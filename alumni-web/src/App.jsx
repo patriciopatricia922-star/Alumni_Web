@@ -11,6 +11,11 @@ import Announcements from './pages/Announcements';
 import Profile from './pages/Profile';
 import PersonalInformation from './pages/PersonalInformation';
 import ChangePassword from './pages/Changepassword';
+import About from './pages/About';
+import ContactSupport from './pages/ContactSupport';
+import PersonalBackground from './survey/PersonalBackground';
+import EducationalBackground from './survey/Educationalbackground';
+import CertificationAchievement from './survey/Certificationachievement';
 
 
 function App() {
@@ -27,6 +32,11 @@ function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/personal-information" element={<PersonalInformation />} />
       <Route path="/change-password" element={<ChangePassword />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact-support" element={<ContactSupport />} />
+      <Route path="/survey/personal-background" element={<PersonalBackground />} />
+      <Route path="/survey/educational-background" element={<EducationalBackground />} />
+      <Route path="/survey/certification-achievement" element={<CertificationAchievement />} />
     </Routes>
   );
 }

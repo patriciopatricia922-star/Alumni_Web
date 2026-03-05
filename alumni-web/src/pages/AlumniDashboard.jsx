@@ -1,14 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 
 const AlumniDashboard = () => {
+  const navigate = useNavigate();
   const forYouItems = [
     {
       icon: 'survey',
       title: 'Alumni Survey Tracer',
       description: 'Update your status',
       badge: true,
-      path: '/survey',
+      path: '/survey/personal-background',
     },
     {
       icon: 'discount',
@@ -250,6 +252,7 @@ const AlumniDashboard = () => {
                   }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(43,114,251,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                  onClick={() => navigate(item.path)}
                 >
                   {/* Icon box with badge */}
                   <div style={{ position: 'relative', flexShrink: 0 }}>
