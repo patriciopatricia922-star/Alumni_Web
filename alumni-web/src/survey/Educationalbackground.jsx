@@ -172,7 +172,8 @@ const EducationalBackground = () => {
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   const showPostGradCourse = form.postGradPlans === 'Yes';
-  const showLicensureBranch = form.licensureReviewing === 'Yes' || form.licensureReviewing === 'Reviewing';
+  // Only show branch if Yes — not when No or Not applicable
+  const showLicensureBranch = form.licensureReviewing === 'Yes';
   const showBoardExam = showLicensureBranch && (form.licensurePlans === 'Yes' || form.licensurePlans === 'Already taken');
 
   return (
@@ -360,7 +361,7 @@ const EducationalBackground = () => {
               <Field label="Are you currently taking/reviewing for licensure examination? *">
                 <RadioGroup
                   name="licensureReviewing"
-                  options={['Yes', 'No', 'Reviewing']}
+                  options={['Yes', 'No', 'Not applicable']}
                   value={form.licensureReviewing}
                   onChange={v => {
                     setForm(prev => ({

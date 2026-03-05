@@ -16,6 +16,12 @@ import ContactSupport from './pages/ContactSupport';
 import PersonalBackground from './survey/PersonalBackground';
 import EducationalBackground from './survey/Educationalbackground';
 import CertificationAchievement from './survey/Certificationachievement';
+import EmploymentInformation from './survey/Employmentinformation';
+import JobExperience from './survey/Jobexperience';
+import SkillsAndCompetencies from './survey/Skillsandcompetencies';
+import Feedback from './survey/Feedback';
+import AlumniEngagement from './survey/Alumniengagement';
+import SurveyComplete from './survey/SurveyComplete';
 
 
 function App() {
@@ -37,8 +43,14 @@ function App() {
       <Route path="/survey/personal-background" element={<PersonalBackground />} />
       <Route path="/survey/educational-background" element={<EducationalBackground />} />
       <Route path="/survey/certification-achievement" element={<CertificationAchievement />} />
+      <Route path="/survey/employment-information" element={<EmploymentInformation />} />
+      <Route path="/survey/job-experience" element={<JobExperience />} />
+      <Route path="/survey/skills-and-competencies" element={<SkillsAndCompetencies />} />
+      <Route path="/survey/feedback" element={<Feedback />} />
+      <Route path="/survey/alumni-engagement" element={<AlumniEngagement />} />
+      <Route path="/survey/complete" element={<SurveyComplete />} />
     </Routes>
   );
 }
 
-export default App;  
+export default App;
