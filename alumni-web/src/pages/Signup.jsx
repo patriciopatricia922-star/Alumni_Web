@@ -94,6 +94,9 @@ const Signup = () => {
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
       return setError('Please fill in all required fields.');
     }
+    if (form.email.toLowerCase().trim().endsWith('@nu-dasma.edu.ph')) {
+      return setError('This email domain is reserved for NU Dasmarinas staff. Please use a personal email address.');
+    }
     if (form.password.length < 8) {
       return setError('Password must be at least 8 characters long.');
     }
@@ -120,8 +123,9 @@ const Signup = () => {
       });
       if (signUpError) throw signUpError;
 
-      // 2. Insert into public.users
-      const { error: insertError } = await supabase.from('users').insert({
+      // 2. Upsert into public.users
+      // (DB trigger may have already created the row, so upsert avoids 409 conflict)
+      const { error: insertError } = await supabase.from('users').upsert({
         id: data.user.id,
         email: form.email,
         first_name: form.firstName,
@@ -129,12 +133,23 @@ const Signup = () => {
         last_name: form.lastName,
         program: idData.program || null,
         batch_year: idData.batchYear ? parseInt(idData.batchYear) : null,
-      });
-      if (insertError) throw insertError;
+      }, { onConflict: 'id' });
+
+      if (insertError) {
+        // Profile row failed — sign out the session and show error
+        // (The DB trigger will handle creating the profile row as a fallback)
+        await supabase.auth.signOut();
+        throw new Error('Account setup incomplete. Please try signing up again.');
+      }
 
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('already registered') || msg.includes('409') || msg.toLowerCase().includes('unique')) {
+        setError('This email is already registered. Please log in instead.');
+      } else {
+        setError(msg || 'Something went wrong. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

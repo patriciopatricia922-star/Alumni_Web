@@ -16,15 +16,32 @@ const verifyAlumniID = async (imageFile) => {
   formData.append('scale', 'true');
   formData.append('OCREngine', '2');
 
-  const response = await fetch('https://api.ocr.space/parse/image', {
-    method: 'POST',
-    body: formData,
-  });
-
-  const data = await response.json();
+  // Retry up to 3 attempts on timeout or failure
+  let data = null;
+  let lastError = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout per attempt
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      data = await response.json();
+      if (data && !data.IsErroredOnProcessing) break; // success
+      lastError = data?.ErrorMessage?.[0] || 'OCR processing failed.';
+    } catch (err) {
+      lastError = err.name === 'AbortError'
+        ? `Scan timed out (attempt ${attempt}/3). Retrying...`
+        : err.message;
+      if (attempt < 3) await new Promise(r => setTimeout(r, 2000)); // wait 2s before retry
+    }
+  }
 
   if (!data || data.IsErroredOnProcessing) {
-    throw new Error(data?.ErrorMessage?.[0] || 'OCR processing failed. Please try again.');
+    throw new Error(lastError || 'Scan failed after 3 attempts. Please try again.');
   }
 
   const rawText = data.ParsedResults?.[0]?.ParsedText || '';
@@ -412,7 +429,7 @@ const AlumniIDRegistration = () => {
           </div>
         )}
 
-        {/* ── Camera Fullscreen ──────────────────────────────────────────────── */}
+        {/* ── Camera Fullscreen ────── */}
         {cameraActive && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px', letterSpacing: '0.3px' }}>
@@ -554,11 +571,11 @@ const AlumniIDRegistration = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[
-                  {  text: 'Place your ID on a flat, well-lit surface before scanning.' },
-                  {  text: 'Keep the ID straight and avoid tilting or angling it.' },
-                  {  text: 'Make sure all text on the ID is clearly visible and not blurry.' },
-                  {  text: 'Avoid covering any part of the ID with your fingers.' },
-                  {  text: "Avoid glare — don't scan under direct bright light or flash." },
+                  { text: 'Place your ID on a flat, well-lit surface before scanning.' },
+                  { text: 'Keep the ID straight and avoid tilting or angling it.' },
+                  { text: 'Make sure all text on the ID is clearly visible and not blurry.' },
+                  { text: 'Avoid covering any part of the ID with your fingers.' },
+                  { text: "Avoid glare — don't scan under direct bright light or flash." },
                 ].map((tip, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }}>{tip.icon}</span>
