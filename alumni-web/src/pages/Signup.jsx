@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AlumnAILogo from '../assets/AlumnAI Logo.png';
+import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
   .custom-scroll::-webkit-scrollbar {
@@ -66,10 +67,78 @@ const sectionTitleStyle = {
 };
 
 const Signup = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const idData = location.state || {};
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [activeTab, setActiveTab] = useState('signup');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const [form, setForm] = useState({
+    lastName: idData.lastName || '',
+    firstName: idData.firstName || '',
+    middleName: idData.middleName || '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const handleSignup = async () => {
+    setError('');
+    if (!form.firstName || !form.lastName || !form.email || !form.password) {
+      return setError('Please fill in all required fields.');
+    }
+    if (form.password.length < 8) {
+      return setError('Password must be at least 8 characters long.');
+    }
+    if (form.password !== form.confirmPassword) {
+      return setError('Passwords do not match.');
+    }
+    if (!agreed) {
+      return setError('You must agree to the Terms of Service and Privacy Policy.');
+    }
+
+    setLoading(true);
+    try {
+      // 1. Create auth user
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            first_name: form.firstName,
+            middle_name: form.middleName,
+            last_name: form.lastName,
+          },
+        },
+      });
+      if (signUpError) throw signUpError;
+
+      // 2. Insert into public.users
+      const { error: insertError } = await supabase.from('users').insert({
+        id: data.user.id,
+        email: form.email,
+        first_name: form.firstName,
+        middle_name: form.middleName || null,
+        last_name: form.lastName,
+        program: idData.program || null,
+        batch_year: idData.batchYear ? parseInt(idData.batchYear) : null,
+      });
+      if (insertError) throw insertError;
+
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const EyeIcon = ({ visible }) => (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
@@ -211,7 +280,7 @@ const Signup = () => {
               flexDirection: 'column',
             }}
           >
-            {/* Sticky Header */}
+            {/* Header */}
             <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '14px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 2px 0' }}>
                 Alumni Registration
@@ -232,21 +301,44 @@ const Signup = () => {
                 gap: '16px',
               }}
             >
+
+              {/* Error message */}
+              {error && (
+                <div style={{ background: 'rgba(255, 80, 80, 0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '8px 12px' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
+                </div>
+              )}
+
               {/* Personal Information */}
               <div>
                 <h4 style={sectionTitleStyle}>Personal Information</h4>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={labelStyle}>Last Name *</label>
-                  <input style={inputStyle} placeholder="e.g. Dela Cruz" />
+                  <input
+                    style={inputStyle}
+                    placeholder="e.g. Dela Cruz"
+                    value={form.lastName}
+                    onChange={e => set('lastName', e.target.value)}
+                  />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>First Name *</label>
-                    <input style={inputStyle} placeholder="e.g. Juan" />
+                    <input
+                      style={inputStyle}
+                      placeholder="e.g. Juan"
+                      value={form.firstName}
+                      onChange={e => set('firstName', e.target.value)}
+                    />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>Middle Name</label>
-                    <input style={inputStyle} placeholder="e.g. Mendoza" />
+                    <input
+                      style={inputStyle}
+                      placeholder="e.g. Mendoza"
+                      value={form.middleName}
+                      onChange={e => set('middleName', e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
@@ -256,12 +348,24 @@ const Signup = () => {
                 <h4 style={sectionTitleStyle}>Account Security</h4>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={labelStyle}>Email Address *</label>
-                  <input style={inputStyle} type="email" placeholder="e.g. you@gmail.com" />
+                  <input
+                    style={inputStyle}
+                    type="email"
+                    placeholder="e.g. you@gmail.com"
+                    value={form.email}
+                    onChange={e => set('email', e.target.value)}
+                  />
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                   <label style={labelStyle}>Password *</label>
                   <div style={{ position: 'relative' }}>
-                    <input style={inputStyle} type={showPassword ? 'text' : 'password'} placeholder="••••••••" />
+                    <input
+                      style={inputStyle}
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={form.password}
+                      onChange={e => set('password', e.target.value)}
+                    />
                     <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       <EyeIcon visible={showPassword} />
                     </button>
@@ -273,7 +377,13 @@ const Signup = () => {
                 <div>
                   <label style={labelStyle}>Confirm Password *</label>
                   <div style={{ position: 'relative' }}>
-                    <input style={inputStyle} type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" />
+                    <input
+                      style={inputStyle}
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={form.confirmPassword}
+                      onChange={e => set('confirmPassword', e.target.value)}
+                    />
                     <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       <EyeIcon visible={showConfirmPassword} />
                     </button>
@@ -303,11 +413,12 @@ const Signup = () => {
 
               {/* Create Account Button */}
               <button
-                disabled={!agreed}
+                onClick={handleSignup}
+                disabled={!agreed || loading}
                 style={{
                   width: '100%',
                   height: '40px',
-                  background: agreed ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
+                  background: agreed && !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
                   border: 'none',
                   borderRadius: '10px',
@@ -316,12 +427,12 @@ const Signup = () => {
                   fontSize: '14px',
                   letterSpacing: '0.3px',
                   color: '#FFFFFF',
-                  cursor: agreed ? 'pointer' : 'not-allowed',
+                  cursor: agreed && !loading ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s ease',
                   flexShrink: 0,
                 }}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
 
               {/* Already have an account */}

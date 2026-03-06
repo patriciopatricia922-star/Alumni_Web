@@ -266,7 +266,7 @@ const EmploymentInformation = () => {
       <Sidebar />
 
       {/* Main content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative' }}>
+      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
 
         {/* Sticky Header — top bar + survey title + progress banner all sticky together */}
         <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
