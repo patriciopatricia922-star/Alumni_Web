@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
@@ -124,6 +125,15 @@ const JobExperience = () => {
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('job_experience');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
+
   const toggleFactor = (factor) => {
     setForm(prev => {
       const current = prev.firstJobFactors;
@@ -143,7 +153,7 @@ const JobExperience = () => {
       <Sidebar />
 
       {/* Main content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative' }}>
+      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
 
         {/* Sticky Header */}
         <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
@@ -322,7 +332,7 @@ const JobExperience = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/skills-and-competencies')}
+                onClick={() => saveSectionProgress('job_experience', form).then(() => navigate('/survey/skills-and-competencies'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

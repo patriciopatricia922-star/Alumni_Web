@@ -45,7 +45,6 @@ const verifyAlumniID = async (imageFile) => {
   }
 
   const rawText = data.ParsedResults?.[0]?.ParsedText || '';
-  console.log('OCR RAW TEXT:', rawText); // debug — check browser console
   const upperText = rawText.toUpperCase();
 
   // OCR splits lines so check each word separately
@@ -120,16 +119,15 @@ const verifyAlumniID = async (imageFile) => {
 
     const parts = fullName.split(' ');
 
-    // 1. Separate suffix only if there are enough name parts remaining
-    //    e.g. dont strip "II" if it would leave us with < 2 parts
+    // Separate suffix only if there are enough name parts remaining
     let suffix = '';
     const lastPart = parts[parts.length - 1].replace('.', '').toUpperCase();
     if (suffixes.includes(lastPart) && parts.length > 2) {
       suffix = parts.pop();
     }
 
-    // 2. Detect compound last name (e.g. Dela Cruz, De Leon, San Jose)
-    //    If second-to-last word is a particle, last name = last 2 words
+    //  Detect compound last name (e.g. Dela Cruz, De Leon, San Jose)
+    //  If second-to-last word is a particle, last name = last 2 words
     let lastNameParts = [];
     if (
       parts.length >= 2 &&
@@ -141,7 +139,7 @@ const verifyAlumniID = async (imageFile) => {
     }
     lastName = lastNameParts.join(' ') + (suffix ? ' ' + suffix : '');
 
-    // 3. Remaining parts: last word = middle name, rest = first name
+    // Remaining parts: last word = middle name, rest = first name
     if (parts.length === 0) {
       firstName = '';
       middleName = '';
@@ -153,7 +151,7 @@ const verifyAlumniID = async (imageFile) => {
       firstName = parts.slice(0, parts.length - 1).join(' ');
     }
 
-    // 4. Capitalize each word properly
+    // Capitalize each word properly
     const cap = str => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
     firstName = cap(firstName);
     middleName = cap(middleName);
@@ -297,7 +295,7 @@ const AlumniIDRegistration = () => {
     navigate('/signup', { state: { fromIDVerification: true, ...extractedData } });
   };
 
-  // ── Border color by status ─────────────────────────────────────────────────
+  // ── Border color by status ────────────────────
   const borderColor = {
     idle: 'rgba(0,0,0,0.25)',
     scanning: '#51A2FF',

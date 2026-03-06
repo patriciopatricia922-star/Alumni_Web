@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 // ─── Shared Styles ───────────────────────────────────────────────────────────
@@ -242,6 +243,15 @@ const EmploymentInformation = () => {
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('employment_information');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
+
   const toggleReasonForJob = (reason) => {
     setForm(prev => {
       const current = prev.reasonsForJob;
@@ -470,7 +480,7 @@ const EmploymentInformation = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/job-experience')}
+                onClick={() => saveSectionProgress('employment_information', form).then(() => navigate('/survey/job-experience'))}
                 style={{ width: '88px', height: '45px', background: '#0028FF', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '10px', border: 'none', fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#FFFFFF', cursor: 'pointer' }}
                 onMouseOver={e => e.target.style.opacity = '0.9'}
                 onMouseOut={e => e.target.style.opacity = '1'}

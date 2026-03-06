@@ -1,9 +1,59 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
+import { supabase } from '../lib/supabase';
+import { loadSurveyProgress } from '../lib/surveyProgress';
 
 const AlumniDashboard = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0, current_route: '/survey/personal-background' });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      // Fetch user name
+      const { data } = await supabase
+        .from('users')
+        .select('first_name, last_name')
+        .eq('id', authUser.id)
+        .single();
+      if (data) setUser(data);
+
+      // Fetch survey progress
+      const progress = await loadSurveyProgress();
+      if (progress) setSurveyProgress(progress);
+    };
+    fetchData();
+  }, []);
+
+  const firstName = user?.first_name || 'Alumni';
+  const progressPercentage = surveyProgress?.percentage || 0;
+  const resumeRoute = surveyProgress?.current_route || '/survey/personal-background';
+  const [animatedPercentage, setAnimatedPercentage] = useState(0);
+
+  // Animate progress bar when percentage loads
+  useEffect(() => {
+    if (progressPercentage === 0) return;
+    let start = 0;
+    const end = progressPercentage;
+    const duration = 1200; // ms
+    const stepTime = 16; // ~60fps
+    const steps = duration / stepTime;
+    const increment = end / steps;
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setAnimatedPercentage(end);
+        clearInterval(timer);
+      } else {
+        setAnimatedPercentage(Math.floor(start));
+      }
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [progressPercentage]);
   const forYouItems = [
     {
       icon: 'survey',
@@ -157,7 +207,7 @@ const AlumniDashboard = () => {
             color: '#FFFFFF',
             margin: '0 0 40px 0',
           }}>
-            Hello, <span style={{ color: '#D9CA81' }}>John</span>
+            Hello, <span style={{ color: '#D9CA81' }}>{firstName}</span>
           </h1>
         </div>
 
@@ -202,10 +252,10 @@ const AlumniDashboard = () => {
           {/* Circular Progress */}
           <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0 }}>
             <svg width="140" height="140" style={{ transform: 'rotate(-90deg)', position: 'absolute' }}>
-              <circle cx="70" cy="70" r="58" stroke="#D9CA81" strokeWidth="8" fill="none" opacity="0.2"/>
+              <circle cx="70" cy="70" r="58" stroke="#D9CA81" strokeWidth="8" fill="none"/>
               <circle cx="70" cy="70" r="58" stroke="#2B72FB" strokeWidth="8" fill="none"
                 strokeDasharray={`${2 * Math.PI * 58}`}
-                strokeDashoffset={`${2 * Math.PI * 58 * 0.22}`}
+                strokeDashoffset={`${2 * Math.PI * 58 * (1 - animatedPercentage / 100)}`}
                 strokeLinecap="round"/>
             </svg>
             <div style={{
@@ -215,7 +265,7 @@ const AlumniDashboard = () => {
               fontSize: '32px', lineHeight: '28px',
               letterSpacing: '-0.35px', color: '#2B72FB',
             }}>
-              78%
+              {animatedPercentage}%
             </div>
           </div>
         </div>
@@ -252,7 +302,7 @@ const AlumniDashboard = () => {
                   }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(43,114,251,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => navigate(item.icon === 'survey' ? resumeRoute : item.path)}
                 >
                   {/* Icon box with badge */}
                   <div style={{ position: 'relative', flexShrink: 0 }}>

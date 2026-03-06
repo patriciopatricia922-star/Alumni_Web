@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 const inputStyle = {
@@ -171,6 +172,15 @@ const EducationalBackground = () => {
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('educational_background');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
+
   const showPostGradCourse = form.postGradPlans === 'Yes';
   // Only show branch if Yes — not when No or Not applicable
   const showLicensureBranch = form.licensureReviewing === 'Yes';
@@ -196,7 +206,7 @@ const EducationalBackground = () => {
           }}>
             {/* Back */}
             <button
-              onClick={() => navigate('/survey')}
+              onClick={() => navigate('/dashboard')}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -465,7 +475,7 @@ const EducationalBackground = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/certification-achievement')}
+                onClick={() => saveSectionProgress('educational_background', form).then(() => navigate('/survey/certification-achievement'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
@@ -92,6 +93,15 @@ const AlumniEngagement = () => {
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('alumni_engagement');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
+
   const toggleParticipate = (value) => {
     setForm(prev => {
       const current = prev.participateIn;
@@ -105,7 +115,7 @@ const AlumniEngagement = () => {
   };
 
   const handleSubmit = () => {
-    navigate('/survey/complete');
+    saveSectionProgress('alumni_engagement', form).then(() => navigate('/survey/complete'));
   };
 
   return (
@@ -115,7 +125,7 @@ const AlumniEngagement = () => {
       <Sidebar />
 
       {/* Main content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative' }}>
+      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
 
         {/* Sticky Header */}
         <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>

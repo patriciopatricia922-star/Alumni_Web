@@ -22,6 +22,7 @@ import SkillsAndCompetencies from './survey/Skillsandcompetencies';
 import Feedback from './survey/Feedback';
 import AlumniEngagement from './survey/Alumniengagement';
 import SurveyComplete from './survey/SurveyComplete';
+import Discounts from './pages/Discounts';
 
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
       <Route path="/survey/feedback" element={<Feedback />} />
       <Route path="/survey/alumni-engagement" element={<AlumniEngagement />} />
       <Route path="/survey/complete" element={<SurveyComplete />} />
+      <Route path="/discounts" element={<Discounts />} />
     </Routes>
   );
 }

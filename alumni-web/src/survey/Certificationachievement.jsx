@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 const inputStyle = {
@@ -201,6 +202,15 @@ const CertificationAchievement = () => {
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('certification_achievement');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
+
   const showCertFields = form.certiportPasser === 'Yes';
   const showHowHelped = showCertFields && form.helpedCareer === 'Yes';
 
@@ -209,7 +219,7 @@ const CertificationAchievement = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative' }}>
+      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
 
         {/* Sticky Header */}
         <div style={{
@@ -445,7 +455,7 @@ const CertificationAchievement = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/employment-information')}
+                onClick={() => saveSectionProgress('certification_achievement', form).then(() => navigate('/survey/employment-information'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

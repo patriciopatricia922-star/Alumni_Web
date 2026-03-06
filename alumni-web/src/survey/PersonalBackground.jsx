@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
+import { supabase } from '../lib/supabase';
 import Sidebar from '../components/Sidebar';
 
 const inputStyle = {
@@ -81,6 +83,39 @@ const PersonalBackground = () => {
     contactNumber: '',
     email: '',
   });
+
+  // Pre-fill from Supabase + load any previously saved form data
+  useEffect(() => {
+    const prefill = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      // Load user profile
+      const { data } = await supabase
+        .from('users')
+        .select('first_name, middle_name, last_name, email')
+        .eq('id', authUser.id)
+        .single();
+
+      // Load previously saved form data for this section
+      const savedData = await loadSectionData('personal_background');
+
+      if (savedData) {
+        // Saved data takes priority — restore exactly where they left off
+        setForm(f => ({ ...f, ...savedData }));
+      } else if (data) {
+        // First time — pre-fill from profile
+        setForm(f => ({
+          ...f,
+          firstName: data.first_name || '',
+          middleName: data.middle_name || '',
+          lastName: data.last_name || '',
+          email: data.email || '',
+        }));
+      }
+    };
+    prefill();
+  }, []);
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
   const setRadio = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
@@ -363,7 +398,7 @@ const PersonalBackground = () => {
               justifyContent: 'flex-end',
             }}>
               <button
-                onClick={() => navigate('/survey/educational-background')}
+                onClick={() => saveSectionProgress('personal_background', form).then(() => navigate('/survey/educational-background'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

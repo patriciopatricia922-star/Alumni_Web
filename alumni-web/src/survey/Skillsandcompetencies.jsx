@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
@@ -129,7 +130,16 @@ const SkillsAndCompetencies = () => {
       'Work Ethics/Professionalism skills': 0,
     },
     skillsToDevlop: '',
-  });
+  })
+
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('skills_competencies');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);;
 
   const toggleCompetency = (value) => {
     setForm(prev => {
@@ -157,7 +167,7 @@ const SkillsAndCompetencies = () => {
       <Sidebar />
 
       {/* Main content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative' }}>
+      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
 
         {/* Sticky Header */}
         <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
@@ -337,7 +347,7 @@ const SkillsAndCompetencies = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/feedback')}
+                onClick={() => saveSectionProgress('skills_competencies', form).then(() => navigate('/survey/feedback'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

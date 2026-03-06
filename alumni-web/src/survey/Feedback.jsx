@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
 // ─── Shared Styles ────────────────────────────────────────────────────────────
@@ -78,6 +79,15 @@ const FeedbackForUniversity = () => {
   });
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  // Load saved form data on mount
+  useEffect(() => {
+    const load = async () => {
+      const savedData = await loadSectionData('feedback_university');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
+  }, []);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial' }}>
@@ -260,7 +270,7 @@ const FeedbackForUniversity = () => {
                 Previous
               </button>
               <button
-                onClick={() => navigate('/survey/alumni-engagement')}
+                onClick={() => saveSectionProgress('feedback_university', form).then(() => navigate('/survey/alumni-engagement'))}
                 style={{
                   width: '88px', height: '45px',
                   background: '#0028FF',

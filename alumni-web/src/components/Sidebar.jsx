@@ -1,12 +1,45 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import homeIcon from '../assets/home_icn.svg';
 import announceIcon from '../assets/announce_icn.svg';
 import profileIcon from '../assets/profile_icn.svg';
 import logoutIcon from '../assets/logout_icn.svg';
+import { supabase } from '../lib/supabase';
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const { data } = await supabase
+        .from('users')
+        .select('first_name, last_name, email')
+        .eq('id', authUser.id)
+        .single();
+      if (data) setUser(data);
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
+
+  // Determine role from email
+  const email = user?.email || '';
+  const role = email === 'superadmin@nu-dasma.edu.ph'
+    ? 'Super Admin'
+    : email === 'nudaao@nu-dasma.edu.ph'
+    ? 'Admin'
+    : 'Alumni';
+
+  const displayName = user ? `${user.first_name} ${user.last_name}` : 'Loading...';
+  const initials = user ? user.first_name?.charAt(0).toUpperCase() : 'U';
 
   const menuItems = [
     { path: '/dashboard', label: 'Home', icon: homeIcon },
@@ -103,21 +136,22 @@ const Sidebar = () => {
             borderRadius: '50%', display: 'flex', alignItems: 'center',
             justifyContent: 'center', flexShrink: 0,
           }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>U</span>
+            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', lineHeight: '20px', color: '#FFFFFF' }}>User</span>
-            <span style={{ fontFamily: 'Arial', fontSize: '12px', lineHeight: '16px', color: '#D1D5DC', textTransform: 'capitalize' }}>Alumni</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <span style={{ fontFamily: 'Arial', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+            <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>{role}</span>
           </div>
-          <Link to="/login" style={{ textDecoration: 'none' }}>
-            <button style={{
+          <button
+            onClick={handleLogout}
+            style={{
               width: '28px', height: '28px', background: 'none', border: 'none',
               borderRadius: '4px', cursor: 'pointer', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', padding: 0,
-            }}>
-              <img src={logoutIcon} alt="Logout" style={{ width: '16px', height: '16px' }} />
-            </button>
-          </Link>
+              alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0,
+            }}
+          >
+            <img src={logoutIcon} alt="Logout" style={{ width: '16px', height: '16px' }} />
+          </button>
         </div>
       </div>
     </aside>
