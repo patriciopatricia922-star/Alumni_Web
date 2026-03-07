@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 
+// ─── Responsive hook ─────────────────────────────────────────────────────────
+const useWindowWidth = () => {
+  const [width, setWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  React.useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+};
+
 const announcements = [
   {
     id: 1,
@@ -28,7 +39,7 @@ const announcements = [
   },
 ];
 
-const AnnouncementCard = ({ announcement }) => (
+const AnnouncementCard = ({ announcement, isMobile }) => (
   <div style={{
     background: 'rgba(13, 19, 56, 0.4)',
     border: '0.89px solid rgba(255, 255, 255, 0.1)',
@@ -40,10 +51,10 @@ const AnnouncementCard = ({ announcement }) => (
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      padding: '20px 24px',
+      padding: isMobile ? '14px 16px' : '20px 24px',
       borderBottom: '0.89px solid rgba(255, 255, 255, 0.1)',
     }}>
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1 }}>
+      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', flex: 1 }}>
         {/* Icon */}
         <div style={{
           width: '48px', height: '48px', flexShrink: 0,
@@ -57,23 +68,21 @@ const AnnouncementCard = ({ announcement }) => (
             <path d="M1.5 3L11 11L20.5 3" stroke="#FFFFFF" strokeWidth="1.5"/>
           </svg>
         </div>
-
         {/* Title */}
-        <div>
-          <h3 style={{
-            fontFamily: 'Arimo, Arial', fontWeight: 700,
-            fontSize: '15px', lineHeight: '55px',
-            letterSpacing: '-0.35px', color: '#FFFFFF',
-            margin: 0,
-          }}>
-            {announcement.title}
-          </h3>
-        </div>
+        <h3 style={{
+          fontFamily: 'Arimo, Arial', fontWeight: 700,
+          fontSize: isMobile ? '14px' : '15px',
+          lineHeight: '48px',
+          letterSpacing: '-0.35px', color: '#FFFFFF',
+          margin: 0,
+        }}>
+          {announcement.title}
+        </h3>
       </div>
     </div>
 
     {/* Body */}
-    <div style={{ padding: '16px 24px' }}>
+    <div style={{ padding: isMobile ? '12px 16px' : '16px 24px' }}>
       <p style={{
         fontFamily: 'Arimo, Arial', fontWeight: 400,
         fontSize: '14px', lineHeight: '22px',
@@ -86,13 +95,10 @@ const AnnouncementCard = ({ announcement }) => (
 
     {/* Footer */}
     <div style={{
-      padding: '12px 24px',
+      padding: isMobile ? '10px 16px' : '12px 24px',
       borderTop: '0.89px solid rgba(255, 255, 255, 0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '24px',
+      display: 'flex', alignItems: 'center', gap: '16px',
     }}>
-      {/* Time */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
@@ -106,18 +112,13 @@ const AnnouncementCard = ({ announcement }) => (
           {announcement.time}
         </span>
       </div>
-
-      {/* See more button */}
       <button style={{
-        height: '39px',
-        padding: '0 20px',
-        borderRadius: '14px',
-        border: 'none',
+        height: '36px', padding: '0 16px',
+        borderRadius: '14px', border: 'none',
+        background: 'rgba(43,114,251,0.15)',
         fontFamily: 'Arimo, Arial', fontWeight: 700,
-        fontSize: '13px', lineHeight: '20px',
-        color: '#FFFFFF',
-        cursor: 'pointer',
-        display: 'flex', alignItems: 'center', gap: '8px',
+        fontSize: '13px', color: '#FFFFFF',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
       }}>
         See more
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
@@ -130,21 +131,39 @@ const AnnouncementCard = ({ announcement }) => (
 
 const Announcements = () => {
   const [filter, setFilter] = useState('all');
+  const width = useWindowWidth();
+  const isMobile  = width < 768;
+  const isTablet  = width >= 768 && width < 1024;
+  const isDesktop = width >= 1024;
+  const sidebarWidth = 229;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#002263' }}>
       <Sidebar />
 
       {/* Main Content */}
-      <div style={{ marginLeft: '229px', flex: 1, padding: '37px 51px', position: 'relative' }}>
+      <div style={{
+        marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
+        flex: 1,
+        padding: isMobile ? '24px 20px 90px' : isTablet ? '40px 32px 48px' : '37px 51px',
+        position: 'relative',
+        boxSizing: 'border-box',
+        maxWidth: '100%',
+        overflowX: 'hidden',
+      }}>
 
-        {/* Notification Bell — sticky top right */}
-        <div style={{ position: 'fixed', top: '53px', right: '51px', zIndex: 50 }}>
+        {/* Notification Bell */}
+        <div style={{
+          position: 'absolute',
+          top: isMobile ? '24px' : isTablet ? '40px' : '37px',
+          right: isMobile ? '20px' : isTablet ? '32px' : '51px',
+          zIndex: 50,
+        }}>
           <button style={{
             width: '48px', height: '48px',
-            background: 'linear-gradient(135deg, rgba(15, 22, 66, 0.1) 0%, rgba(10, 15, 46, 0.05) 100%)',
-            border: '1.24px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -4px rgba(0, 0, 0, 0.1)',
+            background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
+            border: '1.24px solid rgba(255,255,255,0.1)',
+            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)',
             borderRadius: '14px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative',
@@ -154,8 +173,7 @@ const Announcements = () => {
             </svg>
             <div style={{
               position: 'absolute', top: '-4px', right: '-4px',
-              width: '20px', height: '20px',
-              background: '#2B72FB', borderRadius: '50%',
+              width: '20px', height: '20px', background: '#2B72FB', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <span style={{ fontFamily: 'SF Pro Display, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
@@ -164,126 +182,115 @@ const Announcements = () => {
         </div>
 
         {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ paddingRight: '64px', marginBottom: isMobile ? '20px' : '32px' }}>
           <h1 style={{
             fontFamily: 'Montserrat', fontWeight: 700,
-            fontSize: '40px', lineHeight: '48px',
-            letterSpacing: '-1px', color: '#FFFFFF',
+            fontSize: isMobile ? '32px' : isTablet ? '34px' : '40px',
+            lineHeight: '1.2', letterSpacing: '-1px', color: '#FFFFFF',
             margin: '0 0 8px 0',
           }}>
             Announcements
           </h1>
           <p style={{
             fontFamily: 'Montserrat', fontWeight: 400,
-            fontSize: '16px', lineHeight: '22px',
-            color: 'rgba(255, 255, 255, 0.6)',
-            margin: 0,
+            fontSize: isMobile ? '13px' : '16px', lineHeight: '22px',
+            color: 'rgba(255,255,255,0.6)', margin: 0,
           }}>
             Stay connected with the latest news, events, and opportunities from your alumni community.
           </p>
         </div>
 
-        {/* Featured Banner */}
-        <div style={{
-          position: 'relative',
-          padding: '24px 32px',
-          background: 'linear-gradient(180deg, rgba(43, 114, 251, 0.2) 0%, rgba(30, 37, 85, 0.3) 100%)',
-          border: '0.89px solid rgba(43, 114, 251, 0.3)',
-          borderRadius: '24px',
-          marginBottom: '40px',
-          overflow: 'hidden',
-          display: 'flex', gap: '24px', alignItems: 'center',
-        }}>
-          {/* Glow */}
+        {/* Featured Banner — hidden on mobile to save space, shown on tablet+ */}
+        {!isMobile && (
           <div style={{
-            position: 'absolute', width: '256px', height: '256px',
-            right: '-30px', top: '-127px',
-            background: '#2B72FB', opacity: 0.1,
-            filter: 'blur(64px)', borderRadius: '50%', pointerEvents: 'none',
-          }} />
-
-          {/* Big Icon */}
-          <div style={{
-            width: '80px', height: '80px', flexShrink: 0,
-            background: 'linear-gradient(180deg, rgba(43, 114, 251, 0.4) 0%, rgba(30, 37, 85, 0.6) 100%)',
-            border: '0.89px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0px 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            borderRadius: '16px',
-            marginBottom: '67px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative',
+            padding: isTablet ? '20px 24px' : '24px 32px',
+            background: 'linear-gradient(180deg, rgba(43,114,251,0.2) 0%, rgba(30,37,85,0.3) 100%)',
+            border: '0.89px solid rgba(43,114,251,0.3)',
+            borderRadius: '24px',
+            marginBottom: '40px',
+            overflow: 'hidden',
+            display: 'flex', gap: '24px', alignItems: 'center',
           }}>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <path d="M2 5H30V24C30 24.55 29.55 25 29 25H3C2.45 25 2 24.55 2 24V5Z" stroke="#FFFFFF" strokeWidth="2"/>
-              <path d="M2 5L16 17L30 5" stroke="#FFFFFF" strokeWidth="2"/>
-            </svg>
-          </div>
-
-          {/* Content */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <h2 style={{
-              fontFamily: 'Arimo, Arial', fontWeight: 700,
-              fontSize: '25px', lineHeight: '22px',
-              letterSpacing: '-0.35px', color: '#FFFFFF',
-              margin: '0 0 14px 0',
+            <div style={{
+              position: 'absolute', width: '256px', height: '256px',
+              right: '-30px', top: '-127px',
+              background: '#2B72FB', opacity: 0.1,
+              filter: 'blur(64px)', borderRadius: '50%', pointerEvents: 'none',
+            }} />
+            {/* Big Icon */}
+            <div style={{
+              width: '80px', height: '80px', flexShrink: 0,
+              background: 'linear-gradient(180deg, rgba(43,114,251,0.4) 0%, rgba(30,37,85,0.6) 100%)',
+              border: '0.89px solid rgba(255,255,255,0.2)',
+              boxShadow: '0px 25px 50px -12px rgba(0,0,0,0.25)',
+              borderRadius: '16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              alignSelf: 'flex-start',
             }}>
-              Alumni Tracer Survey
-            </h2>
-            <p style={{
-              fontFamily: 'SF Pro Display, Arial', fontWeight: 400,
-              fontSize: '14px', lineHeight: '22px',
-              color: 'rgba(255, 255, 255, 0.65)',
-              margin: '0 0 20px 0',
-              maxWidth: '744px',
-            }}>
-              Join us for an unforgettable evening of networking, reminiscing, and celebrating the bonds that unite our alumni community. Your participation helps us improve our programs.
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              {/* Time */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
-                  <path d="M7 4V7.5L9.5 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17" strokeLinecap="round"/>
-                </svg>
-                <span style={{ fontFamily: 'SF Pro Display, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-                  2 hours ago
-                </span>
-              </div>
-
-              {/* See more */}
-              <button style={{
-                height: '39px', padding: '0 20px',
-                borderRadius: '14px', border: 'none',
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path d="M2 5H30V24C30 24.55 29.55 25 29 25H3C2.45 25 2 24.55 2 24V5Z" stroke="#FFFFFF" strokeWidth="2"/>
+                <path d="M2 5L16 17L30 5" stroke="#FFFFFF" strokeWidth="2"/>
+              </svg>
+            </div>
+            {/* Content */}
+            <div style={{ flex: 1, position: 'relative' }}>
+              <h2 style={{
                 fontFamily: 'Arimo, Arial', fontWeight: 700,
-                fontSize: '13px', color: '#FFFFFF',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: isTablet ? '20px' : '25px', lineHeight: '1.3',
+                letterSpacing: '-0.35px', color: '#FFFFFF', margin: '0 0 10px 0',
               }}>
-                See more
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                  <path d="M1 4H7M7 4L4 1M7 4L4 7" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+                Alumni Tracer Survey
+              </h2>
+              <p style={{
+                fontFamily: 'SF Pro Display, Arial', fontWeight: 400,
+                fontSize: '14px', lineHeight: '22px',
+                color: 'rgba(255,255,255,0.65)', margin: '0 0 16px 0',
+              }}>
+                Join us for an unforgettable evening of networking, reminiscing, and celebrating the bonds that unite our alumni community. Your participation helps us improve our programs.
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
+                    <path d="M7 4V7.5L9.5 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17" strokeLinecap="round"/>
+                  </svg>
+                  <span style={{ fontFamily: 'SF Pro Display, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>2 hours ago</span>
+                </div>
+                <button style={{
+                  height: '36px', padding: '0 20px',
+                  borderRadius: '14px', border: 'none',
+                  background: 'rgba(43,114,251,0.25)',
+                  fontFamily: 'Arimo, Arial', fontWeight: 700,
+                  fontSize: '13px', color: '#FFFFFF',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                }}>
+                  See more
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                    <path d="M1 4H7M7 4L4 1M7 4L4 7" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Filter Bar */}
         <div style={{
           display: 'flex', justifyContent: 'space-between',
-          alignItems: 'center', marginBottom: '24px',
+          alignItems: 'center',
+          marginBottom: isMobile ? '16px' : '24px',
         }}>
-          {/* All Posts pill */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: '8px',
-            background: 'linear-gradient(90deg, #1E2555 0%, rgba(15, 19, 56, 0.7) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: '10px',
-            padding: '8px 12px',
+            background: 'linear-gradient(90deg, #1E2555 0%, rgba(15,19,56,0.7) 100%)',
+            border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: '10px', padding: '8px 12px',
           }}>
             <span style={{
               fontFamily: 'Arimo, Arial', fontWeight: 400,
               fontSize: '14px', lineHeight: '20px',
-              color: 'rgba(255, 255, 255, 0.9)',
+              color: 'rgba(255,255,255,0.9)',
             }}>
               All Posts
             </span>
@@ -293,16 +300,14 @@ const Announcements = () => {
               fontFamily: 'Arimo, Arial', fontWeight: 700,
               fontSize: '12px', lineHeight: '16px', color: '#FFFFFF',
             }}>
-              3
+              {announcements.length}
             </div>
           </div>
-
-          {/* Filter button */}
           <button style={{
             display: 'flex', alignItems: 'center', gap: '8px',
             padding: '8px 16px',
-            background: 'linear-gradient(180deg, rgba(30, 37, 85, 0.7) 0%, rgba(15, 19, 56, 0.7) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'linear-gradient(180deg, rgba(30,37,85,0.7) 0%, rgba(15,19,56,0.7) 100%)',
+            border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '8px', cursor: 'pointer',
           }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -317,16 +322,20 @@ const Announcements = () => {
           </button>
         </div>
 
-        {/* Announcement Cards Grid — 2 columns */}
+        {/* Cards
+            Desktop: 2-column grid
+            Tablet:  2-column grid (narrower)
+            Mobile:  single column  */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '24px',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? '14px' : '24px',
         }}>
           {announcements.map((a) => (
-            <AnnouncementCard key={a.id} announcement={a} />
+            <AnnouncementCard key={a.id} announcement={a} isMobile={isMobile} />
           ))}
         </div>
+
       </div>
     </div>
   );

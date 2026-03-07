@@ -6,10 +6,23 @@ import profileIcon from '../assets/profile_icn.svg';
 import logoutIcon from '../assets/logout_icn.svg';
 import { supabase } from '../lib/supabase';
 
+// ─── Responsive hook ────────────────────────────────────────────────────────
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+};
+
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const width = useWindowWidth();
+  const isMobile = width < 768;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -30,7 +43,6 @@ const Sidebar = () => {
     navigate('/login');
   };
 
-  // Determine role from email
   const email = user?.email || '';
   const role = email === 'superadmin@nu-dasma.edu.ph'
     ? 'Super Admin'
@@ -42,28 +54,120 @@ const Sidebar = () => {
   const initials = user ? user.first_name?.charAt(0).toUpperCase() : 'U';
 
   const menuItems = [
-    { path: '/dashboard', label: 'Home', icon: homeIcon },
-    { path: '/announcements', label: 'Announcements', icon: announceIcon },
-    { path: '/profile', label: 'Profile', icon: profileIcon },
+    { path: '/dashboard',      label: 'Home',          icon: homeIcon      },
+    { path: '/announcements',  label: 'Announcements', icon: announceIcon  },
+    { path: '/profile',        label: 'Profile',       icon: profileIcon   },
   ];
 
-  return (
-    <aside
-      style={{
+  // ── Bottom Nav (mobile) ──────────────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <nav style={{
         position: 'fixed',
-        left: 0,
-        top: 0,
-        width: '229px',
-        height: '100vh',
+        bottom: 0, left: 0, right: 0,
+        height: '72px',
         background: '#001947',
-        boxShadow: '0px 10px 50px rgba(0, 0, 0, 0.25)',
-        borderRadius: '0px 20px 20px 0px',
+        boxShadow: '0px -4px 24px rgba(0,0,0,0.35)',
+        borderRadius: '20px 20px 0 0',
         display: 'flex',
-        flexDirection: 'column',
-        zIndex: 100,
-      }}
-    >
-      {/* Logo Section */}
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        zIndex: 200,
+        paddingBottom: 'env(safe-area-inset-bottom)', // handles iPhone home bar
+      }}>
+        {/* Nav items */}
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: '4px', flex: 1, height: '100%',
+                textDecoration: 'none',
+                position: 'relative',
+              }}
+            >
+              {/* Active indicator pill at top */}
+              {isActive && (
+                <div style={{
+                  position: 'absolute', top: 0, left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '32px', height: '3px',
+                  background: '#D9CA81',
+                  borderRadius: '0 0 4px 4px',
+                }} />
+              )}
+              <img
+                src={item.icon}
+                alt={item.label}
+                style={{
+                  width: '22px', height: '22px',
+                  filter: isActive
+                    ? 'brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%)'
+                    : 'brightness(0) invert(1) opacity(0.55)',
+                }}
+              />
+              <span style={{
+                fontFamily: 'Montserrat', fontSize: '10px',
+                fontWeight: isActive ? 700 : 400,
+                lineHeight: '12px',
+                color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.5)',
+                // Truncate long labels like "Announcements"
+                maxWidth: '64px', textAlign: 'center',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+
+        {/* Logout button as a nav item */}
+        <button
+          onClick={handleLogout}
+          style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: '4px', flex: 1, height: '100%',
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          <img
+            src={logoutIcon}
+            alt="Logout"
+            style={{
+              width: '22px', height: '22px',
+              filter: 'brightness(0) invert(1) opacity(0.55)',
+            }}
+          />
+          <span style={{
+            fontFamily: 'Montserrat', fontSize: '10px', fontWeight: 400,
+            lineHeight: '12px', color: 'rgba(255,255,255,0.5)',
+          }}>
+            Logout
+          </span>
+        </button>
+      </nav>
+    );
+  }
+
+  // ── Desktop Sidebar ──────────────────────────────────────────────────────
+  return (
+    <aside style={{
+      position: 'fixed',
+      left: 0, top: 0,
+      width: '229px', height: '100vh',
+      background: '#001947',
+      boxShadow: '0px 10px 50px rgba(0,0,0,0.25)',
+      borderRadius: '0px 20px 20px 0px',
+      display: 'flex', flexDirection: 'column',
+      zIndex: 100,
+    }}>
+      {/* Logo */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 0', gap: '8px' }}>
         <div style={{ width: '40px', height: '40px' }}>
           <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -79,14 +183,14 @@ const Sidebar = () => {
       </div>
 
       {/* Divider */}
-      <div style={{ width: '100%', height: '1px', background: 'rgba(255, 255, 255, 0.1)', boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.35)' }} />
+      <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.35)' }} />
 
       {/* Menu */}
       <div style={{ padding: '20px 9px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <p style={{
           fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
           lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
-          color: 'rgba(255, 255, 255, 0.4)', padding: '0 16px', margin: '0 0 6px 0',
+          color: 'rgba(255,255,255,0.4)', padding: '0 16px', margin: '0 0 6px 0',
         }}>MENU</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -99,7 +203,7 @@ const Sidebar = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '9px 13px',
-                  background: isActive ? 'rgba(217, 202, 129, 0.12)' : 'transparent',
+                  background: isActive ? 'rgba(217,202,129,0.12)' : 'transparent',
                   borderRadius: '14px', textDecoration: 'none',
                   transition: 'background 0.2s', margin: '0 6px',
                 }}
@@ -128,7 +232,7 @@ const Sidebar = () => {
         <div style={{
           display: 'flex', alignItems: 'center', padding: '0 12px',
           gap: '12px', height: '56px',
-          background: 'rgba(255, 255, 255, 0.1)', borderRadius: '30px',
+          background: 'rgba(255,255,255,0.1)', borderRadius: '30px',
         }}>
           <div style={{
             width: '40px', height: '40px',

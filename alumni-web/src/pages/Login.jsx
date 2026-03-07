@@ -65,9 +65,9 @@ const Login = () => {
       // Route based on role
       const email = form.email.toLowerCase().trim();
       if (email === 'superadmin@nu-dasma.edu.ph') {
-        navigate('/dashboard?role=superadmin');
+        navigate('/superadmin/super-admin-dashboard');
       } else if (email === 'nudaao@nu-dasma.edu.ph') {
-        navigate('/dashboard?role=admin');
+        navigate('/dashboard');
       } else {
         navigate('/dashboard');
       }

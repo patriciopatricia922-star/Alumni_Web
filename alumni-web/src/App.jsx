@@ -26,6 +26,9 @@ import Discounts from './pages/Discounts';
 import Events from './pages/Events';
 import Jobs from './pages/Jobs';
 import ForgotPassword from './pages/Forgotpassword';
+import SuperAdminDashboard from './Superadmin/Superadmindashboard';
+
+
 
 
 function App() {
@@ -57,6 +60,9 @@ function App() {
       <Route path="/discounts" element={<Discounts />} />
       <Route path="/events" element={<Events />} />
       <Route path="/jobs" element={<Jobs />} />
+      
+      {/* for super admin */}
+      <Route path="/superadmin/super-admin-dashboard" element={<SuperAdminDashboard/>} />
     </Routes>
   );
 }
