@@ -196,7 +196,7 @@ const AlumniDashboard = () => {
             margin: '0 0 40px 0',
             maxWidth: '658px',
           }}>
-            You're making great progress! Keep engaging with your alumni community.
+            Welcome Bark! Let’s see what’s new in your alumni network.
           </p>
           <h1 style={{
             fontFamily: 'Montserrat',
@@ -246,7 +246,7 @@ const AlumniDashboard = () => {
             maxWidth: '680px',
             position: 'relative',
           }}>
-            You're making great progress! Keep engaging with your community.
+            Your alumni activity engagement!
           </p>
 
           {/* Circular Progress */}

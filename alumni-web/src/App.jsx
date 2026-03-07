@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import LandingPage from './pages/LandingPage';
+import LandingPage from './pages/Landingpage';
 import AlumniIDRegistration from './pages/AlumniIDRegistration';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -23,6 +23,9 @@ import Feedback from './survey/Feedback';
 import AlumniEngagement from './survey/Alumniengagement';
 import SurveyComplete from './survey/SurveyComplete';
 import Discounts from './pages/Discounts';
+import Events from './pages/Events';
+import Jobs from './pages/Jobs';
+import ForgotPassword from './pages/Forgotpassword';
 
 
 function App() {
@@ -39,6 +42,7 @@ function App() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/personal-information" element={<PersonalInformation />} />
       <Route path="/change-password" element={<ChangePassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact-support" element={<ContactSupport />} />
       <Route path="/survey/personal-background" element={<PersonalBackground />} />
@@ -51,6 +55,8 @@ function App() {
       <Route path="/survey/alumni-engagement" element={<AlumniEngagement />} />
       <Route path="/survey/complete" element={<SurveyComplete />} />
       <Route path="/discounts" element={<Discounts />} />
+      <Route path="/events" element={<Events />} />
+      <Route path="/jobs" element={<Jobs />} />
     </Routes>
   );
 }
