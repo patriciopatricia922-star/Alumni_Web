@@ -502,7 +502,7 @@ const AlumniIDRegistration = () => {
               {preview ? (
                 <img src={preview} alt="Alumni ID Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <img src={CameraIcon} alt="Upload" style={{ width: '139px', height: '139px' }} />
+                <img src={CameraIcon} alt="Upload" style={{ width: '119px', height: '119px' }} />
               )}
 
               {/* Scanning overlay on top of preview */}

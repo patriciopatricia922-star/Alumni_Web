@@ -57,15 +57,15 @@ const Icons = {
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 const NAV = [
-  { key: 'super-admin',       label: 'Audit Overview',     Icon: Icons.Dashboard   },
-  { key: 'audit-logs',        label: 'Detailed Audit Logs',Icon: Icons.AuditLogs   },
-  { key: 'admin-management',  label: 'Admin Management',   Icon: Icons.AdminMgmt   },
-  { key: 'alumni-management', label: 'Alumni Management',  Icon: Icons.AlumniMgmt  },
-  { key: 'engagement',        label: 'Alumni Engagement',  Icon: Icons.Engagement  },
+  { key: 'super-admin',       label: 'Audit Overview',      route: '/superadmin/super-admin-dashboard', Icon: Icons.Dashboard   },
+  { key: 'audit-logs',        label: 'Detailed Audit Logs', route: '/superadmin/audit-logs',            Icon: Icons.AuditLogs   },
+  { key: 'admin-management',  label: 'Admin Management',    route: '/superadmin/admin-management',      Icon: Icons.AdminMgmt   },
+  { key: 'alumni-management', label: 'Alumni Management',   route: '/superadmin/alumni-management',     Icon: Icons.AlumniMgmt  },
+  { key: 'engagement',        label: 'Alumni Engagement',   route: '/superadmin/alumni-engagement',     Icon: Icons.Engagement  },
 ];
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
-const SuperAdminSidebar = ({ activePage, onNavigate }) => {
+const SuperAdminSidebar = ({ activePage }) => {
   const navigate = useNavigate();
   const handleLogout = () => navigate('/login');
 
@@ -111,12 +111,12 @@ const SuperAdminSidebar = ({ activePage, onNavigate }) => {
         }}>MENU</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {NAV.map(({ key, label, Icon }) => {
+          {NAV.map(({ key, label, route, Icon }) => {
             const isActive = activePage === key;
             return (
               <button
                 key={key}
-                onClick={() => onNavigate(key)}
+                onClick={() => navigate(route)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '9px 13px', margin: '0 6px',
@@ -254,8 +254,6 @@ const ActionBadge = ({ type }) => {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const SuperAdminDashboard = () => {
-  const [activePage, setActivePage] = useState('super-admin');
-
   // ── Data ──────────────────────────────────────────────────────────────────
   const stats = [
     {
@@ -333,7 +331,7 @@ const SuperAdminDashboard = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Lexend, Arial, sans-serif' }}>
-      <SuperAdminSidebar activePage={activePage} onNavigate={setActivePage} />
+      <SuperAdminSidebar activePage='super-admin' />
 
       {/* Main content */}
       <main style={{ marginLeft: '229px', flex: 1, padding: '40px 40px 60px', overflowX: 'hidden' }}>

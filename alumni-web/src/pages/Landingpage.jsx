@@ -554,7 +554,7 @@ const LandingPage = () => {
                   { label: 'COMMUNITY', desc: "by contributing to the improvement of life's conditions." },
                 ].map((item, index) => (
                   <p key={index} style={{ fontFamily: 'Arial', fontSize: '16px', lineHeight: '24px', color: '#364153', margin: '0 0 6px 0' }}>
-                    <span style={{ fontWeight: 700, color: '#002263' }}>{item.label}</span>, {item.desc}
+                    <span style={{ fontWeight: 700, color: '#C9A700' }}>{item.label}</span>, {item.desc}
                   </p>
                 ))}
               </div>

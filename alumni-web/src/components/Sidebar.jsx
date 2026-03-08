@@ -5,6 +5,7 @@ import announceIcon from '../assets/announce_icn.svg';
 import profileIcon from '../assets/profile_icn.svg';
 import logoutIcon from '../assets/logout_icn.svg';
 import { supabase } from '../lib/supabase';
+import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
 // ─── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -169,17 +170,11 @@ const Sidebar = () => {
     }}>
       {/* Logo */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '32px 0', gap: '8px' }}>
-        <div style={{ width: '40px', height: '40px' }}>
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-            <path d="M20 12.5L7.5 18.75L20 25L32.5 18.75L20 12.5Z" stroke="#D9CA81" strokeWidth="2.67" strokeLinejoin="round"/>
-            <path d="M32.5 18.75V26.25" stroke="#D9CA81" strokeWidth="2.67" strokeLinecap="round"/>
-            <path d="M13.75 21.875V27.5L20 30.625L26.25 27.5V21.875" stroke="#D9CA81" strokeWidth="2.67" strokeLinejoin="round"/>
-          </svg>
-        </div>
-        <div style={{ display: 'flex' }}>
-          <span style={{ fontFamily: 'Arimo, Arial', fontSize: '22px', fontWeight: 700, lineHeight: '32px', color: '#FFFFFF' }}>Alumn</span>
-          <span style={{ fontFamily: 'Arimo, Arial', fontSize: '22px', fontWeight: 700, lineHeight: '32px', color: '#D9CA81' }}>AI</span>
-        </div>
+        <img
+          src={sidebarLogo}
+          alt="AlumnAI"
+          style={{ width: '120px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
+        />
       </div>
 
       {/* Divider */}
