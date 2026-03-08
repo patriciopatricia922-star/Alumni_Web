@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
+// ─── Responsive hook ──────────────────────────────────────────────────────────
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+};
+
+
 // ─── Shared Styles ───────────────────────────────────────────────────────────
 
 const labelStyle = {
@@ -228,6 +240,11 @@ const EMPLOYED_STATUSES = [
 
 const EmploymentInformation = () => {
   const navigate = useNavigate();
+  const width = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
+  const hPad = isMobile ? '20px' : isTablet ? '32px' : '51px';
+  const cardPad = isMobile ? '24px 20px' : isTablet ? '28px 28px' : '40px 40px';
 
   const [form, setForm] = useState({
     jobRelatedToDegree: '',
@@ -276,13 +293,13 @@ const EmploymentInformation = () => {
       <Sidebar />
 
       {/* Main content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
+      <div style={{ marginLeft: isMobile ? 0 : '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh', paddingBottom: isMobile ? '90px' : '0px' }}>
 
         {/* Sticky Header — top bar + survey title + progress banner all sticky together */}
         <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
 
           {/* Top bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '30px 51px 0px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${isMobile ? '20px' : '30px'} ${hPad} 0px` }}>
             <button
               onClick={() => navigate('/survey/certification-achievement')}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -292,13 +309,15 @@ const EmploymentInformation = () => {
               </svg>
               <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
             </button>
-            <div style={{
-              background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
-              border: '1.24px solid rgba(99,102,241,0.3)',
-              borderRadius: '999px', padding: '7px 20px',
-            }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>ALUMNI STATUS</span>
-            </div>
+            {!isMobile && (
+              <div style={{
+                background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
+                border: '1.24px solid rgba(99,102,241,0.3)',
+                borderRadius: '999px', padding: '7px 20px',
+              }}>
+                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>Alumni Status</span>
+              </div>
+            )}
             <button style={{
               width: '48px', height: '48px',
               background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
@@ -316,48 +335,58 @@ const EmploymentInformation = () => {
           </div>
 
           {/* Survey Title */}
-          <div style={{ textAlign: 'center', padding: '16px 51px 0px' }}>
-            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '28px', lineHeight: '42px', letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0 }}>
+          <div style={{ textAlign: 'center', padding: `${isMobile ? '14px' : '16px'} ${hPad} 0px` }}>
+            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile ? '22px' : '28px', lineHeight: '42px', letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0 }}>
               Alumni Tracer Survey
             </h1>
           </div>
 
           {/* Progress Banner */}
-          <div style={{ margin: '12px 51px 0px', background: '#001743', border: '1px solid #01122F', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '16px', padding: '18px 30px 16px' }}>
+          <div style={{ margin: `12px ${hPad} 0px`, background: '#001743', border: '1px solid #01122F', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '16px', padding: isMobile ? '14px 18px 12px' : '18px 30px 16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: 'rgba(255,255,255,0.99)' }}>Section 4 of 7</span>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '17px', color: 'rgba(255,255,255,0.99)' }}>57% complete</span>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '16px', color: 'rgba(255,255,255,0.99)' }}>Section 4 of 7</span>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>57% complete</span>
             </div>
             <div style={{ width: '100%', height: '11px', background: '#D9CA81', borderRadius: '10px', marginBottom: '10px' }}>
               <div style={{ width: '57%', height: '100%', background: '#51A2FF', borderRadius: '10px' }} />
             </div>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '17px', color: 'rgba(255,255,255,0.99)' }}>Employment Information</span>
+            <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>Employment Information</span>
           </div>
 
         </div>{/* end sticky */}
 
         {/* Form Card */}
-        <div style={{ padding: '0px 51px 60px' }}>
+        <div style={{ padding: `0px ${hPad} 60px` }}>
           <div style={{
             background: 'rgba(13, 19, 56, 0.4)',
             border: '1px solid rgba(255, 255, 255, 0.06)',
             boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
             borderRadius: '16px',
-            padding: '32.89px 32.89px 0.89px',
+            padding: cardPad,
             display: 'flex',
             flexDirection: 'column',
-            gap: '32px',
+            gap: isMobile ? '24px' : '32px',
           }}>
 
             {/* Section heading */}
-            <div>
-              <h2 style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '20px', lineHeight: '30px', color: '#FFFFFF', margin: '0 0 4px 0' }}>
+            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
+              <h2 style={{
+                fontFamily: 'Arimo, Arial', fontWeight: 700,
+                fontSize: isMobile ? '18px' : '20px',
+                lineHeight: '30px', color: '#FFFFFF', margin: '0 0 6px 0',
+              }}>
                 Employment Information
               </h2>
-              <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '13px', lineHeight: '20px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-                Informations related to your job
+              <p style={{
+                fontFamily: 'Arimo, Arial', fontWeight: 400,
+                fontSize: '13px', lineHeight: '20px',
+                color: 'rgba(255,255,255,0.6)', margin: 0,
+              }}>
+                Information related to your job
               </p>
             </div>
+            {/* Divider */}
+            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '32px' }} />
 
             {/* Fields */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -410,7 +439,7 @@ const EmploymentInformation = () => {
                     onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'} />
                 </Field>
 
-                <Field label="Name of company / Employer *">
+                <Field label="Name of company / employer *">
                   <input type="text" placeholder="Enter your answer" value={form.companyName}
                     onChange={e => set('companyName', e.target.value)} style={inputStyle}
                     onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
@@ -432,7 +461,7 @@ const EmploymentInformation = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <span style={labelStyle}>Monthly income Range *</span>
+                  <span style={labelStyle}>Monthly income range *</span>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {MONTHLY_INCOME.map(opt => (
                       <RadioOption key={opt} name="monthlyIncome" value={opt}
@@ -442,7 +471,7 @@ const EmploymentInformation = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <span style={labelStyle}>Reasons for accepting the Job *</span>
+                  <span style={labelStyle}>Reasons for accepting the job *</span>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 32px' }}>
                     {REASONS_FOR_JOB.map(reason => (
                       <CheckboxOption key={reason} name="reasonsForJob" value={reason}
@@ -457,7 +486,7 @@ const EmploymentInformation = () => {
             {/* ── Unemployed Branch ───────────────────────────────────────────── */}
             {showUnemployedFields && (
               <div style={{ borderTop: '0.89px solid rgba(255,255,255,0.06)', paddingTop: '16.89px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <span style={labelStyle}>Reasons of being Unemployed *</span>
+                <span style={labelStyle}>Reasons of being unemployed *</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '34px' }}>
                   {UNEMPLOYED_REASONS.map(reason => (
                     <RadioOption key={reason} name="reasonsUnemployed" value={reason}

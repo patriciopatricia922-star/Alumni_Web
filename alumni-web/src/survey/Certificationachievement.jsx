@@ -3,6 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
+// ─── Responsive hook ──────────────────────────────────────────────────────────
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+};
+
 const inputStyle = {
   width: '100%',
   height: '47px',
@@ -19,7 +30,7 @@ const inputStyle = {
 
 const textAreaStyle = {
   width: '100%',
-  height: '110px',
+  height: '100px',
   background: 'rgba(255, 255, 255, 0.17)',
   border: '0.89px solid rgba(255, 255, 255, 0.06)',
   borderRadius: '10px',
@@ -37,35 +48,34 @@ const labelStyle = {
   fontWeight: 400,
   fontSize: '14px',
   lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.7)',
+  color: 'rgba(255, 255, 255, 0.9)',
 };
 
 const Field = ({ label, children }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
     <label style={labelStyle}>{label}</label>
     {children}
   </div>
 );
 
 const RadioGroup = ({ name, options, value, onChange }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
     {options.map(opt => (
-      <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '7px', cursor: 'pointer' }}>
+      <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '4px 0' }}>
         <input
           type="radio"
           name={name}
           value={opt}
           checked={value === opt}
           onChange={() => onChange(opt)}
-          style={{ width: '16px', height: '16px', accentColor: '#51A2FF', cursor: 'pointer' }}
+          style={{ width: '18px', height: '18px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0 }}
         />
-        <span style={labelStyle}>{opt}</span>
+        <span style={{ ...labelStyle, fontWeight: 400 }}>{opt}</span>
       </label>
     ))}
   </div>
 );
 
-// Multi-select dropdown for certifications
 const CERTIFICATIONS = [
   'Microsoft Office Specialist (MOS) - Word',
   'Microsoft Office Specialist (MOS) - Excel',
@@ -123,14 +133,11 @@ const MultiSelectDropdown = ({ value, onChange }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
-      {/* Trigger */}
       <div
         onClick={() => setOpen(o => !o)}
         style={{
           ...inputStyle,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           cursor: 'pointer',
           borderColor: open ? 'rgba(43,114,251,0.6)' : 'rgba(255,255,255,0.06)',
         }}
@@ -138,35 +145,25 @@ const MultiSelectDropdown = ({ value, onChange }) => {
         <span style={{ color: value.length === 0 ? 'rgba(255,255,255,0.3)' : '#FFFFFF', fontSize: '14px', fontFamily: 'Arimo, Arial' }}>
           {displayText}
         </span>
-        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
           <path d="M7.5 11L0 0H15L7.5 11Z" fill="white" />
         </svg>
       </div>
 
-      {/* Dropdown panel */}
       {open && (
         <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          right: 0,
-          background: '#011C50',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '10px',
-          maxHeight: '280px',
-          overflowY: 'auto',
-          zIndex: 200,
-          padding: '8px 0',
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: '#011C50', border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: '10px', maxHeight: '280px', overflowY: 'auto',
+          zIndex: 200, padding: '8px 0',
         }}>
           {CERTIFICATIONS.map(cert => (
             <label
               key={cert}
               style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                padding: '8px 16px',
-                cursor: 'pointer',
+                display: 'flex', alignItems: 'flex-start', gap: '10px',
+                padding: '10px 16px', cursor: 'pointer',
                 background: value.includes(cert) ? 'rgba(81,162,255,0.1)' : 'transparent',
                 transition: 'background 0.15s',
               }}
@@ -179,7 +176,7 @@ const MultiSelectDropdown = ({ value, onChange }) => {
                 onChange={() => toggle(cert)}
                 style={{ width: '16px', height: '16px', marginTop: '2px', accentColor: '#51A2FF', flexShrink: 0, cursor: 'pointer' }}
               />
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', lineHeight: '18px', color: 'rgba(255,255,255,0.7)' }}>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', lineHeight: '20px', color: 'rgba(255,255,255,0.8)' }}>
                 {cert}
               </span>
             </label>
@@ -192,6 +189,13 @@ const MultiSelectDropdown = ({ value, onChange }) => {
 
 const CertificationAchievement = () => {
   const navigate = useNavigate();
+  const width = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
+
+  const sidebarWidth = 229;
+  const hPad = isMobile ? '20px' : isTablet ? '32px' : '51px';
+  const cardPad = isMobile ? '24px 20px' : isTablet ? '28px 28px' : '40px 40px';
 
   const [form, setForm] = useState({
     certiportPasser: '',
@@ -202,7 +206,6 @@ const CertificationAchievement = () => {
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
-  // Load saved form data on mount
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('certification_achievement');
@@ -219,20 +222,21 @@ const CertificationAchievement = () => {
       <Sidebar />
 
       {/* Main Content */}
-      <div style={{ marginLeft: '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh' }}>
+      <div style={{
+        marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
+        flex: 1, position: 'relative',
+        overflowY: 'auto', height: '100vh',
+        paddingBottom: isMobile ? '90px' : '0px',
+      }}>
 
         {/* Sticky Header */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 40,
-          background: '#002263',
-          paddingBottom: '16px',
-        }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
+
           {/* Top bar */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '30px 51px 0px',
+            padding: `${isMobile ? '20px' : '30px'} ${hPad} 0px`,
           }}>
-            {/* Back */}
             <button
               onClick={() => navigate('/survey/educational-background')}
               style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
@@ -240,37 +244,35 @@ const CertificationAchievement = () => {
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
+              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
             </button>
 
-            {/* ALUMNI STATUS badge */}
-            <div style={{
-              background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
-              border: '1.24px solid rgba(99,102,241,0.3)',
-              borderRadius: '999px',
-              padding: '7px 20px',
-            }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>
-                ALUMNI STATUS
-              </span>
-            </div>
+            {!isMobile && (
+              <div style={{
+                background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
+                border: '1.24px solid rgba(99,102,241,0.3)',
+                borderRadius: '999px', padding: '7px 20px',
+              }}>
+                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>
+                  Alumni Status
+                </span>
+              </div>
+            )}
 
-            {/* Notification Bell */}
             <button style={{
               width: '48px', height: '48px',
               background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
               border: '1.24px solid rgba(255,255,255,0.1)',
               borderRadius: '14px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative',
+              position: 'relative', flexShrink: 0,
             }}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div style={{
                 position: 'absolute', top: '-4px', right: '-4px',
-                width: '20px', height: '20px',
-                background: '#2B72FB', borderRadius: '50%',
+                width: '20px', height: '20px', background: '#2B72FB', borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <span style={{ fontFamily: 'Arimo, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
@@ -279,11 +281,11 @@ const CertificationAchievement = () => {
           </div>
 
           {/* Survey Title */}
-          <div style={{ textAlign: 'center', padding: '16px 51px 0px' }}>
+          <div style={{ textAlign: 'center', padding: `${isMobile ? '14px' : '16px'} ${hPad} 0px` }}>
             <h1 style={{
               fontFamily: 'Arimo, Arial', fontWeight: 700,
-              fontSize: '28px', lineHeight: '42px',
-              letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0,
+              fontSize: isMobile ? '22px' : isTablet ? '25px' : '28px',
+              lineHeight: '42px', letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0,
             }}>
               Alumni Tracer Survey
             </h1>
@@ -291,61 +293,60 @@ const CertificationAchievement = () => {
 
           {/* Progress Banner */}
           <div style={{
-            margin: '12px 51px 0px',
-            background: '#001743',
-            border: '1px solid #01122F',
+            margin: `12px ${hPad} 0px`,
+            background: '#001743', border: '1px solid #01122F',
             boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
             borderRadius: '16px',
-            padding: '18px 30px 16px',
+            padding: isMobile ? '14px 18px 12px' : '18px 30px 16px',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: 'rgba(255,255,255,0.99)' }}>Section 3 of 7</span>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '17px', color: 'rgba(255,255,255,0.99)' }}>43% complete</span>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '16px', color: 'rgba(255,255,255,0.99)' }}>Section 3 of 7</span>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>43% complete</span>
             </div>
             <div style={{ width: '100%', height: '11px', background: '#D9CA81', borderRadius: '10px', marginBottom: '10px' }}>
               <div style={{ width: '43%', height: '100%', background: '#51A2FF', borderRadius: '10px' }} />
             </div>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '17px', color: 'rgba(255,255,255,0.99)' }}>
+            <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>
               Certification Achievement
             </span>
           </div>
         </div>
 
         {/* Form Card */}
-        <div style={{ padding: '0px 51px 60px' }}>
+        <div style={{ padding: `0px ${hPad} 60px` }}>
           <div style={{
             background: 'rgba(13, 19, 56, 0.4)',
             border: '0.89px solid rgba(255, 255, 255, 0.1)',
             boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
             borderRadius: '16px',
-            padding: '32.89px 32.89px 0.89px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '32px',
+            padding: cardPad,
+            display: 'flex', flexDirection: 'column', gap: '0px',
           }}>
 
             {/* Section heading */}
-            <div>
+            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
               <h2 style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 400,
-                fontSize: '20px', lineHeight: '30px',
-                color: '#FFFFFF', margin: '0 0 4px 0', textAlign: 'center',
+                fontFamily: 'Arimo, Arial', fontWeight: 700,
+                fontSize: isMobile ? '18px' : '20px',
+                lineHeight: '30px', color: '#FFFFFF', margin: '0 0 6px 0',
               }}>
                 Certification Achievement
               </h2>
               <p style={{
                 fontFamily: 'Arimo, Arial', fontWeight: 400,
                 fontSize: '13px', lineHeight: '20px',
-                color: 'rgba(255,255,255,0.5)', margin: 0, textAlign: 'center',
+                color: 'rgba(255,255,255,0.6)', margin: 0,
               }}>
                 Certifications you have
               </p>
             </div>
 
-            {/* Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Divider */}
+            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '32px' }} />
 
-              {/* Q1: Certiport passer */}
+            {/* Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '28px' : '36px' }}>
+
               <Field label="Are you a certiport passer? *">
                 <RadioGroup
                   name="certiportPasser"
@@ -363,58 +364,49 @@ const CertificationAchievement = () => {
                 />
               </Field>
 
-              {/* Branch: certification dropdown + career question */}
               {showCertFields && (
                 <>
-                  {/* Divider */}
-                  <div style={{ borderTop: '0.89px solid rgba(255,255,255,0.06)', paddingTop: '4px' }} />
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
 
-                  <Field label="Please specify any of certiport certification earned *">
+                  <Field label="Please specify any certiport certification earned *">
                     <MultiSelectDropdown
                       value={form.certifications}
                       onChange={v => set('certifications', v)}
                     />
                   </Field>
 
-                  {/* Selected tags */}
                   {form.certifications.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '-8px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '-16px' }}>
                       {form.certifications.map(cert => (
                         <div key={cert} style={{
                           display: 'flex', alignItems: 'center', gap: '6px',
                           background: 'rgba(81,162,255,0.15)',
                           border: '1px solid rgba(81,162,255,0.3)',
-                          borderRadius: '20px',
-                          padding: '4px 10px',
+                          borderRadius: '20px', padding: '5px 12px',
                         }}>
                           <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#FFFFFF' }}>
                             {cert.length > 40 ? cert.slice(0, 40) + '…' : cert}
                           </span>
                           <button
                             onClick={() => set('certifications', form.certifications.filter(c => c !== cert))}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '14px', padding: 0, lineHeight: 1 }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontSize: '16px', padding: 0, lineHeight: 1 }}
                           >×</button>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Divider */}
-                  <div style={{ borderTop: '0.89px solid rgba(255,255,255,0.06)', paddingTop: '4px' }} />
+                  <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
 
-                  {/* Q2: Helped career */}
                   <Field label="Have your certifications helped you in your career? *">
                     <RadioGroup
                       name="helpedCareer"
                       options={['Yes', 'No']}
                       value={form.helpedCareer}
-                      onChange={v => {
-                        setForm(prev => ({ ...prev, helpedCareer: v, howHelped: '' }));
-                      }}
+                      onChange={v => setForm(prev => ({ ...prev, helpedCareer: v, howHelped: '' }))}
                     />
                   </Field>
 
-                  {/* Branch: how helped */}
                   {showHowHelped && (
                     <Field label="How have your certifications helped you? *">
                       <textarea
@@ -434,22 +426,19 @@ const CertificationAchievement = () => {
 
             {/* Navigation */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: '32px',
-              paddingBottom: '33px',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              paddingTop: '40px', paddingBottom: '8px',
+              marginTop: '40px',
               borderTop: '0.89px solid rgba(255,255,255,0.06)',
             }}>
               <button
                 onClick={() => navigate('/survey/educational-background')}
                 style={{
-                  width: '88px', height: '45px',
-                  background: '#FFFFFF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                  width: isMobile ? '100px' : '120px', height: '48px',
+                  background: '#FFFFFF', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
                   borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#090909',
-                  cursor: 'pointer',
+                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600,
+                  color: '#090909', cursor: 'pointer',
                 }}
               >
                 Previous
@@ -457,12 +446,11 @@ const CertificationAchievement = () => {
               <button
                 onClick={() => saveSectionProgress('certification_achievement', form).then(() => navigate('/survey/employment-information'))}
                 style={{
-                  width: '88px', height: '45px',
-                  background: '#0028FF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                  width: isMobile ? '100px' : '120px', height: '48px',
+                  background: '#0028FF', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
                   borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#FFFFFF',
-                  cursor: 'pointer',
+                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600,
+                  color: '#FFFFFF', cursor: 'pointer',
                 }}
                 onMouseOver={e => e.target.style.opacity = '0.9'}
                 onMouseOut={e => e.target.style.opacity = '1'}

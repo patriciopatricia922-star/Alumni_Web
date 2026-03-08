@@ -171,7 +171,7 @@ const PersonalBackground = () => {
               <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
             </button>
 
-            {/* ALUMNI STATUS badge — hide text on very small screens */}
+            {/* Alumni Status badge — hide text on very small screens */}
             <div style={{
               background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
               border: '1.24px solid rgba(99,102,241,0.3)',
@@ -184,7 +184,7 @@ const PersonalBackground = () => {
                 letterSpacing: '0.3px',
                 color: 'rgba(255,255,255,0.8)',
               }}>
-                ALUMNI STATUS
+                Alumni Status
               </span>
             </div>
 
