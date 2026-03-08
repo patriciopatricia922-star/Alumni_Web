@@ -1,144 +1,397 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
-// ─── Responsive hook ──────────────────────────────────────────────────────────
-const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
-  useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return width;
-};
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
 
-const inputStyle = {
-  width: '100%',
-  height: '47px',
-  background: 'rgba(255, 255, 255, 0.17)',
-  border: '0.89px solid rgba(255, 255, 255, 0.06)',
-  borderRadius: '10px',
-  padding: '12px 16px',
-  fontFamily: 'Arimo, Arial',
-  fontSize: '14px',
-  color: '#FFFFFF',
-  outline: 'none',
-  boxSizing: 'border-box',
-};
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-const textAreaStyle = {
-  width: '100%',
-  height: '100px',
-  background: 'rgba(255, 255, 255, 0.17)',
-  border: '0.89px solid rgba(255, 255, 255, 0.06)',
-  borderRadius: '10px',
-  padding: '12px 16px',
-  fontFamily: 'Arimo, Arial',
-  fontSize: '14px',
-  color: '#FFFFFF',
-  outline: 'none',
-  boxSizing: 'border-box',
-  resize: 'none',
-};
+  .eb-root {
+    display: flex;
+    min-height: 100vh;
+    background: #002263;
+    font-family: 'Arimo', Arial, sans-serif;
+  }
 
-const labelStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '14px',
-  lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.9)',
-};
+  .eb-content {
+    flex: 1;
+    min-width: 0;
+    margin-left: 229px;
+  }
 
-const subLabelStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '13px',
-  lineHeight: '18px',
-  letterSpacing: '0.3px',
-  textTransform: 'uppercase',
-  color: 'rgba(255, 255, 255, 0.6)',
-};
+  /* ── Sticky header ── */
+  .eb-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #002263;
+    padding-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
 
-const Field = ({ label, sub = false, children }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-    <label style={sub ? subLabelStyle : labelStyle}>{label}</label>
-    {children}
-  </div>
-);
+  .eb-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 51px 0;
+  }
 
-const TextInput = ({ placeholder, value, onChange }) => (
-  <input
-    type="text"
-    placeholder={placeholder}
-    value={value}
-    onChange={onChange}
-    style={inputStyle}
-    onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'}
-  />
-);
+  .eb-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
 
-const TextArea = ({ placeholder, value, onChange }) => (
-  <textarea
-    placeholder={placeholder}
-    value={value}
-    onChange={onChange}
-    style={textAreaStyle}
-    onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'}
-  />
-);
+  .eb-badge {
+    background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+    border: 1.24px solid rgba(99,102,241,0.3);
+    border-radius: 999px;
+    padding: 7px 20px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+  }
 
-const RadioGroup = ({ name, options, value, onChange, gap = 9 }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: `${gap}px` }}>
-    {options.map(opt => (
-      <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '4px 0' }}>
-        <input
-          type="radio"
-          name={name}
-          value={opt}
-          checked={value === opt}
-          onChange={() => onChange(opt)}
-          style={{ width: '18px', height: '18px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0 }}
-        />
-        <span style={{ ...labelStyle, fontSize: '14px', fontWeight: 400 }}>{opt}</span>
-      </label>
-    ))}
-  </div>
-);
+  .eb-bell {
+    width: 48px;
+    height: 48px;
+    background: rgba(15,22,66,0.1);
+    border: 1.24px solid rgba(255,255,255,0.1);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
 
-const SelectInput = ({ value, onChange, options, placeholder = 'Select' }) => (
-  <div style={{ position: 'relative', width: '100%' }}>
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      style={{
-        ...inputStyle,
-        appearance: 'none',
-        WebkitAppearance: 'none',
-        cursor: 'pointer',
-        color: value ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-      }}
-      onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'}
-    >
-      <option value="" disabled>{placeholder}</option>
-      {options.map(o => (
-        <option key={o.value ?? o} value={o.value ?? o} style={{ background: '#001743', color: '#fff' }}>
-          {o.label ?? o}
-        </option>
-      ))}
-    </select>
-    <svg
-      style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-      width="15" height="11" viewBox="0 0 15 11" fill="none"
-    >
-      <path d="M7.5 11L0 0H15L7.5 11Z" fill="white" />
-    </svg>
-  </div>
-);
+  .eb-bell-dot {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 20px; height: 20px;
+    background: #2B72FB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 10px;
+    color: #fff;
+  }
+
+  .eb-title {
+    text-align: center;
+    padding: 14px 51px 0;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.4;
+    letter-spacing: -0.7px;
+    color: #fff;
+  }
+
+  .eb-progress {
+    margin: 12px 51px 0;
+    background: #001743;
+    border: 1px solid #01122F;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 16px;
+    padding: 18px 30px 16px;
+  }
+
+  .eb-progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 16px;
+    color: rgba(255,255,255,0.99);
+  }
+
+  .eb-progress-track {
+    width: 100%;
+    height: 11px;
+    background: #D9CA81;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .eb-progress-fill {
+    width: 29%;
+    height: 100%;
+    background: #51A2FF;
+    border-radius: 10px;
+  }
+
+  .eb-progress-label {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 17px;
+    color: rgba(255,255,255,0.99);
+  }
+
+  /* ── Body ── */
+  .eb-body {
+    padding: 24px 51px 60px;
+  }
+
+  /* ── Form card ── */
+  .eb-card {
+    background: rgba(13,19,56,0.4);
+    border: 0.89px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 16px;
+    padding: 40px 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .eb-section-title {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.5;
+    color: #fff;
+    text-align: center;
+  }
+
+  .eb-section-sub {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* ── Fields ── */
+  .eb-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .eb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .eb-label {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 21px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .eb-label-sub {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .eb-input {
+    width: 100%;
+    height: 47px;
+    background: rgba(255,255,255,0.17);
+    border: 0.89px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .eb-input:focus { border-color: rgba(43,114,251,0.6); }
+  .eb-input option { background: #001743; color: #fff; }
+
+  .eb-textarea {
+    width: 100%;
+    height: 100px;
+    background: rgba(255,255,255,0.17);
+    border: 0.89px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    outline: none;
+    resize: none;
+    transition: border-color 0.15s;
+  }
+  .eb-textarea:focus { border-color: rgba(43,114,251,0.6); }
+
+  .eb-select-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  .eb-select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+
+  .eb-select-arrow {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .eb-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+  }
+
+  .eb-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.4;
+    padding: 2px 0;
+  }
+
+  .eb-radio-label input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #51A2FF;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── Footer — no divider ── */
+  .eb-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+  }
+
+  .eb-btn-prev {
+    width: 120px;
+    height: 48px;
+    background: #fff;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #090909;
+    transition: opacity 0.15s;
+  }
+  .eb-btn-prev:hover { opacity: 0.85; }
+
+  .eb-btn-next {
+    width: 120px;
+    height: 48px;
+    background: #0028FF;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    transition: opacity 0.15s;
+  }
+  .eb-btn-next:hover { opacity: 0.9; }
+  /* ── Required asterisk (red) ── */
+  .eb-req { color: #F87171; font-weight: 700; margin-left: 2px; }
+
+  /* ── Inline field error ── */
+  .eb-field-error {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 12px;
+    color: #F87171;
+    margin-left: 6px;
+    font-weight: 400;
+  }
+
+  /* ══════════════════════════════════════════
+     RESPONSIVE BREAKPOINTS
+  ══════════════════════════════════════════ */
+
+  @media (max-width: 1100px) {
+    .eb-topbar   { padding: 24px 32px 0; }
+    .eb-title    { padding: 14px 32px 0; font-size: 26px; }
+    .eb-progress { margin: 12px 32px 0; }
+    .eb-body     { padding: 20px 32px 60px; }
+    .eb-card     { padding: 32px 32px 28px; }
+  }
+
+  @media (max-width: 900px) {
+    .eb-topbar   { padding: 20px 24px 0; }
+    .eb-title    { padding: 12px 24px 0; font-size: 24px; }
+    .eb-progress { margin: 10px 24px 0; }
+    .eb-body     { padding: 18px 24px 60px; }
+    .eb-card     { padding: 28px 24px 24px; gap: 28px; }
+    .eb-fields   { gap: 28px; }
+  }
+
+  @media (max-width: 767px) {
+    .eb-content  { margin-left: 0; }
+    .eb-topbar   { padding: 20px 16px 0; }
+    .eb-badge    { padding: 6px 12px; font-size: 10px; }
+    .eb-bell     { display: none; }
+    .eb-title    { padding: 12px 16px 0; font-size: 20px; }
+    .eb-progress { margin: 10px 16px 0; padding: 14px 16px; }
+    .eb-progress-row   { font-size: 13px; }
+    .eb-progress-label { font-size: 13px; }
+    .eb-body     { padding: 16px 16px 80px; }
+    .eb-card     { padding: 20px 16px 20px; gap: 24px; }
+    .eb-fields   { gap: 24px; }
+    .eb-section-title  { font-size: 17px; }
+    .eb-btn-prev { width: 100px; height: 44px; font-size: 14px; }
+    .eb-btn-next { width: 100px; height: 44px; font-size: 14px; }
+  }
+
+  @media (max-width: 390px) {
+    .eb-title    { font-size: 17px; }
+    .eb-input, .eb-textarea { font-size: 13px; }
+    .eb-btn-prev, .eb-btn-next { width: 90px; font-size: 13px; }
+  }
+
+  @media (max-height: 600px) {
+    .eb-header   { padding-bottom: 10px; }
+    .eb-progress { padding: 10px 20px; }
+    .eb-body     { padding-top: 14px; }
+  }
+`;
 
 const DEGREE_OPTIONS = [
   'Bachelor of Science in Computer Science',
@@ -150,29 +403,14 @@ const DEGREE_OPTIONS = [
   'Other',
 ];
 
-const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => {
-  const y = 2025 + i;
-  return { value: String(y), label: String(y) };
-});
+const YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => String(2025 + i));
 
 const DISTINCTION_OPTIONS = [
-  { value: 'Summa Cum Laude', label: 'Summa Cum Laude' },
-  { value: 'Magna Cum Laude', label: 'Magna Cum Laude' },
-  { value: 'Cum Laude', label: 'Cum Laude' },
-  { value: 'With Honors', label: 'With Honors' },
-  { value: 'None', label: 'None' },
+  'Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'With Honors', 'None',
 ];
 
 const EducationalBackground = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
-  const isMobile  = width < 768;
-  const isTablet  = width >= 768 && width < 1024;
-  const isDesktop = width >= 1024;
-
-  const sidebarWidth = 229;
-  const hPad = isMobile ? '20px' : isTablet ? '32px' : '51px';
-  const cardPad = isMobile ? '24px 20px' : isTablet ? '28px 28px' : '40px 40px';
 
   const [form, setForm] = useState({
     degreeProgram: '',
@@ -199,334 +437,313 @@ const EducationalBackground = () => {
     load();
   }, []);
 
-  const showPostGradCourse = form.postGradPlans === 'Yes';
-  const showLicensureBranch = form.licensureReviewing === 'Yes';
-  const showBoardExam = showLicensureBranch && (form.licensurePlans === 'Yes' || form.licensurePlans === 'Already taken');
+  const showPostGradCourse   = form.postGradPlans === 'Yes';
+  const showLicensureBranch  = form.licensureReviewing === 'Yes';
+  const showBoardExam        = showLicensureBranch &&
+    (form.licensurePlans === 'Yes' || form.licensurePlans === 'Already taken');
+
+  const [errors, setErrors] = useState(new Set());
+  const cardRef = useRef(null);
+
+  const validate = () => {
+    const e = new Set();
+    if (!form.degreeProgram)           e.add('degreeProgram');
+    if (!form.reasonForCourse.trim())  e.add('reasonForCourse');
+    if (!form.yearGraduated)           e.add('yearGraduated');
+    if (!form.distinction)             e.add('distinction');
+    if (!form.postGradPlans)           e.add('postGradPlans');
+    if (form.postGradPlans === 'Yes' && !form.postGradCourse.trim()) e.add('postGradCourse');
+    if (!form.licensureReviewing)      e.add('licensureReviewing');
+    if (form.licensureReviewing === 'Yes') {
+      if (!form.licensurePlans)           e.add('licensurePlans');
+      if (!form.licensureReason.trim())   e.add('licensureReason');
+      if (form.licensurePlans === 'Yes' || form.licensurePlans === 'Already taken') {
+        if (!form.boardExamName.trim()) e.add('boardExamName');
+        if (!form.boardExamDate)        e.add('boardExamDate');
+        if (!form.boardExamResult)      e.add('boardExamResult');
+      }
+    }
+    return e;
+  };
+
+  const handleNext = () => {
+    const e = validate();
+    if (e.size > 0) {
+      setErrors(e);
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    setErrors(new Set());
+    saveSectionProgress('educational_background', form)
+      .then(() => navigate('/survey/certification-achievement'));
+  };
+
+  // Shared focus/blur handlers
+  const onFocus = e => e.target.style.borderColor = 'rgba(43,114,251,0.6)';
+  const onBlur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial' }}>
-      {!isMobile && <Sidebar />}
-      {isMobile && <Sidebar />}
+    <>
+      <style>{STYLES}</style>
 
-      {/* Main Content */}
-      <div style={{
-        marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
-        flex: 1,
-        position: 'relative',
-        paddingBottom: isMobile ? '90px' : '0px',
-      }}>
+      <div className="eb-root">
+        <Sidebar />
 
-        {/* Sticky Header */}
-        <div style={{
-          position: 'sticky', top: 0, zIndex: 40,
-          background: '#002263',
-          paddingBottom: '16px',
-        }}>
-          {/* Top bar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: `${isMobile ? '20px' : '30px'} ${hPad} 0px`,
-          }}>
-            {/* Back */}
-            <button
-              onClick={() => navigate('/dashboard')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
-            </button>
+        <div className="eb-content">
 
-            {/* Alumni Status badge — hide on mobile to save space */}
-            {!isMobile && (
-              <div style={{
-                background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
-                border: '1.24px solid rgba(99,102,241,0.3)',
-                borderRadius: '999px',
-                padding: '7px 20px',
-              }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>
-                  Alumni Status
-                </span>
-              </div>
-            )}
+          {/* ── Sticky Header ─────────────────────────────────────────── */}
+          <div className="eb-header">
 
-            {/* Notification Bell */}
-            <button style={{
-              width: '48px', height: '48px',
-              background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
-              border: '1.24px solid rgba(255,255,255,0.1)',
-              borderRadius: '14px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative', flexShrink: 0,
-            }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div style={{
-                position: 'absolute', top: '-4px', right: '-4px',
-                width: '20px', height: '20px',
-                background: '#2B72FB', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
-              </div>
-            </button>
-          </div>
-
-          {/* Survey Title */}
-          <div style={{ textAlign: 'center', padding: `${isMobile ? '14px' : '16px'} ${hPad} 0px` }}>
-            <h1 style={{
-              fontFamily: 'Arimo, Arial', fontWeight: 700,
-              fontSize: isMobile ? '22px' : isTablet ? '25px' : '28px',
-              lineHeight: '42px', letterSpacing: '-0.7px',
-              color: '#FFFFFF', margin: 0,
-            }}>
-              Alumni Tracer Survey
-            </h1>
-          </div>
-
-          {/* Progress Banner */}
-          <div style={{
-            margin: `12px ${hPad} 0px`,
-            background: '#001743',
-            border: '1px solid #01122F',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '16px',
-            padding: isMobile ? '14px 18px 12px' : '18px 30px 16px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '16px', color: 'rgba(255,255,255,0.99)' }}>Section 2 of 7</span>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>29% complete</span>
-            </div>
-            <div style={{ width: '100%', height: '11px', background: '#D9CA81', borderRadius: '10px', marginBottom: '10px' }}>
-              <div style={{ width: '29%', height: '100%', background: '#51A2FF', borderRadius: '10px' }} />
-            </div>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>
-              Educational Background
-            </span>
-          </div>
-        </div>
-
-        {/* Form Card */}
-        <div style={{ padding: `0px ${hPad} 60px` }}>
-          <div style={{
-            background: 'rgba(13, 19, 56, 0.4)',
-            border: '0.89px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '16px',
-            padding: cardPad,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0px',
-          }}>
-
-            {/* Section heading */}
-            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-              <h2 style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 700,
-                fontSize: isMobile ? '18px' : '20px',
-                lineHeight: '30px', color: '#FFFFFF', margin: '0 0 6px 0',
-              }}>
-                Educational Background
-              </h2>
-              <p style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 400,
-                fontSize: '13px', lineHeight: '20px',
-                color: 'rgba(255,255,255,0.6)', margin: 0,
-              }}>
-                Your academic background
-              </p>
-            </div>
-
-            {/* Divider */}
-            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '32px' }} />
-
-            {/* Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '28px' : '36px' }}>
-
-              <Field label="Degree Program Completed *">
-                <SelectInput
-                  value={form.degreeProgram}
-                  onChange={v => set('degreeProgram', v)}
-                  options={DEGREE_OPTIONS}
-                />
-              </Field>
-
-              <Field label="Reason(s) of taking the course *">
-                <TextArea
-                  placeholder="Enter your answer"
-                  value={form.reasonForCourse}
-                  onChange={e => set('reasonForCourse', e.target.value)}
-                />
-              </Field>
-
-              <Field label="Year Graduated *">
-                <SelectInput
-                  value={form.yearGraduated}
-                  onChange={v => set('yearGraduated', v)}
-                  options={YEAR_OPTIONS}
-                />
-              </Field>
-
-              <Field label="Distinction Received *">
-                <SelectInput
-                  value={form.distinction}
-                  onChange={v => set('distinction', v)}
-                  options={DISTINCTION_OPTIONS}
-                />
-              </Field>
-
-              <Field label="Do you have plans on taking a post-graduate studies? *">
-                <RadioGroup
-                  name="postGradPlans"
-                  options={['Yes', 'No']}
-                  value={form.postGradPlans}
-                  onChange={v => set('postGradPlans', v)}
-                />
-              </Field>
-
-              {showPostGradCourse && (
-                <Field label="If yes, what course?" sub>
-                  <TextArea
-                    placeholder="Enter your answer"
-                    value={form.postGradCourse}
-                    onChange={e => set('postGradCourse', e.target.value)}
-                  />
-                </Field>
-              )}
-
-              <Field label="Are you currently taking/reviewing for licensure examination? *">
-                <RadioGroup
-                  name="licensureReviewing"
-                  options={['Yes', 'No', 'Not applicable']}
-                  value={form.licensureReviewing}
-                  onChange={v => {
-                    setForm(prev => ({
-                      ...prev,
-                      licensureReviewing: v,
-                      licensurePlans: '',
-                      licensureReason: '',
-                      boardExamName: '',
-                      boardExamDate: '',
-                      boardExamResult: '',
-                    }));
-                  }}
-                />
-              </Field>
-
-              {showLicensureBranch && (
-                <Field label="Do you have any plans on taking licensure examination?" sub>
-                  <RadioGroup
-                    name="licensurePlans"
-                    options={['Yes', 'No', 'Already taken', 'Not applicable']}
-                    value={form.licensurePlans}
-                    onChange={v => {
-                      setForm(prev => ({
-                        ...prev,
-                        licensurePlans: v,
-                        boardExamName: '',
-                        boardExamDate: '',
-                        boardExamResult: '',
-                      }));
-                    }}
-                    gap={13}
-                  />
-                </Field>
-              )}
-
-              {showLicensureBranch && (
-                <Field label="Reason(s) for not taking or taking licensure examination *" sub>
-                  <TextArea
-                    placeholder="Enter your answer"
-                    value={form.licensureReason}
-                    onChange={e => set('licensureReason', e.target.value)}
-                  />
-                </Field>
-              )}
-
-              {showBoardExam && (
-                <>
-                  <Field label="Name of board/licensure examination *" sub>
-                    <TextInput
-                      placeholder="Enter your answer"
-                      value={form.boardExamName}
-                      onChange={e => set('boardExamName', e.target.value)}
-                    />
-                  </Field>
-
-                  <Field label="Date taken/date of examination *" sub>
-                    <input
-                      type="date"
-                      value={form.boardExamDate}
-                      onChange={e => set('boardExamDate', e.target.value)}
-                      style={{ ...inputStyle, colorScheme: 'dark' }}
-                      onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'}
-                    />
-                  </Field>
-
-                  <Field label="Results *" sub>
-                    <RadioGroup
-                      name="boardExamResult"
-                      options={['Passed', 'Failed', 'Pending', 'Not yet taken']}
-                      value={form.boardExamResult}
-                      onChange={v => set('boardExamResult', v)}
-                      gap={15}
-                    />
-                  </Field>
-                </>
-              )}
-
-            </div>
-
-            {/* Navigation */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: '40px',
-              paddingBottom: '8px',
-              marginTop: '40px',
-              borderTop: '0.89px solid rgba(255,255,255,0.06)',
-            }}>
-              <button
-                onClick={() => navigate('/survey/personal-background')}
-                style={{
-                  width: isMobile ? '100px' : '120px',
-                  height: '48px',
-                  background: '#FFFFFF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                  borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600,
-                  color: '#090909', cursor: 'pointer',
-                }}
-              >
-                Previous
+            <div className="eb-topbar">
+              <button className="eb-back-btn" onClick={() => navigate('/dashboard')}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5"
+                    stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Back
               </button>
-              <button
-                onClick={() => saveSectionProgress('educational_background', form).then(() => navigate('/survey/certification-achievement'))}
-                style={{
-                  width: isMobile ? '100px' : '120px',
-                  height: '48px',
-                  background: '#0028FF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                  borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600,
-                  color: '#FFFFFF', cursor: 'pointer',
-                }}
-                onMouseOver={e => e.target.style.opacity = '0.9'}
-                onMouseOut={e => e.target.style.opacity = '1'}
-              >
-                Next
+
+              <div className="eb-badge">Alumni Status</div>
+
+              <button className="eb-bell">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                    stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="eb-bell-dot">3</div>
               </button>
             </div>
 
+            <h1 className="eb-title">Alumni Tracer Survey</h1>
+
+            <div className="eb-progress">
+              <div className="eb-progress-row">
+                <span>Section 2 of 7</span>
+                <span>29% complete</span>
+              </div>
+              <div className="eb-progress-track">
+                <div className="eb-progress-fill" />
+              </div>
+              <span className="eb-progress-label">Educational Background</span>
+            </div>
+
           </div>
+          {/* ── End Sticky Header ─────────────────────────────────────── */}
+
+          {/* ── Body ──────────────────────────────────────────────────── */}
+          <div className="eb-body">
+            <div className="eb-card" ref={cardRef}>
+
+              {/* Section heading — no divider below */}
+              <div>
+                <h2 className="eb-section-title">Educational Background</h2>
+                <p className="eb-section-sub">Your academic background</p>
+              </div>
+
+              {/* Fields */}
+              <div className="eb-fields">
+
+                {/* Degree Program */}
+                <div className="eb-field">
+                  <label className="eb-label">Degree Program Completed <span className="eb-req">*</span>{errors.has('degreeProgram') && <span className="eb-field-error">Required</span>}</label>
+                  <div className="eb-select-wrap">
+                    <select className="eb-input eb-select"
+                      value={form.degreeProgram}
+                      onChange={e => set('degreeProgram', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur}>
+                      <option value="" disabled>Select</option>
+                      {DEGREE_OPTIONS.map(o => (
+                        <option key={o} value={o} style={{ background: '#001743' }}>{o}</option>
+                      ))}
+                    </select>
+                    <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Reason for course */}
+                <div className="eb-field">
+                  <label className="eb-label">Reason(s) of taking the course <span className="eb-req">*</span>{errors.has('reasonForCourse') && <span className="eb-field-error">Required</span>}</label>
+                  <textarea className="eb-textarea" placeholder="Enter your answer"
+                    value={form.reasonForCourse}
+                    onChange={e => set('reasonForCourse', e.target.value)}
+                    onFocus={onFocus} onBlur={onBlur} />
+                </div>
+
+                {/* Year Graduated */}
+                <div className="eb-field">
+                  <label className="eb-label">Year Graduated <span className="eb-req">*</span>{errors.has('yearGraduated') && <span className="eb-field-error">Required</span>}</label>
+                  <div className="eb-select-wrap">
+                    <select className="eb-input eb-select"
+                      value={form.yearGraduated}
+                      onChange={e => set('yearGraduated', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur}>
+                      <option value="" disabled>Select</option>
+                      {YEAR_OPTIONS.map(y => (
+                        <option key={y} value={y} style={{ background: '#001743' }}>{y}</option>
+                      ))}
+                    </select>
+                    <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Distinction */}
+                <div className="eb-field">
+                  <label className="eb-label">Distinction Received <span className="eb-req">*</span>{errors.has('distinction') && <span className="eb-field-error">Required</span>}</label>
+                  <div className="eb-select-wrap">
+                    <select className="eb-input eb-select"
+                      value={form.distinction}
+                      onChange={e => set('distinction', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur}>
+                      <option value="" disabled>Select</option>
+                      {DISTINCTION_OPTIONS.map(o => (
+                        <option key={o} value={o} style={{ background: '#001743' }}>{o}</option>
+                      ))}
+                    </select>
+                    <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Post-grad plans */}
+                <div className="eb-field">
+                  <label className="eb-label">Do you have plans on taking a post-graduate studies? <span className="eb-req">*</span>{errors.has('postGradPlans') && <span className="eb-field-error">Required</span>}</label>
+                  <div className="eb-radio-group">
+                    {['Yes', 'No'].map(opt => (
+                      <label key={opt} className="eb-radio-label">
+                        <input type="radio" name="postGradPlans" value={opt}
+                          checked={form.postGradPlans === opt}
+                          onChange={() => set('postGradPlans', opt)} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {showPostGradCourse && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">If yes, what course? <span className="eb-req">*</span>{errors.has('postGradCourse') && <span className="eb-field-error">Required</span>}</label>
+                    <textarea className="eb-textarea" placeholder="Enter your answer"
+                      value={form.postGradCourse}
+                      onChange={e => set('postGradCourse', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur} />
+                  </div>
+                )}
+
+                {/* Licensure reviewing */}
+                <div className="eb-field">
+                  <label className="eb-label">Are you currently taking/reviewing for licensure examination? <span className="eb-req">*</span>{errors.has('licensureReviewing') && <span className="eb-field-error">Required</span>}</label>
+                  <div className="eb-radio-group">
+                    {['Yes', 'No', 'Not applicable'].map(opt => (
+                      <label key={opt} className="eb-radio-label">
+                        <input type="radio" name="licensureReviewing" value={opt}
+                          checked={form.licensureReviewing === opt}
+                          onChange={() => setForm(prev => ({
+                            ...prev,
+                            licensureReviewing: opt,
+                            licensurePlans: '',
+                            licensureReason: '',
+                            boardExamName: '',
+                            boardExamDate: '',
+                            boardExamResult: '',
+                          }))} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {showLicensureBranch && (
+                  <>
+                    {/* Fixed casing: only first letter capitalised */}
+                    <div className="eb-field">
+                      <label className="eb-label-sub">Do you have any plans on taking licensure examination? <span className="eb-req">*</span>{errors.has('licensurePlans') && <span className="eb-field-error">Required</span>}</label>
+                      <div className="eb-radio-group">
+                        {['Yes', 'No', 'Already taken', 'Not applicable'].map(opt => (
+                          <label key={opt} className="eb-radio-label">
+                            <input type="radio" name="licensurePlans" value={opt}
+                              checked={form.licensurePlans === opt}
+                              onChange={() => setForm(prev => ({
+                                ...prev,
+                                licensurePlans: opt,
+                                boardExamName: '',
+                                boardExamDate: '',
+                                boardExamResult: '',
+                              }))} />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="eb-field">
+                      <label className="eb-label-sub">Reason(s) for not taking or taking licensure examination <span className="eb-req">*</span>{errors.has('licensureReason') && <span className="eb-field-error">Required</span>}</label>
+                      <textarea className="eb-textarea" placeholder="Enter your answer"
+                        value={form.licensureReason}
+                        onChange={e => set('licensureReason', e.target.value)}
+                        onFocus={onFocus} onBlur={onBlur} />
+                    </div>
+                  </>
+                )}
+
+                {showBoardExam && (
+                  <>
+                    <div className="eb-field">
+                      <label className="eb-label-sub">Name of board/licensure examination <span className="eb-req">*</span>{errors.has('boardExamName') && <span className="eb-field-error">Required</span>}</label>
+                      <input className="eb-input" placeholder="Enter your answer"
+                        value={form.boardExamName}
+                        onChange={e => set('boardExamName', e.target.value)}
+                        onFocus={onFocus} onBlur={onBlur} />
+                    </div>
+
+                    <div className="eb-field">
+                      <label className="eb-label-sub">Date taken/date of examination <span className="eb-req">*</span>{errors.has('boardExamDate') && <span className="eb-field-error">Required</span>}</label>
+                      <input type="date" className="eb-input"
+                        value={form.boardExamDate}
+                        onChange={e => set('boardExamDate', e.target.value)}
+                        style={{ colorScheme: 'dark' }}
+                        onFocus={onFocus} onBlur={onBlur} />
+                    </div>
+
+                    <div className="eb-field">
+                      <label className="eb-label-sub">Results <span className="eb-req">*</span>{errors.has('boardExamResult') && <span className="eb-field-error">Required</span>}</label>
+                      <div className="eb-radio-group">
+                        {['Passed', 'Failed', 'Pending', 'Not yet taken'].map(opt => (
+                          <label key={opt} className="eb-radio-label">
+                            <input type="radio" name="boardExamResult" value={opt}
+                              checked={form.boardExamResult === opt}
+                              onChange={() => set('boardExamResult', opt)} />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+              </div>
+
+              {/* Footer — no divider */}
+              <div className="eb-footer">
+                <button className="eb-btn-prev"
+                  onClick={() => navigate('/survey/personal-background')}>
+                  Previous
+                </button>
+                <button className="eb-btn-next" onClick={handleNext}>
+                  Next
+                </button>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

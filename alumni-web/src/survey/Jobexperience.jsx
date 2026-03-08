@@ -1,386 +1,208 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
-// ─── Responsive hook ──────────────────────────────────────────────────────────
-const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
-  useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return width;
-};
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  .je-root { display: flex; min-height: 100vh; background: #002263; font-family: 'Arimo', Arial, sans-serif; }
+  .je-content { flex: 1; min-width: 0; margin-left: 229px; }
 
-// ─── Shared Styles ────────────────────────────────────────────────────────────
+  .je-header { position: sticky; top: 0; z-index: 40; background: #002263; padding-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  .je-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
+  .je-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
+  .je-badge { background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
+  .je-bell { width: 48px; height: 48px; background: rgba(15,22,66,0.1); border: 1.24px solid rgba(255,255,255,0.1); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+  .je-bell-dot { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; background: #2B72FB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arimo', Arial, sans-serif; font-size: 10px; color: #fff; }
+  .je-title { text-align: center; padding: 14px 51px 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.4; letter-spacing: -0.7px; color: #fff; }
+  .je-progress { margin: 12px 51px 0; background: #001743; border: 1px solid #01122F; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 18px 30px 16px; }
+  .je-progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Arimo', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.99); }
+  .je-progress-track { width: 100%; height: 11px; background: #D9CA81; border-radius: 10px; margin-bottom: 10px; }
+  .je-progress-fill { width: 71%; height: 100%; background: #51A2FF; border-radius: 10px; }
+  .je-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
 
-const labelStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '14px',
-  lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.7)',
-};
+  .je-body { padding: 24px 51px 60px; }
+  .je-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 32px; }
+  .je-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
+  .je-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
 
-const radioOptionStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '14px',
-  lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.7)',
-};
+  .je-questions { display: flex; flex-direction: column; gap: 32px; }
+  .je-field { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .je-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
+  .je-hint { font-family: 'Arimo', Arial, sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); line-height: 16px; margin-top: -4px; }
 
-// ─── Radio Option Component ───────────────────────────────────────────────────
+  .je-radio-group { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+  .je-radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+  .je-radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
+  .je-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+  .je-checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
 
-const RadioOption = ({ name, value, checked, onChange, label }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={() => onChange(value)}
-      style={{ width: '16px', height: '16px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0 }}
-    />
-    <span style={radioOptionStyle}>{label}</span>
-  </label>
-);
+  .je-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; padding-bottom: 8px; }
+  .je-btn-prev { width: 120px; height: 48px; background: #fff; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #090909; transition: opacity 0.15s; }
+  .je-btn-prev:hover { opacity: 0.85; }
+  .je-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
+  .je-btn-next:hover { opacity: 0.9; }
+  /* ── Required asterisk (red) ── */
+  .je-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
-// ─── Checkbox Option Component ────────────────────────────────────────────────
+  /* ── Inline field error ── */
+  .je-field-error {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 12px;
+    color: #F87171;
+    margin-left: 6px;
+    font-weight: 400;
+  }
 
-const CheckboxOption = ({ value, checked, onChange, label }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-    <input
-      type="checkbox"
-      value={value}
-      checked={checked}
-      onChange={() => onChange(value)}
-      style={{ width: '16px', height: '16px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0 }}
-    />
-    <span style={radioOptionStyle}>{label}</span>
-  </label>
-);
+  @media (max-width: 1100px) {
+    .je-topbar { padding: 24px 32px 0; } .je-title { padding: 14px 32px 0; font-size: 26px; }
+    .je-progress { margin: 12px 32px 0; } .je-body { padding: 20px 32px 60px; } .je-card { padding: 32px 32px 28px; }
+  }
+  @media (max-width: 900px) {
+    .je-topbar { padding: 20px 24px 0; } .je-title { padding: 12px 24px 0; font-size: 24px; }
+    .je-progress { margin: 10px 24px 0; } .je-body { padding: 18px 24px 60px; } .je-card { padding: 28px 24px 24px; gap: 28px; }
+  }
+  @media (max-width: 767px) {
+    .je-content { margin-left: 0; } .je-topbar { padding: 20px 16px 0; } .je-badge { padding: 6px 12px; font-size: 10px; }
+    .je-bell { display: none; } .je-title { padding: 12px 16px 0; font-size: 20px; }
+    .je-progress { margin: 10px 16px 0; padding: 14px 16px; } .je-progress-row { font-size: 13px; } .je-progress-label { font-size: 13px; }
+    .je-body { padding: 16px 16px 80px; } .je-card { padding: 20px 16px 20px; gap: 24px; } .je-section-title { font-size: 17px; }
+    .je-btn-prev { width: 100px; height: 44px; font-size: 14px; } .je-btn-next { width: 100px; height: 44px; font-size: 14px; }
+  }
+  @media (max-width: 390px) { .je-title { font-size: 17px; } .je-btn-prev, .je-btn-next { width: 90px; font-size: 13px; } }
+  @media (max-height: 600px) { .je-header { padding-bottom: 10px; } .je-progress { padding: 10px 20px; } .je-body { padding-top: 14px; } }
+`;
 
-// ─── Question Block ───────────────────────────────────────────────────────────
-
-const QuestionBlock = ({ label, children, borderTop = true }) => (
-  <div style={{
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    width: '100%',
-    ...(borderTop ? {
-      borderTop: '0.89px solid rgba(255, 255, 255, 0.06)',
-      paddingTop: '24.89px',
-    } : {}),
-  }}>
-    <span style={labelStyle}>{label}</span>
-    {children}
-  </div>
-);
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const LICENSURE_OPTIONS = [
-  'Less than a month',
-  '1-3 months',
-  '4-6 months',
-  '7-12 months',
-  'More than a year',
-  'Not applicable',
-];
-
-const EMPLOYMENT_DURATION_OPTIONS = [
-  'Less than a month',
-  '1-5 months',
-  '7-11 months',
-  '1 year or less than 2 years',
-  '2 years or less than 3 years',
-  '3 years or less than 4 years',
-  'Other',
-];
-
-const FIRST_JOB_OPTIONS = [
-  'Job/Career fair',
-  'Internship/Absorption',
-  'Referral',
-  'Recommendation',
-  'Walk-in applications',
-  'Not applicable',
-  'Other',
-];
-
-const FACTORS_OPTIONS = [
-  'Academic performance',
-  'Internship/On-the-job training',
-  'Personal connections',
-  'Skills/Competencies acquired in school',
-  'Certifications',
-  'Not applicable',
-  'Other',
-];
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+const LICENSURE_OPTIONS = ['Less than a month','1-3 months','4-6 months','7-12 months','More than a year','Not applicable'];
+const EMPLOYMENT_DURATION_OPTIONS = ['Less than a month','1-5 months','7-11 months','1 year or less than 2 years','2 years or less than 3 years','3 years or less than 4 years','Other'];
+const FIRST_JOB_OPTIONS = ['Job/Career fair','Internship/Absorption','Referral','Recommendation','Walk-in applications','Not applicable','Other'];
+const FACTORS_OPTIONS = ['Academic performance','Internship/On-the-job training','Personal connections','Skills/Competencies acquired in school','Certifications','Not applicable','Other'];
 
 const JobExperience = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
-  const hPad = isMobile ? '20px' : isTablet ? '32px' : '51px';
-  const cardPad = isMobile ? '24px 20px' : isTablet ? '28px 28px' : '40px 40px';
-
-  const [form, setForm] = useState({
-    licensureReviewing: '',
-    employmentDuration: '',
-    firstJobSource: '',
-    firstJobFactors: [],
-  });
-
+  const [form, setForm] = useState({ licensureReviewing: '', employmentDuration: '', firstJobSource: '', firstJobFactors: [] });
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
-  // Load saved form data on mount
   useEffect(() => {
-    const load = async () => {
-      const savedData = await loadSectionData('job_experience');
-      if (savedData) setForm(f => ({ ...f, ...savedData }));
-    };
-    load();
+    loadSectionData('job_experience').then(d => { if (d) setForm(f => ({ ...f, ...d })); });
   }, []);
 
-  const toggleFactor = (factor) => {
-    setForm(prev => {
-      const current = prev.firstJobFactors;
-      return {
-        ...prev,
-        firstJobFactors: current.includes(factor)
-          ? current.filter(f => f !== factor)
-          : [...current, factor],
-      };
-    });
+  const toggleFactor = (factor) => setForm(prev => ({
+    ...prev,
+    firstJobFactors: prev.firstJobFactors.includes(factor)
+      ? prev.firstJobFactors.filter(f => f !== factor)
+      : [...prev.firstJobFactors, factor],
+  }));
+
+  const [errors, setErrors] = useState(new Set());
+  const cardRef = useRef(null);
+
+  const validate = () => {
+    const e = new Set();
+    if (!form.licensureReviewing)          e.add('licensureReviewing');
+    if (!form.employmentDuration)          e.add('employmentDuration');
+    if (!form.firstJobSource)              e.add('firstJobSource');
+    if (form.firstJobFactors.length === 0) e.add('firstJobFactors');
+    return e;
+  };
+
+  const handleNext = () => {
+    const e = validate();
+    if (e.size > 0) {
+      setErrors(e);
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    setErrors(new Set());
+    saveSectionProgress('job_experience', form).then(() => navigate('/survey/skills-and-competencies'));
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial' }}>
-
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main content */}
-      <div style={{ marginLeft: isMobile ? 0 : '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh', paddingBottom: isMobile ? '90px' : '0px' }}>
-
-        {/* Sticky Header */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
-          {/* Top bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${isMobile ? '20px' : '30px'} ${hPad} 0px` }}>
-            <button
-              onClick={() => navigate('/survey/employment-information')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
-            </button>
-            {!isMobile && (
-              <div style={{
-                background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
-                border: '1.24px solid rgba(99,102,241,0.3)',
-                borderRadius: '999px', padding: '7px 20px',
-              }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>Alumni Status</span>
-              </div>
-            )}
-            <button style={{
-              width: '48px', height: '48px',
-              background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
-              border: '1.24px solid rgba(255,255,255,0.1)',
-              borderRadius: '14px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
-            }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '20px', height: '20px', background: '#2B72FB', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
-              </div>
-            </button>
-          </div>
-          {/* Survey Title */}
-          <div style={{ textAlign: 'center', padding: `${isMobile ? '14px' : '16px'} ${hPad} 0px` }}>
-            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile ? '22px' : '28px', lineHeight: '42px', letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0 }}>
-              Alumni Tracer Survey
-            </h1>
-          </div>
-          {/* Progress Banner */}
-          <div style={{ margin: `12px ${hPad} 0px`, background: '#001743', border: '1px solid #01122F', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '16px', padding: isMobile ? '14px 18px 12px' : '18px 30px 16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '16px', color: 'rgba(255,255,255,0.99)' }}>Section 5 of 7</span>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>71% complete</span>
-            </div>
-            <div style={{ width: '100%', height: '11px', background: '#D9CA81', borderRadius: '10px', marginBottom: '10px' }}>
-              <div style={{ width: '71%', height: '100%', background: '#51A2FF', borderRadius: '10px' }} />
-            </div>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>Job Experience</span>
-          </div>
-        </div>
-
-        {/* Form Card */}
-        <div style={{ padding: `0px ${hPad} 60px` }}>
-          <div style={{
-            background: 'rgba(13, 19, 56, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '16px',
-            padding: cardPad,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: isMobile ? '24px' : '32px',
-          }}>
-
-            {/* Title */}
-            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-              <h2 style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 700,
-                fontSize: isMobile ? '18px' : '20px',
-                lineHeight: '30px', color: '#FFFFFF', margin: '0 0 6px 0',
-              }}>
-                Job search experience
-              </h2>
-              <p style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 400,
-                fontSize: '13px', lineHeight: '20px',
-                color: 'rgba(255,255,255,0.6)', margin: 0,
-              }}>
-                Your job hunting experience
-              </p>
-            </div>
-            {/* Divider */}
-            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '32px' }} />
-
-            {/* Questions */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-
-              {/* Q1 - Licensure Examination */}
-              <QuestionBlock label="Are you currently taking/reviewing for licensure examinations? *" borderTop={false}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {LICENSURE_OPTIONS.map(opt => (
-                    <RadioOption
-                      key={opt}
-                      name="licensureReviewing"
-                      value={opt}
-                      checked={form.licensureReviewing === opt}
-                      onChange={v => set('licensureReviewing', v)}
-                      label={opt}
-                    />
-                  ))}
-                </div>
-              </QuestionBlock>
-
-              {/* Q2 - Employment Duration */}
-              <QuestionBlock label="How long have you been employed in your current job? *">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {EMPLOYMENT_DURATION_OPTIONS.map(opt => (
-                    <RadioOption
-                      key={opt}
-                      name="employmentDuration"
-                      value={opt}
-                      checked={form.employmentDuration === opt}
-                      onChange={v => set('employmentDuration', v)}
-                      label={opt}
-                    />
-                  ))}
-                </div>
-              </QuestionBlock>
-
-              {/* Q3 - First Job Source */}
-              <QuestionBlock label="How did you find your first job? *">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {FIRST_JOB_OPTIONS.map(opt => (
-                    <RadioOption
-                      key={opt}
-                      name="firstJobSource"
-                      value={opt}
-                      checked={form.firstJobSource === opt}
-                      onChange={v => set('firstJobSource', v)}
-                      label={opt}
-                    />
-                  ))}
-                </div>
-              </QuestionBlock>
-
-              {/* Q4 - First Job Factors (checkbox) */}
-              <QuestionBlock label="What factors helped you most in getting your first job? *">
-                <span style={{
-                  fontFamily: 'Arimo, Arial',
-                  fontSize: '11px',
-                  color: 'rgba(255,255,255,0.4)',
-                  lineHeight: '16px',
-                  marginTop: '-4px',
-                }}>
-                  (Check all that apply)
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  {FACTORS_OPTIONS.map(opt => (
-                    <CheckboxOption
-                      key={opt}
-                      value={opt}
-                      checked={form.firstJobFactors.includes(opt)}
-                      onChange={toggleFactor}
-                      label={opt}
-                    />
-                  ))}
-                </div>
-              </QuestionBlock>
-
-            </div>
-
-            {/* Navigation */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: '32px',
-              paddingBottom: '33px',
-              borderTop: '0.89px solid rgba(255,255,255,0.06)',
-            }}>
-              <button
-                onClick={() => navigate('/survey/employment-information')}
-                style={{
-                  width: isMobile ? '100px' : '120px', height: '48px',
-                  background: '#FFFFFF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                  borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600, color: '#090909',
-                  cursor: 'pointer',
-                }}
-              >
-                Previous
+    <>
+      <style>{STYLES}</style>
+      <div className="je-root">
+        <Sidebar />
+        <div className="je-content">
+          <div className="je-header">
+            <div className="je-topbar">
+              <button className="je-back-btn" onClick={() => navigate('/survey/employment-information')}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Back
               </button>
-              <button
-                onClick={() => saveSectionProgress('job_experience', form).then(() => navigate('/survey/skills-and-competencies'))}
-                style={{
-                  width: isMobile ? '100px' : '120px', height: '48px',
-                  background: '#0028FF',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                  borderRadius: '10px', border: 'none',
-                  fontFamily: 'Arimo, Arial', fontSize: '15px', fontWeight: 600, color: '#FFFFFF',
-                  cursor: 'pointer',
-                }}
-                onMouseOver={e => e.target.style.opacity = '0.9'}
-                onMouseOut={e => e.target.style.opacity = '1'}
-              >
-                Next
+              <div className="je-badge">Alumni Status</div>
+              <button className="je-bell">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <div className="je-bell-dot">3</div>
               </button>
             </div>
+            <h1 className="je-title">Alumni Tracer Survey</h1>
+            <div className="je-progress">
+              <div className="je-progress-row"><span>Section 5 of 7</span><span>71% complete</span></div>
+              <div className="je-progress-track"><div className="je-progress-fill" /></div>
+              <span className="je-progress-label">Job Experience</span>
+            </div>
+          </div>
 
+          <div className="je-body">
+            <div className="je-card" ref={cardRef}>
+              <div>
+                <h2 className="je-section-title">Job search experience</h2>
+                <p className="je-section-sub">Your job hunting experience</p>
+              </div>
+              <div className="je-questions">
+                <div className="je-field">
+                  <span className="je-label">Are you currently taking/reviewing for licensure examinations? <span className="je-req">*</span>{errors.has('licensureReviewing') && <span className="je-field-error">Required</span>}</span>
+                  <div className="je-radio-group">
+                    {LICENSURE_OPTIONS.map(opt => (
+                      <label key={opt} className="je-radio-label">
+                        <input type="radio" name="licensureReviewing" value={opt} checked={form.licensureReviewing === opt} onChange={() => set('licensureReviewing', opt)} />{opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="je-field">
+                  <span className="je-label">How long have you been employed in your current job? <span className="je-req">*</span>{errors.has('employmentDuration') && <span className="je-field-error">Required</span>}</span>
+                  <div className="je-radio-group">
+                    {EMPLOYMENT_DURATION_OPTIONS.map(opt => (
+                      <label key={opt} className="je-radio-label">
+                        <input type="radio" name="employmentDuration" value={opt} checked={form.employmentDuration === opt} onChange={() => set('employmentDuration', opt)} />{opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="je-field">
+                  <span className="je-label">How did you find your first job? <span className="je-req">*</span>{errors.has('firstJobSource') && <span className="je-field-error">Required</span>}</span>
+                  <div className="je-radio-group">
+                    {FIRST_JOB_OPTIONS.map(opt => (
+                      <label key={opt} className="je-radio-label">
+                        <input type="radio" name="firstJobSource" value={opt} checked={form.firstJobSource === opt} onChange={() => set('firstJobSource', opt)} />{opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="je-field">
+                  <span className="je-label">What factors helped you most in getting your first job? <span className="je-req">*</span>{errors.has('firstJobFactors') && <span className="je-field-error">Required</span>}</span>
+                  <span className="je-hint">(Check all that apply)</span>
+                  <div className="je-radio-group">
+                    {FACTORS_OPTIONS.map(opt => (
+                      <label key={opt} className="je-checkbox-label">
+                        <input type="checkbox" value={opt} checked={form.firstJobFactors.includes(opt)} onChange={() => toggleFactor(opt)} />{opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="je-footer">
+                <button className="je-btn-prev" onClick={() => navigate('/survey/employment-information')}>Previous</button>
+                <button className="je-btn-next" onClick={handleNext}>Next</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

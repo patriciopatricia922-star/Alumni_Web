@@ -74,7 +74,7 @@ const Sidebar = () => {
         alignItems: 'center',
         justifyContent: 'space-around',
         zIndex: 200,
-        paddingBottom: 'env(safe-area-inset-bottom)', // handles iPhone home bar
+        paddingBottom: 'env(safe-area-inset-bottom)', 
       }}>
         {/* Nav items */}
         {menuItems.map((item) => {
@@ -112,7 +112,7 @@ const Sidebar = () => {
                 }}
               />
               <span style={{
-                fontFamily: 'Montserrat', fontSize: '10px',
+                fontFamily: 'Arimo', fontSize: '10px',
                 fontWeight: isActive ? 700 : 400,
                 lineHeight: '12px',
                 color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.5)',
@@ -146,7 +146,7 @@ const Sidebar = () => {
             }}
           />
           <span style={{
-            fontFamily: 'Montserrat', fontSize: '10px', fontWeight: 400,
+            fontFamily: 'Arimo', fontSize: '10px', fontWeight: 400,
             lineHeight: '12px', color: 'rgba(255,255,255,0.5)',
           }}>
             Logout
@@ -173,7 +173,7 @@ const Sidebar = () => {
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ width: '120px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
+          style={{ width: '100px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
         />
       </div>
 
@@ -183,7 +183,7 @@ const Sidebar = () => {
       {/* Menu */}
       <div style={{ padding: '20px 9px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <p style={{
-          fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
+          fontFamily: 'Arimo', fontWeight: 600, fontSize: '10px',
           lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
           color: 'rgba(255,255,255,0.4)', padding: '0 16px', margin: '0 0 6px 0',
         }}>MENU</p>
@@ -212,7 +212,7 @@ const Sidebar = () => {
                     : 'brightness(0) invert(1) opacity(0.85)',
                 }} />
                 <span style={{
-                  fontFamily: 'Montserrat', fontSize: '15px',
+                  fontFamily: 'Arimo', fontSize: '15px',
                   fontWeight: isActive ? 700 : 400, lineHeight: '24px',
                   letterSpacing: '0.325px', color: isActive ? '#D9CA81' : '#FFFFFF',
                 }}>{item.label}</span>

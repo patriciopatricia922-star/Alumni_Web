@@ -3,91 +3,445 @@ import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import Sidebar from '../components/Sidebar';
 
-// ─── Responsive hook ──────────────────────────────────────────────────────────
-const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
-  useEffect(() => {
-    const handler = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
-  }, []);
-  return width;
-};
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-// ─── Shared Styles ───────────────────────────────────────────────────────────
+  .ei-root {
+    display: flex;
+    min-height: 100vh;
+    background: #002263;
+    font-family: 'Arimo', Arial, sans-serif;
+  }
 
-const labelStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '13px',
-  lineHeight: '20px',
-  color: '#FFFFFF',
-};
+  .ei-content {
+    flex: 1;
+    min-width: 0;
+    margin-left: 229px;
+  }
 
-const questionLabelStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '14px',
-  lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.7)',
-};
+  /* ── Sticky header ── */
+  .ei-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: #002263;
+    padding-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
 
-const radioOptionStyle = {
-  fontFamily: 'Arimo, Arial',
-  fontWeight: 400,
-  fontSize: '14px',
-  lineHeight: '21px',
-  color: 'rgba(255, 255, 255, 0.7)',
-};
+  .ei-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 51px 0;
+  }
 
-const inputStyle = {
-  width: '100%',
-  height: '46.78px',
-  background: 'rgba(255, 255, 255, 0.17)',
-  border: '0.89px solid rgba(255, 255, 255, 0.06)',
-  borderRadius: '10px',
-  padding: '12px 16px',
-  fontFamily: 'Arimo, Arial',
-  fontSize: '14px',
-  color: '#FFFFFF',
-  outline: 'none',
-  boxSizing: 'border-box',
-};
+  .ei-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
 
-// ─── Radio Option Component ───────────────────────────────────────────────────
+  .ei-badge {
+    background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+    border: 1.24px solid rgba(99,102,241,0.3);
+    border-radius: 999px;
+    padding: 7px 20px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    color: rgba(255,255,255,0.8);
+    white-space: nowrap;
+  }
 
-const RadioOption = ({ name, value, checked, onChange, label }) => (
-  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-    <input
-      type="radio"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={() => onChange(value)}
-      style={{ width: '16px', height: '16px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0 }}
-    />
-    <span style={radioOptionStyle}>{label}</span>
-  </label>
-);
+  .ei-bell {
+    width: 48px;
+    height: 48px;
+    background: rgba(15,22,66,0.1);
+    border: 1.24px solid rgba(255,255,255,0.1);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
 
-// ─── Checkbox Option Component ────────────────────────────────────────────────
+  .ei-bell-dot {
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 20px; height: 20px;
+    background: #2B72FB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 10px;
+    color: #fff;
+  }
 
-const CheckboxOption = ({ name, value, checked, onChange, label }) => (
-  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', cursor: 'pointer' }}>
-    <input
-      type="checkbox"
-      name={name}
-      value={value}
-      checked={checked}
-      onChange={() => onChange(value)}
-      style={{ width: '16px', height: '16px', accentColor: '#51A2FF', cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
-    />
-    <span style={radioOptionStyle}>{label}</span>
-  </label>
-);
+  .ei-title {
+    text-align: center;
+    padding: 14px 51px 0;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.4;
+    letter-spacing: -0.7px;
+    color: #fff;
+  }
 
-// ─── Select Dropdown Component ────────────────────────────────────────────────
+  .ei-progress {
+    margin: 12px 51px 0;
+    background: #001743;
+    border: 1px solid #01122F;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 16px;
+    padding: 18px 30px 16px;
+  }
+
+  .ei-progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 16px;
+    color: rgba(255,255,255,0.99);
+  }
+
+  .ei-progress-track {
+    width: 100%;
+    height: 11px;
+    background: #D9CA81;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .ei-progress-fill {
+    width: 57%;
+    height: 100%;
+    background: #51A2FF;
+    border-radius: 10px;
+  }
+
+  .ei-progress-label {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 17px;
+    color: rgba(255,255,255,0.99);
+  }
+
+  /* ── Body ── */
+  .ei-body {
+    padding: 24px 51px 60px;
+  }
+
+  /* ── Form card ── */
+  .ei-card {
+    background: rgba(13,19,56,0.4);
+    border: 0.89px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 16px;
+    padding: 40px 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .ei-section-title {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.5;
+    color: #fff;
+    text-align: center;
+  }
+
+  .ei-section-sub {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* ── Fields ── */
+  .ei-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .ei-field {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .ei-label {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 21px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .ei-input {
+    width: 100%;
+    height: 47px;
+    background: rgba(255,255,255,0.17);
+    border: 0.89px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .ei-input:focus { border-color: rgba(43,114,251,0.6); }
+
+  /* ── Radio & Checkbox ── */
+  .ei-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 4px;
+  }
+
+  .ei-radio-cols {
+    display: flex;
+    gap: 32px;
+  }
+
+  .ei-radio-col {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+  }
+
+  .ei-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+  }
+
+  .ei-radio-label input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #51A2FF;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .ei-checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 32px;
+  }
+
+  .ei-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.4;
+  }
+
+  .ei-checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #51A2FF;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Branch section ── */
+  .ei-branch {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-top: 16px;
+  }
+
+  /* ── Dropdown ── */
+  .ei-dropdown {
+    position: relative;
+    width: 100%;
+  }
+
+  .ei-dropdown-trigger {
+    width: 100%;
+    height: 47px;
+    background: rgba(255,255,255,0.17);
+    border: 0.89px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 0 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.15s;
+    user-select: none;
+  }
+  .ei-dropdown-trigger.open { border-color: rgba(43,114,251,0.6); }
+
+  .ei-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #011C50;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 200;
+  }
+
+  .ei-dropdown-item {
+    padding: 10px 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .ei-dropdown-item:hover    { background: rgba(81,162,255,0.08); }
+  .ei-dropdown-item.selected { background: rgba(81,162,255,0.1); color: #51A2FF; }
+
+  /* ── Footer — no divider ── */
+  .ei-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .ei-btn-prev {
+    width: 120px;
+    height: 48px;
+    background: #fff;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #090909;
+    transition: opacity 0.15s;
+  }
+  .ei-btn-prev:hover { opacity: 0.85; }
+
+  .ei-btn-next {
+    width: 120px;
+    height: 48px;
+    background: #0028FF;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    transition: opacity 0.15s;
+  }
+  .ei-btn-next:hover { opacity: 0.9; }
+  /* ── Required asterisk (red) ── */
+  .ei-req { color: #F87171; font-weight: 700; margin-left: 2px; }
+
+  /* ── Inline field error ── */
+  .ei-field-error {
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 12px;
+    color: #F87171;
+    margin-left: 6px;
+    font-weight: 400;
+  }
+
+  /* ══════════════════════════════════════════
+     RESPONSIVE BREAKPOINTS
+  ══════════════════════════════════════════ */
+
+  @media (max-width: 1100px) {
+    .ei-topbar   { padding: 24px 32px 0; }
+    .ei-title    { padding: 14px 32px 0; font-size: 26px; }
+    .ei-progress { margin: 12px 32px 0; }
+    .ei-body     { padding: 20px 32px 60px; }
+    .ei-card     { padding: 32px 32px 28px; }
+  }
+
+  @media (max-width: 900px) {
+    .ei-topbar   { padding: 20px 24px 0; }
+    .ei-title    { padding: 12px 24px 0; font-size: 24px; }
+    .ei-progress { margin: 10px 24px 0; }
+    .ei-body     { padding: 18px 24px 60px; }
+    .ei-card     { padding: 28px 24px 24px; gap: 24px; }
+  }
+
+  @media (max-width: 767px) {
+    .ei-content        { margin-left: 0; }
+    .ei-topbar         { padding: 20px 16px 0; }
+    .ei-badge          { padding: 6px 12px; font-size: 10px; }
+    .ei-bell           { display: none; }
+    .ei-title          { padding: 12px 16px 0; font-size: 20px; }
+    .ei-progress       { margin: 10px 16px 0; padding: 14px 16px; }
+    .ei-progress-row   { font-size: 13px; }
+    .ei-progress-label { font-size: 13px; }
+    .ei-body           { padding: 16px 16px 80px; }
+    .ei-card           { padding: 20px 16px 20px; gap: 20px; }
+    .ei-section-title  { font-size: 17px; }
+    .ei-radio-cols     { flex-direction: column; gap: 12px; }
+    .ei-checkbox-grid  { grid-template-columns: 1fr; gap: 12px; }
+    .ei-btn-prev       { width: 100px; height: 44px; font-size: 14px; }
+    .ei-btn-next       { width: 100px; height: 44px; font-size: 14px; }
+  }
+
+  @media (max-width: 390px) {
+    .ei-title    { font-size: 17px; }
+    .ei-input    { font-size: 13px; }
+    .ei-btn-prev, .ei-btn-next { width: 90px; font-size: 13px; }
+  }
+
+  @media (max-height: 600px) {
+    .ei-header   { padding-bottom: 10px; }
+    .ei-progress { padding: 10px 20px; }
+    .ei-body     { padding-top: 14px; }
+  }
+`;
 
 const INDUSTRY_OPTIONS = [
   'Agriculture, Forestry and Fishing',
@@ -111,75 +465,6 @@ const INDUSTRY_OPTIONS = [
   'Other Service Activities',
   'Other',
 ];
-
-const SelectDropdown = ({ value, onChange, placeholder = 'Select' }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  return (
-    <div ref={ref} style={{ position: 'relative', width: '100%' }}>
-      <div
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', height: '47px',
-          background: 'rgba(255, 255, 255, 0.17)',
-          border: '0.89px solid rgba(255, 255, 255, 0.06)',
-          borderRadius: '10px', padding: '13px 15px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          cursor: 'pointer', boxSizing: 'border-box',
-        }}
-      >
-        <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: value ? '#FFFFFF' : 'rgba(255,255,255,0.3)' }}>
-          {value || placeholder}
-        </span>
-        <svg width="15" height="11" viewBox="0 0 15 11" fill="none"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-          <path d="M1 1L7.5 9L14 1" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
-      </div>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-          background: '#011C50', border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '10px', maxHeight: '260px', overflowY: 'auto', zIndex: 200,
-        }}>
-          {INDUSTRY_OPTIONS.map(opt => (
-            <div
-              key={opt}
-              onClick={() => { onChange(opt); setOpen(false); }}
-              style={{
-                padding: '10px 15px', fontFamily: 'Arimo, Arial', fontSize: '14px',
-                color: value === opt ? '#51A2FF' : 'rgba(255,255,255,0.85)',
-                background: value === opt ? 'rgba(81,162,255,0.1)' : 'transparent', cursor: 'pointer',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(81,162,255,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = value === opt ? 'rgba(81,162,255,0.1)' : 'transparent'}
-            >
-              {opt}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── Field Wrapper ────────────────────────────────────────────────────────────
-
-const Field = ({ label, children, gap = '12px' }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap, width: '100%' }}>
-    <span style={labelStyle}>{label}</span>
-    {children}
-  </div>
-);
-
-// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const EMPLOYMENT_STATUSES_COL1 = [
   'Employed Full-time',
@@ -236,15 +521,42 @@ const EMPLOYED_STATUSES = [
   'OFW (Overseas Filipino Worker)',
 ];
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+const SelectDropdown = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="ei-dropdown" ref={ref}>
+      <div className={`ei-dropdown-trigger${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
+        <span style={{ color: value ? '#fff' : 'rgba(255,255,255,0.3)' }}>{value || 'Select'}</span>
+        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      {open && (
+        <div className="ei-dropdown-menu">
+          {INDUSTRY_OPTIONS.map(opt => (
+            <div key={opt}
+              className={`ei-dropdown-item${value === opt ? ' selected' : ''}`}
+              onClick={() => { onChange(opt); setOpen(false); }}>
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const EmploymentInformation = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
-  const hPad = isMobile ? '20px' : isTablet ? '32px' : '51px';
-  const cardPad = isMobile ? '24px 20px' : isTablet ? '28px 28px' : '40px 40px';
 
   const [form, setForm] = useState({
     jobRelatedToDegree: '',
@@ -260,7 +572,6 @@ const EmploymentInformation = () => {
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
-  // Load saved form data on mount
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('employment_information');
@@ -270,258 +581,275 @@ const EmploymentInformation = () => {
   }, []);
 
   const toggleReasonForJob = (reason) => {
-    setForm(prev => {
-      const current = prev.reasonsForJob;
-      return {
-        ...prev,
-        reasonsForJob: current.includes(reason)
-          ? current.filter(r => r !== reason)
-          : [...current, reason],
-      };
-    });
+    setForm(prev => ({
+      ...prev,
+      reasonsForJob: prev.reasonsForJob.includes(reason)
+        ? prev.reasonsForJob.filter(r => r !== reason)
+        : [...prev.reasonsForJob, reason],
+    }));
   };
 
-  const isEmployed = EMPLOYED_STATUSES.includes(form.employmentStatus);
-  const isUnemployed = form.employmentStatus === 'Unemployed';
-  const showEmployedFields = form.employmentStatus !== '' && isEmployed;
+  const resetEmploymentBranch = (v) =>
+    setForm(prev => ({
+      ...prev,
+      employmentStatus: v,
+      jobPosition: '', companyName: '', typeOfIndustry: '',
+      locationOfEmployment: '', monthlyIncome: '',
+      reasonsForJob: [], reasonsUnemployed: '',
+    }));
+
+  const isEmployed           = EMPLOYED_STATUSES.includes(form.employmentStatus);
+  const isUnemployed         = form.employmentStatus === 'Unemployed';
+  const showEmployedFields   = form.employmentStatus !== '' && isEmployed;
   const showUnemployedFields = form.employmentStatus !== '' && isUnemployed;
 
+  const [errors, setErrors] = useState(new Set());
+  const cardRef = useRef(null);
+
+  const validate = () => {
+    const e = new Set();
+    if (!form.jobRelatedToDegree) e.add('jobRelatedToDegree');
+    if (!form.employmentStatus)   e.add('employmentStatus');
+    if (EMPLOYED_STATUSES.includes(form.employmentStatus)) {
+      if (!form.jobPosition.trim())        e.add('jobPosition');
+      if (!form.companyName.trim())        e.add('companyName');
+      if (!form.typeOfIndustry)            e.add('typeOfIndustry');
+      if (!form.locationOfEmployment)      e.add('locationOfEmployment');
+      if (!form.monthlyIncome)             e.add('monthlyIncome');
+      if (form.reasonsForJob.length === 0) e.add('reasonsForJob');
+    }
+    if (form.employmentStatus === 'Unemployed' && !form.reasonsUnemployed)
+      e.add('reasonsUnemployed');
+    return e;
+  };
+
+  const handleNext = () => {
+    const e = validate();
+    if (e.size > 0) {
+      setErrors(e);
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    setErrors(new Set());
+    saveSectionProgress('employment_information', form)
+      .then(() => navigate('/survey/job-experience'));
+  };
+
+  const onFocus = e => e.target.style.borderColor = 'rgba(43,114,251,0.6)';
+  const onBlur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial' }}>
+    <>
+      <style>{STYLES}</style>
 
-      {/* Sidebar */}
-      <Sidebar />
+      <div className="ei-root">
+        <Sidebar />
 
-      {/* Main content */}
-      <div style={{ marginLeft: isMobile ? 0 : '229px', flex: 1, position: 'relative', overflowY: 'auto', height: '100vh', paddingBottom: isMobile ? '90px' : '0px' }}>
+        <div className="ei-content">
 
-        {/* Sticky Header — top bar + survey title + progress banner all sticky together */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 40, background: '#002263', paddingBottom: '16px' }}>
+          {/* ── Sticky Header ─────────────────────────────────────────── */}
+          <div className="ei-header">
 
-          {/* Top bar */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: `${isMobile ? '20px' : '30px'} ${hPad} 0px` }}>
-            <button
-              onClick={() => navigate('/survey/certification-achievement')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
-            </button>
-            {!isMobile && (
-              <div style={{
-                background: 'linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(139,92,246,0.2) 100%)',
-                border: '1.24px solid rgba(99,102,241,0.3)',
-                borderRadius: '999px', padding: '7px 20px',
-              }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', letterSpacing: '0.3px', color: 'rgba(255,255,255,0.8)' }}>Alumni Status</span>
-              </div>
-            )}
-            <button style={{
-              width: '48px', height: '48px',
-              background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
-              border: '1.24px solid rgba(255,255,255,0.1)',
-              borderRadius: '14px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
-            }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '20px', height: '20px', background: '#2B72FB', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
-              </div>
-            </button>
-          </div>
-
-          {/* Survey Title */}
-          <div style={{ textAlign: 'center', padding: `${isMobile ? '14px' : '16px'} ${hPad} 0px` }}>
-            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile ? '22px' : '28px', lineHeight: '42px', letterSpacing: '-0.7px', color: '#FFFFFF', margin: 0 }}>
-              Alumni Tracer Survey
-            </h1>
-          </div>
-
-          {/* Progress Banner */}
-          <div style={{ margin: `12px ${hPad} 0px`, background: '#001743', border: '1px solid #01122F', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '16px', padding: isMobile ? '14px 18px 12px' : '18px 30px 16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '16px', color: 'rgba(255,255,255,0.99)' }}>Section 4 of 7</span>
-              <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>57% complete</span>
-            </div>
-            <div style={{ width: '100%', height: '11px', background: '#D9CA81', borderRadius: '10px', marginBottom: '10px' }}>
-              <div style={{ width: '57%', height: '100%', background: '#51A2FF', borderRadius: '10px' }} />
-            </div>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '13px' : '17px', color: 'rgba(255,255,255,0.99)' }}>Employment Information</span>
-          </div>
-
-        </div>{/* end sticky */}
-
-        {/* Form Card */}
-        <div style={{ padding: `0px ${hPad} 60px` }}>
-          <div style={{
-            background: 'rgba(13, 19, 56, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '16px',
-            padding: cardPad,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: isMobile ? '24px' : '32px',
-          }}>
-
-            {/* Section heading */}
-            <div style={{ marginBottom: '32px', textAlign: 'center' }}>
-              <h2 style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 700,
-                fontSize: isMobile ? '18px' : '20px',
-                lineHeight: '30px', color: '#FFFFFF', margin: '0 0 6px 0',
-              }}>
-                Employment Information
-              </h2>
-              <p style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 400,
-                fontSize: '13px', lineHeight: '20px',
-                color: 'rgba(255,255,255,0.6)', margin: 0,
-              }}>
-                Information related to your job
-              </p>
-            </div>
-            {/* Divider */}
-            <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '32px' }} />
-
-            {/* Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-              {/* Q1: Job related to degree */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <span style={questionLabelStyle}>Is your current job related to your degree? *</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
-                  {['Yes', 'No'].map(opt => (
-                    <RadioOption key={opt} name="jobRelatedToDegree" value={opt}
-                      checked={form.jobRelatedToDegree === opt}
-                      onChange={v => set('jobRelatedToDegree', v)} label={opt} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Q2: Current Employment Status */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <span style={labelStyle}>Current Employment Status *</span>
-                <div style={{ display: 'flex', gap: '32px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1 }}>
-                    {EMPLOYMENT_STATUSES_COL1.map(opt => (
-                      <RadioOption key={opt} name="employmentStatus" value={opt}
-                        checked={form.employmentStatus === opt}
-                        onChange={v => setForm(prev => ({ ...prev, employmentStatus: v, jobPosition: '', companyName: '', typeOfIndustry: '', locationOfEmployment: '', monthlyIncome: '', reasonsForJob: [], reasonsUnemployed: '' }))}
-                        label={opt} />
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', flex: 1 }}>
-                    {EMPLOYMENT_STATUSES_COL2.map(opt => (
-                      <RadioOption key={opt} name="employmentStatus" value={opt}
-                        checked={form.employmentStatus === opt}
-                        onChange={v => setForm(prev => ({ ...prev, employmentStatus: v, jobPosition: '', companyName: '', typeOfIndustry: '', locationOfEmployment: '', monthlyIncome: '', reasonsForJob: [], reasonsUnemployed: '' }))}
-                        label={opt} />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            {/* ── Employed Branch ─────────────────────────────────────────────── */}
-            {showEmployedFields && (
-              <div style={{ borderTop: '0.89px solid rgba(255,255,255,0.06)', paddingTop: '16.89px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-
-                <Field label="Job position *">
-                  <input type="text" placeholder="Enter your answer" value={form.jobPosition}
-                    onChange={e => set('jobPosition', e.target.value)} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'} />
-                </Field>
-
-                <Field label="Name of company / employer *">
-                  <input type="text" placeholder="Enter your answer" value={form.companyName}
-                    onChange={e => set('companyName', e.target.value)} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.06)'} />
-                </Field>
-
-                <Field label="Type of industry *">
-                  <SelectDropdown value={form.typeOfIndustry} onChange={v => set('typeOfIndustry', v)} placeholder="Select" />
-                </Field>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <span style={labelStyle}>Location of employment *</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {['Local', 'Abroad'].map(opt => (
-                      <RadioOption key={opt} name="locationOfEmployment" value={opt}
-                        checked={form.locationOfEmployment === opt} onChange={v => set('locationOfEmployment', v)} label={opt} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <span style={labelStyle}>Monthly income range *</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {MONTHLY_INCOME.map(opt => (
-                      <RadioOption key={opt} name="monthlyIncome" value={opt}
-                        checked={form.monthlyIncome === opt} onChange={v => set('monthlyIncome', v)} label={opt} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <span style={labelStyle}>Reasons for accepting the job *</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 32px' }}>
-                    {REASONS_FOR_JOB.map(reason => (
-                      <CheckboxOption key={reason} name="reasonsForJob" value={reason}
-                        checked={form.reasonsForJob.includes(reason)} onChange={toggleReasonForJob} label={reason} />
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* ── Unemployed Branch ───────────────────────────────────────────── */}
-            {showUnemployedFields && (
-              <div style={{ borderTop: '0.89px solid rgba(255,255,255,0.06)', paddingTop: '16.89px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <span style={labelStyle}>Reasons of being unemployed *</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '34px' }}>
-                  {UNEMPLOYED_REASONS.map(reason => (
-                    <RadioOption key={reason} name="reasonsUnemployed" value={reason}
-                      checked={form.reasonsUnemployed === reason} onChange={v => set('reasonsUnemployed', v)} label={reason} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              paddingTop: '32px', paddingBottom: '33px',
-              borderTop: '0.89px solid rgba(255,255,255,0.06)',
-            }}>
-              <button
-                onClick={() => navigate('/survey/certification-achievement')}
-                style={{ width: '88px', height: '45px', background: '#FFFFFF', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '10px', border: 'none', fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#090909', cursor: 'pointer' }}
-              >
-                Previous
+            <div className="ei-topbar">
+              <button className="ei-back-btn"
+                onClick={() => navigate('/survey/certification-achievement')}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                  <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5"
+                    stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Back
               </button>
-              <button
-                onClick={() => saveSectionProgress('employment_information', form).then(() => navigate('/survey/job-experience'))}
-                style={{ width: '88px', height: '45px', background: '#0028FF', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '10px', border: 'none', fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#FFFFFF', cursor: 'pointer' }}
-                onMouseOver={e => e.target.style.opacity = '0.9'}
-                onMouseOut={e => e.target.style.opacity = '1'}
-              >
-                Next
+
+              <div className="ei-badge">Alumni Status</div>
+
+              <button className="ei-bell">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                    stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="ei-bell-dot">3</div>
               </button>
             </div>
 
+            <h1 className="ei-title">Alumni Tracer Survey</h1>
+
+            <div className="ei-progress">
+              <div className="ei-progress-row">
+                <span>Section 4 of 7</span>
+                <span>57% complete</span>
+              </div>
+              <div className="ei-progress-track">
+                <div className="ei-progress-fill" />
+              </div>
+              <span className="ei-progress-label">Employment Information</span>
+            </div>
+
           </div>
+          {/* ── End Sticky Header ─────────────────────────────────────── */}
+
+          {/* ── Body ──────────────────────────────────────────────────── */}
+          <div className="ei-body">
+            <div className="ei-card" ref={cardRef}>
+
+              {/* Section heading — no divider below */}
+              <div>
+                <h2 className="ei-section-title">Employment Information</h2>
+                <p className="ei-section-sub">Information related to your job</p>
+              </div>
+
+              {/* Core fields */}
+              <div className="ei-fields">
+
+                {/* Q1: Job related to degree */}
+                <div className="ei-field">
+                  <span className="ei-label">Is your current job related to your degree? <span className="ei-req">*</span>{errors.has('jobRelatedToDegree') && <span className="ei-field-error">Required</span>}</span>
+                  <div className="ei-radio-group">
+                    {['Yes', 'No'].map(opt => (
+                      <label key={opt} className="ei-radio-label">
+                        <input type="radio" name="jobRelatedToDegree" value={opt}
+                          checked={form.jobRelatedToDegree === opt}
+                          onChange={() => set('jobRelatedToDegree', opt)} />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Q2: Employment status */}
+                <div className="ei-field">
+                  <span className="ei-label">Current Employment Status <span className="ei-req">*</span>{errors.has('employmentStatus') && <span className="ei-field-error">Required</span>}</span>
+                  <div className="ei-radio-cols">
+                    <div className="ei-radio-col">
+                      {EMPLOYMENT_STATUSES_COL1.map(opt => (
+                        <label key={opt} className="ei-radio-label">
+                          <input type="radio" name="employmentStatus" value={opt}
+                            checked={form.employmentStatus === opt}
+                            onChange={() => resetEmploymentBranch(opt)} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="ei-radio-col">
+                      {EMPLOYMENT_STATUSES_COL2.map(opt => (
+                        <label key={opt} className="ei-radio-label">
+                          <input type="radio" name="employmentStatus" value={opt}
+                            checked={form.employmentStatus === opt}
+                            onChange={() => resetEmploymentBranch(opt)} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* ── Employed branch ───────────────────────────────────── */}
+              {showEmployedFields && (
+                <div className="ei-branch">
+
+                  <div className="ei-field">
+                    <span className="ei-label">Job position <span className="ei-req">*</span>{errors.has('jobPosition') && <span className="ei-field-error">Required</span>}</span>
+                    <input className="ei-input" type="text" placeholder="Enter your answer"
+                      value={form.jobPosition}
+                      onChange={e => set('jobPosition', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur} />
+                  </div>
+
+                  <div className="ei-field">
+                    <span className="ei-label">Name of company / employer <span className="ei-req">*</span>{errors.has('companyName') && <span className="ei-field-error">Required</span>}</span>
+                    <input className="ei-input" type="text" placeholder="Enter your answer"
+                      value={form.companyName}
+                      onChange={e => set('companyName', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur} />
+                  </div>
+
+                  <div className="ei-field">
+                    <span className="ei-label">Type of industry <span className="ei-req">*</span>{errors.has('typeOfIndustry') && <span className="ei-field-error">Required</span>}</span>
+                    <SelectDropdown value={form.typeOfIndustry} onChange={v => set('typeOfIndustry', v)} />
+                  </div>
+
+                  <div className="ei-field">
+                    <span className="ei-label">Location of employment <span className="ei-req">*</span>{errors.has('locationOfEmployment') && <span className="ei-field-error">Required</span>}</span>
+                    <div className="ei-radio-group">
+                      {['Local', 'Abroad'].map(opt => (
+                        <label key={opt} className="ei-radio-label">
+                          <input type="radio" name="locationOfEmployment" value={opt}
+                            checked={form.locationOfEmployment === opt}
+                            onChange={() => set('locationOfEmployment', opt)} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="ei-field">
+                    <span className="ei-label">Monthly income range <span className="ei-req">*</span>{errors.has('monthlyIncome') && <span className="ei-field-error">Required</span>}</span>
+                    <div className="ei-radio-group">
+                      {MONTHLY_INCOME.map(opt => (
+                        <label key={opt} className="ei-radio-label">
+                          <input type="radio" name="monthlyIncome" value={opt}
+                            checked={form.monthlyIncome === opt}
+                            onChange={() => set('monthlyIncome', opt)} />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="ei-field">
+                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reasonsForJob') && <span className="ei-field-error">Required</span>}</span>
+                    <div className="ei-checkbox-grid">
+                      {REASONS_FOR_JOB.map(reason => (
+                        <label key={reason} className="ei-checkbox-label">
+                          <input type="checkbox" value={reason}
+                            checked={form.reasonsForJob.includes(reason)}
+                            onChange={() => toggleReasonForJob(reason)} />
+                          {reason}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              )}
+
+              {/* ── Unemployed branch ─────────────────────────────────── */}
+              {showUnemployedFields && (
+                <div className="ei-branch">
+                  <div className="ei-field">
+                    <span className="ei-label">Reasons of being unemployed <span className="ei-req">*</span>{errors.has('reasonsUnemployed') && <span className="ei-field-error">Required</span>}</span>
+                    <div className="ei-radio-group" style={{ gap: '16px' }}>
+                      {UNEMPLOYED_REASONS.map(reason => (
+                        <label key={reason} className="ei-radio-label">
+                          <input type="radio" name="reasonsUnemployed" value={reason}
+                            checked={form.reasonsUnemployed === reason}
+                            onChange={() => set('reasonsUnemployed', reason)} />
+                          {reason}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer — no divider */}
+              <div className="ei-footer">
+                <button className="ei-btn-prev"
+                  onClick={() => navigate('/survey/certification-achievement')}>
+                  Previous
+                </button>
+                <button className="ei-btn-next" onClick={handleNext}>
+                  Next
+                </button>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
