@@ -51,17 +51,10 @@ const STYLES = `
   .sc-btn-prev:hover { opacity: 0.85; }
   .sc-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .sc-btn-next:hover { opacity: 0.9; }
-  /* ── Required asterisk (red) ── */
-  .sc-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
-  /* ── Inline field error ── */
-  .sc-field-error {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 12px;
-    color: #F87171;
-    margin-left: 6px;
-    font-weight: 400;
-  }
+  .sc-error-banner { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #FCA5A5; line-height: 1.5; }
+  .sc-req { color: #F87171; font-weight: 700; margin-left: 2px; }
+  .sc-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
 
   @media (max-width: 1100px) {
     .sc-topbar { padding: 24px 32px 0; } .sc-title { padding: 14px 32px 0; font-size: 26px; }
@@ -106,6 +99,8 @@ const StarRating = ({ value, onChange }) => {
 
 const SkillsAndCompetencies = () => {
   const navigate = useNavigate();
+  const cardRef = useRef(null);
+  const [errors, setErrors] = useState(new Set());
   const [form, setForm] = useState({
     usefulCompetencies: [],
     skillRatings: { 'Communication skills': 0, 'Information to technology Skills': 0, 'Leadership skills': 0, 'Critical & Problem-Solving skills': 0, 'Work Ethics/Professionalism skills': 0 },
@@ -124,8 +119,6 @@ const SkillsAndCompetencies = () => {
   }));
 
   const setSkillRating = (skill, rating) => setForm(prev => ({ ...prev, skillRatings: { ...prev.skillRatings, [skill]: rating } }));
-  const [errors, setErrors] = useState(new Set());
-  const cardRef = useRef(null);
 
   const validate = () => {
     const e = new Set();
@@ -166,7 +159,7 @@ const SkillsAndCompetencies = () => {
             </div>
             <h1 className="sc-title">Alumni Tracer Survey</h1>
             <div className="sc-progress">
-              <div className="sc-progress-row"><span>Section 6 of 7</span><span>86% complete</span></div>
+              <div className="sc-progress-row"><span>Section 6 of 8</span><span>85% complete</span></div>
               <div className="sc-progress-track"><div className="sc-progress-fill" /></div>
               <span className="sc-progress-label">Skills and competencies</span>
             </div>
@@ -174,6 +167,11 @@ const SkillsAndCompetencies = () => {
 
           <div className="sc-body">
             <div className="sc-card" ref={cardRef}>
+              {errors.size > 0 && (
+                <div className="sc-error-banner">
+                  <strong>Please answer all required questions before proceeding.</strong>
+                </div>
+              )}
               <div>
                 <h2 className="sc-section-title">Skills and competencies</h2>
                 <p className="sc-section-sub">Your workplace skills</p>

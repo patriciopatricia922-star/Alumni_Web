@@ -7,7 +7,6 @@ import about_icn from '../assets/about_icn.svg';
 import logout_icn from '../assets/logout_icn.svg';
 import profile_icn from '../assets/profile_icn.svg';
 
-// ─── Responsive hook ─────────────────────────────────────────────────────────
 const useWindowWidth = () => {
   const [width, setWidth] = React.useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
   React.useEffect(() => {
@@ -23,8 +22,8 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
   const width = useWindowWidth();
-  const isMobile  = width < 768;
-  const isTablet  = width >= 768 && width < 1024;
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
   const sidebarWidth = 229;
 
   useEffect(() => {
@@ -58,32 +57,28 @@ const Profile = () => {
     },
   ];
 
-  // Avatar size scales with breakpoint
-  const avatarSize = isMobile ? 140 : 220;
-  const initialsFontSize = isMobile ? '48px' : '72px';
+  const avatarSize = isMobile ? 100 : 140;
+  const initialsFontSize = isMobile ? '36px' : '52px';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#002263' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#002263' }}>
       <Sidebar />
 
-      {/* Main Content */}
       <div style={{
         marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
         flex: 1,
-        padding: isMobile ? '24px 20px 90px' : isTablet ? '40px 32px 48px' : '37px 51px',
-        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: isMobile ? '24px 20px 90px' : '24px 32px',
         boxSizing: 'border-box',
-        maxWidth: '100%',
-        overflowX: 'hidden',
+        overflow: 'hidden',
+        position: 'relative',
       }}>
 
         {/* Notification Bell */}
-        <div style={{
-          position: 'absolute',
-          top: isMobile ? '24px' : '37px',
-          right: isMobile ? '20px' : isTablet ? '32px' : '51px',
-          zIndex: 50,
-        }}>
+        <div style={{ position: 'absolute', top: isMobile ? '24px' : '28px', right: isMobile ? '20px' : '32px', zIndex: 50 }}>
           <button style={{
             width: '48px', height: '48px',
             background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
@@ -106,173 +101,157 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Profile Card — centered, full width on mobile */}
+        {/* Profile Card */}
         <div style={{
           display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          minHeight: isMobile ? 'unset' : 'calc(100vh - 74px)',
-          paddingTop: isMobile ? '52px' : isTablet ? '40px' : '107px',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: isMobile ? '24px 16px' : '32px 28px',
+          gap: isMobile ? '16px' : '20px',
+          width: isMobile ? '100%' : isTablet ? '440px' : '520px',
+          background: 'rgba(13, 19, 56, 0.4)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+          borderRadius: '14px',
+          boxSizing: 'border-box',
         }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: isMobile ? '32px 16px' : '48px 23px',
-            gap: isMobile ? '20px' : '31px',
-            width: isMobile ? '100%' : isTablet ? '480px' : '599px',
-            background: 'rgba(13, 19, 56, 0.4)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '14px',
-            boxSizing: 'border-box',
-          }}>
 
-            {/* Avatar */}
-            <div
-              style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, position: 'relative', cursor: 'pointer' }}
-              onClick={() => document.getElementById('avatar-upload').click()}
-              onMouseEnter={e => e.currentTarget.querySelector('.avatar-overlay').style.opacity = '1'}
-              onMouseLeave={e => e.currentTarget.querySelector('.avatar-overlay').style.opacity = '0'}
-            >
-              <input
-                id="avatar-upload"
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files[0];
-                  if (!file) return;
-                  const { data: { user: authUser } } = await supabase.auth.getUser();
-                  if (!authUser) return;
-                  const ext = file.name.split('.').pop();
-                  const filePath = `avatars/${authUser.id}.${ext}`;
-                  const { error: uploadError } = await supabase.storage
-                    .from('avatars').upload(filePath, file, { upsert: true });
-                  if (uploadError) { console.error(uploadError); return; }
-                  const { data: { publicUrl } } = supabase.storage
-                    .from('avatars').getPublicUrl(filePath);
-                  await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', authUser.id);
-                  setAvatarUrl(publicUrl);
-                }}
-              />
+          {/* Avatar */}
+          <div
+            style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+            onClick={() => document.getElementById('avatar-upload').click()}
+            onMouseEnter={e => e.currentTarget.querySelector('.avatar-overlay').style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.querySelector('.avatar-overlay').style.opacity = '0'}
+          >
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+                if (!authUser) return;
+                const ext = file.name.split('.').pop();
+                const filePath = `avatars/${authUser.id}.${ext}`;
+                const { error: uploadError } = await supabase.storage
+                  .from('avatars').upload(filePath, file, { upsert: true });
+                if (uploadError) { console.error(uploadError); return; }
+                const { data: { publicUrl } } = supabase.storage
+                  .from('avatars').getPublicUrl(filePath);
+                await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', authUser.id);
+                setAvatarUrl(publicUrl);
+              }}
+            />
 
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Profile" style={{
-                  width: `${avatarSize}px`, height: `${avatarSize}px`,
-                  borderRadius: '50%', objectFit: 'cover',
-                  border: '3px solid rgba(255,255,255,0.15)', display: 'block',
-                }} />
-              ) : user ? (
-                <div style={{
-                  width: `${avatarSize}px`, height: `${avatarSize}px`, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #51A2FF 0%, #155DFC 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '3px solid rgba(255,255,255,0.15)',
-                }}>
-                  <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: initialsFontSize, color: '#FFFFFF' }}>
-                    {initials}
-                  </span>
-                </div>
-              ) : (
-                <div style={{
-                  width: `${avatarSize}px`, height: `${avatarSize}px`,
-                  borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <img src={profile_icn} alt="Profile" style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, filter: 'brightness(0) invert(1)' }} />
-                </div>
-              )}
-
-              {/* Camera hover overlay */}
-              <div className="avatar-overlay" style={{
-                position: 'absolute', top: 0, left: 0,
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" style={{
+                width: `${avatarSize}px`, height: `${avatarSize}px`,
+                borderRadius: '50%', objectFit: 'cover',
+                border: '3px solid rgba(255,255,255,0.15)', display: 'block',
+              }} />
+            ) : user ? (
+              <div style={{
                 width: `${avatarSize}px`, height: `${avatarSize}px`, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.5)',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: '8px',
-                opacity: 0, transition: 'opacity 0.2s ease',
+                background: 'linear-gradient(135deg, #51A2FF 0%, #155DFC 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '3px solid rgba(255,255,255,0.15)',
               }}>
-                <svg width={isMobile ? '28' : '36'} height={isMobile ? '28' : '36'} viewBox="0 0 24 24" fill="none">
-                  <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="13" r="4" stroke="white" strokeWidth="2"/>
-                </svg>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: isMobile ? '11px' : '13px', fontWeight: 600, color: '#FFFFFF' }}>
-                  Change Photo
+                <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: initialsFontSize, color: '#FFFFFF' }}>
+                  {initials}
                 </span>
               </div>
-            </div>
+            ) : (
+              <div style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={profile_icn} alt="Profile" style={{ width: `${avatarSize}px`, height: `${avatarSize}px`, filter: 'brightness(0) invert(1)' }} />
+              </div>
+            )}
 
-            {/* Full Name */}
-            <div style={{ width: '100%', textAlign: 'center' }}>
-              <h2 style={{
-                fontFamily: 'Montserrat', fontWeight: 700,
-                fontSize: isMobile ? '24px' : '36px',
-                lineHeight: '1.2', textAlign: 'center',
-                color: '#FFFFFF', margin: 0,
-              }}>
-                {fullName}
-              </h2>
-            </div>
-
-            {/* Settings Card */}
-            <div style={{
-              width: '100%',
-              background: 'rgba(13,19,56,0.4)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '14px',
-              overflow: 'hidden',
+            <div className="avatar-overlay" style={{
+              position: 'absolute', top: 0, left: 0,
+              width: `${avatarSize}px`, height: `${avatarSize}px`, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: '6px',
+              opacity: 0, transition: 'opacity 0.2s ease',
             }}>
-              <div style={{ padding: isMobile ? '18px 20px 12px' : '25px 34px 16px' }}>
-                <h3 style={{
-                  fontFamily: 'Montserrat', fontWeight: 700,
-                  fontSize: isMobile ? '18px' : '24px',
-                  lineHeight: '36px', color: '#FFFFFF', margin: 0,
-                }}>
-                  Settings
-                </h3>
-              </div>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="13" r="4" stroke="white" strokeWidth="2"/>
+              </svg>
+              <span style={{ fontFamily: 'Arimo, Arial', fontSize: '11px', fontWeight: 600, color: '#FFFFFF' }}>Change Photo</span>
+            </div>
+          </div>
 
-              <div style={{ padding: '0 0 16px' }}>
-                {menuItems.map((item, i) => (
-                  <button
-                    key={i}
-                    onClick={item.action}
-                    style={{
-                      width: '100%',
-                      display: 'flex', alignItems: 'center', gap: '16px',
-                      padding: isMobile ? '12px 20px' : '14px 34px',
-                      background: 'none', border: 'none',
-                      cursor: 'pointer', textAlign: 'left',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
-                  >
-                    <div style={{ width: '29px', height: '29px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img
-                        src={item.icon}
-                        alt={item.label}
-                        style={{
-                          width: '23px', height: '23px',
-                          filter: item.color === '#FF0000'
-                            ? 'brightness(0) saturate(100%) invert(17%) sepia(96%) saturate(7472%) hue-rotate(0deg) brightness(105%) contrast(115%)'
-                            : 'brightness(0) invert(1)',
-                        }}
-                      />
-                    </div>
-                    <span style={{
-                      fontFamily: 'Montserrat', fontWeight: 600,
-                      fontSize: isMobile ? '15px' : '18px',
-                      lineHeight: '20px', color: item.color,
-                    }}>
-                      {item.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+          {/* Full Name */}
+          <h2 style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '20px' : '28px',
+            lineHeight: '1.2', textAlign: 'center',
+            color: '#FFFFFF', margin: 0,
+          }}>
+            {fullName}
+          </h2>
+
+          {/* Settings Card */}
+          <div style={{
+            width: '100%',
+            background: 'rgba(13,19,56,0.4)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '14px',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: isMobile ? '14px 20px 10px' : '18px 28px 12px' }}>
+              <h3 style={{
+                fontFamily: 'Arimo, Arial', fontWeight: 700,
+                fontSize: isMobile ? '16px' : '20px',
+                lineHeight: '1.4', color: '#FFFFFF', margin: 0,
+              }}>
+                Settings
+              </h3>
             </div>
 
+            <div style={{ padding: '0 0 10px' }}>
+              {menuItems.map((item, i) => (
+                <button
+                  key={i}
+                  onClick={item.action}
+                  style={{
+                    width: '100%',
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    padding: isMobile ? '10px 20px' : '11px 28px',
+                    background: 'none', border: 'none',
+                    cursor: 'pointer', textAlign: 'left',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                >
+                  <div style={{ width: '26px', height: '26px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <img
+                      src={item.icon}
+                      alt={item.label}
+                      style={{
+                        width: '20px', height: '20px',
+                        filter: item.color === '#FF0000'
+                          ? 'brightness(0) saturate(100%) invert(17%) sepia(96%) saturate(7472%) hue-rotate(0deg) brightness(105%) contrast(115%)'
+                          : 'brightness(0) invert(1)',
+                      }}
+                    />
+                  </div>
+                  <span style={{
+                    fontFamily: 'Arimo, Arial', fontWeight: 600,
+                    fontSize: isMobile ? '14px' : '16px',
+                    lineHeight: '20px', color: item.color,
+                  }}>
+                    {item.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
+
         </div>
       </div>
     </div>

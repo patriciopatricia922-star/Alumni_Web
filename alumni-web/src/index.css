@@ -80,3 +80,13 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+@font-face {
+  font-family: "myPressuru";
+  src: url("./assets/fonts/pressuru.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "HARVATS";
+  src: url("./assets/fonts/HARVATS.ttf") format("truetype");
+}

@@ -42,17 +42,10 @@ const STYLES = `
   .ae-btn-prev:hover { opacity: 0.85; }
   .ae-btn-submit { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .ae-btn-submit:hover { opacity: 0.9; }
-  /* ── Required asterisk (red) ── */
-  .ae-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
-  /* ── Inline field error ── */
-  .ae-field-error {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 12px;
-    color: #F87171;
-    margin-left: 6px;
-    font-weight: 400;
-  }
+  .ae-error-banner { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #FCA5A5; line-height: 1.5; }
+  .ae-req { color: #F87171; font-weight: 700; margin-left: 2px; }
+  .ae-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
 
   @media (max-width: 1100px) {
     .ae-topbar { padding: 24px 32px 0; } .ae-title { padding: 14px 32px 0; font-size: 26px; }
@@ -84,6 +77,8 @@ const PARTICIPATE_OPTIONS = [
 
 const AlumniEngagement = () => {
   const navigate = useNavigate();
+  const cardRef = useRef(null);
+  const [errors, setErrors] = useState(new Set());
   const [form, setForm] = useState({ recommend: '', participateIn: [] });
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -97,9 +92,6 @@ const AlumniEngagement = () => {
       ? prev.participateIn.filter(v => v !== value)
       : [...prev.participateIn, value],
   }));
-
-  const [errors, setErrors] = useState(new Set());
-  const cardRef = useRef(null);
 
   const validate = () => {
     const e = new Set();
@@ -139,14 +131,19 @@ const AlumniEngagement = () => {
             </div>
             <h1 className="ae-title">Alumni Tracer Survey</h1>
             <div className="ae-progress">
-              <div className="ae-progress-row"><span>Section 7 of 7</span><span>100% complete</span></div>
+              <div className="ae-progress-row"><span>Section 8 of 8</span><span>100% complete</span></div>
               <div className="ae-progress-track" />
-              <span className="ae-progress-label">Alumni engagement</span>
+              <span className="ae-progress-label">Alumni Engagement</span>
             </div>
           </div>
 
           <div className="ae-body">
             <div className="ae-card" ref={cardRef}>
+              {errors.size > 0 && (
+                <div className="ae-error-banner">
+                  <strong>Please answer all required questions before proceeding.</strong>
+                </div>
+              )}
               <div>
                 <h2 className="ae-section-title">Alumni Engagement</h2>
                 <p className="ae-section-sub">Your insights and involvement</p>

@@ -2,10 +2,13 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
 
+
+
 const LandingPage = () => {
   return (
     <div style={{ width: '100%', background: '#FFFFFF', fontFamily: 'Arial, sans-serif' }}>
       <style>{`
+        
         @keyframes bounceDown {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(8px); }
@@ -53,14 +56,14 @@ const LandingPage = () => {
           <div style={{ textAlign: 'center' }}>
             <p
               style={{
-                fontFamily: 'Impact, Arial, sans-serif',
+                fontFamily: 'myPressuru, Arial, sans-serif',
                 fontSize: '24px',
                 letterSpacing: '2.4px',
                 color: '#FFFFFF',
                 textTransform: 'uppercase',
                 textShadow: '0px 2.5px 4px rgba(0, 0, 0, 0.7)',
                 marginBottom: '8px',
-                WebkitTextStroke: '0.5px black',
+                WebkitTextStroke: '0.6px black',
                 fontWeight: 400,
               }}
             >

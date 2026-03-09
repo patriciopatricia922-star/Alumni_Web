@@ -44,17 +44,10 @@ const STYLES = `
   .fu-btn-prev:hover { opacity: 0.85; }
   .fu-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .fu-btn-next:hover { opacity: 0.9; }
-  /* ── Required asterisk (red) ── */
-  .fu-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
-  /* ── Inline field error ── */
-  .fu-field-error {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 12px;
-    color: #F87171;
-    margin-left: 6px;
-    font-weight: 400;
-  }
+  .fu-error-banner { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #FCA5A5; line-height: 1.5; }
+  .fu-req { color: #F87171; font-weight: 700; margin-left: 2px; }
+  .fu-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
 
   @media (max-width: 1100px) {
     .fu-topbar { padding: 24px 32px 0; } .fu-title { padding: 14px 32px 0; font-size: 26px; }
@@ -79,6 +72,8 @@ const SATISFACTION_OPTIONS = ['Very satisfied','Satisfied','Neutral','Dissatisfi
 
 const FeedbackForUniversity = () => {
   const navigate = useNavigate();
+  const cardRef = useRef(null);
+  const [errors, setErrors] = useState(new Set());
   const [form, setForm] = useState({ satisfaction: '', recommend: '', suggestions: '' });
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -86,14 +81,11 @@ const FeedbackForUniversity = () => {
     loadSectionData('feedback_university').then(d => { if (d) setForm(f => ({ ...f, ...d })); });
   }, []);
 
-  const [errors, setErrors] = useState(new Set());
-  const cardRef = useRef(null);
-
   const validate = () => {
     const e = new Set();
-    if (!form.satisfaction)        e.add('satisfaction');
-    if (!form.recommend)           e.add('recommend');
-    if (!form.suggestions.trim())  e.add('suggestions');
+    if (!form.satisfaction)       e.add('satisfaction');
+    if (!form.recommend)          e.add('recommend');
+    if (!form.suggestions.trim()) e.add('suggestions');
     return e;
   };
 
@@ -128,14 +120,19 @@ const FeedbackForUniversity = () => {
             </div>
             <h1 className="fu-title">Alumni Tracer Survey</h1>
             <div className="fu-progress">
-              <div className="fu-progress-row"><span>Section 7 of 7</span><span>95% complete</span></div>
+              <div className="fu-progress-row"><span>Section 7 of 8</span><span>95% complete</span></div>
               <div className="fu-progress-track"><div className="fu-progress-fill" /></div>
-              <span className="fu-progress-label">Feedback</span>
+              <span className="fu-progress-label">Feedback for the University</span>
             </div>
           </div>
 
           <div className="fu-body">
             <div className="fu-card" ref={cardRef}>
+              {errors.size > 0 && (
+                <div className="fu-error-banner">
+                  <strong>Please answer all required questions before proceeding.</strong>
+                </div>
+              )}
               <div>
                 <h2 className="fu-section-title">Feedback for the University</h2>
                 <p className="fu-section-sub">Share your thoughts with us</p>

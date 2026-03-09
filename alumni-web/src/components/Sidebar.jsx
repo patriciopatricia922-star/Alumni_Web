@@ -7,7 +7,6 @@ import logoutIcon from '../assets/logout_icn.svg';
 import { supabase } from '../lib/supabase';
 import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
-// ─── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
   useEffect(() => {
@@ -74,9 +73,8 @@ const Sidebar = () => {
         alignItems: 'center',
         justifyContent: 'space-around',
         zIndex: 200,
-        paddingBottom: 'env(safe-area-inset-bottom)', 
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
-        {/* Nav items */}
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -91,7 +89,6 @@ const Sidebar = () => {
                 position: 'relative',
               }}
             >
-              {/* Active indicator pill at top */}
               {isActive && (
                 <div style={{
                   position: 'absolute', top: 0, left: '50%',
@@ -116,7 +113,6 @@ const Sidebar = () => {
                 fontWeight: isActive ? 700 : 400,
                 lineHeight: '12px',
                 color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.5)',
-                // Truncate long labels like "Announcements"
                 maxWidth: '64px', textAlign: 'center',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               }}>
@@ -126,7 +122,6 @@ const Sidebar = () => {
           );
         })}
 
-        {/* Logout button as a nav item */}
         <button
           onClick={handleLogout}
           style={{
@@ -198,12 +193,12 @@ const Sidebar = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '9px 13px',
-                  background: isActive ? 'rgba(217,202,129,0.12)' : 'transparent',
+                  background: 'transparent',
                   borderRadius: '14px', textDecoration: 'none',
                   transition: 'background 0.2s', margin: '0 6px',
                 }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <img src={item.icon} alt={item.label} style={{
                   width: '20px', height: '20px',
