@@ -27,6 +27,8 @@ import Discounts from './pages/Discounts';
 import Events from './pages/Events';
 import Jobs from './pages/Jobs';
 import ForgotPassword from './pages/Forgotpassword';
+import AdminDashboard from './admin/AdminDashboard';
+import AlumniManagement from './admin/AlumniManagement';
 import SuperAdminDashboard from './Superadmin/Superadmindashboard';
 import DetailedAuditLogs from './superadmin/Detailedauditlogs';
 import AuthCallback from './pages/AuthCallback';
@@ -112,6 +114,10 @@ function App() {
       <Route path="/survey/feedback" element={<ProtectedRoute allowedRoles={['alumni']}><Feedback /></ProtectedRoute>} />
       <Route path="/survey/alumni-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><AlumniEngagement /></ProtectedRoute>} />
       <Route path="/survey/complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
+
+      {/* ── Admin protected routes (For testing) ── */}
+      <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
 
       {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
