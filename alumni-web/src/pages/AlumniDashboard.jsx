@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
-import { loadSurveyProgress } from '../lib/surveyProgress';
+import { loadSurveyProgress, getResumeRoute, isSurveyComplete } from '../lib/surveyProgress';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
@@ -18,7 +18,8 @@ const AlumniDashboard = () => {
   const navigate = useNavigate();
   const width = useWindowWidth();
   const [user, setUser] = useState(null);
-  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0, current_route: '/survey/personal-background' });
+  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
+  const [resumeRoute, setResumeRoute] = useState('/survey/personal-background');
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
 
   const isMobile  = width < 768;
@@ -38,13 +39,17 @@ const AlumniDashboard = () => {
       if (data) setUser(data);
       const progress = await loadSurveyProgress();
       if (progress) setSurveyProgress(progress);
+      // getResumeRoute resolves the correct WEB route regardless of
+      // which platform last saved progress, and returns /survey/complete
+      // when the survey is 100% done.
+      const route = await getResumeRoute();
+      setResumeRoute(route);
     };
     fetchData();
   }, []);
 
   const firstName = user?.first_name || 'Alumni';
   const progressPercentage = surveyProgress?.percentage || 0;
-  const resumeRoute = surveyProgress?.current_route || '/survey/personal-background';
 
   useEffect(() => {
     if (progressPercentage === 0) return;
@@ -238,7 +243,7 @@ const AlumniDashboard = () => {
             lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
             margin: isMobile ? '0 0 12px 0' : '0 0 16px 0',
           }}>
-            Welcome bark! Let's see what's new in your alumni network.
+            Welcome {firstName}! Let's see what's new in your alumni network.
           </p>
           <h1 style={{
             fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,

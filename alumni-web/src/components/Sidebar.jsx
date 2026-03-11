@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import homeIcon from '../assets/home_icn.svg';
 import announceIcon from '../assets/announce_icn.svg';
 import profileIcon from '../assets/profile_icn.svg';
-import logoutIcon from '../assets/logout_icn.svg';
 import { supabase } from '../lib/supabase';
 import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
@@ -19,7 +18,6 @@ const useWindowWidth = () => {
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const width = useWindowWidth();
   const isMobile = width < 768;
@@ -38,11 +36,6 @@ const Sidebar = () => {
     fetchUser();
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/login');
-  };
-
   const email = user?.email || '';
   const role = email === 'superadmin@nu-dasma.edu.ph'
     ? 'Super Admin'
@@ -54,9 +47,9 @@ const Sidebar = () => {
   const initials = user ? user.first_name?.charAt(0).toUpperCase() : 'U';
 
   const menuItems = [
-    { path: '/dashboard',      label: 'Home',          icon: homeIcon      },
-    { path: '/announcements',  label: 'Announcements', icon: announceIcon  },
-    { path: '/profile',        label: 'Profile',       icon: profileIcon   },
+    { path: '/dashboard',     label: 'Home',          icon: homeIcon     },
+    { path: '/announcements', label: 'Announcements', icon: announceIcon },
+    { path: '/profile',       label: 'Profile',       icon: profileIcon  },
   ];
 
   // ── Bottom Nav (mobile) ──────────────────────────────────────────────────
@@ -121,32 +114,6 @@ const Sidebar = () => {
             </Link>
           );
         })}
-
-        <button
-          onClick={handleLogout}
-          style={{
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: '4px', flex: 1, height: '100%',
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          <img
-            src={logoutIcon}
-            alt="Logout"
-            style={{
-              width: '22px', height: '22px',
-              filter: 'brightness(0) invert(1) opacity(0.55)',
-            }}
-          />
-          <span style={{
-            fontFamily: 'Arimo', fontSize: '10px', fontWeight: 400,
-            lineHeight: '12px', color: 'rgba(255,255,255,0.5)',
-          }}>
-            Logout
-          </span>
-        </button>
       </nav>
     );
   }
@@ -236,16 +203,6 @@ const Sidebar = () => {
             <span style={{ fontFamily: 'Arial', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
             <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>{role}</span>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '28px', height: '28px', background: 'none', border: 'none',
-              borderRadius: '4px', cursor: 'pointer', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', padding: 0, flexShrink: 0,
-            }}
-          >
-            <img src={logoutIcon} alt="Logout" style={{ width: '16px', height: '16px' }} />
-          </button>
         </div>
       </div>
     </aside>

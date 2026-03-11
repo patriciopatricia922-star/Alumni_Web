@@ -4,6 +4,19 @@ import AlumnAILogo from '../assets/AlumnAI Logo.png';
 import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
+  @font-face {
+    font-family: 'Arimo';
+    font-weight: 400;
+    font-style: normal;
+    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Arimo';
+    font-weight: 700;
+    font-style: normal;
+    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
+  }
+
   .custom-scroll::-webkit-scrollbar {
     width: 6px;
   }
@@ -39,7 +52,7 @@ const inputStyle = {
   border: '1.23674px solid rgba(0, 0, 0, 0.25)',
   borderRadius: '8px',
   padding: '4px 12px',
-  fontFamily: 'Montserrat',
+  fontFamily: 'Arimo',
   fontWeight: 400,
   fontSize: '12px',
   color: '#FFFFFF',
@@ -48,7 +61,7 @@ const inputStyle = {
 };
 
 const labelStyle = {
-  fontFamily: 'Montserrat',
+  fontFamily: 'Arimo',
   fontWeight: 400,
   fontSize: '11px',
   lineHeight: '14px',
@@ -58,7 +71,7 @@ const labelStyle = {
 };
 
 const sectionTitleStyle = {
-  fontFamily: 'Montserrat',
+  fontFamily: 'Arimo',
   fontWeight: 700,
   fontSize: '13px',
   lineHeight: '20px',
@@ -184,7 +197,7 @@ const Signup = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Montserrat, Arial, sans-serif',
+          fontFamily: 'Arimo, Arial, sans-serif',
           overflow: 'hidden',
         }}
       >
@@ -197,7 +210,7 @@ const Signup = () => {
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
+            <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
               Back
             </span>
           </Link>
@@ -249,7 +262,7 @@ const Signup = () => {
                   background: activeTab === 'signup' ? '#155DFC' : 'transparent',
                   borderRadius: '8px',
                   border: 'none',
-                  fontFamily: 'Arial',
+                  fontFamily: 'Arimo',
                   fontWeight: 400,
                   fontSize: '12px',
                   color: '#FFFFFF',
@@ -267,7 +280,7 @@ const Signup = () => {
                     background: activeTab === 'login' ? '#155DFC' : 'transparent',
                     borderRadius: '8px',
                     border: 'none',
-                    fontFamily: 'Arial',
+                    fontFamily: 'Arimo',
                     fontWeight: 400,
                     fontSize: '12px',
                     color: '#FFFFFF',
@@ -297,10 +310,10 @@ const Signup = () => {
           >
             {/* Header */}
             <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
-              <h3 style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '14px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 2px 0' }}>
+              <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 2px 0' }}>
                 Alumni Registration
               </h3>
-              <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '11px', lineHeight: '16px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
+              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '16px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
                 Create your account to join
               </p>
             </div>
@@ -320,7 +333,7 @@ const Signup = () => {
               {/* Error message */}
               {error && (
                 <div style={{ background: 'rgba(255, 80, 80, 0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '8px 12px' }}>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
+                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
                 </div>
               )}
 
@@ -385,7 +398,7 @@ const Signup = () => {
                       <EyeIcon visible={showPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
+                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
                     The password must be at least 8 characters long.
                   </p>
                 </div>
@@ -403,7 +416,7 @@ const Signup = () => {
                       <EyeIcon visible={showConfirmPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
+                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
                     The password must be at least 8 characters long.
                   </p>
                 </div>
@@ -418,7 +431,7 @@ const Signup = () => {
                   onChange={(e) => setAgreed(e.target.checked)}
                   style={{ width: '13px', height: '13px', marginTop: '3px', accentColor: '#2B72FB', flexShrink: 0, cursor: 'pointer' }}
                 />
-                <label htmlFor="terms" style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', cursor: 'pointer' }}>
+                <label htmlFor="terms" style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', cursor: 'pointer' }}>
                   I agree to the{' '}
                   <Link to="/terms" style={{ color: '#D9CA81', textDecoration: 'none' }}>Terms of Service</Link>
                   {' '}and{' '}
@@ -432,15 +445,14 @@ const Signup = () => {
                 disabled={!agreed || loading}
                 style={{
                   width: '100%',
-                  height: '40px',
+                  height: '50px',
                   background: agreed && !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
                   border: 'none',
-                  borderRadius: '10px',
-                  fontFamily: 'Montserrat',
+                  borderRadius: '13px',
+                  fontFamily: 'Arimo',
                   fontWeight: 700,
-                  fontSize: '14px',
-                  letterSpacing: '0.3px',
+                  fontSize: '15px',
                   color: '#FFFFFF',
                   cursor: agreed && !loading ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s ease',
@@ -451,7 +463,7 @@ const Signup = () => {
               </button>
 
               {/* Already have an account */}
-              <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
+              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
                 Already have an account?{' '}
                 <Link to="/login" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>
                   Log in

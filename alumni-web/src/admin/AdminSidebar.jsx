@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
 const menuItems = [
-  { path: '/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'             },
+  { path: '/admin/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'             },
   { path: '/admin/alumni-management',      icon: BsFillPeopleFill,        label: 'Alumni Management'     },
   { path: '/admin/survey-management',      icon: RiSurveyFill,            label: 'Survey Management'     },
   { path: '/admin/response-and-analytics', icon: SiGoogleanalytics,       label: 'Response & Analytics'  },
@@ -122,11 +122,11 @@ function AdminSidebar() {
             borderRadius: '50%', display: 'flex', alignItems: 'center',
             justifyContent: 'center', flexShrink: 0,
           }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
-            <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>Admin</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>Admin</span>
           </div>
           <button
             onClick={handleLogout}

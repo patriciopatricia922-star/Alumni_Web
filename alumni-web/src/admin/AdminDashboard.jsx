@@ -127,21 +127,21 @@ export default function AdminDashboard() {
   const [activePieIndex, setActivePieIndex] = useState(null);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#DAE5F1", fontFamily: "Arimo, Arial" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "rgba(225,236,247,0.95)", fontFamily: "Arimo, Arial" }}>
       <AdminSidebar />
 
       {/* Main content */}
-      <main style={{ marginLeft: 229, flex: 1, padding: "37px 40px 60px" }}>
+      <main style={{ marginLeft: 229, flex: 1, padding: "37px 32px 60px", minHeight: "100vh" }}>
 
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: "Lexend, Arial", fontWeight: 700, fontSize: 30, color: "#324D87", lineHeight: "36px" }}>Dashboard Overview</div>
-          <div style={{ fontFamily: "Arial", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome back! Here's what's happening with your alumni.</div>
+          <div style={{ fontFamily: "Arial", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome bark! Here's what's happening with your alumni.</div>
         </div>
 
         {/* Section: Institution's KPIs */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}>📊 Institution's KPIs</div>
+          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}> Institution's KPIs</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             {kpis1.map((k) => <KpiProgressCard key={k.label} {...k} />)}
           </div>
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
         {/* Section: Alumni Tracer */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}>🎓 Alumni Tracer</div>
+          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}> Alumni Tracer</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             {kpis2.map((k) => <KpiStatCard key={k.label} {...k} />)}
           </div>

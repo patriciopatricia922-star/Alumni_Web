@@ -4,7 +4,19 @@ import AlumnAILogo from '../assets/AlumnAI Logo.png';
 import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
-  .login-card { width: 440px; height: 650px; max-height: 95vh; }
+  @font-face {
+    font-family: 'Arimo';
+    font-weight: 400;
+    font-style: normal;
+    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
+  }
+  @font-face {
+    font-family: 'Arimo';
+    font-weight: 700;
+    font-style: normal;
+    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
+  }
+  .login-card { width: 440px; height: 720px; max-height: 95vh; }
   @media (max-width: 500px) { .login-card { width: 95vw; } }
 `;
 
@@ -73,7 +85,7 @@ const Login = () => {
       if (email === 'superadmin@nu-dasma.edu.ph') {
         navigate('/superadmin/super-admin-dashboard');
       } else if (email === 'nudaao@nu-dasma.edu.ph') {
-  navigate('/admin/admin-dashboard'); 
+        navigate('/admin/admin-dashboard');
       } else {
         navigate('/dashboard');
       }
@@ -83,7 +95,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -126,19 +137,19 @@ const Login = () => {
             <img src={AlumnAILogo} alt="AlumnAI Logo" style={{ width: '100px', height: '100px', objectFit: 'contain' }} />
             <div style={{ width: '80%', background: 'rgba(243,243,245,0.17)', borderRadius: '10px', padding: '2px', display: 'flex' }}>
               <Link to="/signup" style={{ flex: 1, textDecoration: 'none' }}>
-                <button style={{ width: '100%', height: '24px', background: 'transparent', borderRadius: '8px', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#FFFFFF', cursor: 'pointer' }}>
+                <button style={{ width: '100%', height: '24px', background: 'transparent', borderRadius: '8px', border: 'none', fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px', color: '#FFFFFF', cursor: 'pointer', transition: 'background 0.2s ease' }}>
                   Sign up
                 </button>
               </Link>
-              <button style={{ flex: 1, height: '24px', background: '#155DFC', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)', borderRadius: '8px', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#FFFFFF', cursor: 'pointer' }}>
+              <button style={{ flex: 1, height: '24px', background: '#155DFC', boxShadow: '0px 4px 8px rgba(0,0,0,0.1)', borderRadius: '8px', border: 'none', fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px', color: '#FFFFFF', cursor: 'pointer', transition: 'background 0.2s ease' }}>
                 Log in
               </button>
             </div>
           </div>
 
           {/* Google Button + OR divider */}
-          <div style={{ padding: '0 20px', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <button onClick={handleGoogleLogin} disabled={loading} style={{ width: '50%', height: '42px', background: 'rgba(243,243,245,0.17)', border: '1.23674px solid rgba(0,0,0,0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: loading ? 'not-allowed' : 'pointer', marginBottom: '12px', opacity: loading ? 0.6 : 1 }}>
+          <div style={{ padding: '4px 20px 0', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button onClick={handleGoogleLogin} disabled={loading} style={{ width: '50%', height: '42px', background: 'rgba(243,243,245,0.17)', border: '1.23674px solid rgba(0,0,0,0.25)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: loading ? 'not-allowed' : 'pointer', marginBottom: '24px', opacity: loading ? 0.6 : 1 }}>
               <svg width="20" height="20" viewBox="0 0 48 48">
                 <path fill="#F44336" d="M24 9.5c3.1 0 5.8 1.1 7.9 2.9l5.9-5.9C34.3 3.5 29.4 1.5 24 1.5 15.1 1.5 7.5 6.8 4.1 14.3l6.9 5.4C12.7 13.6 17.9 9.5 24 9.5z"/>
                 <path fill="#4CAF50" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4c4.1-3.8 6.5-9.4 6.5-16.2z" opacity=".99"/>
@@ -147,15 +158,15 @@ const Login = () => {
               </svg>
               <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#FFFFFF' }}>with Google</span>
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', width: '100%' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
-              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FFFFFF' }}>OR</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px', width: '100%' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.15)' }} />
+              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.15)' }} />
             </div>
           </div>
 
           {/* Form Card */}
-          <div style={{ margin: '0 5% 5%', flex: 1, background: 'rgba(13,19,56,0.25)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ margin: '0 5% 5%', flex: 1, background: 'rgba(13,19,56,0.25)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.25)', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 4px 0' }}>Welcome Back</h3>
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Please enter your details to log in</p>
@@ -198,19 +209,19 @@ const Login = () => {
                 disabled={loading}
                 style={{
                   width: '100%', height: '50px',
-                  background: loading ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.7)',
+                  background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
                   boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
                   border: 'none', borderRadius: '13px',
                   fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
                   color: '#FFFFFF', cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s ease',
+                  transition: 'background 0.2s ease', flexShrink: 0,
                 }}
               >
                 {loading ? 'Logging in...' : 'Login'}
               </button>
 
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', lineHeight: '40px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
-                Don't have an account? <Link to="/register" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>Sign up</Link>
+                Don't have an account? <Link to="/signup" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>Sign up</Link>
               </p>
             </div>
           </div>

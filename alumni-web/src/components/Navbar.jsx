@@ -42,25 +42,21 @@ const Navbar = () => {
       >
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <img
-                src={AlumnAIHorizontal}
-                alt="AlumnAI"
-                style={{
-                height: '30px',
-                width: '30',
-                objectFit: 'contain',
-                }}
-            />
-            </Link>
+          <img
+            src={AlumnAIHorizontal}
+            alt="AlumnAI"
+            style={{ height: '30px', width: '30', objectFit: 'contain' }}
+          />
+        </Link>
 
         {/* Nav Links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           {[
-            { to: '/', label: 'Home' },
-            { to: '/events', label: 'Events' },
-            { to: '/jobs', label: 'Jobs' },
+            { to: '/',          label: 'Home'      },
+            { to: '/events',    label: 'Events'    },
+            { to: '/jobs',      label: 'Jobs'      },
             { to: '/discounts', label: 'Discounts' },
-            { to: '/about', label: 'About' },
+            { to: '/about',     label: 'About'     },
           ].map((link) => (
             <Link
               key={link.to}
@@ -82,8 +78,31 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Auth Buttons */}
+        {/* Auth Buttons — Register first, then Log in */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Link to="/register" style={{ textDecoration: 'none' }}>
+            <button
+              style={{
+                padding: '8px 16px',
+                background: '#DAA520',
+                border: 'none',
+                borderRadius: '8px',
+                color: '#00072D',
+                fontSize: '14px',
+                lineHeight: '20px',
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 400,
+                cursor: 'pointer',
+                letterSpacing: '0.35px',
+                transition: 'background-color 0.2s ease',
+              }}
+              onMouseEnter={(e) => (e.target.style.backgroundColor = '#C89600')}
+              onMouseLeave={(e) => (e.target.style.backgroundColor = '#DAA520')}
+            >
+              Register
+            </button>
+          </Link>
+
           <Link to="/login" style={{ textDecoration: 'none' }}>
             <button
               style={{
@@ -106,29 +125,6 @@ const Navbar = () => {
               }
             >
               Log in
-            </button>
-          </Link>
-
-          <Link to="/register" style={{ textDecoration: 'none' }}>
-            <button
-              style={{
-                padding: '8px 16px',
-                background: '#DAA520',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#00072D',
-                fontSize: '14px',
-                lineHeight: '20px',
-                fontFamily: 'Arial, sans-serif',
-                fontWeight: 400,
-                cursor: 'pointer',
-                letterSpacing: '0.35px',
-                transition: 'background-color 0.2s ease',
-              }}
-              onMouseEnter={(e) => (e.target.style.backgroundColor = '#C89600')}
-              onMouseLeave={(e) => (e.target.style.backgroundColor = '#DAA520')}
-            >
-              Register
             </button>
           </Link>
         </div>
