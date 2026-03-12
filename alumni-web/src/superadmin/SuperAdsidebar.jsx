@@ -10,15 +10,14 @@ import { supabase } from '../lib/supabase';
 import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
 const menuItems = [
-  { path: '/admin/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'             },
-  { path: '/admin/alumni-management',      icon: BsFillPeopleFill,        label: 'Alumni Management'     },
-  { path: '/admin/survey-management',      icon: RiSurveyFill,            label: 'Survey Management'     },
-  { path: '/admin/response-and-analytics', icon: SiGoogleanalytics,       label: 'Response & Analytics'  },
-  { path: '/admin/predictive-analytics',   icon: RiOrganizationChart,     label: 'Predictive Analytics'  },
-  { path: '/admin/engagement-alumni',      icon: FaBookBookmark,          label: 'Alumni Engagement'     },
+  { path: '/superadmin/super-admin-dashboard', icon: TbLayoutDashboardFilled, label: 'Audit Overview'      },
+  { path: '/superadmin/audit-logs',            icon: SiGoogleanalytics,       label: 'Audit Logs' },
+  { path: '/superadmin/admin-management',      icon: BsFillPeopleFill,        label: 'Admin Management'    },
+  { path: '/superadmin/alumni-management',     icon: RiSurveyFill,            label: 'Alumni Management'   },
+  { path: '/superadmin/alumni-engagement',     icon: FaBookBookmark,          label: 'Alumni Engagement'   },
 ];
 
-function AdminSidebar() {
+function SuperAdminSidebar() {
   const location = useLocation();
   const navigate  = useNavigate();
   const [user, setUser] = useState(null);
@@ -42,8 +41,8 @@ function AdminSidebar() {
     navigate('/login');
   };
 
-  const displayName = 'NUD-AAO';
-  const initials    = 'N';
+  const displayName = 'Super Admin';
+  const initials    = 'S';
 
   return (
     <aside style={{
@@ -88,7 +87,7 @@ function AdminSidebar() {
                   padding: '9px 13px',
                   background: 'transparent',
                   borderRadius: '14px', textDecoration: 'none',
-                  transition: 'background 0.2s', margin: '0 6px',
+                  transition: 'background 0.2s', margin: '0 6px', overflow: 'hidden',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
@@ -101,7 +100,7 @@ function AdminSidebar() {
                   fontFamily: 'Arimo', fontSize: '15px',
                   fontWeight: isActive ? 700 : 400, lineHeight: '24px',
                   letterSpacing: '0.325px',
-                  color: isActive ? '#D9CA81' : '#FFFFFF',
+                  color: isActive ? '#D9CA81' : '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>{label}</span>
               </Link>
             );
@@ -122,11 +121,11 @@ function AdminSidebar() {
             borderRadius: '50%', display: 'flex', alignItems: 'center',
             justifyContent: 'center', flexShrink: 0,
           }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
-            <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>Admin</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</span>
+            <span style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>Super Admin</span>
           </div>
           <button
             onClick={handleLogout}
@@ -149,4 +148,4 @@ function AdminSidebar() {
   );
 }
 
-export default AdminSidebar;
+export default SuperAdminSidebar;

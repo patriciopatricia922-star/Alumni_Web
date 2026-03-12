@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import AlumnAILogo from '../assets/AlumnAI Logo.png';
+import AlumnAILogo from '../assets/horizon_logo.svg';
 import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
@@ -34,7 +34,7 @@ const scrollbarStyles = `
 
   .signup-card {
     width: 440px;
-    height: 820px;
+    height: 880px;
     max-height: 95vh;
   }
 
@@ -47,7 +47,7 @@ const scrollbarStyles = `
 
 const inputStyle = {
   width: '100%',
-  height: '36px',
+  height: '40px',
   background: 'rgba(243, 243, 245, 0.17)',
   border: '1.23674px solid rgba(0, 0, 0, 0.25)',
   borderRadius: '8px',
@@ -66,9 +66,21 @@ const labelStyle = {
   fontSize: '11px',
   lineHeight: '14px',
   color: '#FFFFFF',
-  marginBottom: '5px',
+  marginBottom: '6px',
   display: 'block',
 };
+
+const RequiredLabel = ({ text, touched, hasValue }) => (
+  <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '4px' }}>
+    {text}
+    <span style={{ color: '#FF4D4D', fontWeight: 700 }}>*</span>
+    {touched && !hasValue && (
+      <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FF6B6B', fontWeight: 400 }}>
+        Required
+      </span>
+    )}
+  </label>
+);
 
 const sectionTitleStyle = {
   fontFamily: 'Arimo',
@@ -76,7 +88,8 @@ const sectionTitleStyle = {
   fontSize: '13px',
   lineHeight: '20px',
   color: '#FFFFFF',
-  margin: '0 0 10px 0',
+  margin: '0 0 12px 0',
+  paddingBottom: '6px',
 };
 
 const Signup = () => {
@@ -86,10 +99,11 @@ const Signup = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
   const [activeTab, setActiveTab] = useState('signup');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [touched, setTouched] = useState({});
 
   const [form, setForm] = useState({
     lastName: idData.lastName || '',
@@ -101,14 +115,26 @@ const Signup = () => {
   });
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
+  const touch = (key) => setTouched(prev => ({ ...prev, [key]: true }));
+
+  const validateEmail = (value) => {
+    const trimmed = value.toLowerCase().trim();
+    if (!trimmed) {
+      setEmailError('');
+    } else if (trimmed.includes('@') && !trimmed.endsWith('@gmail.com')) {
+      setEmailError('Only Gmail accounts (@gmail.com) are accepted.');
+    } else {
+      setEmailError('');
+    }
+  };
 
   const handleSignup = async () => {
     setError('');
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
       return setError('Please fill in all required fields.');
     }
-    if (form.email.toLowerCase().trim().endsWith('@nu-dasma.edu.ph')) {
-      return setError('This email domain is reserved for NU Dasmarinas staff. Please use a personal email address.');
+    if (emailError) {
+      return setError(emailError);
     }
     if (form.password.length < 8) {
       return setError('Password must be at least 8 characters long.');
@@ -116,13 +142,9 @@ const Signup = () => {
     if (form.password !== form.confirmPassword) {
       return setError('Passwords do not match.');
     }
-    if (!agreed) {
-      return setError('You must agree to the Terms of Service and Privacy Policy.');
-    }
 
     setLoading(true);
     try {
-      // 1. Create auth user
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -136,8 +158,6 @@ const Signup = () => {
       });
       if (signUpError) throw signUpError;
 
-      // 2. Upsert into public.users
-      // (DB trigger may have already created the row, so upsert avoids 409 conflict)
       const { error: insertError } = await supabase.from('users').upsert({
         id: data.user.id,
         email: form.email,
@@ -149,13 +169,11 @@ const Signup = () => {
       }, { onConflict: 'id' });
 
       if (insertError) {
-        // Profile row failed — sign out the session and show error
-        // (The DB trigger will handle creating the profile row as a fallback)
         await supabase.auth.signOut();
         throw new Error('Account setup incomplete. Please try signing up again.');
       }
 
-      navigate('/dashboard');
+      navigate('/login');
     } catch (err) {
       const msg = err.message || '';
       if (msg.toLowerCase().includes('already registered') || msg.includes('409') || msg.toLowerCase().includes('unique')) {
@@ -169,17 +187,17 @@ const Signup = () => {
   };
 
   const EyeIcon = ({ visible }) => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
       {visible ? (
         <>
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#FFFFFF" strokeWidth="2" />
-          <circle cx="12" cy="12" r="3" stroke="#FFFFFF" strokeWidth="2" />
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
+          <circle cx="12" cy="12" r="3" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
         </>
       ) : (
         <>
-          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
-          <line x1="1" y1="1" x2="23" y2="23" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
+          <line x1="1" y1="1" x2="23" y2="23" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
         </>
       )}
     </svg>
@@ -225,24 +243,25 @@ const Signup = () => {
             borderRadius: '15px',
             display: 'flex',
             flexDirection: 'column',
+            justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
           {/* Top Nav Area */}
           <div
             style={{
-              padding: '16px 20px 10px',
+              padding: '20px 20px 12px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '10px',
+              gap: '12px',
               flexShrink: 0,
             }}
           >
             <img
               src={AlumnAILogo}
               alt="AlumnAI Logo"
-              style={{ width: '100px', height: '100px', objectFit: 'contain' }}
+              style={{ width: '150px', height: '70px', objectFit: 'contain' }}
             />
 
             <div
@@ -309,7 +328,7 @@ const Signup = () => {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
+            <div style={{ padding: '16px 18px 12px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 2px 0' }}>
                 Alumni Registration
               </h3>
@@ -322,17 +341,17 @@ const Signup = () => {
             <div
               className="custom-scroll"
               style={{
-                padding: '4px 18px 18px',
+                padding: '8px 20px 20px',
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
+                gap: '20px',
               }}
             >
 
               {/* Error message */}
               {error && (
-                <div style={{ background: 'rgba(255, 80, 80, 0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '8px 12px' }}>
+                <div style={{ background: 'rgba(255, 80, 80, 0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '10px 12px' }}>
                   <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
                 </div>
               )}
@@ -340,23 +359,25 @@ const Signup = () => {
               {/* Personal Information */}
               <div>
                 <h4 style={sectionTitleStyle}>Personal Information</h4>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={labelStyle}>Last Name *</label>
+                <div style={{ marginBottom: '12px' }}>
+                  <RequiredLabel text="Last Name" touched={touched.lastName} hasValue={!!form.lastName} />
                   <input
                     style={inputStyle}
                     placeholder="e.g. Dela Cruz"
                     value={form.lastName}
                     onChange={e => set('lastName', e.target.value)}
+                    onBlur={() => touch('lastName')}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>First Name *</label>
+                    <RequiredLabel text="First Name" touched={touched.firstName} hasValue={!!form.firstName} />
                     <input
                       style={inputStyle}
                       placeholder="e.g. Juan"
                       value={form.firstName}
                       onChange={e => set('firstName', e.target.value)}
+                      onBlur={() => touch('firstName')}
                     />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -371,21 +392,53 @@ const Signup = () => {
                 </div>
               </div>
 
+              {/* Academic Information */}
+              <div>
+                <h4 style={sectionTitleStyle}>Academic Information</h4>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={labelStyle}>Academic Program</label>
+                  <input
+                    style={{ ...inputStyle, color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
+                    placeholder="e.g. BSCS"
+                    value={idData.program || ''}
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Year Graduated</label>
+                  <input
+                    style={{ ...inputStyle, color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
+                    placeholder="e.g. 2024"
+                    value={idData.batchYear || ''}
+                    readOnly
+                  />
+                </div>
+              </div>
+
               {/* Account Security */}
               <div>
                 <h4 style={sectionTitleStyle}>Account Security</h4>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={labelStyle}>Email Address *</label>
+                <div style={{ marginBottom: '12px' }}>
+                  <RequiredLabel text="Email Address" touched={touched.email} hasValue={!!form.email} />
                   <input
-                    style={inputStyle}
+                    style={{
+                      ...inputStyle,
+                      border: emailError ? '1.23674px solid rgba(255,80,80,0.6)' : inputStyle.border,
+                    }}
                     type="email"
                     placeholder="e.g. you@gmail.com"
                     value={form.email}
-                    onChange={e => set('email', e.target.value)}
+                    onChange={e => { set('email', e.target.value); validateEmail(e.target.value); }}
+                    onBlur={() => touch('email')}
                   />
+                  {emailError && (
+                    <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FF6B6B', margin: '5px 0 0 0' }}>
+                      {emailError}
+                    </p>
+                  )}
                 </div>
-                <div style={{ marginBottom: '10px' }}>
-                  <label style={labelStyle}>Password *</label>
+                <div style={{ marginBottom: '12px' }}>
+                  <RequiredLabel text="Password" touched={touched.password} hasValue={!!form.password} />
                   <div style={{ position: 'relative' }}>
                     <input
                       style={inputStyle}
@@ -393,17 +446,18 @@ const Signup = () => {
                       placeholder="••••••••"
                       value={form.password}
                       onChange={e => set('password', e.target.value)}
+                      onBlur={() => touch('password')}
                     />
                     <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       <EyeIcon visible={showPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
-                    The password must be at least 8 characters long.
+                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
+                    Must be at least 8 characters long.
                   </p>
                 </div>
                 <div>
-                  <label style={labelStyle}>Confirm Password *</label>
+                  <RequiredLabel text="Confirm Password" touched={touched.confirmPassword} hasValue={!!form.confirmPassword} />
                   <div style={{ position: 'relative' }}>
                     <input
                       style={inputStyle}
@@ -411,42 +465,26 @@ const Signup = () => {
                       placeholder="••••••••"
                       value={form.confirmPassword}
                       onChange={e => set('confirmPassword', e.target.value)}
+                      onBlur={() => touch('confirmPassword')}
                     />
                     <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       <EyeIcon visible={showConfirmPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
-                    The password must be at least 8 characters long.
+                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
+                    Must be at least 8 characters long.
                   </p>
                 </div>
               </div>
 
-              {/* Terms Checkbox */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  style={{ width: '13px', height: '13px', marginTop: '3px', accentColor: '#2B72FB', flexShrink: 0, cursor: 'pointer' }}
-                />
-                <label htmlFor="terms" style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', cursor: 'pointer' }}>
-                  I agree to the{' '}
-                  <Link to="/terms" style={{ color: '#D9CA81', textDecoration: 'none' }}>Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link to="/privacy" style={{ color: '#D9CA81', textDecoration: 'none' }}>Privacy Policy</Link>
-                </label>
-              </div>
-
-              {/* Create Account Button */}
+              {/* Submit Button */}
               <button
                 onClick={handleSignup}
-                disabled={!agreed || loading}
+                disabled={loading}
                 style={{
                   width: '100%',
                   height: '50px',
-                  background: agreed && !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
+                  background: !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
                   border: 'none',
                   borderRadius: '13px',
@@ -454,7 +492,7 @@ const Signup = () => {
                   fontWeight: 700,
                   fontSize: '15px',
                   color: '#FFFFFF',
-                  cursor: agreed && !loading ? 'pointer' : 'not-allowed',
+                  cursor: !loading ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s ease',
                   flexShrink: 0,
                 }}

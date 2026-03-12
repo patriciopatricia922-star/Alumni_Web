@@ -14,13 +14,15 @@ const ForgotPassword = () => {
     setLoading(true);
     setError('');
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/verify`,
     });
     setLoading(false);
     if (resetError) {
       setError(resetError.message);
     } else {
       setSent(true);
+      // Navigate to verify page, passing email so it can resend if needed
+      navigate('/verify', { state: { email, type: 'recovery' } });
     }
   };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
 import AdminSidebar from './AdminSidebar';
 import { supabase } from "../lib/supabase";
@@ -44,17 +44,17 @@ const skillsData = [
 ];
 
 const kpis1 = [
-  { category: "Career Services",  label: "Placement Rate",    value: "92%", progress: 92,  target: 100, icon: "👥" },
-  { category: "Alumni Relations", label: "Retention Rate",    value: "90%", progress: 90,  target: 100, icon: "🤝" },
-  { category: "Employment",       label: "Employment Rate",   value: "40%", progress: 40,  target: 100, icon: "💼" },
-  { category: "Satisfaction",     label: "Alumni Satisfaction", value: "4.3", progress: 86, target: 100, icon: "⭐" },
+  { category: "Career Services",  label: "Placement Rate",      value: "92%", progress: 92,  target: 100 },
+  { category: "Alumni Relations", label: "Retention Rate",      value: "90%", progress: 90,  target: 100 },
+  { category: "Employment",       label: "Employment Rate",     value: "40%", progress: 40,  target: 100 },
+  { category: "Satisfaction",     label: "Alumni Satisfaction", value: "4.3", progress: 86,  target: 100 },
 ];
 
 const kpis2 = [
-  { category: "Alumni",         label: "Registered Alumni",    value: "100",  sub: "+8% from last year",    icon: "👥" },
-  { category: "Survey",        label: "Survey Response Rate",  value: "90%",  sub: "68% completion rate",   icon: "📋" },
-  { category: "Program",       label: "Active Programs",       value: "90%",  sub: "+3% from last period",  icon: "🎓" },
-  { category: "Satisfaction",  label: "Alumni Satisfaction",   value: "4.3",  sub: "+3% from last period",  icon: "⭐" },
+  { category: "Alumni",        label: "Registered Alumni",   value: "100", sub: "+8% from last year"   },
+  { category: "Survey",        label: "Survey Response Rate", value: "90%", sub: "68% completion rate" },
+  { category: "Program",       label: "Active Programs",      value: "90%", sub: "+3% from last period" },
+  { category: "Satisfaction",  label: "Alumni Satisfaction",  value: "4.3", sub: "+3% from last period" },
 ];
 
 // ─── CARD WRAPPER ─────────────────────────────────────────────────────────────
@@ -92,19 +92,12 @@ function KpiProgressCard({ category, label, value, progress, target }) {
 }
 
 // ─── KPI CARD (stat) ──────────────────────────────────────────────────────────
-function KpiStatCard({ category, label, value, sub, iconBg = "#F2F2F2", iconColor = "#155DFC" }) {
+function KpiStatCard({ label, value, sub }) {
   return (
     <Card style={{ width: "calc(25% - 12px)", padding: "20px 18px 14px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ fontFamily: "Lexend, Arial", fontWeight: 400, fontSize: 14, color: "#6A7282" }}>{label}</div>
-          <div style={{ fontFamily: "Lexend, Arial", fontWeight: 700, fontSize: 30, color: "#101828", margin: "4px 0" }}>{value}</div>
-          <div style={{ fontFamily: "Arial", fontSize: 12, color: "#00A63E" }}>{sub}</div>
-        </div>
-        <div style={{ width: 48, height: 48, background: iconBg, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <span style={{ fontSize: 20 }}>{category === "Survey" ? "📋" : category === "Alumni" ? "👥" : category === "Program" ? "🎓" : "⭐"}</span>
-        </div>
-      </div>
+      <div style={{ fontFamily: "Lexend, Arial", fontWeight: 400, fontSize: 14, color: "#6A7282" }}>{label}</div>
+      <div style={{ fontFamily: "Lexend, Arial", fontWeight: 700, fontSize: 30, color: "#101828", margin: "4px 0" }}>{value}</div>
+      <div style={{ fontFamily: "Arial", fontSize: 12, color: "#00A63E" }}>{sub}</div>
     </Card>
   );
 }
@@ -125,6 +118,71 @@ function ChartTooltip({ active, payload, label }) {
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activePieIndex, setActivePieIndex] = useState(null);
+  const [alumniCount, setAlumniCount] = useState('—');
+  const [surveyCompletionRate, setSurveyCompletionRate] = useState('—');
+  const [alumniSubText, setAlumniSubText] = useState('loading...');
+  const [surveySubText, setSurveySubText] = useState('loading...');
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      // Live alumni count
+      const { count: alumniTotal, error: alumniErr } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'alumni');
+      if (!alumniErr) setAlumniCount(String(alumniTotal ?? 0));
+      else console.error('Alumni count error:', alumniErr.message);
+
+      // New registrations this month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count: newThisMonth, error: newErr } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'alumni')
+        .gte('created_at', startOfMonth);
+      if (!newErr) {
+        setAlumniSubText(`+${newThisMonth ?? 0} new this month`);
+      }
+
+      // Live survey completion rate
+      const { count: completed, error: surveyErr } = await supabase
+        .from('survey_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('completed', true);
+      if (!surveyErr) {
+        const total = alumniTotal ?? 0;
+        const rate = total > 0 ? Math.round(((completed ?? 0) / total) * 100) : 0;
+        setSurveyCompletionRate(`${rate}%`);
+
+        // Survey completions this month vs last month
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+        const { count: completedThisMonth } = await supabase
+          .from('survey_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('completed', true)
+          .gte('last_updated', startOfMonth);
+        const { count: completedLastMonth } = await supabase
+          .from('survey_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('completed', true)
+          .gte('last_updated', startOfLastMonth)
+          .lt('last_updated', startOfMonth);
+        const thisM = completedThisMonth ?? 0;
+        const lastM = completedLastMonth ?? 0;
+        if (lastM === 0) {
+          setSurveySubText(thisM > 0 ? `+${thisM} completed this month` : 'No completions yet');
+        } else {
+          const diff = thisM - lastM;
+          const sign = diff >= 0 ? '+' : '';
+          setSurveySubText(`${sign}${diff} vs last month`);
+        }
+      } else {
+        console.error('Survey completion error:', surveyErr.message);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "rgba(225,236,247,0.95)", fontFamily: "Arimo, Arial" }}>
@@ -136,12 +194,12 @@ export default function AdminDashboard() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: "Lexend, Arial", fontWeight: 700, fontSize: 30, color: "#324D87", lineHeight: "36px" }}>Dashboard Overview</div>
-          <div style={{ fontFamily: "Arial", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome bark! Here's what's happening with your alumni.</div>
+          <div style={{ fontFamily: "Arial", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome back! Here's what's happening with your alumni.</div>
         </div>
 
         {/* Section: Institution's KPIs */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}> Institution's KPIs</div>
+          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}>Institution's KPIs</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             {kpis1.map((k) => <KpiProgressCard key={k.label} {...k} />)}
           </div>
@@ -149,9 +207,24 @@ export default function AdminDashboard() {
 
         {/* Section: Alumni Tracer */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}> Alumni Tracer</div>
+          <div style={{ fontFamily: "Arimo, Arial", fontWeight: 700, fontSize: 18, color: "#0F172B", marginBottom: 12 }}>Alumni Tracer</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            {kpis2.map((k) => <KpiStatCard key={k.label} {...k} />)}
+            {kpis2.map((k) => (
+            <KpiStatCard
+              key={k.label}
+              {...k}
+              value={
+                k.label === 'Registered Alumni'    ? alumniCount :
+                k.label === 'Survey Response Rate' ? surveyCompletionRate :
+                k.value
+              }
+              sub={
+                k.label === 'Registered Alumni'    ? alumniSubText :
+                k.label === 'Survey Response Rate' ? surveySubText :
+                k.sub
+              }
+            />
+          ))}
           </div>
         </div>
 

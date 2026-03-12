@@ -1,41 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import sidebarLogo from '../assets/sidebar_alumnAI.svg';
+import SuperAdminSidebar from '../superadmin/SuperAdsidebar';
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
+// ─── Icons (page-only) ────────────────────────────────────────────────────────
 const Icons = {
-  Dashboard: ({ size = 21 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-    </svg>
-  ),
-  AuditLogs: ({ size = 21 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-    </svg>
-  ),
-  AdminMgmt: ({ size = 21 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-    </svg>
-  ),
-  AlumniMgmt: ({ size = 21 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm-9-3V8H4v3H1v2h3v3h2v-3h3v-2H6z"/>
-    </svg>
-  ),
-  Engagement: ({ size = 21 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm7.76-9.64c2.02 2.2 2.02 5.25 0 7.27l-1.68-1.69c.84-1.18.84-2.71 0-3.89l1.68-1.69zM20.07 2c3.93 4.05 3.9 10.11 0 14l-1.63-1.63c2.77-3.18 2.77-7.72 0-10.74L20.07 2z"/>
-    </svg>
-  ),
-  LogOut: () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16,17 21,12 16,7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-  ),
   Search: () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -51,95 +18,6 @@ const Icons = {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
   ),
-};
-
-// ─── Nav items ────────────────────────────────────────────────────────────────
-const NAV = [
-  { key: 'super-admin',       label: 'Audit Overview',      route: '/superadmin/super-admin-dashboard', Icon: Icons.Dashboard   },
-  { key: 'audit-logs',        label: 'Detailed Audit Logs', route: '/superadmin/audit-logs',            Icon: Icons.AuditLogs   },
-  { key: 'admin-management',  label: 'Admin Management',    route: '/superadmin/admin-management',      Icon: Icons.AdminMgmt   },
-  { key: 'alumni-management', label: 'Alumni Management',   route: '/superadmin/alumni-management',     Icon: Icons.AlumniMgmt  },
-  { key: 'engagement',        label: 'Alumni Engagement',   route: '/superadmin/alumni-engagement',     Icon: Icons.Engagement  },
-];
-
-// ─── Sidebar (identical to SuperAdminDashboard) ───────────────────────────────
-const SuperAdminSidebar = ({ activePage }) => {
-  const navigate = useNavigate();
-  const handleLogout = () => navigate('/login');
-
-  return (
-    <aside style={{
-      position: 'fixed',
-      left: 0, top: 0,
-      width: '229px', height: '100vh',
-      background: '#001947',
-      boxShadow: '0px 10px 50px rgba(0,0,0,0.25)',
-      borderRadius: '0px 20px 20px 0px',
-      display: 'flex', flexDirection: 'column',
-      zIndex: 100,
-    }}>
-      {/* ── Logo ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0 16px', gap: '6px' }}>
-        <img src={sidebarLogo} alt="AlumnAI" style={{ width: '120px', height: 'auto', objectFit: 'contain', flexShrink: 0 }} />
-        <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '11px', fontWeight: 600, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>
-          Super Admin
-        </span>
-      </div>
-
-      {/* ── Divider ── */}
-      <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.35)', flexShrink: 0 }} />
-
-      {/* ── Menu ── */}
-      <div style={{ padding: '20px 9px 0', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto' }}>
-        <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px', lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', padding: '0 16px', margin: '0 0 6px 0' }}>MENU</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {NAV.map(({ key, label, route, Icon }) => {
-            const isActive = activePage === key;
-            return (
-              <button
-                key={key}
-                onClick={() => navigate(route)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '9px 13px', margin: '0 6px',
-                  background: isActive ? 'rgba(217,202,129,0.12)' : 'transparent',
-                  borderRadius: '14px', border: 'none',
-                  cursor: 'pointer', textAlign: 'left',
-                  transition: 'background 0.2s',
-                  width: 'calc(100% - 12px)',
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
-              >
-                <span style={{ width: '20px', height: '20px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.85)' }}>
-                  <Icon size={20} />
-                </span>
-                <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '15px', fontWeight: isActive ? 700 : 400, lineHeight: '24px', letterSpacing: '0.325px', color: isActive ? '#D9CA81' : '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── User Profile Bottom ── */}
-      <div style={{ padding: '0 8px 24px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px', gap: '12px', height: '56px', background: 'rgba(255,255,255,0.1)', borderRadius: '30px' }}>
-          <div style={{ width: '40px', height: '40px', flexShrink: 0, background: 'linear-gradient(135deg, #51A2FF 0%, #155DFC 100%)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>S</span>
-          </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Super Admin</span>
-            <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '16px', color: '#D1D5DC' }}>Super Admin</span>
-          </div>
-          <button onClick={handleLogout} title="Sign out" style={{ width: '28px', height: '28px', background: 'none', border: 'none', borderRadius: '4px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, color: '#D1D5DC' }}>
-            <Icons.LogOut />
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
 };
 
 // ─── Tag color map ─────────────────────────────────────────────────────────────
@@ -236,27 +114,24 @@ const DetailedAuditLogs = () => {
 
           {/* Search + dropdowns */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-            {/* Search */}
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', display: 'flex' }}>
                 <Icons.Search />
               </span>
               <input
                 type="text"
-                placeholder="Search by user, description, IP, or record ID..."
+                placeholder="Search by user, description, or record ID..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{ width: '100%', paddingLeft: '38px', paddingRight: '12px', paddingTop: '9px', paddingBottom: '9px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', color: '#101828', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
-            {/* Role */}
             <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} style={{ padding: '9px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', color: '#374151', background: '#FFFFFF', outline: 'none' }}>
               <option>All Roles</option>
               <option>Super Admin</option>
               <option>Admin</option>
               <option>Alumni</option>
             </select>
-            {/* Action */}
             <select value={selectedAction} onChange={e => setSelectedAction(e.target.value)} style={{ padding: '9px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', color: '#374151', background: '#FFFFFF', outline: 'none' }}>
               <option>All Actions</option>
               <option>Create</option>
@@ -264,7 +139,6 @@ const DetailedAuditLogs = () => {
               <option>Delete</option>
               <option>Login</option>
             </select>
-            {/* Module */}
             <select value={selectedModule} onChange={e => setSelectedModule(e.target.value)} style={{ padding: '9px 12px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', color: '#374151', background: '#FFFFFF', outline: 'none' }}>
               <option>All Modules</option>
               <option>Alumni Profile</option>

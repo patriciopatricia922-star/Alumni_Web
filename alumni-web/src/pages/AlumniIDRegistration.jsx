@@ -16,13 +16,12 @@ const verifyAlumniID = async (imageFile) => {
   formData.append('scale', 'true');
   formData.append('OCREngine', '2');
 
-  // Retry up to 3 attempts on timeout or failure
   let data = null;
   let lastError = null;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout per attempt
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const response = await fetch('https://api.ocr.space/parse/image', {
         method: 'POST',
         body: formData,
@@ -30,13 +29,13 @@ const verifyAlumniID = async (imageFile) => {
       });
       clearTimeout(timeout);
       data = await response.json();
-      if (data && !data.IsErroredOnProcessing) break; // success
+      if (data && !data.IsErroredOnProcessing) break;
       lastError = data?.ErrorMessage?.[0] || 'OCR processing failed.';
     } catch (err) {
       lastError = err.name === 'AbortError'
         ? `Scan timed out (attempt ${attempt}/3). Retrying...`
         : err.message;
-      if (attempt < 3) await new Promise(r => setTimeout(r, 2000)); // wait 2s before retry
+      if (attempt < 3) await new Promise(r => setTimeout(r, 2000));
     }
   }
 
@@ -47,20 +46,47 @@ const verifyAlumniID = async (imageFile) => {
   const rawText = data.ParsedResults?.[0]?.ParsedText || '';
   const upperText = rawText.toUpperCase();
 
-  // OCR splits lines so check each word separately
   const isNU =
     upperText.includes('NATIONAL') &&
     upperText.includes('UNIVERSITY');
   const isAlumni = upperText.includes('ALUMNI');
 
   if (!isNU) {
-    return { verified: false, reason: 'This ID does not appear to be a National University ID. Please use your official NU Alumni ID.' };
+    return { verified: false, reason: 'This ID does not appear to be a National University ID.' };
   }
   if (!isAlumni) {
-    return { verified: false, reason: 'This ID does not appear to be an Alumni ID. Please use your official NU Alumni ID.' };
+    return { verified: false, reason: 'This ID does not appear to be an Alumni ID. Please use your official branch ID.' };
   }
 
-  // ── Extract info ─────────────────────────────────────────────────────────
+  const isDasmarinas =
+    upperText.includes('DASMARIÑAS') ||
+    upperText.includes('NU-D') ||
+    upperText.includes('NUD') ||
+    /NU\s+D\b/.test(upperText);
+
+  const otherBranches = [
+    { keyword: 'MANILA',   label: 'Manila' },
+    { keyword: 'FAIRVIEW', label: 'Fairview' },
+    { keyword: 'MOA',      label: 'MOA' },
+    { keyword: 'LIPA',     label: 'Lipa' },
+    { keyword: 'BALIWAG',  label: 'Baliwag' },
+    { keyword: 'LAGUNA',   label: 'Laguna' },
+    { keyword: 'CLARK', label: 'Clark'},
+    { keyword: 'EAST ORTIGAS', label: 'East Ortigas'},
+    { keyword: 'BACOLOD', label: 'Bacolod'},
+    { keyword: 'NAZARETH', label: 'Nazareth'},
+  ];
+
+  const detectedOtherBranch = otherBranches.find(b => upperText.includes(b.keyword));
+
+  if (detectedOtherBranch) {
+    return { verified: false, reason: `This appears to be an NU ${detectedOtherBranch.label} Alumni ID. Only NU Dasmariñas Alumni IDs are accepted for registration.` };
+  }
+
+  if (!isDasmarinas) {
+    return { verified: false, reason: 'This ID could not be verified as an NU Dasmariñas Alumni ID.' };
+  }
+
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
 
   const isNameLine = (line) => {
@@ -76,13 +102,11 @@ const verifyAlumniID = async (imageFile) => {
     );
   };
 
-  // Collect consecutive all-caps name lines and join them
   let fullName = '';
   let nameLines = [];
   for (let i = 0; i < lines.length; i++) {
     if (isNameLine(lines[i])) {
       nameLines.push(lines[i]);
-      // Check if next line is also a name line — if so keep collecting
       if (nameLines.length >= 2) break;
     } else if (nameLines.length > 0) {
       break;
@@ -114,32 +138,27 @@ const verifyAlumniID = async (imageFile) => {
 
   if (fullName) {
     const suffixes = ['JR', 'SR', 'JR.', 'SR.'];
-    // Filipino compound last name particles
     const particles = ['DELA', 'DE', 'DEL', 'DELOS', 'SAN', 'SANTA', 'LOS', 'LAS'];
 
     const parts = fullName.split(' ');
 
-    // Separate suffix only if there are enough name parts remaining
     let suffix = '';
     const lastPart = parts[parts.length - 1].replace('.', '').toUpperCase();
     if (suffixes.includes(lastPart) && parts.length > 2) {
       suffix = parts.pop();
     }
 
-    //  Detect compound last name (e.g. Dela Cruz, De Leon, San Jose)
-    //  If second-to-last word is a particle, last name = last 2 words
     let lastNameParts = [];
     if (
       parts.length >= 2 &&
       particles.includes(parts[parts.length - 2].toUpperCase())
     ) {
-      lastNameParts = parts.splice(parts.length - 2, 2); // grab last 2 words
+      lastNameParts = parts.splice(parts.length - 2, 2);
     } else {
-      lastNameParts = parts.splice(parts.length - 1, 1); // grab last 1 word
+      lastNameParts = parts.splice(parts.length - 1, 1);
     }
     lastName = lastNameParts.join(' ') + (suffix ? ' ' + suffix : '');
 
-    // Remaining parts: last word = middle name, rest = first name
     if (parts.length === 0) {
       firstName = '';
       middleName = '';
@@ -151,7 +170,6 @@ const verifyAlumniID = async (imageFile) => {
       firstName = parts.slice(0, parts.length - 1).join(' ');
     }
 
-    // Capitalize each word properly
     const cap = str => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
     firstName = cap(firstName);
     middleName = cap(middleName);
@@ -187,6 +205,62 @@ const scannerStyle = `
     box-shadow: 0 0 8px #51A2FF;
     animation: scan-line 2s ease-in-out infinite;
   }
+
+  /* ── RWD Classes ── */
+  .aid-back {
+    position: fixed;
+    top: 27px;
+    left: 39px;
+    z-index: 10;
+  }
+  .aid-card {
+    width: 800px;
+    max-width: 95vw;
+    background: rgba(13, 19, 56, 0.25);
+    border: 0.8px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 48px;
+    box-sizing: border-box;
+  }
+  .aid-upload-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+    transition: border-color 0.4s ease;
+  }
+  .aid-modal-box {
+    width: 360px;
+    background: linear-gradient(145deg, #0D1338, #0a0f2e);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 36px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  /* Tablet: <= 768px */
+  @media (max-width: 768px) {
+    .aid-back  { top: 16px; left: 16px; }
+    .aid-card  { padding: 32px 24px; border-radius: 12px; }
+    .aid-upload-area { height: 220px; }
+    .aid-modal-box { width: 90vw; max-width: 360px; }
+  }
+
+  /* Mobile: <= 480px */
+  @media (max-width: 480px) {
+    .aid-back  { top: 12px; left: 12px; }
+    .aid-card  { padding: 24px 16px; border-radius: 10px; max-width: 100vw; }
+    .aid-upload-area { height: 180px; }
+    .aid-modal-box { width: 92vw; padding: 24px 20px; }
+  }
 `;
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -203,11 +277,10 @@ const AlumniIDRegistration = () => {
   const [imageFile, setImageFile] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
-  const [status, setStatus] = useState('idle'); // 'idle' | 'scanning' | 'verified' | 'failed'
+  const [status, setStatus] = useState('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [extractedData, setExtractedData] = useState(null);
 
-  // ── Auto-scan whenever imageFile changes ───────────────────────────────────
   useEffect(() => {
     if (!imageFile) return;
     const run = async () => {
@@ -231,7 +304,6 @@ const AlumniIDRegistration = () => {
     run();
   }, [imageFile]);
 
-  // ── File Upload ────────────────────────────────────────────────────────────
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -240,7 +312,6 @@ const AlumniIDRegistration = () => {
     setShowModal(false);
   };
 
-  // ── Camera ─────────────────────────────────────────────────────────────────
   const startCamera = async () => {
     setShowModal(false);
     try {
@@ -276,7 +347,7 @@ const AlumniIDRegistration = () => {
     canvas.toBlob((blob) => {
       const file = new File([blob], 'captured-id.jpg', { type: 'image/jpeg' });
       setPreview(URL.createObjectURL(blob));
-      setImageFile(file); // triggers auto-scan via useEffect
+      setImageFile(file);
       stopCamera();
     }, 'image/jpeg', 0.95);
   }, []);
@@ -295,7 +366,6 @@ const AlumniIDRegistration = () => {
     navigate('/signup', { state: { fromIDVerification: true, ...extractedData } });
   };
 
-  // ── Border color by status ────────────────────
   const borderColor = {
     idle: 'rgba(0,0,0,0.25)',
     scanning: '#51A2FF',
@@ -320,7 +390,7 @@ const AlumniIDRegistration = () => {
         }}
       >
         {/* Back Button */}
-        <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
+        <div className="aid-back">
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
               <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -335,21 +405,7 @@ const AlumniIDRegistration = () => {
             onClick={() => setShowModal(false)}
             style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
           >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{
-                background: 'linear-gradient(145deg, #0D1338, #0a0f2e)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '20px',
-                padding: '36px 32px',
-                width: '360px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '20px',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
-              }}
-            >
+            <div className="aid-modal-box" onClick={e => e.stopPropagation()}>
               {/* Icon */}
               <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(43,114,251,0.15)', border: '1px solid rgba(43,114,251,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
@@ -427,7 +483,7 @@ const AlumniIDRegistration = () => {
           </div>
         )}
 
-        {/* ── Camera Fullscreen ────── */}
+        {/* ── Camera Fullscreen ──────────────────────────────────────────────── */}
         {cameraActive && (
           <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px', letterSpacing: '0.3px' }}>
@@ -445,7 +501,7 @@ const AlumniIDRegistration = () => {
                 onClick={capturePhoto}
                 style={{ height: '50px', padding: '0 36px', background: '#2B72FB', border: 'none', borderRadius: '14px', fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '15px', color: '#FFFFFF', cursor: 'pointer', boxShadow: '0 4px 20px rgba(43,114,251,0.4)' }}
               >
-                Capture
+                📸 Capture
               </button>
               <button
                 onClick={stopCamera}
@@ -457,17 +513,8 @@ const AlumniIDRegistration = () => {
           </div>
         )}
 
-        {/* ── Main Card (original layout preserved) ─────────────────────────── */}
-        <div
-          style={{
-            width: '800px',
-            maxWidth: '95vw',
-            background: 'rgba(13, 19, 56, 0.25)',
-            border: '0.8px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '14px',
-            padding: '48px',
-          }}
-        >
+        {/* ── Main Card ─────────────────────────────────────────────────────── */}
+        <div className="aid-card">
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '28px', lineHeight: '42px', color: '#FFFFFF', margin: '0 0 12px 0' }}>
@@ -486,26 +533,21 @@ const AlumniIDRegistration = () => {
 
             {/* Upload Area */}
             <div
+              className="aid-upload-area"
               onClick={() => !preview && setShowModal(true)}
               style={{
-                position: 'relative',
-                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
-                width: '100%', height: '300px',
                 background: '#F3F3F5',
                 border: `2px solid ${borderColor}`,
                 borderRadius: '14px',
                 cursor: preview ? 'default' : 'pointer',
-                overflow: 'hidden',
-                transition: 'border-color 0.4s ease',
               }}
             >
               {preview ? (
                 <img src={preview} alt="Alumni ID Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               ) : (
-                <img src={CameraIcon} alt="Upload" style={{ width: '119px', height: '119px' }} />
+                <img src={CameraIcon} alt="Upload" style={{ width: '139px', height: '139px' }} />
               )}
 
-              {/* Scanning overlay on top of preview */}
               {status === 'scanning' && preview && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                   <div className="scan-line" />
@@ -516,7 +558,6 @@ const AlumniIDRegistration = () => {
                 </div>
               )}
 
-              {/* Verified overlay checkmark */}
               {status === 'verified' && preview && (
                 <div style={{ position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px rgba(34,197,94,0.5)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -525,7 +566,6 @@ const AlumniIDRegistration = () => {
                 </div>
               )}
 
-              {/* Failed overlay x mark */}
               {status === 'failed' && preview && (
                 <div style={{ position: 'absolute', top: '12px', right: '12px', width: '32px', height: '32px', borderRadius: '50%', background: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 12px rgba(239,68,68,0.5)' }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -535,10 +575,8 @@ const AlumniIDRegistration = () => {
               )}
             </div>
 
-            {/* Hidden file input */}
             <input ref={fileInputRef} id="alumni-id-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
-            {/* Retry button — only shown after failed or verified */}
             {preview && status !== 'scanning' && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
                 <button
@@ -569,11 +607,11 @@ const AlumniIDRegistration = () => {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[
-                  { text: 'Place your ID on a flat, well-lit surface before scanning.' },
-                  { text: 'Keep the ID straight and avoid tilting or angling it.' },
-                  { text: 'Make sure all text on the ID is clearly visible and not blurry.' },
-                  { text: 'Avoid covering any part of the ID with your fingers.' },
-                  { text: "Avoid glare — don't scan under direct bright light or flash." },
+                  { text: '1.Place your ID on a flat, well-lit surface before scanning.' },
+                  { text: '2.Keep the ID straight and avoid tilting or angling it.' },
+                  { text: '3.Make sure all text on the ID is clearly visible and not blurry.' },
+                  { text: '4.Avoid covering any part of the ID with your fingers.' },
+                  { text: "5.Avoid glare — don't scan under direct bright light or flash." },
                 ].map((tip, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }}>{tip.icon}</span>
@@ -584,9 +622,7 @@ const AlumniIDRegistration = () => {
             </div>
           )}
 
-          {/* ── Status Banners ──────────────────────────────────────────────── */}
-
-          {/* Scanning */}
+          {/* Scanning banner */}
           {status === 'scanning' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(81,162,255,0.08)', border: '1px solid rgba(81,162,255,0.2)', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px' }}>
               <div style={{ width: '20px', height: '20px', border: '2px solid rgba(81,162,255,0.3)', borderTop: '2px solid #51A2FF', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
@@ -594,7 +630,7 @@ const AlumniIDRegistration = () => {
             </div>
           )}
 
-          {/* Failed */}
+          {/* Failed banner */}
           {status === 'failed' && errorMsg && (
             <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '12px', padding: '16px 18px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
@@ -611,7 +647,7 @@ const AlumniIDRegistration = () => {
             </div>
           )}
 
-          {/* Verified */}
+          {/* Verified banner */}
           {status === 'verified' && extractedData && (
             <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '12px', padding: '16px 18px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
@@ -687,7 +723,7 @@ const AlumniIDRegistration = () => {
               marginBottom: '24px',
             }}
           >
-            {status === 'scanning' ? 'Verifying...' : status === 'verified' ? 'Next →' : 'Verify Your ID to Continue'}
+            {status === 'scanning' ? 'Verifying...' : status === 'verified' ? 'Next' : 'Verify Your ID to Continue'}
           </button>
 
           {/* Log in link */}

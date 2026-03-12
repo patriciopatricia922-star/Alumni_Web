@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
 import { supabase } from '../lib/supabase';
-const alumnaiLogo = new URL('../assets/AlumnAI Logo.png', import.meta.url).href;
+const alumnaiLogo = new URL('../assets/horizon_logo.svg', import.meta.url).href;
 
 const LandingPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -323,7 +323,7 @@ const LandingPage = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 64px 5vw 80px;
+          padding: 130px 5vw 40px;
           box-sizing: border-box;
           text-align: center;
         }
@@ -352,6 +352,8 @@ const LandingPage = () => {
           align-items: center;
           cursor: pointer;
           gap: 4px;
+          margin-top: auto;
+          margin-bottom: 16px;
         }
         .lp-explore-more p {
           font-family: Arial;
@@ -422,7 +424,7 @@ const LandingPage = () => {
                 color: '#FFFFFF',
                 WebkitTextStroke: '0.6px rgba(0,0,0,0.6)',
                 textShadow: '0px 2.5px 4px rgba(0,0,0,0.7)',
-                margin: '0 0 8px',
+                margin: '0 0 -8px',
                 fontWeight: 400,
               }}
             >
@@ -579,7 +581,7 @@ const LandingPage = () => {
           <div style={{ marginBottom: '56px' }}>
             <h2 style={{
               fontFamily: 'Arial', fontWeight: 700, fontSize: '42px',
-              lineHeight: '1.1', color: '#DAA520',
+              lineHeight: '1.1', color: '#002263',
               textAlign: 'center', margin: '0 0 16px',
             }}>
               Mission
@@ -619,7 +621,7 @@ const LandingPage = () => {
           <div style={{ marginBottom: '0' }}>
             <h2 style={{
               fontFamily: 'Arial', fontWeight: 700, fontSize: '42px',
-              lineHeight: '1.1', color: '#DAA520',
+              lineHeight: '1.1', color: '#002263',
               textAlign: 'center', margin: '0 0 16px',
             }}>
               Vision
@@ -642,18 +644,18 @@ const LandingPage = () => {
       </section>
 
       {/* ══ WHY JOIN — BENEFIT CARDS ══════════════════════════════════════ */}
-      <section style={{ width: '100%', background: '#002263', padding: '80px 32px' }}>
+      <section style={{ width: '100%', background: '#F9FAFB', padding: '80px 32px' }}>
         <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
             <h2 style={{
               fontFamily: 'Arial', fontWeight: 700, fontSize: '36px',
-              lineHeight: '44px', color: '#FFFFFF', margin: '0 0 12px',
+              lineHeight: '44px', color: '#101828', margin: '0 0 12px',
             }}>
               Benefits
             </h2>
             <p style={{
               fontFamily: 'Arial', fontSize: '17px', lineHeight: '26px',
-              color: 'rgba(255,255,255,0.65)', margin: 0,
+              color: '#4A5565', margin: 0,
             }}>
               Membership opens doors to a lifetime of opportunity, connection, and growth.
             </p>
@@ -669,10 +671,10 @@ const LandingPage = () => {
             {[
               {
                 icon: (
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="9" cy="7" r="4" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="9" cy="7" r="4" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ),
                 title: 'Stay Connected',
@@ -680,8 +682,8 @@ const LandingPage = () => {
               },
               {
                 icon: (
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ),
                 title: 'Give Back',
@@ -689,8 +691,8 @@ const LandingPage = () => {
               },
               {
                 icon: (
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 ),
                 title: 'Grow Together',
@@ -700,47 +702,81 @@ const LandingPage = () => {
               <div
                 key={i}
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '20px',
-                  padding: '36px 28px',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '16px',
-                  transition: 'background 0.2s, border-color 0.2s',
+                  alignItems: 'center',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
+                  transition: 'box-shadow 0.2s, transform 0.2s',
                   cursor: 'default',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.09)';
-                  e.currentTarget.style.borderColor = 'rgba(218,165,32,0.4)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,34,99,0.14)';
+                  e.currentTarget.style.transform = 'translateY(-3px)';
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Icon circle */}
+                {/* Top accent bar — gold */}
                 <div style={{
-                  width: '56px', height: '56px',
-                  background: 'rgba(218,165,32,0.12)',
-                  borderRadius: '16px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '100%',
+                  height: '8px',
+                  background: '#DAA520',
                   flexShrink: 0,
+                }} />
+
+                {/* Card body */}
+                <div style={{
+                  padding: '36px 28px 40px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  width: '100%',
+                  boxSizing: 'border-box',
                 }}>
-                  {card.icon}
+                  {/* Icon in circle */}
+                  <div style={{
+                    width: '72px', height: '72px',
+                    background: 'rgba(0,34,99,0.07)',
+                    borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '20px',
+                    flexShrink: 0,
+                  }}>
+                    {card.icon}
+                  </div>
+
+                  {/* Title */}
+                  <h3 style={{
+                    fontFamily: 'Arial', fontWeight: 700, fontSize: '22px',
+                    lineHeight: '1.3', color: '#101828', margin: '0 0 10px',
+                  }}>
+                    {card.title}
+                  </h3>
+
+                  {/* Gold underline beneath title */}
+                  <div style={{
+                    width: '48px', height: '3px',
+                    background: '#DAA520',
+                    borderRadius: '2px',
+                    marginBottom: '20px',
+                    flexShrink: 0,
+                  }} />
+
+                  {/* Description */}
+                  <p style={{
+                    fontFamily: 'Arial', fontSize: '15px', lineHeight: '24px',
+                    color: '#4A5565', margin: 0,
+                  }}>
+                    {card.desc}
+                  </p>
                 </div>
-                <h3 style={{
-                  fontFamily: 'Arial', fontWeight: 700, fontSize: '20px',
-                  lineHeight: '28px', color: '#FFFFFF', margin: 0,
-                }}>
-                  {card.title}
-                </h3>
-                <p style={{
-                  fontFamily: 'Arial', fontSize: '15px', lineHeight: '24px',
-                  color: 'rgba(255,255,255,0.65)', margin: 0,
-                }}>
-                  {card.desc}
-                </p>
               </div>
             ))}
           </div>

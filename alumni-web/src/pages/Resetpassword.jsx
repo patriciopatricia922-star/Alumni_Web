@@ -24,12 +24,12 @@ const inputStyle = {
   background: 'rgba(243,243,245,0.17)',
   border: '1.23674px solid rgba(0,0,0,0.25)',
   borderRadius: '8px', padding: '4px 36px 4px 12px',
-  fontFamily: 'Montserrat', fontWeight: 400, fontSize: '12px',
+  fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px',
   color: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
 };
 
 const labelStyle = {
-  fontFamily: 'Montserrat', fontWeight: 400, fontSize: '13px',
+  fontFamily: 'Arimo', fontWeight: 400, fontSize: '13px',
   lineHeight: '38px', color: '#FFFFFF', display: 'block', margin: 0,
 };
 
@@ -93,7 +93,7 @@ const ResetPassword = () => {
       width: '100%', height: '100vh',
       background: '#002263',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Montserrat, Arial, sans-serif',
+      fontFamily: 'Arimo',
     }}>
       {/* Back Button */}
       <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
@@ -118,7 +118,7 @@ const ResetPassword = () => {
       }}>
         {/* Title */}
         <h2 style={{
-          fontFamily: 'Montserrat', fontWeight: 700, fontSize: '17px',
+          fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px',
           color: '#FFFFFF', margin: '0 0 8px 0', textAlign: 'center',
         }}>
           Reset Password
@@ -126,7 +126,7 @@ const ResetPassword = () => {
 
         {/* Subtitle */}
         <p style={{
-          fontFamily: 'Montserrat', fontWeight: 400, fontSize: '14px',
+          fontFamily: 'Arimo', fontWeight: 400, fontSize: '14px',
           lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
           textAlign: 'center', margin: '0 0 28px 0',
         }}>
@@ -140,7 +140,7 @@ const ResetPassword = () => {
             border: '1px solid rgba(255,80,80,0.4)',
             borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
           }}>
-            <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
+            <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
           </div>
         )}
 
@@ -151,7 +151,7 @@ const ResetPassword = () => {
             border: '1px solid rgba(0,200,83,0.4)',
             borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
           }}>
-            <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: '#00C853', margin: 0 }}>
+            <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#00C853', margin: 0 }}>
               Password reset successfully! Redirecting to login…
             </p>
           </div>
@@ -176,7 +176,7 @@ const ResetPassword = () => {
             </button>
           </div>
           <StrengthDots />
-          <p style={{ fontFamily: 'Montserrat', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
+          <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
             The password must be at least 8 characters long.
           </p>
         </div>
@@ -200,7 +200,7 @@ const ResetPassword = () => {
               <EyeIcon visible={showConfirm} />
             </button>
           </div>
-          <p style={{ fontFamily: 'Montserrat', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
+          <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
             The password must be at least 8 characters long.
           </p>
         </div>
@@ -214,7 +214,7 @@ const ResetPassword = () => {
             background: loading || success ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.7)',
             boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
             border: 'none', borderRadius: '13px',
-            fontFamily: 'Montserrat', fontWeight: 700, fontSize: '15px',
+            fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
             color: '#FFFFFF', cursor: loading || success ? 'not-allowed' : 'pointer',
             transition: 'background 0.2s',
           }}
