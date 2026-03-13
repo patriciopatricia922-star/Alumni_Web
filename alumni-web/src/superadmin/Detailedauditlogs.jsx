@@ -35,39 +35,8 @@ const getStatusStyle = status => status === 'Success'
   ? { bg: '#DCFCE7', color: '#15803D' }
   : { bg: '#FEE2E2', color: '#B91C1C' };
 
-// ─── Audit log data ───────────────────────────────────────────────────────────
-const AUDIT_LOGS = [
-  {
-    tags: ['Super Admin', 'Update', 'Alumni Profile'],
-    user: 'Mark Wilson',
-    action: 'disabled access admin Thomas Lee',
-    timestamp: 'Feb 15, 2026, 08:55:42 PM',
-    newValue: 'Disabled admin profile',
-    recordId: 'IMPORT-2026-001',
-    device: 'Chrome 120 / Windows 11',
-    status: 'Success',
-  },
-  {
-    tags: ['Alumni', 'Login', 'Alumni Profile'],
-    user: 'Sarah Smith',
-    action: 'failed login attempt - incorrect password',
-    timestamp: 'Feb 15, 2026, 08:42:18 PM',
-    newValue: '',
-    recordId: '',
-    device: 'Safari 17 / iOS 17',
-    status: 'Failed',
-  },
-  {
-    tags: ['Admin', 'Create', 'Events'],
-    user: 'Jennifer Garcia',
-    action: 'created new alumni event',
-    timestamp: 'Feb 15, 2026, 08:15:33 PM',
-    newValue: 'Event: Alumni Homecoming 2026',
-    recordId: 'EVENT-2026-048',
-    device: 'Chrome 120 / macOS 14',
-    status: 'Success',
-  },
-];
+// ─── No data ──────────────────────────────────────────────────────────────────
+const AUDIT_LOGS = [];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const DetailedAuditLogs = () => {
@@ -82,7 +51,7 @@ const DetailedAuditLogs = () => {
       <SuperAdminSidebar activePage="audit-logs" />
 
       {/* ── Main Content ── */}
-      <main style={{ marginLeft: '229px', flex: 1, padding: '40px 40px 60px' }}>
+      <main style={{ marginLeft: '250px', flex: 1, padding: '40px 40px 60px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
@@ -169,7 +138,7 @@ const DetailedAuditLogs = () => {
               ))}
             </div>
             <span style={{ marginLeft: 'auto', fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#6A7282' }}>
-              Showing {AUDIT_LOGS.length} of {AUDIT_LOGS.length} records
+              Showing 0 of 0 records
             </span>
           </div>
         </div>
@@ -181,66 +150,22 @@ const DetailedAuditLogs = () => {
             <p style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#6A7282', margin: 0 }}>Detailed record of all system activities</p>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {AUDIT_LOGS.map((log, i) => (
-              <div key={i} style={{ padding: '16px', border: '1px solid #E5E7EB', borderRadius: '10px', background: '#FFFFFF' }}>
-                {/* Tags */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
-                  {log.tags.map((tag, ti) => {
-                    const s = getTagStyle(tag);
-                    return (
-                      <span key={ti} style={{ background: s.bg, color: s.color, fontFamily: 'Arimo, Arial', fontSize: '11px', fontWeight: 600, padding: '2px 10px', borderRadius: '999px' }}>
-                        {tag}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                {/* User + action */}
-                <p style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#111827', margin: '0 0 10px' }}>
-                  <span style={{ fontWeight: 700 }}>{log.user}</span>{' '}
-                  <span style={{ color: '#374151' }}>{log.action}</span>
-                </p>
-
-                {/* Meta row */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#6B7280' }}>
-                      <span style={{ fontWeight: 600 }}>Timestamp:</span> {log.timestamp}
-                    </span>
-                    {log.newValue && (
-                      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#6B7280' }}>
-                        <span style={{ fontWeight: 600 }}>New Value:</span> {log.newValue}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', textAlign: 'right' }}>
-                    {log.recordId && (
-                      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#6B7280' }}>
-                        <span style={{ fontWeight: 600 }}>Record ID:</span> {log.recordId}
-                      </span>
-                    )}
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#6B7280' }}>
-                      <span style={{ fontWeight: 600 }}>Device / Browser:</span> {log.device}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Status badge */}
-                <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-                  {(() => {
-                    const s = getStatusStyle(log.status);
-                    return (
-                      <span style={{ background: s.bg, color: s.color, fontFamily: 'Arimo, Arial', fontSize: '12px', fontWeight: 600, padding: '3px 12px', borderRadius: '999px' }}>
-                        {log.status === 'Success' ? '✓ ' : '✕ '}{log.status}
-                      </span>
-                    );
-                  })()}
-                </div>
-              </div>
-            ))}
+          {/* Empty state */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '60px 24px', gap: '10px',
+            background: '#F8FAFC', borderRadius: '10px',
+            border: '1px dashed #CBD5E1',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#94A3B8' }}>No audit logs recorded yet</span>
           </div>
         </div>
+
       </main>
     </div>
   );

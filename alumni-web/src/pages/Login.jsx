@@ -60,7 +60,6 @@ const Login = () => {
 
   const [form, setForm] = useState({ email: '', password: '' });
 
-  // Pick up any error message passed back from AuthCallback (e.g. admin blocked)
   React.useEffect(() => {
     if (location.state?.error) setError(location.state.error);
   }, [location.state]);
@@ -81,7 +80,6 @@ const Login = () => {
       });
       if (loginError) throw loginError;
 
-      // Route based on role
       const email = form.email.toLowerCase().trim();
       if (email === 'superadmin@nu-dasma.edu.ph') {
         navigate('/superadmin/super-admin-dashboard');
@@ -108,7 +106,6 @@ const Login = () => {
         },
       });
       if (error) throw error;
-      // Page will redirect to Google — no further action needed here
     } catch (err) {
       setError(err.message || 'Google sign-in failed. Please try again.');
       setLoading(false);
@@ -145,7 +142,7 @@ const Login = () => {
 
           {/* Top Nav */}
           <div style={{
-            padding: '20px 20px 12px',
+            padding: '20px 20px 20px',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', gap: '12px', flexShrink: 0,
           }}>
@@ -154,10 +151,11 @@ const Login = () => {
               alt="AlumnAI Logo"
               style={{ width: '150px', height: '70px', objectFit: 'contain' }}
             />
-            <div style={{ width: '80%', background: 'rgba(243,243,245,0.17)', borderRadius: '10px', padding: '2px', display: 'flex' }}>
-              <Link to="/register" style={{ flex: 1, textDecoration: 'none' }}>
+            {/* Slider — Figma spec: 352.8 × 36 */}
+            <div style={{ width: '352.8px', maxWidth: '90%', background: 'rgba(243,243,245,0.17)', borderRadius: '10px', padding: '3px', display: 'flex', height: '36px', boxSizing: 'border-box' }}>
+              <Link to="/register" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
                 <button style={{
-                  width: '100%', height: '24px', background: 'transparent',
+                  width: '100%', flex: 1, background: 'transparent',
                   borderRadius: '8px', border: 'none', fontFamily: 'Arimo',
                   fontWeight: 400, fontSize: '12px', color: '#FFFFFF',
                   cursor: 'pointer', transition: 'background 0.2s ease',
@@ -166,7 +164,7 @@ const Login = () => {
                 </button>
               </Link>
               <button style={{
-                flex: 1, height: '24px', background: '#155DFC',
+                flex: 1, background: '#155DFC',
                 boxShadow: '0px 4px 8px rgba(0,0,0,0.1)', borderRadius: '8px',
                 border: 'none', fontFamily: 'Arimo', fontWeight: 400,
                 fontSize: '12px', color: '#FFFFFF', cursor: 'pointer',
@@ -178,7 +176,7 @@ const Login = () => {
           </div>
 
           {/* Google Button + OR divider */}
-          <div style={{ padding: '4px 20px 0', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ padding: '0 20px 0', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button
               onClick={handleGoogleLogin}
               disabled={loading}
@@ -216,14 +214,13 @@ const Login = () => {
             borderRadius: '12px', overflow: 'hidden',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
-            <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
+            <div style={{ padding: '0px 18px 36px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 4px 0' }}>Welcome Back</h3>
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Please enter your details to log in</p>
             </div>
 
             <div style={{ padding: '4px 18px 18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
-              {/* Error */}
               {error && (
                 <div style={{ background: 'rgba(255,80,80,0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '8px 12px' }}>
                   <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
@@ -231,7 +228,7 @@ const Login = () => {
               )}
 
               {/* Email */}
-              <div>
+              <div style={{ marginTop: '2px'}}>
                 <label style={labelStyle}>Email Address</label>
                 <input
                   style={inputStyle}
@@ -246,7 +243,7 @@ const Login = () => {
               {/* Password */}
               <div>
                 <label style={labelStyle}>Password</label>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', marginTop: '10px' }}>
                   <input
                     style={inputStyle}
                     type={showPassword ? 'text' : 'password'}
@@ -272,7 +269,7 @@ const Login = () => {
                 onClick={handleLogin}
                 disabled={loading}
                 style={{
-                  width: '100%', height: '50px',
+                  width: '100%', height: '45px',
                   background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
                   boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
                   border: 'none', borderRadius: '13px',

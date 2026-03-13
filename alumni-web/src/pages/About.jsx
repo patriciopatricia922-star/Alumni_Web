@@ -38,7 +38,7 @@ const About = () => {
               background: '#2B72FB', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ fontFamily: 'SF Pro Display, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
+              <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FFFFFF' }}>3</span>
             </div>
           </button>
         </div>
@@ -67,14 +67,14 @@ const About = () => {
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
+              <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
                 Back
               </span>
             </button>
 
             {/* Title */}
             <h2 style={{
-              fontFamily: 'Montserrat', fontWeight: 700,
+              fontFamily: 'Arimo', fontWeight: 700,
               fontSize: '19px', lineHeight: '20px',
               color: '#FFFFFF', margin: '0 0 8px 0',
               textAlign: 'center',
@@ -82,7 +82,7 @@ const About = () => {
               About AlumnAI
             </h2>
             <p style={{
-              fontFamily: 'Montserrat', fontWeight: 400,
+              fontFamily: 'Arimo', fontWeight: 400,
               fontSize: '15px', lineHeight: '20px',
               color: 'rgba(255, 255, 255, 0.5)',
               margin: '0 0 24px 0', textAlign: 'center',
@@ -120,13 +120,13 @@ const About = () => {
 
               {/* AlumnAI name */}
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '20px', lineHeight: '32px', color: '#FFFFFF' }}>Alumn</span>
-                <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '20px', lineHeight: '32px', color: '#D9CA81' }}>AI</span>
+                <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '20px', lineHeight: '32px', color: '#FFFFFF' }}>Alumn</span>
+                <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '20px', lineHeight: '32px', color: '#D9CA81' }}>AI</span>
               </div>
 
               {/* Description */}
               <p style={{
-                fontFamily: 'Montserrat', fontWeight: 400,
+                fontFamily: 'Arimo', fontWeight: 400,
                 fontSize: '17px', lineHeight: '28px',
                 color: '#FFFFFF', textAlign: 'center', margin: 0,
               }}>
@@ -155,7 +155,7 @@ const About = () => {
                     onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                   >
                     <span style={{
-                      fontFamily: 'Montserrat', fontWeight: 700,
+                      fontFamily: 'Arimo', fontWeight: 700,
                       fontSize: '16px', lineHeight: '20px', color: '#FFFFFF',
                     }}>
                       {link.label}

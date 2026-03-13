@@ -14,8 +14,8 @@ const menuItems = [
   { path: '/admin/alumni-management',      icon: BsFillPeopleFill,        label: 'Alumni Management'     },
   { path: '/admin/survey-management',      icon: RiSurveyFill,            label: 'Survey Management'     },
   { path: '/admin/response-and-analytics', icon: SiGoogleanalytics,       label: 'Response & Analytics'  },
-  { path: '/admin/predictive-analytics',   icon: RiOrganizationChart,     label: 'Predictive Analytics'  },
-  { path: '/admin/engagement-alumni',      icon: FaBookBookmark,          label: 'Alumni Engagement'     },
+  { path: '/admin/predictive-analytics',   icon: RiOrganizationChart,     label: 'Predictive Analytics', marginTop: '16px' },
+  { path: '/admin/engagement-alumni',      icon: FaBookBookmark,          label: 'Alumni Engagement',    marginTop: '16px' },
 ];
 
 function AdminSidebar() {
@@ -70,14 +70,8 @@ function AdminSidebar() {
 
       {/* Menu */}
       <div style={{ padding: '20px 9px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <p style={{
-          fontFamily: 'Arimo', fontWeight: 600, fontSize: '10px',
-          lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.4)', padding: '0 16px', margin: '0 0 6px 0',
-        }}>MENU</p>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {menuItems.map(({ path, icon: Icon, label }) => {
+          {menuItems.map(({ path, icon: Icon, label, marginTop }) => {
             const isActive = location.pathname === path;
             return (
               <Link
@@ -89,12 +83,13 @@ function AdminSidebar() {
                   background: 'transparent',
                   borderRadius: '14px', textDecoration: 'none',
                   transition: 'background 0.2s', margin: '0 6px',
+                  marginTop: marginTop || '0px',
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <Icon
-                  size={20}
+                  size={21}
                   style={{ color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.85)', flexShrink: 0 }}
                 />
                 <span style={{
@@ -140,7 +135,7 @@ function AdminSidebar() {
             onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
             title="Logout"
           >
-            <FiLogOut size={16} />
+            <FiLogOut size={17} />
           </button>
         </div>
       </div>

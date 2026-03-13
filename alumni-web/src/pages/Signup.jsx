@@ -66,7 +66,7 @@ const labelStyle = {
   fontSize: '11px',
   lineHeight: '14px',
   color: '#FFFFFF',
-  marginBottom: '6px',
+  marginBottom: '10px',
   display: 'block',
 };
 
@@ -89,7 +89,7 @@ const sectionTitleStyle = {
   lineHeight: '20px',
   color: '#FFFFFF',
   margin: '0 0 12px 0',
-  paddingBottom: '6px',
+  paddingBottom: '2px',
 };
 
 const Signup = () => {
@@ -264,20 +264,24 @@ const Signup = () => {
               style={{ width: '150px', height: '70px', objectFit: 'contain' }}
             />
 
+            {/* Slider — Figma spec: 352.8 × 36 */}
             <div
               style={{
-                width: '80%',
+                width: '352.8px',
+                maxWidth: '90%',
+                height: '36px',
                 background: 'rgba(243, 243, 245, 0.17)',
                 borderRadius: '10px',
-                padding: '2px',
+                padding: '3px',
                 display: 'flex',
+                boxSizing: 'border-box',
               }}
             >
               <button
                 onClick={() => setActiveTab('signup')}
                 style={{
                   flex: 1,
-                  height: '24px',
+                  height: '100%',
                   background: activeTab === 'signup' ? '#155DFC' : 'transparent',
                   borderRadius: '8px',
                   border: 'none',
@@ -291,11 +295,12 @@ const Signup = () => {
               >
                 Sign up
               </button>
-              <Link to="/login" style={{ flex: 1, textDecoration: 'none' }}>
+              <Link to="/login" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
                 <button
                   style={{
                     width: '100%',
-                    height: '24px',
+                    flex: 1,
+                    height: '100%',
                     background: activeTab === 'login' ? '#155DFC' : 'transparent',
                     borderRadius: '8px',
                     border: 'none',
@@ -349,7 +354,6 @@ const Signup = () => {
               }}
             >
 
-              {/* Error message */}
               {error && (
                 <div style={{ background: 'rgba(255, 80, 80, 0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '10px 12px' }}>
                   <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
@@ -359,7 +363,7 @@ const Signup = () => {
               {/* Personal Information */}
               <div>
                 <h4 style={sectionTitleStyle}>Personal Information</h4>
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ marginBottom: '24px' }}>
                   <RequiredLabel text="Last Name" touched={touched.lastName} hasValue={!!form.lastName} />
                   <input
                     style={inputStyle}
@@ -369,7 +373,7 @@ const Signup = () => {
                     onBlur={() => touch('lastName')}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginBottom:'13px' }}>
                   <div style={{ flex: 1 }}>
                     <RequiredLabel text="First Name" touched={touched.firstName} hasValue={!!form.firstName} />
                     <input
@@ -395,20 +399,20 @@ const Signup = () => {
               {/* Academic Information */}
               <div>
                 <h4 style={sectionTitleStyle}>Academic Information</h4>
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ marginBottom: '20px' }}>
                   <label style={labelStyle}>Academic Program</label>
                   <input
                     style={{ ...inputStyle, color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                    placeholder="e.g. BSCS"
+                    placeholder="e.g. BSIT-MWA"
                     value={idData.program || ''}
                     readOnly
                   />
                 </div>
-                <div>
+                <div style={{ marginBottom: '16px'}}>
                   <label style={labelStyle}>Year Graduated</label>
                   <input
                     style={{ ...inputStyle, color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                    placeholder="e.g. 2024"
+                    placeholder="e.g. 2025"
                     value={idData.batchYear || ''}
                     readOnly
                   />
@@ -418,7 +422,7 @@ const Signup = () => {
               {/* Account Security */}
               <div>
                 <h4 style={sectionTitleStyle}>Account Security</h4>
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ marginBottom: '23px' }}>
                   <RequiredLabel text="Email Address" touched={touched.email} hasValue={!!form.email} />
                   <input
                     style={{
@@ -437,7 +441,7 @@ const Signup = () => {
                     </p>
                   )}
                 </div>
-                <div style={{ marginBottom: '12px' }}>
+                <div style={{ marginBottom: '22px' }}>
                   <RequiredLabel text="Password" touched={touched.password} hasValue={!!form.password} />
                   <div style={{ position: 'relative' }}>
                     <input
@@ -483,7 +487,7 @@ const Signup = () => {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  height: '50px',
+                  height: '45px',
                   background: !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
                   border: 'none',
@@ -500,7 +504,6 @@ const Signup = () => {
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
 
-              {/* Already have an account */}
               <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
                 Already have an account?{' '}
                 <Link to="/login" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>

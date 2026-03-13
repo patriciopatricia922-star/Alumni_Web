@@ -22,9 +22,9 @@ const StatCard = ({ title, value, subtitle, subtitleColor, IconEl, iconBg }) => 
     boxShadow: '0px 1px 3px rgba(0,0,0,0.08)',
   }}>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <span style={{ fontFamily: 'Lexend, Arial', fontSize: '14px', color: '#6A7282', lineHeight: '20px' }}>{title}</span>
-      <span style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', lineHeight: '36px' }}>{value}</span>
-      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: subtitleColor || '#6A7282', lineHeight: '16px' }}>{subtitle}</span>
+      <span style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#6A7282', lineHeight: '20px' }}>{title}</span>
+      <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '30px', color: '#101828', lineHeight: '36px' }}>{value}</span>
+      <span style={{ fontFamily: 'Arimo', fontSize: '12px', color: subtitleColor || '#6A7282', lineHeight: '16px' }}>{subtitle}</span>
     </div>
     <div style={{
       width: '48px', height: '48px', flexShrink: 0,
@@ -45,9 +45,25 @@ const ChartCard = ({ title, subtitle, children }) => (
     padding: '24px',
     flex: 1,
   }}>
-    <div style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>{title}</div>
-    <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>{subtitle}</div>
+    <div style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>{title}</div>
+    <div style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>{subtitle}</div>
     {children}
+  </div>
+);
+
+// ─── Empty Chart Placeholder ──────────────────────────────────────────────────
+const EmptyChart = ({ height = 280 }) => (
+  <div style={{
+    height,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    background: '#F8FAFC', borderRadius: '10px',
+    border: '1px dashed #CBD5E1', gap: '8px',
+  }}>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+    <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#94A3B8' }}>No data available yet</span>
   </div>
 );
 
@@ -61,7 +77,7 @@ const ActionBadge = ({ type }) => {
   const c = colors[type] || colors.Update;
   return (
     <span style={{
-      fontFamily: 'Arimo, Arial', fontSize: '12px', color: c.text,
+      fontFamily: 'Arimo', fontSize: '12px', color: c.text,
       background: c.bg, borderRadius: '8px',
       padding: '2px 8px', lineHeight: '16px',
     }}>{type}</span>
@@ -123,42 +139,8 @@ const SuperAdminDashboard = () => {
     },
   ];
 
-  const activityByRole = [
-    { name: 'Alumni', value: 78, color: '#51A2FF' },
-    { name: 'Admin',  value: 45, color: '#155DFC' },
-  ];
-
-  const activityByModule = [
-    { name: 'Alumni Portal', value: 50 },
-    { name: 'Events',        value: 30 },
-    { name: 'Donations',     value: 20 },
-    { name: 'Feedback',      value: 18 },
-    { name: 'User Mgmt',     value: 25 },
-    { name: 'Settings',      value: 12 },
-    { name: 'Reports',       value: 28 },
-  ];
-
-  const loginTrends = [
-    { date: 'Feb 8',  successful: 65, failed: 5 },
-    { date: 'Feb 9',  successful: 68, failed: 3 },
-    { date: 'Feb 10', successful: 62, failed: 8 },
-    { date: 'Feb 11', successful: 70, failed: 4 },
-    { date: 'Feb 12', successful: 73, failed: 6 },
-    { date: 'Feb 13', successful: 67, failed: 2 },
-    { date: 'Feb 14', successful: 75, failed: 4 },
-    { date: 'Feb 15', successful: 71, failed: 3 },
-  ];
-
-  const recentActions = [
-    { type: 'Update',  module: 'System Settings', user: 'Super Admin', description: 'Updated system security settings',    timestamp: 'February 15, 2026 10:23 PM', id: 'ID: #27T4X55D1'     },
-    { type: 'Archive', module: 'Events',           user: 'Super Admin', description: 'Archived event',                     timestamp: 'February 15, 2026 10:19 PM', id: 'ID: EVENT-2025-045' },
-    { type: 'Export',  module: 'Reports',          user: 'Super Admin', description: 'Exported alumni database report',    timestamp: 'February 15, 2026 09:58 PM', id: 'ID: EXPORT-652'     },
-    { type: 'Update',  module: 'User Management',  user: 'Admin',       description: 'Changed user role',                 timestamp: 'February 14, 2026 09:32 PM', id: 'ID: USER-188'       },
-    { type: 'Update',  module: 'System Settings',  user: 'Super Admin', description: 'Enabled email notifications',       timestamp: 'February 14, 2026 10:18 PM', id: 'ID: SETT#65D-002'   },
-  ];
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Lexend, Arial, sans-serif' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Arimo' }}>
       <SuperAdSidebar activePage="super-admin" />
 
       {/* Main content */}
@@ -166,10 +148,10 @@ const SuperAdminDashboard = () => {
 
         {/* ── Header ── */}
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 4px', lineHeight: '36px' }}>
+          <h1 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 4px', lineHeight: '36px' }}>
             Audit Overview
           </h1>
-          <p style={{ fontFamily: 'Lexend, Arial', fontSize: '16px', color: '#6A7282', margin: 0 }}>
+          <p style={{ fontFamily: 'Arimo', fontSize: '16px', color: '#6A7282', margin: 0 }}>
             Welcome bark! Here's what's happening with your alumni network.
           </p>
         </div>
@@ -182,82 +164,45 @@ const SuperAdminDashboard = () => {
         {/* ── Charts Row ── */}
         <div style={{ display: 'flex', gap: '20px', marginBottom: '28px' }}>
           <ChartCard title="Activity by Role" subtitle="Distribution of actions across user roles">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie data={activityByRole} cx="50%" cy="50%" outerRadius={100} dataKey="value" labelLine={false} label={({ name, value }) => `${name}: ${value}`}>
-                  {activityByRole.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <EmptyChart height={280} />
           </ChartCard>
 
           <ChartCard title="Activity by Module" subtitle="Actions performed in each system module">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={activityByModule}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fontFamily: 'Arimo, Arial' }} angle={-30} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#155DFC" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <EmptyChart height={280} />
           </ChartCard>
         </div>
 
         {/* ── Login Trends ── */}
         <div style={{ marginBottom: '28px' }}>
           <ChartCard title="Login Activity Trends" subtitle="Successful and failed login attempts over the past week">
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={loginTrends}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
-                <XAxis dataKey="date" tick={{ fontSize: 12, fontFamily: 'Arimo, Arial' }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontFamily: 'Arimo, Arial', fontSize: '14px' }} />
-                <Line type="monotone" dataKey="successful" stroke="#10B981" strokeWidth={2} name="Successful Logins" dot={{ r: 4 }} />
-                <Line type="monotone" dataKey="failed"     stroke="#EF4444" strokeWidth={2} name="Failed Logins"     dot={{ r: 4 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            <EmptyChart height={280} />
           </ChartCard>
         </div>
 
         {/* ── Recent Critical Actions ── */}
         <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '14px', padding: '24px' }}>
-          <div style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>
+          <div style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>
             Recent Critical Actions
           </div>
-          <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>
+          <div style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>
             Latest admin-level operations and important system changes
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {recentActions.map((action, i) => (
-              <div key={i} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                padding: '14px', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '10px', gap: '12px',
-              }}>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <ActionBadge type={action.type} />
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', fontWeight: 600, color: '#0A0A0A' }}>{action.module}</span>
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#717182' }}>•</span>
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#0A0A0A', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '2px 8px' }}>{action.user}</span>
-                  </div>
-                  <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#0A0A0A' }}>{action.description}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>{action.timestamp}</span>
-                    <span style={{ color: '#717182', fontSize: '12px' }}>•</span>
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>{action.id}</span>
-                  </div>
-                </div>
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#0A0A0A', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '2px 10px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                  ✓ Success
-                </span>
-              </div>
-            ))}
+          {/* Empty state */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '48px 24px', gap: '10px',
+            background: '#F8FAFC', borderRadius: '10px',
+            border: '1px dashed #CBD5E1',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#94A3B8' }}>No actions recorded yet</span>
           </div>
         </div>
+
       </main>
     </div>
   );

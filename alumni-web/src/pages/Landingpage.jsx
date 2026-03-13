@@ -593,7 +593,7 @@ const LandingPage = () => {
               borderRadius: '2px',
             }} />
             <p style={{
-              fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px',
+              fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px',
               color: '#364153', margin: '0 0 16px', textAlign: 'justify',
             }}>
               Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism,
@@ -601,14 +601,14 @@ const LandingPage = () => {
               education and other development programs.
             </p>
             <p style={{
-              fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px',
+              fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px',
               color: '#364153', margin: '0 0 16px', textAlign: 'justify',
             }}>
               We are committed to our:
             </p>
             {missionItems.map((item, i) => (
               <p key={i} style={{
-                fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px',
+                fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px',
                 color: '#364153', margin: '0 0 10px', textAlign: 'justify',
               }}>
                 <span style={{ fontWeight: 700, color: '#DAA520' }}>{item.label}</span>
@@ -633,7 +633,7 @@ const LandingPage = () => {
               borderRadius: '2px',
             }} />
             <p style={{
-              fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px',
+              fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px',
               color: '#364153', margin: 0, textAlign: 'justify',
             }}>
               We are National University, a dynamic private institution committed to nation building,
