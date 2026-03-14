@@ -21,12 +21,43 @@ const Navbar = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const smoothScrollTo = (targetY, duration = 600) => {
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    let startTime = null;
+
+    const easeInOutCubic = (t) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      window.scrollTo(0, startY + diff * easeInOutCubic(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  };
+
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const navHeight = 64;
+      const top = el.getBoundingClientRect().top + window.scrollY - navHeight;
+      smoothScrollTo(top, 700);
+    } else {
+      window.location.href = `/#${id}`;
+    }
+    setMenuOpen(false);
+  };
+
   const navLinks = [
-    { to: '/',          label: 'Home'      },
-    { to: '/events',    label: 'Events'    },
-    { to: '/jobs',      label: 'Jobs'      },
-    { to: '/discounts', label: 'Discounts' },
-    { to: '/about',     label: 'About'     },
+    { label: 'Home',      action: () => { smoothScrollTo(0, 700); setMenuOpen(false); } },
+    { label: 'Events',    action: () => scrollTo('events')    },
+    { label: 'Jobs',      action: () => scrollTo('jobs')      },
+    { label: 'Discounts', action: () => scrollTo('discounts') },
+    { label: 'About',     action: () => scrollTo('about')     },
   ];
 
   return (
@@ -117,7 +148,7 @@ const Navbar = () => {
         width: '100%',
         height: '64px',
         zIndex: 1000,
-        transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
+        transition: 'background-color 0.6s ease, box-shadow 0.6s ease',
         backgroundColor: menuOpen ? '#002263' : (scrolled ? '#002263' : 'transparent'),
         boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
       }}>
@@ -145,23 +176,26 @@ const Navbar = () => {
           {/* Desktop nav links */}
           <div className="nb-links">
             {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
+              <button
+                key={link.label}
+                onClick={link.action}
                 style={{
                   fontFamily: 'Arial, sans-serif',
                   fontSize: '16px',
                   lineHeight: '24px',
                   color: '#FFFFFF',
-                  textDecoration: 'none',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                   letterSpacing: '0.4px',
+                  padding: 0,
                   transition: 'opacity 0.2s ease',
                 }}
                 onMouseEnter={(e) => (e.target.style.opacity = '0.7')}
                 onMouseLeave={(e) => (e.target.style.opacity = '1')}
               >
                 {link.label}
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -232,14 +266,14 @@ const Navbar = () => {
       {/* ── Mobile dropdown ── */}
       <div className={`nb-mobile-menu${menuOpen ? ' open' : ''}`}>
         {navLinks.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
+          <button
+            key={link.label}
+            onClick={link.action}
             className="nb-mobile-link"
-            onClick={() => setMenuOpen(false)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%' }}
           >
             {link.label}
-          </Link>
+          </button>
         ))}
 
         <div className="nb-mobile-actions">

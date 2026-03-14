@@ -394,12 +394,21 @@ const STYLES = `
 `;
 
 const DEGREE_OPTIONS = [
-  'Bachelor of Science in Computer Science',
-  'Bachelor of Science in Information Technology',
-  'Bachelor of Science in Nursing',
-  'Bachelor of Science in Education',
-  'Bachelor of Arts',
-  'Bachelor of Engineering',
+  'BA COMM',
+  'BS PSYCH',
+  'BS PE',
+  'BSA',
+  'BSMA',
+  'BSBA-MM',
+  'BSBA-FM',
+  'BSBA-HRM',
+  'BSTM',
+  'BSHM',
+  'BS ARCH',
+  'BSCE',
+  'BSCS-ML',
+  'BSCpE',
+  'BSIT-MWA',
   'Other',
 ];
 
@@ -414,6 +423,7 @@ const EducationalBackground = () => {
 
   const [form, setForm] = useState({
     degreeProgram: '',
+    otherDegree: '',
     reasonForCourse: '',
     yearGraduated: '',
     distinction: '',
@@ -448,6 +458,7 @@ const EducationalBackground = () => {
   const validate = () => {
     const e = new Set();
     if (!form.degreeProgram)           e.add('degreeProgram');
+    if (form.degreeProgram === 'Other' && !form.otherDegree.trim()) e.add('otherDegree');
     if (!form.reasonForCourse.trim())  e.add('reasonForCourse');
     if (!form.yearGraduated)           e.add('yearGraduated');
     if (!form.distinction)             e.add('distinction');
@@ -561,6 +572,16 @@ const EducationalBackground = () => {
                     </svg>
                   </div>
                 </div>
+
+                {form.degreeProgram === 'Other' && (
+                  <div className="eb-field">
+                    <label className="eb-label">Please specify your degree program <span className="eb-req">*</span>{errors.has('otherDegree') && <span className="eb-field-error">Required</span>}</label>
+                    <input className="eb-input" placeholder="Enter your degree program"
+                      value={form.otherDegree}
+                      onChange={e => set('otherDegree', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur} />
+                  </div>
+                )}
 
                 {/* Reason for course */}
                 <div className="eb-field">

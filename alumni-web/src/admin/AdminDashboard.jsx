@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: "Arimo", fontWeight: 700, fontSize: 30, color: "#324D87", lineHeight: "36px" }}>Dashboard Overview</div>
-          <div style={{ fontFamily: "Arimo", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome bark! Here's what's happening with your alumni.</div>
+          <div style={{ fontFamily: "Arimo", fontSize: 16, color: "#6A7282", marginTop: 4 }}>Welcome Bark! Here's what's happening with your alumni.</div>
         </div>
 
         {/* Section: Institution's KPIs */}

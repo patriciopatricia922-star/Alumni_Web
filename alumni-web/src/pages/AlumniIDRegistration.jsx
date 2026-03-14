@@ -518,7 +518,7 @@ const AlumniIDRegistration = () => {
 
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '24px', lineHeight: '34px', color: '#FFFFFF', margin: '0 0 6px 0' }}>
+            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '22px', lineHeight: '34px', color: '#FFFFFF', margin: '0 0 6px 0' }}>
               Alumni Registration
             </h1>
             <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '13px', lineHeight: '20px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>

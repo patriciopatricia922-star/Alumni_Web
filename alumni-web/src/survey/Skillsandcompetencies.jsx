@@ -24,24 +24,24 @@ const STYLES = `
   .sc-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
 
   .sc-body { padding: 24px 51px 60px; }
-  .sc-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 32px; }
+  .sc-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
   .sc-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
   .sc-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
 
-  .sc-questions { display: flex; flex-direction: column; gap: 32px; }
-  .sc-field { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .sc-questions { display: flex; flex-direction: column; gap: 40px; }
+  .sc-field { display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .sc-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
   .sc-skill-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: #fff; }
 
-  .sc-radio-group { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+  .sc-radio-group { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
   .sc-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
   .sc-checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
 
   .sc-stars { display: flex; flex-direction: row; align-items: center; gap: 20px; padding: 4px 0; }
   .sc-star { width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-  .sc-skill-ratings { display: flex; flex-direction: column; gap: 24px; }
-  .sc-skill-row { display: flex; flex-direction: column; gap: 12px; }
+  .sc-skill-ratings { display: flex; flex-direction: column; gap: 32px; }
+  .sc-skill-row { display: flex; flex-direction: column; gap: 14px; }
 
   .sc-textarea { width: 100%; height: 110px; background: rgba(255,255,255,0.17); border: 0.89px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: #fff; outline: none; resize: vertical; transition: border-color 0.15s; }
   .sc-textarea:focus { border-color: rgba(43,114,251,0.6); }
@@ -76,8 +76,8 @@ const STYLES = `
   @media (max-height: 600px) { .sc-header { padding-bottom: 10px; } .sc-progress { padding: 10px 20px; } .sc-body { padding-top: 14px; } }
 `;
 
-const COMPETENCIES_OPTIONS = ['Communication skills','Information to technology Skills','Leadership skills','Critical & Problem-Solving skills','Work Ethics/Professionalism','Other'];
-const SKILL_RATINGS = ['Communication skills','Information to technology Skills','Leadership skills','Critical & Problem-Solving skills','Work Ethics/Professionalism skills'];
+const COMPETENCIES_OPTIONS = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism'];
+const SKILL_RATINGS = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism Skills'];
 
 const StarRating = ({ value, onChange }) => {
   const [hovered, setHovered] = useState(0);
@@ -103,7 +103,7 @@ const SkillsAndCompetencies = () => {
   const [errors, setErrors] = useState(new Set());
   const [form, setForm] = useState({
     usefulCompetencies: [],
-    skillRatings: { 'Communication skills': 0, 'Information to technology Skills': 0, 'Leadership skills': 0, 'Critical & Problem-Solving skills': 0, 'Work Ethics/Professionalism skills': 0 },
+    skillRatings: { 'Communication Skills': 0, 'Information & Technology Skills': 0, 'Leadership Skills': 0, 'Critical & Problem-Solving Skills': 0, 'Work Ethics/Professionalism Skills': 0 },
     skillsToDevelop: '',
   });
 

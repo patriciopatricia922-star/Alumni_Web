@@ -101,3 +101,7 @@ html {
   font-style: italic;
   src: url('./assets/fonts/Arimo-Italic.ttf') format('truetype');
 }
+
+html {
+  scroll-behavior: smooth;
+}

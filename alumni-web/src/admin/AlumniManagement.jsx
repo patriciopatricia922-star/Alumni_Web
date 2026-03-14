@@ -315,8 +315,8 @@ function AlumniManagement() {
         {/* Heading */}
         <div className="am-heading-row">
           <div>
-            <h1 className="am-title">Alumni Module</h1>
-            <p className="am-subtitle">Welcome back! Here's what's happening with your alumni.</p>
+            <h1 className="am-title">Alumni Management</h1>
+            <p className="am-subtitle">View, organize, and manage alumni data and activities.</p>
           </div>
 
         </div>

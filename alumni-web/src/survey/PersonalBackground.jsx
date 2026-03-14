@@ -395,6 +395,7 @@ const PersonalBackground = () => {
     civilStatus: '', streetAddress: '', city: '',
     province: '', zipCode: '', country: '',
     contactNumber: '', email: '',
+    phonePrefix: '+63',
   });
 
   useEffect(() => {
@@ -604,7 +605,11 @@ const PersonalBackground = () => {
                   <div className="pb-field">
                     <label className="pb-label">Country <span className="pb-req">*</span>{errors.has('country') && <span className="pb-field-error">Required</span>}</label>
                     <select className="pb-input pb-input-select"
-                      value={form.country} onChange={set('country')}>
+                      value={form.country} onChange={e => {
+                        const c = e.target.value;
+                        const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
+                        setForm(f => ({ ...f, country: c, phonePrefix: prefix }));
+                      }}>
                       <option value="" disabled style={{ background: '#001947' }}>Select</option>
                       <option value="Philippines" style={{ background: '#001947' }}>Philippines</option>
                       <option value="United States" style={{ background: '#001947' }}>United States</option>
@@ -616,7 +621,18 @@ const PersonalBackground = () => {
                 <div className="pb-field">
                   <label className="pb-label">Contact Number <span className="pb-req">*</span>{errors.has('contactNumber') && <span className="pb-field-error">Required</span>}</label>
                   <div className="pb-phone-row">
-                    <div className="pb-phone-prefix">+63</div>
+                    {form.country === 'Other' ? (
+                      <input
+                        className="pb-input"
+                        style={{ width: '68px', flexShrink: 0, padding: '12px 8px', textAlign: 'center' }}
+                        value={form.phonePrefix}
+                        onChange={e => setForm(f => ({ ...f, phonePrefix: e.target.value }))}
+                        placeholder="+"
+                        maxLength={5}
+                      />
+                    ) : (
+                      <div className="pb-phone-prefix">{form.phonePrefix || '+63'}</div>
+                    )}
                     <input type="tel" className="pb-input pb-phone-input"
                       placeholder="e.g. 912-345-6789"
                       value={form.contactNumber} onChange={set('contactNumber')} />

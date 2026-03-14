@@ -24,16 +24,16 @@ const STYLES = `
   .je-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
 
   .je-body { padding: 24px 51px 60px; }
-  .je-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 32px; }
+  .je-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
   .je-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
   .je-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
 
-  .je-questions { display: flex; flex-direction: column; gap: 32px; }
-  .je-field { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .je-questions { display: flex; flex-direction: column; gap: 40px; }
+  .je-field { display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .je-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
   .je-hint { font-family: 'Arimo', Arial, sans-serif; font-size: 11px; color: rgba(255,255,255,0.4); line-height: 16px; margin-top: -4px; }
 
-  .je-radio-group { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+  .je-radio-group { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
   .je-radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
   .je-radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
   .je-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
@@ -44,6 +44,23 @@ const STYLES = `
   .je-btn-prev:hover { opacity: 0.85; }
   .je-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .je-btn-next:hover { opacity: 0.9; }
+  .je-other-input {
+    width: 100%;
+    height: 44px;
+    background: rgba(255,255,255,0.17);
+    border: 0.89px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-family: 'Arimo', Arial, sans-serif;
+    font-size: 14px;
+    color: #fff;
+    outline: none;
+    margin-top: 8px;
+    transition: border-color 0.15s;
+  }
+  .je-other-input:focus { border-color: rgba(43,114,251,0.6); }
+  .je-other-input::placeholder { color: rgba(255,255,255,0.3); }
+
   /* ── Required asterisk (red) ── */
   .je-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
@@ -75,14 +92,19 @@ const STYLES = `
   @media (max-height: 600px) { .je-header { padding-bottom: 10px; } .je-progress { padding: 10px 20px; } .je-body { padding-top: 14px; } }
 `;
 
-const LICENSURE_OPTIONS = ['Less than a month','1-3 months','4-6 months','7-12 months','More than a year','Not applicable'];
-const EMPLOYMENT_DURATION_OPTIONS = ['Less than a month','1-5 months','7-11 months','1 year or less than 2 years','2 years or less than 3 years','3 years or less than 4 years','Other'];
-const FIRST_JOB_OPTIONS = ['Job/Career fair','Internship/Absorption','Referral','Recommendation','Walk-in applications','Not applicable','Other'];
-const FACTORS_OPTIONS = ['Academic performance','Internship/On-the-job training','Personal connections','Skills/Competencies acquired in school','Certifications','Not applicable','Other'];
+const TIME_TO_FIND_JOB_OPTIONS = ['Less than a month','1–3 months','4–6 months','7–12 months','More than a year','Not applicable'];
+const EMPLOYMENT_DURATION_OPTIONS = ['Less than a month','1–6 months','7–11 months','1 year or less than 2 years','2 years or less than 3 years','3 years or less than 4 years','Other'];
+const FIRST_JOB_OPTIONS = ['Job/Career Fair','Internship Absorption','Online','Recommendation','Walk-in Applications','Not applicable','Other'];
+const FACTORS_OPTIONS = ['Academic performance','Internship / On-the-job Training','Personal connections','Skills/Competencies acquired in school','Certifications','Not applicable','Other'];
 
 const JobExperience = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ licensureReviewing: '', employmentDuration: '', firstJobSource: '', firstJobFactors: [] });
+  const [form, setForm] = useState({
+    timeToFindJob: '', otherTimeToFindJob: '',
+    employmentDuration: '', otherEmploymentDuration: '',
+    firstJobSource: '', otherFirstJobSource: '',
+    firstJobFactors: [], otherJobFactors: '',
+  });
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   useEffect(() => {
@@ -101,10 +123,13 @@ const JobExperience = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.licensureReviewing)          e.add('licensureReviewing');
+    if (!form.timeToFindJob)               e.add('timeToFindJob');
     if (!form.employmentDuration)          e.add('employmentDuration');
+    if (form.employmentDuration === 'Other' && !form.otherEmploymentDuration.trim()) e.add('otherEmploymentDuration');
     if (!form.firstJobSource)              e.add('firstJobSource');
+    if (form.firstJobSource === 'Other' && !form.otherFirstJobSource.trim()) e.add('otherFirstJobSource');
     if (form.firstJobFactors.length === 0) e.add('firstJobFactors');
+    if (form.firstJobFactors.includes('Other') && !form.otherJobFactors.trim()) e.add('otherJobFactors');
     return e;
   };
 
@@ -116,7 +141,12 @@ const JobExperience = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('job_experience', form).then(() => navigate('/survey/skills-and-competencies'));
+    saveSectionProgress('job_experience', {
+      ...form,
+      employment_duration_other: form.employmentDuration === 'Other' ? form.otherEmploymentDuration : null,
+      first_job_source_other:    form.firstJobSource === 'Other'    ? form.otherFirstJobSource    : null,
+      job_factors_other:         form.firstJobFactors.includes('Other') ? form.otherJobFactors   : null,
+    }).then(() => navigate('/survey/skills-and-competencies'));
   };
 
   return (
@@ -152,36 +182,60 @@ const JobExperience = () => {
                 <p className="je-section-sub">Your job hunting experience</p>
               </div>
               <div className="je-questions">
+
+                {/* Q1: Time to find first job */}
                 <div className="je-field">
-                  <span className="je-label">Are you currently taking/reviewing for licensure examinations? <span className="je-req">*</span>{errors.has('licensureReviewing') && <span className="je-field-error">Required</span>}</span>
+                  <span className="je-label">How long did it take you to find your first job after graduation? <span className="je-req">*</span>{errors.has('timeToFindJob') && <span className="je-field-error">Required</span>}</span>
                   <div className="je-radio-group">
-                    {LICENSURE_OPTIONS.map(opt => (
+                    {TIME_TO_FIND_JOB_OPTIONS.map(opt => (
                       <label key={opt} className="je-radio-label">
-                        <input type="radio" name="licensureReviewing" value={opt} checked={form.licensureReviewing === opt} onChange={() => set('licensureReviewing', opt)} />{opt}
+                        <input type="radio" name="timeToFindJob" value={opt} checked={form.timeToFindJob === opt} onChange={() => set('timeToFindJob', opt)} />{opt}
                       </label>
                     ))}
                   </div>
                 </div>
+
+                {/* Q2: Employment duration */}
                 <div className="je-field">
                   <span className="je-label">How long have you been employed in your current job? <span className="je-req">*</span>{errors.has('employmentDuration') && <span className="je-field-error">Required</span>}</span>
                   <div className="je-radio-group">
                     {EMPLOYMENT_DURATION_OPTIONS.map(opt => (
                       <label key={opt} className="je-radio-label">
-                        <input type="radio" name="employmentDuration" value={opt} checked={form.employmentDuration === opt} onChange={() => set('employmentDuration', opt)} />{opt}
+                        <input type="radio" name="employmentDuration" value={opt}
+                          checked={form.employmentDuration === opt}
+                          onChange={() => set('employmentDuration', opt === form.employmentDuration ? '' : opt)} />{opt}
                       </label>
                     ))}
                   </div>
+                  {form.employmentDuration === 'Other' && (
+                    <input className="je-other-input" type="text" placeholder="Please specify"
+                      value={form.otherEmploymentDuration}
+                      onChange={e => set('otherEmploymentDuration', e.target.value)}
+                      style={{ borderColor: errors.has('otherEmploymentDuration') ? '#F87171' : undefined }} />
+                  )}
                 </div>
+
+                {/* Q3: First job source */}
                 <div className="je-field">
                   <span className="je-label">How did you find your first job? <span className="je-req">*</span>{errors.has('firstJobSource') && <span className="je-field-error">Required</span>}</span>
                   <div className="je-radio-group">
                     {FIRST_JOB_OPTIONS.map(opt => (
                       <label key={opt} className="je-radio-label">
-                        <input type="radio" name="firstJobSource" value={opt} checked={form.firstJobSource === opt} onChange={() => set('firstJobSource', opt)} />{opt}
+                        <input type="radio" name="firstJobSource" value={opt}
+                          checked={form.firstJobSource === opt}
+                          onChange={() => set('firstJobSource', opt)} />{opt}
                       </label>
                     ))}
                   </div>
+                  {form.firstJobSource === 'Other' && (
+                    <input className="je-other-input" type="text" placeholder="Please specify"
+                      value={form.otherFirstJobSource}
+                      onChange={e => set('otherFirstJobSource', e.target.value)}
+                      style={{ borderColor: errors.has('otherFirstJobSource') ? '#F87171' : undefined }} />
+                  )}
                 </div>
+
+                {/* Q4: Job factors (multi-select) */}
                 <div className="je-field">
                   <span className="je-label">What factors helped you most in getting your first job? <span className="je-req">*</span>{errors.has('firstJobFactors') && <span className="je-field-error">Required</span>}</span>
                   <span className="je-hint">(Check all that apply)</span>
@@ -192,7 +246,14 @@ const JobExperience = () => {
                       </label>
                     ))}
                   </div>
+                  {form.firstJobFactors.includes('Other') && (
+                    <input className="je-other-input" type="text" placeholder="Please specify"
+                      value={form.otherJobFactors}
+                      onChange={e => set('otherJobFactors', e.target.value)}
+                      style={{ borderColor: errors.has('otherJobFactors') ? '#F87171' : undefined }} />
+                  )}
                 </div>
+
               </div>
               <div className="je-footer">
                 <button className="je-btn-prev" onClick={() => navigate('/survey/employment-information')}>Previous</button>

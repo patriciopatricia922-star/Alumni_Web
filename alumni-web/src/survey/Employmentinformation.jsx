@@ -159,7 +159,7 @@ const STYLES = `
     padding: 40px 40px 32px;
     display: flex;
     flex-direction: column;
-    gap: 32px;
+    gap: 40px;
   }
 
   .ei-section-title {
@@ -185,13 +185,13 @@ const STYLES = `
   .ei-fields {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 32px;
   }
 
   .ei-field {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     width: 100%;
   }
 
@@ -222,8 +222,8 @@ const STYLES = `
   .ei-radio-group {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-top: 4px;
+    gap: 16px;
+    padding-top: 8px;
   }
 
   .ei-radio-cols {
@@ -287,8 +287,8 @@ const STYLES = `
   .ei-branch {
     display: flex;
     flex-direction: column;
-    gap: 32px;
-    padding-top: 16px;
+    gap: 36px;
+    padding-top: 24px;
   }
 
   /* ── Dropdown ── */
@@ -466,59 +466,61 @@ const INDUSTRY_OPTIONS = [
   'Other',
 ];
 
-const EMPLOYMENT_STATUSES_COL1 = [
-  'Employed Full-time',
-  'Employed Part-time',
-  'Self-employed / Freelancer',
-  'Government Employee',
-];
-
-const EMPLOYMENT_STATUSES_COL2 = [
-  'Working Student',
-  'OFW (Overseas Filipino Worker)',
-  'Unemployed',
+const EMPLOYMENT_STATUSES_ALL = [
+  'Regular / Permanent',
+  'Contractual',
+  'Part-Time',
+  'Probationary',
+  'Self-Employed',
+  'Unemployed, but looking for work',
+  'Unemployed, but not looking for work',
+  'Other',
 ];
 
 const REASONS_FOR_JOB = [
-  'Salaries and benefits',
-  'Career challenge',
-  'Related to special Skill',
-  'Related to course or Program of Study',
-  'Proximity of residence',
-  'Peer influence',
-  'Family influence',
+  'Salaries and Benefits',
+  'Career Challenge',
+  'Related to Special Skill',
+  'Related to Course or Program of Study',
+  'Proximity of Residence',
+  'Peer Influence',
+  'Family Influence',
   'Other',
 ];
 
 const UNEMPLOYED_REASONS = [
-  'Pursuing further Studies',
-  'Family responsibilities or Personal Matters',
+  'Pursuing further studies',
+  'Family responsibilities or personal matters',
   'Health-related reasons',
-  'Lack of job Opportunities Related to the Field of Study',
-  'Lack of job Placement Results or Hiring Process',
-  'Currently seeking Better Employment Opportunities',
-  'Started a personal Business or Freelance Work (Not Yet Stable)',
-  'Relocation or migration Plans',
-  'Lack of work Experience or Qualifications Required by Employers',
-  'Taking a break or Resting Before Seeking Employment',
-  'Reviewing for board Examination',
+  'Lack of job opportunities related to the field of study',
+  'Waiting for job placement results or hiring process',
+  'Currently seeking better employment opportunities',
+  'Started a personal business or freelance work (not yet stable)',
+  'Relocation or migration plans',
+  'Lack of work experience or qualifications required by employers',
+  'Taking a break or resting before seeking employment',
+  'Reviewing for board examination',
   'Other',
 ];
 
 const MONTHLY_INCOME = [
-  'Below ₱10,000',
-  '₱10,000 - ₱20,000',
-  '₱20,001 - ₱40,000',
-  'Above ₱40,000',
+  'Below ₱15,000',
+  '₱15,001 – ₱30,000',
+  '₱30,001 – ₱50,000',
+  'Above ₱50,000',
 ];
 
 const EMPLOYED_STATUSES = [
-  'Employed Full-time',
-  'Employed Part-time',
-  'Self-employed / Freelancer',
-  'Government Employee',
-  'Working Student',
-  'OFW (Overseas Filipino Worker)',
+  'Regular / Permanent',
+  'Contractual',
+  'Part-Time',
+  'Probationary',
+  'Self-Employed',
+];
+
+const UNEMPLOYED_STATUSES = [
+  'Unemployed, but looking for work',
+  'Unemployed, but not looking for work',
 ];
 
 const SelectDropdown = ({ value, onChange }) => {
@@ -561,13 +563,16 @@ const EmploymentInformation = () => {
   const [form, setForm] = useState({
     jobRelatedToDegree: '',
     employmentStatus: '',
+    otherEmploymentStatus: '',
     jobPosition: '',
     companyName: '',
     typeOfIndustry: '',
     locationOfEmployment: '',
     monthlyIncome: '',
-    reasonsForJob: [],
+    reasonForJob: '',
+    otherReasonForJob: '',
     reasonsUnemployed: '',
+    otherReasonUnemployed: '',
   });
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
@@ -580,26 +585,19 @@ const EmploymentInformation = () => {
     load();
   }, []);
 
-  const toggleReasonForJob = (reason) => {
-    setForm(prev => ({
-      ...prev,
-      reasonsForJob: prev.reasonsForJob.includes(reason)
-        ? prev.reasonsForJob.filter(r => r !== reason)
-        : [...prev.reasonsForJob, reason],
-    }));
-  };
-
   const resetEmploymentBranch = (v) =>
     setForm(prev => ({
       ...prev,
       employmentStatus: v,
+      otherEmploymentStatus: '',
       jobPosition: '', companyName: '', typeOfIndustry: '',
       locationOfEmployment: '', monthlyIncome: '',
-      reasonsForJob: [], reasonsUnemployed: '',
+      reasonForJob: '', otherReasonForJob: '',
+      reasonsUnemployed: '', otherReasonUnemployed: '',
     }));
 
   const isEmployed           = EMPLOYED_STATUSES.includes(form.employmentStatus);
-  const isUnemployed         = form.employmentStatus === 'Unemployed';
+  const isUnemployed         = UNEMPLOYED_STATUSES.includes(form.employmentStatus);
   const showEmployedFields   = form.employmentStatus !== '' && isEmployed;
   const showUnemployedFields = form.employmentStatus !== '' && isUnemployed;
 
@@ -610,16 +608,23 @@ const EmploymentInformation = () => {
     const e = new Set();
     if (!form.jobRelatedToDegree) e.add('jobRelatedToDegree');
     if (!form.employmentStatus)   e.add('employmentStatus');
+    if (form.employmentStatus === 'Other' && !form.otherEmploymentStatus.trim())
+      e.add('otherEmploymentStatus');
     if (EMPLOYED_STATUSES.includes(form.employmentStatus)) {
-      if (!form.jobPosition.trim())        e.add('jobPosition');
-      if (!form.companyName.trim())        e.add('companyName');
-      if (!form.typeOfIndustry)            e.add('typeOfIndustry');
-      if (!form.locationOfEmployment)      e.add('locationOfEmployment');
-      if (!form.monthlyIncome)             e.add('monthlyIncome');
-      if (form.reasonsForJob.length === 0) e.add('reasonsForJob');
+      if (!form.jobPosition.trim())   e.add('jobPosition');
+      if (!form.companyName.trim())   e.add('companyName');
+      if (!form.typeOfIndustry)       e.add('typeOfIndustry');
+      if (!form.locationOfEmployment) e.add('locationOfEmployment');
+      if (!form.monthlyIncome)        e.add('monthlyIncome');
+      if (!form.reasonForJob)         e.add('reasonForJob');
+      if (form.reasonForJob === 'Other' && !form.otherReasonForJob.trim())
+        e.add('otherReasonForJob');
     }
-    if (form.employmentStatus === 'Unemployed' && !form.reasonsUnemployed)
-      e.add('reasonsUnemployed');
+    if (UNEMPLOYED_STATUSES.includes(form.employmentStatus)) {
+      if (!form.reasonsUnemployed) e.add('reasonsUnemployed');
+      if (form.reasonsUnemployed === 'Other' && !form.otherReasonUnemployed.trim())
+        e.add('otherReasonUnemployed');
+    }
     return e;
   };
 
@@ -718,28 +723,24 @@ const EmploymentInformation = () => {
                 {/* Q2: Employment status */}
                 <div className="ei-field">
                   <span className="ei-label">Current Employment Status <span className="ei-req">*</span>{errors.has('employmentStatus') && <span className="ei-field-error">Required</span>}</span>
-                  <div className="ei-radio-cols">
-                    <div className="ei-radio-col">
-                      {EMPLOYMENT_STATUSES_COL1.map(opt => (
-                        <label key={opt} className="ei-radio-label">
-                          <input type="radio" name="employmentStatus" value={opt}
-                            checked={form.employmentStatus === opt}
-                            onChange={() => resetEmploymentBranch(opt)} />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                    <div className="ei-radio-col">
-                      {EMPLOYMENT_STATUSES_COL2.map(opt => (
-                        <label key={opt} className="ei-radio-label">
-                          <input type="radio" name="employmentStatus" value={opt}
-                            checked={form.employmentStatus === opt}
-                            onChange={() => resetEmploymentBranch(opt)} />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
+                  <div className="ei-radio-group">
+                    {EMPLOYMENT_STATUSES_ALL.map(opt => (
+                      <label key={opt} className="ei-radio-label">
+                        <input type="radio" name="employmentStatus" value={opt}
+                          checked={form.employmentStatus === opt}
+                          onChange={() => resetEmploymentBranch(opt)} />
+                        {opt}
+                      </label>
+                    ))}
                   </div>
+                  {form.employmentStatus === 'Other' && (
+                    <input className="ei-input" type="text"
+                      placeholder="Please specify"
+                      value={form.otherEmploymentStatus}
+                      onChange={e => set('otherEmploymentStatus', e.target.value)}
+                      onFocus={onFocus} onBlur={onBlur}
+                      style={{ marginTop: '8px', borderColor: errors.has('otherEmploymentStatus') ? '#F87171' : undefined }} />
+                  )}
                 </div>
 
               </div>
@@ -798,17 +799,25 @@ const EmploymentInformation = () => {
                   </div>
 
                   <div className="ei-field">
-                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reasonsForJob') && <span className="ei-field-error">Required</span>}</span>
-                    <div className="ei-checkbox-grid">
-                      {REASONS_FOR_JOB.map(reason => (
-                        <label key={reason} className="ei-checkbox-label">
-                          <input type="checkbox" value={reason}
-                            checked={form.reasonsForJob.includes(reason)}
-                            onChange={() => toggleReasonForJob(reason)} />
-                          {reason}
+                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reasonForJob') && <span className="ei-field-error">Required</span>}</span>
+                    <div className="ei-radio-group">
+                      {REASONS_FOR_JOB.map(opt => (
+                        <label key={opt} className="ei-radio-label">
+                          <input type="radio" name="reasonForJob" value={opt}
+                            checked={form.reasonForJob === opt}
+                            onChange={() => set('reasonForJob', opt)} />
+                          {opt}
                         </label>
                       ))}
                     </div>
+                    {form.reasonForJob === 'Other' && (
+                      <input className="ei-input" type="text"
+                        placeholder="Please specify"
+                        value={form.otherReasonForJob}
+                        onChange={e => set('otherReasonForJob', e.target.value)}
+                        onFocus={onFocus} onBlur={onBlur}
+                        style={{ marginTop: '8px', borderColor: errors.has('otherReasonForJob') ? '#F87171' : undefined }} />
+                    )}
                   </div>
 
                 </div>
@@ -829,6 +838,14 @@ const EmploymentInformation = () => {
                         </label>
                       ))}
                     </div>
+                    {form.reasonsUnemployed === 'Other' && (
+                      <input className="ei-input" type="text"
+                        placeholder="Please specify"
+                        value={form.otherReasonUnemployed}
+                        onChange={e => set('otherReasonUnemployed', e.target.value)}
+                        onFocus={onFocus} onBlur={onBlur}
+                        style={{ marginTop: '8px', borderColor: errors.has('otherReasonUnemployed') ? '#F87171' : undefined }} />
+                    )}
                   </div>
                 </div>
               )}

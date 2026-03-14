@@ -24,15 +24,15 @@ const STYLES = `
   .fu-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
 
   .fu-body { padding: 24px 51px 60px; }
-  .fu-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 32px; }
+  .fu-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
   .fu-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
   .fu-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
 
-  .fu-questions { display: flex; flex-direction: column; gap: 32px; }
-  .fu-field { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .fu-questions { display: flex; flex-direction: column; gap: 40px; }
+  .fu-field { display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .fu-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
 
-  .fu-radio-group { display: flex; flex-direction: column; gap: 15px; padding-top: 4px; }
+  .fu-radio-group { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
   .fu-radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
   .fu-radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
 
@@ -68,7 +68,7 @@ const STYLES = `
   @media (max-height: 600px) { .fu-header { padding-bottom: 10px; } .fu-progress { padding: 10px 20px; } .fu-body { padding-top: 14px; } }
 `;
 
-const SATISFACTION_OPTIONS = ['Very satisfied','Satisfied','Neutral','Dissatisfied','Very Dissatisfied'];
+const SATISFACTION_OPTIONS = ['Very Satisfied','Satisfied','Neutral','Dissatisfied','Very Dissatisfied'];
 
 const FeedbackForUniversity = () => {
   const navigate = useNavigate();
