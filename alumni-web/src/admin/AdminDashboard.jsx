@@ -152,11 +152,13 @@ export default function AdminDashboard() {
   const [satisfactionSub, setSatisfactionSub] = useState('based on feedback');
 
   const SATISFACTION_SCORE = {
+    'Very Satisfied':    5,
     'Very satisfied':    5,
     'Satisfied':         4,
     'Neutral':           3,
     'Dissatisfied':      2,
     'Very Dissatisfied': 1,
+    'Very dissatisfied': 1,
   };
 
   useEffect(() => {
@@ -207,13 +209,24 @@ export default function AdminDashboard() {
 
       // ── Active Programs ───────────────────────────────────────────────────
       try {
-        const { data: eduRows } = await supabase
+        const { data: eduRows, error: eduErr } = await supabase
           .from('survey_progress')
-          .select('educational_background_data')
-          .not('educational_background_data', 'is', null);
-        if (eduRows) {
+          .select('educational_background_data');
+        if (eduErr) {
+          console.error('Active programs error:', eduErr.message);
+          setActivePrograms('—');
+          setActiveProgramsSub('Unable to load');
+        } else if (eduRows) {
           const programs = new Set(
-            eduRows.map(r => r.educational_background_data?.degreeProgram).filter(Boolean)
+            eduRows
+              .filter(r => r.educational_background_data !== null)
+              .map(r => {
+                const d = r.educational_background_data;
+                // handle both string JSON and object
+                const parsed = typeof d === 'string' ? JSON.parse(d) : d;
+                return parsed?.degreeProgram || parsed?.degree_program || null;
+              })
+              .filter(Boolean)
           );
           const count = programs.size;
           setActivePrograms(String(count));
@@ -223,13 +236,21 @@ export default function AdminDashboard() {
 
       // ── Alumni Satisfaction ───────────────────────────────────────────────
       try {
-        const { data: feedbackRows } = await supabase
+        const { data: feedbackRows, error: feedbackErr } = await supabase
           .from('survey_progress')
-          .select('feedback_university_data')
-          .not('feedback_university_data', 'is', null);
-        if (feedbackRows) {
+          .select('feedback_university_data');
+        if (feedbackErr) {
+          console.error('Alumni satisfaction error:', feedbackErr.message);
+          setAlumniSatisfaction('—');
+          setSatisfactionSub('Unable to load');
+        } else if (feedbackRows) {
           const scores = feedbackRows
-            .map(r => SATISFACTION_SCORE[r.feedback_university_data?.satisfaction])
+            .filter(r => r.feedback_university_data !== null)
+            .map(r => {
+              const d = r.feedback_university_data;
+              const parsed = typeof d === 'string' ? JSON.parse(d) : d;
+              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
+            })
             .filter(Boolean);
           if (scores.length > 0) {
             const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -241,6 +262,22 @@ export default function AdminDashboard() {
           }
         }
       } catch (e) { console.error('Alumni satisfaction error:', e); }
+
+      // ── Survey Response Rate (recalculate with fresh total) ───────────────
+      try {
+        const { count: totalAlumni } = await supabase
+          .from('users')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'alumni');
+        const { count: totalCompleted } = await supabase
+          .from('survey_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('completed', true);
+        const total = totalAlumni ?? 0;
+        const done  = totalCompleted ?? 0;
+        const rate  = total > 0 ? Math.round((done / total) * 100) : 0;
+        setSurveyCompletionRate(`${rate}%`);
+      } catch (e) { console.error('Survey rate error:', e); }
     };
     fetchStats();
   }, []);
