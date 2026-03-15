@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+
+const FONT_STYLE = `@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');`;
 import SuperAdminSidebar from '../superadmin/SuperAdsidebar';
 
 // ─── Icons (page-only) ────────────────────────────────────────────────────────
@@ -47,7 +49,9 @@ const DetailedAuditLogs = () => {
   const [searchQuery, setSearchQuery]       = useState('');
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Arimo, Arial, sans-serif' }}>
+    <>
+      <style>{FONT_STYLE}</style>
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Lexend, Arimo, Arial' }}>
       <SuperAdminSidebar activePage="audit-logs" />
 
       {/* ── Main Content ── */}
@@ -55,10 +59,10 @@ const DetailedAuditLogs = () => {
 
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 6px', lineHeight: '36px' }}>
+          <h1 style={{ fontFamily: 'Lexend, Arimo, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 6px', lineHeight: '36px' }}>
             Detailed Audit Logs
           </h1>
-          <p style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: '#6A7282', margin: 0 }}>
+          <p style={{ fontFamily: 'Lexend, Arimo, Arial', fontSize: '16px', color: '#6A7282', margin: 0 }}>
             Complete audit trail of all system activities and operations
           </p>
         </div>
@@ -168,6 +172,7 @@ const DetailedAuditLogs = () => {
 
       </main>
     </div>
+    </>
   );
 };
 

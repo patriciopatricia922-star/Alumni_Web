@@ -12,9 +12,9 @@ import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 const menuItems = [
   { path: '/superadmin/super-admin-dashboard', icon: TbLayoutDashboardFilled, label: 'Audit Overview'   },
   { path: '/superadmin/audit-logs',            icon: SiGoogleanalytics,       label: 'Audit Logs'       },
-  { path: '/superadmin/admin-management',      icon: BsFillPeopleFill,        label: 'Admin Management' },
-  { path: '/superadmin/alumni-management',     icon: RiSurveyFill,            label: 'Alumni Management'},
-  { path: '/superadmin/alumni-engagement',     icon: FaBookBookmark,          label: 'Alumni Engagement'},
+  { path: '/superadmin/admin-management',      icon: BsFillPeopleFill,        label: 'Admin Management',  split: true },
+  { path: '/superadmin/alumni-management',     icon: RiSurveyFill,            label: 'Alumni Management', split: true },
+  { path: '/superadmin/alumni-engagement',     icon: FaBookBookmark,          label: 'Alumni Engagement', split: true },
 ];
 
 function SuperAdminSidebar() {
@@ -68,16 +68,16 @@ function SuperAdminSidebar() {
       <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.35)' }} />
 
       {/* Menu */}
-      <div style={{ padding: '24px 10px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {menuItems.map(({ path, icon: Icon, label }) => {
+      <div style={{ padding: '24px 10px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {menuItems.map(({ path, icon: Icon, label, split }) => {
           const isActive = location.pathname === path;
           return (
             <Link
               key={path}
               to={path}
               style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                padding: '11px 14px',
+                display: 'flex', alignItems: 'center', gap: '11px',
+                padding: '10px 14px',
                 background: 'transparent',
                 borderRadius: '14px', textDecoration: 'none',
                 transition: 'background 0.2s', margin: '0 6px',
@@ -86,16 +86,17 @@ function SuperAdminSidebar() {
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
             >
               <Icon
-                size={22}
+                size={23}
                 style={{ color: isActive ? '#D9CA81' : 'rgba(255,255,255,0.85)', flexShrink: 0 }}
               />
               <span style={{
-                fontFamily: 'Arimo', fontSize: '15px',
-                fontWeight: isActive ? 700 : 400, lineHeight: '24px',
+                fontFamily: 'Arimo', fontSize: '15.5px',
+                fontWeight: isActive ? 700 : 400, lineHeight: '20px',
                 letterSpacing: '0.3px',
                 color: isActive ? '#D9CA81' : '#FFFFFF',
-                whiteSpace: 'nowrap',
-              }}>{label}</span>
+              }}>
+                {split ? (<>{label.split(' ')[0]}<br/>{label.split(' ')[1]}</>) : label}
+              </span>
             </Link>
           );
         })}
@@ -105,7 +106,7 @@ function SuperAdminSidebar() {
       <div style={{ marginTop: 'auto', padding: '0 10px 24px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', padding: '0 12px',
-          gap: '12px', height: '56px',
+          gap: '11px', height: '56px',
           background: 'rgba(255,255,255,0.1)', borderRadius: '30px',
         }}>
           <div style={{

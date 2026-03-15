@@ -7,6 +7,8 @@ import {
   LineChart, Line, Legend,
 } from 'recharts';
 
+const FONT_STYLE = `@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');`;
+
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, subtitleColor, IconEl, iconBg }) => (
   <div style={{
@@ -22,9 +24,9 @@ const StatCard = ({ title, value, subtitle, subtitleColor, IconEl, iconBg }) => 
     boxShadow: '0px 1px 3px rgba(0,0,0,0.08)',
   }}>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <span style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#6A7282', lineHeight: '20px' }}>{title}</span>
-      <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '30px', color: '#101828', lineHeight: '36px' }}>{value}</span>
-      <span style={{ fontFamily: 'Arimo', fontSize: '12px', color: subtitleColor || '#6A7282', lineHeight: '16px' }}>{subtitle}</span>
+      <span style={{ fontFamily: 'Lexend, Arial', fontSize: '14px', color: '#6A7282', lineHeight: '20px' }}>{title}</span>
+      <span style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', lineHeight: '36px' }}>{value}</span>
+      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: subtitleColor || '#6A7282', lineHeight: '16px' }}>{subtitle}</span>
     </div>
     <div style={{
       width: '48px', height: '48px', flexShrink: 0,
@@ -45,8 +47,8 @@ const ChartCard = ({ title, subtitle, children }) => (
     padding: '24px',
     flex: 1,
   }}>
-    <div style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>{title}</div>
-    <div style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>{subtitle}</div>
+    <div style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>{title}</div>
+    <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>{subtitle}</div>
     {children}
   </div>
 );
@@ -63,7 +65,7 @@ const EmptyChart = ({ height = 280 }) => (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
-    <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#94A3B8' }}>No data available yet</span>
+    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#94A3B8' }}>No data available yet</span>
   </div>
 );
 
@@ -77,7 +79,7 @@ const ActionBadge = ({ type }) => {
   const c = colors[type] || colors.Update;
   return (
     <span style={{
-      fontFamily: 'Arimo', fontSize: '12px', color: c.text,
+      fontFamily: 'Arimo, Arial', fontSize: '12px', color: c.text,
       background: c.bg, borderRadius: '8px',
       padding: '2px 8px', lineHeight: '16px',
     }}>{type}</span>
@@ -140,7 +142,9 @@ const SuperAdminDashboard = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Arimo' }}>
+    <>
+      <style>{FONT_STYLE}</style>
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Lexend, Arimo, Arial' }}>
       <SuperAdSidebar activePage="super-admin" />
 
       {/* Main content */}
@@ -148,10 +152,10 @@ const SuperAdminDashboard = () => {
 
         {/* ── Header ── */}
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 4px', lineHeight: '36px' }}>
+          <h1 style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 4px', lineHeight: '36px' }}>
             Audit Overview
           </h1>
-          <p style={{ fontFamily: 'Arimo', fontSize: '16px', color: '#6A7282', margin: 0 }}>
+          <p style={{ fontFamily: 'Lexend, Arial', fontSize: '16px', color: '#6A7282', margin: 0 }}>
             Welcome bark! Here's what's happening with your alumni network.
           </p>
         </div>
@@ -181,10 +185,10 @@ const SuperAdminDashboard = () => {
 
         {/* ── Recent Critical Actions ── */}
         <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '14px', padding: '24px' }}>
-          <div style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>
+          <div style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>
             Recent Critical Actions
           </div>
-          <div style={{ fontFamily: 'Arimo', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>
+          <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#717182', marginBottom: '20px' }}>
             Latest admin-level operations and important system changes
           </div>
 
@@ -199,12 +203,13 @@ const SuperAdminDashboard = () => {
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
             </svg>
-            <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#94A3B8' }}>No actions recorded yet</span>
+            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#94A3B8' }}>No actions recorded yet</span>
           </div>
         </div>
 
       </main>
     </div>
+    </>
   );
 };
 

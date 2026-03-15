@@ -26,7 +26,34 @@ const inputStyle = {
   borderRadius: '8px', padding: '4px 36px 4px 12px',
   fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px',
   color: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
+  WebkitTextFillColor: '#FFFFFF',
+  /* Remove browser's native eye icon */
+  MsRevealButton: 'none',
 };
+
+const inputCSS = `
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+  input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  input::placeholder {
+    color: rgba(255,255,255,0.25);
+  }
+  input[type="password"] {
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 3px;
+    font-size: 16px;
+  }
+  input[type="text"] {
+    color: #FFFFFF;
+    letter-spacing: normal;
+    font-size: 12px;
+  }
+`;
 
 const labelStyle = {
   fontFamily: 'Arimo', fontWeight: 400, fontSize: '13px',
@@ -43,7 +70,6 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Password strength dots
   const getStrength = (pw) => {
     let score = 0;
     if (pw.length >= 8) score++;
@@ -55,17 +81,30 @@ const ResetPassword = () => {
 
   const strength = getStrength(newPassword);
   const strengthColors = ['rgba(255,255,255,0.2)', '#FF4444', '#FF9500', '#FFD700', '#00C853'];
+  const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+  const strengthTextColors = ['transparent', '#FF4444', '#FF9500', '#FFD700', '#00C853'];
   const dots = 8;
 
-  const StrengthDots = () => (
-    <div style={{ display: 'flex', gap: '4px', marginTop: '6px' }}>
-      {Array.from({ length: dots }).map((_, i) => (
-        <div key={i} style={{
-          width: '5px', height: '5px', borderRadius: '50%',
-          background: i < (strength * 2) ? strengthColors[strength] : 'rgba(255,255,255,0.2)',
-          transition: 'background 0.2s',
-        }} />
-      ))}
+  const StrengthRow = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        {Array.from({ length: dots }).map((_, i) => (
+          <div key={i} style={{
+            width: '5px', height: '5px', borderRadius: '50%',
+            background: i < (strength * 2) ? strengthColors[strength] : 'rgba(255,255,255,0.2)',
+            transition: 'background 0.2s',
+          }} />
+        ))}
+      </div>
+      {newPassword.length > 0 && (
+        <span style={{
+          fontFamily: 'Arimo', fontSize: '11px', fontWeight: 600,
+          color: strengthTextColors[strength],
+          transition: 'color 0.2s',
+        }}>
+          {strengthLabels[strength]}
+        </span>
+      )}
     </div>
   );
 
@@ -89,140 +128,153 @@ const ResetPassword = () => {
   };
 
   return (
-    <div style={{
-      width: '100%', height: '100vh',
-      background: '#002263',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Arimo',
-    }}>
-      {/* Back Button */}
-      <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
-        <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
-        </Link>
-      </div>
-
-      {/* Card */}
+    <>
+      <style>{inputCSS}</style>
       <div style={{
-        width: '368px',
-        background: 'rgba(13,19,56,0.4)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-        borderRadius: '13px',
-        padding: '40px 22px 32px',
-        display: 'flex', flexDirection: 'column',
-        gap: '0px',
+        width: '100%', height: '100vh',
+        background: '#002263',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: 'Arimo',
       }}>
-        {/* Title */}
-        <h2 style={{
-          fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px',
-          color: '#FFFFFF', margin: '0 0 8px 0', textAlign: 'center',
+        {/* Back Button */}
+        <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
+          <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
+          </Link>
+        </div>
+
+        {/* Card */}
+        <div style={{
+          width: '368px',
+          background: 'rgba(13,19,56,0.4)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+          borderRadius: '13px',
+          padding: '40px 22px 32px',
+          display: 'flex', flexDirection: 'column',
+          gap: '0px',
         }}>
-          Reset Password
-        </h2>
-
-        {/* Subtitle */}
-        <p style={{
-          fontFamily: 'Arimo', fontWeight: 400, fontSize: '14px',
-          lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
-          textAlign: 'center', margin: '0 0 28px 0',
-        }}>
-          Enter your new password for your account
-        </p>
-
-        {/* Error */}
-        {error && (
-          <div style={{
-            background: 'rgba(255,80,80,0.15)',
-            border: '1px solid rgba(255,80,80,0.4)',
-            borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
+          {/* Title */}
+          <h2 style={{
+            fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px',
+            color: '#FFFFFF', margin: '0 0 8px 0', textAlign: 'center',
           }}>
-            <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
-          </div>
-        )}
+            Reset Password
+          </h2>
 
-        {/* Success */}
-        {success && (
-          <div style={{
-            background: 'rgba(0,200,83,0.15)',
-            border: '1px solid rgba(0,200,83,0.4)',
-            borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
+          {/* Subtitle */}
+          <p style={{
+            fontFamily: 'Arimo', fontWeight: 400, fontSize: '14px',
+            lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
+            textAlign: 'center', margin: '0 0 28px 0',
           }}>
-            <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#00C853', margin: 0 }}>
-              Password reset successfully! Redirecting to login…
+            Enter your new password for your account
+          </p>
+
+          {/* Error */}
+          {error && (
+            <div style={{
+              background: 'rgba(255,80,80,0.15)',
+              border: '1px solid rgba(255,80,80,0.4)',
+              borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
+            }}>
+              <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
+            </div>
+          )}
+
+          {/* Success */}
+          {success && (
+            <div style={{
+              background: 'rgba(0,200,83,0.15)',
+              border: '1px solid rgba(0,200,83,0.4)',
+              borderRadius: '8px', padding: '8px 12px', marginBottom: '16px',
+            }}>
+              <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#00C853', margin: 0 }}>
+                Password reset successfully! Redirecting to login…
+              </p>
+            </div>
+          )}
+
+          {/* New Password */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>New Password *</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                style={inputStyle}
+                type={showNew ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+              />
+              <button
+                onClick={() => setShowNew(!showNew)}
+                style={{
+                  position: 'absolute', right: '10px', top: '50%',
+                  transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.25)',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer',
+                  padding: '2px 4px', display: 'flex', alignItems: 'center',
+                }}
+              >
+                <EyeIcon visible={showNew} />
+              </button>
+            </div>
+            <StrengthRow />
+            <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
+              The password must be at least 8 characters long.
             </p>
           </div>
-        )}
 
-        {/* New Password */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={labelStyle}>New Password *</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              style={inputStyle}
-              type={showNew ? 'text' : 'password'}
-              placeholder="••••••••"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-            />
-            <button
-              onClick={() => setShowNew(!showNew)}
-              style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <EyeIcon visible={showNew} />
-            </button>
+          {/* Confirm Password */}
+          <div style={{ marginBottom: '28px' }}>
+            <label style={labelStyle}>Confirm New Password *</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                style={inputStyle}
+                type={showConfirm ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleReset()}
+              />
+              <button
+                onClick={() => setShowConfirm(!showConfirm)}
+                style={{
+                  position: 'absolute', right: '10px', top: '50%',
+                  transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.25)',
+                  border: 'none', borderRadius: '4px', cursor: 'pointer',
+                  padding: '2px 4px', display: 'flex', alignItems: 'center',
+                }}
+              >
+                <EyeIcon visible={showConfirm} />
+              </button>
+            </div>
+            <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
+              The password must be at least 8 characters long.
+            </p>
           </div>
-          <StrengthDots />
-          <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
-            The password must be at least 8 characters long.
-          </p>
-        </div>
 
-        {/* Confirm Password */}
-        <div style={{ marginBottom: '28px' }}>
-          <label style={labelStyle}>Confirm New Password *</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              style={inputStyle}
-              type={showConfirm ? 'text' : 'password'}
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleReset()}
-            />
-            <button
-              onClick={() => setShowConfirm(!showConfirm)}
-              style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <EyeIcon visible={showConfirm} />
-            </button>
-          </div>
-          <p style={{ fontFamily: 'Arimo', fontSize: '11px', lineHeight: '24px', color: 'rgba(255,255,255,0.5)', margin: '2px 0 0 0' }}>
-            The password must be at least 8 characters long.
-          </p>
+          {/* Submit Button */}
+          <button
+            onClick={handleReset}
+            disabled={loading || success}
+            style={{
+              width: '100%', height: '40px',
+              background: loading || success ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.7)',
+              boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+              border: 'none', borderRadius: '13px',
+              fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
+              color: '#FFFFFF', cursor: loading || success ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s',
+            }}
+          >
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </button>
         </div>
-
-        {/* Submit Button */}
-        <button
-          onClick={handleReset}
-          disabled={loading || success}
-          style={{
-            width: '100%', height: '40px',
-            background: loading || success ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.7)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            border: 'none', borderRadius: '13px',
-            fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
-            color: '#FFFFFF', cursor: loading || success ? 'not-allowed' : 'pointer',
-            transition: 'background 0.2s',
-          }}
-        >
-          {loading ? 'Resetting...' : 'Reset Password'}
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

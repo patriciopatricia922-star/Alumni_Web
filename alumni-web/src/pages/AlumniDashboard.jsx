@@ -49,7 +49,8 @@ const AlumniDashboard = () => {
   }, []);
 
   const firstName = user?.first_name || 'Alumni';
-  const progressPercentage = surveyProgress?.percentage || 0;
+  const rawPercentage = surveyProgress?.percentage || 0;
+  const progressPercentage = rawPercentage === 100 ? 100 : 0;
 
   useEffect(() => {
     if (progressPercentage === 0) return;
@@ -243,7 +244,7 @@ const AlumniDashboard = () => {
             lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
             margin: isMobile ? '0 0 12px 0' : '0 0 16px 0',
           }}>
-            Welcome Bark! Let's see what's new in your alumni network.
+            Welcome bark! Let's see what's new in your alumni network.
           </p>
           <h1 style={{
             fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,

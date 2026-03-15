@@ -84,7 +84,7 @@ const verifyAlumniID = async (imageFile) => {
   }
 
   if (!isDasmarinas) {
-    return { verified: false, reason: 'This ID could not be verified as an Alumni ID. Please try again.' };
+    return { verified: false, reason: 'This ID could not be verified as an NU Dasmariñas Alumni ID.' };
   }
 
   const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
@@ -216,12 +216,19 @@ const scannerStyle = `
   .aid-card {
     width: 680px;
     max-width: 95vw;
+    max-height: 92vh;
     background: rgba(13, 19, 56, 0.25);
     border: 0.8px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     padding: 32px 40px;
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
+  .aid-card::-webkit-scrollbar { width: 4px; }
+  .aid-card::-webkit-scrollbar-track { background: transparent; }
+  .aid-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+  .aid-card::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
   .aid-upload-area {
     position: relative;
     display: flex;
@@ -249,7 +256,7 @@ const scannerStyle = `
   /* Tablet: <= 768px */
   @media (max-width: 768px) {
     .aid-back         { top: 16px; left: 16px; }
-    .aid-card         { padding: 24px 20px; border-radius: 12px; }
+    .aid-card         { padding: 24px 20px; border-radius: 12px; max-height: 90vh; }
     .aid-upload-area  { height: 170px; }
     .aid-modal-box    { width: 90vw; max-width: 360px; }
   }
@@ -257,7 +264,7 @@ const scannerStyle = `
   /* Mobile: <= 480px */
   @media (max-width: 480px) {
     .aid-back         { top: 12px; left: 12px; }
-    .aid-card         { padding: 20px 14px; border-radius: 10px; max-width: 100vw; }
+    .aid-card         { padding: 20px 14px; border-radius: 10px; max-width: 100vw; max-height: 88vh; }
     .aid-upload-area  { height: 150px; }
     .aid-modal-box    { width: 92vw; padding: 24px 20px; }
   }
@@ -379,14 +386,14 @@ const AlumniIDRegistration = () => {
       <div
         style={{
           width: '100%',
-          minHeight: '100vh',
+          height: '100vh',
           background: '#002263',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'Arimo, Arial, sans-serif',
-          padding: '24px 0',
+          overflow: 'hidden',
         }}
       >
         {/* Back Button */}
@@ -518,7 +525,7 @@ const AlumniIDRegistration = () => {
 
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '22px', lineHeight: '34px', color: '#FFFFFF', margin: '0 0 6px 0' }}>
+            <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '24px', lineHeight: '34px', color: '#FFFFFF', margin: '0 0 6px 0' }}>
               Alumni Registration
             </h1>
             <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '13px', lineHeight: '20px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>

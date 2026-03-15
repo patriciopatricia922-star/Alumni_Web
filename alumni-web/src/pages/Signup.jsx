@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AlumnAILogo from '../assets/horizon_logo.svg';
+import SignupIcon from '../assets/signup_ic.svg';
+import LoginIcon from '../assets/login_ic.svg';
 import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
@@ -34,7 +36,7 @@ const scrollbarStyles = `
 
   .signup-card {
     width: 440px;
-    height: 880px;
+    height: 900px;
     max-height: 95vh;
   }
 
@@ -42,6 +44,26 @@ const scrollbarStyles = `
     .signup-card {
       width: 95vw;
     }
+  }
+
+  /* Eye icon button always visible on autofill */
+  .eye-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.25);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .eye-btn:hover {
+    background: rgba(0, 0, 0, 0.45);
   }
 `;
 
@@ -51,7 +73,7 @@ const inputStyle = {
   background: 'rgba(243, 243, 245, 0.17)',
   border: '1.23674px solid rgba(0, 0, 0, 0.25)',
   borderRadius: '8px',
-  padding: '4px 12px',
+  padding: '4px 36px 4px 12px',
   fontFamily: 'Arimo',
   fontWeight: 400,
   fontSize: '12px',
@@ -66,7 +88,7 @@ const labelStyle = {
   fontSize: '11px',
   lineHeight: '14px',
   color: '#FFFFFF',
-  marginBottom: '10px',
+  marginBottom: '6px',
   display: 'block',
 };
 
@@ -88,8 +110,9 @@ const sectionTitleStyle = {
   fontSize: '13px',
   lineHeight: '20px',
   color: '#FFFFFF',
-  margin: '0 0 12px 0',
-  paddingBottom: '2px',
+  margin: '0 0 14px 0',
+  paddingBottom: '6px',
+  borderBottom: '1px solid rgba(255,255,255,0.08)',
 };
 
 const Signup = () => {
@@ -187,17 +210,17 @@ const Signup = () => {
   };
 
   const EyeIcon = ({ visible }) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
       {visible ? (
         <>
-          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
-          <circle cx="12" cy="12" r="3" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#FFFFFF" strokeWidth="2" />
+          <circle cx="12" cy="12" r="3" stroke="#FFFFFF" strokeWidth="2" />
         </>
       ) : (
         <>
-          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
-          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
-          <line x1="1" y1="1" x2="23" y2="23" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
+          <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+          <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+          <line x1="1" y1="1" x2="23" y2="23" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
         </>
       )}
     </svg>
@@ -243,14 +266,13 @@ const Signup = () => {
             borderRadius: '15px',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
           {/* Top Nav Area */}
           <div
             style={{
-              padding: '20px 20px 12px',
+              padding: '20px 20px 0px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -264,7 +286,7 @@ const Signup = () => {
               style={{ width: '150px', height: '70px', objectFit: 'contain' }}
             />
 
-            {/* Slider — Figma spec: 352.8 × 36 */}
+            {/* Slider */}
             <div
               style={{
                 width: '352.8px',
@@ -291,8 +313,10 @@ const Signup = () => {
                   color: '#FFFFFF',
                   cursor: 'pointer',
                   transition: 'background 0.2s ease',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 }}
               >
+                <img src={SignupIcon} alt="" style={{ width: '14px', height: '14px' }} />
                 Sign up
               </button>
               <Link to="/login" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
@@ -310,13 +334,18 @@ const Signup = () => {
                     color: '#FFFFFF',
                     cursor: 'pointer',
                     transition: 'background 0.2s ease',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                   }}
                 >
+                  <img src={LoginIcon} alt="" style={{ width: '14px', height: '14px' }} />
                   Log in
                 </button>
               </Link>
             </div>
           </div>
+
+          {/* Gap between slider and form card */}
+          <div style={{ height: '16px', flexShrink: 0 }} />
 
           {/* Form Card */}
           <div
@@ -333,8 +362,8 @@ const Signup = () => {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '16px 18px 12px', flexShrink: 0, textAlign: 'center' }}>
-              <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 2px 0' }}>
+            <div style={{ padding: '18px 18px 14px', flexShrink: 0, textAlign: 'center' }}>
+              <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px', lineHeight: '22px', color: '#FFFFFF', margin: '0 0 4px 0' }}>
                 Alumni Registration
               </h3>
               <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '16px', color: 'rgba(255, 255, 255, 0.7)', margin: 0 }}>
@@ -346,11 +375,11 @@ const Signup = () => {
             <div
               className="custom-scroll"
               style={{
-                padding: '8px 20px 20px',
+                padding: '4px 20px 20px',
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '20px',
+                gap: '24px',
               }}
             >
 
@@ -361,9 +390,9 @@ const Signup = () => {
               )}
 
               {/* Personal Information */}
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <h4 style={sectionTitleStyle}>Personal Information</h4>
-                <div style={{ marginBottom: '24px' }}>
+                <div>
                   <RequiredLabel text="Last Name" touched={touched.lastName} hasValue={!!form.lastName} />
                   <input
                     style={inputStyle}
@@ -373,7 +402,7 @@ const Signup = () => {
                     onBlur={() => touch('lastName')}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: '10px', marginBottom:'13px' }}>
+                <div style={{ display: 'flex', gap: '10px' }}>
                   <div style={{ flex: 1 }}>
                     <RequiredLabel text="First Name" touched={touched.firstName} hasValue={!!form.firstName} />
                     <input
@@ -397,22 +426,22 @@ const Signup = () => {
               </div>
 
               {/* Academic Information */}
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <h4 style={sectionTitleStyle}>Academic Information</h4>
-                <div style={{ marginBottom: '20px' }}>
+                <div>
                   <label style={labelStyle}>Academic Program</label>
                   <input
                     style={{ ...inputStyle, color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                    placeholder="e.g. BSIT-MWA"
+                    placeholder="e.g. BSCS"
                     value={idData.program || ''}
                     readOnly
                   />
                 </div>
-                <div style={{ marginBottom: '16px'}}>
+                <div>
                   <label style={labelStyle}>Year Graduated</label>
                   <input
                     style={{ ...inputStyle, color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                    placeholder="e.g. 2025"
+                    placeholder="e.g. 2024"
                     value={idData.batchYear || ''}
                     readOnly
                   />
@@ -420,9 +449,9 @@ const Signup = () => {
               </div>
 
               {/* Account Security */}
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <h4 style={sectionTitleStyle}>Account Security</h4>
-                <div style={{ marginBottom: '23px' }}>
+                <div>
                   <RequiredLabel text="Email Address" touched={touched.email} hasValue={!!form.email} />
                   <input
                     style={{
@@ -441,7 +470,7 @@ const Signup = () => {
                     </p>
                   )}
                 </div>
-                <div style={{ marginBottom: '22px' }}>
+                <div>
                   <RequiredLabel text="Password" touched={touched.password} hasValue={!!form.password} />
                   <div style={{ position: 'relative' }}>
                     <input
@@ -452,7 +481,7 @@ const Signup = () => {
                       onChange={e => set('password', e.target.value)}
                       onBlur={() => touch('password')}
                     />
-                    <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button className="eye-btn" onClick={() => setShowPassword(!showPassword)}>
                       <EyeIcon visible={showPassword} />
                     </button>
                   </div>
@@ -471,7 +500,7 @@ const Signup = () => {
                       onChange={e => set('confirmPassword', e.target.value)}
                       onBlur={() => touch('confirmPassword')}
                     />
-                    <button onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button className="eye-btn" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                       <EyeIcon visible={showConfirmPassword} />
                     </button>
                   </div>
@@ -487,7 +516,7 @@ const Signup = () => {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  height: '45px',
+                  height: '50px',
                   background: !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
                   boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
                   border: 'none',

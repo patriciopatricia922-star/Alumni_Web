@@ -9,7 +9,7 @@ const VerificationCode = () => {
   const type = location.state?.type || 'recovery';
 
   const [code, setCode] = useState(['', '', '', '', '', '']);
-  const [timer, setTimer] = useState(30);
+  const [timer, setTimer] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -69,14 +69,18 @@ const VerificationCode = () => {
   const handleResend = async () => {
     if (!canResend || !email) return;
     setCanResend(false);
-    setTimer(30);
+    setTimer(120);
     setError('');
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/verify`,
     });
   };
 
-  const formatTime = (s) => `00:${String(s).padStart(2, '0')}`;
+  const formatTime = (s) => {
+    const minutes = Math.floor(s / 60);
+    const seconds = s % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
   return (
     <div style={{
@@ -167,7 +171,7 @@ const VerificationCode = () => {
           fontFamily: 'Arimo', fontSize: '14px', lineHeight: '20px',
           color: 'rgba(255,255,255,0.7)', textAlign: 'center', margin: '0 0 4px 0',
         }}>
-          {canResend ? 'Didn`t receive the code?' : `Send code again: ${formatTime(timer)}`}
+          {canResend ? "Didn't receive the code?" : `Send code again: ${formatTime(timer)}`}
         </p>
 
         {/* Resend */}

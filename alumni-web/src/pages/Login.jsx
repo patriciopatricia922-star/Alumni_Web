@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AlumnAILogo from '../assets/horizon_logo.svg';
+import SignupIcon from '../assets/signup_ic.svg';
+import LoginIcon from '../assets/login_ic.svg';
 import { supabase } from '../lib/supabase';
 
 const scrollbarStyles = `
@@ -159,7 +161,9 @@ const Login = () => {
                   borderRadius: '8px', border: 'none', fontFamily: 'Arimo',
                   fontWeight: 400, fontSize: '12px', color: '#FFFFFF',
                   cursor: 'pointer', transition: 'background 0.2s ease',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 }}>
+                  <img src={SignupIcon} alt="" style={{ width: '14px', height: '14px' }} />
                   Sign up
                 </button>
               </Link>
@@ -169,7 +173,9 @@ const Login = () => {
                 border: 'none', fontFamily: 'Arimo', fontWeight: 400,
                 fontSize: '12px', color: '#FFFFFF', cursor: 'pointer',
                 transition: 'background 0.2s ease',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               }}>
+                <img src={LoginIcon} alt="" style={{ width: '14px', height: '14px' }} />
                 Log in
               </button>
             </div>
@@ -214,7 +220,7 @@ const Login = () => {
             borderRadius: '12px', overflow: 'hidden',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
-            <div style={{ padding: '0px 18px 36px', flexShrink: 0, textAlign: 'center' }}>
+            <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 4px 0' }}>Welcome Back</h3>
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Please enter your details to log in</p>
             </div>
@@ -228,7 +234,7 @@ const Login = () => {
               )}
 
               {/* Email */}
-              <div style={{ marginTop: '2px'}}>
+              <div>
                 <label style={labelStyle}>Email Address</label>
                 <input
                   style={inputStyle}
@@ -243,7 +249,7 @@ const Login = () => {
               {/* Password */}
               <div>
                 <label style={labelStyle}>Password</label>
-                <div style={{ position: 'relative', marginTop: '10px' }}>
+                <div style={{ position: 'relative' }}>
                   <input
                     style={inputStyle}
                     type={showPassword ? 'text' : 'password'}
@@ -269,7 +275,7 @@ const Login = () => {
                 onClick={handleLogin}
                 disabled={loading}
                 style={{
-                  width: '100%', height: '45px',
+                  width: '100%', height: '50px',
                   background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
                   boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
                   border: 'none', borderRadius: '13px',
@@ -283,7 +289,7 @@ const Login = () => {
 
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
                 Don't have an account?{' '}
-                <Link to="/register" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>Sign up</Link>
+                <Link to="/signup" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>Sign up</Link>
               </p>
             </div>
           </div>
