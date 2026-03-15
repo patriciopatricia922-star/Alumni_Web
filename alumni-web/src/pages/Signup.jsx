@@ -189,12 +189,21 @@ const Signup = () => {
         last_name: form.lastName,
         program: idData.program || null,
         batch_year: idData.batchYear ? parseInt(idData.batchYear) : null,
+        role: 'alumni',
       }, { onConflict: 'id' });
 
       if (insertError) {
         await supabase.auth.signOut();
         throw new Error('Account setup incomplete. Please try signing up again.');
       }
+
+      // Also upsert alumni_profiles (best-effort, don't block navigation)
+      try {
+        await supabase.from('alumni_profiles').upsert({
+          user_id: data.user.id,
+          profile_completion_percentage: 10,
+        }, { onConflict: 'user_id' });
+      } catch (_) {}
 
       navigate('/login');
     } catch (err) {

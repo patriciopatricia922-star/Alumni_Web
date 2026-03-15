@@ -203,7 +203,7 @@ const LandingPage = () => {
             <h3>No upcoming events</h3>
             <p>Check back soon for exciting events and gatherings from the alumni community.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
         </div>
       </section>
 
@@ -218,7 +218,7 @@ const LandingPage = () => {
             <h3>No job postings available</h3>
             <p>Check back soon for exciting career opportunities from our partner companies.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
         </div>
       </section>
 
@@ -233,7 +233,7 @@ const LandingPage = () => {
             <h3>No discounts available</h3>
             <p>Check back soon for exclusive discounts and benefits from our partner establishments.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
         </div>
       </section>
 
@@ -249,22 +249,22 @@ const LandingPage = () => {
             <p className="lp-section-subtitle">Connecting National University—Dasmariñas alumni through innovative technology and community engagement.</p>
           </div>
           <div style={{ marginBottom: '56px' }}>
-            <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#002263', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
+            <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
             <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
-            <p style={{ fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>
+            <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>
               Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism, National University is committed to providing relevant, innovative, and accessible quality education and other development programs.
             </p>
-            <p style={{ fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>We are committed to our:</p>
+            <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>We are committed to our:</p>
             {missionItems.map((item, i) => (
-              <p key={i} style={{ fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px', color: '#364153', margin: '0 0 10px', textAlign: 'justify' }}>
+              <p key={i} style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 10px', textAlign: 'justify' }}>
                 <span style={{ fontWeight: 700, color: '#DAA520' }}>{item.label}</span>{', '}{item.desc}
               </p>
             ))}
           </div>
           <div style={{ marginBottom: '0' }}>
-            <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#002263', textAlign: 'center', margin: '0 0 16px' }}>Vision</h2>
+            <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Vision</h2>
             <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
-            <p style={{ fontFamily: 'Arial', fontSize: '19px', lineHeight: '28px', color: '#364153', margin: 0, textAlign: 'justify' }}>
+            <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: 0, textAlign: 'justify' }}>
               We are National University, a dynamic private institution committed to nation building, recognized internationally in teaching and research.
             </p>
           </div>
@@ -320,7 +320,7 @@ const LandingPage = () => {
             <img src={alumnaiLogo} alt="AlumnAI Logo" style={{ width: '130%', height: '130%', objectFit: 'contain', marginLeft: '39px' }} />
           </div>
           <div className="lp-footer-contact">
-            <h3 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '16px', lineHeight: '24px', letterSpacing: '0.2em', color: '#FFFFFF', margin: '0 0 24px', textTransform: 'uppercase' }}>CONTACT US</h3>
+            <h3 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '18px', lineHeight: '26px', letterSpacing: '0.2em', color: '#FFFFFF', margin: '0 0 24px', textTransform: 'uppercase' }}>CONTACT US</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {[
                 { icon: <path d="M8.5 0C5.87 0 3.75 2.12 3.75 4.75C3.75 8.31 8.5 14 8.5 14C8.5 14 13.25 8.31 13.25 4.75C13.25 2.12 11.13 0 8.5 0ZM8.5 6.5C7.67 6.5 7 5.83 7 5C7 4.17 7.67 3.5 8.5 3.5C9.33 3.5 10 4.17 10 5C10 5.83 9.33 6.5 8.5 6.5Z" fill="#FFFFFF" />, text: "Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114" },
@@ -330,7 +330,7 @@ const LandingPage = () => {
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                   <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style={{ flexShrink: 0, marginTop: '3px' }}>{item.icon}</svg>
-                  <p style={{ fontFamily: 'Arial', fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', margin: 0 }}>{item.text}</p>
+                  <p style={{ fontFamily: 'Arial', fontSize: '18px', lineHeight: '26px', color: '#FFFFFF', margin: 0 }}>{item.text}</p>
                 </div>
               ))}
             </div>
