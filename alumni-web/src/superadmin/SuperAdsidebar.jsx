@@ -12,7 +12,7 @@ import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 const menuItems = [
   { path: '/superadmin/super-admin-dashboard', icon: TbLayoutDashboardFilled, label: 'Audit Overview'   },
   { path: '/superadmin/audit-logs',            icon: SiGoogleanalytics,       label: 'Audit Logs'       },
-  { path: '/superadmin/admin-management',      icon: BsFillPeopleFill,        label: 'Admin Management',  split: true },
+  { path: '/superadmin/super-admin-alumni',      icon: BsFillPeopleFill,        label: 'Admin Management',  split: true },
   { path: '/superadmin/alumni-management',     icon: RiSurveyFill,            label: 'Alumni Management', split: true },
   { path: '/superadmin/alumni-engagement',     icon: FaBookBookmark,          label: 'Alumni Engagement', split: true },
 ];

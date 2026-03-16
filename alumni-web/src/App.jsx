@@ -31,6 +31,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
 import SuperAdminDashboard from './Superadmin/Superadmindashboard';
 import DetailedAuditLogs from './superadmin/Detailedauditlogs';
+import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
 import VerificationCode from './pages/Verificationcode';
 import ResetPassword from './pages/Resetpassword';
@@ -122,6 +123,8 @@ function App() {
       {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><DetailedAuditLogs /></ProtectedRoute>} />
+      <Route path= "/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni/></ProtectedRoute>} />
+    
     </Routes>
   );
 }

@@ -18,8 +18,33 @@ const scrollbarStyles = `
     font-style: normal;
     src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
   }
-  .login-card { width: 440px; height: 720px; max-height: 95vh; }
+  .login-card { width: 500px; height: 730px; max-height: 95vh; }
   @media (max-width: 500px) { .login-card { width: 95vw; } }
+
+  /* Hide browser native eye icon */
+  input::-ms-reveal,
+  input::-ms-clear { display: none; }
+  input::-webkit-credentials-auto-fill-button { visibility: hidden; pointer-events: none; }
+
+  /* Eye button always visible on autofill */
+  .eye-btn-login {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.25);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .eye-btn-login:hover { background: rgba(0, 0, 0, 0.45); }
+  input::-ms-reveal, input::-ms-clear { display: none; }
+  input::-webkit-credentials-auto-fill-button { visibility: hidden; pointer-events: none; }
 `;
 
 const inputStyle = {
@@ -187,7 +212,7 @@ const Login = () => {
               onClick={handleGoogleLogin}
               disabled={loading}
               style={{
-                width: '60%', height: '42px',
+                width: '251px', height: '42px',
                 background: 'rgba(243,243,245,0.17)',
                 border: '1.23674px solid rgba(0,0,0,0.25)',
                 borderRadius: '8px', display: 'flex', alignItems: 'center',
@@ -205,9 +230,9 @@ const Login = () => {
               <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: '#FFFFFF' }}>Continue with Google</span>
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', width: '100%' }}>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.15)' }} />
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
               <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>OR</span>
-              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.15)' }} />
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
             </div>
           </div>
 
@@ -220,7 +245,7 @@ const Login = () => {
             borderRadius: '12px', overflow: 'hidden',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
-            <div style={{ padding: '14px 18px 10px', flexShrink: 0, textAlign: 'center' }}>
+            <div style={{ padding: '16px 18px 12px', flexShrink: 0, textAlign: 'center' }}>
               <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 4px 0' }}>Welcome Back</h3>
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Please enter your details to log in</p>
             </div>
@@ -258,10 +283,7 @@ const Login = () => {
                     onChange={e => set('password', e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   />
-                  <button
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                  >
+                  <button className="eye-btn-login" onClick={() => setShowPassword(!showPassword)}>
                     <EyeIcon visible={showPassword} />
                   </button>
                 </div>
@@ -271,21 +293,23 @@ const Login = () => {
               </div>
 
               {/* Log in Button */}
-              <button
-                onClick={handleLogin}
-                disabled={loading}
-                style={{
-                  width: '100%', height: '50px',
-                  background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                  border: 'none', borderRadius: '13px',
-                  fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
-                  color: '#FFFFFF', cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s ease', flexShrink: 0,
-                }}
-              >
-                {loading ? 'Logging in...' : 'Log in'}
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={handleLogin}
+                  disabled={loading}
+                  style={{
+                    width: '310px', height: '40px',
+                    background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
+                    boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                    border: 'none', borderRadius: '13px',
+                    fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
+                    color: '#FFFFFF', cursor: loading ? 'not-allowed' : 'pointer',
+                    transition: 'background 0.2s ease', flexShrink: 0,
+                  }}
+                >
+                  {loading ? 'Logging in...' : 'Log in'}
+                </button>
+              </div>
 
               <p style={{ fontFamily: 'Arimo', fontSize: '12px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
                 Don't have an account?{' '}

@@ -65,11 +65,21 @@ const scrollbarStyles = `
   .eye-btn:hover {
     background: rgba(0, 0, 0, 0.45);
   }
+
+  /* Hide browser native eye icon */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
+  input::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    pointer-events: none;
+  }
 `;
 
 const inputStyle = {
   width: '100%',
-  height: '40px',
+  height: '36px',
   background: 'rgba(243, 243, 245, 0.17)',
   border: '1.23674px solid rgba(0, 0, 0, 0.25)',
   borderRadius: '8px',
@@ -85,7 +95,7 @@ const inputStyle = {
 const labelStyle = {
   fontFamily: 'Arimo',
   fontWeight: 400,
-  fontSize: '11px',
+  fontSize: '13px',
   lineHeight: '14px',
   color: '#FFFFFF',
   marginBottom: '6px',
@@ -107,12 +117,10 @@ const RequiredLabel = ({ text, touched, hasValue }) => (
 const sectionTitleStyle = {
   fontFamily: 'Arimo',
   fontWeight: 700,
-  fontSize: '13px',
-  lineHeight: '20px',
+  fontSize: '17px',
+  lineHeight: '38px',
   color: '#FFFFFF',
-  margin: '0 0 14px 0',
-  paddingBottom: '6px',
-  borderBottom: '1px solid rgba(255,255,255,0.08)',
+  margin: '0 0 8px 0',
 };
 
 const Signup = () => {
@@ -440,7 +448,7 @@ const Signup = () => {
                 <div>
                   <label style={labelStyle}>Academic Program</label>
                   <input
-                    style={{ ...inputStyle, color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
+                    style={{ ...inputStyle, height: '36px', background: 'rgba(243,243,245,0.35)', color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
                     placeholder="e.g. BSCS"
                     value={idData.program || ''}
                     readOnly
@@ -449,7 +457,7 @@ const Signup = () => {
                 <div>
                   <label style={labelStyle}>Year Graduated</label>
                   <input
-                    style={{ ...inputStyle, color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
+                    style={{ ...inputStyle, height: '36px', background: 'rgba(243,243,245,0.35)', color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
                     placeholder="e.g. 2024"
                     value={idData.batchYear || ''}
                     readOnly
@@ -494,7 +502,7 @@ const Signup = () => {
                       <EyeIcon visible={showPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
+                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
                     Must be at least 8 characters long.
                   </p>
                 </div>
@@ -513,36 +521,38 @@ const Signup = () => {
                       <EyeIcon visible={showConfirmPassword} />
                     </button>
                   </div>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
+                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '5px 0 0 0' }}>
                     Must be at least 8 characters long.
                   </p>
                 </div>
               </div>
 
               {/* Submit Button */}
-              <button
-                onClick={handleSignup}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  height: '50px',
-                  background: !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
-                  boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-                  border: 'none',
-                  borderRadius: '13px',
-                  fontFamily: 'Arimo',
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  color: '#FFFFFF',
-                  cursor: !loading ? 'pointer' : 'not-allowed',
-                  transition: 'background 0.2s ease',
-                  flexShrink: 0,
-                }}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={handleSignup}
+                  disabled={loading}
+                  style={{
+                    width: '284px',
+                    height: '37px',
+                    background: !loading ? 'rgba(0, 40, 255, 0.7)' : 'rgba(0, 40, 255, 0.35)',
+                    boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
+                    border: 'none',
+                    borderRadius: '14px',
+                    fontFamily: 'Arimo',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    color: '#FFFFFF',
+                    cursor: !loading ? 'pointer' : 'not-allowed',
+                    transition: 'background 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </div>
 
-              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
+              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
                 Already have an account?{' '}
                 <Link to="/login" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>
                   Log in
