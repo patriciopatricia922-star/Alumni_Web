@@ -261,15 +261,7 @@ function SurveyManagement() {
         @media (max-width: 900px) { .sm-page { margin-left: 0; padding: 20px 16px 60px; } }
 
         /* heading */
-        .sm-heading {
-          display:flex; justify-content:space-between; align-items:flex-start;
-          flex-wrap:wrap; gap:12px; margin-bottom:24px;
-          position:sticky; top:0; z-index:100;
-          background:rgba(225,236,247,0.97);
-          backdrop-filter:blur(6px);
-          padding-top:8px; padding-bottom:12px;
-          margin-top:-8px;
-        }
+        .sm-heading { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px; }
         .sm-title   { margin:0 0 4px; font-family:'Lexend',sans-serif; font-weight:700; font-size:30px; color:#324D87; }
         .sm-sub     { margin:0; font-family:'Lexend',sans-serif; font-size:16px; color:#6A7282; }
 
@@ -290,7 +282,7 @@ function SurveyManagement() {
         @media (max-width:860px) { .sm-layout { grid-template-columns:1fr; } }
 
         /* sidebar */
-        .sm-sidebar { position:sticky; top:100px; height:calc(100vh - 120px); display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+        .sm-sidebar { position:sticky; top:20px; height:max-content; display:flex; flex-direction:column; gap:10px; }
         .sm-add-sec {
           height:36px; background:#E2E8F0; border:none; border-radius:8px;
           font-family:'Arimo',sans-serif; font-size:13px; color:#314158;
@@ -320,8 +312,6 @@ function SurveyManagement() {
         .sm-sec-card {
           background:#fff; border-radius:12px; border:1px solid #E2E8F0;
           border-left:4px solid #155DFC; padding:16px 20px;
-          position:sticky; top:78px; z-index:90;
-          box-shadow:0 2px 8px rgba(0,0,0,.06);
         }
         .sm-sec-card-top { font-family:'Arimo',sans-serif; font-size:12px; color:#90A1B9; margin-bottom:4px; }
         .sm-sec-card h2  { margin:0 0 4px; font-family:'Lexend',sans-serif; font-size:18px; color:#0F172B; font-weight:600; }
@@ -477,99 +467,7 @@ function SurveyManagement() {
 
           {/* Sidebar */}
           <div className="sm-sidebar">
-            <button
-              className="sm-add-sec"
-              onClick={() => {
-                setSurvey(prev => ({
-                  ...prev,
-                  sections: [
-                    ...prev.sections,
-                    { id: Date.now(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] }
-                  ]
-                }));
-                setActiveSection(survey.sections.length);
-              }}
-            >
-              + Add Section
-            </button>
-            <button
-              className="sm-add-sec"
-              onClick={() => {
-                setSurvey(prev => ({
-                  ...prev,
-                  sections: [...prev.sections, {
-                    id: Date.now(),
-                    title: "New Section",
-                    description: "Section description",
-                    questions: []
-                  }]
-                }));
-                setActiveSection(survey.sections.length);
-              }}
-            >
-              + Add Section
-            </button>
-            <button className="sm-add-sec" onClick={() => {
-                setSurvey(prev => ({
-                  ...prev,
-                  sections: [...prev.sections, {
-                    id: Date.now(),
-                    title: `Section ${prev.sections.length + 1}`,
-                    description: "New section",
-                    questions: []
-                  }]
-                }));
-                setActiveSection(survey.sections.length);
-              }}>
-                + Add Section
-              </button>
-            <button
-            className="sm-add-sec"
-            onClick={() => {
-              setSurvey(prev => ({
-                ...prev,
-                sections: [...prev.sections, {
-                  id: Date.now(),
-                  title: `New Section ${prev.sections.length + 1}`,
-                  description: "Section description",
-                  questions: [],
-                }],
-              }));
-              setActiveSection(survey.sections.length);
-            }}
-          >
-            + Add Section
-          </button>
-          <button
-              className="sm-add-sec"
-              onClick={() => {
-                setSurvey(prev => ({
-                  ...prev,
-                  sections: [...prev.sections, {
-                    id: Date.now(),
-                    title: `New Section ${prev.sections.length + 1}`,
-                    description: "Section description",
-                    questions: []
-                  }]
-                }));
-                setActiveSection(survey.sections.length);
-              }}
-            >+ Add Section</button>
-          <button
-              className="sm-add-sec"
-              onClick={() => setSurvey(prev => ({
-                ...prev,
-                sections: [...prev.sections, {
-                  id: Date.now(),
-                  title: "New Section",
-                  description: "Section description",
-                  questions: [{ id: Date.now(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" }]
-                }]
-              }))}
-            >
-              + Add Section
-            </button>
-          <div className="sm-sec-list">
+            <div className="sm-sec-list">
               {survey.sections.map((sec, idx) => (
                 <div
                   key={idx}
