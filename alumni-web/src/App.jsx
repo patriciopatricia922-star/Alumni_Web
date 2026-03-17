@@ -35,6 +35,7 @@ import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
 import VerificationCode from './pages/Verificationcode';
 import ResetPassword from './pages/Resetpassword';
+import SurveyManagement from './admin/SurveyManagement';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
 // Checks for a valid Supabase session before rendering the page.
@@ -119,7 +120,7 @@ function App() {
       {/* ── Admin protected routes (For testing) ── */}
       <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
-
+      <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
       {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><DetailedAuditLogs /></ProtectedRoute>} />
