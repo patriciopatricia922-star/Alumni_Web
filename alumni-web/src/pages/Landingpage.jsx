@@ -203,7 +203,7 @@ const LandingPage = () => {
             <h3>No upcoming events</h3>
             <p>Check back soon for exciting events and gatherings from the alumni community.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
         </div>
       </section>
 
@@ -218,7 +218,7 @@ const LandingPage = () => {
             <h3>No job postings available</h3>
             <p>Check back soon for exciting career opportunities from our partner companies.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
         </div>
       </section>
 
@@ -233,7 +233,7 @@ const LandingPage = () => {
             <h3>No discounts available</h3>
             <p>Check back soon for exclusive discounts and benefits from our partner establishments.</p>
           </div>
-          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/register')}>View All</button></div>
+          <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={() => navigate('/login')}>View All</button></div>
         </div>
       </section>
 
