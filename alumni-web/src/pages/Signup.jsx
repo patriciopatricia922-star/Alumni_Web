@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import AlumnAILogo from '../assets/horizon_logo.svg';
+import AlumnAILogo from '../assets/new_lg.svg';
 import SignupIcon from '../assets/signup_ic.svg';
 import LoginIcon from '../assets/login_ic.svg';
 import { supabase } from '../lib/supabase';
@@ -234,7 +234,7 @@ const Signup = () => {
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', gap: '12px', flexShrink: 0,
           }}>
-            <img src={AlumnAILogo} alt="AlumnAI Logo" style={{ width: '150px', height: '70px', objectFit: 'contain' }} />
+            <img src={AlumnAILogo} alt="AlumnAI Logo" style={{ marginLeft: '45px', width: '150px', height: '70px', objectFit: 'contain' }} />
             <div style={{
               width: '352.8px', maxWidth: '90%', height: '36px',
               background: 'rgba(243,243,245,0.17)', borderRadius: '10px',

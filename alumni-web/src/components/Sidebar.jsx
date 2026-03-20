@@ -168,7 +168,7 @@ const Sidebar = () => {
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ width: isTablet ? '130px' : '150px', height: 'auto', objectFit: 'contain' }}
+          style={{ marginLeft: '10%', width: isTablet ? '135px' : '156px', height: 'auto', objectFit: 'contain' }}
         />
       </div>
 

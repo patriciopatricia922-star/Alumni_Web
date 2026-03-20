@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
 import { supabase } from '../lib/supabase';
-const alumnaiLogo = new URL('../assets/horizon_logo.svg', import.meta.url).href;
+const alumnaiLogo = new URL('../assets/new_lg.svg', import.meta.url).href;
 
 const LandingPage = () => {
   const navigate = useNavigate();

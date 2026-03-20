@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import AlumnAIHorizontal from '../assets/alumnAI.png';
+import AlumnAIHorizontal from '../assets/new_lg.svg';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -169,7 +169,7 @@ const Navbar = () => {
             <img
               src={AlumnAIHorizontal}
               alt="AlumnAI"
-              style={{ height: '30px', objectFit: 'contain' }}
+              style={{ height: '69px', objectFit: 'contain' }}
             />
           </Link>
 

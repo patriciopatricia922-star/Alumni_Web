@@ -286,11 +286,11 @@ const AlumniIDRegistration = () => {
       const avgBright = bright / (W * H);
 
       if (avgBright < 35) {
-        setCamGuide('Too dark — move to a brighter area');
+        setCamGuide('Too dark. Move to a brighter area');
         stable = 0; detectionRef.current = requestAnimationFrame(analyse); return;
       }
       if (avgBright > 230) {
-        setCamGuide('Too bright — reduce glare or move away from light');
+        setCamGuide('Too bright. Reduce any glare or move away from the light');
         stable = 0; detectionRef.current = requestAnimationFrame(analyse); return;
       }
 
@@ -306,7 +306,7 @@ const AlumniIDRegistration = () => {
         }
       }
 
-      // ── Card-fill score ───────────────────────────────────────────────────
+      // ── Card-fill score (for clarification to mobile) ───────────────────────────────────────────────────
       // An ID card filling the zone will have:
       //   1. Strong edges near ALL FOUR borders of the zone (the card's outline)
       //   2. Relatively uniform interior (not just a busy background)
@@ -353,17 +353,17 @@ const AlumniIDRegistration = () => {
         setCamGuide('Place your Alumni ID inside the frame');
         stable = 0;
       } else if (!cardFillsFrame && topScore < BORDER_THRESH && botScore < BORDER_THRESH) {
-        setCamGuide('Move closer — ID is too far away');
+        setCamGuide('Move closer. ID is too far away');
         stable = 0;
       } else if (!cardFillsFrame && (leftScore < BORDER_THRESH || rightScore < BORDER_THRESH)) {
-        setCamGuide('Centre the ID — align it with the frame edges');
+        setCamGuide('Centre the ID, align it with the frame edges');
         stable = 0;
       } else if (!cardFillsFrame) {
         setCamGuide('Align the ID to fill the frame');
         stable = 0;
       } else if (diff > 0.08) {
         // Card is there but moving
-        setCamGuide('Hold still — keep the ID steady');
+        setCamGuide('Hold still. Keep the ID steady');
         stable = Math.max(0, stable - 4);
       } else {
         // ── Card detected and stable — count down ────────────────────────────
@@ -374,7 +374,7 @@ const AlumniIDRegistration = () => {
         else {
           // ── AUTO CAPTURE ──────────────────────────────────────────────────
           capturedRef.current = true;
-          setCamGuide('✓ Capturing...');
+          setCamGuide('Capturing...');
           // Capture full video frame (not just the zone) for best OCR quality
           canvas.width  = vW;
           canvas.height = vH;
