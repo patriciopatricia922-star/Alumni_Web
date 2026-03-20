@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
-import { loadSurveyProgress, getResumeRoute, isSurveyComplete } from '../lib/surveyProgress';
+import { loadSurveyProgress } from '../lib/surveyProgress';
+import { logAction } from '../lib/auditLogger';
+import announcementIcon from '../assets/announcement_ic.svg';
+import discountIcon     from '../assets/discount_ic.svg';
+import eventsIcon       from '../assets/events_ic.svg';
+import jobsIcon         from '../assets/jobs_ic.svg';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
@@ -16,17 +21,22 @@ const useWindowWidth = () => {
 
 const AlumniDashboard = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
-  const [user, setUser] = useState(null);
-  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
-  const [resumeRoute, setResumeRoute] = useState('/survey/personal-background');
+  const width    = useWindowWidth();
+
+  const [user,               setUser]               = useState(null);
+  const [surveyProgress,     setSurveyProgress]     = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
+  const [notifs,             setNotifs]             = useState([]);
+  const [unreadCount,        setUnreadCount]        = useState(0);
+  const [showDropdown,       setShowDropdown]       = useState(false);
+  const [notifTab,           setNotifTab]           = useState('all');
+  const bellRef = useRef(null);
 
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1024;
-  const isDesktop = width >= 1024;
-  const sidebarWidth = 229;
+  const sidebarWidth = isTablet ? 200 : 229;
 
+  // ── Fetch user + survey progress ─────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -39,357 +49,453 @@ const AlumniDashboard = () => {
       if (data) setUser(data);
       const progress = await loadSurveyProgress();
       if (progress) setSurveyProgress(progress);
-      // getResumeRoute resolves the correct WEB route regardless of
-      // which platform last saved progress, and returns /survey/complete
-      // when the survey is 100% done.
-      const route = await getResumeRoute();
-      setResumeRoute(route);
+      await logAction({ action: 'View', module: 'Dashboard', description: 'Alumni viewed dashboard (web)', status: 'Success' });
     };
     fetchData();
   }, []);
 
-  const firstName = user?.first_name || 'Alumni';
-  const rawPercentage = surveyProgress?.percentage || 0;
-  const progressPercentage = rawPercentage === 100 ? 100 : 0;
+  const firstName   = user?.first_name || 'Alumni';
+  const progressPct = Math.min(surveyProgress?.percentage || 0, 100);
 
   useEffect(() => {
-    if (progressPercentage === 0) return;
-    let start = 0;
-    const end = progressPercentage;
-    const duration = 1200;
-    const stepTime = 16;
-    const steps = duration / stepTime;
-    const increment = end / steps;
+    if (progressPct === 0) { setAnimatedPercentage(0); return; }
+    let current = 0;
     const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) { setAnimatedPercentage(end); clearInterval(timer); }
-      else setAnimatedPercentage(Math.floor(start));
-    }, stepTime);
+      current += progressPct / 60;
+      if (current >= progressPct) { setAnimatedPercentage(progressPct); clearInterval(timer); }
+      else setAnimatedPercentage(Math.floor(current));
+    }, 16);
     return () => clearInterval(timer);
-  }, [progressPercentage]);
+  }, [progressPct]);
 
-  const forYouItems = [
-    { icon: 'survey',   title: 'Alumni Survey Tracer', description: 'Update your status',       badge: true, path: '/survey/personal-background' },
-    { icon: 'discount', title: 'Discounts',            description: '8 new offers available',   badge: true, path: '/discounts' },
-    { icon: 'events',   title: 'Events',               description: '5 upcoming this week',     badge: true, path: '/events' },
-    { icon: 'jobs',     title: 'Jobs',                 description: '3 new listings available', badge: true, path: '/jobs' },
-  ];
+  // ── Fetch notifications ──────────────────────────────────────────────────
+  useEffect(() => {
+    const fetchNotifs = async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('id, title, content, published_at, is_active')
+        .eq('is_active', true)
+        .order('published_at', { ascending: false })
+        .limit(20);
+      if (error || !data) return;
+      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      setNotifs(mapped);
+      setUnreadCount(mapped.filter(n => !n.read).length);
+    };
+    fetchNotifs();
+  }, []);
 
-  const announcements = [
-    { title: 'Alumni Welcome Back Night',     description: 'Join us for the annual alumni welcome back event.',              time: '2 hours ago' },
-    { title: 'Scholarship Applications Open', description: 'Applications for the 2026 alumni scholarship are now open.',    time: '5 hours ago' },
-    { title: 'Career Fair This Friday',       description: 'Connect with top companies at our upcoming career fair.',        time: '1 day ago'   },
-    { title: 'Chapter Meeting Update',        description: 'The monthly chapter meeting has been rescheduled to March 10.', time: '2 days ago'  },
-  ];
+  useEffect(() => {
+    const handler = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
-  const ForYouIcon = ({ type }) => {
-    if (type === 'survey') return (
-      <svg width="12" height="16" viewBox="0 0 12 16" fill="none">
-        <rect x="0.5" y="0.5" width="11" height="15" rx="1.5" stroke="#FFFFFF" strokeWidth="1.5"/>
-        <path d="M3 5H9M3 8H9M3 11H6" stroke="#FFFFFF" strokeWidth="1.2" strokeLinecap="round"/>
-      </svg>
-    );
-    if (type === 'discount') return (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M13.5 2.5L2.5 13.5M5.5 4C5.5 4.82843 4.82843 5.5 4 5.5C3.17157 5.5 2.5 4.82843 2.5 4C2.5 3.17157 3.17157 2.5 4 2.5C4.82843 2.5 5.5 3.17157 5.5 4ZM13.5 12C13.5 12.8284 12.8284 13.5 12 13.5C11.1716 13.5 10.5 12.8284 10.5 12C10.5 11.1716 11.1716 10.5 12 10.5C12.8284 10.5 13.5 11.1716 13.5 12Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    );
-    if (type === 'events') return (
-      <svg width="15" height="16" viewBox="0 0 15 16" fill="none">
-        <rect x="0.75" y="1.75" width="13.5" height="13.5" rx="1.25" stroke="#FFFFFF" strokeWidth="1.5"/>
-        <path d="M0.75 6H14.25" stroke="#FFFFFF" strokeWidth="1.5"/>
-        <path d="M4.5 0.5V3M10.5 0.5V3" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
-      </svg>
-    );
-    if (type === 'jobs') return (
-      <svg width="18" height="17" viewBox="0 0 18 17" fill="none">
-        <rect x="0.75" y="4.75" width="16.5" height="11.5" rx="1.25" stroke="#FFFFFF" strokeWidth="1.5"/>
-        <path d="M5.5 4.5V3C5.5 2.17157 6.17157 1.5 7 1.5H11C11.8284 1.5 12.5 2.17157 12.5 3V4.5" stroke="#FFFFFF" strokeWidth="1.5"/>
-      </svg>
-    );
-    return null;
+  const markAllRead = useCallback(() => {
+    const allIds = notifs.map(n => n.id);
+    localStorage.setItem('read_notifs', JSON.stringify(allIds));
+    setNotifs(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0);
+  }, [notifs]);
+
+  const markOneRead = useCallback((id) => {
+    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
+    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const groupByDate = (list) => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate()-7);
+    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    list.forEach(n => {
+      const d = new Date(n.time); d.setHours(0,0,0,0);
+      if      (d >= today)     groups['Today'].push(n);
+      else if (d >= yesterday) groups['Yesterday'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
+    });
+    return groups;
   };
 
-  const Chevron = () => (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ flexShrink: 0 }}>
-      <path d="M1 1L5 5L1 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso), now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff/60)   + 'm ago';
+    if (diff < 86400)  return Math.floor(diff/3600)  + 'h ago';
+    if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  };
 
+  const forYouItems = [
+    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news',    path: '/announcements' },
+    { icon: eventsIcon,       title: 'Events',        description: '5 upcoming events',    path: '/events'        },
+    { icon: discountIcon,     title: 'Discounts',     description: '8 offers available',   path: '/discounts'     },
+    { icon: jobsIcon,         title: 'Jobs',          description: '3 listings available', path: '/jobs'          },
+  ];
+
+  // ── Sizes — scaled from Figma (card 160px, icon box 120px) ───────────────
+  // Figma: card 495×160px, icon box 120×120px
+  const CARD_H   = isMobile ? 80  : isTablet ? 120 : 160;
+  const ICON_BOX = isMobile ? 60  : isTablet ? 90  : 120;
+  const TITLE_SZ = isMobile ? 13  : isTablet ? 16  : 22;
+  const SUB_SZ   = isMobile ? 10  : isTablet ? 12  : 16;
+
+  // ── For You Card ──────────────────────────────────────────────────────────
   const ForYouCard = ({ item }) => (
     <div
+      onClick={() => navigate(item.path)}
       style={{
-        padding: isMobile ? '12px 14px' : '14px 18px',
-        background: 'rgba(13,19,56,0.4)',
-        border: '0.89px solid rgba(255,255,255,0.1)',
-        boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+        height: `${CARD_H}px`,
+        background: 'rgba(0,62,166,0.35)',
+        border: '0.889px solid rgba(255,255,255,0.2)',
+        boxShadow: '0px 4px 4px rgba(0,0,0,0.3)',
         borderRadius: '16px',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: '14px',
         cursor: 'pointer',
-        transition: 'transform 0.15s, border-color 0.15s',
+        display: 'flex',
+        alignItems: 'center',
+        paddingRight: isMobile ? '14px' : '20px',
+        boxSizing: 'border-box',
+        transition: 'border-color 0.15s, transform 0.15s',
+        overflow: 'hidden',
+        position: 'relative',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = 'rgba(43,114,251,0.3)'; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-      onClick={() => navigate(item.icon === 'survey' ? resumeRoute : item.path)}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(43,114,251,0.55)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.transform = 'translateY(0)'; }}
     >
-      <div style={{ position: 'relative', flexShrink: 0 }}>
+      {/* Icon box — Figma: 120×120, left:-4, top:1 (flush left, vertically centered in 160px card) */}
+      <div style={{
+        width:  `${ICON_BOX}px`,
+        height: `${ICON_BOX}px`,
+        minWidth: `${ICON_BOX}px`,
+        background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)',
+        boxShadow: '0px 10px 15px rgba(97,95,255,0.5), 0px 4px 6px rgba(43,114,251,0.15)',
+        borderRadius: '14px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+        // Pull away from card edge for breathing room
+        marginLeft: isMobile ? '8px' : '14px',
+        flexShrink: 0,
+      }}>
+        <img
+          src={item.icon}
+          alt={item.title}
+          style={{
+            
+            width:  item.title === 'Discounts' ? '159%' : '95%',
+            height: item.title === 'Discounts' ? '159%' : '95%',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0px 4px 4px #2B72FB)',
+            transform: item.title === 'Discounts' ? 'rotate(10.05deg)' : 'none',
+            marginLeft: item.title === 'Discounts' ? '2vh': '0',
+          }}
+        />
+        
         <div style={{
-          width: '38px', height: '38px',
-          background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)',
-          boxShadow: '0px 10px 15px rgba(97,95,255,0.3), 0px 4px 6px rgba(43,114,251,0.15)',
-          borderRadius: '12px',
+          position: 'absolute',
+          // Sits at top-right corner of icon box, slightly above
+          top: isMobile ? '-6px' : '-10px',
+          right: isMobile ? '-6px' : '-10px',
+          width:  isMobile ? '14px' : '26px',
+          height: isMobile ? '14px' : '26px',
+          background: 'rgba(43,114,251,0.42)',
+          borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <ForYouIcon type={item.icon} />
+          <div style={{
+            width:  isMobile ? '9px' : '16px',
+            height: isMobile ? '9px' : '16px',
+            background: '#2B72FB',
+            borderRadius: '50%',
+          }} />
         </div>
-        {item.badge && (
-          <>
-            <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', background: 'rgba(43,114,251,0.42)', borderRadius: '50%' }} />
-            <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', background: '#2B72FB', borderRadius: '50%' }} />
-          </>
-        )}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '13px', lineHeight: '18px', color: '#FFFFFF', margin: '0 0 2px 0' }}>{item.title}</p>
-        <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 400, fontSize: '11px', lineHeight: '15px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>{item.description}</p>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0, paddingLeft: isMobile ? '14px' : '22px' }}>
+        <p style={{
+          fontFamily: 'Arimo, Arial', fontWeight: 700,
+          fontSize: `${TITLE_SZ}px`,
+          lineHeight: '1.25', color: '#FFED97',
+          margin: '0 0 4px 0',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {item.title}
+        </p>
+        <p style={{
+          fontFamily: 'Arimo, Arial', fontWeight: 400,
+          fontSize: `${SUB_SZ}px`,
+          lineHeight: '1.4', color: '#FFFFFF',
+          margin: 0,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {item.description}
+        </p>
       </div>
-      <Chevron />
+
+      {/* Chevron */}
+      <svg width="8" height="14" viewBox="0 0 8 14" fill="none" style={{ flexShrink: 0, marginLeft: '8px' }}>
+        <path d="M1 1L7 7L1 13" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ filter: 'drop-shadow(4px 4px 10px rgba(0,0,0,0.25))' }}/>
+      </svg>
     </div>
   );
 
-  const circleSize = isMobile ? 90 : isTablet ? 100 : 110;
-  const circleR    = isMobile ? 37 : isTablet ? 42  : 46;
+  // ── Progress circle ───────────────────────────────────────────────────────
+  const CIRCLE_SZ = isMobile ? 60  : isTablet ? 80  : 110;
+  const CIRCLE_R  = isMobile ? 22  : isTablet ? 30  : 43;
+  const PCT_SZ    = isMobile ? 14  : isTablet ? 18  : 26;
 
   const ProgressCircle = () => (
-    <div style={{ position: 'relative', width: `${circleSize}px`, height: `${circleSize}px`, flexShrink: 0 }}>
-      <svg width={circleSize} height={circleSize} style={{ transform: 'rotate(-90deg)', position: 'absolute' }}>
-        <circle cx={circleSize/2} cy={circleSize/2} r={circleR} stroke="#D9CA81" strokeWidth="7" fill="none"/>
-        <circle cx={circleSize/2} cy={circleSize/2} r={circleR} stroke="#2B72FB" strokeWidth="7" fill="none"
-          strokeDasharray={`${2 * Math.PI * circleR}`}
-          strokeDashoffset={`${2 * Math.PI * circleR * (1 - animatedPercentage / 100)}`}
-          strokeLinecap="round"/>
+    <div style={{ position: 'relative', width: CIRCLE_SZ, height: CIRCLE_SZ, flexShrink: 0 }}>
+      <svg width={CIRCLE_SZ} height={CIRCLE_SZ} style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}>
+        <circle cx={CIRCLE_SZ/2} cy={CIRCLE_SZ/2} r={CIRCLE_R}
+          stroke="#FFED97" strokeWidth={isMobile ? 7 : 9} fill="none" opacity="0.35"/>
+        <circle cx={CIRCLE_SZ/2} cy={CIRCLE_SZ/2} r={CIRCLE_R}
+          stroke="#2B72FB" strokeWidth={isMobile ? 7 : 9} fill="none"
+          strokeDasharray={`${2*Math.PI*CIRCLE_R}`}
+          strokeDashoffset={`${2*Math.PI*CIRCLE_R*(1-animatedPercentage/100)}`}
+          strokeLinecap="round"
+          style={{ filter: 'drop-shadow(10px 0px 10px #00369C)' }}
+        />
       </svg>
       <div style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,
-        fontSize: isMobile ? '20px' : '26px', lineHeight: '1',
-        letterSpacing: '-0.35px', color: '#2B72FB',
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+        fontFamily: 'Arimo, Arial', fontWeight: 700,
+        fontSize: `${PCT_SZ}px`,
+        letterSpacing: '-0.35px', color: '#FFED97', lineHeight: 1,
+        whiteSpace: 'nowrap',
       }}>
         {animatedPercentage}%
       </div>
     </div>
   );
 
+  // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#002263' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'rgba(0,34,99,0.95)' }}>
       <Sidebar />
 
       <div style={{
         marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
         flex: 1,
-        padding: isMobile ? '20px 20px 90px' : isTablet ? '28px 32px 32px' : '32px 51px 32px 48px',
+        display: 'flex',
+        flexDirection: 'column',
+        // Vertical padding: top enough for bell, bottom enough for mobile nav
+        paddingTop:    isMobile ? '14px' : isTablet ? '22px' : '28px',
+        paddingBottom: isMobile ? '80px' : '22px',
+        paddingLeft:   isMobile ? '14px' : isTablet ? '24px' : '36px',
+        paddingRight:  isMobile ? '14px' : isTablet ? '24px' : '36px',
         boxSizing: 'border-box',
-        maxWidth: '100%',
-        overflowX: 'hidden',
+        height: '100vh',
+        // NEVER scroll on desktop/tablet — everything must fit
         overflowY: isMobile ? 'auto' : 'hidden',
+        overflowX: 'hidden',
         position: 'relative',
+        // No gap — spacing handled manually with spacer divs
       }}>
 
-        {/* Notification Bell */}
-        <div style={{
-          position: 'absolute',
-          top: isMobile ? '20px' : isTablet ? '28px' : '32px',
-          right: isMobile ? '20px' : isTablet ? '32px' : '51px',
-          zIndex: 10,
+        {/* ── Notification Bell ──────────────────────────────────────────── */}
+        <div ref={bellRef} style={{
+          position: 'fixed',
+          top:   isMobile ? '14px' : isTablet ? '28px' : '36px',
+          right: isMobile ? '14px' : isTablet ? '28px' : '44px',
+          zIndex: 200,
         }}>
-          <button style={{
-            width: '44px', height: '44px',
-            background: 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
-            border: '1.24px solid rgba(255,255,255,0.1)',
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)',
+          <button onClick={() => setShowDropdown(v => !v)} style={{
+            width: isMobile ? '44px' : '58px',
+            height: isMobile ? '44px' : '58px',
+            background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
+            border: showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
+            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
             borderRadius: '14px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative',
+            position: 'relative', transition: 'all 0.15s', flexShrink: 0,
           }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M8.33 17.5H11.67M15 7.5C15 5.84 14.16 4.34 12.89 3.39M5 7.5C5 4.74 7.24 2.5 10 2.5C11.33 2.5 12.53 3.02 13.41 3.88M15 7.5C15 11.25 16.67 13.33 16.67 13.33H3.33C3.33 13.33 5 11.25 5 7.5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
+                stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <div style={{
-              position: 'absolute', top: '-4px', right: '-4px',
-              width: '20px', height: '20px', background: '#2B72FB', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '10px', color: '#FFFFFF', fontWeight: 400 }}>3</span>
-            </div>
+            {unreadCount > 0 && (
+              <div style={{
+                position: 'absolute', top: '-5px', right: '-5px',
+                width: '24px', height: '24px',
+                background: 'rgba(43,114,251,0.42)', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{
+                  width: '17px', height: '17px', background: '#2B72FB', borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0px 4px 6px -4px rgba(0,0,0,0.1)',
+                }}>
+                  <span style={{ fontFamily: 'Arimo', fontSize: '9px', color: '#FFFFFF', fontWeight: 400 }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                </div>
+              </div>
+            )}
           </button>
+
+          {showDropdown && (
+            <div style={{ position: 'absolute', top: isMobile?'52px':'68px', right: 0, width: isMobile?'90vw':'380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
+              <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
+                {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
+              </div>
+              <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
+                {['all','unread'].map(t => (
+                  <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab===t?'#2B72FB':'transparent', border: notifTab===t?'none':'1px solid rgba(255,255,255,0.12)', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab===t?700:400, color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize' }}>
+                    {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                  </button>
+                ))}
+              </div>
+              <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
+                {(() => {
+                  const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+                  if (!list.length) return (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{notifTab==='unread'?'No unread notifications':'No notifications yet'}</p>
+                    </div>
+                  );
+                  return Object.entries(groupByDate(list)).map(([label, items]) => {
+                    if (!items.length) return null;
+                    return (
+                      <div key={label}>
+                        <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
+                        {items.map(n => (
+                          <div key={n.id} onClick={() => markOneRead(n.id)}
+                            style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read?'transparent':'rgba(43,114,251,0.07)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read?'3px solid transparent':'3px solid #2B72FB' }}
+                            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.background=n.read?'transparent':'rgba(43,114,251,0.07)'}>
+                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.15)', border: '1px solid rgba(43,114,251,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/></svg>
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontFamily: 'Arimo', fontWeight: n.read?400:700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
+                              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
+                            </div>
+                            {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2B72FB', flexShrink: 0, marginTop: '6px' }} />}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+              <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
+                  style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+                  onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
+                  See all notifications →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Header */}
-        <div style={{ paddingRight: '64px', marginBottom: isMobile ? '14px' : '20px' }}>
+        {/* ── SECTION 1: Header ─────────────────────────────────────────── */}
+        {/* Reserve right side for bell button so text doesn't overlap */}
+        {/* ── Dashboard title + subtitle (tight together, no gap below subtitle) ── */}
+        <div style={{ paddingRight: isMobile ? '58px' : '80px', flexShrink: 0 }}>
           <h2 style={{
-            fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,
-            fontSize: isMobile ? '28px' : isTablet ? '30px' : '34px',
-            lineHeight: '1.15', letterSpacing: '-0.8px', color: '#FFFFFF',
-            margin: '0 0 3px 0',
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '20px' : isTablet ? '24px' : '32px',
+            lineHeight: '1.2', letterSpacing: '-1px', color: '#FFFFFF',
+            margin: 0,
           }}>
             Dashboard
           </h2>
           <p style={{
-            fontFamily: 'Arimo, Arial, sans-serif',
-            fontSize: isMobile ? '12px' : '14px',
-            lineHeight: '20px', color: 'rgba(255,255,255,0.7)',
-            margin: isMobile ? '0 0 12px 0' : '0 0 16px 0',
+            fontFamily: 'Arimo, Arial', fontWeight: 400,
+            fontSize: isMobile ? '10px' : isTablet ? '11px' : '13px',
+            lineHeight: '1.5', color: 'rgba(255,255,255,0.7)',
+            margin: '2px 0 0 0',   // tight — no bottom gap, next element provides spacing
           }}>
-            Welcome bark! Let's see what's new in your alumni network.
+            You're making great progress! Keep engaging with your alumni network.
           </p>
+        </div>
+
+        {/* [SPACE] between Dashboard block and Hello/{name}+Banner block */}
+        <div style={{ height: isMobile ? '12px' : isTablet ? '16px' : '22px', flexShrink: 0 }} />
+
+        {/* ── Hello + Banner (tight together as one group) ─────────────── */}
+        <div style={{ flexShrink: 0, paddingRight: isMobile ? '58px' : '80px' }}>
           <h1 style={{
-            fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,
-            fontSize: isMobile ? '30px' : isTablet ? '32px' : '36px',
-            lineHeight: '1.15', letterSpacing: '-0.9px', color: '#FFFFFF',
-            margin: '0',
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '23px' : isTablet ? '26px' : '30px',
+            lineHeight: '1.14', letterSpacing: '-1.05px', color: '#FFFFFF',
+            margin: '0 0 8px 0',   
+            marginTop: '16px',
           }}>
             Hello, <span style={{ color: '#D9CA81' }}>{firstName}</span>
           </h1>
         </div>
 
-        {/* Progress Banner */}
+        {/* ── SECTION 2 Progress Banner — directly under Hello ─────────── */}
         <div style={{
-          position: 'relative',
-          width: '100%',
-          padding: isMobile ? '14px 20px' : '18px 32px',
-          background: 'linear-gradient(180deg, rgba(43,114,251,0.2) 0%, rgba(30,37,85,0.3) 100%)',
-          border: '0.89px solid rgba(43,114,251,0.3)',
-          borderRadius: '20px',
-          marginBottom: isMobile ? '20px' : '28px',
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px',
+          position: 'relative', flexShrink: 0,
+          marginBottom: 0,   // no gap here — [SPACE] spacer below handles it
+          padding: isMobile ? '14px 18px' : isTablet ? '16px 22px' : '18px 28px',
+          background: 'linear-gradient(180deg, rgba(43,114,251,0.5) -11.25%, rgba(30,37,85,0.65) 100%)',
+          border: '0.889px solid rgba(43,114,251,0.3)',
+          borderRadius: '24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: '20px', overflow: 'hidden', boxSizing: 'border-box',
         }}>
-          <div style={{
-            position: 'absolute', width: '256px', height: '256px',
-            right: '-30px', top: '-127px',
-            background: '#2B72FB', opacity: 0.1,
-            filter: 'blur(64px)', borderRadius: '50%', pointerEvents: 'none',
-          }} />
+          <div style={{ position: 'absolute', width: '256px', height: '256px', right: '-30px', top: '-127px', background: '#2B72FB', opacity: 0.1, filter: 'blur(64px)', borderRadius: '50%', pointerEvents: 'none' }} />
           <p style={{
-            fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,
-            fontSize: isMobile ? '15px' : isTablet ? '20px' : '24px',
-            lineHeight: '1.4', color: '#FFFFFF',
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            // Text is left-aligned inside banner with generous left padding already from container
+            fontSize: isMobile ? '19px' : isTablet ? '19px' : '25px',
+            lineHeight: '1.5', color: '#FFFFFF',
             margin: 0, position: 'relative', flex: 1,
           }}>
-            Your alumni activity engagement!
+            Your alumni tracer survey progress!
           </p>
           <ProgressCircle />
         </div>
 
-        {/* Mobile: single column */}
-        {isMobile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '18px', color: '#FFFFFF', margin: 0 }}>For You</h3>
-                <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 600, fontSize: '12px', color: 'rgba(255,255,255,0.55)', cursor: 'pointer' }}>View All</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}
-              </div>
-            </div>
+        {/* [SPACE] — bigger gap between banner and For You section */}
+        <div style={{ height: isMobile ? '16px' : isTablet ? '22px' : '28px', flexShrink: 0 }} />
 
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '18px', color: '#FFFFFF', margin: 0 }}>Announcements</h3>
-                <span onClick={() => navigate('/announcements')} style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 600, fontSize: '12px', color: 'rgba(255,255,255,0.55)', cursor: 'pointer' }}>View All</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {announcements.map((a, i) => (
-                  <div key={i} style={{
-                    padding: '12px 14px',
-                    background: 'rgba(13,19,56,0.4)',
-                    border: '0.89px solid rgba(255,255,255,0.1)',
-                    borderRadius: '16px',
-                    display: 'flex', gap: '12px', alignItems: 'center',
-                  }}>
-                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <div style={{ width: '36px', height: '36px', background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)', boxShadow: '0px 8px 14px rgba(97,95,255,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                          <path d="M1.5 2.5H14.5V11C14.5 11.55 14.05 12 13.5 12H2.5C1.95 12 1.5 11.55 1.5 11V2.5Z" stroke="#FFFFFF" strokeWidth="1.2"/>
-                          <path d="M1.5 2.5L8 8L14.5 2.5" stroke="#FFFFFF" strokeWidth="1.2"/>
-                        </svg>
-                      </div>
-                      <div style={{ position: 'absolute', top: '-3px', right: '-3px', width: '13px', height: '13px', background: 'rgba(43,114,251,0.4)', borderRadius: '50%' }} />
-                      <div style={{ position: 'absolute', top: '-1px', right: '-1px', width: '9px', height: '9px', background: '#2B72FB', borderRadius: '50%' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2px' }}>
-                        <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '12px', lineHeight: '17px', color: '#FFFFFF', margin: 0, paddingRight: '8px' }}>{a.title}</p>
-                        <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.5)', flexShrink: 0, whiteSpace: 'nowrap' }}>{a.time}</span>
-                      </div>
-                      <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '11px', lineHeight: '16px', color: 'rgba(255,255,255,0.55)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* ── SECTION 3: For You ────────────────────────────────────────── */}
+        {/* flex:1 + minHeight:0 fills ALL remaining vertical space */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {/* "For You" header is ABOVE the card grid, not overlapping it */}
+          <h3 style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '16px' : isTablet ? '18px' : '24px',
+            letterSpacing: '-0.6px', color: '#FFFFFF',
+            margin: '0 0 9px 0',
+            flexShrink: 0,
+          }}>For You</h3>
 
-        ) : (
-          /* Tablet + Desktop: two columns */
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: isTablet ? '24px' : '60px',
-            alignItems: 'flex-start',
-          }}>
-            <div style={{ flex: isDesktop ? '0 0 340px' : '1', minWidth: 0 }}>
-              <h3 style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '20px', lineHeight: '24px', letterSpacing: '-0.5px', color: '#FFFFFF', margin: '0 0 16px 0' }}>For You</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}
-              </div>
+          {isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}
             </div>
-
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '20px', lineHeight: '24px', letterSpacing: '-0.5px', color: '#FFFFFF', margin: '0 0 16px 0' }}>Recent Announcements</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {announcements.map((a, i) => (
-                  <div key={i} style={{
-                    padding: '14px 16px',
-                    background: 'rgba(13,19,56,0.4)',
-                    border: '0.89px solid rgba(255,255,255,0.1)',
-                    boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-                    borderRadius: '16px',
-                    display: 'flex', gap: '14px', alignItems: 'center',
-                  }}>
-                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <div style={{ width: '38px', height: '38px', background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)', boxShadow: '0px 10px 15px rgba(97,95,255,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                          <path d="M1.5 2.5H14.5V11C14.5 11.55 14.05 12 13.5 12H2.5C1.95 12 1.5 11.55 1.5 11V2.5Z" stroke="#FFFFFF" strokeWidth="1.2"/>
-                          <path d="M1.5 2.5L8 8L14.5 2.5" stroke="#FFFFFF" strokeWidth="1.2"/>
-                        </svg>
-                      </div>
-                      <div style={{ position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', background: 'rgba(43,114,251,0.42)', borderRadius: '50%' }} />
-                      <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', background: '#2B72FB', borderRadius: '50%' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3px' }}>
-                        <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '13px', lineHeight: '18px', letterSpacing: '-0.25px', color: '#FFFFFF', margin: 0 }}>{a.title}</p>
-                        <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '10px', lineHeight: '15px', color: 'rgba(255,255,255,0.7)', flexShrink: 0, marginLeft: '8px' }}>{a.time}</span>
-                      </div>
-                      <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '11px', lineHeight: '17px', color: 'rgba(255,255,255,0.65)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          ) : (
+            // 2×2 grid. gridTemplateRows: exact card heights so no stretching.
+            // Gap between rows = same as column gap for uniform spacing.
+            <div style={{
+              flex: 1, minHeight: 0,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gridTemplateRows: `${CARD_H}px ${CARD_H}px`,
+              alignContent: 'start',   // rows sit at top, gap between them is natural
+              gap: isTablet ? '10px' : '14px',
+            }}>
+              {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
       </div>
     </div>

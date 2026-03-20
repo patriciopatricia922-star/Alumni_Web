@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { supabaseAdmin } from "../lib/supabaseadmin";
 import SuperAdSidebar from "../superadmin/SuperAdsidebar";
+import { MdEmail } from "react-icons/md";
+import { MdWork } from "react-icons/md";
+import { MdAssignment } from "react-icons/md";
+import { MdAccountCircle } from "react-icons/md";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 const IconUsers = ({ color = "#155DFC" }) => (
@@ -45,22 +50,18 @@ const IconExport = () => (
     <path d="M2 12h12" stroke="#314158" strokeWidth="1.33" strokeLinecap="round"/>
   </svg>
 );
-const IconPlus = () => null;
-const IconEdit = () => null;
-const IconView = () => null;
-const IconDelete = () => null;
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
 function EmpBadge({ status }) {
   const s = (status ?? "").toLowerCase();
   let bg, color, label;
-  if      (s === "employed")                             { bg="#DCFCE7"; color="#008236"; label="Employed"; }
-  else if (s === "unemployed")                           { bg="#FFE2E2"; color="#BF0000"; label="Unemployed"; }
-  else if (s === "student" || s.includes("stud"))        { bg="#DBEAFE"; color="#1447E6"; label="Student"; }
-  else if (s.includes("seek") || s.includes("look"))     { bg="#FEF9C2"; color="#A65F00"; label="Seeking"; }
-  else if (s.includes("further") || s.includes("study")) { bg="#DBEAFE"; color="#1447E6"; label="Further Studies"; }
-  else if (s.includes("self"))                           { bg="#DCFCE7"; color="#008236"; label="Self-Employed"; }
-  else                                                   { bg="#F1F5F9"; color="#45556C"; label=status||"—"; }
+  if      (s === "employed")                              { bg="#DCFCE7"; color="#008236"; label="Employed"; }
+  else if (s === "unemployed")                            { bg="#FFE2E2"; color="#BF0000"; label="Unemployed"; }
+  else if (s === "student" || s.includes("stud"))         { bg="#DBEAFE"; color="#1447E6"; label="Student"; }
+  else if (s.includes("seek") || s.includes("look"))      { bg="#FEF9C2"; color="#A65F00"; label="Seeking"; }
+  else if (s.includes("further") || s.includes("study"))  { bg="#DBEAFE"; color="#1447E6"; label="Further Studies"; }
+  else if (s.includes("self"))                            { bg="#DCFCE7"; color="#008236"; label="Self-Employed"; }
+  else                                                    { bg="#F1F5F9"; color="#45556C"; label=status||"—"; }
   return (
     <span style={{
       display:"inline-flex", alignItems:"center", justifyContent:"center",
@@ -94,14 +95,106 @@ function AccountBadge({ status }) {
   );
 }
 
+// ─── Alumni Profile Modal ─────────────────────────────────────────────────────
+function AlumniProfileModal({ alumni, onClose }) {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  const getInitials = (name) =>
+    (name || "?").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+
+  const statusClass = (value) =>
+    (value ?? "").toLowerCase().replace(/[\s-]+/g, "-");
+
+  const detailItems = [
+    {
+      icon: <MdEmail size={18} color="#155DFC" />,
+      label: "Email Address",
+      value: alumni.email || "—",
+      isText: true,
+    },
+    {
+      icon: <MdWork size={18} color="#155DFC" />,
+      label: "Employment Status",
+      value: alumni.employment_status || "—",
+      isText: true,
+    },
+    {
+      icon: <MdAssignment size={18} color="#155DFC" />,
+      label: "Survey Status",
+      value: alumni.survey_status || "—",
+      isBadge: true,
+    },
+    {
+      icon: <MdAccountCircle size={18} color="#155DFC" />,
+      label: "Account Status",
+      value: alumni.account_status || "—",
+      isBadge: true,
+    },
+  ];
+
+  return (
+    <div className="apm-overlay" onClick={onClose}>
+      <div className="apm-drawer" onClick={(e) => e.stopPropagation()}>
+
+        <button className="apm-close" onClick={onClose} aria-label="Close">✕</button>
+
+        <div className="apm-hero">
+          <div className="apm-hero-bg" aria-hidden="true" />
+          <div className="apm-avatar-ring">
+            <div className="apm-avatar">{getInitials(alumni.name)}</div>
+          </div>
+          <div className="apm-hero-info">
+            <h2 className="apm-name">{alumni.name}</h2>
+            <p className="apm-program">{alumni.program || "—"}</p>
+            <span className="apm-batch">Batch {alumni.batch || "—"}</span>
+          </div>
+        </div>
+
+        <div className="apm-body">
+          <p className="apm-section-title">Profile Details</p>
+          <ul className="apm-details-list">
+            {detailItems.map((item, i) => (
+              <li key={i} className="apm-detail-item">
+                <div className="apm-detail-icon-wrap">
+                  {item.icon}
+                </div>
+                <div className="apm-detail-content">
+                  <span className="apm-detail-label">{item.label}</span>
+                  {item.isBadge ? (
+                    <span className={`apm-badge apm-badge--${statusClass(item.value)}`}>
+                      {item.value}
+                    </span>
+                  ) : (
+                    <span className="apm-detail-value">{item.value}</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
-function AlumniManagement() {
-  const navigate   = useNavigate();
-  const [alumni,   setAlumni]   = useState([]);
-  const [search,   setSearch]   = useState("");
-  const [stats,    setStats]    = useState({ completed:0, pending:0, active:0, deactivated:0 });
-  const [page,     setPage]     = useState(1);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+function SuperAdminAlumni() {
+  const navigate = useNavigate();
+  const [alumni,         setAlumni]         = useState([]);
+  const [search,         setSearch]         = useState("");
+  const [stats,          setStats]          = useState({ completed:0, pending:0, active:0, deactivated:0 });
+  const [page,           setPage]           = useState(1);
+  const [isMobile,       setIsMobile]       = useState(window.innerWidth < 900);
+  const [selectedAlumni, setSelectedAlumni] = useState(null);
   const PER_PAGE = 5;
 
   useEffect(() => {
@@ -119,37 +212,92 @@ function AlumniManagement() {
     ).length,
   });
 
-  const loadAlumni = () => {
-    fetch(`http://localhost/alumni_backend/get_alumni.php?t=${Date.now()}`, {
-      method:"GET", headers:{ "x-api-key":"SUPER_SECRET_ADMIN_KEY" },
-    })
-      .then((r) => r.json())
-      .then((data) => { if (!Array.isArray(data)) throw new Error(); setAlumni(data); setStats(calcStats(data)); })
-      .catch((e) => console.error("get_alumni error:", e));
+  // ── Supabase backend — identical logic to AlumniManagement ─────────────────
+  const loadAlumni = async () => {
+    try {
+      const { data: users, error: usersError } = await supabaseAdmin
+        .from("users")
+        .select("id, email, first_name, middle_name, last_name, program, batch_year, account_status, role")
+        .eq("role", "alumni");
+
+      if (usersError) throw usersError;
+
+      const { data: surveys, error: surveyError } = await supabaseAdmin
+        .from("survey_progress")
+        .select("user_id, completed, percentage, employment_information_data");
+
+      if (surveyError) throw surveyError;
+
+      const surveyMap = {};
+      (surveys || []).forEach((s) => {
+        let empData = s.employment_information_data;
+        if (typeof empData === "string") {
+          try { empData = JSON.parse(empData); } catch (_) { empData = {}; }
+        }
+        empData = empData || {};
+        surveyMap[s.user_id] = {
+          survey_status:     s.completed ? "completed" : "pending",
+          percentage:        s.percentage ?? 0,
+          employment_status: empData.employmentStatus
+                          ?? empData.employment_status
+                          ?? empData.status
+                          ?? null,
+          job_position:      empData.jobTitle
+                          ?? empData.job_title
+                          ?? empData.position
+                          ?? empData.jobPosition
+                          ?? null,
+          job_company:       empData.companyName
+                          ?? empData.company
+                          ?? empData.employer
+                          ?? null,
+        };
+      });
+
+      const merged = (users || []).map((u) => {
+        const survey = surveyMap[u.id] || {};
+        const fullName = [u.first_name, u.middle_name, u.last_name]
+          .filter(Boolean).join(" ");
+        return {
+          id:                u.id,
+          name:              fullName,
+          email:             u.email,
+          program:           u.program || "—",
+          batch:             u.batch_year ? String(u.batch_year) : "—",
+          account_status:    u.account_status ?? "active",
+          survey_status:     survey.survey_status     ?? "pending",
+          percentage:        survey.percentage        ?? 0,
+          employment_status: survey.employment_status ?? null,
+          job_position:      survey.job_position      ?? null,
+          job_company:       survey.job_company       ?? null,
+        };
+      });
+
+      setAlumni(merged);
+      setStats(calcStats(merged));
+    } catch (e) {
+      console.error("loadAlumni error:", e);
+    }
   };
 
-  useEffect(() => {
-    fetch("http://localhost/alumni_backend/sync_from_supabase.php", {
-      method:"GET", headers:{ "x-api-key":"SUPER_SECRET_ADMIN_KEY" },
-    })
-      .then((r) => r.json())
-      .then((res) => { console.log("Sync result:", res); loadAlumni(); })
-      .catch(() => { console.warn("Sync skipped."); loadAlumni(); });
-  }, []);
+  useEffect(() => { loadAlumni(); }, []);
 
-  function updateStatus(id, newStatus) {
-    fetch("http://localhost/alumni_backend/update_status.php", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json","x-api-key":"SUPER_SECRET_ADMIN_KEY" },
-      body: JSON.stringify({ id, account_status: newStatus }),
-    })
-      .then((r) => r.json())
-      .then(() => {
-        const updated = alumni.map((a) => a.id === id ? { ...a, account_status: newStatus } : a);
-        setAlumni(updated); setStats(calcStats(updated));
-      })
-      .catch((e) => console.error(e));
-  }
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from("users")
+        .update({ account_status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+      const updated = alumni.map((a) =>
+        a.id === id ? { ...a, account_status: newStatus } : a
+      );
+      setAlumni(updated);
+      setStats(calcStats(updated));
+    } catch (e) {
+      console.error("updateStatus error:", e);
+    }
+  };
 
   const total        = alumni.length || 1;
   const completedPct = Math.round((stats.completed / total) * 100);
@@ -171,7 +319,7 @@ function AlumniManagement() {
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; }
 
-        .am-page {
+        .sam-page {
           min-height: 100vh;
           background: #F8FAFC;
           margin-left: 250px;
@@ -179,10 +327,9 @@ function AlumniManagement() {
           font-family: 'Arimo', Arial, sans-serif;
         }
         @media (max-width: 900px) {
-          .am-page { margin-left: 0 !important; padding: 20px 16px 48px; }
+          .sam-page { margin-left: 0 !important; padding: 20px 16px 48px; }
         }
 
-        /* heading */
         .am-heading-row {
           display: flex; justify-content: space-between;
           align-items: flex-start; flex-wrap: wrap; gap: 12px;
@@ -198,8 +345,6 @@ function AlumniManagement() {
           font-weight: 400; font-size: 16px; line-height: 24px; color: #6A7282;
         }
 
-
-        /* metric cards */
         .am-metrics {
           display: grid; grid-template-columns: repeat(4,1fr);
           gap: 16px; margin-bottom: 24px;
@@ -221,14 +366,12 @@ function AlumniManagement() {
         .am-icon-green   { background:#F0FDF4; }
         .am-icon-red     { background:#FFE2E2; }
 
-        /* table card */
         .am-table-card {
           background: #F8F9FB; border: 1px solid #E2E8F0; border-radius: 14px;
           box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1);
           overflow: hidden;
         }
 
-        /* toolbar */
         .am-toolbar {
           display: flex; align-items: center; justify-content: space-between;
           flex-wrap: wrap; gap: 10px; padding: 16px;
@@ -249,7 +392,6 @@ function AlumniManagement() {
         }
         .am-tb-btn:hover { background:#f1f5f9; }
 
-        /* table */
         .am-table-wrap { width:100%; overflow-x:auto; }
         .am-table { width:100%; border-collapse:collapse; min-width:620px; }
         .am-table thead tr { background:#F8FAFC; border-bottom:1px solid #E2E8F0; }
@@ -269,19 +411,13 @@ function AlumniManagement() {
         }
         .am-empty td { text-align:center; color:#90A1B9; padding:40px 0; font-style:italic; }
 
-        /* name cell */
         .am-name-cell  { display:flex; align-items:center; gap:12px; }
         .am-avatar     { width:32px; height:32px; border-radius:50%; background:#DBEAFE; color:#155DFC; font-family:'Arimo',sans-serif; font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
         .am-name-stack { display:flex; flex-direction:column; min-width:0; }
         .am-name       { font-size:14px; line-height:20px; color:#0F172B; font-family:'Arimo',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .am-email      { font-size:12px; line-height:16px; color:#62748E; font-family:'Arimo',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .am-batch      { display:inline-flex; align-items:center; padding:4px 8px; background:#F1F5F9; border-radius:4px; font-family:'Arimo',sans-serif; font-size:14px; line-height:20px; color:#314158; }
 
-        /* batch */
-        .am-batch { display:inline-flex; align-items:center; padding:4px 8px; background:#F1F5F9; border-radius:4px; font-family:'Arimo',sans-serif; font-size:14px; line-height:20px; color:#314158; }
-
-
-
-        /* pagination */
         .am-footer {
           display:flex; justify-content:space-between; align-items:center;
           flex-wrap:wrap; gap:12px; padding:0 24px; min-height:63px;
@@ -300,28 +436,115 @@ function AlumniManagement() {
         .am-pg-btn:disabled { opacity:.45; cursor:default; }
         .am-pg-btn.on { background:#155DFC; color:#fff; border-color:#155DFC; }
 
-        /* responsive column hiding */
         @media (max-width:1020px) { .am-col-program { display:none; } }
         @media (max-width:860px)  { .am-col-survey  { display:none; } }
         @media (max-width:720px)  { .am-col-account { display:none; } }
         @media (max-width:580px)  { .am-col-batch   { display:none; } .am-table { min-width:0; } }
 
+        /* ── Alumni Profile Modal ── */
+        .apm-overlay {
+          position: fixed; inset: 0; z-index: 999;
+          background: rgba(0,0,0,0.45);
+          display: flex; align-items: center; justify-content: center;
+          animation: apm-fade-in 0.18s ease;
+        }
+        @keyframes apm-fade-in { from { opacity:0; } to { opacity:1; } }
+        .apm-drawer {
+          position: relative;
+          width: 420px; max-width: 95vw; max-height: 90vh;
+          background: #fff; border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+          overflow-y: auto; overflow-x: hidden;
+          animation: apm-slide-up 0.22s ease;
+        }
+        @keyframes apm-slide-up { from { transform: translateY(24px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        .apm-close {
+          position: absolute; top: 14px; right: 14px; z-index: 2;
+          width: 32px; height: 32px; border-radius: 50%;
+          background: rgba(255,255,255,0.85); border: 1px solid #E2E8F0;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; font-size: 16px; color: #62748E;
+          transition: background 0.12s;
+        }
+        .apm-close:hover { background: #f1f5f9; }
+        .apm-hero {
+          position: relative; padding: 32px 24px 20px;
+          background: linear-gradient(135deg, #1447E6 0%, #0F2FA3 100%);
+          display: flex; flex-direction: column; align-items: center; gap: 12px;
+        }
+        .apm-hero-bg {
+          position: absolute; inset: 0; opacity: 0.07;
+          background: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%);
+          background-size: 12px 12px;
+        }
+        .apm-avatar-ring {
+          width: 72px; height: 72px; border-radius: 50%;
+          border: 3px solid rgba(255,255,255,0.4);
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.15);
+        }
+        .apm-avatar {
+          width: 60px; height: 60px; border-radius: 50%;
+          background: #DBEAFE; color: #155DFC;
+          font-family: 'Arimo', sans-serif; font-weight: 700; font-size: 22px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .apm-hero-info { text-align: center; position: relative; z-index: 1; }
+        .apm-name {
+          margin: 0 0 4px; font-family: 'Lexend', sans-serif;
+          font-weight: 700; font-size: 18px; color: #fff;
+        }
+        .apm-program {
+          margin: 0 0 6px; font-family: 'Arimo', sans-serif;
+          font-size: 13px; color: rgba(255,255,255,0.8);
+          display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+        .apm-batch {
+          display: inline-flex; align-items: center; padding: 2px 10px;
+          background: rgba(255,255,255,0.15); border-radius: 9999px;
+          font-family: 'Arimo', sans-serif; font-size: 12px; color: #fff;
+        }
+        .apm-body { padding: 20px 24px 28px; }
+        .apm-section-title {
+          font-family: 'Lexend', sans-serif; font-weight: 700;
+          font-size: 12px; letter-spacing: .6px; text-transform: uppercase;
+          color: #62748E; margin: 0 0 14px;
+        }
+        .apm-details-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+        .apm-detail-item { display: flex; align-items: flex-start; gap: 12px; }
+        .apm-detail-icon-wrap {
+          width: 36px; height: 36px; border-radius: 8px;
+          background: #EFF6FF;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .apm-detail-content { display: flex; flex-direction: column; gap: 2px; padding-top: 2px; }
+        .apm-detail-label { font-family: 'Arimo', sans-serif; font-size: 11px; color: #90A1B9; }
+        .apm-detail-value { font-family: 'Arimo', sans-serif; font-size: 14px; color: #0F172B; word-break: break-all; }
+        .apm-badge {
+          display: inline-flex; align-items: center; padding: 2px 10px;
+          border-radius: 9999px; font-family: 'Arimo', sans-serif;
+          font-size: 12px; font-weight: 400;
+        }
+        .apm-badge--completed    { background: #DCFCE7; color: #008236; }
+        .apm-badge--pending      { background: #FFE2E2; color: #BF0000; }
+        .apm-badge--active       { background: rgba(142,201,47,0.28); color: #4C4C4C; }
+        .apm-badge--inactive,
+        .apm-badge--deactivated  { background: rgba(255,149,0,0.55); color: #4C4C4C; }
+        .apm-row-clickable       { cursor: pointer; }
       `}</style>
 
       <SuperAdSidebar />
 
-      <div className="am-page">
+      <div className="sam-page">
 
-        {/* Heading */}
         <div className="am-heading-row">
           <div>
             <h1 className="am-title">Alumni Module</h1>
             <p className="am-subtitle">View, organize, and manage alumni data and activities.</p>
           </div>
-
         </div>
 
-        {/* Metric Cards */}
         <div className="am-metrics">
           <div className="am-metric-card">
             <div className="am-metric-left">
@@ -357,10 +580,7 @@ function AlumniManagement() {
           </div>
         </div>
 
-        {/* Table Card */}
         <div className="am-table-card">
-
-          {/* Toolbar */}
           <div className="am-toolbar">
             <div className="am-search-wrap">
               <IconSearch />
@@ -377,7 +597,6 @@ function AlumniManagement() {
             </div>
           </div>
 
-          {/* Table */}
           <div className="am-table-wrap">
             <table className="am-table">
               <thead>
@@ -394,34 +613,31 @@ function AlumniManagement() {
                 {paginated.length === 0 ? (
                   <tr className="am-empty"><td colSpan="6">No alumni records found.</td></tr>
                 ) : (
-                  paginated.map((a) => {
-                    return (
-                      <tr key={a.id}>
-                        <td>
-                          <div className="am-name-cell">
-                            <div className="am-avatar">{(a.name ?? "?").charAt(0).toUpperCase()}</div>
-                            <div className="am-name-stack">
-                              <span className="am-name">{a.name}</span>
-                              <span className="am-email">{a.email}</span>
-                            </div>
+                  paginated.map((a) => (
+                    <tr key={a.id} className="apm-row-clickable" onClick={() => setSelectedAlumni(a)}>
+                      <td>
+                        <div className="am-name-cell">
+                          <div className="am-avatar">{(a.name ?? "?").charAt(0).toUpperCase()}</div>
+                          <div className="am-name-stack">
+                            <span className="am-name">{a.name}</span>
+                            <span className="am-email">{a.email}</span>
                           </div>
-                        </td>
-                        <td className="am-col-batch">
-                          {a.batch ? <span className="am-batch">{a.batch}</span> : <span style={{color:"#CBD5E1"}}>—</span>}
-                        </td>
-                        <td className="am-col-program">{a.program || "—"}</td>
-                        <td className="tc"><EmpBadge status={a.employment_status} /></td>
-                        <td className="tc am-col-survey"><SurveyBadge status={a.survey_status} /></td>
-                        <td className="tc am-col-account"><AccountBadge status={a.account_status} /></td>
-                      </tr>
-                    );
-                  })
+                        </div>
+                      </td>
+                      <td className="am-col-batch">
+                        {a.batch ? <span className="am-batch">{a.batch}</span> : <span style={{color:"#CBD5E1"}}>—</span>}
+                      </td>
+                      <td className="am-col-program">{a.program || "—"}</td>
+                      <td className="tc"><EmpBadge status={a.employment_status} /></td>
+                      <td className="tc am-col-survey"><SurveyBadge status={a.survey_status} /></td>
+                      <td className="tc am-col-account"><AccountBadge status={a.account_status} /></td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="am-footer">
             <span className="am-footer-text">
               Showing {startEntry} to {endEntry} of {filtered.length} entries
@@ -441,11 +657,17 @@ function AlumniManagement() {
               <button className="am-pg-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>Next</button>
             </div>
           </div>
-
         </div>
       </div>
+
+      {selectedAlumni && (
+        <AlumniProfileModal
+          alumni={selectedAlumni}
+          onClose={() => setSelectedAlumni(null)}
+        />
+      )}
     </>
   );
 }
 
-export default AlumniManagement;
+export default SuperAdminAlumni;

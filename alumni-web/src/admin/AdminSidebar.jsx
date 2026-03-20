@@ -5,23 +5,37 @@ import { FaBookBookmark } from 'react-icons/fa6';
 import { RiSurveyFill, RiOrganizationChart } from 'react-icons/ri';
 import { SiGoogleanalytics } from 'react-icons/si';
 import { BsFillPeopleFill } from 'react-icons/bs';
-import { FiLogOut } from 'react-icons/fi';
+import { FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { supabase } from '../lib/supabase';
 import sidebarLogo from '../assets/sidebar_alumnAI.svg';
 
 const menuItems = [
-  { path: '/admin/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'             },
-  { path: '/admin/alumni-management',      icon: BsFillPeopleFill,        label: 'Alumni Management'     },
-  { path: '/admin/survey-management',      icon: RiSurveyFill,            label: 'Survey Management'     },
-  { path: '/admin/response-and-analytics', icon: SiGoogleanalytics,       label: 'Response & Analytics'  },
-  { path: '/admin/predictive-analytics',   icon: RiOrganizationChart,     label: 'Predictive Analytics', marginTop: '16px' },
-  { path: '/admin/engagement-alumni',      icon: FaBookBookmark,          label: 'Alumni Engagement',    marginTop: '16px' },
+  { path: '/admin/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'            },
+  { path: '/admin/alumni-management',            icon: BsFillPeopleFill,        label: 'Alumni Management'    },
+  { path: '/admin/survey-management',            icon: RiSurveyFill,            label: 'Survey Management'    },
+  { path: '/admin/response-and-analytics',       icon: SiGoogleanalytics,       label: 'Response & Analytics' },
+  { path: '/admin/predictive-analytics',         icon: RiOrganizationChart,     label: 'Predictive Analytics', marginTop: '16px' },
+  { path: '/admin/engagement-alumni',            icon: FaBookBookmark,          label: 'Alumni Engagement',    marginTop: '16px' },
 ];
 
 function AdminSidebar() {
-  const location = useLocation();
+  const location  = useLocation();
   const navigate  = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user,       setUser]       = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile,   setIsMobile]   = useState(window.innerWidth < 900);
+
+  useEffect(() => {
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 900);
+      if (window.innerWidth >= 900) setMobileOpen(false);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Close drawer on route change
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,7 +59,7 @@ function AdminSidebar() {
   const displayName = 'NUD-AAO';
   const initials    = 'N';
 
-  return (
+  const sidebarContent = (
     <aside style={{
       position: 'fixed', left: 0, top: 0,
       width: '229px', height: '100vh',
@@ -54,6 +68,8 @@ function AdminSidebar() {
       borderRadius: '0px 20px 20px 0px',
       display: 'flex', flexDirection: 'column',
       zIndex: 100,
+      transform: isMobile && !mobileOpen ? 'translateX(-100%)' : 'translateX(0)',
+      transition: 'transform 0.25s ease',
     }}>
 
       {/* Logo */}
@@ -80,13 +96,13 @@ function AdminSidebar() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: '10px',
                   padding: '9px 13px',
-                  background: 'transparent',
+                  background: isActive ? 'rgba(217,202,129,0.1)' : 'transparent',
                   borderRadius: '14px', textDecoration: 'none',
                   transition: 'background 0.2s', margin: '0 6px',
                   marginTop: marginTop || '0px',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
               >
                 <Icon
                   size={21}
@@ -141,6 +157,46 @@ function AdminSidebar() {
       </div>
 
     </aside>
+  );
+
+  return (
+    <>
+      {sidebarContent}
+
+      {/* Mobile backdrop */}
+      {isMobile && mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 99,
+            background: 'rgba(0,0,0,0.45)',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        />
+      )}
+
+      {/* Mobile hamburger toggle */}
+      {isMobile && (
+        <button
+          onClick={() => setMobileOpen(o => !o)}
+          style={{
+            position: 'fixed', top: '20px', left: '20px', zIndex: 101,
+            width: '40px', height: '40px',
+            background: '#001947', border: 'none', borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#FFFFFF',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          }}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+        >
+          {mobileOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+        </button>
+      )}
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
+    </>
   );
 }
 

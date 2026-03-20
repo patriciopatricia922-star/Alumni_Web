@@ -29,13 +29,19 @@ import Jobs from './pages/Jobs';
 import ForgotPassword from './pages/Forgotpassword';
 import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
-import SuperAdminDashboard from './Superadmin/Superadmindashboard';
+import SuperAdminDashboard from './superadmin/Superadmindashboard';
 import DetailedAuditLogs from './superadmin/Detailedauditlogs';
 import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
 import VerificationCode from './pages/Verificationcode';
 import ResetPassword from './pages/Resetpassword';
 import SurveyManagement from './admin/SurveyManagement';
+import UpdateTracer from './pages/UpdateTracer';
+import AdminAccountManagement from './superadmin/Adminaccountmanagement';
+import SuperAdminEngagement from './superadmin/Superadminengagement';
+import TermsOfServiceAbout from './pages/Termsofserviceabout';
+import PrivacyPolicyAbout from './pages/Privacypolicyabout';
+import NotificationsPage from './pages/Notificationspage';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
 // Checks for a valid Supabase session before rendering the page.
@@ -96,16 +102,19 @@ function App() {
 
       {/* ── Alumni protected routes ── */}
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['alumni']}><AlumniDashboard /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute allowedRoles={['alumni']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/announcements" element={<ProtectedRoute allowedRoles={['alumni']}><Announcements /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={['alumni']}><Profile /></ProtectedRoute>} />
       <Route path="/personal-information" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalInformation /></ProtectedRoute>} />
       <Route path="/change-password" element={<ProtectedRoute allowedRoles={['alumni']}><ChangePassword /></ProtectedRoute>} />
       <Route path="/about" element={<ProtectedRoute allowedRoles={['alumni']}><About /></ProtectedRoute>} />
+      <Route path="/terms-about" element={<ProtectedRoute allowedRoles={['alumni']}><TermsOfServiceAbout/></ProtectedRoute>} />
+      <Route path="/privacy-about" element={<ProtectedRoute allowedRoles={['alumni']}><PrivacyPolicyAbout /></ProtectedRoute>} />
       <Route path="/contact-support" element={<ProtectedRoute allowedRoles={['alumni']}><ContactSupport /></ProtectedRoute>} />
       <Route path="/discounts" element={<ProtectedRoute allowedRoles={['alumni']}><Discounts /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute allowedRoles={['alumni']}><Events /></ProtectedRoute>} />
       <Route path="/jobs" element={<ProtectedRoute allowedRoles={['alumni']}><Jobs /></ProtectedRoute>} />
-
+      <Route path="/update-tracer" element={<ProtectedRoute allowedRoles={['alumni']}><UpdateTracer /></ProtectedRoute>} />
       {/* ── Survey protected routes ── */}
       <Route path="/survey/personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackground /></ProtectedRoute>} />
       <Route path="/survey/educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackground /></ProtectedRoute>} />
@@ -124,7 +133,9 @@ function App() {
       {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><DetailedAuditLogs /></ProtectedRoute>} />
+      <Route path= "/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement/></ProtectedRoute>} />
       <Route path= "/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni/></ProtectedRoute>} />
+      <Route path= "/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement/></ProtectedRoute>} />
     
     </Routes>
   );

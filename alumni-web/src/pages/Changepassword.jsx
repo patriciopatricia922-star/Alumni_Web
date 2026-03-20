@@ -13,6 +13,17 @@ const useWindowWidth = () => {
   return width;
 };
 
+// ── Suppress native browser password eye icon ─────────────────────────────
+const SUPPRESS_NATIVE_EYE = `
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear,
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-contacts-auto-fill-button {
+    display: none !important;
+    pointer-events: none;
+  }
+`;
+
 const EyeIcon = ({ visible }) => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
     {visible ? (
@@ -38,6 +49,7 @@ const PasswordInput = ({ label, value, onChange, hint }) => {
           type={show ? 'text' : 'password'}
           value={value}
           onChange={onChange}
+          autoComplete="new-password"
           style={{
             width: '100%', height: '47px',
             background: 'rgba(243, 243, 245, 0.17)',
@@ -49,14 +61,60 @@ const PasswordInput = ({ label, value, onChange, hint }) => {
           onFocus={e => e.target.style.borderColor = 'rgba(43,114,251,0.6)'}
           onBlur={e => e.target.style.borderColor = 'rgba(0,0,0,0.25)'}
         />
-        <button type="button" onClick={() => setShow(s => !s)} style={{
-          position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-          background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center',
-        }}>
+        <button
+          type="button"
+          onClick={() => setShow(s => !s)}
+          style={{
+            position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            display: 'flex', alignItems: 'center', zIndex: 1,
+          }}
+        >
           <EyeIcon visible={show} />
         </button>
       </div>
       {hint && <p style={{ fontFamily: 'Arimo, Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>{hint}</p>}
+    </div>
+  );
+};
+
+// ── Password strength rules ────────────────────────────────────────────────
+const RULES = [
+  { id: 'length',  label: 'At least 8 characters',         test: v => v.length >= 8 },
+  { id: 'upper',   label: 'At least one uppercase letter',  test: v => /[A-Z]/.test(v) },
+  { id: 'number',  label: 'At least one number',            test: v => /[0-9]/.test(v) },
+  { id: 'special', label: 'At least one symbol (!, #, * …)', test: v => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(v) },
+];
+
+const PasswordRules = ({ value }) => {
+  if (!value) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '4px' }}>
+      {RULES.map(rule => {
+        const passed = rule.test(value);
+        return (
+          <div key={rule.id} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+            <span style={{
+              width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
+              background: passed ? 'rgba(0,200,83,0.2)' : 'rgba(255,255,255,0.07)',
+              border: `1.5px solid ${passed ? '#00C853' : 'rgba(255,255,255,0.2)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {passed && (
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M1.5 4L3 5.5L6.5 2" stroke="#00C853" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </span>
+            <span style={{
+              fontFamily: 'Arimo, Arimo', fontSize: '12px',
+              color: passed ? '#00C853' : 'rgba(255,255,255,0.45)',
+            }}>
+              {rule.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -67,25 +125,40 @@ const ChangePassword = () => {
   const isMobile = width < 768;
   const sidebarWidth = 229;
 
-  const [current, setCurrent] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [current, setCurrent]   = useState('');
+  const [newPass, setNewPass]   = useState('');
+  const [confirm, setConfirm]   = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState(false);
+
+  // ── Validate new password against all rules ──────────────────────────────
+  const allRulesPassed = RULES.every(rule => rule.test(newPass));
 
   const handleSave = async () => {
     setError(''); setSuccess(false);
-    if (!current || !newPass || !confirm) return setError('Please fill in all fields.');
-    if (newPass.length < 8) return setError('New password must be at least 8 characters long.');
-    if (newPass !== confirm) return setError('New passwords do not match.');
+
+    if (!current || !newPass || !confirm)
+      return setError('Please fill in all fields.');
+
+    if (!allRulesPassed)
+      return setError('New password does not meet all requirements.');
+
+    if (newPass !== confirm)
+      return setError('New passwords do not match.');
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: current });
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: current,
+      });
       if (signInError) throw new Error('Current password is incorrect.');
+
       const { error: updateError } = await supabase.auth.updateUser({ password: newPass });
       if (updateError) throw updateError;
+
       setSuccess(true);
       setCurrent(''); setNewPass(''); setConfirm('');
       setTimeout(() => navigate('/personal-information'), 2000);
@@ -98,6 +171,10 @@ const ChangePassword = () => {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#002263' }}>
+
+      {/* Suppress native browser eye icon */}
+      <style>{SUPPRESS_NATIVE_EYE}</style>
+
       <Sidebar />
 
       <div style={{
@@ -162,9 +239,24 @@ const ChangePassword = () => {
 
           {/* Fields */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
-            <PasswordInput label="Current password *" value={current} onChange={e => setCurrent(e.target.value)} />
-            <PasswordInput label="New password *" value={newPass} onChange={e => setNewPass(e.target.value)} hint="Must be at least 8 characters long." />
-            <PasswordInput label="Confirm new password *" value={confirm} onChange={e => setConfirm(e.target.value)} />
+            <PasswordInput
+              label="Current password *"
+              value={current}
+              onChange={e => setCurrent(e.target.value)}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <PasswordInput
+                label="New password *"
+                value={newPass}
+                onChange={e => setNewPass(e.target.value)}
+              />
+              <PasswordRules value={newPass} />
+            </div>
+            <PasswordInput
+              label="Confirm new password *"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+            />
           </div>
 
           {error && (
@@ -178,14 +270,17 @@ const ChangePassword = () => {
             </div>
           )}
 
-          <button onClick={handleSave} disabled={loading} style={{
-            width: '100%', height: '48px',
-            background: loading ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.8)',
-            boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
-            borderRadius: '13px', border: 'none',
-            fontFamily: 'Arimo, Arimo', fontWeight: 700, fontSize: '15px', color: '#FFFFFF',
-            cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
-          }}
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            style={{
+              width: '100%', height: '48px',
+              background: loading ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.8)',
+              boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+              borderRadius: '13px', border: 'none',
+              fontFamily: 'Arimo, Arimo', fontWeight: 700, fontSize: '15px', color: '#FFFFFF',
+              cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
+            }}
             onMouseEnter={e => { if (!loading) e.currentTarget.style.background = 'rgba(0,40,255,0.95)'; }}
             onMouseLeave={e => { if (!loading) e.currentTarget.style.background = 'rgba(0,40,255,0.8)'; }}
           >

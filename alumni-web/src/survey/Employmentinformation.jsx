@@ -5,551 +5,81 @@ import Sidebar from '../components/Sidebar';
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  .ei-root {
-    display: flex;
-    min-height: 100vh;
-    background: #002263;
-    font-family: 'Arimo', Arial, sans-serif;
-  }
-
-  .ei-content {
-    flex: 1;
-    min-width: 0;
-    margin-left: 229px;
-  }
-
-  /* ── Sticky header ── */
-  .ei-header {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    background: #002263;
-    padding-bottom: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  }
-
-  .ei-topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 28px 51px 0;
-  }
-
-  .ei-back-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    color: #fff;
-    flex-shrink: 0;
-  }
-
-  .ei-badge {
-    background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
-    border: 1.24px solid rgba(99,102,241,0.3);
-    border-radius: 999px;
-    padding: 7px 20px;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.3px;
-    color: rgba(255,255,255,0.8);
-    white-space: nowrap;
-  }
-
-  .ei-bell {
-    width: 48px;
-    height: 48px;
-    background: rgba(15,22,66,0.1);
-    border: 1.24px solid rgba(255,255,255,0.1);
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    border-radius: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .ei-bell-dot {
-    position: absolute;
-    top: -4px; right: -4px;
-    width: 20px; height: 20px;
-    background: #2B72FB;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 10px;
-    color: #fff;
-  }
-
-  .ei-title {
-    text-align: center;
-    padding: 14px 51px 0;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 28px;
-    line-height: 1.4;
-    letter-spacing: -0.7px;
-    color: #fff;
-  }
-
-  .ei-progress {
-    margin: 12px 51px 0;
-    background: #001743;
-    border: 1px solid #01122F;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
-    border-radius: 16px;
-    padding: 18px 30px 16px;
-  }
-
-  .ei-progress-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 16px;
-    color: rgba(255,255,255,0.99);
-  }
-
-  .ei-progress-track {
-    width: 100%;
-    height: 11px;
-    background: #D9CA81;
-    border-radius: 10px;
-    margin-bottom: 10px;
-  }
-
-  .ei-progress-fill {
-    width: 57%;
-    height: 100%;
-    background: #51A2FF;
-    border-radius: 10px;
-  }
-
-  .ei-progress-label {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 17px;
-    color: rgba(255,255,255,0.99);
-  }
-
-  /* ── Body ── */
-  .ei-body {
-    padding: 24px 51px 60px;
-  }
-
-  /* ── Form card ── */
-  .ei-card {
-    background: rgba(13,19,56,0.4);
-    border: 0.89px solid rgba(255,255,255,0.1);
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
-    border-radius: 16px;
-    padding: 40px 40px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-  }
-
-  .ei-section-title {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    line-height: 1.5;
-    color: #fff;
-    text-align: center;
-  }
-
-  .ei-section-sub {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-weight: 400;
-    font-size: 13px;
-    line-height: 20px;
-    color: rgba(255,255,255,0.6);
-    margin-top: 6px;
-    text-align: center;
-  }
-
-  /* ── Fields ── */
-  .ei-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
-  }
-
-  .ei-field {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 100%;
-  }
-
-  .ei-label {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 21px;
-    color: rgba(255,255,255,0.7);
-  }
-
-  .ei-input {
-    width: 100%;
-    height: 47px;
-    background: rgba(255,255,255,0.17);
-    border: 0.89px solid rgba(255,255,255,0.06);
-    border-radius: 10px;
-    padding: 12px 16px;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 14px;
-    color: #fff;
-    outline: none;
-    transition: border-color 0.15s;
-  }
+  .ei-root { display: flex; min-height: 100vh; background: #002263; font-family: 'Arimo', Arial, sans-serif; }
+  .ei-content { flex: 1; min-width: 0; margin-left: 229px; }
+  .ei-header { position: sticky; top: 0; z-index: 40; background: #002263; padding-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  .ei-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
+  .ei-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
+  .ei-badge { background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
+  .ei-bell { width: 48px; height: 48px; background: rgba(15,22,66,0.1); border: 1.24px solid rgba(255,255,255,0.1); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
+  .ei-bell-dot { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; background: #2B72FB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arimo', Arial, sans-serif; font-size: 10px; color: #fff; }
+  .ei-title { text-align: center; padding: 14px 51px 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.4; letter-spacing: -0.7px; color: #fff; }
+  .ei-progress { margin: 12px 51px 0; background: #001743; border: 1px solid #01122F; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 18px 30px 16px; }
+  .ei-progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Arimo', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.99); }
+  .ei-progress-track { width: 100%; height: 11px; background: #D9CA81; border-radius: 10px; margin-bottom: 10px; }
+  .ei-progress-fill { width: 57%; height: 100%; background: #51A2FF; border-radius: 10px; }
+  .ei-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
+  .ei-body { padding: 24px 51px 60px; }
+  .ei-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
+  .ei-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
+  .ei-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; line-height: 20px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
+  .ei-fields { display: flex; flex-direction: column; gap: 32px; }
+  .ei-field { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+  .ei-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
+  .ei-input { width: 100%; height: 47px; background: rgba(255,255,255,0.17); border: 0.89px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: #fff; outline: none; transition: border-color 0.15s; }
   .ei-input:focus { border-color: rgba(43,114,251,0.6); }
-
-  /* ── Radio & Checkbox ── */
-  .ei-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding-top: 8px;
-  }
-
-  .ei-radio-cols {
-    display: flex;
-    gap: 32px;
-  }
-
-  .ei-radio-col {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    flex: 1;
-  }
-
-  .ei-radio-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.4;
-  }
-
-  .ei-radio-label input[type="radio"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #51A2FF;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .ei-checkbox-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px 32px;
-  }
-
-  .ei-checkbox-label {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 14px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.4;
-  }
-
-  .ei-checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #51A2FF;
-    cursor: pointer;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  /* ── Branch section ── */
-  .ei-branch {
-    display: flex;
-    flex-direction: column;
-    gap: 36px;
-    padding-top: 24px;
-  }
-
-  /* ── Dropdown ── */
-  .ei-dropdown {
-    position: relative;
-    width: 100%;
-  }
-
-  .ei-dropdown-trigger {
-    width: 100%;
-    height: 47px;
-    background: rgba(255,255,255,0.17);
-    border: 0.89px solid rgba(255,255,255,0.06);
-    border-radius: 10px;
-    padding: 0 16px;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 14px;
-    color: #fff;
-    outline: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: border-color 0.15s;
-    user-select: none;
-  }
+  .ei-radio-group { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+  .ei-radio-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+  .ei-radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
+  .ei-branch { display: flex; flex-direction: column; gap: 36px; padding-top: 24px; }
+  .ei-dropdown { position: relative; width: 100%; }
+  .ei-dropdown-trigger { width: 100%; height: 47px; background: rgba(255,255,255,0.17); border: 0.89px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: #fff; outline: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: border-color 0.15s; user-select: none; }
   .ei-dropdown-trigger.open { border-color: rgba(43,114,251,0.6); }
-
-  .ei-dropdown-menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: #011C50;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px;
-    max-height: 260px;
-    overflow-y: auto;
-    z-index: 200;
-  }
-
-  .ei-dropdown-item {
-    padding: 10px 16px;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 14px;
-    color: rgba(255,255,255,0.85);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .ei-dropdown-item:hover    { background: rgba(81,162,255,0.08); }
+  .ei-dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #011C50; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; max-height: 260px; overflow-y: auto; z-index: 200; }
+  .ei-dropdown-item { padding: 10px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.85); cursor: pointer; transition: background 0.15s; }
+  .ei-dropdown-item:hover { background: rgba(81,162,255,0.08); }
   .ei-dropdown-item.selected { background: rgba(81,162,255,0.1); color: #51A2FF; }
-
-  /* ── Footer — no divider ── */
-  .ei-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 8px;
-    padding-bottom: 8px;
-  }
-
-  .ei-btn-prev {
-    width: 120px;
-    height: 48px;
-    background: #fff;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: #090909;
-    transition: opacity 0.15s;
-  }
+  .ei-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; padding-bottom: 8px; }
+  .ei-btn-prev { width: 120px; height: 48px; background: #fff; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #090909; transition: opacity 0.15s; }
   .ei-btn-prev:hover { opacity: 0.85; }
-
-  .ei-btn-next {
-    width: 120px;
-    height: 48px;
-    background: #0028FF;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: #fff;
-    transition: opacity 0.15s;
-  }
+  .ei-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .ei-btn-next:hover { opacity: 0.9; }
-  /* ── Required asterisk (red) ── */
   .ei-req { color: #F87171; font-weight: 700; margin-left: 2px; }
-
-  /* ── Inline field error ── */
-  .ei-field-error {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 12px;
-    color: #F87171;
-    margin-left: 6px;
-    font-weight: 400;
-  }
-
-  /* ══════════════════════════════════════════
-     RESPONSIVE BREAKPOINTS
-  ══════════════════════════════════════════ */
-
-  @media (max-width: 1100px) {
-    .ei-topbar   { padding: 24px 32px 0; }
-    .ei-title    { padding: 14px 32px 0; font-size: 26px; }
-    .ei-progress { margin: 12px 32px 0; }
-    .ei-body     { padding: 20px 32px 60px; }
-    .ei-card     { padding: 32px 32px 28px; }
-  }
-
-  @media (max-width: 900px) {
-    .ei-topbar   { padding: 20px 24px 0; }
-    .ei-title    { padding: 12px 24px 0; font-size: 24px; }
-    .ei-progress { margin: 10px 24px 0; }
-    .ei-body     { padding: 18px 24px 60px; }
-    .ei-card     { padding: 28px 24px 24px; gap: 24px; }
-  }
-
-  @media (max-width: 767px) {
-    .ei-content        { margin-left: 0; }
-    .ei-topbar         { padding: 20px 16px 0; }
-    .ei-badge          { padding: 6px 12px; font-size: 10px; }
-    .ei-bell           { display: none; }
-    .ei-title          { padding: 12px 16px 0; font-size: 20px; }
-    .ei-progress       { margin: 10px 16px 0; padding: 14px 16px; }
-    .ei-progress-row   { font-size: 13px; }
-    .ei-progress-label { font-size: 13px; }
-    .ei-body           { padding: 16px 16px 80px; }
-    .ei-card           { padding: 20px 16px 20px; gap: 20px; }
-    .ei-section-title  { font-size: 17px; }
-    .ei-radio-cols     { flex-direction: column; gap: 12px; }
-    .ei-checkbox-grid  { grid-template-columns: 1fr; gap: 12px; }
-    .ei-btn-prev       { width: 100px; height: 44px; font-size: 14px; }
-    .ei-btn-next       { width: 100px; height: 44px; font-size: 14px; }
-  }
-
-  @media (max-width: 390px) {
-    .ei-title    { font-size: 17px; }
-    .ei-input    { font-size: 13px; }
-    .ei-btn-prev, .ei-btn-next { width: 90px; font-size: 13px; }
-  }
-
-  @media (max-height: 600px) {
-    .ei-header   { padding-bottom: 10px; }
-    .ei-progress { padding: 10px 20px; }
-    .ei-body     { padding-top: 14px; }
-  }
+  .ei-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
+  @media (max-width: 1100px) { .ei-topbar { padding: 24px 32px 0; } .ei-title { padding: 14px 32px 0; font-size: 26px; } .ei-progress { margin: 12px 32px 0; } .ei-body { padding: 20px 32px 60px; } .ei-card { padding: 32px 32px 28px; } }
+  @media (max-width: 900px) { .ei-topbar { padding: 20px 24px 0; } .ei-title { padding: 12px 24px 0; font-size: 24px; } .ei-progress { margin: 10px 24px 0; } .ei-body { padding: 18px 24px 60px; } .ei-card { padding: 28px 24px 24px; gap: 24px; } }
+  @media (max-width: 767px) { .ei-content { margin-left: 0; } .ei-topbar { padding: 20px 16px 0; } .ei-badge { padding: 6px 12px; font-size: 10px; } .ei-bell { display: none; } .ei-title { padding: 12px 16px 0; font-size: 20px; } .ei-progress { margin: 10px 16px 0; padding: 14px 16px; } .ei-progress-row { font-size: 13px; } .ei-progress-label { font-size: 13px; } .ei-body { padding: 16px 16px 80px; } .ei-card { padding: 20px 16px 20px; gap: 20px; } .ei-section-title { font-size: 17px; } .ei-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ei-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 390px) { .ei-title { font-size: 17px; } .ei-input { font-size: 13px; } .ei-btn-prev, .ei-btn-next { width: 90px; font-size: 13px; } }
+  @media (max-height: 600px) { .ei-header { padding-bottom: 10px; } .ei-progress { padding: 10px 20px; } .ei-body { padding-top: 14px; } }
 `;
 
-const INDUSTRY_OPTIONS = [
-  'Agriculture, Forestry and Fishing',
-  'Mining and Quarrying',
-  'Manufacturing',
-  'Electricity, Gas, Steam and Air Conditioning Supply',
-  'Water Supply, Sewerage and Waste Management',
-  'Construction',
-  'Wholesale and Retail Trade',
-  'Transportation and Storage',
-  'Accommodation and Food Service Activities',
-  'Information and Communication Technology (ICT)',
-  'Financial and Insurance Activities',
-  'Real Estate Activities',
-  'Professional, Scientific and Technical Activities',
-  'Administrative and Support Service Activities',
-  'Public Administration and Defence',
-  'Education',
-  'Human Health and Social Work Activities',
-  'Arts, Entertainment and Recreation',
-  'Other Service Activities',
-  'Other',
-];
-
-const EMPLOYMENT_STATUSES_ALL = [
-  'Regular / Permanent',
-  'Contractual',
-  'Part-Time',
-  'Probationary',
-  'Self-Employed',
-  'Unemployed, but looking for work',
-  'Unemployed, but not looking for work',
-  'Other',
-];
-
-const REASONS_FOR_JOB = [
-  'Salaries and Benefits',
-  'Career Challenge',
-  'Related to Special Skill',
-  'Related to Course or Program of Study',
-  'Proximity of Residence',
-  'Peer Influence',
-  'Family Influence',
-  'Other',
-];
-
-const UNEMPLOYED_REASONS = [
-  'Pursuing further studies',
-  'Family responsibilities or personal matters',
-  'Health-related reasons',
-  'Lack of job opportunities related to the field of study',
-  'Waiting for job placement results or hiring process',
-  'Currently seeking better employment opportunities',
-  'Started a personal business or freelance work (not yet stable)',
-  'Relocation or migration plans',
-  'Lack of work experience or qualifications required by employers',
-  'Taking a break or resting before seeking employment',
-  'Reviewing for board examination',
-  'Other',
-];
-
-const MONTHLY_INCOME = [
-  'Below ₱15,000',
-  '₱15,001 – ₱30,000',
-  '₱30,001 – ₱50,000',
-  'Above ₱50,000',
-];
-
-const EMPLOYED_STATUSES = [
-  'Regular / Permanent',
-  'Contractual',
-  'Part-Time',
-  'Probationary',
-  'Self-Employed',
-];
-
-const UNEMPLOYED_STATUSES = [
-  'Unemployed, but looking for work',
-  'Unemployed, but not looking for work',
-];
+const INDUSTRY_OPTIONS = ['Agriculture, Forestry and Fishing','Mining and Quarrying','Manufacturing','Electricity, Gas, Steam and Air Conditioning Supply','Water Supply, Sewerage and Waste Management','Construction','Wholesale and Retail Trade','Transportation and Storage','Accommodation and Food Service Activities','Information and Communication Technology (ICT)','Financial and Insurance Activities','Real Estate Activities','Professional, Scientific and Technical Activities','Administrative and Support Service Activities','Public Administration and Defence','Education','Human Health and Social Work Activities','Arts, Entertainment and Recreation','Other Service Activities','Other'];
+const EMPLOYMENT_STATUSES_ALL = ['Regular / Permanent','Contractual','Part-Time','Probationary','Self-Employed','Unemployed, but looking for work','Unemployed, but not looking for work','Other'];
+const REASONS_FOR_JOB = ['Salaries and Benefits','Career Challenge','Related to Special Skill','Related to Course or Program of Study','Proximity of Residence','Peer Influence','Family Influence','Other'];
+const UNEMPLOYED_REASONS = ['Pursuing further studies','Family responsibilities or personal matters','Health-related reasons','Lack of job opportunities related to the field of study','Waiting for job placement results or hiring process','Currently seeking better employment opportunities','Started a personal business or freelance work (not yet stable)','Relocation or migration plans','Lack of work experience or qualifications required by employers','Taking a break or resting before seeking employment','Reviewing for board examination','Other'];
+const MONTHLY_INCOME = ['Below ₱15,000','₱15,001 – ₱30,000','₱30,001 – ₱50,000','Above ₱50,000'];
+const EMPLOYED_STATUSES = ['Regular / Permanent','Contractual','Part-Time','Probationary','Self-Employed'];
+const UNEMPLOYED_STATUSES = ['Unemployed, but looking for work','Unemployed, but not looking for work'];
 
 const SelectDropdown = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
   return (
     <div className="ei-dropdown" ref={ref}>
       <div className={`ei-dropdown-trigger${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
         <span style={{ color: value ? '#fff' : 'rgba(255,255,255,0.3)' }}>{value || 'Select'}</span>
-        <svg width="12" height="8" viewBox="0 0 12 8" fill="none"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
-          <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </div>
       {open && (
         <div className="ei-dropdown-menu">
           {INDUSTRY_OPTIONS.map(opt => (
-            <div key={opt}
-              className={`ei-dropdown-item${value === opt ? ' selected' : ''}`}
-              onClick={() => { onChange(opt); setOpen(false); }}>
-              {opt}
-            </div>
+            <div key={opt} className={`ei-dropdown-item${value === opt ? ' selected' : ''}`} onClick={() => { onChange(opt); setOpen(false); }}>{opt}</div>
           ))}
         </div>
       )}
@@ -561,18 +91,18 @@ const EmploymentInformation = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    jobRelatedToDegree: '',
-    employmentStatus: '',
-    otherEmploymentStatus: '',
-    jobPosition: '',
-    companyName: '',
-    typeOfIndustry: '',
-    locationOfEmployment: '',
-    monthlyIncome: '',
-    reasonForJob: '',
-    otherReasonForJob: '',
-    reasonsUnemployed: '',
-    otherReasonUnemployed: '',
+    job_related_to_degree: '',
+    employment_status: '',
+    other_employment_status: '',
+    job_position: '',
+    company_name: '',
+    type_of_industry: '',
+    location_of_employment: '',
+    monthly_income: '',
+    reason_for_job: '',
+    other_reason_for_job: '',
+    reasons_unemployed: '',
+    other_reason_unemployed: '',
   });
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
@@ -580,50 +110,54 @@ const EmploymentInformation = () => {
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('employment_information');
-      if (savedData) setForm(f => ({ ...f, ...savedData }));
+      if (savedData) setForm(f => ({
+        ...f,
+        ...savedData,
+        // ← fallbacks for old key names saved before the snake_case migration
+        location_of_employment: savedData.location_of_employment || savedData.employment_location || '',
+        reason_for_job:         savedData.reason_for_job         || savedData.job_acceptance_reason || '',
+        type_of_industry:       savedData.type_of_industry       || savedData.industry || '',
+        monthly_income:         savedData.monthly_income         || savedData.salary_range || '',
+      }));
     };
     load();
   }, []);
 
-  const resetEmploymentBranch = (v) =>
-    setForm(prev => ({
-      ...prev,
-      employmentStatus: v,
-      otherEmploymentStatus: '',
-      jobPosition: '', companyName: '', typeOfIndustry: '',
-      locationOfEmployment: '', monthlyIncome: '',
-      reasonForJob: '', otherReasonForJob: '',
-      reasonsUnemployed: '', otherReasonUnemployed: '',
-    }));
+  const resetEmploymentBranch = (v) => setForm(prev => ({
+    ...prev,
+    employment_status: v,
+    other_employment_status: '',
+    job_position: '', company_name: '', type_of_industry: '',
+    location_of_employment: '', monthly_income: '',
+    reason_for_job: '', other_reason_for_job: '',
+    reasons_unemployed: '', other_reason_unemployed: '',
+  }));
 
-  const isEmployed           = EMPLOYED_STATUSES.includes(form.employmentStatus);
-  const isUnemployed         = UNEMPLOYED_STATUSES.includes(form.employmentStatus);
-  const showEmployedFields   = form.employmentStatus !== '' && isEmployed;
-  const showUnemployedFields = form.employmentStatus !== '' && isUnemployed;
+  const isEmployed           = EMPLOYED_STATUSES.includes(form.employment_status);
+  const isUnemployed         = UNEMPLOYED_STATUSES.includes(form.employment_status);
+  const showEmployedFields   = form.employment_status !== '' && isEmployed;
+  const showUnemployedFields = form.employment_status !== '' && isUnemployed;
 
   const [errors, setErrors] = useState(new Set());
   const cardRef = useRef(null);
 
   const validate = () => {
     const e = new Set();
-    if (!form.jobRelatedToDegree) e.add('jobRelatedToDegree');
-    if (!form.employmentStatus)   e.add('employmentStatus');
-    if (form.employmentStatus === 'Other' && !form.otherEmploymentStatus.trim())
-      e.add('otherEmploymentStatus');
-    if (EMPLOYED_STATUSES.includes(form.employmentStatus)) {
-      if (!form.jobPosition.trim())   e.add('jobPosition');
-      if (!form.companyName.trim())   e.add('companyName');
-      if (!form.typeOfIndustry)       e.add('typeOfIndustry');
-      if (!form.locationOfEmployment) e.add('locationOfEmployment');
-      if (!form.monthlyIncome)        e.add('monthlyIncome');
-      if (!form.reasonForJob)         e.add('reasonForJob');
-      if (form.reasonForJob === 'Other' && !form.otherReasonForJob.trim())
-        e.add('otherReasonForJob');
+    if (!form.job_related_to_degree) e.add('job_related_to_degree');
+    if (!form.employment_status)     e.add('employment_status');
+    if (form.employment_status === 'Other' && !form.other_employment_status.trim()) e.add('other_employment_status');
+    if (EMPLOYED_STATUSES.includes(form.employment_status)) {
+      if (!form.job_position.trim())    e.add('job_position');
+      if (!form.company_name.trim())    e.add('company_name');
+      if (!form.type_of_industry)       e.add('type_of_industry');
+      if (!form.location_of_employment) e.add('location_of_employment');
+      if (!form.monthly_income)         e.add('monthly_income');
+      if (!form.reason_for_job)         e.add('reason_for_job');
+      if (form.reason_for_job === 'Other' && !form.other_reason_for_job.trim()) e.add('other_reason_for_job');
     }
-    if (UNEMPLOYED_STATUSES.includes(form.employmentStatus)) {
-      if (!form.reasonsUnemployed) e.add('reasonsUnemployed');
-      if (form.reasonsUnemployed === 'Other' && !form.otherReasonUnemployed.trim())
-        e.add('otherReasonUnemployed');
+    if (UNEMPLOYED_STATUSES.includes(form.employment_status)) {
+      if (!form.reasons_unemployed) e.add('reasons_unemployed');
+      if (form.reasons_unemployed === 'Other' && !form.other_reason_unemployed.trim()) e.add('other_reason_unemployed');
     }
     return e;
   };
@@ -646,224 +180,135 @@ const EmploymentInformation = () => {
   return (
     <>
       <style>{STYLES}</style>
-
       <div className="ei-root">
         <Sidebar />
-
         <div className="ei-content">
-
-          {/* ── Sticky Header ─────────────────────────────────────────── */}
           <div className="ei-header">
-
             <div className="ei-topbar">
-              <button className="ei-back-btn"
-                onClick={() => navigate('/survey/certification-achievement')}>
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5"
-                    stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+              <button className="ei-back-btn" onClick={() => navigate('/survey/certification-achievement')}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 Back
               </button>
-
               <div className="ei-badge">Alumni Status</div>
-
               <button className="ei-bell">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                    stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 <div className="ei-bell-dot">3</div>
               </button>
             </div>
-
             <h1 className="ei-title">Alumni Tracer Survey</h1>
-
             <div className="ei-progress">
-              <div className="ei-progress-row">
-                <span>Section 4 of 7</span>
-                <span>57% complete</span>
-              </div>
-              <div className="ei-progress-track">
-                <div className="ei-progress-fill" />
-              </div>
+              <div className="ei-progress-row"><span>Section 4 of 7</span><span>57% complete</span></div>
+              <div className="ei-progress-track"><div className="ei-progress-fill" /></div>
               <span className="ei-progress-label">Employment Information</span>
             </div>
-
           </div>
-          {/* ── End Sticky Header ─────────────────────────────────────── */}
 
-          {/* ── Body ──────────────────────────────────────────────────── */}
           <div className="ei-body">
             <div className="ei-card" ref={cardRef}>
-
-              {/* Section heading — no divider below */}
               <div>
                 <h2 className="ei-section-title">Employment Information</h2>
                 <p className="ei-section-sub">Information related to your job</p>
               </div>
-
-              {/* Core fields */}
               <div className="ei-fields">
-
-                {/* Q1: Job related to degree */}
                 <div className="ei-field">
-                  <span className="ei-label">Is your current job related to your degree? <span className="ei-req">*</span>{errors.has('jobRelatedToDegree') && <span className="ei-field-error">Required</span>}</span>
+                  <span className="ei-label">Is your current job related to your degree? <span className="ei-req">*</span>{errors.has('job_related_to_degree') && <span className="ei-field-error">Required</span>}</span>
                   <div className="ei-radio-group">
                     {['Yes', 'No'].map(opt => (
                       <label key={opt} className="ei-radio-label">
-                        <input type="radio" name="jobRelatedToDegree" value={opt}
-                          checked={form.jobRelatedToDegree === opt}
-                          onChange={() => set('jobRelatedToDegree', opt)} />
-                        {opt}
+                        <input type="radio" name="job_related_to_degree" value={opt} checked={form.job_related_to_degree === opt} onChange={() => set('job_related_to_degree', opt)} />{opt}
                       </label>
                     ))}
                   </div>
                 </div>
-
-                {/* Q2: Employment status */}
                 <div className="ei-field">
-                  <span className="ei-label">Current Employment Status <span className="ei-req">*</span>{errors.has('employmentStatus') && <span className="ei-field-error">Required</span>}</span>
+                  <span className="ei-label">Current Employment Status <span className="ei-req">*</span>{errors.has('employment_status') && <span className="ei-field-error">Required</span>}</span>
                   <div className="ei-radio-group">
                     {EMPLOYMENT_STATUSES_ALL.map(opt => (
                       <label key={opt} className="ei-radio-label">
-                        <input type="radio" name="employmentStatus" value={opt}
-                          checked={form.employmentStatus === opt}
-                          onChange={() => resetEmploymentBranch(opt)} />
-                        {opt}
+                        <input type="radio" name="employment_status" value={opt} checked={form.employment_status === opt} onChange={() => resetEmploymentBranch(opt)} />{opt}
                       </label>
                     ))}
                   </div>
-                  {form.employmentStatus === 'Other' && (
-                    <input className="ei-input" type="text"
-                      placeholder="Please specify"
-                      value={form.otherEmploymentStatus}
-                      onChange={e => set('otherEmploymentStatus', e.target.value)}
-                      onFocus={onFocus} onBlur={onBlur}
-                      style={{ marginTop: '8px', borderColor: errors.has('otherEmploymentStatus') ? '#F87171' : undefined }} />
+                  {form.employment_status === 'Other' && (
+                    <input className="ei-input" type="text" placeholder="Please specify" value={form.other_employment_status} onChange={e => set('other_employment_status', e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{ marginTop: '8px', borderColor: errors.has('other_employment_status') ? '#F87171' : undefined }} />
                   )}
                 </div>
-
               </div>
 
-              {/* ── Employed branch ───────────────────────────────────── */}
               {showEmployedFields && (
                 <div className="ei-branch">
-
                   <div className="ei-field">
-                    <span className="ei-label">Job position <span className="ei-req">*</span>{errors.has('jobPosition') && <span className="ei-field-error">Required</span>}</span>
-                    <input className="ei-input" type="text" placeholder="Enter your answer"
-                      value={form.jobPosition}
-                      onChange={e => set('jobPosition', e.target.value)}
-                      onFocus={onFocus} onBlur={onBlur} />
+                    <span className="ei-label">Job position <span className="ei-req">*</span>{errors.has('job_position') && <span className="ei-field-error">Required</span>}</span>
+                    <input className="ei-input" type="text" placeholder="Enter your answer" value={form.job_position} onChange={e => set('job_position', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
-
                   <div className="ei-field">
-                    <span className="ei-label">Name of company / employer <span className="ei-req">*</span>{errors.has('companyName') && <span className="ei-field-error">Required</span>}</span>
-                    <input className="ei-input" type="text" placeholder="Enter your answer"
-                      value={form.companyName}
-                      onChange={e => set('companyName', e.target.value)}
-                      onFocus={onFocus} onBlur={onBlur} />
+                    <span className="ei-label">Name of company / employer <span className="ei-req">*</span>{errors.has('company_name') && <span className="ei-field-error">Required</span>}</span>
+                    <input className="ei-input" type="text" placeholder="Enter your answer" value={form.company_name} onChange={e => set('company_name', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
-
                   <div className="ei-field">
-                    <span className="ei-label">Type of industry <span className="ei-req">*</span>{errors.has('typeOfIndustry') && <span className="ei-field-error">Required</span>}</span>
-                    <SelectDropdown value={form.typeOfIndustry} onChange={v => set('typeOfIndustry', v)} />
+                    <span className="ei-label">Type of industry <span className="ei-req">*</span>{errors.has('type_of_industry') && <span className="ei-field-error">Required</span>}</span>
+                    <SelectDropdown value={form.type_of_industry} onChange={v => set('type_of_industry', v)} />
                   </div>
-
                   <div className="ei-field">
-                    <span className="ei-label">Location of employment <span className="ei-req">*</span>{errors.has('locationOfEmployment') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">Location of employment <span className="ei-req">*</span>{errors.has('location_of_employment') && <span className="ei-field-error">Required</span>}</span>
                     <div className="ei-radio-group">
                       {['Local', 'Abroad'].map(opt => (
                         <label key={opt} className="ei-radio-label">
-                          <input type="radio" name="locationOfEmployment" value={opt}
-                            checked={form.locationOfEmployment === opt}
-                            onChange={() => set('locationOfEmployment', opt)} />
-                          {opt}
+                          <input type="radio" name="location_of_employment" value={opt} checked={form.location_of_employment === opt} onChange={() => set('location_of_employment', opt)} />{opt}
                         </label>
                       ))}
                     </div>
                   </div>
-
                   <div className="ei-field">
-                    <span className="ei-label">Monthly income range <span className="ei-req">*</span>{errors.has('monthlyIncome') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">Monthly income range <span className="ei-req">*</span>{errors.has('monthly_income') && <span className="ei-field-error">Required</span>}</span>
                     <div className="ei-radio-group">
                       {MONTHLY_INCOME.map(opt => (
                         <label key={opt} className="ei-radio-label">
-                          <input type="radio" name="monthlyIncome" value={opt}
-                            checked={form.monthlyIncome === opt}
-                            onChange={() => set('monthlyIncome', opt)} />
-                          {opt}
+                          <input type="radio" name="monthly_income" value={opt} checked={form.monthly_income === opt} onChange={() => set('monthly_income', opt)} />{opt}
                         </label>
                       ))}
                     </div>
                   </div>
-
                   <div className="ei-field">
-                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reasonForJob') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reason_for_job') && <span className="ei-field-error">Required</span>}</span>
                     <div className="ei-radio-group">
                       {REASONS_FOR_JOB.map(opt => (
                         <label key={opt} className="ei-radio-label">
-                          <input type="radio" name="reasonForJob" value={opt}
-                            checked={form.reasonForJob === opt}
-                            onChange={() => set('reasonForJob', opt)} />
-                          {opt}
+                          <input type="radio" name="reason_for_job" value={opt} checked={form.reason_for_job === opt} onChange={() => set('reason_for_job', opt)} />{opt}
                         </label>
                       ))}
                     </div>
-                    {form.reasonForJob === 'Other' && (
-                      <input className="ei-input" type="text"
-                        placeholder="Please specify"
-                        value={form.otherReasonForJob}
-                        onChange={e => set('otherReasonForJob', e.target.value)}
-                        onFocus={onFocus} onBlur={onBlur}
-                        style={{ marginTop: '8px', borderColor: errors.has('otherReasonForJob') ? '#F87171' : undefined }} />
+                    {form.reason_for_job === 'Other' && (
+                      <input className="ei-input" type="text" placeholder="Please specify" value={form.other_reason_for_job} onChange={e => set('other_reason_for_job', e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{ marginTop: '8px', borderColor: errors.has('other_reason_for_job') ? '#F87171' : undefined }} />
                     )}
                   </div>
-
                 </div>
               )}
 
-              {/* ── Unemployed branch ─────────────────────────────────── */}
               {showUnemployedFields && (
                 <div className="ei-branch">
                   <div className="ei-field">
-                    <span className="ei-label">Reasons of being unemployed <span className="ei-req">*</span>{errors.has('reasonsUnemployed') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">Reasons of being unemployed <span className="ei-req">*</span>{errors.has('reasons_unemployed') && <span className="ei-field-error">Required</span>}</span>
                     <div className="ei-radio-group" style={{ gap: '16px' }}>
                       {UNEMPLOYED_REASONS.map(reason => (
                         <label key={reason} className="ei-radio-label">
-                          <input type="radio" name="reasonsUnemployed" value={reason}
-                            checked={form.reasonsUnemployed === reason}
-                            onChange={() => set('reasonsUnemployed', reason)} />
-                          {reason}
+                          <input type="radio" name="reasons_unemployed" value={reason} checked={form.reasons_unemployed === reason} onChange={() => set('reasons_unemployed', reason)} />{reason}
                         </label>
                       ))}
                     </div>
-                    {form.reasonsUnemployed === 'Other' && (
-                      <input className="ei-input" type="text"
-                        placeholder="Please specify"
-                        value={form.otherReasonUnemployed}
-                        onChange={e => set('otherReasonUnemployed', e.target.value)}
-                        onFocus={onFocus} onBlur={onBlur}
-                        style={{ marginTop: '8px', borderColor: errors.has('otherReasonUnemployed') ? '#F87171' : undefined }} />
+                    {form.reasons_unemployed === 'Other' && (
+                      <input className="ei-input" type="text" placeholder="Please specify" value={form.other_reason_unemployed} onChange={e => set('other_reason_unemployed', e.target.value)} onFocus={onFocus} onBlur={onBlur} style={{ marginTop: '8px', borderColor: errors.has('other_reason_unemployed') ? '#F87171' : undefined }} />
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Footer — no divider */}
               <div className="ei-footer">
-                <button className="ei-btn-prev"
-                  onClick={() => navigate('/survey/certification-achievement')}>
-                  Previous
-                </button>
-                <button className="ei-btn-next" onClick={handleNext}>
-                  Next
-                </button>
+                <button className="ei-btn-prev" onClick={() => navigate('/survey/certification-achievement')}>Previous</button>
+                <button className="ei-btn-next" onClick={handleNext}>Next</button>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </>

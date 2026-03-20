@@ -4,6 +4,7 @@ import AlumnAILogo from '../assets/horizon_logo.svg';
 import SignupIcon from '../assets/signup_ic.svg';
 import LoginIcon from '../assets/login_ic.svg';
 import { supabase } from '../lib/supabase';
+import { logAction } from '../lib/auditLogger';
 
 const scrollbarStyles = `
   @font-face {
@@ -18,42 +19,57 @@ const scrollbarStyles = `
     font-style: normal;
     src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
   }
+
   .login-card { width: 500px; height: 730px; max-height: 95vh; }
   @media (max-width: 500px) { .login-card { width: 95vw; } }
 
-  /* Hide browser native eye icon */
-  input::-ms-reveal,
-  input::-ms-clear { display: none; }
-  input::-webkit-credentials-auto-fill-button { visibility: hidden; pointer-events: none; }
+  /* ── Suppress ALL browser-native password/eye UI ── */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear,
+  input[type="text"]::-ms-reveal,
+  input[type="text"]::-ms-clear { display: none !important; }
+  input::-webkit-credentials-auto-fill-button,
+  input::-webkit-strong-password-auto-fill-button { visibility: hidden !important; display: none !important; pointer-events: none !important; }
 
-  /* Eye button always visible on autofill */
+  /* ── Fix browser autofill highlight — keeps text white and background transparent ── */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(13, 19, 56, 0.6) inset !important;
+    -webkit-text-fill-color: #FFFFFF !important;
+    caret-color: #FFFFFF !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* ── Eye button ── */
   .eye-btn-login {
     position: absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.25);
+    background: none;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
-    padding: 2px 4px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s;
+    line-height: 0;
+    -webkit-appearance: none;
   }
-  .eye-btn-login:hover { background: rgba(0, 0, 0, 0.45); }
-  input::-ms-reveal, input::-ms-clear { display: none; }
-  input::-webkit-credentials-auto-fill-button { visibility: hidden; pointer-events: none; }
+  .eye-btn-login:focus { outline: none; }
 `;
 
 const inputStyle = {
   width: '100%', height: '36px',
   background: 'rgba(243,243,245,0.17)',
   border: '1.23674px solid rgba(0,0,0,0.25)',
-  borderRadius: '8px', padding: '4px 12px',
+  borderRadius: '8px',
+  padding: '4px 36px 4px 12px',
   fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px',
   color: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
+  WebkitTextFillColor: '#FFFFFF',
 };
 
 const labelStyle = {
@@ -62,30 +78,26 @@ const labelStyle = {
 };
 
 const EyeIcon = ({ visible }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    {visible ? (
-      <>
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
-        <circle cx="12" cy="12" r="3" stroke="rgba(255,255,255,0.85)" strokeWidth="2" />
-      </>
-    ) : (
-      <>
-        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
-        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
-        <line x1="1" y1="1" x2="23" y2="23" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" />
-      </>
-    )}
-  </svg>
+  visible ? (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5z" fill="rgba(255,255,255,0.85)" />
+      <circle cx="12" cy="12" r="3.5" fill="#002263" />
+      <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.85)" />
+    </svg>
+  ) : (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46A11.804 11.804 0 0 0 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="rgba(255,255,255,0.85)" />
+    </svg>
+  )
 );
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState('');
+  const [form,         setForm]         = useState({ email: '', password: '' });
 
   React.useEffect(() => {
     if (location.state?.error) setError(location.state.error);
@@ -98,7 +110,6 @@ const Login = () => {
     if (!form.email || !form.password) {
       return setError('Please enter your email and password.');
     }
-
     setLoading(true);
     try {
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
@@ -108,6 +119,20 @@ const Login = () => {
       if (loginError) throw loginError;
 
       const email = form.email.toLowerCase().trim();
+
+      // ── Determine role label for audit log ──
+      let roleLabel = 'Alumni';
+      if (email === 'superadmin@nu-dasma.edu.ph') roleLabel = 'Super Admin';
+      else if (email === 'nudaao@nu-dasma.edu.ph') roleLabel = 'Admin';
+
+      // ── Log successful login ──
+      await logAction({
+        action:      'Login',
+        module:      'Authentication',
+        description: `${roleLabel} logged in`,
+        status:      'Success',
+      });
+
       if (email === 'superadmin@nu-dasma.edu.ph') {
         navigate('/superadmin/super-admin-dashboard');
       } else if (email === 'nudaao@nu-dasma.edu.ph') {
@@ -116,6 +141,17 @@ const Login = () => {
         navigate('/dashboard');
       }
     } catch (err) {
+      // ── Log failed login attempt (no user session so log manually) ──
+      await supabase.from('audit_logs').insert({
+        user_id:    null,
+        user_email: form.email,
+        user_role:  null,
+        action:     'Login',
+        module:     'Authentication',
+        description: `Failed login attempt for ${form.email}`,
+        status:     'Failed',
+      });
+
       setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
@@ -128,9 +164,7 @@ const Login = () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) throw error;
     } catch (err) {
@@ -152,7 +186,7 @@ const Login = () => {
         <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
           </Link>
@@ -173,12 +207,7 @@ const Login = () => {
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', gap: '12px', flexShrink: 0,
           }}>
-            <img
-              src={AlumnAILogo}
-              alt="AlumnAI Logo"
-              style={{ width: '150px', height: '70px', objectFit: 'contain' }}
-            />
-            {/* Slider — Figma spec: 352.8 × 36 */}
+            <img src={AlumnAILogo} alt="AlumnAI Logo" style={{ width: '150px', height: '70px', objectFit: 'contain' }} />
             <div style={{ width: '352.8px', maxWidth: '90%', background: 'rgba(243,243,245,0.17)', borderRadius: '10px', padding: '3px', display: 'flex', height: '36px', boxSizing: 'border-box' }}>
               <Link to="/register" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
                 <button style={{
@@ -268,6 +297,7 @@ const Login = () => {
                   value={form.email}
                   onChange={e => set('email', e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  autoComplete="email"
                 />
               </div>
 
@@ -282,8 +312,15 @@ const Login = () => {
                     value={form.password}
                     onChange={e => set('password', e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    autoComplete="current-password"
                   />
-                  <button className="eye-btn-login" onClick={() => setShowPassword(!showPassword)}>
+                  <button
+                    type="button"
+                    className="eye-btn-login"
+                    onClick={() => setShowPassword(v => !v)}
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
                     <EyeIcon visible={showPassword} />
                   </button>
                 </div>
@@ -295,6 +332,7 @@ const Login = () => {
               {/* Log in Button */}
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <button
+                  type="button"
                   onClick={handleLogin}
                   disabled={loading}
                   style={{

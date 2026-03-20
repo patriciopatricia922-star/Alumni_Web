@@ -9,7 +9,6 @@ const STYLES = `
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Root layout ── */
   .pb-root {
     display: flex;
     min-height: 100vh;
@@ -17,19 +16,12 @@ const STYLES = `
     font-family: 'Arimo', Arial, sans-serif;
   }
 
-  /*
-    The key to making sticky work:
-    - .pb-content must be a normal block container (no overflow set)
-    - .pb-header uses position:sticky top:0 inside that block flow
-    - .pb-body is just a regular block that scrolls with the page
-  */
   .pb-content {
     flex: 1;
     min-width: 0;
     margin-left: 229px;
   }
 
-  /* ── Sticky header ── */
   .pb-header {
     position: sticky;
     top: 0;
@@ -39,7 +31,6 @@ const STYLES = `
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
 
-  /* ── Top bar ── */
   .pb-topbar {
     display: flex;
     align-items: center;
@@ -105,7 +96,6 @@ const STYLES = `
     color: #fff;
   }
 
-  /* ── Survey title ── */
   .pb-title {
     text-align: center;
     padding: 14px 51px 0;
@@ -117,7 +107,6 @@ const STYLES = `
     color: #fff;
   }
 
-  /* ── Progress banner ── */
   .pb-progress {
     margin: 12px 51px 0;
     background: #001743;
@@ -158,12 +147,10 @@ const STYLES = `
     color: rgba(255,255,255,0.99);
   }
 
-  /* ── Scrollable body ── */
   .pb-body {
     padding: 24px 51px 60px;
   }
 
-  /* ── Form card ── */
   .pb-card {
     background: rgba(13, 19, 56, 0.4);
     border: 0.89px solid rgba(255,255,255,0.1);
@@ -175,7 +162,6 @@ const STYLES = `
     gap: 40px;
   }
 
-  /* ── Section heading ── */
   .pb-section-title {
     font-family: 'Arimo', Arial, sans-serif;
     font-weight: 700;
@@ -195,7 +181,6 @@ const STYLES = `
     text-align: center;
   }
 
-  /* ── Fields ── */
   .pb-fields {
     display: flex;
     flex-direction: column;
@@ -300,7 +285,6 @@ const STYLES = `
     min-width: 0;
   }
 
-  /* ── Footer (Next button) — NO border-top divider ── */
   .pb-footer {
     display: flex;
     justify-content: flex-end;
@@ -322,10 +306,9 @@ const STYLES = `
     transition: background 0.15s;
   }
   .pb-btn-next:hover { background: rgba(0,40,255,0.85); }
-  /* ── Required asterisk (red) ── */
+
   .pb-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
-  /* ── Inline field error ── */
   .pb-field-error {
     font-family: 'Arimo', Arial, sans-serif;
     font-size: 12px;
@@ -334,11 +317,6 @@ const STYLES = `
     font-weight: 400;
   }
 
-  /* ══════════════════════════════════════════
-     RESPONSIVE BREAKPOINTS
-  ══════════════════════════════════════════ */
-
-  /* Tablet landscape / small desktop */
   @media (max-width: 1100px) {
     .pb-topbar   { padding: 24px 32px 0; }
     .pb-title    { padding: 14px 32px 0; font-size: 26px; }
@@ -346,7 +324,6 @@ const STYLES = `
     .pb-body     { padding: 20px 32px 60px; }
   }
 
-  /* Tablet portrait */
   @media (max-width: 900px) {
     .pb-topbar   { padding: 20px 24px 0; }
     .pb-title    { padding: 12px 24px 0; font-size: 24px; }
@@ -355,7 +332,6 @@ const STYLES = `
     .pb-card     { padding: 28px 24px 28px; }
   }
 
-  /* Mobile — sidebar collapses */
   @media (max-width: 767px) {
     .pb-content  { margin-left: 0; }
     .pb-topbar   { padding: 20px 16px 0; }
@@ -371,14 +347,12 @@ const STYLES = `
     .pb-row      { flex-direction: column; gap: 28px; }
   }
 
-  /* Very small phones */
   @media (max-width: 390px) {
     .pb-title    { font-size: 18px; }
     .pb-input    { font-size: 13px; height: 44px; }
     .pb-btn-next { width: 80px; height: 42px; font-size: 13px; }
   }
 
-  /* Short viewports / landscape phones */
   @media (max-height: 600px) {
     .pb-header   { padding-bottom: 10px; }
     .pb-progress { padding: 10px 20px; }
@@ -389,34 +363,41 @@ const STYLES = `
 const PersonalBackground = () => {
   const navigate = useNavigate();
 
+  // ── All keys are snake_case to match Flutter + Supabase exactly ──
   const [form, setForm] = useState({
-    lastName: '', firstName: '', middleName: '',
-    studentNumber: '', gender: '', birthday: '',
-    civilStatus: '', streetAddress: '', city: '',
-    province: '', zipCode: '', country: '',
-    contactNumber: '', email: '',
-    phonePrefix: '+63',
+    last_name: '', first_name: '', middle_name: '',
+    student_number: '', gender: '', birthday: '',
+    civil_status: '', street_address: '', city: '',
+    province: '', zip_code: '', country: '',
+    contact_number: '', email: '',
+    phone_prefix: '+63',
   });
 
   useEffect(() => {
     const prefill = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
+
       const { data } = await supabase
         .from('users')
-        .select('first_name, middle_name, last_name, email')
+        .select('first_name, middle_name, last_name, email, student_number')
         .eq('id', authUser.id)
         .single();
+
       const savedData = await loadSectionData('personal_background');
+
       if (savedData) {
+        // Saved survey data takes priority
         setForm(f => ({ ...f, ...savedData }));
       } else if (data) {
+        // Fall back to profile data
         setForm(f => ({
           ...f,
-          firstName:  data.first_name  || '',
-          middleName: data.middle_name || '',
-          lastName:   data.last_name   || '',
-          email:      data.email       || '',
+          first_name:     data.first_name     || '',
+          middle_name:    data.middle_name     || '',
+          last_name:      data.last_name       || '',
+          email:          data.email           || '',
+          student_number: data.student_number  || '',
         }));
       }
     };
@@ -431,18 +412,18 @@ const PersonalBackground = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.lastName.trim())      e.add('lastName');
-    if (!form.firstName.trim())     e.add('firstName');
-    if (!form.gender)               e.add('gender');
-    if (!form.birthday)             e.add('birthday');
-    if (!form.civilStatus)          e.add('civilStatus');
-    if (!form.streetAddress.trim()) e.add('streetAddress');
-    if (!form.city.trim())          e.add('city');
-    if (!form.province.trim())      e.add('province');
-    if (!form.zipCode.trim())       e.add('zipCode');
-    if (!form.country)              e.add('country');
-    if (!form.contactNumber.trim()) e.add('contactNumber');
-    if (!form.email.trim())         e.add('email');
+    if (!form.last_name.trim())      e.add('last_name');
+    if (!form.first_name.trim())     e.add('first_name');
+    if (!form.gender)                e.add('gender');
+    if (!form.birthday)              e.add('birthday');
+    if (!form.civil_status)          e.add('civil_status');
+    if (!form.street_address.trim()) e.add('street_address');
+    if (!form.city.trim())           e.add('city');
+    if (!form.province.trim())       e.add('province');
+    if (!form.zip_code.trim())       e.add('zip_code');
+    if (!form.country)               e.add('country');
+    if (!form.contact_number.trim()) e.add('contact_number');
+    if (!form.email.trim())          e.add('email');
     return e;
   };
 
@@ -454,6 +435,7 @@ const PersonalBackground = () => {
       return;
     }
     setErrors(new Set());
+    // Save directly — keys already match Flutter/Supabase snake_case
     saveSectionProgress('personal_background', form)
       .then(() => navigate('/survey/educational-background'));
   };
@@ -467,9 +449,7 @@ const PersonalBackground = () => {
 
         <div className="pb-content">
 
-          {/* ── Sticky Header ─────────────────────────────────────────── */}
           <div className="pb-header">
-
             <div className="pb-topbar">
               <button className="pb-back-btn" onClick={() => navigate('/dashboard')}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -502,11 +482,8 @@ const PersonalBackground = () => {
               </div>
               <span className="pb-progress-label">Personal Background</span>
             </div>
-
           </div>
-          {/* ── End Sticky Header ─────────────────────────────────────── */}
 
-          {/* ── Body (scrolls naturally with the page) ────────────────── */}
           <div className="pb-body">
             <div className="pb-card" ref={cardRef}>
 
@@ -518,28 +495,28 @@ const PersonalBackground = () => {
               <div className="pb-fields">
 
                 <div className="pb-field">
-                  <label className="pb-label">Last Name <span className="pb-req">*</span>{errors.has('lastName') && <span className="pb-field-error">Required</span>}</label>
+                  <label className="pb-label">Last Name <span className="pb-req">*</span>{errors.has('last_name') && <span className="pb-field-error">Required</span>}</label>
                   <input className="pb-input" placeholder="e.g. Dela Cruz"
-                    value={form.lastName} onChange={set('lastName')} />
+                    value={form.last_name} onChange={set('last_name')} />
                 </div>
 
                 <div className="pb-row">
                   <div className="pb-field">
-                    <label className="pb-label">First Name <span className="pb-req">*</span>{errors.has('firstName') && <span className="pb-field-error">Required</span>}</label>
+                    <label className="pb-label">First Name <span className="pb-req">*</span>{errors.has('first_name') && <span className="pb-field-error">Required</span>}</label>
                     <input className="pb-input" placeholder="e.g. Juan"
-                      value={form.firstName} onChange={set('firstName')} />
+                      value={form.first_name} onChange={set('first_name')} />
                   </div>
                   <div className="pb-field">
                     <label className="pb-label">Middle Name</label>
                     <input className="pb-input" placeholder="e.g. Mercado"
-                      value={form.middleName} onChange={set('middleName')} />
+                      value={form.middle_name} onChange={set('middle_name')} />
                   </div>
                 </div>
 
                 <div className="pb-field">
                   <label className="pb-label">Student Number <span className="pb-req">*</span></label>
                   <input className="pb-input" placeholder="e.g. 2023-123456"
-                    value={form.studentNumber} onChange={set('studentNumber')} />
+                    value={form.student_number} onChange={set('student_number')} />
                 </div>
 
                 <div className="pb-field">
@@ -564,13 +541,13 @@ const PersonalBackground = () => {
                 </div>
 
                 <div className="pb-field">
-                  <label className="pb-label">Civil Status <span className="pb-req">*</span>{errors.has('civilStatus') && <span className="pb-field-error">Required</span>}</label>
+                  <label className="pb-label">Civil Status <span className="pb-req">*</span>{errors.has('civil_status') && <span className="pb-field-error">Required</span>}</label>
                   <div className="pb-radio-group">
                     {['Single', 'Married', 'Widowed'].map(opt => (
                       <label key={opt} className="pb-radio-label">
-                        <input type="radio" name="civilStatus" value={opt}
-                          checked={form.civilStatus === opt}
-                          onChange={() => setRadio('civilStatus')(opt)} />
+                        <input type="radio" name="civil_status" value={opt}
+                          checked={form.civil_status === opt}
+                          onChange={() => setRadio('civil_status')(opt)} />
                         {opt}
                       </label>
                     ))}
@@ -578,14 +555,14 @@ const PersonalBackground = () => {
                 </div>
 
                 <div className="pb-field">
-                  <label className="pb-label">Street Address <span className="pb-req">*</span>{errors.has('streetAddress') && <span className="pb-field-error">Required</span>}</label>
+                  <label className="pb-label">Street Address <span className="pb-req">*</span>{errors.has('street_address') && <span className="pb-field-error">Required</span>}</label>
                   <input className="pb-input" placeholder="e.g. Blk 123 Lot 456 AlumnAI St."
-                    value={form.streetAddress} onChange={set('streetAddress')} />
+                    value={form.street_address} onChange={set('street_address')} />
                 </div>
 
                 <div className="pb-row">
                   <div className="pb-field">
-                    <label className="pb-label">City *</label>
+                    <label className="pb-label">City <span className="pb-req">*</span>{errors.has('city') && <span className="pb-field-error">Required</span>}</label>
                     <input className="pb-input" placeholder="e.g. Dasmariñas"
                       value={form.city} onChange={set('city')} />
                   </div>
@@ -598,9 +575,9 @@ const PersonalBackground = () => {
 
                 <div className="pb-row">
                   <div className="pb-field">
-                    <label className="pb-label">ZIP Code *</label>
+                    <label className="pb-label">ZIP Code <span className="pb-req">*</span>{errors.has('zip_code') && <span className="pb-field-error">Required</span>}</label>
                     <input className="pb-input" placeholder="e.g. 4114"
-                      value={form.zipCode} onChange={set('zipCode')} />
+                      value={form.zip_code} onChange={set('zip_code')} />
                   </div>
                   <div className="pb-field">
                     <label className="pb-label">Country <span className="pb-req">*</span>{errors.has('country') && <span className="pb-field-error">Required</span>}</label>
@@ -608,7 +585,7 @@ const PersonalBackground = () => {
                       value={form.country} onChange={e => {
                         const c = e.target.value;
                         const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
-                        setForm(f => ({ ...f, country: c, phonePrefix: prefix }));
+                        setForm(f => ({ ...f, country: c, phone_prefix: prefix }));
                       }}>
                       <option value="" disabled style={{ background: '#001947' }}>Select</option>
                       <option value="Philippines" style={{ background: '#001947' }}>Philippines</option>
@@ -619,23 +596,23 @@ const PersonalBackground = () => {
                 </div>
 
                 <div className="pb-field">
-                  <label className="pb-label">Contact Number <span className="pb-req">*</span>{errors.has('contactNumber') && <span className="pb-field-error">Required</span>}</label>
+                  <label className="pb-label">Contact Number <span className="pb-req">*</span>{errors.has('contact_number') && <span className="pb-field-error">Required</span>}</label>
                   <div className="pb-phone-row">
                     {form.country === 'Other' ? (
                       <input
                         className="pb-input"
                         style={{ width: '68px', flexShrink: 0, padding: '12px 8px', textAlign: 'center' }}
-                        value={form.phonePrefix}
-                        onChange={e => setForm(f => ({ ...f, phonePrefix: e.target.value }))}
+                        value={form.phone_prefix}
+                        onChange={e => setForm(f => ({ ...f, phone_prefix: e.target.value }))}
                         placeholder="+"
                         maxLength={5}
                       />
                     ) : (
-                      <div className="pb-phone-prefix">{form.phonePrefix || '+63'}</div>
+                      <div className="pb-phone-prefix">{form.phone_prefix || '+63'}</div>
                     )}
                     <input type="tel" className="pb-input pb-phone-input"
                       placeholder="e.g. 912-345-6789"
-                      value={form.contactNumber} onChange={set('contactNumber')} />
+                      value={form.contact_number} onChange={set('contact_number')} />
                   </div>
                 </div>
 
@@ -648,7 +625,6 @@ const PersonalBackground = () => {
 
               </div>
 
-              {/* Footer — no divider */}
               <div className="pb-footer">
                 <button className="pb-btn-next" onClick={handleNext}>Next</button>
               </div>

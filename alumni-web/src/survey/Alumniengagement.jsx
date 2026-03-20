@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
+import { supabase } from '../lib/supabase';
+import { logAction } from '../lib/auditLogger';
 import Sidebar from '../components/Sidebar';
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   .ae-root { display: flex; min-height: 100vh; background: #002263; font-family: 'Arimo', Arial, sans-serif; }
   .ae-content { flex: 1; min-width: 0; margin-left: 229px; }
-
   .ae-header { position: sticky; top: 0; z-index: 40; background: #002263; padding-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
   .ae-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
   .ae-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
@@ -22,92 +22,75 @@ const STYLES = `
   .ae-progress-track { width: 100%; height: 11px; background: #D9CA81; border-radius: 10px; margin-bottom: 10px; }
   .ae-progress-fill { width: 100%; height: 100%; background: #51A2FF; border-radius: 10px; }
   .ae-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
-
   .ae-body { padding: 24px 51px 60px; }
   .ae-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
   .ae-section-title { font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 20px; line-height: 1.5; color: #fff; text-align: center; }
   .ae-section-sub { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 6px; text-align: center; }
-
   .ae-questions { display: flex; flex-direction: column; gap: 40px; }
   .ae-field { display: flex; flex-direction: column; gap: 14px; width: 100%; }
   .ae-label { font-family: 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: rgba(255,255,255,0.7); }
-
   .ae-radio-group { display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
   .ae-radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
   .ae-radio-label input[type="radio"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
   .ae-checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.4; }
   .ae-checkbox-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #51A2FF; cursor: pointer; flex-shrink: 0; }
-
   .ae-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; padding-bottom: 8px; }
   .ae-btn-prev { width: 120px; height: 48px; background: #fff; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #090909; transition: opacity 0.15s; }
   .ae-btn-prev:hover { opacity: 0.85; }
   .ae-btn-submit { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .ae-btn-submit:hover { opacity: 0.9; }
-
   .ae-error-banner { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #FCA5A5; line-height: 1.5; }
   .ae-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .ae-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
-
-  @media (max-width: 1100px) {
-    .ae-topbar { padding: 24px 32px 0; } .ae-title { padding: 14px 32px 0; font-size: 26px; }
-    .ae-progress { margin: 12px 32px 0; } .ae-body { padding: 20px 32px 60px; } .ae-card { padding: 32px 32px 28px; }
-  }
-  @media (max-width: 900px) {
-    .ae-topbar { padding: 20px 24px 0; } .ae-title { padding: 12px 24px 0; font-size: 24px; }
-    .ae-progress { margin: 10px 24px 0; } .ae-body { padding: 18px 24px 60px; } .ae-card { padding: 28px 24px 24px; gap: 28px; }
-  }
-  @media (max-width: 767px) {
-    .ae-content { margin-left: 0; } .ae-topbar { padding: 20px 16px 0; } .ae-badge { padding: 6px 12px; font-size: 10px; }
-    .ae-bell { display: none; } .ae-title { padding: 12px 16px 0; font-size: 20px; }
-    .ae-progress { margin: 10px 16px 0; padding: 14px 16px; } .ae-progress-row { font-size: 13px; } .ae-progress-label { font-size: 13px; }
-    .ae-body { padding: 16px 16px 80px; } .ae-card { padding: 20px 16px 20px; gap: 24px; } .ae-section-title { font-size: 17px; }
-    .ae-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ae-btn-submit { width: 100px; height: 44px; font-size: 14px; }
-  }
+  @media (max-width: 1100px) { .ae-topbar { padding: 24px 32px 0; } .ae-title { padding: 14px 32px 0; font-size: 26px; } .ae-progress { margin: 12px 32px 0; } .ae-body { padding: 20px 32px 60px; } .ae-card { padding: 32px 32px 28px; } }
+  @media (max-width: 900px) { .ae-topbar { padding: 20px 24px 0; } .ae-title { padding: 12px 24px 0; font-size: 24px; } .ae-progress { margin: 10px 24px 0; } .ae-body { padding: 18px 24px 60px; } .ae-card { padding: 28px 24px 24px; gap: 28px; } }
+  @media (max-width: 767px) { .ae-content { margin-left: 0; } .ae-topbar { padding: 20px 16px 0; } .ae-badge { padding: 6px 12px; font-size: 10px; } .ae-bell { display: none; } .ae-title { padding: 12px 16px 0; font-size: 20px; } .ae-progress { margin: 10px 16px 0; padding: 14px 16px; } .ae-progress-row { font-size: 13px; } .ae-progress-label { font-size: 13px; } .ae-body { padding: 16px 16px 80px; } .ae-card { padding: 20px 16px 20px; gap: 24px; } .ae-section-title { font-size: 17px; } .ae-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ae-btn-submit { width: 100px; height: 44px; font-size: 14px; } }
   @media (max-width: 390px) { .ae-title { font-size: 17px; } .ae-btn-prev, .ae-btn-submit { width: 90px; font-size: 13px; } }
   @media (max-height: 600px) { .ae-header { padding-bottom: 10px; } .ae-progress { padding: 10px 20px; } .ae-body { padding-top: 14px; } }
 `;
 
-const PARTICIPATE_OPTIONS = [
-  'Alumni Seminars/Webinar programs for professional growth',
-  'Career talks for students',
-  'Alumni fundraising events/activities',
-  'Volunteer opportunities',
-  'Not at all',
-  'Other',
-];
+const PARTICIPATE_OPTIONS = ['Alumni Seminars/Webinar programs for professional growth','Career talks for students','Alumni fundraising events/activities','Volunteer opportunities','Not at all','Other'];
 
 const AlumniEngagement = () => {
   const navigate = useNavigate();
   const cardRef = useRef(null);
   const [errors, setErrors] = useState(new Set());
+
   const [form, setForm] = useState({
-    informedAboutEvents: '',
-    participateIn: [],
-    otherParticipate: '',
+    informed_about_events: '',
+    participate_in: [],
+    other_participate: '',
   });
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   useEffect(() => {
-    loadSectionData('alumni_engagement').then(d => { if (d) setForm(f => ({ ...f, ...d })); });
+    loadSectionData('alumni_engagement').then(d => {
+      if (d) setForm(f => ({
+        ...f,
+        ...d,
+        informed_about_events: d.informed_about_events || d.stay_connected || '',
+        participate_in:        d.participate_in        || d.engagement_activities || [],
+      }));
+    });
   }, []);
 
   const toggleParticipate = (value) => setForm(prev => ({
     ...prev,
-    participateIn: prev.participateIn.includes(value)
-      ? prev.participateIn.filter(v => v !== value)
-      : [...prev.participateIn, value],
+    participate_in: prev.participate_in.includes(value)
+      ? prev.participate_in.filter(v => v !== value)
+      : [...prev.participate_in, value],
   }));
 
   const validate = () => {
     const e = new Set();
-    if (!form.informedAboutEvents)               e.add('informedAboutEvents');
-    if (form.participateIn.length === 0)         e.add('participateIn');
-    if (form.participateIn.includes('Other') && !form.otherParticipate.trim()) e.add('otherParticipate');
+    if (!form.informed_about_events)              e.add('informed_about_events');
+    if (form.participate_in.length === 0)         e.add('participate_in');
+    if (form.participate_in.includes('Other') && !form.other_participate.trim()) e.add('other_participate');
     return e;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const e = validate();
     if (e.size > 0) {
       setErrors(e);
@@ -115,7 +98,30 @@ const AlumniEngagement = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('alumni_engagement', form).then(() => navigate('/survey/complete'));
+
+    try {
+      await saveSectionProgress('alumni_engagement', form);
+
+      // ── Log survey submission ──
+      const { data: { user } } = await supabase.auth.getUser();
+      await logAction({
+        action:      'Create',
+        module:      'Survey',
+        description: 'Alumni submitted tracer survey (web)',
+        recordId:    user?.id ?? null,
+        status:      'Success',
+      });
+
+      navigate('/survey/complete');
+    } catch (err) {
+      // ── Log failed submission ──
+      await logAction({
+        action:      'Create',
+        module:      'Survey',
+        description: 'Alumni survey submission failed (web)',
+        status:      'Failed',
+      });
+    }
   };
 
   return (
@@ -124,8 +130,6 @@ const AlumniEngagement = () => {
       <div className="ae-root">
         <Sidebar />
         <div className="ae-content">
-
-          {/* ── Sticky Header ── */}
           <div className="ae-header">
             <div className="ae-topbar">
               <button className="ae-back-btn" onClick={() => navigate('/survey/feedback')}>
@@ -146,62 +150,47 @@ const AlumniEngagement = () => {
             </div>
           </div>
 
-          {/* ── Body ── */}
           <div className="ae-body">
             <div className="ae-card" ref={cardRef}>
-
-              {errors.size > 0 && (
-                <div className="ae-error-banner">
-                  <strong>Please answer all required questions before proceeding.</strong>
-                </div>
-              )}
-
+              {errors.size > 0 && <div className="ae-error-banner"><strong>Please answer all required questions before proceeding.</strong></div>}
               <div>
                 <h2 className="ae-section-title">Alumni Engagement</h2>
                 <p className="ae-section-sub">Your connection with the university</p>
               </div>
-
               <div className="ae-questions">
-
-                {/* Q1 */}
                 <div className="ae-field">
-                  <span className="ae-label">Would you like to be informed about upcoming alumni events and activities? <span className="ae-req">*</span>{errors.has('informedAboutEvents') && <span className="ae-field-error">Required</span>}</span>
+                  <span className="ae-label">Would you like to be informed about upcoming alumni events and activities? <span className="ae-req">*</span>{errors.has('informed_about_events') && <span className="ae-field-error">Required</span>}</span>
                   <div className="ae-radio-group">
                     {['Yes', 'No'].map(opt => (
                       <label key={opt} className="ae-radio-label">
-                        <input type="radio" name="informedAboutEvents" value={opt} checked={form.informedAboutEvents === opt} onChange={() => set('informedAboutEvents', opt)} />{opt}
+                        <input type="radio" name="informed_about_events" value={opt} checked={form.informed_about_events === opt} onChange={() => set('informed_about_events', opt)} />{opt}
                       </label>
                     ))}
                   </div>
                 </div>
-
-                {/* Q2 — multi-select */}
                 <div className="ae-field">
-                  <span className="ae-label">Would you be willing to participate in: <span className="ae-req">*</span>{errors.has('participateIn') && <span className="ae-field-error">Required</span>}</span>
+                  <span className="ae-label">Would you be willing to participate in: <span className="ae-req">*</span>{errors.has('participate_in') && <span className="ae-field-error">Required</span>}</span>
                   <div className="ae-radio-group">
                     {PARTICIPATE_OPTIONS.map(opt => (
                       <label key={opt} className="ae-checkbox-label">
-                        <input type="checkbox" value={opt} checked={form.participateIn.includes(opt)} onChange={() => toggleParticipate(opt)} />{opt}
+                        <input type="checkbox" value={opt} checked={form.participate_in.includes(opt)} onChange={() => toggleParticipate(opt)} />{opt}
                       </label>
                     ))}
                   </div>
-                  {form.participateIn.includes('Other') && (
+                  {form.participate_in.includes('Other') && (
                     <input
-                      style={{ width: '100%', height: '44px', background: 'rgba(255,255,255,0.17)', border: errors.has('otherParticipate') ? '1px solid #F87171' : '0.89px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '10px 16px', fontFamily: 'Arimo, Arial, sans-serif', fontSize: '14px', color: '#fff', outline: 'none', marginTop: '8px' }}
+                      style={{ width: '100%', height: '44px', background: 'rgba(255,255,255,0.17)', border: errors.has('other_participate') ? '1px solid #F87171' : '0.89px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '10px 16px', fontFamily: 'Arimo, Arial, sans-serif', fontSize: '14px', color: '#fff', outline: 'none', marginTop: '8px' }}
                       placeholder="Please specify"
-                      value={form.otherParticipate}
-                      onChange={e => set('otherParticipate', e.target.value)}
+                      value={form.other_participate}
+                      onChange={e => set('other_participate', e.target.value)}
                     />
                   )}
                 </div>
-
               </div>
-
               <div className="ae-footer">
                 <button className="ae-btn-prev" onClick={() => navigate('/survey/feedback')}>Previous</button>
                 <button className="ae-btn-submit" onClick={handleSubmit}>Submit</button>
               </div>
-
             </div>
           </div>
         </div>

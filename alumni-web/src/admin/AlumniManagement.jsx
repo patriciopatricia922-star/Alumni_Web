@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./AdminSidebar";
+import { MdEmail } from "react-icons/md";
+import { MdWork } from "react-icons/md";
+import { MdAssignment } from "react-icons/md";
+import { MdAccountCircle } from "react-icons/md";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
 const IconUsers = ({ color = "#155DFC" }) => (
@@ -46,22 +50,18 @@ const IconExport = () => (
     <path d="M2 12h12" stroke="#314158" strokeWidth="1.33" strokeLinecap="round"/>
   </svg>
 );
-const IconPlus = () => null;
-const IconEdit = () => null;
-const IconView = () => null;
-const IconDelete = () => null;
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
 function EmpBadge({ status }) {
   const s = (status ?? "").toLowerCase();
   let bg, color, label;
-  if      (s === "employed")                             { bg="#DCFCE7"; color="#008236"; label="Employed"; }
-  else if (s === "unemployed")                           { bg="#FFE2E2"; color="#BF0000"; label="Unemployed"; }
-  else if (s === "student" || s.includes("stud"))        { bg="#DBEAFE"; color="#1447E6"; label="Student"; }
-  else if (s.includes("seek") || s.includes("look"))     { bg="#FEF9C2"; color="#A65F00"; label="Seeking"; }
-  else if (s.includes("further") || s.includes("study")) { bg="#DBEAFE"; color="#1447E6"; label="Further Studies"; }
-  else if (s.includes("self"))                           { bg="#DCFCE7"; color="#008236"; label="Self-Employed"; }
-  else                                                   { bg="#F1F5F9"; color="#45556C"; label=status||"—"; }
+  if      (s === "employed")                              { bg="#DCFCE7"; color="#008236"; label="Employed"; }
+  else if (s === "unemployed")                            { bg="#FFE2E2"; color="#BF0000"; label="Unemployed"; }
+  else if (s === "student" || s.includes("stud"))         { bg="#DBEAFE"; color="#1447E6"; label="Student"; }
+  else if (s.includes("seek") || s.includes("look"))      { bg="#FEF9C2"; color="#A65F00"; label="Seeking"; }
+  else if (s.includes("further") || s.includes("study"))  { bg="#DBEAFE"; color="#1447E6"; label="Further Studies"; }
+  else if (s.includes("self"))                            { bg="#DCFCE7"; color="#008236"; label="Self-Employed"; }
+  else                                                    { bg="#F1F5F9"; color="#45556C"; label=status||"—"; }
   return (
     <span style={{
       display:"inline-flex", alignItems:"center", justifyContent:"center",
@@ -95,7 +95,7 @@ function AccountBadge({ status }) {
   );
 }
 
-// ─── Alumni Profile Modal ──────────────────────────────────────────────────────
+// ─── Alumni Profile Modal ─────────────────────────────────────────────────────
 function AlumniProfileModal({ alumni, onClose }) {
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -114,6 +114,33 @@ function AlumniProfileModal({ alumni, onClose }) {
   const statusClass = (value) =>
     (value ?? "").toLowerCase().replace(/[\s-]+/g, "-");
 
+  const detailItems = [
+    {
+      icon: <MdEmail size={18} color="#155DFC" />,
+      label: "Email Address",
+      value: alumni.email || "—",
+      isText: true,
+    },
+    {
+      icon: <MdWork size={18} color="#155DFC" />,
+      label: "Employment Status",
+      value: alumni.employment_status || "—",
+      isText: true,
+    },
+    {
+      icon: <MdAssignment size={18} color="#155DFC" />,
+      label: "Survey Status",
+      value: alumni.survey_status || "—",
+      isBadge: true,
+    },
+    {
+      icon: <MdAccountCircle size={18} color="#155DFC" />,
+      label: "Account Status",
+      value: alumni.account_status || "—",
+      isBadge: true,
+    },
+  ];
+
   return (
     <div className="apm-overlay" onClick={onClose}>
       <div className="apm-drawer" onClick={(e) => e.stopPropagation()}>
@@ -130,7 +157,6 @@ function AlumniProfileModal({ alumni, onClose }) {
           <div className="apm-hero-info">
             <h2 className="apm-name">{alumni.name}</h2>
             <p className="apm-program">
-              <span className="apm-program-icon">🎓</span>
               {alumni.program || "—"}
             </p>
             <span className="apm-batch">Batch {alumni.batch || "—"}</span>
@@ -141,38 +167,23 @@ function AlumniProfileModal({ alumni, onClose }) {
         <div className="apm-body">
           <p className="apm-section-title">Profile Details</p>
           <ul className="apm-details-list">
-            <li className="apm-detail-item">
-              <div className="apm-detail-icon-wrap">✉</div>
-              <div className="apm-detail-content">
-                <span className="apm-detail-label">Email Address</span>
-                <span className="apm-detail-value">{alumni.email || "—"}</span>
-              </div>
-            </li>
-            <li className="apm-detail-item">
-              <div className="apm-detail-icon-wrap">💼</div>
-              <div className="apm-detail-content">
-                <span className="apm-detail-label">Employment Status</span>
-                <span className="apm-detail-value">{alumni.employment_status || "—"}</span>
-              </div>
-            </li>
-            <li className="apm-detail-item">
-              <div className="apm-detail-icon-wrap">📋</div>
-              <div className="apm-detail-content">
-                <span className="apm-detail-label">Survey Status</span>
-                <span className={`apm-badge apm-badge--${statusClass(alumni.survey_status)}`}>
-                  {alumni.survey_status || "—"}
-                </span>
-              </div>
-            </li>
-            <li className="apm-detail-item">
-              <div className="apm-detail-icon-wrap">👤</div>
-              <div className="apm-detail-content">
-                <span className="apm-detail-label">Account Status</span>
-                <span className={`apm-badge apm-badge--${statusClass(alumni.account_status)}`}>
-                  {alumni.account_status || "—"}
-                </span>
-              </div>
-            </li>
+            {detailItems.map((item, i) => (
+              <li key={i} className="apm-detail-item">
+                <div className="apm-detail-icon-wrap">
+                  {item.icon}
+                </div>
+                <div className="apm-detail-content">
+                  <span className="apm-detail-label">{item.label}</span>
+                  {item.isBadge ? (
+                    <span className={`apm-badge apm-badge--${statusClass(item.value)}`}>
+                      {item.value}
+                    </span>
+                  ) : (
+                    <span className="apm-detail-value">{item.value}</span>
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
@@ -182,12 +193,12 @@ function AlumniProfileModal({ alumni, onClose }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 function AlumniManagement() {
-  const navigate   = useNavigate();
-  const [alumni,   setAlumni]   = useState([]);
-  const [search,   setSearch]   = useState("");
-  const [stats,    setStats]    = useState({ completed:0, pending:0, active:0, deactivated:0 });
-  const [page,     setPage]     = useState(1);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
+  const navigate = useNavigate();
+  const [alumni,         setAlumni]         = useState([]);
+  const [search,         setSearch]         = useState("");
+  const [stats,          setStats]          = useState({ completed:0, pending:0, active:0, deactivated:0 });
+  const [page,           setPage]           = useState(1);
+  const [isMobile,       setIsMobile]       = useState(window.innerWidth < 900);
   const [selectedAlumni, setSelectedAlumni] = useState(null);
   const PER_PAGE = 5;
 
@@ -208,7 +219,6 @@ function AlumniManagement() {
 
   const loadAlumni = async () => {
     try {
-      // ── Fetch all alumni users ──────────────────────────────────────────────
       const { data: users, error: usersError } = await supabaseAdmin
         .from("users")
         .select("id, email, first_name, middle_name, last_name, program, batch_year, account_status, role")
@@ -216,14 +226,12 @@ function AlumniManagement() {
 
       if (usersError) throw usersError;
 
-      // ── Fetch all survey progress ───────────────────────────────────────────
       const { data: surveys, error: surveyError } = await supabaseAdmin
         .from("survey_progress")
         .select("user_id, completed, percentage, employment_information_data");
 
       if (surveyError) throw surveyError;
 
-      // ── Build survey lookup map ─────────────────────────────────────────────
       const surveyMap = {};
       (surveys || []).forEach((s) => {
         let empData = s.employment_information_data;
@@ -250,7 +258,6 @@ function AlumniManagement() {
         };
       });
 
-      // ── Merge users + survey data ───────────────────────────────────────────
       const merged = (users || []).map((u) => {
         const survey = surveyMap[u.id] || {};
         const fullName = [u.first_name, u.middle_name, u.last_name]
@@ -277,9 +284,7 @@ function AlumniManagement() {
     }
   };
 
-  useEffect(() => {
-    loadAlumni();
-  }, []);
+  useEffect(() => { loadAlumni(); }, []);
 
   const updateStatus = async (id, newStatus) => {
     try {
@@ -329,7 +334,6 @@ function AlumniManagement() {
           .am-page { margin-left: 0 !important; padding: 20px 16px 48px; }
         }
 
-        /* heading */
         .am-heading-row {
           display: flex; justify-content: space-between;
           align-items: flex-start; flex-wrap: wrap; gap: 12px;
@@ -345,8 +349,6 @@ function AlumniManagement() {
           font-weight: 400; font-size: 16px; line-height: 24px; color: #6A7282;
         }
 
-
-        /* metric cards */
         .am-metrics {
           display: grid; grid-template-columns: repeat(4,1fr);
           gap: 16px; margin-bottom: 24px;
@@ -368,14 +370,12 @@ function AlumniManagement() {
         .am-icon-green   { background:#F0FDF4; }
         .am-icon-red     { background:#FFE2E2; }
 
-        /* table card */
         .am-table-card {
           background: #F8F9FB; border: 1px solid #E2E8F0; border-radius: 14px;
           box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1);
           overflow: hidden;
         }
 
-        /* toolbar */
         .am-toolbar {
           display: flex; align-items: center; justify-content: space-between;
           flex-wrap: wrap; gap: 10px; padding: 16px;
@@ -396,7 +396,6 @@ function AlumniManagement() {
         }
         .am-tb-btn:hover { background:#f1f5f9; }
 
-        /* table */
         .am-table-wrap { width:100%; overflow-x:auto; }
         .am-table { width:100%; border-collapse:collapse; min-width:620px; }
         .am-table thead tr { background:#F8FAFC; border-bottom:1px solid #E2E8F0; }
@@ -416,19 +415,13 @@ function AlumniManagement() {
         }
         .am-empty td { text-align:center; color:#90A1B9; padding:40px 0; font-style:italic; }
 
-        /* name cell */
         .am-name-cell  { display:flex; align-items:center; gap:12px; }
         .am-avatar     { width:32px; height:32px; border-radius:50%; background:#DBEAFE; color:#155DFC; font-family:'Arimo',sans-serif; font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
         .am-name-stack { display:flex; flex-direction:column; min-width:0; }
         .am-name       { font-size:14px; line-height:20px; color:#0F172B; font-family:'Arimo',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .am-email      { font-size:12px; line-height:16px; color:#62748E; font-family:'Arimo',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .am-batch      { display:inline-flex; align-items:center; padding:4px 8px; background:#F1F5F9; border-radius:4px; font-family:'Arimo',sans-serif; font-size:14px; line-height:20px; color:#314158; }
 
-        /* batch */
-        .am-batch { display:inline-flex; align-items:center; padding:4px 8px; background:#F1F5F9; border-radius:4px; font-family:'Arimo',sans-serif; font-size:14px; line-height:20px; color:#314158; }
-
-
-
-        /* pagination */
         .am-footer {
           display:flex; justify-content:space-between; align-items:center;
           flex-wrap:wrap; gap:12px; padding:0 24px; min-height:63px;
@@ -447,7 +440,6 @@ function AlumniManagement() {
         .am-pg-btn:disabled { opacity:.45; cursor:default; }
         .am-pg-btn.on { background:#155DFC; color:#fff; border-color:#155DFC; }
 
-        /* responsive column hiding */
         @media (max-width:1020px) { .am-col-program { display:none; } }
         @media (max-width:860px)  { .am-col-survey  { display:none; } }
         @media (max-width:720px)  { .am-col-account { display:none; } }
@@ -511,7 +503,6 @@ function AlumniManagement() {
           font-size: 13px; color: rgba(255,255,255,0.8);
           display: flex; align-items: center; justify-content: center; gap: 4px;
         }
-        .apm-program-icon { font-size: 14px; }
         .apm-batch {
           display: inline-flex; align-items: center; padding: 2px 10px;
           background: rgba(255,255,255,0.15); border-radius: 9999px;
@@ -527,9 +518,9 @@ function AlumniManagement() {
         .apm-detail-item { display: flex; align-items: flex-start; gap: 12px; }
         .apm-detail-icon-wrap {
           width: 36px; height: 36px; border-radius: 8px;
-          background: #EFF6FF; color: #155DFC;
+          background: #EFF6FF;
           display: flex; align-items: center; justify-content: center;
-          font-size: 18px; flex-shrink: 0;
+          flex-shrink: 0;
         }
         .apm-detail-content { display: flex; flex-direction: column; gap: 2px; padding-top: 2px; }
         .apm-detail-label { font-family: 'Arimo', sans-serif; font-size: 11px; color: #90A1B9; }
@@ -539,29 +530,25 @@ function AlumniManagement() {
           border-radius: 9999px; font-family: 'Arimo', sans-serif;
           font-size: 12px; font-weight: 400;
         }
-        .apm-badge--completed   { background: #DCFCE7; color: #008236; }
-        .apm-badge--pending     { background: #FFE2E2; color: #BF0000; }
-        .apm-badge--active      { background: rgba(142,201,47,0.28); color: #4C4C4C; }
+        .apm-badge--completed    { background: #DCFCE7; color: #008236; }
+        .apm-badge--pending      { background: #FFE2E2; color: #BF0000; }
+        .apm-badge--active       { background: rgba(142,201,47,0.28); color: #4C4C4C; }
         .apm-badge--inactive,
-        .apm-badge--deactivated { background: rgba(255,149,0,0.55); color: #4C4C4C; }
-        .apm-row-clickable { cursor: pointer; }
-
+        .apm-badge--deactivated  { background: rgba(255,149,0,0.55); color: #4C4C4C; }
+        .apm-row-clickable       { cursor: pointer; }
       `}</style>
 
       <AdminSidebar />
 
       <div className="am-page">
 
-        {/* Heading */}
         <div className="am-heading-row">
           <div>
             <h1 className="am-title">Alumni Module</h1>
-            <p className="am-subtitle">Welcome back! Here's what's happening with your alumni.</p>
+            <p className="am-subtitle">Welcome bark! Here's what's happening with your alumni.</p>
           </div>
-
         </div>
 
-        {/* Metric Cards */}
         <div className="am-metrics">
           <div className="am-metric-card">
             <div className="am-metric-left">
@@ -597,10 +584,7 @@ function AlumniManagement() {
           </div>
         </div>
 
-        {/* Table Card */}
         <div className="am-table-card">
-
-          {/* Toolbar */}
           <div className="am-toolbar">
             <div className="am-search-wrap">
               <IconSearch />
@@ -617,7 +601,6 @@ function AlumniManagement() {
             </div>
           </div>
 
-          {/* Table */}
           <div className="am-table-wrap">
             <table className="am-table">
               <thead>
@@ -634,34 +617,31 @@ function AlumniManagement() {
                 {paginated.length === 0 ? (
                   <tr className="am-empty"><td colSpan="6">No alumni records found.</td></tr>
                 ) : (
-                  paginated.map((a) => {
-                    return (
-                      <tr key={a.id} className="apm-row-clickable" onClick={() => setSelectedAlumni(a)}>
-                        <td>
-                          <div className="am-name-cell">
-                            <div className="am-avatar">{(a.name ?? "?").charAt(0).toUpperCase()}</div>
-                            <div className="am-name-stack">
-                              <span className="am-name">{a.name}</span>
-                              <span className="am-email">{a.email}</span>
-                            </div>
+                  paginated.map((a) => (
+                    <tr key={a.id} className="apm-row-clickable" onClick={() => setSelectedAlumni(a)}>
+                      <td>
+                        <div className="am-name-cell">
+                          <div className="am-avatar">{(a.name ?? "?").charAt(0).toUpperCase()}</div>
+                          <div className="am-name-stack">
+                            <span className="am-name">{a.name}</span>
+                            <span className="am-email">{a.email}</span>
                           </div>
-                        </td>
-                        <td className="am-col-batch">
-                          {a.batch ? <span className="am-batch">{a.batch}</span> : <span style={{color:"#CBD5E1"}}>—</span>}
-                        </td>
-                        <td className="am-col-program">{a.program || "—"}</td>
-                        <td className="tc"><EmpBadge status={a.employment_status} /></td>
-                        <td className="tc am-col-survey"><SurveyBadge status={a.survey_status} /></td>
-                        <td className="tc am-col-account"><AccountBadge status={a.account_status} /></td>
-                      </tr>
-                    );
-                  })
+                        </div>
+                      </td>
+                      <td className="am-col-batch">
+                        {a.batch ? <span className="am-batch">{a.batch}</span> : <span style={{color:"#CBD5E1"}}>—</span>}
+                      </td>
+                      <td className="am-col-program">{a.program || "—"}</td>
+                      <td className="tc"><EmpBadge status={a.employment_status} /></td>
+                      <td className="tc am-col-survey"><SurveyBadge status={a.survey_status} /></td>
+                      <td className="tc am-col-account"><AccountBadge status={a.account_status} /></td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination */}
           <div className="am-footer">
             <span className="am-footer-text">
               Showing {startEntry} to {endEntry} of {filtered.length} entries
@@ -681,9 +661,9 @@ function AlumniManagement() {
               <button className="am-pg-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>Next</button>
             </div>
           </div>
-
         </div>
       </div>
+
       {selectedAlumni && (
         <AlumniProfileModal
           alumni={selectedAlumni}

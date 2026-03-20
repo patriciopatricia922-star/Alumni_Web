@@ -62,7 +62,7 @@ const ContactSupport = () => {
               background: '#2B72FB', borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ fontFamily: 'SF Pro Display, Arial', fontSize: '10px', color: '#FFFFFF' }}>3</span>
+              <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: '10px', color: '#FFFFFF' }}>3</span>
             </div>
           </button>
         </div>
@@ -92,7 +92,7 @@ const ContactSupport = () => {
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
+              <span style={{ fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
                 Back
               </span>
             </button>
@@ -100,14 +100,14 @@ const ContactSupport = () => {
             {/* Title */}
             <div style={{ textAlign: 'center' }}>
               <h2 style={{
-                fontFamily: 'Montserrat', fontWeight: 700,
+                fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 700,
                 fontSize: '19px', lineHeight: '20px',
                 color: '#FFFFFF', margin: '0 0 8px 0',
               }}>
                 Contact Support
               </h2>
               <p style={{
-                fontFamily: 'Montserrat', fontWeight: 400,
+                fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 400,
                 fontSize: '15px', lineHeight: '20px',
                 color: 'rgba(255, 255, 255, 0.5)', margin: 0,
               }}>
@@ -151,14 +151,14 @@ const ContactSupport = () => {
                   {/* Text */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <h3 style={{
-                      fontFamily: 'Montserrat', fontWeight: 600,
+                      fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 600,
                       fontSize: '14px', lineHeight: '21px',
                       color: '#FFFFFF', margin: 0,
                     }}>
                       {item.label}
                     </h3>
                     <p style={{
-                      fontFamily: 'Montserrat', fontWeight: 400,
+                      fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 400,
                       fontSize: '13px', lineHeight: '20px',
                       color: '#2B72FB', margin: 0,
                       textDecoration: item.underline ? 'underline' : 'none',
@@ -178,7 +178,7 @@ const ContactSupport = () => {
               padding: '25.8px 19.2px 20px 27.8px',
             }}>
               <h3 style={{
-                fontFamily: 'Montserrat', fontWeight: 600,
+                fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 600,
                 fontSize: '16px', lineHeight: '24px',
                 color: '#FFFFFF', margin: '0 0 16px 0',
               }}>
@@ -190,14 +190,14 @@ const ContactSupport = () => {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}>
                     <span style={{
-                      fontFamily: 'Montserrat', fontWeight: 400,
+                      fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 400,
                       fontSize: '15px', lineHeight: '22px',
                       color: 'rgba(255, 255, 255, 0.7)',
                     }}>
                       {row.day}
                     </span>
                     <span style={{
-                      fontFamily: 'Montserrat', fontWeight: 500,
+                      fontFamily: 'Arimo, Arial, sans-serif', fontWeight: 500,
                       fontSize: '15px', lineHeight: '22px',
                       color: '#FFFFFF',
                     }}>
