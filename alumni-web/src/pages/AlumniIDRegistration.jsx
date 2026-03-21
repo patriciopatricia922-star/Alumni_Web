@@ -49,7 +49,7 @@ const verifyAlumniID = async (imageFile) => {
   const isNU = upperText.includes('NATIONAL') && upperText.includes('UNIVERSITY');
   const isAlumni = upperText.includes('ALUMNI');
 
-  if (!isNU) return { verified: false, reason: 'This ID does not appear to be a National University ID.' };
+  if (!isNU) return { verified: false, reason: 'This ID does not appear to be an NU-Dasmariñas ID.' };
   if (!isAlumni) return { verified: false, reason: 'This ID does not appear to be an Alumni ID. Please use your official branch ID.' };
 
   const isDasmarinas =
