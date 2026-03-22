@@ -97,6 +97,7 @@ const ContactSupport = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
         height: '100vh',
         overflow: 'hidden',
         padding: isMobile ? '20px 16px 80px' : isTablet ? '28px 28px' : '37px 51px',
@@ -137,25 +138,26 @@ const ContactSupport = () => {
           )}
         </div>
 
-        {/* ── Centred card ─────────────────────────────────────────────────── */}
+        {/* ── Back button — outside card ────────────────────────────────────── */}
+        <button onClick={()=>navigate('/about')} style={{display:'flex',alignItems:'center',gap:'8px',background:'none',border:'none',cursor:'pointer',padding:0,marginBottom:isMobile?'16px':'20px',flexShrink:0}}>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+            <path d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:'15px',color:'#FFFFFF'}}>Back</span>
+        </button>
+
+        {/* ── Centred card — no scroll ──────────────────────────────────────── */}
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', minHeight:0 }}>
           <div style={{
             display:'flex', flexDirection:'column', gap:'16px',
             width:'100%', maxWidth: isMobile?'100%':isTablet?'480px':'545px',
-            maxHeight:'100%',
             background:'rgba(13,19,56,0.4)',
             border:'0.8px solid rgba(255,255,255,0.1)',
             borderRadius:'14px',
             padding: isMobile?'24px 20px':'34px 37px',
             boxSizing:'border-box',
-            overflowY:'auto',
+            overflow:'hidden',
           }}>
-
-            {/* Back */}
-            <button onClick={()=>navigate('/about')} style={{display:'flex',alignItems:'center',gap:'8px',background:'none',border:'none',cursor:'pointer',padding:0}}>
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:'14px',color:'#FFFFFF'}}>Back</span>
-            </button>
 
             {/* Title */}
             <div style={{textAlign:'center'}}>
