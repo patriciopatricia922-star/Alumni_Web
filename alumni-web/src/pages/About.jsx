@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
+import AlumnAILogo from '../assets/new_lg.svg';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
@@ -89,6 +90,7 @@ const About = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
         height: '100vh',
         overflow: 'hidden',
         padding: isMobile ? '20px 16px 80px' : isTablet ? '28px 28px' : '37px 51px',
@@ -147,7 +149,15 @@ const About = () => {
           )}
         </div>
 
-        {/* ── Centred card — fills remaining space without overflow ────────── */}
+        {/* ── Back button — outside card, top-left like Announcements ─────── */}
+        <button onClick={()=>navigate('/profile')} style={{display:'flex',alignItems:'center',gap:'8px',background:'none',border:'none',cursor:'pointer',padding:0,marginBottom:isMobile?'16px':'20px',flexShrink:0}}>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+            <path d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:'15px',color:'#FFFFFF'}}>Back</span>
+        </button>
+
+        {/* ── Centred card — no scroll ──────────────────────────────────────── */}
         <div style={{
           flex: 1,
           display: 'flex',
@@ -159,20 +169,13 @@ const About = () => {
           <div style={{
             width: '100%',
             maxWidth: isMobile ? '100%' : isTablet ? '480px' : '547px',
-            maxHeight: '100%',
             background: 'rgba(13,19,56,0.4)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '14px',
             padding: isMobile ? '24px 20px' : '34px 38px 40px',
             boxSizing: 'border-box',
-            overflowY: 'auto',
+            overflow: 'hidden',
           }}>
-
-            {/* Back */}
-            <button onClick={()=>navigate('/profile')} style={{display:'flex',alignItems:'center',gap:'8px',background:'none',border:'none',cursor:'pointer',padding:0,marginBottom:'24px'}}>
-              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:'14px',color:'#FFFFFF'}}>Back</span>
-            </button>
 
             {/* Title */}
             <h2 style={{fontFamily:'Arimo',fontWeight:700,fontSize:isMobile?'17px':'19px',color:'#FFFFFF',margin:'0 0 8px 0',textAlign:'center'}}>About AlumnAI</h2>
@@ -180,16 +183,16 @@ const About = () => {
 
             {/* App info */}
             <div style={{background:'rgba(13,19,56,0.4)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'14px',padding:isMobile?'20px 16px':'32px 24px',marginBottom:'14px',display:'flex',flexDirection:'column',alignItems:'center',gap:'14px'}}>
-              <div style={{width:isMobile?'72px':'90px',height:isMobile?'72px':'90px',background:'linear-gradient(180deg,#002263 0%,rgba(0,69,201,0.05) 100%)',border:'1.24px solid rgba(255,255,255,0.15)',boxShadow:'0px 10px 15px -3px rgba(43,114,251,0.25)',borderRadius:'16px',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width={isMobile?38:48} height={isMobile?38:48} viewBox="0 0 48 48" fill="none">
-                  <path d="M24 14L8 22.5L24 31L40 22.5L24 14Z" stroke="#D9CA81" strokeWidth="2.67" strokeLinejoin="round"/>
-                  <path d="M40 22.5V32" stroke="#D9CA81" strokeWidth="2.67" strokeLinecap="round"/>
-                  <path d="M15 27V34L24 38.5L33 34V27" stroke="#D9CA81" strokeWidth="2.67" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{display:'flex',alignItems:'center'}}>
-                <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:isMobile?'17px':'20px',color:'#FFFFFF'}}>Alumn</span>
-                <span style={{fontFamily:'Arimo',fontWeight:700,fontSize:isMobile?'17px':'20px',color:'#D9CA81'}}>AI</span>
+              <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
+                <img
+                  src={AlumnAILogo}
+                  alt="AlumnAI"
+                  style={{
+                    width: isMobile ? '140px' : '180px',
+                    height: 'auto',
+                    objectFit: 'contain',
+                  }}
+                />
               </div>
               <p style={{fontFamily:'Arimo',fontWeight:400,fontSize:isMobile?'13px':'15px',lineHeight:'1.6',color:'#FFFFFF',textAlign:'center',margin:0}}>
                 Connecting National University—Dasmariñas alumni through a modern, intelligent platform built for lifelong community engagement.

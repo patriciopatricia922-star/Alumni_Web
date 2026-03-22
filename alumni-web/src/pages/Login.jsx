@@ -248,6 +248,7 @@ const Login = () => {
                 justifyContent: 'center', gap: '10px',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 marginBottom: '16px', opacity: loading ? 0.6 : 1,
+                boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
               }}
             >
               <svg width="18" height="18" viewBox="0 0 48 48">
@@ -338,7 +339,7 @@ const Login = () => {
                   style={{
                     width: '310px', height: '40px',
                     background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
-                    boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                    boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
                     border: 'none', borderRadius: '13px',
                     fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px',
                     color: '#FFFFFF', cursor: loading ? 'not-allowed' : 'pointer',

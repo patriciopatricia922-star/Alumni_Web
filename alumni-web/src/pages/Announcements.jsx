@@ -13,8 +13,32 @@ const useWindowWidth = () => {
   return width;
 };
 
-// ─── Icon: megaphone (matches Figma 3D icon placeholder) ─────────────────────
-const MegaphoneIcon = ({ size = 28 }) => (
+import megaphoneIcon from '../assets/megaphone_ic.svg';
+import calenderIcon  from '../assets/calendar_ic.svg';
+import documentIcon  from '../assets/document_ic.svg';
+
+const CATEGORY_ICONS = {
+  'News':       megaphoneIcon,
+  'Activities': calenderIcon,
+};
+const getIcon = (category) => CATEGORY_ICONS[category] || documentIcon;
+
+const CATEGORIES = ['All Announcements', 'Activities', 'News'];
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso), now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60)     return 'Just now';
+  if (diff < 3600)   return Math.floor(diff/60)   + 'm ago';
+  if (diff < 86400)  return Math.floor(diff/3600)  + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
+const MegaphoneIcon = ({ size = 36 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M3 9v6h4l5 5V4L7 9H3z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
     <path d="M16.5 7.5C17.9 8.9 18.75 10.85 18.75 13C18.75 15.15 17.9 17.1 16.5 18.5" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
@@ -22,132 +46,155 @@ const MegaphoneIcon = ({ size = 28 }) => (
   </svg>
 );
 
-// ─── Announcement Card — Figma: 495×180, icon box 120×120 ────────────────────
-const AnnouncementCard = ({ announcement, isMobile, isTablet }) => (
-  <div style={{
-    background: 'rgba(0,62,166,0.35)',
-    border: '0.889px solid rgba(255,255,255,0.2)',
-    boxShadow: '0px 4px 4px rgba(0,0,0,0.3)',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  }}>
-    {/* Top: timestamp */}
-    <div style={{
-      display: 'flex', justifyContent: 'flex-end',
-      padding: isMobile ? '8px 14px' : '10px 18px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
-          <path d="M7 4V7.5L9.5 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17" strokeLinecap="round"/>
-        </svg>
-        <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-          {announcement.time}
-        </span>
-      </div>
-    </div>
+const ClockIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+    <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
+    <path d="M7 4V7.5L9.5 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17" strokeLinecap="round"/>
+  </svg>
+);
 
-    {/* Main body — icon + text, Figma layout */}
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      padding: isMobile ? '0 14px 14px' : '0 20px 20px',
-      gap: isMobile ? '12px' : '20px',
-      flex: 1,
-    }}>
-      {/* Icon box — Figma: 120×120, left:-4 top:12, gradient bg */}
-      <div style={{
-        width:  isMobile ? '64px' : isTablet ? '80px' : '100px',
-        height: isMobile ? '64px' : isTablet ? '80px' : '100px',
-        minWidth: isMobile ? '64px' : isTablet ? '80px' : '100px',
-        background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)',
-        boxShadow: '0px 10px 15px rgba(97,95,255,0.5), 0px 4px 6px rgba(43,114,251,0.15)',
-        borderRadius: '14px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, position: 'relative',
-        marginLeft: '-4px',
-      }}>
-        <MegaphoneIcon size={isMobile ? 24 : isTablet ? 30 : 36} />
-        {/* Figma Component 7: notification dot */}
-        <div style={{
-          position: 'absolute', top: '-8px', right: '-8px',
-          width: '22px', height: '22px',
-          background: 'rgba(43,114,251,0.42)', borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ width: '14px', height: '14px', background: '#2B72FB', borderRadius: '50%' }} />
+// ── Announcement Card — Figma: box-shadow 0px 2px 2px rgba(255,255,255,0.25) ──
+const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'rgba(0,62,166,0.35)',
+        border: `0.889px solid ${hovered ? 'rgba(43,114,251,0.55)' : 'rgba(255,255,255,0.2)'}`,
+        boxShadow: hovered
+          ? '0px 0px 20px rgba(43,114,251,0.3), 0px 8px 24px rgba(0,0,0,0.4)'
+          : '0px 2px 2px rgba(255,255,255,0.25)',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        cursor: 'pointer',
+      }}
+    >
+      {/* Top: timestamp — right-aligned */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: isMobile ? '8px 14px' : '10px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <ClockIcon />
+          <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+            {announcement.time}
+          </span>
         </div>
       </div>
 
-      {/* Text — Figma: title 22px #FFED97, description 16px rgba(255,255,255,0.65) */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <h3 style={{
-          fontFamily: 'Arimo, Arial', fontWeight: 700,
-          fontSize: isMobile ? '15px' : isTablet ? '17px' : '20px',
-          lineHeight: '1.4', letterSpacing: '-0.3px',
-          color: '#FFED97', margin: '0 0 6px 0',
+      {/* Main body — icon + text + chevron */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        padding: isMobile ? '0 14px 14px' : '0 20px 20px',
+        gap: isMobile ? '12px' : '20px',
+        flex: 1,
+      }}>
+        {/* Icon box — Figma: 120×120, gradient bg, drop-shadow #2B72FB */}
+        <div style={{
+          width:    isMobile ? '64px' : isTablet ? '80px' : '100px',
+          height:   isMobile ? '64px' : isTablet ? '80px' : '100px',
+          minWidth: isMobile ? '64px' : isTablet ? '80px' : '100px',
+          background: 'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)',
+          boxShadow: '0px 10px 15px rgba(97,95,255,0.5), 0px 4px 6px rgba(43,114,251,0.15)',
+          borderRadius: '14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, position: 'relative',
+          marginLeft: '-4px',
+          transform: hovered ? 'scale(1.04)' : 'scale(1)',
+          transition: 'transform 0.3s ease',
         }}>
-          {announcement.title}
-        </h3>
-        <p style={{
-          fontFamily: 'Arimo, Arial', fontWeight: 400,
-          fontSize: isMobile ? '12px' : '14px', lineHeight: '1.6',
-          color: 'rgba(255,255,255,0.65)', margin: 0,
-          display: '-webkit-box', WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical', overflow: 'hidden',
-        }}>
-          {announcement.description}
-        </p>
+          <img
+            src={getIcon(announcement.category)}
+            alt={announcement.category}
+            style={{
+              width: '82%', height: '82%', objectFit: 'contain',
+              filter: 'drop-shadow(0px 4px 4px #2B72FB)',
+            }}
+          />
+          {/* Notification dot */}
+          <div style={{
+            position: 'absolute', top: '-8px', right: '-8px',
+            width: '22px', height: '22px',
+            background: 'rgba(43,114,251,0.42)', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{ width: '14px', height: '14px', background: '#2B72FB', borderRadius: '50%' }} />
+          </div>
+        </div>
+
+        {/* Text */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '15px' : isTablet ? '17px' : '20px',
+            lineHeight: '1.4', letterSpacing: '-0.3px',
+            color: '#FFED97', margin: '0 0 6px 0',
+          }}>
+            {announcement.title}
+          </h3>
+          <p style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 400,
+            fontSize: isMobile ? '12px' : '14px', lineHeight: '1.6',
+            color: 'rgba(255,255,255,0.65)', margin: 0,
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
+            {announcement.description}
+          </p>
+        </div>
+
+        {/* Chevron */}
+        <svg width="8" height="14" viewBox="0 0 8 14" fill="none" style={{ flexShrink: 0 }}>
+          <path d="M1 1L7 7L1 13" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ filter: 'drop-shadow(0px 4px 10px rgba(0,0,0,0.25))' }}/>
+        </svg>
       </div>
 
-      {/* Chevron */}
-      <svg width="8" height="14" viewBox="0 0 8 14" fill="none" style={{ flexShrink: 0 }}>
-        <path d="M1 1L7 7L1 13" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-          style={{ filter: 'drop-shadow(0px 4px 10px rgba(0,0,0,0.25))' }}/>
-      </svg>
+      {/* Footer — Figma: See more button rgba(0,40,255,0.85) */}
+      <div style={{
+        padding: isMobile ? '10px 14px' : '12px 20px',
+        borderTop: '0.89px solid rgba(255,255,255,0.08)',
+        display: 'flex', alignItems: 'center',
+      }}>
+        <button style={{
+          height: '36px', padding: '0 18px',
+          borderRadius: '14px', border: 'none',
+          background: 'rgba(0,40,255,0.85)',
+          boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
+          fontFamily: 'Arimo, Arial', fontWeight: 700,
+          fontSize: '13px', color: '#FFFFFF',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+          transition: 'opacity 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          See more
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+            <path d="M1 4H7M7 4L4 1M7 4L4 7" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
+  );
+};
 
-    {/* Footer — Figma: See more button rgba(0,40,255,0.85) */}
-    <div style={{
-      padding: isMobile ? '10px 14px' : '12px 20px',
-      borderTop: '0.89px solid rgba(255,255,255,0.08)',
-      display: 'flex', alignItems: 'center', gap: '12px',
-    }}>
-      <button style={{
-        height: '36px', padding: '0 18px',
-        borderRadius: '14px', border: 'none',
-        background: 'rgba(0,40,255,0.85)',
-        boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
-        fontFamily: 'Arimo, Arial', fontWeight: 700,
-        fontSize: '13px', color: '#FFFFFF',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-        transition: 'opacity 0.15s',
-      }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-      >
-        See more
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-          <path d="M1 4H7M7 4L4 1M7 4L4 7" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-);
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ── Main ───────────────────────────────────────────────────────────────────────
 const Announcements = () => {
-  const navigate  = useNavigate();
-  const width     = useWindowWidth();
-  const bellRef   = useRef(null);
-
-  const isMobile  = width < 768;
-  const isTablet  = width >= 768 && width < 1024;
+  const navigate     = useNavigate();
+  const width        = useWindowWidth();
+  const bellRef      = useRef(null);
+  const filterRef    = useRef(null);
+  const [activeCategory, setActiveCategory] = useState('All Announcements');
+  const [showFilter,     setShowFilter]     = useState(false);
+  const isMobile     = width < 768;
+  const isTablet     = width >= 768 && width < 1024;
   const sidebarWidth = isTablet ? 200 : 229;
 
-  // ── Announcement data ──────────────────────────────────────────────────────
+  // ── Announcement data ────────────────────────────────────────────────────────
   const [announcements, setAnnouncements] = useState([]);
   const [loading,       setLoading]       = useState(true);
 
@@ -156,24 +203,21 @@ const Announcements = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('announcements')
-        .select('id, title, content, published_at, is_active')
+        .select('id, title, content, published_at, is_active, category')
         .eq('is_active', true)
         .order('published_at', { ascending: false });
-
       if (!error && data) {
         setAnnouncements(data.map(a => ({
-          id:          a.id,
-          title:       a.title,
-          description: a.content,
-          time:        formatTime(a.published_at),
+          id: a.id, title: a.title, description: a.content,
+          time: formatTime(a.published_at),
+          category: a.category || 'News',
         })));
       } else {
-        // Fallback mock data when table is empty or doesn't exist yet
         setAnnouncements([
-          { id: 1, title: 'Alumni Welcome Back Night',     description: 'Join us for an unforgettable evening of networking, reminiscing, and celebrating the bonds that unite our alumni community.', time: '2 hours ago' },
-          { id: 2, title: 'Scholarship Applications Open', description: 'Applications for the 2026 alumni scholarship are now open. Enhance your professional development and skills.', time: '5 hours ago' },
-          { id: 3, title: 'Career Fair This Friday',       description: 'Connect with top companies and explore new opportunities at our upcoming career fair. Don\'t miss out!', time: '1 day ago' },
-          { id: 4, title: 'Chapter Meeting Update',        description: 'The monthly chapter meeting has been rescheduled to March 10. Mark your calendars and stay connected.', time: '2 days ago' },
+          { id: 1, title: 'New Partnership with Industry Leaders', description: 'Hello, Alumni!',    time: '2 hours ago', category: 'News'       },
+          { id: 2, title: 'New Partnership with Industry Leaders', description: 'Hello, Alumni!',    time: '2 hours ago', category: 'News'       },
+          { id: 3, title: 'Alumni Networking Event 2026',          description: 'Hello, Alumni!',    time: '2 days ago',  category: 'Activities' },
+          { id: 4, title: 'Complete Your Alumni Tracer Survey',    description: 'Attention, Alumni!',time: '2 days ago',  category: 'Activities' },
         ]);
       }
       setLoading(false);
@@ -181,7 +225,7 @@ const Announcements = () => {
     fetchAnnouncements();
   }, []);
 
-  // ── Notification bell (same pattern as dashboard) ──────────────────────────
+  // ── Notifications ────────────────────────────────────────────────────────────
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -205,14 +249,16 @@ const Announcements = () => {
   }, []);
 
   useEffect(() => {
-    const handler = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const handler = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+      if (filterRef.current && !filterRef.current.contains(e.target)) setShowFilter(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const markAllRead = useCallback(() => {
-    const allIds = notifs.map(n => n.id);
-    localStorage.setItem('read_notifs', JSON.stringify(allIds));
+    localStorage.setItem('read_notifs', JSON.stringify(notifs.map(n => n.id)));
     setNotifs(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0);
   }, [notifs]);
 
@@ -238,19 +284,10 @@ const Announcements = () => {
     return groups;
   };
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  function formatTime(iso) {
-    if (!iso) return '';
-    const d = new Date(iso), now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff/60)   + 'm ago';
-    if (diff < 86400)  return Math.floor(diff/3600)  + 'h ago';
-    if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
-    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-  }
+  const filtered = activeCategory === 'All Announcements'
+    ? announcements
+    : announcements.filter(a => a.category === activeCategory);
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#002263' }}>
       <Sidebar />
@@ -265,7 +302,7 @@ const Announcements = () => {
         position: 'relative',
       }}>
 
-        {/* ── Notification Bell — same as dashboard ──────────────────────── */}
+        {/* ── Notification Bell ──────────────────────────────────────────────── */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:   isMobile ? '24px' : '37px',
@@ -273,41 +310,30 @@ const Announcements = () => {
           zIndex: 200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{
-            width: isMobile ? '44px' : '58px',
-            height: isMobile ? '44px' : '58px',
+            width:  isMobile ? '44px' : '62px',
+            height: isMobile ? '44px' : '62px',
             background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
-            border: showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+            border: showDropdown ? '0.8px solid rgba(43,114,251,0.5)' : '0.8px solid rgba(255,255,255,0.2)',
+            boxShadow: 'drop-shadow(0px 2px 3px rgba(255,255,255,0.15))',
             borderRadius: '14px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative', transition: 'all 0.15s',
           }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-                stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+              <path d="M10.8 22.75H15.2M20.8 9.75C20.8 6.215 17.206 3.25 13 3.25C8.794 3.25 5.2 6.215 5.2 9.75C5.2 14.625 3.25 16.9 3.25 16.9H22.75C22.75 16.9 20.8 14.625 20.8 9.75Z" stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {unreadCount > 0 && (
-              <div style={{
-                position: 'absolute', top: '-5px', right: '-5px',
-                width: '24px', height: '24px',
-                background: 'rgba(43,114,251,0.42)', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <div style={{
-                  width: '17px', height: '17px', background: '#2B72FB', borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <span style={{ fontFamily: 'Arimo', fontSize: '9px', color: '#FFFFFF', fontWeight: 400 }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
+              <>
+                <div style={{ position: 'absolute', top: '-4.41px', right: '-4.41px', width: '28.81px', height: '28.81px', background: '#2B72FB', opacity: 0.42, borderRadius: '50%' }} />
+                <div style={{ position: 'absolute', top: '-1px', right: '-1px', minWidth: '20px', height: '20px', background: '#2B72FB', boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+                  <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FFFFFF', fontWeight: 400 }}>{unreadCount > 99 ? '99+' : unreadCount}</span>
                 </div>
-              </div>
+              </>
             )}
           </button>
 
-          {/* Notification dropdown */}
           {showDropdown && (
-            <div style={{ position: 'absolute', top: isMobile?'52px':'68px', right: 0, width: isMobile?'90vw':'380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
+            <div style={{ position: 'absolute', top: isMobile?'52px':'70px', right: 0, width: isMobile?'90vw':'380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
               <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
                 {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
@@ -355,7 +381,7 @@ const Announcements = () => {
                 })()}
               </div>
               <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-                <button onClick={() => setShowDropdown(false)}
+                <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
                   style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
@@ -366,51 +392,32 @@ const Announcements = () => {
           )}
         </div>
 
-        {/* ── Header — Figma: "Announcements" 40px, subtitle 16px ──────────── */}
-        <div style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '32px' }}>
-
-          {/* Back button — Figma: maki:arrow + "Back" text, color #FFFFFF */}
-          <button
-            onClick={() => navigate('/dashboard')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: 0, marginBottom: isMobile ? '12px' : '16px',
-            }}
-          >
+        {/* ── Header ─────────────────────────────────────────────────────────── */}
+        <div style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px' }}>
+          <button onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: isMobile ? '12px' : '16px' }}>
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <path d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67"
-                stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '15px', color: '#FFFFFF' }}>Back</span>
           </button>
-
-          <h1 style={{
-            fontFamily: 'Arimo, Arial', fontWeight: 700,
-            fontSize: isMobile ? '28px' : isTablet ? '32px' : '40px',
-            lineHeight: '1.2', letterSpacing: '-1px', color: '#FFFFFF',
-            margin: '0 0 8px 0',
-          }}>
+          <h1 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile?'28px':isTablet?'32px':'40px', lineHeight: '1.2', letterSpacing: '-1px', color: '#FFFFFF', margin: '0 0 8px 0' }}>
             Announcements
           </h1>
-          <p style={{
-            fontFamily: 'Arimo, Arial', fontWeight: 400,
-            fontSize: isMobile ? '13px' : '16px', lineHeight: '22px',
-            color: 'rgba(255,255,255,0.6)', margin: 0,
-          }}>
-            Stay connected with the latest news, events, and opportunities from your alumni community.
+          <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: isMobile?'13px':'16px', lineHeight: '22px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
+            Stay connected with the latest news, events, and opportunities from your alumni network.
           </p>
         </div>
 
-        {/* ── Featured Banner — Figma: 1028×200, gradient bg ───────────────── */}
+        {/* ── Featured Banner — Figma: gradient bg, box-shadow 0px 0px 8px rgba(255,255,255,0.5) ── */}
         {!isMobile && (
           <div style={{
             position: 'relative',
             padding: isTablet ? '24px 28px' : '24px 32px',
             background: 'linear-gradient(180deg, rgba(43,114,251,0.2) 0%, rgba(30,37,85,0.3) 100%)',
             border: '0.889px solid rgba(43,114,251,0.3)',
+            boxShadow: '0px 0px 8px rgba(255,255,255,0.5)',
             borderRadius: '24px',
-            marginBottom: isTablet ? '28px' : '40px',
+            marginBottom: isTablet ? '28px' : '32px',
             overflow: 'hidden',
             display: 'flex', gap: '24px', alignItems: 'center',
           }}>
@@ -426,45 +433,37 @@ const Announcements = () => {
               boxShadow: '0px 10px 15px rgba(97,95,255,0.5), 0px 4px 6px rgba(43,114,251,0.15)',
               borderRadius: '14px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'relative',
+              filter: 'drop-shadow(0px 4px 4px #2B72FB)',
             }}>
-              <MegaphoneIcon size={isTablet ? 30 : 42} />
+              <img src={megaphoneIcon} alt="Megaphone" style={{ width: '82%', height: '82%', objectFit: 'contain', filter: 'drop-shadow(0px 4px 4px #2B72FB)' }} />
             </div>
 
             {/* Content */}
             <div style={{ flex: 1, position: 'relative' }}>
-              <h2 style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 700,
-                fontSize: isTablet ? '20px' : '25px',
-                lineHeight: '1.3', letterSpacing: '-0.35px',
-                color: '#FFFFFF', margin: '0 0 8px 0',
-              }}>
+              <h2 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isTablet?'20px':'25px', lineHeight: '1.3', letterSpacing: '-0.35px', color: '#FFFFFF', margin: '0 0 8px 0' }}>
                 Alumni Tracer Survey
               </h2>
-              <p style={{
-                fontFamily: 'Arimo, Arial', fontWeight: 400,
-                fontSize: '13px', lineHeight: '22px',
-                color: 'rgba(255,255,255,0.65)', margin: '0 0 16px 0',
-              }}>
-                Join us for an unforgettable evening of networking, reminiscing, and celebrating the bonds that unite our alumni community.
+              <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '13px', lineHeight: '22px', color: 'rgba(255,255,255,0.65)', margin: '0 0 16px 0' }}>
+                Your feedback matters! Complete our annual survey to help us improve the alumni experience and community engagement.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="6" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17"/>
-                    <path d="M7 4V7.5L9.5 9" stroke="rgba(255,255,255,0.5)" strokeWidth="1.17" strokeLinecap="round"/>
-                  </svg>
+                  <ClockIcon />
                   <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>2 hours ago</span>
                 </div>
                 <button style={{
                   height: '39px', padding: '0 20px',
                   borderRadius: '14px', border: 'none',
                   background: 'rgba(0,40,255,0.85)',
-                  boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1)',
+                  boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
                   fontFamily: 'Arimo, Arial', fontWeight: 700,
                   fontSize: '13px', color: '#FFFFFF',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                }}>
+                  transition: 'opacity 0.15s',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
                   See more
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
                     <path d="M1 4H7M7 4L4 1M7 4L4 7" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -475,52 +474,43 @@ const Announcements = () => {
           </div>
         )}
 
-        {/* ── Filter bar — Figma: 321×37 joined component, right-aligned ────
-             Left (65.73%): "All Posts" + count badge
-             Right (34.27%): funnel icon + "FILTER"                         */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginBottom: isMobile ? '16px' : '24px',
-        }}>
+        {/* ── Filter bar — two separate elements with gap ────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile?'16px':'24px', gap: '12px' }}>
+          {/* Label pill */}
           <div style={{
-            display: 'flex',
             height: '37px',
-            width: isMobile ? '100%' : '321px',
+            display: 'flex', alignItems: 'center',
+            padding: '0 12px', gap: '8px',
+            background: 'rgba(0,62,166,0.35)',
+            border: '1px solid rgba(255,255,255,0.05)',
             borderRadius: '10px',
-            overflow: 'hidden',
-            flexShrink: 0,
+            filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
+            minWidth: isMobile ? 0 : '211px',
+            flex: isMobile ? 1 : 'none',
           }}>
-            {/* Left: All Posts + badge */}
-            <div style={{
-              flex: '0 0 65.73%',
-              display: 'flex', alignItems: 'center',
-              padding: '0 12px', gap: '8px',
-              background: 'rgba(0,62,166,0.35)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRight: 'none',
-              borderRadius: '10px 0 0 10px',
-            }}>
-              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap' }}>
-                All Posts
+            <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+              {activeCategory}
+            </span>
+            <div style={{ background: '#2B72FB', borderRadius: '8px', minWidth: '22.63px', height: '19.98px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '12px', lineHeight: '16px', color: '#FFFFFF' }}>
+                {filtered.length}
               </span>
-              <div style={{ background: '#2B72FB', borderRadius: '8px', minWidth: '23px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '12px', lineHeight: '16px', color: '#FFFFFF' }}>
-                  {announcements.length}
-                </span>
-              </div>
             </div>
-            {/* Right: FILTER button */}
-            <button style={{
-              flex: '0 0 34.27%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: '6px',
-              background: 'rgba(0,40,255,0.85)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '0 8px 8px 0',
-              cursor: 'pointer', padding: 0,
-              transition: 'opacity 0.15s',
-            }}
+          </div>
+
+          {/* FILTER button + dropdown */}
+          <div ref={filterRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => setShowFilter(f => !f)}
+              style={{
+                height: '37px', padding: '0 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                background: 'rgba(0,40,255,0.85)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px', cursor: 'pointer',
+                filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
+                transition: 'opacity 0.15s',
+              }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
@@ -531,13 +521,46 @@ const Announcements = () => {
                 FILTER
               </span>
             </button>
+
+            {showFilter && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                background: 'linear-gradient(180deg, #1E2555 0%, #0F1338 100%)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px', overflow: 'hidden',
+                zIndex: 300, minWidth: '220px',
+                boxShadow: '0px 10px 30px rgba(0,0,0,0.5)',
+              }}>
+                {CATEGORIES.map((cat, i) => (
+                  <button key={cat} onClick={() => { setActiveCategory(cat); setShowFilter(false); }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      background: activeCategory === cat ? 'rgba(43,114,251,0.15)' : 'transparent',
+                      border: 'none',
+                      borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+                      cursor: 'pointer', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: activeCategory === cat ? '#FFFFFF' : 'rgba(255,255,255,0.7)', fontWeight: activeCategory === cat ? 700 : 400 }}>{cat}</span>
+                    <div style={{ background: activeCategory === cat ? '#2B72FB' : 'rgba(43,114,251,0.25)', borderRadius: '6px', padding: '1px 7px' }}>
+                      <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '11px', color: '#FFFFFF' }}>
+                        {cat === 'All Announcements' ? announcements.length : announcements.filter(a => a.category === cat).length}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* ── Announcement Cards — Figma: 2-col desktop, 1-col mobile ─────── */}
+        {/* ── Announcement Cards — 2-col desktop, 1-col mobile ──────────────── */}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-            <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>Loading announcements…</div>
+            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>Loading announcements…</span>
           </div>
         ) : (
           <div style={{
@@ -545,7 +568,7 @@ const Announcements = () => {
             gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
             gap: isMobile ? '14px' : isTablet ? '18px' : '24px',
           }}>
-            {announcements.map(a => (
+            {filtered.map(a => (
               <AnnouncementCard key={a.id} announcement={a} isMobile={isMobile} isTablet={isTablet} />
             ))}
           </div>

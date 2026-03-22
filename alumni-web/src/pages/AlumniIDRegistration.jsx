@@ -49,7 +49,7 @@ const verifyAlumniID = async (imageFile) => {
   const isNU = upperText.includes('NATIONAL') && upperText.includes('UNIVERSITY');
   const isAlumni = upperText.includes('ALUMNI');
 
-  if (!isNU) return { verified: false, reason: 'This ID does not appear to be an NU-Dasmariñas ID.' };
+  if (!isNU) return { verified: false, reason: 'This ID does not appear to be a National University ID.' };
   if (!isAlumni) return { verified: false, reason: 'This ID does not appear to be an Alumni ID. Please use your official branch ID.' };
 
   const isDasmarinas =
@@ -286,11 +286,11 @@ const AlumniIDRegistration = () => {
       const avgBright = bright / (W * H);
 
       if (avgBright < 35) {
-        setCamGuide('Too dark. Move to a brighter area');
+        setCamGuide('Too dark — move to a brighter area');
         stable = 0; detectionRef.current = requestAnimationFrame(analyse); return;
       }
       if (avgBright > 230) {
-        setCamGuide('Too bright. Reduce any glare or move away from the light');
+        setCamGuide('Too bright — reduce glare or move away from light');
         stable = 0; detectionRef.current = requestAnimationFrame(analyse); return;
       }
 
@@ -306,7 +306,7 @@ const AlumniIDRegistration = () => {
         }
       }
 
-      // ── Card-fill score (for clarification to mobile) ───────────────────────────────────────────────────
+      // ── Card-fill score ───────────────────────────────────────────────────
       // An ID card filling the zone will have:
       //   1. Strong edges near ALL FOUR borders of the zone (the card's outline)
       //   2. Relatively uniform interior (not just a busy background)
@@ -353,17 +353,17 @@ const AlumniIDRegistration = () => {
         setCamGuide('Place your Alumni ID inside the frame');
         stable = 0;
       } else if (!cardFillsFrame && topScore < BORDER_THRESH && botScore < BORDER_THRESH) {
-        setCamGuide('Move closer. ID is too far away');
+        setCamGuide('Move closer — ID is too far away');
         stable = 0;
       } else if (!cardFillsFrame && (leftScore < BORDER_THRESH || rightScore < BORDER_THRESH)) {
-        setCamGuide('Centre the ID, align it with the frame edges');
+        setCamGuide('Centre the ID — align it with the frame edges');
         stable = 0;
       } else if (!cardFillsFrame) {
         setCamGuide('Align the ID to fill the frame');
         stable = 0;
       } else if (diff > 0.08) {
         // Card is there but moving
-        setCamGuide('Hold still. Keep the ID steady');
+        setCamGuide('Hold still — keep the ID steady');
         stable = Math.max(0, stable - 4);
       } else {
         // ── Card detected and stable — count down ────────────────────────────
@@ -374,7 +374,7 @@ const AlumniIDRegistration = () => {
         else {
           // ── AUTO CAPTURE ──────────────────────────────────────────────────
           capturedRef.current = true;
-          setCamGuide('Capturing...');
+          setCamGuide('✓ Capturing...');
           // Capture full video frame (not just the zone) for best OCR quality
           canvas.width  = vW;
           canvas.height = vH;
@@ -664,7 +664,7 @@ const AlumniIDRegistration = () => {
           </div>
 
           {/* Next button */}
-          <button onClick={handleNext} disabled={status !== 'verified' || !agreed} style={{ width:'100%', height:'46px', background:status==='verified'&&agreed?'rgba(0,40,255,0.7)':'rgba(0,40,255,0.25)', boxShadow:status==='verified'&&agreed?'0px 4px 20px rgba(0,40,255,0.3)':'none', border:'none', borderRadius:'14px', fontFamily:'Arimo,Arial', fontWeight:700, fontSize:'15px', lineHeight:'24px', color:'#FFFFFF', cursor:status==='verified'&&agreed?'pointer':'not-allowed', transition:'all 0.3s ease', marginBottom:'14px' }}>
+          <button onClick={handleNext} disabled={status !== 'verified' || !agreed} style={{ width:'100%', height:'46px', background:status==='verified'&&agreed?'rgba(0,40,255,0.7)':'rgba(0,40,255,0.25)', boxShadow:'0px 2px 2px rgba(255,255,255,0.25)', border:'none', borderRadius:'14px', fontFamily:'Arimo,Arial', fontWeight:700, fontSize:'15px', lineHeight:'24px', color:'#FFFFFF', cursor:status==='verified'&&agreed?'pointer':'not-allowed', transition:'all 0.3s ease', marginBottom:'14px' }}>
             {status === 'scanning' ? 'Verifying...' : status === 'verified' ? 'Next' : 'Verify Your ID to Continue'}
           </button>
 

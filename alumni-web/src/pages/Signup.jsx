@@ -379,7 +379,7 @@ const Signup = () => {
                 <button type="button" onClick={handleSignup} disabled={loading} style={{
                   width: '284px', height: '37px',
                   background: !loading ? 'rgba(0,40,255,0.7)' : 'rgba(0,40,255,0.35)',
-                  boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                  boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
                   border: 'none', borderRadius: '14px',
                   fontFamily: 'Arimo', fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
                   cursor: !loading ? 'pointer' : 'not-allowed',

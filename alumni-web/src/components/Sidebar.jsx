@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import homeIcon     from '../assets/home_icn.svg';
+import settingsIcon from '../assets/settings_icn.svg';
+import aboutIcon    from '../assets/about_icn.svg';
 import surveyIcon   from '../assets/tracer_ic.svg';
 import profileIcon  from '../assets/profile_icn.svg';
 import { supabase } from '../lib/supabase';
-import { getResumeRoute, isSurveyComplete } from '../lib/surveyProgress';
+import { getResumeRoute } from '../lib/surveyProgress';
 import sidebarLogo  from '../assets/new_lg.svg';
 
 const useWindowWidth = () => {
@@ -46,12 +48,9 @@ const Sidebar = () => {
       if (data) setUser(data);
     };
     fetchUser();
-
-    // ── Resolve the correct survey nav target ──────────────────────────────
-    // If the survey is complete → go to /update-tracer (prompt to update or keep)
-    // If in progress → go to the resume route
     const resolveSurveyRoute = async () => {
       try {
+        const { isSurveyComplete } = await import('../lib/surveyProgress');
         const complete = await isSurveyComplete();
         if (complete) {
           setSurveyRoute('/update-tracer');
@@ -157,7 +156,7 @@ const Sidebar = () => {
       width: sidebarW, height: '100vh',
       background: 'rgba(0,34,109,0.7)',
       border: '1px solid rgba(255,255,255,0.1)',
-      boxShadow: '0px 10px 50px rgba(0,0,0,0.25)',
+      boxShadow: '0px 10px 50px rgba(255,255,255,0.1)',
       borderRadius: '0px 15px 15px 0px',
       display: 'flex', flexDirection: 'column',
       zIndex: 100,
@@ -168,7 +167,7 @@ const Sidebar = () => {
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ marginLeft: '10%', width: isTablet ? '135px' : '156px', height: 'auto', objectFit: 'contain' }}
+          style={{ width: isTablet ? '130px' : '150px', height: 'auto', objectFit: 'contain' }}
         />
       </div>
 
@@ -190,6 +189,52 @@ const Sidebar = () => {
             <Link
               key={item.path}
               to={item.navPath}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '9px 13px', margin: '0 6px',
+                background: 'transparent',
+                borderRadius: '14px', textDecoration: 'none',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <img src={item.icon} alt={item.label} style={{
+                width: '20px', height: '20px',
+                filter: isActive
+                  ? 'brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%)'
+                  : 'brightness(0) invert(1) opacity(0.75)',
+              }} />
+              <span style={{
+                fontFamily: 'Arimo',
+                fontSize: isTablet ? '14px' : '15px',
+                fontWeight: isActive ? 700 : 500,
+                lineHeight: '24px', letterSpacing: '0.325px',
+                // ── Only gold text as the active indicator, no pill ──
+                color: isActive ? '#FFEC8E' : '#FFFFFF',
+              }}>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* HELP section */}
+      <div style={{ padding: '16px 9px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <p style={{
+          fontFamily: 'Arimo', fontWeight: 600, fontSize: '10px',
+          lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.4)', padding: '0 16px', margin: '0 0 8px 0',
+        }}>HELP</p>
+
+        {[
+          { path: '/personal-information', label: 'Settings', icon: settingsIcon },
+          { path: '/about',                         label: 'About',    icon: aboutIcon    },
+        ].map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 13px', margin: '0 6px',
@@ -245,7 +290,7 @@ const Sidebar = () => {
             <span style={{ fontFamily: 'Arial', fontSize: '11px', lineHeight: '15px', color: '#D1D5DC' }}>{role}</span>
           </div>
 
-          {/* Logout icon */}
+          {/* Logout icon — inside user card, right side */}
           <button
             onClick={handleLogout}
             title="Logout"
