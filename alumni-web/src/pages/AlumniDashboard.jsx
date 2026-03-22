@@ -303,7 +303,7 @@ const AlumniDashboard = () => {
         <div ref={bellRef} style={{
           position: 'fixed',
           top:   isMobile ? '14px' : isTablet ? '28px' : '36px',
-          right: isMobile ? '14px' : isTablet ? '28px' : '44px',
+          right: isMobile ? '9px' : isTablet ? '23px' : '39px',
           zIndex: 200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{

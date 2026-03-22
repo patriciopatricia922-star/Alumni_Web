@@ -83,13 +83,13 @@ const NotificationsPage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Arimo:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&family=Arimo:wght@400;600;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; background: #002263 !important; }
         .np-page {
           min-height: 100vh; background: #002263;
           margin-left: 229px; padding: 37px 40px 80px;
-          font-family: 'Arimo', Arial, sans-serif;
+          font-family: 'Arimo';
         }
         @media (max-width: 900px) { .np-page { margin-left: 0; padding: 20px 16px 60px; } }
         .np-notif-row {
@@ -128,7 +128,7 @@ const NotificationsPage = () => {
         {/* Heading */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
           <div>
-            <h1 style={{ margin: '0 0 4px', fontFamily: 'Lexend, sans-serif', fontWeight: 700, fontSize: 30, color: '#FFFFFF' }}>Notifications</h1>
+            <h1 style={{ margin: '0 0 4px', fontFamily: 'Arimo', fontWeight: 700, fontSize: 30, color: '#FFFFFF' }}>Notifications</h1>
             <p style={{ margin: 0, fontFamily: 'Arimo', fontSize: 15, color: 'rgba(255,255,255,0.5)' }}>Stay updated with the latest announcements and activities.</p>
           </div>
           {unreadCount > 0 && (
