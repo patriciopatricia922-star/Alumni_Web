@@ -32,6 +32,14 @@ const AlumniDashboard = () => {
   const [notifTab,           setNotifTab]           = useState('all');
   const bellRef = useRef(null);
 
+  // ── Card badge dots ───────────────────────────────────────────────────────
+  const [cardBadges, setCardBadges] = useState({
+    announcements: false,
+    events:        false,
+    discounts:     false,
+    jobs:          false,
+  });
+
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1024;
   const sidebarWidth = isTablet ? 200 : 229;
@@ -82,8 +90,28 @@ const AlumniDashboard = () => {
       const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
+      // Announcements badge — true if any unread
+      setCardBadges(prev => ({ ...prev, announcements: mapped.some(n => !n.read) }));
     };
     fetchNotifs();
+  }, []);
+
+  // ── Fetch card badges for events, discounts, jobs ────────────────────────
+  useEffect(() => {
+    const fetchBadges = async () => {
+      const [eventsRes, discountsRes, jobsRes] = await Promise.all([
+        supabase.from('events').select('id',    { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('jobs').select('id',      { count: 'exact', head: true }).eq('is_active', true),
+      ]);
+      setCardBadges(prev => ({
+        ...prev,
+        events:    (eventsRes.count    || 0) > 0,
+        discounts: (discountsRes.count || 0) > 0,
+        jobs:      (jobsRes.count      || 0) > 0,
+      }));
+    };
+    fetchBadges();
   }, []);
 
   useEffect(() => {
@@ -96,12 +124,17 @@ const AlumniDashboard = () => {
     const allIds = notifs.map(n => n.id);
     localStorage.setItem('read_notifs', JSON.stringify(allIds));
     setNotifs(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0);
+    setCardBadges(prev => ({ ...prev, announcements: false }));
   }, [notifs]);
 
   const markOneRead = useCallback((id) => {
     const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
     if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifs(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
+      setCardBadges(p => ({ ...p, announcements: updated.some(n => !n.read) }));
+      return updated;
+    });
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
@@ -132,10 +165,10 @@ const AlumniDashboard = () => {
   };
 
   const forYouItems = [
-    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news',    path: '/announcements' },
-    { icon: eventsIcon,       title: 'Events',        description: '5 upcoming events',    path: '/events'        },
-    { icon: discountIcon,     title: 'Discounts',     description: '8 offers available',   path: '/discounts'     },
-    { icon: jobsIcon,         title: 'Jobs',          description: '3 listings available', path: '/jobs'          },
+    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news',    path: '/announcements', showDot: cardBadges.announcements },
+    { icon: eventsIcon,       title: 'Events',        description: '5 upcoming events',    path: '/events',        showDot: cardBadges.events        },
+    { icon: discountIcon,     title: 'Discounts',     description: '8 offers available',   path: '/discounts',     showDot: cardBadges.discounts     },
+    { icon: jobsIcon,         title: 'Jobs',          description: '3 listings available', path: '/jobs',          showDot: cardBadges.jobs          },
   ];
 
   // ── Sizes — scaled from Figma (card 160px, icon box 120px) ───────────────
@@ -177,7 +210,6 @@ const AlumniDashboard = () => {
         borderRadius: '14px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative',
-        // Pull away from card edge for breathing room
         marginLeft: isMobile ? '8px' : '14px',
         flexShrink: 0,
       }}>
@@ -185,7 +217,6 @@ const AlumniDashboard = () => {
           src={item.icon}
           alt={item.title}
           style={{
-            
             width:  item.title === 'Discounts' ? '159%' : '95%',
             height: item.title === 'Discounts' ? '159%' : '95%',
             objectFit: 'contain',
@@ -194,25 +225,27 @@ const AlumniDashboard = () => {
             marginLeft: item.title === 'Discounts' ? '2vh': '0',
           }}
         />
-        
-        <div style={{
-          position: 'absolute',
-          // Sits at top-right corner of icon box, slightly above
-          top: isMobile ? '-6px' : '-10px',
-          right: isMobile ? '-6px' : '-10px',
-          width:  isMobile ? '14px' : '26px',
-          height: isMobile ? '14px' : '26px',
-          background: 'rgba(43,114,251,0.42)',
-          borderRadius: '50%',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
+
+        {/* Notification dot — only shown when there's something new */}
+        {item.showDot && (
           <div style={{
-            width:  isMobile ? '9px' : '16px',
-            height: isMobile ? '9px' : '16px',
-            background: '#2B72FB',
+            position: 'absolute',
+            top: isMobile ? '-6px' : '-10px',
+            right: isMobile ? '-6px' : '-10px',
+            width:  isMobile ? '14px' : '26px',
+            height: isMobile ? '14px' : '26px',
+            background: 'rgba(43,114,251,0.42)',
             borderRadius: '50%',
-          }} />
-        </div>
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              width:  isMobile ? '9px' : '16px',
+              height: isMobile ? '9px' : '16px',
+              background: '#2B72FB',
+              borderRadius: '50%',
+            }} />
+          </div>
+        )}
       </div>
 
       {/* Text */}
@@ -285,18 +318,15 @@ const AlumniDashboard = () => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        // Vertical padding: top enough for bell, bottom enough for mobile nav
         paddingTop:    isMobile ? '14px' : isTablet ? '22px' : '28px',
         paddingBottom: isMobile ? '80px' : '22px',
         paddingLeft:   isMobile ? '14px' : isTablet ? '24px' : '36px',
         paddingRight:  isMobile ? '14px' : isTablet ? '24px' : '36px',
         boxSizing: 'border-box',
         height: '100vh',
-        // NEVER scroll on desktop/tablet — everything must fit
         overflowY: isMobile ? 'auto' : 'hidden',
         overflowX: 'hidden',
         position: 'relative',
-        // No gap — spacing handled manually with spacer divs
       }}>
 
         {/* ── Notification Bell ──────────────────────────────────────────── */}
@@ -401,8 +431,6 @@ const AlumniDashboard = () => {
         </div>
 
         {/* ── SECTION 1: Header ─────────────────────────────────────────── */}
-        {/* Reserve right side for bell button so text doesn't overlap */}
-        {/* ── Dashboard title + subtitle (tight together, no gap below subtitle) ── */}
         <div style={{ paddingRight: isMobile ? '58px' : '80px', flexShrink: 0 }}>
           <h2 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
@@ -416,32 +444,31 @@ const AlumniDashboard = () => {
             fontFamily: 'Arimo, Arial', fontWeight: 400,
             fontSize: isMobile ? '10px' : isTablet ? '11px' : '13px',
             lineHeight: '1.5', color: 'rgba(255,255,255,0.7)',
-            margin: '2px 0 0 0',   // tight — no bottom gap, next element provides spacing
+            margin: '2px 0 0 0',
           }}>
             You're making great progress! Keep engaging with your alumni network.
           </p>
         </div>
 
-        {/* [SPACE] between Dashboard block and Hello/{name}+Banner block */}
         <div style={{ height: isMobile ? '12px' : isTablet ? '16px' : '22px', flexShrink: 0 }} />
 
-        {/* ── Hello + Banner (tight together as one group) ─────────────── */}
+        {/* ── Hello + Banner ────────────────────────────────────────────── */}
         <div style={{ flexShrink: 0, paddingRight: isMobile ? '58px' : '80px' }}>
           <h1 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
             fontSize: isMobile ? '23px' : isTablet ? '26px' : '30px',
             lineHeight: '1.14', letterSpacing: '-1.05px', color: '#FFFFFF',
-            margin: '0 0 8px 0',   
+            margin: '0 0 8px 0',
             marginTop: '16px',
           }}>
             Hello, <span style={{ color: '#D9CA81' }}>{firstName}</span>
           </h1>
         </div>
 
-        {/* ── SECTION 2 Progress Banner — directly under Hello ─────────── */}
+        {/* ── SECTION 2: Progress Banner ───────────────────────────────── */}
         <div style={{
           position: 'relative', flexShrink: 0,
-          marginBottom: 0,   // no gap here — [SPACE] spacer below handles it
+          marginBottom: 0,
           padding: isMobile ? '14px 18px' : isTablet ? '16px 22px' : '18px 28px',
           background: 'linear-gradient(180deg, rgba(43,114,251,0.5) -11.25%, rgba(30,37,85,0.65) 100%)',
           border: '0.889px solid rgba(43,114,251,0.3)',
@@ -452,7 +479,6 @@ const AlumniDashboard = () => {
           <div style={{ position: 'absolute', width: '256px', height: '256px', right: '-30px', top: '-127px', background: '#2B72FB', opacity: 0.1, filter: 'blur(64px)', borderRadius: '50%', pointerEvents: 'none' }} />
           <p style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
-            // Text is left-aligned inside banner with generous left padding already from container
             fontSize: isMobile ? '19px' : isTablet ? '19px' : '25px',
             lineHeight: '1.5', color: '#FFFFFF',
             margin: 0, position: 'relative', flex: 1,
@@ -462,13 +488,10 @@ const AlumniDashboard = () => {
           <ProgressCircle />
         </div>
 
-        {/* [SPACE] — bigger gap between banner and For You section */}
         <div style={{ height: isMobile ? '16px' : isTablet ? '22px' : '28px', flexShrink: 0 }} />
 
         {/* ── SECTION 3: For You ────────────────────────────────────────── */}
-        {/* flex:1 + minHeight:0 fills ALL remaining vertical space */}
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          {/* "For You" header is ABOVE the card grid, not overlapping it */}
           <h3 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
             fontSize: isMobile ? '16px' : isTablet ? '18px' : '24px',
@@ -482,14 +505,12 @@ const AlumniDashboard = () => {
               {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}
             </div>
           ) : (
-            // 2×2 grid. gridTemplateRows: exact card heights so no stretching.
-            // Gap between rows = same as column gap for uniform spacing.
             <div style={{
               flex: 1, minHeight: 0,
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gridTemplateRows: `${CARD_H}px ${CARD_H}px`,
-              alignContent: 'start',   // rows sit at top, gap between them is natural
+              alignContent: 'start',
               gap: isTablet ? '10px' : '14px',
             }}>
               {forYouItems.map((item, i) => <ForYouCard key={i} item={item} />)}

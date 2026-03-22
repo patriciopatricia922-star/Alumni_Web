@@ -388,11 +388,6 @@ const Signup = () => {
                   {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </div>
-
-              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '13px', lineHeight: '20px', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>
-                Already have an account?{' '}
-                <Link to="/login" style={{ color: '#D9CA81', textDecoration: 'none', fontWeight: 700 }}>Log in</Link>
-              </p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
+import { supabase } from '../lib/supabase';
 import Sidebar from '../components/Sidebar';
 
 const STYLES = `
@@ -12,13 +13,15 @@ const STYLES = `
   .sc-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
   .sc-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
   .sc-badge { background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
-  .sc-bell { width: 48px; height: 48px; background: rgba(15,22,66,0.1); border: 1.24px solid rgba(255,255,255,0.1); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; }
-  .sc-bell-dot { position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; background: #2B72FB; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arimo', Arial, sans-serif; font-size: 10px; color: #fff; }
+  .sc-bell { width: 48px; height: 48px; background: rgba(0,62,166,0.35); border: 1.24px solid rgba(255,255,255,0.2); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
+  .sc-bell.active { background: rgba(43,114,251,0.2); border-color: rgba(43,114,251,0.5); }
+  .sc-bell-dot { position: absolute; top: -4.41px; right: -4.41px; width: 28.81px; height: 28.81px; background: #2B72FB; opacity: 0.42; border-radius: 50%; }
+  .sc-bell-count { position: absolute; top: -1px; right: -1px; min-width: 20px; height: 20px; background: #2B72FB; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0 4px; font-family: 'Arimo', Arial, sans-serif; font-size: 10px; color: #fff; font-weight: 400; }
   .sc-title { text-align: center; padding: 14px 51px 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.4; letter-spacing: -0.7px; color: #fff; }
   .sc-progress { margin: 12px 51px 0; background: #001743; border: 1px solid #01122F; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 18px 30px 16px; }
   .sc-progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-family: 'Arimo', Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.99); }
-  .sc-progress-track { width: 100%; height: 11px; background: #D9CA81; border-radius: 10px; margin-bottom: 10px; }
-  .sc-progress-fill { width: 86%; height: 100%; background: #51A2FF; border-radius: 10px; }
+  .sc-progress-track { width: 100%; height: 11px; background: #D9CA81; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .sc-progress-fill { height: 100%; background: #51A2FF; border-radius: 10px; transition: width 0.4s ease; }
   .sc-progress-label { font-family: 'Arimo', Arial, sans-serif; font-size: 17px; color: rgba(255,255,255,0.99); }
   .sc-body { padding: 24px 51px 60px; }
   .sc-card { background: rgba(13,19,56,0.4); border: 0.89px solid rgba(255,255,255,0.1); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 16px; padding: 40px 40px 32px; display: flex; flex-direction: column; gap: 40px; }
@@ -40,6 +43,8 @@ const STYLES = `
   .sc-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; padding-bottom: 8px; }
   .sc-btn-prev { width: 120px; height: 48px; background: #fff; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #090909; transition: opacity 0.15s; }
   .sc-btn-prev:hover { opacity: 0.85; }
+  .sc-btn-save { height: 48px; padding: 0 24px; background: transparent; border: 1.24px solid rgba(255,255,255,0.3); border-radius: 10px; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 400; color: rgba(255,255,255,0.8); transition: border-color 0.15s, color 0.15s; }
+  .sc-btn-save:hover { border-color: rgba(255,255,255,0.7); color: #fff; }
   .sc-btn-next { width: 120px; height: 48px; background: #0028FF; box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 10px; border: none; cursor: pointer; font-family: 'Arimo', Arial, sans-serif; font-size: 15px; font-weight: 600; color: #fff; transition: opacity 0.15s; }
   .sc-btn-next:hover { opacity: 0.9; }
   .sc-error-banner { background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #FCA5A5; line-height: 1.5; }
@@ -47,13 +52,17 @@ const STYLES = `
   .sc-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
   @media (max-width: 1100px) { .sc-topbar { padding: 24px 32px 0; } .sc-title { padding: 14px 32px 0; font-size: 26px; } .sc-progress { margin: 12px 32px 0; } .sc-body { padding: 20px 32px 60px; } .sc-card { padding: 32px 32px 28px; } }
   @media (max-width: 900px) { .sc-topbar { padding: 20px 24px 0; } .sc-title { padding: 12px 24px 0; font-size: 24px; } .sc-progress { margin: 10px 24px 0; } .sc-body { padding: 18px 24px 60px; } .sc-card { padding: 28px 24px 24px; gap: 28px; } }
-  @media (max-width: 767px) { .sc-content { margin-left: 0; } .sc-topbar { padding: 20px 16px 0; } .sc-badge { padding: 6px 12px; font-size: 10px; } .sc-bell { display: none; } .sc-title { padding: 12px 16px 0; font-size: 20px; } .sc-progress { margin: 10px 16px 0; padding: 14px 16px; } .sc-progress-row { font-size: 13px; } .sc-progress-label { font-size: 13px; } .sc-body { padding: 16px 16px 80px; } .sc-card { padding: 20px 16px 20px; gap: 24px; } .sc-section-title { font-size: 17px; } .sc-stars { gap: 12px; } .sc-star { width: 28px; height: 28px; } .sc-btn-prev { width: 100px; height: 44px; font-size: 14px; } .sc-btn-next { width: 100px; height: 44px; font-size: 14px; } }
-  @media (max-width: 390px) { .sc-title { font-size: 17px; } .sc-btn-prev, .sc-btn-next { width: 90px; font-size: 13px; } }
+  @media (max-width: 767px) { .sc-content { margin-left: 0; } .sc-topbar { padding: 20px 16px 0; } .sc-badge { padding: 6px 12px; font-size: 10px; } .sc-bell { display: none; } .sc-title { padding: 12px 16px 0; font-size: 20px; } .sc-progress { margin: 10px 16px 0; padding: 14px 16px; } .sc-progress-row { font-size: 13px; } .sc-progress-label { font-size: 13px; } .sc-body { padding: 16px 16px 80px; } .sc-card { padding: 20px 16px 20px; gap: 24px; } .sc-section-title { font-size: 17px; } .sc-stars { gap: 12px; } .sc-star { width: 28px; height: 28px; } .sc-btn-prev { width: 100px; height: 44px; font-size: 14px; } .sc-btn-save { height: 44px; padding: 0 14px; font-size: 14px; } .sc-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 390px) { .sc-title { font-size: 17px; } .sc-btn-prev, .sc-btn-next { width: 90px; font-size: 13px; } .sc-btn-save { padding: 0 10px; font-size: 13px; } }
   @media (max-height: 600px) { .sc-header { padding-bottom: 10px; } .sc-progress { padding: 10px 20px; } .sc-body { padding-top: 14px; } }
 `;
 
+const TOTAL_SECTIONS  = 7;
+const CURRENT_SECTION = 6;
+const PROGRESS_PCT    = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
+
 const COMPETENCIES_OPTIONS = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism'];
-const SKILL_RATINGS_KEYS = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism Skills'];
+const SKILL_RATINGS_KEYS   = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism Skills'];
 
 const StarRating = ({ value, onChange }) => {
   const [hovered, setHovered] = useState(0);
@@ -72,10 +81,12 @@ const StarRating = ({ value, onChange }) => {
 
 const SkillsAndCompetencies = () => {
   const navigate = useNavigate();
-  const cardRef = useRef(null);
-  const [errors, setErrors] = useState(new Set());
+  const cardRef  = useRef(null);
+  const bellRef  = useRef(null);
 
-  // All keys snake_case to match Flutter + Supabase
+  const [errors,    setErrors]    = useState(new Set());
+  const [saveToast, setSaveToast] = useState(false);
+
   const [form, setForm] = useState({
     useful_competencies: [],
     skill_ratings: {
@@ -91,6 +102,73 @@ const SkillsAndCompetencies = () => {
   useEffect(() => {
     loadSectionData('skills_competencies').then(d => { if (d) setForm(f => ({ ...f, ...d })); });
   }, []);
+
+  // ── Notification state ─────────────────────────────────────────────────────
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab,     setNotifTab]     = useState('all');
+
+  useEffect(() => {
+    const fetchNotifs = async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('id, title, content, published_at, is_active')
+        .eq('is_active', true)
+        .order('published_at', { ascending: false })
+        .limit(20);
+      if (error || !data) return;
+      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      setNotifs(mapped);
+      setUnreadCount(mapped.filter(n => !n.read).length);
+    };
+    fetchNotifs();
+  }, []);
+
+  useEffect(() => {
+    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
+
+  const markAllRead = useCallback(() => {
+    localStorage.setItem('read_notifs', JSON.stringify(notifs.map(n => n.id)));
+    setNotifs(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0);
+  }, [notifs]);
+
+  const markOneRead = useCallback((id) => {
+    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
+    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  }, []);
+
+  const groupByDate = (list) => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate()-7);
+    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    list.forEach(n => {
+      const d = new Date(n.time); d.setHours(0,0,0,0);
+      if      (d >= today)     groups['Today'].push(n);
+      else if (d >= yesterday) groups['Yesterday'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
+    });
+    return groups;
+  };
+
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso), now = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff/60)   + 'm ago';
+    if (diff < 86400)  return Math.floor(diff/3600)  + 'h ago';
+    if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  };
 
   const toggleCompetency = (value) => setForm(prev => ({
     ...prev,
@@ -112,6 +190,12 @@ const SkillsAndCompetencies = () => {
     return e;
   };
 
+  const handleSave = async () => {
+    await saveSectionProgress('skills_competencies', form);
+    setSaveToast(true);
+    setTimeout(() => setSaveToast(false), 2500);
+  };
+
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -120,7 +204,7 @@ const SkillsAndCompetencies = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('skills_competencies', form).then(() => navigate('/survey/feedback'));
+    saveSectionProgress('skills_competencies', form).then(() => navigate('/survey/feedback-and-engagement'));
   };
 
   return (
@@ -136,15 +220,94 @@ const SkillsAndCompetencies = () => {
                 Back
               </button>
               <div className="sc-badge">Alumni Status</div>
-              <button className="sc-bell">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                <div className="sc-bell-dot">3</div>
-              </button>
+
+              {/* ── Notification Bell ──────────────────────────────────────── */}
+              <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  className={`sc-bell${showDropdown ? ' active' : ''}`}
+                  onClick={() => setShowDropdown(v => !v)}
+                >
+                  <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
+                    <path d="M10.8 22.75H15.2M20.8 9.75C20.8 6.215 17.206 3.25 13 3.25C8.794 3.25 5.2 6.215 5.2 9.75C5.2 14.625 3.25 16.9 3.25 16.9H22.75C22.75 16.9 20.8 14.625 20.8 9.75Z"
+                      stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <>
+                      <div className="sc-bell-dot" />
+                      <div className="sc-bell-count">{unreadCount > 99 ? '99+' : unreadCount}</div>
+                    </>
+                  )}
+                </button>
+
+                {showDropdown && (
+                  <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
+                    <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                      <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
+                      {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
+                    </div>
+                    <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
+                      {['all','unread'].map(t => (
+                        <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab===t?'#2B72FB':'transparent', border: notifTab===t?'none':'1px solid rgba(255,255,255,0.12)', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab===t?700:400, color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize' }}>
+                          {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
+                      {(() => {
+                        const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+                        if (!list.length) return (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                            <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{notifTab==='unread'?'No unread notifications':'No notifications yet'}</p>
+                          </div>
+                        );
+                        return Object.entries(groupByDate(list)).map(([label, items]) => {
+                          if (!items.length) return null;
+                          return (
+                            <div key={label}>
+                              <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
+                              {items.map(n => (
+                                <div key={n.id} onClick={() => markOneRead(n.id)}
+                                  style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read?'transparent':'rgba(43,114,251,0.07)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read?'3px solid transparent':'3px solid #2B72FB' }}
+                                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                                  onMouseLeave={e => e.currentTarget.style.background=n.read?'transparent':'rgba(43,114,251,0.07)'}>
+                                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.15)', border: '1px solid rgba(43,114,251,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/></svg>
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontFamily: 'Arimo', fontWeight: n.read?400:700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
+                                    <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                                    <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
+                                  </div>
+                                  {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2B72FB', flexShrink: 0, marginTop: '6px' }} />}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                    <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                      <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
+                        style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
+                        onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
+                        See all notifications →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+
             <h1 className="sc-title">Alumni Tracer Survey</h1>
             <div className="sc-progress">
-              <div className="sc-progress-row"><span>Section 6 of 8</span><span>85% complete</span></div>
-              <div className="sc-progress-track"><div className="sc-progress-fill" /></div>
+              <div className="sc-progress-row">
+                <span>Section {CURRENT_SECTION} of {TOTAL_SECTIONS}</span>
+              </div>
+              <div className="sc-progress-track">
+                <div className="sc-progress-fill" style={{ width: `${PROGRESS_PCT}%` }} />
+              </div>
               <span className="sc-progress-label">Skills and competencies</span>
             </div>
           </div>
@@ -180,9 +343,18 @@ const SkillsAndCompetencies = () => {
                   <textarea className="sc-textarea" placeholder="Enter your answer" value={form.skills_to_develop} onChange={e => setForm(prev => ({ ...prev, skills_to_develop: e.target.value }))} />
                 </div>
               </div>
+
               <div className="sc-footer">
                 <button className="sc-btn-prev" onClick={() => navigate('/survey/job-experience')}>Previous</button>
-                <button className="sc-btn-next" onClick={handleNext}>Next</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {saveToast && (
+                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: 'rgba(81,210,130,0.9)' }}>
+                      Progress saved
+                    </span>
+                  )}
+                  <button className="sc-btn-save" onClick={handleSave}>Save</button>
+                  <button className="sc-btn-next" onClick={handleNext}>Next</button>
+                </div>
               </div>
             </div>
           </div>

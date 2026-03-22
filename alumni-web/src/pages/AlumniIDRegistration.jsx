@@ -665,7 +665,7 @@ const AlumniIDRegistration = () => {
 
           {/* Next button */}
           <button onClick={handleNext} disabled={status !== 'verified' || !agreed} style={{ width:'100%', height:'46px', background:status==='verified'&&agreed?'rgba(0,40,255,0.7)':'rgba(0,40,255,0.25)', boxShadow:'0px 2px 2px rgba(255,255,255,0.25)', border:'none', borderRadius:'14px', fontFamily:'Arimo,Arial', fontWeight:700, fontSize:'15px', lineHeight:'24px', color:'#FFFFFF', cursor:status==='verified'&&agreed?'pointer':'not-allowed', transition:'all 0.3s ease', marginBottom:'14px' }}>
-            {status === 'scanning' ? 'Verifying...' : status === 'verified' ? 'Next' : 'Verify Your ID to Continue'}
+            {status === 'scanning' ? 'Verifying...' : status === 'verified' ? 'Next' : 'Next'}
           </button>
 
           <p style={{ fontFamily:'Arimo,Arial', fontWeight:400, fontSize:'13px', lineHeight:'20px', color:'#FFFFFF', textAlign:'center', margin:0 }}>

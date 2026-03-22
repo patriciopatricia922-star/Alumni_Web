@@ -20,8 +20,6 @@ import CertificationAchievement from './survey/Certificationachievement';
 import EmploymentInformation from './survey/Employmentinformation';
 import JobExperience from './survey/Jobexperience';
 import SkillsAndCompetencies from './survey/Skillsandcompetencies';
-import Feedback from './survey/Feedback';
-import AlumniEngagement from './survey/Alumniengagement';
 import SurveyComplete from './survey/SurveyComplete';
 import Discounts from './pages/Discounts';
 import Events from './pages/Events';
@@ -42,6 +40,7 @@ import SuperAdminEngagement from './superadmin/Superadminengagement';
 import TermsOfServiceAbout from './pages/Termsofserviceabout';
 import PrivacyPolicyAbout from './pages/Privacypolicyabout';
 import NotificationsPage from './pages/Notificationspage';
+import FeedbackAndAlumniEngagement from './survey/Feedbackandalumniengagement';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
 // Checks for a valid Supabase session before rendering the page.
@@ -122,8 +121,7 @@ function App() {
       <Route path="/survey/employment-information" element={<ProtectedRoute allowedRoles={['alumni']}><EmploymentInformation /></ProtectedRoute>} />
       <Route path="/survey/job-experience" element={<ProtectedRoute allowedRoles={['alumni']}><JobExperience /></ProtectedRoute>} />
       <Route path="/survey/skills-and-competencies" element={<ProtectedRoute allowedRoles={['alumni']}><SkillsAndCompetencies /></ProtectedRoute>} />
-      <Route path="/survey/feedback" element={<ProtectedRoute allowedRoles={['alumni']}><Feedback /></ProtectedRoute>} />
-      <Route path="/survey/alumni-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><AlumniEngagement /></ProtectedRoute>} />
+      <Route path="/survey/feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagement /></ProtectedRoute>} />
       <Route path="/survey/complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
 
       {/* ── Admin protected routes (For testing) ── */}
