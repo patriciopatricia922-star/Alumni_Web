@@ -189,7 +189,7 @@ const UpdateTracerPage = () => {
                   style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
-                  See all notifications →
+                  See all notifications
                 </button>
               </div>
             </div>

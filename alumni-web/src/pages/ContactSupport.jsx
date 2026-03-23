@@ -132,7 +132,7 @@ const ContactSupport = () => {
                 })()}
               </div>
               <div style={{padding:'10px 18px',borderTop:'1px solid rgba(255,255,255,0.07)',flexShrink:0}}>
-                <button onClick={()=>{setShowDropdown(false);navigate('/notifications');}} style={{width:'100%',height:'36px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'10px',fontFamily:'Arimo',fontSize:'13px',color:'rgba(255,255,255,0.7)',cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}>See all notifications →</button>
+                <button onClick={()=>{setShowDropdown(false);navigate('/notifications');}} style={{width:'100%',height:'36px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:'10px',fontFamily:'Arimo',fontSize:'13px',color:'rgba(255,255,255,0.7)',cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.1)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,0.05)'}>See all notifications</button>
               </div>
             </div>
           )}

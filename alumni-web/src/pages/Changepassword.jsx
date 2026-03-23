@@ -312,7 +312,7 @@ const ChangePassword = () => {
                   style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}>
-                  See all notifications →
+                  See all notifications
                 </button>
               </div>
             </div>
@@ -372,7 +372,7 @@ const ChangePassword = () => {
             style={{
               width: '100%', height: '48px',
               background: loading ? 'rgba(0,40,255,0.4)' : 'rgba(0,40,255,0.8)',
-              boxShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+              boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
               borderRadius: '13px', border: 'none',
               fontFamily: 'Arimo, Arimo', fontWeight: 700, fontSize: '15px', color: '#FFFFFF',
               cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s',
