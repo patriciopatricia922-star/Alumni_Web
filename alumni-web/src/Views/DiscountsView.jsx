@@ -36,6 +36,7 @@ const DiscountCard = ({ item }) => {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: 'rgba(0,62,166,0.35)',
+        marginTop: '1px',
         border: `0.889px solid ${hovered ? 'rgba(43,114,251,0.55)' : 'rgba(255,255,255,0.2)'}`,
         boxShadow: hovered
           ? '0px 0px 20px rgba(43,114,251,0.35), 0px 8px 24px rgba(0,0,0,0.4)'
@@ -261,7 +262,7 @@ const DiscountsView = ({
         </button>
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div style={{ marginBottom: isMobile ? '20px' : '32px', paddingRight: isMobile ? '58px' : '90px' }}>
+        <div style={{ marginBottom: isMobile ? '9.5px' : '9.5px', paddingRight: isMobile ? '58px' : '90px' }}>
           <h1 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
             fontSize: isMobile ? '28px' : isTablet ? '32px' : '40px',
@@ -280,7 +281,7 @@ const DiscountsView = ({
         </div>
 
         {/* ── Filter bar ─────────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '16px' : '24px', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '7.5px' : '17.5px', gap: '12px' }}>
 
           {/* ── Wrapper covers both pill + button so dropdown aligns to pill ── */}
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
@@ -293,7 +294,7 @@ const DiscountsView = ({
               border: '1px solid rgba(255,255,255,0.05)',
               borderRadius: '10px',
               filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
-              minWidth: isMobile ? 0 : '211px',
+              minWidth: isMobile ? 0 : '240 px',
               flex: isMobile ? 1 : 'none',
             }}>
               <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>

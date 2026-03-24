@@ -41,7 +41,7 @@ const verifyAlumniID = async (imageFile) => {
     throw new Error(lastError || 'Scan failed after 3 attempts. Please try again.');
   }
 
-  const rawText  = data.ParsedResults?.[0]?.ParsedText || '';
+  const rawText   = data.ParsedResults?.[0]?.ParsedText || '';
   const upperText = rawText.toUpperCase();
 
   const isNU     = upperText.includes('NATIONAL') && upperText.includes('UNIVERSITY');
@@ -85,7 +85,7 @@ const verifyAlumniID = async (imageFile) => {
       upper === line &&
       !upper.includes('NATIONAL') && !upper.includes('UNIVERSITY') &&
       !upper.includes('ALUMNI')   && !upper.includes('MANILA') &&
-      !upper.includes('DASMARINAS') && !upper.includes('CLASS') &&
+      !upper.includes('DASMARIÑAS') && !upper.includes('CLASS') &&
       !upper.includes('BSBA') && !upper.includes('BS') &&
       !upper.includes('AB') && !upper.includes('NUI') &&
       !upper.match(/^[0-9]+$/) && line.length > 2
@@ -142,7 +142,6 @@ const verifyAlumniID = async (imageFile) => {
 };
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-
 const AlumniIDRegistration = () => {
   const navigate = useNavigate();
 
@@ -190,12 +189,30 @@ const AlumniIDRegistration = () => {
 
   // ── Auto-capture detection loop ────────────────────────────────────────────
   const startDetectionLoop = useCallback(() => {
-    const STABLE_NEEDED = 40;
-    let stable = 0;
+    const GRACE_PERIOD_MS = 3000;
+    const STABLE_NEEDED   = 70;
+    const startTime       = Date.now();
+    let stable    = 0;
     let lastScore = 0;
 
     const analyse = () => {
       if (!videoRef.current || !canvasRef.current || capturedRef.current) return;
+
+      // ── Grace period ─────────────────────────────────────────────────────
+      const elapsed = Date.now() - startTime;
+      if (elapsed < GRACE_PERIOD_MS) {
+        const secondsLeft = Math.ceil((GRACE_PERIOD_MS - elapsed) / 1000);
+        if (secondsLeft > 0) {
+          setCamGuide(`Get your Alumni ID ready... (${secondsLeft})`);
+        }
+        detectionRef.current = requestAnimationFrame(analyse);
+        return;
+      }
+
+      // Clear grace period message once when it ends
+      if (elapsed >= GRACE_PERIOD_MS && elapsed < GRACE_PERIOD_MS + 100) {
+        setCamGuide('Align your Alumni ID inside the frame');
+      }
 
       const video = videoRef.current;
       const vW = video.videoWidth  || 640;
@@ -214,6 +231,7 @@ const AlumniIDRegistration = () => {
       ctx.drawImage(video, fX, fY, fW, fH, 0, 0, W, H);
       const { data } = ctx.getImageData(0, 0, W, H);
 
+      // ── Brightness ───────────────────────────────────────────────────────
       let bright = 0;
       for (let i = 0; i < data.length; i += 4)
         bright += (data[i] + data[i+1] + data[i+2]) / 3;
@@ -228,6 +246,7 @@ const AlumniIDRegistration = () => {
         stable = 0; detectionRef.current = requestAnimationFrame(analyse); return;
       }
 
+      // ── Edge detection ───────────────────────────────────────────────────
       const g = (i) => (data[i*4] + data[i*4+1] + data[i*4+2]) / 3;
       const edge = new Uint8Array(W * H);
       for (let y = 1; y < H-1; y++) {
@@ -239,6 +258,7 @@ const AlumniIDRegistration = () => {
         }
       }
 
+      // ── Border scores ────────────────────────────────────────────────────
       const BORDER = 12;
       let topE=0, botE=0, leftE=0, rightE=0;
       for (let x = 0; x < W; x++) {
@@ -266,26 +286,61 @@ const AlumniIDRegistration = () => {
       for (let i = 0; i < edge.length; i++) if (edge[i]) totalEdge++;
       const density = totalEdge / (W * H);
 
+      // ── Skin tone check (center region only) ─────────────────────────────
+      const skinRatio = (() => {
+        let skinCount = 0;
+        let total = 0;
+        const xStart = Math.floor(W * 0.20);
+        const xEnd   = Math.floor(W * 0.80);
+        const yStart = Math.floor(H * 0.20);
+        const yEnd   = Math.floor(H * 0.80);
+        for (let y = yStart; y < yEnd; y++) {
+          for (let x = xStart; x < xEnd; x++) {
+            const i = (y * W + x) * 4;
+            const r = data[i], g = data[i+1], b = data[i+2];
+            if (r > 95 && g > 40 && b > 20 &&
+                r > g && g > b &&
+                (r - g) > 15 && (r - b) > 15) {
+              skinCount++;
+            }
+            total++;
+          }
+        }
+        return skinCount / total;
+      })();
+
+      const likelySkin = skinRatio > 0.55;
+
+      // ── Score + motion ───────────────────────────────────────────────────
       const score = topScore + botScore + leftScore + rightScore + density;
       const diff  = Math.abs(score - lastScore);
       lastScore   = score;
 
+      // ── Guide + capture logic ────────────────────────────────────────────
       if (!cardFillsFrame && density < 0.05) {
-        setCamGuide('Place your Alumni ID inside the frame'); stable = 0;
+        setCamGuide('Place your Alumni ID inside the frame');
+        stable = 0;
+      } else if (likelySkin && cardFillsFrame) {
+        setCamGuide('That looks like a hand — please show your Alumni ID');
+        stable = 0;
       } else if (!cardFillsFrame && topScore < BORDER_THRESH && botScore < BORDER_THRESH) {
-        setCamGuide('Move closer — ID is too far away'); stable = 0;
+        setCamGuide('Move closer — ID is too far away');
+        stable = 0;
       } else if (!cardFillsFrame && (leftScore < BORDER_THRESH || rightScore < BORDER_THRESH)) {
-        setCamGuide('Centre the ID — align it with the frame edges'); stable = 0;
+        setCamGuide('Centre the ID — align it with the frame edges');
+        stable = 0;
       } else if (!cardFillsFrame) {
-        setCamGuide('Align the ID to fill the frame'); stable = 0;
+        setCamGuide('Align the ID to fill the frame');
+        stable = 0;
       } else if (diff > 0.08) {
         setCamGuide('Hold still — keep the ID steady');
-        stable = Math.max(0, stable - 4);
+        stable = Math.max(0, stable - 8);
       } else {
+        // cardFillsFrame is true and not likely skin — proceed to capture
         stable++;
         const left = Math.max(0, STABLE_NEEDED - stable);
-        if      (left > 25) setCamGuide('ID detected — hold steady...');
-        else if (left > 0)  setCamGuide('Almost ready — keep still (' + left + ')');
+        if      (left > 40) setCamGuide('ID detected — hold steady...');
+        else if (left > 0)  setCamGuide(`Almost ready — keep still (${left})`);
         else {
           capturedRef.current = true;
           setCamGuide('✓ Capturing...');
@@ -364,11 +419,9 @@ const AlumniIDRegistration = () => {
 
   return (
     <IDRegistrationView
-      // Refs — created here, attached to DOM in view
       fileInputRef={fileInputRef}
       videoRef={videoRef}
       canvasRef={canvasRef}
-      // State
       agreed={agreed}
       preview={preview}
       showModal={showModal}
@@ -377,10 +430,8 @@ const AlumniIDRegistration = () => {
       errorMsg={errorMsg}
       extractedData={extractedData}
       camGuide={camGuide}
-      // Derived
       borderColor={borderColor}
       frameBorder={frameBorder}
-      // Handlers
       setAgreed={setAgreed}
       setShowModal={setShowModal}
       startCamera={startCamera}
