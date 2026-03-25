@@ -14,7 +14,7 @@ const menuItems = [
   { path: '/superadmin/audit-logs',            icon: SiGoogleanalytics,       label: 'Audit Logs'        },
   { path: '/superadmin/admin-management',    icon: BsFillPeopleFill,        label: 'Admin Management',  split: true },
   { path: '/superadmin/super-admin-alumni',     icon: RiSurveyFill,            label: 'Alumni Management', split: true },
-  { path: '/superadmin/super-alumni-engagement',     icon: FaBookBookmark,          label: 'Alumni Engagement', split: true },
+  { path: '/superadmin/super-alumni-engagement',     icon: FaBookBookmark,          label: 'Content Management', split: true },
 ];
 
 function SuperAdminSidebar() {
