@@ -1,6 +1,6 @@
 const OCR_API_KEY = 'K82618949788957';
 
-const verifyAlumniID = async (imageFile) => {
+export const verifyAlumniID = async (imageFile) => {
   const formData = new FormData();
   formData.append('file', imageFile);
   formData.append('apikey', OCR_API_KEY);

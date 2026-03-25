@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import IDRegistrationView from '../Views/IDRegistrationview';
-import '../utils/ocrUtils.js';
+import { verifyAlumniID } from '../utils/ocrUtils';
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 const AlumniIDRegistration = () => {

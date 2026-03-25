@@ -85,3 +85,5 @@
   .lp-hero-title    { font-size: clamp(36px, 7vw, 96px) !important; line-height: 1.2 !important; letter-spacing: 0.05em !important; white-space: nowrap; }
   .lp-explore-more { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; gap: 4px; margin-top: auto; margin-bottom: 16px; }
   .lp-explore-more p { font-family: Arial; font-size: clamp(13px, 1.2vw, 16px); color: #FFFFFF; margin: 0; letter-spacing: 0.4px; }
+
+  
