@@ -3,58 +3,7 @@ import { Link } from 'react-router-dom';
 import AlumnAILogo from '../assets/new_lg.svg';
 import SignupIcon  from '../assets/signup_ic.svg';
 import LoginIcon   from '../assets/login_ic.svg';
-
-const STYLES = `
-  @font-face {
-    font-family: 'Arimo';
-    font-weight: 400;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
-  }
-  @font-face {
-    font-family: 'Arimo';
-    font-weight: 700;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
-  }
-
-  .login-card { width: 500px; height: 730px; max-height: 95vh; }
-  @media (max-width: 500px) { .login-card { width: 95vw; } }
-
-  input[type="password"]::-ms-reveal,
-  input[type="password"]::-ms-clear,
-  input[type="text"]::-ms-reveal,
-  input[type="text"]::-ms-clear { display: none !important; }
-  input::-webkit-credentials-auto-fill-button,
-  input::-webkit-strong-password-auto-fill-button { visibility: hidden !important; display: none !important; pointer-events: none !important; }
-
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px rgba(13, 19, 56, 0.6) inset !important;
-    -webkit-text-fill-color: #FFFFFF !important;
-    caret-color: #FFFFFF !important;
-    transition: background-color 9999s ease-in-out 0s;
-  }
-
-  .eye-btn-login {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
-    -webkit-appearance: none;
-  }
-  .eye-btn-login:focus { outline: none; }
-`;
+import '../styles/Login.css';
 
 const inputStyle = {
   width: '100%', height: '36px',
@@ -92,7 +41,6 @@ const LoginView = ({
   handleLogin, handleGoogleLogin,
 }) => (
   <>
-    <style>{STYLES}</style>
     <div style={{
       width: '100%', height: '100vh', background: '#002263',
       display: 'flex', flexDirection: 'column', alignItems: 'center',

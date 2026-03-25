@@ -3,50 +3,7 @@ import { Link } from 'react-router-dom';
 import AlumnAILogo from '../assets/new_lg.svg';
 import SignupIcon  from '../assets/signup_ic.svg';
 import LoginIcon   from '../assets/login_ic.svg';
-
-const STYLES = `
-  @font-face {
-    font-family: 'Arimo';
-    font-weight: 400;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
-  }
-  @font-face {
-    font-family: 'Arimo';
-    font-weight: 700;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
-  }
-
-  .custom-scroll::-webkit-scrollbar { width: 6px; }
-  .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
-  .custom-scroll::-webkit-scrollbar-thumb { background: rgba(217,202,129,0.4); border-radius: 10px; }
-  .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(217,202,129,0.8); }
-
-  .signup-card { width: 440px; height: 900px; max-height: 95vh; }
-  @media (max-width: 500px) { .signup-card { width: 95vw; } }
-
-  input[type="password"]::-ms-reveal,
-  input[type="password"]::-ms-clear,
-  input[type="text"]::-ms-reveal,
-  input[type="text"]::-ms-clear { display: none !important; }
-  input::-webkit-credentials-auto-fill-button,
-  input::-webkit-strong-password-auto-fill-button { visibility: hidden !important; display: none !important; pointer-events: none !important; }
-
-  .eye-btn {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; padding: 0;
-    display: flex; align-items: center; justify-content: center;
-    line-height: 0; -webkit-appearance: none;
-  }
-  .eye-btn:focus { outline: none; }
-  input::placeholder { color: rgba(255,255,255,0.3) !important; opacity: 1; }
-  input::-webkit-input-placeholder { color: rgba(255,255,255,0.3) !important; -webkit-text-fill-color: rgba(255,255,255,0.3) !important; }
-  input::-moz-placeholder { color: rgba(255,255,255,0.3) !important; opacity: 1; }
-
-
-  .pw-strength-bar { height: 4px; border-radius: 4px; transition: width 0.3s ease, background 0.3s ease; }
-`;
+import '../styles/Signup.css';
 
 const inputStyle = {
   width: '100%', height: '36px',
@@ -150,7 +107,6 @@ const SignupView = ({
   handleChange, handleBlur, handleSignup,
 }) => (
   <>
-    <style>{STYLES}</style>
     <div style={{
       width: '100%', height: '100vh', background: '#002263',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
