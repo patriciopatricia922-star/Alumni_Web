@@ -1,66 +1,159 @@
 import { supabase } from './supabase';
 
-// ─── Canonical section definitions ───────────────────────────────────────────
-// Keys are the single source of truth shared with mobile.
-// web_route = React Router path  |  mobile_route = Flutter named route
 export const SURVEY_SECTIONS = [
-  { key: 'personal_background',        web_route: '/survey/personal-background',       mobile_route: '/personal',    percentage: 14  },
-  { key: 'educational_background',     web_route: '/survey/educational-background',    mobile_route: '/education',   percentage: 28  },
-  { key: 'certification_achievement',  web_route: '/survey/certification-achievement', mobile_route: '/certification', percentage: 42 },
-  { key: 'employment_information',     web_route: '/survey/employment-information',    mobile_route: '/employment',  percentage: 57  },
-  { key: 'job_experience',             web_route: '/survey/job-experience',            mobile_route: '/job',         percentage: 71  },
-  { key: 'skills_competencies',        web_route: '/survey/skills-and-competencies',   mobile_route: '/skills',      percentage: 85  },
-  { key: 'feedback_university',        web_route: '/survey/feedback',                  mobile_route: '/feedback',    percentage: 95  },
-  { key: 'alumni_engagement',          web_route: '/survey/alumni-engagement',         mobile_route: '/engage',      percentage: 100 },
+  {
+    key: 'personal_background',
+    web_route: '/survey/personal-background',
+    mobile_route: '/personal',
+    percentage: 14,
+  },
+  {
+    key: 'educational_background',
+    web_route: '/survey/educational-background',
+    mobile_route: '/education',
+    percentage: 28,
+  },
+  {
+    key: 'certification_achievement',
+    web_route: '/survey/certification-achievement',
+    mobile_route: '/certification',
+    percentage: 42,
+  },
+  {
+    key: 'employment_information',
+    web_route: '/survey/employment-information',
+    mobile_route: '/employment',
+    percentage: 57,
+  },
+  {
+    key: 'job_experience',
+    web_route: '/survey/job-experience',
+    mobile_route: '/job',
+    percentage: 71,
+  },
+  {
+    key: 'skills_competencies',
+    web_route: '/survey/skills-and-competencies',
+    mobile_route: '/skills',
+    percentage: 85,
+  },
+  {
+    key: 'feedback_university',
+    web_route: '/survey/feedback-and-engagement',
+    mobile_route: '/feedback-and-engagement',
+    percentage: 100,
+  },
 ];
 
 const COMPLETE_SENTINEL = '__complete__';
 
-// ─── Save progress when a section is completed ────────────────────────────────
+const normalizeLegacyWebRoute = (route) => {
+  if (!route) return route;
+
+  if (
+    route === '/survey/feedback' ||
+    route === '/survey/alumni-engagement'
+  ) {
+    return '/survey/feedback-and-engagement';
+  }
+
+  return route;
+};
+
+const normalizeLegacyMobileRoute = (route) => {
+  if (!route) return route;
+
+  if (route === '/feedback' || route === '/engage') {
+    return '/feedback-and-engagement';
+  }
+
+  return route;
+};
+
+const splitMergedFeedbackPayload = (formData = {}) => {
+  const feedbackData = {
+    recommend: formData.recommend ?? '',
+    suggestions: formData.suggestions ?? '',
+    satisfaction: formData.satisfaction ?? '',
+  };
+
+  const engagementData = {
+    participate_in: formData.participate_in ?? [],
+    other_participate: formData.other_participate ?? '',
+    informed_about_events: formData.informed_about_events ?? '',
+  };
+
+  return { feedbackData, engagementData };
+};
+
+// Save progress when a section is completed
 export const saveSectionProgress = async (sectionKey, formData = null) => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) return;
 
-  const sectionIndex = SURVEY_SECTIONS.findIndex(s => s.key === sectionKey);
+  const sectionIndex = SURVEY_SECTIONS.findIndex((section) => section.key === sectionKey);
   if (sectionIndex === -1) return;
 
-  const isLast      = sectionIndex === SURVEY_SECTIONS.length - 1;
+  const isLast = sectionIndex === SURVEY_SECTIONS.length - 1;
   const nextSection = SURVEY_SECTIONS[sectionIndex + 1];
-  const percentage  = SURVEY_SECTIONS[sectionIndex].percentage;
+  const percentage = SURVEY_SECTIONS[sectionIndex].percentage;
 
-  // Store web_route and mobile_route separately so each platform
-  // can resume on its own route without interfering with the other.
   const updates = {
-    user_id:         user.id,
+    user_id: user.id,
     current_section: sectionIndex + 1,
-    // Web resumes at next web_route, or sentinel when done
-    web_current_route:    isLast ? COMPLETE_SENTINEL : nextSection.web_route,
-    // Mobile resumes at next mobile_route, or sentinel when done
+    web_current_route: isLast ? COMPLETE_SENTINEL : nextSection.web_route,
     mobile_current_route: isLast ? COMPLETE_SENTINEL : nextSection.mobile_route,
     percentage,
-    completed:       isLast,
-    last_updated:    new Date().toISOString(),
-    [sectionKey]:    true,
-    ...(formData ? { [`${sectionKey}_data`]: formData } : {}),
+    completed: isLast,
+    last_updated: new Date().toISOString(),
+    [sectionKey]: true,
   };
+
+  if (formData) {
+    if (sectionKey === 'feedback_university') {
+      const { feedbackData, engagementData } = splitMergedFeedbackPayload(formData);
+
+      updates.feedback_university_data = feedbackData;
+      updates.alumni_engagement_data = engagementData;
+      updates.alumni_engagement = true;
+    } else {
+      updates[`${sectionKey}_data`] = formData;
+    }
+  }
 
   const { error } = await supabase
     .from('survey_progress')
     .upsert(updates, { onConflict: 'user_id' });
 
-  if (error) console.error('Error saving progress:', error.message);
+  if (error) {
+    console.error('Error saving progress:', error.message);
+  }
 };
 
-// ─── Load saved form data for a specific section ──────────────────────────────
+// Load saved form data for a specific section
 export const loadSectionData = async (sectionKey) => {
   const progress = await loadSurveyProgress();
   if (!progress) return null;
+
+  if (sectionKey === 'feedback_university') {
+    return {
+      ...(progress.feedback_university_data || {}),
+      ...(progress.alumni_engagement_data || {}),
+    };
+  }
+
   return progress[`${sectionKey}_data`] || null;
 };
 
-// ─── Load full progress row ───────────────────────────────────────────────────
+// Load full progress row
 export const loadSurveyProgress = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -73,40 +166,64 @@ export const loadSurveyProgress = async () => {
     console.error('Error loading survey progress:', error.message);
     return null;
   }
+
   return data;
 };
 
-// ─── Get the WEB route to resume from ────────────────────────────────────────
-// Returns '/survey/complete' when survey is fully done.
+// Get the WEB route to resume from
 export const getResumeRoute = async () => {
   const progress = await loadSurveyProgress();
   if (!progress) return '/survey/personal-background';
 
-  // Survey finished
   if (progress.completed || progress.web_current_route === COMPLETE_SENTINEL) {
     return '/survey/complete';
   }
 
-  // Has a valid web route stored
   if (progress.web_current_route) {
-    return progress.web_current_route;
+    return normalizeLegacyWebRoute(progress.web_current_route);
   }
 
-  // Legacy fallback: if old `current_route` contains a mobile route,
-  // map it back to the correct web route.
   if (progress.current_route) {
+    const normalizedCurrentRoute = normalizeLegacyMobileRoute(progress.current_route);
+
     const matched = SURVEY_SECTIONS.find(
-      s => s.mobile_route === progress.current_route
+      (section) => section.mobile_route === normalizedCurrentRoute
     );
     if (matched) return matched.web_route;
-    // If it looks like a web route already, use it
-    if (progress.current_route.startsWith('/survey/')) return progress.current_route;
+
+    const legacyWebRoute = normalizeLegacyWebRoute(progress.current_route);
+    if (legacyWebRoute?.startsWith('/survey/')) return legacyWebRoute;
   }
 
   return '/survey/personal-background';
 };
 
-// ─── Check if the survey is fully completed ───────────────────────────────────
+export const getMobileResumeRoute = async () => {
+  const progress = await loadSurveyProgress();
+  if (!progress) return '/personal';
+
+  if (progress.completed || progress.mobile_current_route === COMPLETE_SENTINEL) {
+    return '/survey-complete';
+  }
+
+  if (progress.mobile_current_route) {
+    return normalizeLegacyMobileRoute(progress.mobile_current_route);
+  }
+
+  if (progress.current_route) {
+    const normalizedCurrentRoute = normalizeLegacyMobileRoute(progress.current_route);
+
+    const matched = SURVEY_SECTIONS.find(
+      (section) => section.mobile_route === normalizedCurrentRoute
+    );
+    if (matched) return matched.mobile_route;
+
+    return normalizedCurrentRoute;
+  }
+
+  return '/personal';
+};
+
 export const isSurveyComplete = async () => {
   const progress = await loadSurveyProgress();
   if (!progress) return false;

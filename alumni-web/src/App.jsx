@@ -27,6 +27,7 @@ import Jobs from './pages/Jobs';
 import ForgotPassword from './pages/Forgotpassword';
 import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
+import ResponseAndAnalytics from './admin/Responseandanalytics';
 import PredictiveAnalytics from './admin/PredictiveAnalytics';
 import SuperAdminDashboard from './superadmin/Superadmindashboard';
 import DetailedAuditLogs from './superadmin/Detailedauditlogs';
@@ -129,6 +130,7 @@ function App() {
       <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
       <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
+      <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
       <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
       
       {/* ── Super Admin protected routes (For testing) ── */}
