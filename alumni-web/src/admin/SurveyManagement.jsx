@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import AdminSidebar from "./AdminSidebar";
-import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2 } from "react-icons/fi";
-import { BiGitBranch } from "react-icons/bi";
+import SurveyMgmtView from "./views/Surveymgmtview";
 
-// ─── Default survey (used if Supabase has no config yet) ──────────────────────
 const DEFAULT_SURVEY = {
   title: "Alumni Survey",
   sections: [
@@ -130,22 +127,11 @@ const DEFAULT_SURVEY = {
   ]
 };
 
-const TYPE_LABELS = {
-  short: "Short Answer",
-  long: "Long Answer",
-  multiple: "Multiple Choice",
-  date: "Date",
-  rating: "Rating (1–5)",
-  name: "Name Fields",
-  title: "Section Title",
-};
-
-function SurveyManagement() {
+export default function SurveyManagement() {
   const [survey, setSurvey] = useState(null);
   const [configId, setConfigId] = useState(null);
   const [activeSection, setActiveSection] = useState(0);
   const [branchMode, setBranchMode] = useState(false);
-  const [editingQ, setEditingQ] = useState(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [branches, setBranches] = useState({});
@@ -197,34 +183,28 @@ function SurveyManagement() {
   };
 
   const updateQuestion = (sIdx, qIdx, patch) => {
-    setSurvey(prev => {
-      const s = prev.sections.map((sec, si) => si !== sIdx ? sec : {
-        ...sec,
-        questions: sec.questions.map((q, qi) => qi !== qIdx ? q : { ...q, ...patch }),
-      });
+    setSurvey((prev) => {
+      const s = prev.sections.map((sec, si) =>
+        si !== sIdx ? sec : { ...sec, questions: sec.questions.map((q, qi) => (qi !== qIdx ? q : { ...q, ...patch })) }
+      );
       return { ...prev, sections: s };
     });
   };
 
   const deleteQuestion = (sIdx, qIdx) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
-      sections: prev.sections.map((sec, si) => si !== sIdx ? sec : {
-        ...sec, questions: sec.questions.filter((_, qi) => qi !== qIdx),
-      }),
+      sections: prev.sections.map((sec, si) => (si !== sIdx ? sec : { ...sec, questions: sec.questions.filter((_, qi) => qi !== qIdx) })),
     }));
   };
 
   const duplicateQuestion = (sIdx, qIdx) => {
-    setSurvey(prev => {
+    setSurvey((prev) => {
       const sec = prev.sections[sIdx];
       const q = { ...sec.questions[qIdx], id: Date.now() };
       const qs = [...sec.questions];
       qs.splice(qIdx + 1, 0, q);
-      return {
-        ...prev,
-        sections: prev.sections.map((s, si) => si !== sIdx ? s : { ...s, questions: qs }),
-      };
+      return { ...prev, sections: prev.sections.map((s, si) => (si !== sIdx ? s : { ...s, questions: qs })) };
     });
   };
 
@@ -245,724 +225,42 @@ function SurveyManagement() {
   };
 
   const addQuestion = (sIdx) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
-      sections: prev.sections.map((s, si) => si !== sIdx ? s : {
-        ...s, questions: [...s.questions, { id: Date.now(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" }],
-      }),
+      sections: prev.sections.map((s, si) =>
+        si !== sIdx
+          ? s
+          : {
+              ...s,
+              questions: [
+                ...s.questions,
+                { id: Date.now(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
+              ],
+            }
+      ),
     }));
   };
 
-  if (!survey) return (
-    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", background:"#E1ECF7", fontFamily:"Lexend,sans-serif", color:"#6A7282" }}>
-      Loading survey...
-    </div>
-  );
-
-  const currentSection = survey.sections[activeSection];
-  const allQuestions = survey.sections.flatMap((s, si) =>
-    s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title }))
-  );
-
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&display=swap');
-
-        body {
-          background-color: #E1ECF7;
-        }
-
-        .survey-page {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          min-height: 100vh;
-          font-family: "Lexend", sans-serif;
-          margin-left: 229px;
-        }
-
-        @media (max-width: 900px) {
-          .survey-page {
-            margin-left: 0;
-          }
-        }
-
-        /* HEADER */
-        .survey-header {
-          position: sticky;
-          top: 0;
-          z-index: 1000;
-          background: #E1ECF7;
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding: 1rem 2rem 0.5rem;
-        }
-
-        .survey-header::before {
-          content: "";
-          position: absolute;
-          top: -5rem;
-          left: 0;
-          width: 100%;
-          height: 5rem;
-          background: #E1ECF7;
-        }
-
-        .survey-header-left {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .survey-header h1 {
-          font-size: 1.75rem;
-          color: #324D87;
-          margin-bottom: 0.5625rem;
-          margin: 0;
-        }
-
-        .survey-desc {
-          font-size: 0.875rem;
-          color: #6b7280;
-          margin: 0;
-        }
-
-        /* ACTION BUTTONS */
-        .survey-header-actions {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-        }
-
-        .publish-btn {
-          background: #4FA3F7;
-          color: white;
-          border: none;
-          padding: 0.45rem 0.9rem;
-          border-radius: 0.4rem;
-          font-size: 0.75rem;
-          cursor: pointer;
-          margin-top: 1.563rem;
-          font-family: "Lexend", sans-serif;
-        }
-
-        .publish-btn:hover {
-          background: #3d8fd6;
-        }
-
-        .publish-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        /* MAIN LAYOUT */
-        .survey-main {
-          display: grid;
-          grid-template-columns: 18rem 1fr;
-          gap: 1.25rem;
-          padding: 0 2rem;
-        }
-
-        @media (max-width: 860px) {
-          .survey-main {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        /* LEFT TOOL SIDEBAR */
-        .survey-sections {
-          border-radius: 0.75rem;
-          padding: 1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-          position: sticky;
-          top: 7.5rem;
-          height: max-content;
-        }
-
-        .survey-builder {
-          margin-bottom: 3rem;
-        }
-
-        .add-section-btn {
-          background: #e5e7eb;
-          border: none;
-          padding: 0.55rem;
-          border-radius: 0.45rem;
-          font-size: 0.8rem;
-          color: #6b7280;
-          cursor: pointer;
-          font-family: "Lexend", sans-serif;
-        }
-
-        .add-section-btn:hover {
-          background: #d1d5db;
-        }
-
-        /* SECTIONS LIST */
-        .sections-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        /* SECTION ITEM */
-        .section-item {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          background: white;
-          border-radius: 0.5rem;
-          padding: 0.55rem 0.6rem;
-          cursor: pointer;
-          font-size: 0.78rem;
-          color: #374151;
-          border: 0.0625rem solid #e5e7eb;
-          transition: all 0.2s;
-        }
-
-        .section-item:hover {
-          background: #f9fafb;
-        }
-
-        /* SECTION NUMBER */
-        .section-number {
-          width: 1.2rem;
-          height: 1.2rem;
-          border-radius: 50%;
-          background: #e5e7eb;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.7rem;
-          color: #6b7280;
-          flex-shrink: 0;
-        }
-
-        /* ACTIVE SECTION */
-        .section-item.active {
-          border: 0.0625rem solid #3b82f6;
-          background: #eff6ff;
-        }
-
-        .section-item.active .section-number {
-          background: #3b82f6;
-          color: white;
-        }
-
-        /* SECTION HEADER CARD */
-        .section-card {
-          background: white;
-          border-radius: 0.75rem;
-          padding: 1rem;
-          border-left: 0.25rem solid #3b82f6;
-          border: 0.0625rem solid #e5e7eb;
-          margin-bottom: 1rem;
-        }
-
-        .section-top {
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.75rem;
-          color: #6b7280;
-          margin-bottom: 0.5rem;
-        }
-
-        .section-card h2 {
-          margin: 0.2rem 0;
-          font-size: 1.1rem;
-          color: #0f172a;
-        }
-
-        .section-sub {
-          font-size: 0.8rem;
-          color: #6b7280;
-          margin: 0;
-        }
-
-        /* QUESTION CARD */
-        .question-card {
-          background: white;
-          border-radius: 0.75rem;
-          border-left: 0.25rem solid #3b82f6;
-          padding: 1rem;
-          margin-bottom: 0.75rem;
-          border: 0.0625rem solid #e5e7eb;
-          transition: box-shadow 0.2s;
-        }
-
-        .question-card:hover {
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .question-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.5rem;
-          font-size: 0.85rem;
-          font-weight: 500;
-          gap: 1rem;
-        }
-
-        .required-asterisk {
-          color: #ef4444;
-          margin-left: 0.1rem;
-        }
-
-        .question-actions {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          flex-shrink: 0;
-        }
-
-        .question-type {
-          font-size: 0.75rem;
-          padding: 0.2rem 0.4rem;
-          border-radius: 1rem;
-          background: #f3f4f6;
-          border: 1px solid #e5e7eb;
-          font-family: "Lexend", sans-serif;
-        }
-
-        .question-input {
-          width: 100%;
-          max-width: 22rem;
-          padding: 0.35rem;
-          border-radius: 0.4rem;
-          border: 0.0625rem solid #d1d5db;
-          font-family: "Lexend", sans-serif;
-          font-size: 0.875rem;
-        }
-
-        .radio-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          font-size: 0.8rem;
-        }
-
-        .radio-group label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .branch-container {
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 0.5rem;
-        }
-
-        .branch-btn {
-          margin-top: 0.5rem;
-          border: none;
-          background: #f3e8ff;
-          color: #7c3aed;
-          padding: 0.4rem;
-          border-radius: 50%;
-          cursor: pointer;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .branch-btn:hover {
-          background: #e9d5ff;
-        }
-
-        .rating-group {
-          display: flex;
-          gap: 8px;
-          font-size: 24px;
-          color: #d1d5db;
-        }
-
-        .star {
-          cursor: pointer;
-        }
-
-        .star:hover {
-          color: #f5b301;
-        }
-
-        .inner-section-card {
-          margin-top: 0.8rem;
-          margin-bottom: 0.6rem;
-          border-left: 4px solid #6366f1;
-          background: white;
-        }
-
-        .inner-section-card h2 {
-          font-size: 1rem;
-          margin: 0;
-          color: #4f46e5;
-        }
-
-        .branch-page {
-          display: flex;
-          flex-direction: column;
-          gap: 1.2rem;
-        }
-
-        .branch-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .branch-header h2 {
-          margin: 0;
-          font-size: 1.25rem;
-          color: #0f172a;
-        }
-
-        .branch-back {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          background: none;
-          border: none;
-          font-size: 0.9rem;
-          cursor: pointer;
-          font-family: "Lexend", sans-serif;
-          color: #374151;
-          padding: 0.5rem;
-          border-radius: 0.4rem;
-        }
-
-        .branch-back:hover {
-          background: #f3f4f6;
-        }
-
-        .branch-card {
-          background: white;
-          border-radius: 0.75rem;
-          padding: 1.2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          border: 0.0625rem solid #e5e7eb;
-        }
-
-        .branch-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.7rem 0;
-          border-bottom: 0.06rem solid #e5e7eb;
-          gap: 1rem;
-        }
-
-        .branch-row:last-child {
-          border-bottom: none;
-        }
-
-        .branch-question {
-          font-size: 0.85rem;
-          max-width: 60%;
-          color: #374151;
-        }
-
-        .branch-answer {
-          font-size: 0.8rem;
-          color: #6b7280;
-        }
-
-        .branch-select select {
-          padding: 0.35rem 0.5rem;
-          border-radius: 0.4rem;
-          border: 0.06rem solid #d1d5db;
-          font-size: 0.8rem;
-          font-family: "Lexend", sans-serif;
-        }
-      `}</style>
-
-      <AdminSidebar />
-
-      <div className="survey-page">
-        {/* HEADER */}
-        <div className="survey-header">
-          <div className="survey-header-left">
-            <h1 style={{ fontWeight: 700 }}>Survey Management</h1>
-            <p className="survey-desc">
-              Edit questions and publish to reflect on the alumni survey
-            </p>
-          </div>
-
-          <div className="survey-header-actions">
-            {status === "saved" && <span style={{ color:"#00A63E", fontSize:"0.75rem" }}>✓ Published</span>}
-            {status === "error" && <span style={{ color:"#BF0000", fontSize:"0.75rem" }}>Failed to save</span>}
-            {status === "saving" && <span style={{ color:"#6A7282", fontSize:"0.75rem" }}>Saving…</span>}
-            <button className="publish-btn" onClick={handlePublish} disabled={saving}>
-              {saving ? "Publishing…" : status === "saved" ? "✓ Published" : "Publish"}
-            </button>
-          </div>
-        </div>
-
-        <div className="survey-main">
-          {/* SIDEBAR */}
-          <div className="survey-sections">
-            <button
-              className="add-section-btn"
-              onClick={() => {
-                setSurvey(prev => ({
-                  ...prev,
-                  sections: [
-                    ...prev.sections,
-                    { id: Date.now(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] }
-                  ]
-                }));
-                setActiveSection(survey.sections.length);
-              }}
-            >
-              + Add Section
-            </button>
-
-            <div className="sections-list">
-              {survey.sections.map((section, index) => (
-                <div
-                  key={index}
-                  className={`section-item ${activeSection === index ? "active" : ""}`}
-                  onClick={() => { setActiveSection(index); setBranchMode(false); setEditingQ(null); }}
-                >
-                  <div className="section-number">{index + 1}</div>
-                  <span>{section.title}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* BUILDER */}
-          <div className="survey-builder">
-            {branchMode ? (
-              <div className="branch-page">
-                <div className="branch-header">
-                  <button className="branch-back" onClick={() => setBranchMode(false)}>
-                    <FiArrowLeft />
-                    <span>Back to Editor</span>
-                  </button>
-                  <h2>Branching Logic</h2>
-                </div>
-
-                <div className="branch-card">
-                  {allQuestions.filter(q => q.type !== "title").map((q, idx) => {
-                    const key = `${q.sIdx}-${q.qIdx}`;
-                    return (
-                      <div key={idx}>
-                        <div className="branch-question">
-                          {q.label} · {q.sectionTitle} · {TYPE_LABELS[q.type] || q.type}
-                        </div>
-                        <div className="branch-row">
-                          <div className="branch-answer">Next Action:</div>
-                          <div className="branch-select">
-                            <select
-                              value={branches[key] || "next"}
-                              onChange={e => setBranches(prev => ({ ...prev, [key]: e.target.value }))}
-                            >
-                              <option value="next">Continue to next question</option>
-                              {allQuestions.filter(d => d.type !== "title").map((dest, j) => (
-                                <option key={j} value={`${dest.sIdx}-${dest.qIdx}`}>
-                                  Go to: {dest.label}
-                                </option>
-                              ))}
-                              <option value="end">End of form</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="section-card">
-                  <div className="section-top">
-                    <span>Section {activeSection + 1} of {survey.sections.length}</span>
-                  </div>
-                  <h2>{currentSection.title}</h2>
-                  <p className="section-sub">{currentSection.description}</p>
-                </div>
-
-                {currentSection.questions.map((q, qIdx) => {
-                  const isEditing = editingQ?.sIdx === activeSection && editingQ?.qIdx === qIdx;
-
-                  if (q.type === "title") {
-                    return (
-                      <div key={q.id} className="section-card inner-section-card">
-                        {isEditing ? (
-                          <input
-                            value={q.label}
-                            onChange={e => updateQuestion(activeSection, qIdx, { label: e.target.value })}
-                            style={{ width:"100%", border:"none", borderBottom:"2px solid #6366f1", outline:"none", fontFamily:"Lexend", fontSize:"1rem", fontWeight:600, background:"transparent", color:"#4f46e5" }}
-                          />
-                        ) : (
-                          <h2>{q.label}</h2>
-                        )}
-                        <div style={{ marginTop:"0.5rem", display:"flex", gap:"0.4rem" }}>
-                          <button 
-                            onClick={() => setEditingQ(isEditing ? null : { sIdx: activeSection, qIdx })}
-                            style={{ border:"none", background:"#f3f4f6", padding:"0.3rem", borderRadius:"0.3rem", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}
-                          >
-                            <FiEdit2 size={14} />
-                          </button>
-                          <button 
-                            onClick={() => deleteQuestion(activeSection, qIdx)}
-                            style={{ border:"none", background:"#fee2e2", padding:"0.3rem", borderRadius:"0.3rem", cursor:"pointer", color:"#ef4444", display:"flex", alignItems:"center", justifyContent:"center" }}
-                          >
-                            <FiTrash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div key={q.id} className="question-card">
-                      <div className="question-header">
-                        {isEditing ? (
-                          <input
-                            value={q.label}
-                            onChange={e => updateQuestion(activeSection, qIdx, { label: e.target.value })}
-                            style={{ flex:1, border:"none", borderBottom:"2px solid #3b82f6", outline:"none", fontFamily:"Lexend", fontSize:"0.85rem", fontWeight:500, background:"transparent", padding:"0.2rem 0" }}
-                          />
-                        ) : (
-                          <span>
-                            {q.label} {q.required && <span className="required-asterisk">*</span>}
-                          </span>
-                        )}
-
-                        <div className="question-actions">
-                          {isEditing ? (
-                            <select
-                              className="question-type"
-                              value={q.type}
-                              onChange={e => updateQuestion(activeSection, qIdx, { type: e.target.value })}
-                            >
-                              {Object.entries(TYPE_LABELS).filter(([k]) => k !== "title" && k !== "name").map(([k, v]) => (
-                                <option key={k} value={k}>{v}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="question-type">{TYPE_LABELS[q.type] || q.type}</span>
-                          )}
-                          <button onClick={() => setEditingQ(isEditing ? null : { sIdx: activeSection, qIdx })} style={{ border:"none", background:"transparent", cursor:"pointer", padding:"0.2rem", display:"flex", alignItems:"center" }}>
-                            <FiEdit2 size={16} />
-                          </button>
-                          <button onClick={() => duplicateQuestion(activeSection, qIdx)} style={{ border:"none", background:"transparent", cursor:"pointer", padding:"0.2rem", display:"flex", alignItems:"center" }}>
-                            <FiCopy size={16} />
-                          </button>
-                          <button onClick={() => deleteQuestion(activeSection, qIdx)} style={{ border:"none", background:"transparent", cursor:"pointer", color:"#ef4444", padding:"0.2rem", display:"flex", alignItems:"center" }}>
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {isEditing && (
-                        <label style={{ display:"inline-flex", alignItems:"center", gap:"0.4rem", fontSize:"0.75rem", marginBottom:"0.5rem", color:"#6b7280" }}>
-                          <input
-                            type="checkbox"
-                            checked={!!q.required}
-                            onChange={e => updateQuestion(activeSection, qIdx, { required: e.target.checked })}
-                            style={{ accentColor:"#3b82f6" }}
-                          />
-                          Required
-                        </label>
-                      )}
-
-                      {q.type === "short" && (
-                        <>
-                          {isEditing && (
-                            <input
-                              style={{ width:"100%", maxWidth:"22rem", marginBottom:"0.5rem", border:"1px solid #d1d5db", borderRadius:"0.4rem", padding:"0.35rem", fontSize:"0.75rem", fontFamily:"Lexend" }}
-                              placeholder="Placeholder text"
-                              value={q.placeholder || ""}
-                              onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
-                            />
-                          )}
-                          <input className="question-input" placeholder={q.placeholder || "Short answer"} readOnly />
-                        </>
-                      )}
-
-                      {q.type === "long" && (
-                        <>
-                          {isEditing && (
-                            <input
-                              style={{ width:"100%", maxWidth:"22rem", marginBottom:"0.5rem", border:"1px solid #d1d5db", borderRadius:"0.4rem", padding:"0.35rem", fontSize:"0.75rem", fontFamily:"Lexend" }}
-                              placeholder="Placeholder text"
-                              value={q.placeholder || ""}
-                              onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
-                            />
-                          )}
-                          <textarea className="question-input" placeholder={q.placeholder || "Long answer"} rows="3" readOnly />
-                        </>
-                      )}
-
-                      {q.type === "date" && <input type="date" className="question-input" style={{maxWidth:"200px"}} readOnly />}
-
-                      {q.type === "rating" && (
-                        <div className="rating-group">
-                          {[1, 2, 3, 4, 5].map(star => <span key={star} className="star">★</span>)}
-                        </div>
-                      )}
-
-                      {q.type === "multiple" && (
-                        <div className="radio-group">
-                          {(q.options || []).map((opt, oIdx) => (
-                            <label key={oIdx}>
-                              <input type="radio" disabled />
-                              {isEditing ? (
-                                <div style={{ display:"flex", alignItems:"center", gap:"0.5rem", flex:1 }}>
-                                  <input
-                                    value={opt}
-                                    onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
-                                    style={{ flex:1, border:"none", borderBottom:"1px solid #d1d5db", outline:"none", fontSize:"0.8rem", fontFamily:"Lexend", padding:"0.2rem 0" }}
-                                  />
-                                  <button onClick={() => deleteOption(activeSection, qIdx, oIdx)} style={{ border:"none", background:"transparent", cursor:"pointer", color:"#ef4444", padding:"0", display:"flex", alignItems:"center" }}>
-                                    <FiTrash2 size={14} />
-                                  </button>
-                                </div>
-                              ) : (
-                                <span>{opt}</span>
-                              )}
-                            </label>
-                          ))}
-                          {isEditing && (
-                            <button onClick={() => addOption(activeSection, qIdx)} style={{ marginTop:"0.5rem", border:"1px dashed #d1d5db", background:"none", padding:"0.3rem 0.6rem", borderRadius:"0.4rem", fontSize:"0.75rem", color:"#6b7280", cursor:"pointer", fontFamily:"Lexend" }}>
-                              + Add option
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="branch-container">
-                        <button className="branch-btn" onClick={() => setBranchMode(true)}>
-                          <BiGitBranch size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <button 
-                  onClick={() => addQuestion(activeSection)}
-                  style={{ width:"100%", height:"36px", background:"#fff", border:"1px dashed #d1d5db", borderRadius:"0.6rem", fontSize:"0.8rem", color:"#6b7280", cursor:"pointer", marginTop:"0.5rem", fontFamily:"Lexend" }}
-                >
-                  + Add Question
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+    <SurveyMgmtView
+      survey={survey}
+      setSurvey={setSurvey}
+      activeSection={activeSection}
+      setActiveSection={setActiveSection}
+      branchMode={branchMode}
+      setBranchMode={setBranchMode}
+      status={status}
+      saving={saving}
+      branches={branches}
+      setBranches={setBranches}
+      handlePublish={handlePublish}
+      updateQuestion={updateQuestion}
+      deleteQuestion={deleteQuestion}
+      duplicateQuestion={duplicateQuestion}
+      addOption={addOption}
+      updateOption={updateOption}
+      deleteOption={deleteOption}
+      addQuestion={addQuestion}
+    />
   );
 }
-
-export default SurveyManagement;

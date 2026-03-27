@@ -1,158 +1,205 @@
-import React, { useMemo, useState } from 'react';
-import AdminSidebar from '../admin/Adminsidebar';
+import React, { useMemo, useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import AdminSidebar from './components/AdminSidebar';
 import Predictiveanalyticsview from './Views/Predictiveanalyticsview';
 
-const PAGE_TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'departments', label: 'Departments' },
-];
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
-const overviewPrograms = [
-  { code: 'BSCS', current: 85, predicted: 92, change: 7 },
-  { code: 'BSIT', current: 78, predicted: 86, change: 8 },
-  { code: 'BSIS', current: 76, predicted: 84, change: 8 },
-  { code: 'BSEMC', current: 74, predicted: 82, change: 8 },
-  { code: 'BSCE', current: 73, predicted: 81, change: 8 },
-  { code: 'BSCpE', current: 72, predicted: 80, change: 8 },
-];
-
-const departmentCards = [
-  {
-    key: 'seca',
-    code: 'SECA',
-    name: 'School of Engineering and Computer Studies',
-    current: 82,
-    predicted: 89,
-    change: 7,
-    programs: 2,
-    color: 'blue',
-  },
-  {
-    key: 'sbma',
-    code: 'SBMA',
-    name: 'School of Business Management and Accountancy',
-    current: 76,
-    predicted: 80,
-    change: 4,
-    programs: 2,
-    color: 'amber',
-  },
-  {
-    key: 'sase',
-    code: 'SASE',
-    name: 'School of Arts, Sciences and Education',
-    current: 80,
-    predicted: 83,
-    change: 3,
-    programs: 2,
-    color: 'violet',
-  },
-];
-
-const departmentTrends = {
-  seca: {
-    title: 'SECA Detailed Trends',
-    subtitle: 'Predicted alignment growth from 2024 to 2029',
-    summaryTitle: 'Career to Degree Alignment',
-    summarySubtitle: 'Predicted alignment rates for SECA',
-    trend: [
-      { year: '2024', value: 82 },
-      { year: '2025', value: 84 },
-      { year: '2026', value: 85 },
-      { year: '2027', value: 87 },
-      { year: '2028', value: 88 },
-      { year: '2029', value: 89 },
-    ],
-  },
-  sbma: {
-    title: 'SBMA Detailed Trends',
-    subtitle: 'Predicted alignment growth from 2024 to 2029',
-    summaryTitle: 'Career to Degree Alignment',
-    summarySubtitle: 'Predicted alignment rates for SBMA',
-    trend: [
-      { year: '2024', value: 76 },
-      { year: '2025', value: 77 },
-      { year: '2026', value: 78 },
-      { year: '2027', value: 79 },
-      { year: '2028', value: 79 },
-      { year: '2029', value: 80 },
-    ],
-  },
-  sase: {
-    title: 'SASE Detailed Trends',
-    subtitle: 'Predicted alignment growth from 2024 to 2029',
-    summaryTitle: 'Career to Degree Alignment',
-    summarySubtitle: 'Predicted alignment rates for SASE',
-    trend: [
-      { year: '2024', value: 80 },
-      { year: '2025', value: 80 },
-      { year: '2026', value: 81 },
-      { year: '2027', value: 82 },
-      { year: '2028', value: 82 },
-      { year: '2029', value: 83 },
-    ],
-  },
-};
-
-const pageContent = {
-  overview: {
-    sectionTitle: 'School of Engineering and Computer Studies',
-    sectionSubtitle: 'Program-level career alignment predictions',
-  },
-  departments: {
-    sectionTitle: 'Career Alignment by Department',
-    sectionSubtitle: 'Select a department to view program-level predictions',
-  },
+// Department metadata (colors, full names) — not from DB
+const DEPARTMENT_META = {
+  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies', color: 'blue' },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber' },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education', color: 'violet' },
 };
 
 const Adminpredictiveanalytics = () => {
   const [activePage, setActivePage] = useState('overview');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
-  const breadcrumbTabs = useMemo(() => {
-    const base = [...PAGE_TABS];
-    if (selectedDepartment) {
-      const currentDept = departmentCards.find((card) => card.key === selectedDepartment);
-      if (currentDept) {
-        base.push({ key: currentDept.key, label: currentDept.code, isDepartment: true });
+  // Raw predictions from Supabase
+  const [predictions, setPredictions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch predictions once on mount
+  useEffect(() => {
+    const fetchPredictions = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from('predictions')
+          .select('*')
+          .order('year', { ascending: true });
+        if (error) throw error;
+        setPredictions(data || []);
+      } catch (err) {
+        console.error('Failed to fetch predictions:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    }
-    return base;
-  }, [selectedDepartment]);
+    };
 
-  const handleTabChange = (key, isDepartment = false) => {
-    if (key === 'overview') {
-      setActivePage('overview');
-      setSelectedDepartment(null);
-      return;
-    }
+    fetchPredictions();
+  }, []);
 
-    if (key === 'departments') {
-      setActivePage('departments');
-      setSelectedDepartment(null);
-      return;
-    }
+  // ── Derive overviewTrend ──────────────────────────────────────────────────
+  // Average predicted_rate across all programs per year
+  const overviewTrend = useMemo(() => {
+    if (!predictions.length) return [];
 
-    if (isDepartment) {
-      setActivePage('department-detail');
-      setSelectedDepartment(key);
-    }
+    const byYear = {};
+    predictions.forEach(({ year, predicted_rate }) => {
+      if (!byYear[year]) byYear[year] = [];
+      byYear[year].push(predicted_rate);
+    });
+
+    return Object.entries(byYear)
+      .sort(([a], [b]) => a - b)
+      .map(([year, rates]) => ({
+        year: String(year),
+        value: Math.round(rates.reduce((s, r) => s + r, 0) / rates.length),
+      }));
+  }, [predictions]);
+
+  // ── Derive departmentCards ────────────────────────────────────────────────
+  // One card per department: current = rate at earliest year, predicted = rate at latest year
+  const departmentCards = useMemo(() => {
+    if (!predictions.length) return [];
+
+    const byDept = {};
+    predictions.forEach((row) => {
+      if (!byDept[row.department]) byDept[row.department] = [];
+      byDept[row.department].push(row);
+    });
+
+    return Object.entries(byDept).map(([dept, rows]) => {
+      const sorted = [...rows].sort((a, b) => a.year - b.year);
+      const current = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
+      const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
+      const meta      = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
+
+      // Count unique programs in this department
+      const programs = new Set(rows.map((r) => r.program)).size;
+
+      return {
+        key: meta.key,
+        code: dept,
+        name: meta.name,
+        color: meta.color,
+        current,
+        predicted,
+        change: predicted - current,
+        programs,
+      };
+    });
+  }, [predictions]);
+
+  // ── Derive departmentTrends (for page 1.3) ────────────────────────────────
+  // Per department: list of programs with current/predicted/change
+  const departmentTrends = useMemo(() => {
+    if (!predictions.length) return {};
+
+    const byDept = {};
+    predictions.forEach((row) => {
+      if (!byDept[row.department]) byDept[row.department] = {};
+      if (!byDept[row.department][row.program]) byDept[row.department][row.program] = [];
+      byDept[row.department][row.program].push(row);
+    });
+
+    const result = {};
+    Object.entries(byDept).forEach(([dept, programs]) => {
+      const meta = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept };
+
+      const programList = Object.entries(programs).map(([prog, rows]) => {
+        const sorted    = [...rows].sort((a, b) => a.year - b.year);
+        const current   = Math.round(sorted[0].current_rate);
+        const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
+        return { code: prog, current, predicted, change: predicted - current };
+      });
+
+      result[meta.key] = {
+        title: meta.name,
+        subtitle: `Program-level predictions ${predictions[0]?.year ?? 2025} → ${predictions[predictions.length - 1]?.year ?? 2030}`,
+        programs: programList,
+      };
+    });
+
+    return result;
+  }, [predictions]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleTabChange = (key) => {
+    setActivePage(key);
+    setSelectedDepartment(null);
   };
 
-  const handleDepartmentClick = (departmentKey) => {
-    setSelectedDepartment(departmentKey);
+  const handleDepartmentClick = (deptKey) => {
+    setSelectedDepartment(deptKey);
     setActivePage('department-detail');
   };
 
-  const selectedDepartmentData = selectedDepartment ? departmentTrends[selectedDepartment] : null;
+  const selectedDepartmentData = selectedDepartment
+    ? departmentTrends[selectedDepartment] ?? null
+    : null;
+
+  const breadcrumbTabs = useMemo(() => {
+    const base = [
+      { key: 'overview',    label: 'Overview' },
+      { key: 'departments', label: 'Departments' },
+    ];
+    if (selectedDepartment) {
+      const dept = departmentCards.find((c) => c.key === selectedDepartment);
+      base.push({
+        key: selectedDepartment,
+        label: dept?.code || 'Detail',
+        isDepartment: true,
+      });
+    }
+    return base;
+  }, [selectedDepartment, departmentCards]);
+
+  // ── Loading / error states ────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div className="pa-layout">
+        <AdminSidebar activePage="predictive-analytics" />
+        <main className="pa-main">
+          <p style={{ color: '#62748E', marginTop: 48 }}>Loading predictions…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="pa-layout">
+        <AdminSidebar activePage="predictive-analytics" />
+        <main className="pa-main">
+          <p style={{ color: '#EF4444', marginTop: 48 }}>
+            Failed to load predictions: {error}
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Predictiveanalyticsview
       activePage={activePage}
       setActivePage={handleTabChange}
       pageTabs={breadcrumbTabs}
-      pageContent={pageContent}
-      overviewPrograms={overviewPrograms}
+      overviewTrend={overviewTrend}
+      overviewChartTitle="Career to Degree Alignment"
+      overviewChartSubtitle="Predicted alignment rates for all departments"
       departmentCards={departmentCards}
       selectedDepartment={selectedDepartment}
       selectedDepartmentData={selectedDepartmentData}

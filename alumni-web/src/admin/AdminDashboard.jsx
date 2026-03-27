@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
-import AdminSidebar from './AdminSidebar';
+import AdminSidebar from "./components/AdminSidebar";
 import { supabase } from "../lib/supabase";
 // import { supabaseAdmin } from "../lib/supabaseAdmin";
 

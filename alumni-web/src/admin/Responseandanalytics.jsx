@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import AdminSidebar from '../admin/Adminsidebar';
+import AdminSidebar from './components/AdminSidebar';
 import Responseanalyticsview from './views/Responseanalyticsview';
 import { supabase } from '../lib/supabase';
 

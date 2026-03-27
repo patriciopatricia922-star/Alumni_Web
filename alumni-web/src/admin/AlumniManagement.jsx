@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import AdminSidebar from "./AdminSidebar";
+import AdminSidebar from "./components/AdminSidebar";
 import AlumniManagementView from "./views/Alumnimanagementview";
 
 const PER_PAGE = 5;

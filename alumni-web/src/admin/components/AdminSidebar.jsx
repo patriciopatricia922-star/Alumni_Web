@@ -6,8 +6,8 @@ import { RiSurveyFill, RiOrganizationChart } from 'react-icons/ri';
 import { SiGoogleanalytics } from 'react-icons/si';
 import { BsFillPeopleFill } from 'react-icons/bs';
 import { FiLogOut, FiMenu, FiX } from 'react-icons/fi';
-import { supabase } from '../lib/supabase';
-import sidebarLogo from '../assets/sidebar_alumnAI.svg';
+import { supabase } from '../../lib/supabase';
+import sidebarLogo  from '../../assets/new_lg.svg';
 
 const menuItems = [
   { path: '/admin/admin-dashboard',              icon: TbLayoutDashboardFilled, label: 'Dashboard'            },
@@ -77,7 +77,7 @@ function AdminSidebar() {
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ width: '100px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
+          style={{ marginLeft: '14%',width: '190px', height: 'auto', objectFit: 'contain', flexShrink: 0 }}
         />
       </div>
 
@@ -85,7 +85,7 @@ function AdminSidebar() {
       <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)', boxShadow: '0px 4px 4px rgba(0,0,0,0.35)' }} />
 
       {/* Menu */}
-      <div style={{ padding: '20px 9px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ padding: '29px 9px 0', display: 'flex', flexDirection: 'column', gap: '9px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {menuItems.map(({ path, icon: Icon, label, marginTop }) => {
             const isActive = location.pathname === path;
