@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  FaBold, FaItalic, FaUnderline, 
+  FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify,
+  FaImage, FaTrash, FaMapMarkerAlt, FaEnvelope, FaCalendarAlt, 
+  FaLink, FaListUl, FaListOl, FaUndo, FaRedo
+} from 'react-icons/fa';
 import '../styles/ContentMgmt.css';
-
 
 const TabIcon = ({ type, active }) => {
   const c = active ? '#FFFFFF' : '#0A0A0A';
@@ -60,6 +65,271 @@ const RestoreIcon = () => (
   </svg>
 );
 
+// Fixed Rich Text Editor Component
+const RichTextEditor = ({ value, onChange, placeholder }) => {
+  const editorRef = useRef(null);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  useEffect(() => {
+    if (editorRef.current && value !== editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = value || '';
+    }
+  }, [value]);
+
+  const saveToHistory = (content) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(content);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const execCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
+    const content = editorRef.current.innerHTML;
+    saveToHistory(content);
+    onChange(content);
+    editorRef.current.focus();
+  };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      const content = history[newIndex];
+      editorRef.current.innerHTML = content;
+      onChange(content);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      const content = history[newIndex];
+      editorRef.current.innerHTML = content;
+      onChange(content);
+    }
+  };
+
+  const handleInput = () => {
+    const content = editorRef.current.innerHTML;
+    saveToHistory(content);
+    onChange(content);
+  };
+
+  const insertIcon = (iconHtml) => {
+    execCommand('insertHTML', iconHtml);
+  };
+
+  const icons = {
+    location: '<span class="rich-icon" contenteditable="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>📍 </span>',
+    email: '<span class="rich-icon" contenteditable="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>✉️ </span>',
+    calendar: '<span class="rich-icon" contenteditable="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>📅 </span>',
+    link: '<span class="rich-icon" contenteditable="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>🔗 </span>',
+  };
+
+  return (
+    <div className="rich-text-editor">
+      <div className="rich-text-toolbar">
+        <div className="toolbar-group">
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
+            <FaBold size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
+            <FaItalic size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
+            <FaUnderline size={14} />
+          </button>
+        </div>
+
+        <div className="toolbar-group">
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
+            <FaAlignLeft size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
+            <FaAlignCenter size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
+            <FaAlignRight size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyFull')} title="Justify">
+            <FaAlignJustify size={14} />
+          </button>
+        </div>
+
+        <div className="toolbar-group">
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('insertUnorderedList')} title="Bullet List">
+            <FaListUl size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => execCommand('insertOrderedList')} title="Numbered List">
+            <FaListOl size={14} />
+          </button>
+        </div>
+
+        <div className="toolbar-group">
+          <select
+            className="toolbar-select"
+            onChange={(e) => {
+              if (e.target.value) {
+                execCommand('fontSize', e.target.value);
+                e.target.value = '';
+              }
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>Font Size</option>
+            <option value="1">Small</option>
+            <option value="3">Normal</option>
+            <option value="5">Large</option>
+            <option value="6">Extra Large</option>
+          </select>
+        </div>
+
+        <div className="toolbar-group">
+          <button type="button" className="toolbar-btn" onClick={() => insertIcon(icons.location)} title="Insert Location Icon">
+            <FaMapMarkerAlt size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => insertIcon(icons.email)} title="Insert Email Icon">
+            <FaEnvelope size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => insertIcon(icons.calendar)} title="Insert Calendar Icon">
+            <FaCalendarAlt size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={() => insertIcon(icons.link)} title="Insert Link Icon">
+            <FaLink size={14} />
+          </button>
+        </div>
+
+        <div className="toolbar-group">
+          <button type="button" className="toolbar-btn" onClick={handleUndo} title="Undo">
+            <FaUndo size={14} />
+          </button>
+          <button type="button" className="toolbar-btn" onClick={handleRedo} title="Redo">
+            <FaRedo size={14} />
+          </button>
+        </div>
+      </div>
+
+      <div
+        ref={editorRef}
+        className="rich-text-content"
+        contentEditable="true"
+        onInput={handleInput}
+        data-placeholder={placeholder}
+        suppressContentEditableWarning={true}
+      />
+    </div>
+  );
+};
+
+// Rich Text Editor for Title (simpler version)
+const RichTextTitle = ({ value, onChange, placeholder }) => {
+  const editorRef = useRef(null);
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  useEffect(() => {
+    if (editorRef.current && value !== editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = value || '';
+    }
+  }, [value]);
+
+  const saveToHistory = (content) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(content);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const execCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
+    const content = editorRef.current.innerHTML;
+    saveToHistory(content);
+    onChange(content);
+    editorRef.current.focus();
+  };
+
+  const handleInput = () => {
+    const content = editorRef.current.innerHTML;
+    saveToHistory(content);
+    onChange(content);
+  };
+
+  return (
+    <div className="rich-text-title-editor">
+      <div className="rich-text-title-toolbar">
+        <button type="button" className="toolbar-btn-small" onClick={() => execCommand('bold')} title="Bold">
+          <FaBold size={12} />
+        </button>
+        <button type="button" className="toolbar-btn-small" onClick={() => execCommand('italic')} title="Italic">
+          <FaItalic size={12} />
+        </button>
+        <button type="button" className="toolbar-btn-small" onClick={() => execCommand('underline')} title="Underline">
+          <FaUnderline size={12} />
+        </button>
+      </div>
+      <div
+        ref={editorRef}
+        className="rich-text-title-content"
+        contentEditable="true"
+        onInput={handleInput}
+        data-placeholder={placeholder}
+        suppressContentEditableWarning={true}
+      />
+    </div>
+  );
+};
+
+// Image Upload Component
+const ImageUpload = ({ onImageUpload, currentImage }) => {
+  const [preview, setPreview] = useState(currentImage || null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+        onImageUpload(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="image-upload-container">
+      {preview && (
+        <div className="image-preview">
+          <img src={preview} alt="Preview" />
+          <button
+            type="button"
+            className="remove-image-btn"
+            onClick={() => {
+              setPreview(null);
+              onImageUpload(null);
+            }}
+          >
+            <FaTrash size={12} />
+          </button>
+        </div>
+      )}
+      <div className="image-upload-area" onClick={() => document.getElementById('image-input').click()}>
+        <FaImage size={20} />
+        <span>{preview ? 'Change Image' : 'Upload Image'}</span>
+        <input
+          id="image-input"
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          style={{ display: 'none' }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
 
@@ -117,11 +387,19 @@ const AnnouncementModal = ({ open, onClose, mode = 'create' }) => {
     >
       <div className="modal-form">
         <Field label="Announcement Title" required>
-          <input className="field-input" placeholder="Enter announcement title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <RichTextTitle
+            value={form.title}
+            onChange={(content) => s('title', content)}
+            placeholder="Enter announcement title..."
+          />
         </Field>
 
         <Field label="Content" required>
-          <textarea className="field-textarea" placeholder="Enter announcement content" value={form.content} onChange={(e) => s('content', e.target.value)} rows={3} />
+          <RichTextEditor
+            value={form.content}
+            onChange={(content) => s('content', content)}
+            placeholder="Enter announcement content..."
+          />
         </Field>
 
         <div className="field-grid">
@@ -161,6 +439,7 @@ const EventModal = ({ open, onClose, mode = 'create' }) => {
     startTime: '',
     endTime: '',
     location: '',
+    image: null,
   });
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -174,11 +453,26 @@ const EventModal = ({ open, onClose, mode = 'create' }) => {
     >
       <div className="modal-form">
         <Field label="Event Title" required>
-          <input className="field-input" placeholder="Enter event title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <RichTextTitle
+            value={form.title}
+            onChange={(content) => s('title', content)}
+            placeholder="Enter event title..."
+          />
+        </Field>
+
+        <Field label="Event Image">
+          <ImageUpload
+            currentImage={form.image}
+            onImageUpload={(image) => s('image', image)}
+          />
         </Field>
 
         <Field label="Description" required>
-          <textarea className="field-textarea" placeholder="Enter event description" value={form.description} onChange={(e) => s('description', e.target.value)} rows={3} />
+          <RichTextEditor
+            value={form.description}
+            onChange={(content) => s('description', content)}
+            placeholder="Enter event description..."
+          />
         </Field>
 
         <div className="field-grid">
@@ -209,7 +503,11 @@ const EventModal = ({ open, onClose, mode = 'create' }) => {
         </div>
 
         <Field label="Location" required>
-          <input className="field-input" placeholder="Enter event location" value={form.location} onChange={(e) => s('location', e.target.value)} />
+          <RichTextTitle
+            value={form.location}
+            onChange={(content) => s('location', content)}
+            placeholder="Enter event location..."
+          />
         </Field>
 
         <ModalFooter onCancel={onClose} createLabel={mode === 'edit' ? 'Update Event' : 'Create Event'} />
@@ -225,6 +523,7 @@ const JobModal = ({ open, onClose, mode = 'create' }) => {
     location: '',
     category: 'Full-time',
     expiry: '',
+    image: null,
   });
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -238,16 +537,35 @@ const JobModal = ({ open, onClose, mode = 'create' }) => {
     >
       <div className="modal-form">
         <Field label="Job Title" required>
-          <input className="field-input" placeholder="Enter job title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <RichTextTitle
+            value={form.title}
+            onChange={(content) => s('title', content)}
+            placeholder="Enter job title..."
+          />
+        </Field>
+
+        <Field label="Job Image">
+          <ImageUpload
+            currentImage={form.image}
+            onImageUpload={(image) => s('image', image)}
+          />
         </Field>
 
         <Field label="Description" required>
-          <textarea className="field-textarea" placeholder="Enter job description" value={form.description} onChange={(e) => s('description', e.target.value)} rows={3} />
+          <RichTextEditor
+            value={form.description}
+            onChange={(content) => s('description', content)}
+            placeholder="Enter job description..."
+          />
         </Field>
 
         <div className="field-grid">
           <Field label="Location" required>
-            <input className="field-input" placeholder="Enter job location" value={form.location} onChange={(e) => s('location', e.target.value)} />
+            <RichTextTitle
+              value={form.location}
+              onChange={(content) => s('location', content)}
+              placeholder="Enter job location..."
+            />
           </Field>
 
           <Field label="Category" required>
@@ -278,6 +596,7 @@ const DiscountModal = ({ open, onClose, mode = 'create' }) => {
     percentage: '',
     audience: 'All Alumni',
     expiry: '',
+    image: null,
   });
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -291,11 +610,26 @@ const DiscountModal = ({ open, onClose, mode = 'create' }) => {
     >
       <div className="modal-form">
         <Field label="Discount Title" required>
-          <input className="field-input" placeholder="Enter discount title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <RichTextTitle
+            value={form.title}
+            onChange={(content) => s('title', content)}
+            placeholder="Enter discount title..."
+          />
+        </Field>
+
+        <Field label="Discount Image">
+          <ImageUpload
+            currentImage={form.image}
+            onImageUpload={(image) => s('image', image)}
+          />
         </Field>
 
         <Field label="Description" required>
-          <textarea className="field-textarea" placeholder="Enter discount description" value={form.description} onChange={(e) => s('description', e.target.value)} rows={3} />
+          <RichTextEditor
+            value={form.description}
+            onChange={(content) => s('description', content)}
+            placeholder="Enter discount description..."
+          />
         </Field>
 
         <div className="field-grid">

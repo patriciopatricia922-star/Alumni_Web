@@ -135,21 +135,55 @@ export default function SurveyManagement() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
   const [branches, setBranches] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
+  const [confirmDialog, setConfirmDialog] = useState({ show: false, message: "", onConfirm: null, itemName: "" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "" });
+    }, 3000);
+  };
+
+  const showConfirm = (message, onConfirm, itemName = "") => {
+    setConfirmDialog({ show: true, message, onConfirm, itemName });
+  };
+
+  const handleConfirm = () => {
+    if (confirmDialog.onConfirm) {
+      confirmDialog.onConfirm();
+    }
+    setConfirmDialog({ show: false, message: "", onConfirm: null, itemName: "" });
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmDialog({ show: false, message: "", onConfirm: null, itemName: "" });
+  };
 
   useEffect(() => {
     const load = async () => {
-      const { data, error } = await supabaseAdmin
-        .from("survey_config")
-        .select("id, config")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
+      setLoading(true);
+      try {
+        const { data, error } = await supabaseAdmin
+          .from("survey_config")
+          .select("id, config")
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error || !data?.config?.sections?.length) {
+        if (error || !data?.config?.sections?.length) {
+          setSurvey(DEFAULT_SURVEY);
+        } else {
+          setConfigId(data.id);
+          setSurvey(data.config);
+        }
+      } catch (error) {
+        console.error("Error loading survey:", error);
         setSurvey(DEFAULT_SURVEY);
-      } else {
-        setConfigId(data.id);
-        setSurvey(data.config);
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -174,9 +208,11 @@ export default function SurveyManagement() {
         if (data) setConfigId(data.id);
       }
       setStatus("saved");
+      showToast("Survey published successfully!", "success");
       setTimeout(() => setStatus(""), 3000);
     } catch {
       setStatus("error");
+      showToast("Failed to publish survey", "error");
     } finally {
       setSaving(false);
     }
@@ -184,33 +220,84 @@ export default function SurveyManagement() {
 
   const updateQuestion = (sIdx, qIdx, patch) => {
     setSurvey((prev) => {
-      const s = prev.sections.map((sec, si) =>
-        si !== sIdx ? sec : { ...sec, questions: sec.questions.map((q, qi) => (qi !== qIdx ? q : { ...q, ...patch })) }
-      );
-      return { ...prev, sections: s };
+      const updatedSections = prev.sections.map((sec, si) => {
+        if (si !== sIdx) return sec;
+        const updatedQuestions = sec.questions.map((q, qi) => {
+          if (qi !== qIdx) return q;
+          return { ...q, ...patch };
+        });
+        return { ...sec, questions: updatedQuestions };
+      });
+      return { ...prev, sections: updatedSections };
     });
+    showToast("Question updated successfully!", "success");
+    setEditingQuestion(null);
   };
 
   const deleteQuestion = (sIdx, qIdx) => {
-    setSurvey((prev) => ({
-      ...prev,
-      sections: prev.sections.map((sec, si) => (si !== sIdx ? sec : { ...sec, questions: sec.questions.filter((_, qi) => qi !== qIdx) })),
-    }));
+    const questionLabel = survey.sections[sIdx].questions[qIdx].label;
+    showConfirm(
+      `Are you sure you want to delete this question?`,
+      () => {
+        setSurvey((prev) => ({
+          ...prev,
+          sections: prev.sections.map((sec, si) => 
+            si !== sIdx ? sec : { ...sec, questions: sec.questions.filter((_, qi) => qi !== qIdx) }
+          ),
+        }));
+        showToast("Question has been deleted successfully!", "success");
+      },
+      questionLabel
+    );
   };
 
   const duplicateQuestion = (sIdx, qIdx) => {
     setSurvey((prev) => {
       const sec = prev.sections[sIdx];
-      const q = { ...sec.questions[qIdx], id: Date.now() };
-      const qs = [...sec.questions];
-      qs.splice(qIdx + 1, 0, q);
-      return { ...prev, sections: prev.sections.map((s, si) => (si !== sIdx ? s : { ...s, questions: qs })) };
+      const originalQ = sec.questions[qIdx];
+      const duplicatedQ = { 
+        ...originalQ, 
+        id: Date.now(),
+        label: `${originalQ.label} (Copy)`
+      };
+      const updatedQuestions = [...sec.questions];
+      updatedQuestions.splice(qIdx + 1, 0, duplicatedQ);
+      const updatedSections = prev.sections.map((s, si) => 
+        si !== sIdx ? s : { ...s, questions: updatedQuestions }
+      );
+      return { ...prev, sections: updatedSections };
     });
+    showToast("Question duplicated successfully!", "success");
+  };
+
+  const deleteSection = (sIdx) => {
+    const sectionTitle = survey.sections[sIdx].title;
+    const questionCount = survey.sections[sIdx].questions.length;
+    const warningMessage = questionCount > 0 
+      ? `This section contains ${questionCount} question(s) that will also be deleted.`
+      : `This section is empty.`;
+    
+    showConfirm(
+      `Are you sure you want to delete the section "${sectionTitle}"?`,
+      () => {
+        setSurvey((prev) => {
+          const updatedSections = prev.sections.filter((_, si) => si !== sIdx);
+          // Adjust active section if needed
+          if (activeSection >= updatedSections.length) {
+            setActiveSection(Math.max(0, updatedSections.length - 1));
+          }
+          return { ...prev, sections: updatedSections };
+        });
+        showToast(`Section "${sectionTitle}" has been deleted successfully!`, "success");
+      },
+      sectionTitle
+    );
   };
 
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
     updateQuestion(sIdx, qIdx, { options: [...(q.options || []), "New Option"] });
+    showToast("Option added successfully!", "success");
   };
 
   const updateOption = (sIdx, qIdx, oIdx, val) => {
@@ -222,6 +309,7 @@ export default function SurveyManagement() {
   const deleteOption = (sIdx, qIdx, oIdx) => {
     const opts = survey.sections[sIdx].questions[qIdx].options.filter((_, i) => i !== oIdx);
     updateQuestion(sIdx, qIdx, { options: opts });
+    showToast("Option deleted successfully!", "success");
   };
 
   const addQuestion = (sIdx) => {
@@ -239,7 +327,39 @@ export default function SurveyManagement() {
             }
       ),
     }));
+    showToast("New question added successfully!", "success");
   };
+
+  const addSection = () => {
+    setSurvey((prev) => ({
+      ...prev,
+      sections: [
+        ...prev.sections,
+        { id: Date.now(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
+      ],
+    }));
+    setActiveSection(survey.sections.length);
+    showToast("New section added successfully!", "success");
+  };
+
+  const startEditing = (question, sIdx, qIdx) => {
+    setEditingQuestion({ ...question, sIdx, qIdx });
+  };
+
+  const cancelEditing = () => {
+    setEditingQuestion(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="survey-loading-container">
+        <div className="survey-loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading survey data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SurveyMgmtView
@@ -261,6 +381,15 @@ export default function SurveyManagement() {
       updateOption={updateOption}
       deleteOption={deleteOption}
       addQuestion={addQuestion}
+      addSection={addSection}
+      deleteSection={deleteSection}
+      editingQuestion={editingQuestion}
+      startEditing={startEditing}
+      cancelEditing={cancelEditing}
+      toast={toast}
+      confirmDialog={confirmDialog}
+      handleConfirm={handleConfirm}
+      handleCancelConfirm={handleCancelConfirm}
     />
   );
 }

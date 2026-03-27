@@ -1,4 +1,5 @@
-import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2 } from "react-icons/fi";
+import { useState } from "react";
+import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2, FiSave, FiX, FiPlus } from "react-icons/fi";
 import { BiGitBranch } from "react-icons/bi";
 import AdminSidebar from '../components/AdminSidebar';
 import "../styles/Surveymgmt.css";
@@ -12,6 +13,14 @@ const TYPE_LABELS = {
   name: "Name Fields",
   title: "Section Title",
 };
+
+const QUESTION_TYPES = [
+  { value: "short", label: "Short Answer" },
+  { value: "long", label: "Long Answer" },
+  { value: "multiple", label: "Multiple Choice" },
+  { value: "date", label: "Date" },
+  { value: "rating", label: "Rating (1–5)" },
+];
 
 export default function SurveyMgmtView({
   survey,
@@ -28,16 +37,58 @@ export default function SurveyMgmtView({
   updateQuestion,
   deleteQuestion,
   duplicateQuestion,
-  addOption,
-  updateOption,
-  deleteOption,
   addQuestion,
+  addSection,
+  deleteSection,
+  editingQuestion,
+  startEditing,
+  cancelEditing,
+  toast = { show: false, message: "", type: "success" },
+  confirmDialog = { show: false, message: "", onConfirm: null, itemName: "" },
+  handleConfirm = () => {},
+  handleCancelConfirm = () => {},
 }) {
+  const [editForm, setEditForm] = useState({ 
+    label: "", 
+    type: "short", 
+    required: false, 
+    placeholder: "", 
+    options: [],
+    sIdx: null,
+    qIdx: null
+  });
+
+  const handleEditClick = (question, sIdx, qIdx) => {
+    setEditForm({
+      sIdx: sIdx,
+      qIdx: qIdx,
+      label: question.label,
+      type: question.type,
+      required: question.required || false,
+      placeholder: question.placeholder || "",
+      options: question.options || []
+    });
+    if (startEditing) startEditing(question, sIdx, qIdx);
+  };
+
+  const handleSaveEdit = () => {
+    const { sIdx, qIdx, label, type, required, placeholder, options } = editForm;
+    if (updateQuestion && sIdx !== null && qIdx !== null) {
+      updateQuestion(sIdx, qIdx, { label, type, required, placeholder, options });
+    }
+  };
+
   if (!survey) {
     return (
-      <div className="survey-loading" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: "#E1ECF7", fontFamily: "Lexend,sans-serif", color: "#6A7282" }}>
-        Loading survey...
-      </div>
+      <>
+        <AdminSidebar />
+        <div className="survey-loading-container">
+          <div className="survey-loading-spinner">
+            <div className="spinner"></div>
+            <p>Loading survey data...</p>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -50,18 +101,51 @@ export default function SurveyMgmtView({
     <>
       <AdminSidebar />
 
+      {/* Toast Notification */}
+      {toast && toast.show && (
+        <div className={`toast-notification toast-${toast.type || "success"}`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog && confirmDialog.show && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h3>Confirm Deletion</h3>
+            </div>
+            <div className="modal-body">
+              <p>{confirmDialog.message}</p>
+              {confirmDialog.itemName && (
+                <p className="modal-item-name">"{confirmDialog.itemName}"</p>
+              )}
+              <p className="modal-warning">This action cannot be undone.</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn modal-btn-cancel" onClick={handleCancelConfirm}>
+                Cancel
+              </button>
+              <button className="modal-btn modal-btn-confirm" onClick={handleConfirm}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="survey-page">
         {/* HEADER */}
         <div className="survey-header">
           <div className="survey-header-left">
-            <h1 style={{ fontWeight: 700 }}>Survey Management</h1>
+            <h1>Survey Management</h1>
             <p className="survey-desc">Edit questions and publish to reflect on the alumni survey</p>
           </div>
 
           <div className="survey-header-actions">
-            {status === "saved" && <span style={{ color: "#00A63E", fontSize: "0.75rem" }}>✓ Published</span>}
-            {status === "error" && <span style={{ color: "#BF0000", fontSize: "0.75rem" }}>Failed to save</span>}
-            {status === "saving" && <span style={{ color: "#6A7282", fontSize: "0.75rem" }}>Saving…</span>}
+            {status === "saved" && <span className="status-saved">✓ Published</span>}
+            {status === "error" && <span className="status-error">Failed to save</span>}
+            {status === "saving" && <span className="status-saving">Saving…</span>}
             <button className="publish-btn" onClick={handlePublish} disabled={saving}>
               {saving ? "Publishing…" : status === "saved" ? "✓ Published" : "Publish"}
             </button>
@@ -71,20 +155,9 @@ export default function SurveyMgmtView({
         <div className="survey-main">
           {/* SIDEBAR */}
           <div className="survey-sections">
-            <button
-              className="add-section-btn"
-              onClick={() => {
-                setSurvey((prev) => ({
-                  ...prev,
-                  sections: [
-                    ...prev.sections,
-                    { id: Date.now(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
-                  ],
-                }));
-                setActiveSection(survey.sections.length);
-              }}
-            >
-              + Add Section
+            <button className="add-section-btn" onClick={addSection}>
+              <FiPlus size={16} />
+              Add Section
             </button>
 
             <div className="sections-list">
@@ -95,10 +168,21 @@ export default function SurveyMgmtView({
                   onClick={() => {
                     setActiveSection(index);
                     setBranchMode(false);
+                    if (cancelEditing) cancelEditing();
                   }}
                 >
                   <div className="section-number">{index + 1}</div>
-                  <span>{section.title}</span>
+                  <span className="section-title">{section.title}</span>
+                  <button 
+                    className="section-delete-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (deleteSection) deleteSection(index);
+                    }}
+                    title="Delete section"
+                  >
+                    <FiTrash2 size={14} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -110,7 +194,7 @@ export default function SurveyMgmtView({
               <div className="branch-page">
                 <div className="branch-header">
                   <button className="branch-back" onClick={() => setBranchMode(false)}>
-                    <FiArrowLeft />
+                    <FiArrowLeft size={18} />
                     <span>Back to Editor</span>
                   </button>
                   <h2>Branching Logic</h2>
@@ -120,7 +204,7 @@ export default function SurveyMgmtView({
                   {allQuestions.filter((q) => q.type !== "title").map((q, idx) => {
                     const key = `${q.sIdx}-${q.qIdx}`;
                     return (
-                      <div key={idx}>
+                      <div key={idx} className="branch-item">
                         <div className="branch-question">
                           {q.label} · {q.sectionTitle} · {TYPE_LABELS[q.type] || q.type}
                         </div>
@@ -128,8 +212,8 @@ export default function SurveyMgmtView({
                           <div className="branch-answer">Next Action:</div>
                           <div className="branch-select">
                             <select
-                              value={branches[key] || "next"}
-                              onChange={(e) => setBranches((prev) => ({ ...prev, [key]: e.target.value }))}
+                              value={branches && branches[key] ? branches[key] : "next"}
+                              onChange={(e) => setBranches && setBranches((prev) => ({ ...prev, [key]: e.target.value }))}
                             >
                               <option value="next">Continue to next question</option>
                               {survey.sections.map((sec, sIndex) => (
@@ -155,57 +239,191 @@ export default function SurveyMgmtView({
                   <p className="section-sub">{currentSection.description}</p>
                 </div>
 
-                {currentSection.questions.map((q, qIdx) => (
-                  <div key={q.id} className="question-card">
-                    <div className="question-header">
-                      <span>
-                        {q.label}
-                        {q.required && <span className="required-asterisk">*</span>}
-                      </span>
-                      <div className="question-actions">
-                        <span className="question-type">{TYPE_LABELS[q.type] || q.type}</span>
-                        <FiEdit2 style={{ cursor: "pointer", color: "#4b5563" }} />
-                        <FiCopy style={{ cursor: "pointer", color: "#4b5563" }} onClick={() => duplicateQuestion(activeSection, qIdx)} />
-                        <FiTrash2 style={{ cursor: "pointer", color: "#ef4444" }} onClick={() => deleteQuestion(activeSection, qIdx)} />
+                {currentSection.questions.map((q, qIdx) => {
+                  const isEditing = editingQuestion && editingQuestion.id === q.id;
+                  
+                  if (isEditing) {
+                    return (
+                      <div key={q.id} className="question-card editing">
+                        <div className="edit-form">
+                          <div className="edit-form-field">
+                            <label>Question Label</label>
+                            <input
+                              type="text"
+                              value={editForm.label}
+                              onChange={(e) => setEditForm({ ...editForm, label: e.target.value })}
+                              placeholder="Enter question"
+                            />
+                          </div>
+                          
+                          <div className="edit-form-field">
+                            <label>Question Type</label>
+                            <select
+                              value={editForm.type}
+                              onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                            >
+                              {QUESTION_TYPES.map(type => (
+                                <option key={type.value} value={type.value}>{type.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div className="edit-form-field checkbox">
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={editForm.required}
+                                onChange={(e) => setEditForm({ ...editForm, required: e.target.checked })}
+                              />
+                              Required Question
+                            </label>
+                          </div>
+                          
+                          {editForm.type !== "multiple" && editForm.type !== "rating" && (
+                            <div className="edit-form-field">
+                              <label>Placeholder (optional)</label>
+                              <input
+                                type="text"
+                                value={editForm.placeholder}
+                                onChange={(e) => setEditForm({ ...editForm, placeholder: e.target.value })}
+                                placeholder="e.g. Enter your answer"
+                              />
+                            </div>
+                          )}
+                          
+                          {editForm.type === "multiple" && (
+                            <div className="edit-form-field">
+                              <label>Options</label>
+                              {editForm.options && editForm.options.map((opt, optIdx) => (
+                                <div key={optIdx} className="option-row">
+                                  <input
+                                    type="text"
+                                    value={opt}
+                                    onChange={(e) => {
+                                      const newOptions = [...editForm.options];
+                                      newOptions[optIdx] = e.target.value;
+                                      setEditForm({ ...editForm, options: newOptions });
+                                    }}
+                                  />
+                                  <button
+                                    className="remove-option-btn"
+                                    onClick={() => {
+                                      const newOptions = editForm.options.filter((_, i) => i !== optIdx);
+                                      setEditForm({ ...editForm, options: newOptions });
+                                    }}
+                                  >
+                                    <FiX size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                className="add-option-btn"
+                                onClick={() => setEditForm({ ...editForm, options: [...(editForm.options || []), "New Option"] })}
+                              >
+                                + Add Option
+                              </button>
+                            </div>
+                          )}
+                          
+                          <div className="edit-form-actions">
+                            <button className="save-edit-btn" onClick={handleSaveEdit}>
+                              <FiSave size={16} />
+                              Save Changes
+                            </button>
+                            <button className="cancel-edit-btn" onClick={cancelEditing}>
+                              <FiX size={16} />
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div key={q.id} className="question-card">
+                      <div className="question-header">
+                        <span className="question-label">
+                          {q.label}
+                          {q.required && <span className="required-asterisk">*</span>}
+                        </span>
+                        <div className="question-actions">
+                          <span className="question-type">{TYPE_LABELS[q.type] || q.type}</span>
+                          <button 
+                            className="icon-btn edit-btn"
+                            onClick={() => handleEditClick(q, activeSection, qIdx)}
+                            title="Edit question"
+                          >
+                            <FiEdit2 size={20} />
+                          </button>
+                          <button 
+                            className="icon-btn copy-btn"
+                            onClick={() => duplicateQuestion && duplicateQuestion(activeSection, qIdx)}
+                            title="Duplicate question"
+                          >
+                            <FiCopy size={20} />
+                          </button>
+                          <button 
+                            className="icon-btn delete-btn"
+                            onClick={() => deleteQuestion && deleteQuestion(activeSection, qIdx)}
+                            title="Delete question"
+                          >
+                            <FiTrash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {q.type === "short" && (
+                        <div className="preview-field">
+                          <div className="preview-placeholder">{q.placeholder || "Enter your answer"}</div>
+                        </div>
+                      )}
+                      {q.type === "long" && (
+                        <div className="preview-field preview-textarea">
+                          <div className="preview-placeholder">{q.placeholder || "Enter your answer"}</div>
+                        </div>
+                      )}
+                      {q.type === "date" && (
+                        <div className="preview-field preview-date">
+                          <div className="preview-placeholder">Select date</div>
+                        </div>
+                      )}
+
+                      {q.type === "multiple" && (
+                        <div className="radio-group">
+                          {q.options && q.options.map((opt, oIdx) => (
+                            <label key={oIdx}>
+                              <input type="radio" name={`question-${q.id}`} disabled />
+                              <span>{opt}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.type === "rating" && (
+                        <div className="rating-group">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <span key={star} className="star">★</span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="branch-container">
+                        <button 
+                          className="branch-btn" 
+                          onClick={() => setBranchMode(true)}
+                          title="Branching logic"
+                        >
+                          <BiGitBranch size={20} />
+                        </button>
                       </div>
                     </div>
+                  );
+                })}
 
-                    {q.type === "short" && <input type="text" className="question-input" placeholder={q.placeholder} disabled />}
-                    {q.type === "long" && <textarea className="question-input" placeholder={q.placeholder} disabled rows={3} />}
-                    {q.type === "date" && <input type="date" className="question-input" disabled />}
-
-                    {q.type === "multiple" && (
-                      <div className="radio-group">
-                        {q.options?.map((opt, oIdx) => (
-                          <label key={oIdx}>
-                            <input type="radio" disabled />
-                            <span>{opt}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-
-                    {q.type === "rating" && (
-                      <div className="rating-group">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <span key={star} className="star">★</span>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="branch-container">
-                      <button className="branch-btn" onClick={() => setBranchMode(true)}>
-                        <BiGitBranch />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                <button
-                  onClick={() => addQuestion(activeSection)}
-                  style={{ width: "100%", padding: "0.6rem", background: "white", border: "1px dashed #3b82f6", borderRadius: "0.5rem", color: "#3b82f6", cursor: "pointer", fontFamily: "Lexend,sans-serif" }}
-                >
-                  + Add Question
+                <button className="add-question-btn" onClick={() => addQuestion && addQuestion(activeSection)}>
+                  <FiPlus size={18} />
+                  Add Question
                 </button>
               </div>
             )}

@@ -580,3 +580,162 @@ body {
 
   .ra-sentiment-score { font-size: 44px; line-height: 44px; }
 }
+
+/* ── Updated Line Chart Card Styles (matching Login Activity Trends) ──────── */
+.ra-line-chart-card {
+  padding: 20px;
+}
+
+.ra-line-chart-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ra-line-chart-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.ra-line-chart-title {
+  font-family: 'Arimo', Arial;
+  font-weight: 400;
+  font-size: 16px;
+  color: #0A0A0A;
+  line-height: 16px;
+  margin-bottom: 4px;
+}
+
+.ra-line-chart-subtitle {
+  font-family: 'Arimo', Arial;
+  font-size: 16px;
+  color: #717182;
+  line-height: 24px;
+}
+
+/* Centered Legend (matching Login Activity Trends) */
+.ra-centered-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid #EEF2F7;
+}
+
+.ra-legend-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ra-legend-line-color {
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.ra-legend-line span {
+  font-family: 'Arimo', Arial;
+  font-size: 14px;
+  color: #0A0A0A;
+}
+
+/* Override recharts default styles for the chart */
+.ra-recharts-wrap .recharts-cartesian-axis-tick-value {
+  fill: #666666;
+  font-family: 'Arimo', Arial;
+  font-size: 11px;
+}
+
+.ra-recharts-wrap .recharts-legend-item-text {
+  font-family: 'Arimo', Arial;
+  font-size: 13px;
+  color: #475569;
+}
+
+.ra-recharts-wrap .recharts-default-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+/* Tooltip styling */
+.ra-chart-tooltip {
+  min-width: 130px;
+  padding: 9px 11px;
+  border: 1px solid #E8EEF5;
+  border-radius: 9px;
+  background: #FFFFFF;
+  box-shadow: 0 8px 24px rgba(15, 23, 43, 0.08);
+}
+
+.ra-chart-tooltip-title {
+  margin-bottom: 7px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 11px;
+  line-height: 15px;
+  font-weight: 700;
+  color: #0F172B;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ra-chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #475569;
+}
+
+.ra-chart-tooltip-row strong {
+  margin-left: auto;
+  color: #0F172B;
+  font-weight: 600;
+}
+
+.ra-chart-tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* Responsive adjustments for charts */
+@media (max-width: 768px) {
+  .ra-line-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .ra-centered-legend {
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .ra-legend-line span {
+    font-size: 12px;
+  }
+  
+  .ra-recharts-wrap {
+    height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ra-centered-legend {
+    gap: 16px;
+  }
+  
+  .ra-legend-line span {
+    font-size: 11px;
+  }
+}

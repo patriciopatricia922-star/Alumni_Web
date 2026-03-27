@@ -185,39 +185,103 @@ const ChartTooltip = ({ active, payload, label }) => {
         <div key={entry.dataKey} className="ra-chart-tooltip-row">
           <span className="ra-chart-tooltip-dot" style={{ background: entry.color }} />
           <span>{entry.name}</span>
-          <strong>{entry.value ?? 'No data'}</strong>
+          <strong>{entry.value !== null && entry.value !== undefined ? `${entry.value}%` : 'No data'}</strong>
         </div>
       ))}
     </div>
   );
 };
 
+// Updated LineChartCard to match Login Activity Trends design
 const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
   const chartData = labels.map((label, index) => {
     const row = { label };
-    series.forEach((line) => { row[line.dataKey] = line.values?.[index] ?? null; });
+    series.forEach((line) => { 
+      row[line.dataKey] = line.values?.[index] !== null && line.values?.[index] !== undefined 
+        ? line.values[index] 
+        : null; 
+    });
     return row;
   });
 
+  // Filter out null values for display
+  const hasData = chartData.some(row => 
+    series.some(line => row[line.dataKey] !== null)
+  );
+
+  if (!hasData) {
+    return (
+      <section className="ra-card ra-card-full">
+        <CardTitle title={title} subtitle={subtitle} />
+        <div className="ra-empty-state">No data available for the selected period</div>
+      </section>
+    );
+  }
+
   return (
-    <section className="ra-card ra-card-full">
-      <CardTitle title={title} subtitle={subtitle} />
+    <section className="ra-card ra-card-full ra-line-chart-card">
+      <div className="ra-line-chart-header">
+        <div className="ra-line-chart-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div>
+          <div className="ra-line-chart-title">{title}</div>
+          <div className="ra-line-chart-subtitle">{subtitle}</div>
+        </div>
+      </div>
+      
       <div className="ra-recharts-wrap">
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-            <CartesianGrid stroke="#F1F5F9" strokeDasharray="4 4" vertical={false} />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} />
+          <LineChart data={chartData} margin={{ top: 8, right: 30, left: 0, bottom: 8 }}>
+            {/* Dashed horizontal grid lines */}
+            <CartesianGrid 
+              stroke="#CCCCCC" 
+              strokeDasharray="4 4" 
+              vertical={false}
+            />
+            
+            <XAxis 
+              dataKey="label" 
+              tickLine={false} 
+              axisLine={{ stroke: '#666666', strokeWidth: 1 }}
+              tick={{ fill: '#666666', fontSize: 11, fontFamily: 'Arimo, Arial' }}
+              dy={8}
+            />
+            
             <YAxis
-              domain={[0, 100]} ticks={[0, 25, 50, 75, 100]}
-              tickLine={false} axisLine={false}
-              tick={{ fill: '#94A3B8', fontSize: 12 }}
+              domain={[0, 100]}
+              ticks={[0, 25, 50, 75, 100]}
+              tickLine={false}
+              axisLine={{ stroke: '#666666', strokeWidth: 1 }}
+              tick={{ fill: '#666666', fontSize: 11, fontFamily: 'Arimo, Arial' }}
               width={36}
+              dx={-8}
             />
+            
             <Tooltip content={<ChartTooltip />} />
+            
+            {/* Legend - matches Login Activity Trends style */}
             <Legend
-              verticalAlign="bottom" height={32} iconType="line"
-              wrapperStyle={{ color: '#475569', fontSize: '13px', paddingTop: '8px' }}
+              verticalAlign="bottom"
+              height={48}
+              iconType="line"
+              wrapperStyle={{ 
+                color: '#475569', 
+                fontSize: '13px', 
+                fontFamily: 'Arimo, Arial',
+                paddingTop: '16px'
+              }}
+              formatter={(value) => {
+                if (value === 'passed') return 'Passed';
+                if (value === 'failed') return 'Failed';
+                if (value === 'certified') return 'Certified';
+                if (value === 'uncertified') return 'No Certification';
+                return value;
+              }}
             />
+            
             {series.map((line) => (
               <Line
                 key={line.dataKey}
@@ -226,14 +290,47 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
                 name={line.name}
                 stroke={line.color}
                 strokeWidth={2}
-                dot={{ r: 3.5, strokeWidth: 2, fill: '#FFFFFF', stroke: line.color }}
-                activeDot={{ r: 5 }}
+                dot={{ 
+                  r: 4, 
+                  strokeWidth: 2, 
+                  fill: '#FFFFFF', 
+                  stroke: line.color 
+                }}
+                activeDot={{ r: 6 }}
                 connectNulls={false}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
+      
+      {/* Centered legend for Board Exam chart - matches Login Activity Trends */}
+      {title === "Board Exam Pass Rate" && (
+        <div className="ra-centered-legend">
+          <div className="ra-legend-line">
+            <div className="ra-legend-line-color" style={{ background: '#22C55E' }}></div>
+            <span>Passed</span>
+          </div>
+          <div className="ra-legend-line">
+            <div className="ra-legend-line-color" style={{ background: '#EF4444' }}></div>
+            <span>Failed</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Centered legend for Certification chart */}
+      {title === "Certification Status" && (
+        <div className="ra-centered-legend">
+          <div className="ra-legend-line">
+            <div className="ra-legend-line-color" style={{ background: '#8B5CF6' }}></div>
+            <span>Certified</span>
+          </div>
+          <div className="ra-legend-line">
+            <div className="ra-legend-line-color" style={{ background: '#FB7185' }}></div>
+            <span>No Certification</span>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
@@ -296,26 +393,26 @@ const SurveyOverviewPage = ({
       )}
 
       {/* Educational ───────────────────────────────── */}
-      {show('boardExam') && (
+      {show('boardExam') && overviewCards.boardExamPassRate && (
         <LineChartCard
           title="Board Exam Pass Rate"
           subtitle="Survey entries with board exam results"
           labels={overviewCards.boardExamPassRate.labels}
           series={[
-            { dataKey: 'passed', name: 'Passed', color: '#22C55E', values: overviewCards.boardExamPassRate.passed },
-            { dataKey: 'failed', name: 'Failed',  color: '#EF4444', values: overviewCards.boardExamPassRate.failed },
+            { dataKey: 'passed', name: 'passed', color: '#22C55E', values: overviewCards.boardExamPassRate.passed },
+            { dataKey: 'failed', name: 'failed', color: '#EF4444', values: overviewCards.boardExamPassRate.failed },
           ]}
         />
       )}
 
-      {show('certification') && (
+      {show('certification') && overviewCards.certificationStatus && (
         <LineChartCard
           title="Certification Status"
           subtitle="Survey entries grouped by graduation or submission year"
           labels={overviewCards.certificationStatus.labels}
           series={[
-            { dataKey: 'certified',   name: 'Certified',         color: '#8B5CF6', values: overviewCards.certificationStatus.certified   },
-            { dataKey: 'uncertified', name: 'No Certification',  color: '#FB7185', values: overviewCards.certificationStatus.uncertified },
+            { dataKey: 'certified', name: 'certified', color: '#8B5CF6', values: overviewCards.certificationStatus.certified },
+            { dataKey: 'uncertified', name: 'uncertified', color: '#FB7185', values: overviewCards.certificationStatus.uncertified },
           ]}
         />
       )}

@@ -1,0 +1,371 @@
+/* ────────────────────────────────────────────────────────────────────────────
+   Mobile Bottom Navigation (768px and below)
+   ──────────────────────────────────────────────────────────────────────────── */
+.superadmin-mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: #001947;
+  box-shadow: 0px -4px 24px rgba(0, 0, 0, 0.35);
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.superadmin-mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  text-decoration: none;
+  position: relative;
+}
+
+.superadmin-mobile-active-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  background: #D9CA81;
+  border-radius: 0 0 4px 4px;
+}
+
+.superadmin-mobile-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.superadmin-mobile-icon-active {
+  color: #D9CA81;
+}
+
+.superadmin-mobile-icon-inactive {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.superadmin-mobile-label {
+  font-family: 'Arimo', sans-serif;
+  font-size: 10px;
+  max-width: 60px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.superadmin-mobile-label-active {
+  font-weight: 700;
+  color: #D9CA81;
+}
+
+.superadmin-mobile-label-inactive {
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.superadmin-mobile-logout-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.superadmin-mobile-hamburger {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  background: #001947;
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Desktop/Tablet Sidebar (768px and above)
+   ──────────────────────────────────────────────────────────────────────────── */
+.superadmin-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  background: #001947;
+  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.25);
+  border-radius: 0px 20px 20px 0px;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.25s ease;
+}
+
+.superadmin-sidebar-mobile {
+  transform: translateX(-100%);
+}
+
+.superadmin-sidebar-logo-container {
+  display: flex;
+  justify-content: center;
+  padding: 36px 0 28px;
+}
+
+.superadmin-sidebar-logo {
+  width: 190px;
+  margin-left: 10%;
+  height: auto;
+  object-fit: contain;
+}
+
+.superadmin-sidebar-logo-tablet {
+  width: 90px;
+}
+
+.superadmin-sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* Menu Section */
+.superadmin-sidebar-menu-section {
+  padding: 24px 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.superadmin-sidebar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin: 0 7px;
+  background: transparent;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.superadmin-sidebar-menu-item-active {
+  background: rgba(217, 202, 129, 0.1);
+}
+
+.superadmin-sidebar-icon {
+  flex-shrink: 0;
+}
+
+.superadmin-sidebar-icon-active {
+  color: #D9CA81;
+}
+
+.superadmin-sidebar-icon-inactive {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.superadmin-sidebar-label {
+  font-family: 'Arimo', sans-serif;
+  font-size: 16.5px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0.3px;
+  color: #FFFFFF;
+}
+
+.superadmin-sidebar-label-tablet {
+  font-size: 16px;
+  line-height: 18px;
+}
+
+.superadmin-sidebar-label-active {
+  font-weight: 700;
+  color: #D9CA81;
+}
+
+/* Footer User Card */
+.superadmin-sidebar-footer {
+  margin-top: auto;
+  padding: 0 10px 24px;
+}
+
+.superadmin-sidebar-user-card {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 11px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 30px;
+}
+
+.superadmin-sidebar-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #51A2FF 0%, #155DFC 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.superadmin-sidebar-initials {
+  font-family: 'Arimo', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.superadmin-sidebar-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.superadmin-sidebar-user-name {
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  line-height: 20px;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.superadmin-sidebar-user-role {
+  font-family: 'Arimo', sans-serif;
+  font-size: 11px;
+  line-height: 16px;
+  color: #D1D5DC;
+}
+
+.superadmin-sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  transition: background 0.15s;
+  color: #D1D5DC;
+}
+
+/* Backdrop */
+.superadmin-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.45);
+  animation: superadminFadeIn 0.2s ease;
+}
+
+/* Animations */
+@keyframes superadminFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Responsive Breakpoints
+   ──────────────────────────────────────────────────────────────────────────── */
+/* Tablet (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .superadmin-sidebar-menu-section {
+    padding: 20px 8px 0;
+    gap: 8px;
+  }
+  
+  .superadmin-sidebar-menu-item {
+    gap: 10px;
+    padding: 9px 12px;
+  }
+  
+  .superadmin-sidebar-user-card {
+    padding: 0 10px;
+    gap: 10px;
+    height: 52px;
+  }
+  
+  .superadmin-sidebar-avatar {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .superadmin-sidebar-initials {
+    font-size: 13px;
+  }
+  
+  .superadmin-sidebar-user-name {
+    font-size: 12px;
+    line-height: 18px;
+  }
+  
+  .superadmin-sidebar-user-role {
+    font-size: 10px;
+    line-height: 14px;
+  }
+  
+  .superadmin-sidebar-logout-btn {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* Mobile (below 768px) - for sidebar version when open */
+@media (max-width: 767px) {
+  .superadmin-sidebar {
+    width: 250px !important;
+    border-radius: 0px 20px 20px 0px;
+  }
+  
+  .superadmin-sidebar-menu-section {
+    padding: 20px 10px 0;
+  }
+  
+  .superadmin-sidebar-menu-item {
+    padding: 10px 14px;
+    margin: 0 6px;
+  }
+  
+  .superadmin-sidebar-logo-container {
+    padding: 28px 0 24px;
+  }
+  
+  .superadmin-sidebar-logo {
+    width: 100px;
+  }
+}
