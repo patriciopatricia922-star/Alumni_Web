@@ -43,6 +43,7 @@ import TermsOfServiceAbout from './pages/Termsofserviceabout';
 import PrivacyPolicyAbout from './pages/Privacypolicyabout';
 import NotificationsPage from './pages/Notificationspage';
 import FeedbackAndAlumniEngagement from './survey/Feedbackandalumniengagement';
+import ContentManagement from './admin/ContentManagement';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
 // Checks for a valid Supabase session before rendering the page.
@@ -132,7 +133,8 @@ function App() {
       <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
       <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
       <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
-      
+      <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement/></ProtectedRoute>} />
+
       {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><DetailedAuditLogs /></ProtectedRoute>} />

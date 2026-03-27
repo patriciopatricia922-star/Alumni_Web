@@ -18,6 +18,8 @@ const DEPARTMENT_META = {
 const Adminpredictiveanalytics = () => {
   const [activePage, setActivePage] = useState('overview');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState(null);
 
   // Raw predictions from Supabase
   const [predictions, setPredictions] = useState([]);
@@ -133,6 +135,38 @@ const Adminpredictiveanalytics = () => {
   }, [predictions]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
+const handleRefresh = async () => {
+  setRefreshing(true);
+  setRefreshMsg(null);
+  try {
+    const res = await fetch('http://localhost:8000/api/refresh-predictions', {
+      method: 'POST',
+    });
+    const data = await res.json();
+    if (data.status === 'success') {
+      setRefreshMsg('Predictions updated successfully.');
+      const { data: newData } = await supabase
+        .from('predictions')
+        .select('*')
+        .order('year', { ascending: true });
+      setPredictions(newData || []);
+    } else {
+      setRefreshMsg('Failed: ' + data.message);
+    }
+  } catch (err) {
+    setRefreshMsg('Error: ' + err.message);
+  } finally {
+    setRefreshing(false);
+  }
+};
+
+// ← paste here
+useEffect(() => {
+  if (!refreshMsg) return;
+  const timer = setTimeout(() => setRefreshMsg(null), 3000);
+  return () => clearTimeout(timer);
+}, [refreshMsg]);
+
 
   const handleTabChange = (key) => {
     setActivePage(key);
@@ -205,6 +239,22 @@ const Adminpredictiveanalytics = () => {
       selectedDepartmentData={selectedDepartmentData}
       onDepartmentClick={handleDepartmentClick}
       sidebar={<AdminSidebar activePage="predictive-analytics" />}
+      refreshBar={
+        <div className="pa-refresh-bar">
+          {refreshMsg && (
+            <span className={`pa-refresh-msg ${refreshMsg.includes('success') ? 'success' : 'error'}`}>
+              {refreshMsg}
+            </span>
+          )}
+          <button
+            className={`pa-refresh-btn ${refreshing ? 'loading' : ''}`}
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            {refreshing ? 'Updating predictions…' : '↻ Refresh Predictions'}
+          </button>
+        </div>
+      }
     />
   );
 };

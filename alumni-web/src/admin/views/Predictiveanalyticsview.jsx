@@ -14,6 +14,7 @@ const Predictiveanalyticsview = (props) => {
     selectedDepartmentData,
     onDepartmentClick,
     sidebar,
+    refreshBar 
   } = props;
 
   // ── Animation state ──────────────────────────────────────
@@ -132,7 +133,12 @@ const Predictiveanalyticsview = (props) => {
               )}
             </React.Fragment>
           ))}
+          {/* Spacer pushes refresh to the right */}
+            <div className="pa-tab-spacer" />
+            {refreshBar}
         </div>
+
+        
 
         {/* ── PAGE 1.1 — Overview Chart ── */}
         {activePage === 'overview' && overviewTrend.length > 0 && (
