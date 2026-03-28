@@ -146,7 +146,9 @@ const AdminSidebarView = ({
 
             {/* Name + role */}
             <div className="admin-sidebar-user-info">
-              <span className="admin-sidebar-user-name">{displayName}</span>
+              <span className="admin-sidebar-user-name" title={displayName}>
+                {displayName}
+              </span>
               <span className="admin-sidebar-user-role">{role}</span>
             </div>
 

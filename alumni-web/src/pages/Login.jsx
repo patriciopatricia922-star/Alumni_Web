@@ -33,25 +33,56 @@ const Login = () => {
       if (loginError) throw loginError;
 
       const email = form.email.toLowerCase().trim();
+      const userId = loginData.user?.id;
 
+      // Fetch user role and account status from database
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role, account_status, first_name, last_name')
+        .eq('id', userId)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+      }
+
+      // Check if account is disabled
+      if (userData?.account_status === 'disabled') {
+        await supabase.auth.signOut();
+        setError('Your account has been disabled. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
+      let role = userData?.role || null;
+      let redirectPath = '/dashboard';
       let roleLabel = 'Alumni';
-      if (email === 'superadmin@nu-dasma.edu.ph') roleLabel = 'Super Admin';
-      else if (email === 'nudaao@nu-dasma.edu.ph') roleLabel = 'Admin';
+
+      // Determine role based on database role
+      if (role === 'superadmin') {
+        roleLabel = 'Super Admin';
+        redirectPath = '/superadmin/super-admin-dashboard';
+      } else if (role === 'admin') {
+        roleLabel = 'Admin';
+        redirectPath = '/admin/admin-dashboard';
+      } else if (email.endsWith('@nu-dasma.edu.ph')) {
+        // Fallback for domain-based admin accounts
+        roleLabel = 'Admin';
+        redirectPath = '/admin/admin-dashboard';
+      } else {
+        roleLabel = 'Alumni';
+        redirectPath = '/dashboard';
+      }
 
       await logAction({
         action:      'Login',
         module:      'Authentication',
         description: `${roleLabel} logged in`,
         status:      'Success',
+        user_id:     userId,
       });
 
-      if (email === 'superadmin@nu-dasma.edu.ph') {
-        navigate('/superadmin/super-admin-dashboard');
-      } else if (email === 'nudaao@nu-dasma.edu.ph') {
-        navigate('/admin/admin-dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate(redirectPath);
     } catch (err) {
       await supabase.from('audit_logs').insert({
         user_id:     null,

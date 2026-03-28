@@ -1,0 +1,307 @@
+.create-admin-modal {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 32px;
+  width: 480px;
+  max-width: 90vw;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  font-family: 'Lexend', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #101828;
+  margin: 0;
+}
+
+.modal-header p {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #717182;
+  margin: 4px 0 0;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #62748E;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #0A0A0A;
+}
+
+.modal-error {
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #B91C1C;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.form-field .required {
+  color: #EF4444;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #0A0A0A;
+  outline: none;
+  background: #F8FAFC;
+  transition: all 0.2s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  border-color: #155DFC;
+  box-shadow: 0 0 0 2px rgba(21, 93, 252, 0.15);
+  background: #FFFFFF;
+}
+
+.form-field input::placeholder {
+  color: #94A3B8;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.btn-cancel {
+  flex: 1;
+  height: 40px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.btn-create {
+  flex: 1;
+  height: 40px;
+  background: #001947;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-create:hover:not(:disabled) {
+  background: #002570;
+}
+
+.btn-create:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .create-admin-modal {
+    padding: 24px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn-cancel,
+  .btn-create {
+    width: 100%;
+  }
+}
+
+.email-hint {
+  display: block;
+  font-size: 11px;
+  color: #62748E;
+  margin-top: 4px;
+  font-family: 'Arimo', sans-serif;
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 0 40px 0 12px;
+  font-family: 'Arimo', sans-serif;
+  font-size: 14px;
+  color: #0A0A0A;
+  outline: none;
+  background: #F8FAFC;
+  transition: all 0.2s;
+}
+
+.password-input-wrapper input:focus {
+  border-color: #155DFC;
+  box-shadow: 0 0 0 2px rgba(21, 93, 252, 0.1);
+  background: #FFFFFF;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #62748E;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: #155DFC;
+}
+
+/* Password Strength Indicator */
+.password-strength-container {
+  margin-top: 8px;
+}
+
+.password-strength-bar {
+  height: 4px;
+  background: #E2E8F0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.password-strength-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.password-strength-text {
+  font-size: 11px;
+  font-family: 'Arimo', sans-serif;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.password-strength-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 10px;
+  font-family: 'Arimo', sans-serif;
+}
+
+.password-strength-requirements span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #F1F5F9;
+  transition: all 0.2s;
+}
+
+.password-strength-requirements span.valid {
+  background: #DCFCE7;
+  color: #008236;
+}
+
+.password-strength-requirements span.invalid {
+  background: #FFE2E2;
+  color: #BF0000;
+}
+
+/* Email hint */
+.email-hint {
+  display: block;
+  font-size: 11px;
+  color: #62748E;
+  margin-top: 4px;
+  font-family: 'Arimo', sans-serif;
+}

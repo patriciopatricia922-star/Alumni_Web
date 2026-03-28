@@ -31,7 +31,7 @@ const AdminSidebar = () => {
       if (!authUser) return;
       const { data } = await supabase
         .from('users')
-        .select('first_name, last_name, email')
+        .select('first_name, last_name, email, role')
         .eq('id', authUser.id)
         .single();
       if (data) setUser(data);
@@ -44,9 +44,40 @@ const AdminSidebar = () => {
     navigate('/login');
   };
 
-  const displayName = 'NUD-AAO';
-  const initials = 'N';
-  const role = 'Admin';
+  // Get display name from user data
+  const getDisplayName = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (user?.first_name) return user.first_name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'NUD-AAO';
+  };
+
+  // Get initials from user data
+  const getInitials = () => {
+    if (user?.first_name && user?.last_name) {
+      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    }
+    if (user?.first_name) {
+      return user.first_name.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'N';
+  };
+
+  // Get role display name
+  const getRoleDisplay = () => {
+    if (user?.role === 'superadmin') return 'Super Admin';
+    if (user?.role === 'admin') return 'Admin';
+    return 'Admin';
+  };
+
+  const displayName = getDisplayName();
+  const initials = getInitials();
+  const role = getRoleDisplay();
 
   const menuItems = [
     { path: '/admin/admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Dashboard' },
