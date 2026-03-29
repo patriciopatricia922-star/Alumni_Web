@@ -15,14 +15,6 @@ const useWindowWidth = () => {
 
 const CATEGORIES = ['All Events', 'Upcoming Events', 'Exclusive Events'];
 
-const EVENTS = [
-  { id: 1, name: '[Event Name]', date: 'February 19, 2026', time: '11 AM - 1 PM', description: 'Join us for the annual alumni welcome back event.', category: 'Upcoming Events' },
-  { id: 2, name: '[Event Name]', date: 'February 19, 2026', time: '11 AM - 1 PM', description: 'Join us for the annual alumni welcome back event.', category: 'Upcoming Events' },
-  { id: 3, name: '[Event Name]', date: 'February 19, 2026', time: '11 AM - 1 PM', description: 'Join us for the annual alumni welcome back event.', category: 'Exclusive Events' },
-  { id: 4, name: '[Event Name]', date: 'February 19, 2026', time: '11 AM - 1 PM', description: 'Join us for the annual alumni welcome back event.', category: 'Exclusive Events' },
-  { id: 5, name: '[Event Name]', date: 'February 19, 2026', time: '11 AM - 1 PM', description: 'Join us for the annual alumni welcome back event.', category: 'Upcoming Events' },
-];
-
 const Events = () => {
   const navigate  = useNavigate();
   const width     = useWindowWidth();
@@ -31,6 +23,8 @@ const Events = () => {
 
   const [activeCategory, setActiveCategory] = useState('All Events');
   const [showFilter,     setShowFilter]     = useState(false);
+  const [events,         setEvents]         = useState([]);
+  const [loading,        setLoading]        = useState(true);
   const filterRef = useRef(null);
   const bellRef   = useRef(null);
 
@@ -39,15 +33,42 @@ const Events = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
+  // Fetch events from Supabase
   useEffect(() => {
-    const h = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) setShowFilter(false);
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    const fetchEvents = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_active', true)
+        .order('event_date', { ascending: true });
+      
+      if (!error && data) {
+        const now = new Date();
+        const formattedEvents = data.map(event => {
+          const eventDate = new Date(event.event_date);
+          let category = 'Exclusive Events';
+          if (eventDate > now) {
+            category = 'Upcoming Events';
+          }
+          return {
+            id: event.id,
+            name: event.title,
+            date: eventDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            time: eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            description: event.description,
+            category: category,
+            location: event.location,
+          };
+        });
+        setEvents(formattedEvents);
+      }
+      setLoading(false);
     };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    fetchEvents();
   }, []);
 
+  // Fetch notifications
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -63,6 +84,15 @@ const Events = () => {
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
     fetchNotifs();
+  }, []);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setShowFilter(false);
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
   const markAllRead = useCallback(() => {
@@ -105,11 +135,11 @@ const Events = () => {
   };
 
   const filtered = activeCategory === 'All Events'
-    ? EVENTS
-    : EVENTS.filter(e => e.category === activeCategory);
+    ? events
+    : events.filter(e => e.category === activeCategory);
 
   const categoryCounts = CATEGORIES.reduce((acc, cat) => {
-    acc[cat] = cat === 'All Events' ? EVENTS.length : EVENTS.filter(e => e.category === cat).length;
+    acc[cat] = cat === 'All Events' ? events.length : events.filter(e => e.category === cat).length;
     return acc;
   }, {});
 
@@ -117,6 +147,7 @@ const Events = () => {
     <EventsView
       isMobile={isMobile}
       isTablet={isTablet}
+      loading={loading}
       // category / filter
       categories={CATEGORIES}
       activeCategory={activeCategory}

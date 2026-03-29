@@ -1,0 +1,191 @@
+import React, { useState, useEffect } from 'react';
+
+import { 
+  FaBold, 
+  FaItalic, 
+  FaUnderline, 
+  FaAlignLeft, 
+  FaAlignCenter, 
+  FaAlignRight 
+} from 'react-icons/fa';
+
+const Modal = ({ open, onClose, title, subtitle, children }) => {
+  if (!open) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+        <h2 className="modal-title">{title}</h2>
+        <p className="modal-subtitle">{subtitle}</p>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const Field = ({ label, required, children }) => (
+  <div className="field-wrap">
+    <label className="field-label">
+      {label}
+      {required && <span className="field-required"> *</span>}
+    </label>
+    {children}
+  </div>
+);
+
+const ModalFooter = ({ onCancel, createLabel, loading }) => (
+  <div className="modal-footer">
+    <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+    <button className="btn-create" disabled={loading}>
+      {loading ? 'Saving...' : createLabel}
+    </button>
+  </div>
+);
+
+const RichTextEditor = ({ value, onChange, placeholder }) => {
+  const editorRef = React.useRef(null);
+
+  const execCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
+    const content = editorRef.current.innerHTML;
+    onChange(content);
+    editorRef.current.focus();
+  };
+
+  React.useEffect(() => {
+    if (editorRef.current && value !== editorRef.current.innerHTML) {
+      editorRef.current.innerHTML = value || '';
+    }
+  }, [value]);
+
+  return (
+    <div className="rich-text-editor">
+      <div className="rich-text-toolbar">
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
+          <FaBold size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
+          <FaItalic size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
+          <FaUnderline size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
+          <FaAlignLeft size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
+          <FaAlignCenter size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
+          <FaAlignRight size={14} />
+        </button>
+      </div>
+      <div
+        ref={editorRef}
+        className="rich-text-content"
+        contentEditable="true"
+        onInput={() => onChange(editorRef.current.innerHTML)}
+        data-placeholder={placeholder}
+        style={{ minHeight: '100px' }}
+      />
+    </div>
+  );
+};
+
+const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpdate }) => {
+  const [form, setForm] = useState({
+    title: '',
+    content: '',
+    priority: 'Medium',
+    audience: 'All Alumni',
+    expiry: '',
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'edit' && announcement) {
+      setForm({
+        title: announcement.title || '',
+        content: announcement.content || '',
+        priority: announcement.priority || 'Medium',
+        audience: announcement.audience || 'All Alumni',
+        expiry: announcement.expiry || '',
+      });
+    } else {
+      setForm({
+        title: '',
+        content: '',
+        priority: 'Medium',
+        audience: 'All Alumni',
+        expiry: '',
+      });
+    }
+  }, [mode, announcement]);
+
+  const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    if (mode === 'edit' && announcement) {
+      await onUpdate(announcement.id, form);
+    } else {
+      await onCreate(form);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={mode === 'edit' ? 'Edit Announcement' : 'Create New Announcement'}
+      subtitle={mode === 'edit' ? 'Update announcement details' : 'Create a new announcement for alumni'}
+    >
+      <div className="modal-form">
+        <Field label="Announcement Title" required>
+          <input className="field-input" placeholder="Enter announcement title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+        </Field>
+
+        <Field label="Content" required>
+          <RichTextEditor
+            value={form.content}
+            onChange={(content) => s('content', content)}
+            placeholder="Enter announcement content..."
+          />
+        </Field>
+
+        <div className="field-grid">
+          <Field label="Priority" required>
+            <select className="field-select" value={form.priority} onChange={(e) => s('priority', e.target.value)}>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+          </Field>
+
+          <Field label="Target Audience" required>
+            <select className="field-select" value={form.audience} onChange={(e) => s('audience', e.target.value)}>
+              <option>All Alumni</option>
+              <option>By Program</option>
+              <option>By Batch</option>
+            </select>
+          </Field>
+        </div>
+
+        <Field label="Expiry Date">
+          <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+        </Field>
+
+        <ModalFooter onCancel={onClose} createLabel={mode === 'edit' ? 'Update Announcement' : 'Create Announcement'} loading={loading} />
+      </div>
+    </Modal>
+  );
+};
+
+export default AnnouncementModal;

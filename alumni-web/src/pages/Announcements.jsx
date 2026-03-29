@@ -45,6 +45,7 @@ const Announcements = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
+  // Fetch announcements from Supabase
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
@@ -53,25 +54,24 @@ const Announcements = () => {
         .select('id, title, content, published_at, is_active, category')
         .eq('is_active', true)
         .order('published_at', { ascending: false });
+      
       if (!error && data) {
-        setAnnouncements(data.map(a => ({
-          id: a.id, title: a.title, description: a.content,
+        const formattedAnnouncements = data.map(a => ({
+          id: a.id,
+          title: a.title,
+          description: a.content,
           time: formatTime(a.published_at),
           category: a.category || 'News',
-        })));
-      } else {
-        setAnnouncements([
-          { id: 1, title: 'New Partnership with Industry Leaders', description: 'Hello, Alumni!',     time: '2 hours ago', category: 'News'       },
-          { id: 2, title: 'New Partnership with Industry Leaders', description: 'Hello, Alumni!',     time: '2 hours ago', category: 'News'       },
-          { id: 3, title: 'Alumni Networking Event 2026',          description: 'Hello, Alumni!',     time: '2 days ago',  category: 'Activities' },
-          { id: 4, title: 'Complete Your Alumni Tracer Survey',    description: 'Attention, Alumni!', time: '2 days ago',  category: 'Activities' },
-        ]);
+          published_at: a.published_at,
+        }));
+        setAnnouncements(formattedAnnouncements);
       }
       setLoading(false);
     };
     fetchAnnouncements();
   }, []);
 
+  // Fetch notifications (same as announcements but limited)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase

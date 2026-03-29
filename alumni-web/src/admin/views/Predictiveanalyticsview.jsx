@@ -20,20 +20,22 @@ const Predictiveanalyticsview = (props) => {
   // ── Animation state ──────────────────────────────────────
   const [animProgress, setAnimProgress] = useState(0);
   const animRef = useRef(null);
+  
+  // Track if we've navigated to departments view
+  const [showDepartments, setShowDepartments] = useState(false);
+  const [hasSelectedDepartment, setHasSelectedDepartment] = useState(false);
 
   useEffect(() => {
     if (activePage !== 'overview' || !overviewTrend.length) return;
 
-    // Reset and re-animate every time overview is shown
     setAnimProgress(0);
     let start = null;
-    const duration = 1200; // ms
+    const duration = 1200;
 
     const step = (timestamp) => {
       if (!start) start = timestamp;
       const elapsed = timestamp - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setAnimProgress(eased);
       if (progress < 1) {
@@ -45,27 +47,31 @@ const Predictiveanalyticsview = (props) => {
     return () => cancelAnimationFrame(animRef.current);
   }, [activePage, overviewTrend]);
 
-  // ── Chart math — dynamic range from real data ────────────
+  // Update when selectedDepartment changes
+  useEffect(() => {
+    if (selectedDepartment && selectedDepartmentData) {
+      setHasSelectedDepartment(true);
+      setShowDepartments(true);
+    }
+  }, [selectedDepartment, selectedDepartmentData]);
+
+  // ── Chart math ────────────────────────────────────────────
   const values = overviewTrend.map((d) => d.value);
   const dataMin = values.length ? Math.min(...values) : 0;
   const dataMax = values.length ? Math.max(...values) : 100;
 
-  // Add 10% padding above and below so line is never at the edge
   const padding = Math.max((dataMax - dataMin) * 0.5, 5);
-  const MIN = Math.max(0,   Math.floor(dataMin - padding));
-  const MAX = Math.min(100, Math.ceil(dataMax  + padding));
+  const MIN = Math.max(0, Math.floor(dataMin - padding));
+  const MAX = Math.min(100, Math.ceil(dataMax + padding));
   const RANGE = MAX - MIN;
 
   const toX = (i) =>
     overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50;
   const toY = (v) => ((MAX - v) / RANGE) * 100;
 
-  // Animated points — only draw up to animProgress along the line
   const animatedTrend = overviewTrend.map((d, i) => {
     const t = i / Math.max(overviewTrend.length - 1, 1);
-    // Interpolate value for points past the animation head
     if (t <= animProgress) return d;
-    // Point is ahead of animation — interpolate from previous
     const prev = overviewTrend[i - 1];
     if (!prev) return null;
     const segT = (animProgress - (i - 1) / (overviewTrend.length - 1)) /
@@ -77,7 +83,6 @@ const Predictiveanalyticsview = (props) => {
     .map((d, i) => `${toX(i)},${toY(d.value)}`)
     .join(' ');
 
-  // Full (static) points for bands
   const upperPoints = [
     ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value + padding * 0.6)}`),
     ...overviewTrend.slice().reverse()
@@ -94,8 +99,57 @@ const Predictiveanalyticsview = (props) => {
     ? overviewTrend[overviewTrend.length - 1].value - overviewTrend[0].value
     : 0;
 
-  // Y-axis labels — evenly spaced between MIN and MAX
   const yLabels = [MAX, Math.round(MIN + RANGE * 0.66), Math.round(MIN + RANGE * 0.33), MIN];
+
+  // Determine what to show
+  const showOverviewChart = true; // Always show chart when on overview
+  const showDepartmentsList = showDepartments && !hasSelectedDepartment;
+  const showDepartmentDetail = hasSelectedDepartment && selectedDepartmentData;
+
+  // Handle breadcrumb click
+  const handleBreadcrumbClick = (target) => {
+    if (target === 'overview') {
+      // Reset everything - go back to just overview
+      setShowDepartments(false);
+      setHasSelectedDepartment(false);
+      setActivePage('overview');
+    } else if (target === 'departments') {
+      // Go back to departments list
+      setHasSelectedDepartment(false);
+      setShowDepartments(true);
+      setActivePage('departments');
+    }
+  };
+
+  // Handle "Click to view detailed breakdown" button
+  const handleViewBreakdown = () => {
+    setShowDepartments(true);
+    setActivePage('departments');
+  };
+
+  // Handle department card click
+  const handleDepartmentCardClick = (deptKey) => {
+    setHasSelectedDepartment(true);
+    onDepartmentClick(deptKey);
+  };
+
+  // Build breadcrumb items
+  const getBreadcrumbItems = () => {
+    const items = [{ key: 'overview', label: 'Overview', icon: <HiOutlineChartBar size={16} /> }];
+    
+    if (showDepartments || hasSelectedDepartment) {
+      items.push({ key: 'departments', label: 'Departments', icon: <HiOutlineBuildingOffice2 size={16} /> });
+    }
+    
+    if (hasSelectedDepartment && selectedDepartmentData) {
+      const dept = departmentCards.find((c) => c.key === selectedDepartment);
+      items.push({ key: 'department-detail', label: dept?.code || 'Detail', icon: <HiOutlineBuildingOffice2 size={16} /> });
+    }
+    
+    return items;
+  };
+
+  const breadcrumbItems = getBreadcrumbItems();
 
   return (
     <div className="pa-layout">
@@ -110,38 +164,34 @@ const Predictiveanalyticsview = (props) => {
           </p>
         </div>
 
-        {/* Breadcrumb Tabs */}
+        {/* Breadcrumb Navigation - ALWAYS VISIBLE */}
         <div className="pa-tab-row">
-          {pageTabs.map((tab, idx) => (
-            <React.Fragment key={tab.key}>
+          {breadcrumbItems.map((item, idx) => (
+            <React.Fragment key={item.key}>
               <button
                 className={`pa-tab-btn ${
-                  activePage === tab.key ||
-                  (tab.isDepartment && activePage === 'department-detail')
-                    ? 'active' : ''
+                  (item.key === 'overview' && !showDepartments && !hasSelectedDepartment) ||
+                  (item.key === 'departments' && showDepartments && !hasSelectedDepartment) ||
+                  (item.key === 'department-detail' && hasSelectedDepartment)
+                    ? 'active' 
+                    : ''
                 }`}
-                onClick={() => setActivePage(tab.key)}
+                onClick={() => handleBreadcrumbClick(item.key)}
               >
-                {tab.key === 'overview'
-                  ? <HiOutlineChartBar size={16} />
-                  : <HiOutlineBuildingOffice2 size={16} />
-                }
-                {tab.label}
+                {item.icon}
+                {item.label}
               </button>
-              {idx < pageTabs.length - 1 && (
+              {idx < breadcrumbItems.length - 1 && (
                 <HiOutlineChevronRight size={14} color="#90A1B9" />
               )}
             </React.Fragment>
           ))}
-          {/* Spacer pushes refresh to the right */}
-            <div className="pa-tab-spacer" />
-            {refreshBar}
+          <div className="pa-tab-spacer" />
+          {refreshBar}
         </div>
 
-        
-
-        {/* ── PAGE 1.1 — Overview Chart ── */}
-        {activePage === 'overview' && overviewTrend.length > 0 && (
+        {/* ── OVERVIEW PAGE (Chart + Button) ── */}
+        {showOverviewChart && overviewTrend.length > 0 && !showDepartmentsList && !showDepartmentDetail && (
           <div className="pa-chart-card">
 
             {/* Header */}
@@ -175,16 +225,13 @@ const Predictiveanalyticsview = (props) => {
 
             {/* Chart */}
             <div className="pa-chart-shell">
-              {/* Y axis */}
               <div className="pa-chart-y-axis">
                 {yLabels.map((v) => (
                   <span key={v}>{v}</span>
                 ))}
               </div>
 
-              {/* Chart area */}
               <div className="pa-chart-main">
-                {/* Grid lines */}
                 <div className="pa-chart-grid">
                   <span /><span /><span /><span />
                 </div>
@@ -194,7 +241,6 @@ const Predictiveanalyticsview = (props) => {
                   viewBox="0 0 100 100"
                   preserveAspectRatio="none"
                 >
-                  {/* Confidence bands — static, fade in */}
                   <polygon
                     points={upperPoints}
                     fill="rgba(219,234,254,0.5)"
@@ -208,7 +254,6 @@ const Predictiveanalyticsview = (props) => {
                     style={{ opacity: animProgress }}
                   />
 
-                  {/* Animated predicted line */}
                   {animatedTrend.length > 1 && (
                     <polyline
                       fill="none"
@@ -221,7 +266,6 @@ const Predictiveanalyticsview = (props) => {
                     />
                   )}
 
-                  {/* Data point dots — appear as line reaches them */}
                   {overviewTrend.map((d, i) => {
                     const t = i / Math.max(overviewTrend.length - 1, 1);
                     const dotOpacity = Math.max(0, Math.min(1,
@@ -243,7 +287,6 @@ const Predictiveanalyticsview = (props) => {
                   })}
                 </svg>
 
-                {/* X-axis labels */}
                 <div className="pa-chart-x-axis">
                   {overviewTrend.map((d) => (
                     <span key={d.year}>{d.year}</span>
@@ -273,23 +316,24 @@ const Predictiveanalyticsview = (props) => {
               </div>
             </div>
 
+            {/* View Breakdown Button */}
             <button
-              className="pa-chart-note-btn"
-              onClick={() => setActivePage('departments')}
+              className="pa-view-breakdown-btn"
+              onClick={handleViewBreakdown}
             >
               Click to view detailed breakdown by department →
             </button>
           </div>
         )}
 
-        {/* ── PAGE 1.2 — Department Cards ── */}
-        {activePage === 'departments' && (
+        {/* ── DEPARTMENTS PAGE (Grid of cards) ── */}
+        {showDepartmentsList && (
           <div className="pa-department-grid">
             {departmentCards.map((card) => (
               <div
                 key={card.key}
                 className="pa-department-card"
-                onClick={() => onDepartmentClick(card.key)}
+                onClick={() => handleDepartmentCardClick(card.key)}
               >
                 <div className="pa-department-top">
                   <div className={`pa-dept-icon ${card.color}`}>
@@ -323,8 +367,8 @@ const Predictiveanalyticsview = (props) => {
           </div>
         )}
 
-        {/* ── PAGE 1.3 — Program Bars ── */}
-        {activePage === 'department-detail' && selectedDepartmentData && (
+        {/* ── DEPARTMENT DETAIL PAGE (Program bars) ── */}
+        {showDepartmentDetail && selectedDepartmentData && (
           <div className="pa-panel">
             <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
             <p className="pa-section-subtitle" style={{ marginBottom: 20 }}>

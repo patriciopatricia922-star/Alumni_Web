@@ -15,16 +15,25 @@ const useWindowWidth = () => {
 
 const CATEGORIES = ['All', 'Accommodations', 'Food & Dining', 'Health, Wellness & Leisure', 'Shopping'];
 
-const discounts = [
-  { id: 1, name: 'Two Seasons Hotel and Resorts', discount: 'Up to 25% discount on room accommodation with complimentary breakfast', category: 'Accommodations', location: 'Two Seasons Boracay\nTwo Seasons Coron Island Resort\nTwo Seasons Coron Bayside Hotel', validUntil: 'Valid until March 31, 2026', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80' },
-  { id: 2, name: 'Vista Venice', discount: '10% off on room accommodation', category: 'Accommodations', location: 'Makati Ave, corner Kalayaan Avenue, Makati City', validUntil: null, image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=600&q=80' },
-  { id: 3, name: 'Wingfinity', discount: 'Get 5% discount on any unlimited menu and Ala Carte meals', category: 'Food & Dining', location: 'Wingfinity and Beyond Torre Central Branch', validUntil: 'Valid until March 31, 2026', image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80' },
-  { id: 4, name: 'AIM Taekwondo School', discount: 'Membership fee (P500.00) is waived', category: 'Health, Wellness & Leisure', location: '5th floor 1318 G. Tuazon St. Sampaloc, Manila', validUntil: 'Valid until March 31, 2026', image: 'https://images.unsplash.com/photo-1555597673-b21d5c935865?w=600&q=80' },
-  { id: 5, name: 'The Pretty You', discount: 'Get 5% discount on all services', category: 'Health, Wellness & Leisure', location: 'P. Campa St. Sampaloc Manila', validUntil: null, image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600&q=80' },
-  { id: 6, name: 'MetroDental', discount: 'Get up to 35% discount', category: 'Health, Wellness & Leisure', location: 'Greenbelt 5 Makati City, Eastwood Libis, Trinoma Mall Quezon City, The Podium Pasig City', validUntil: 'Valid until January 30, 2027', image: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=600&q=80' },
-  { id: 7, name: 'Supplies Station, Inc.', discount: '10% discount on all items with minimum purchase of P1,000', category: 'Shopping', location: 'Clark, Pampanga', validUntil: 'Valid until March 31, 2026', image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80' },
-  { id: 8, name: 'OJO Eyewear', discount: 'Get 10% discount on eyewear packages starting at P1,888 and above', category: 'Shopping', location: 'Warehouse 16B, La Fuerza Compound 2241 Chino Roces Avenue, Makati City', validUntil: 'Valid until November 15, 2026', image: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=600&q=80' },
-];
+// Map discount categories to display categories
+const mapCategory = (discount) => {
+  const title = discount.title?.toLowerCase() || '';
+  const description = discount.description?.toLowerCase() || '';
+  
+  if (title.includes('hotel') || title.includes('resort') || description.includes('accommodation')) {
+    return 'Accommodations';
+  }
+  if (title.includes('wingfinity') || description.includes('meal') || description.includes('restaurant')) {
+    return 'Food & Dining';
+  }
+  if (title.includes('taekwondo') || title.includes('dental') || title.includes('pretty you')) {
+    return 'Health, Wellness & Leisure';
+  }
+  if (title.includes('supplies') || title.includes('eyewear') || title.includes('shopping')) {
+    return 'Shopping';
+  }
+  return 'Shopping';
+};
 
 const Discounts = () => {
   const navigate = useNavigate();
@@ -34,6 +43,8 @@ const Discounts = () => {
 
   const [activeCategory, setActiveCategory] = useState('All');
   const [showFilter,     setShowFilter]     = useState(false);
+  const [discounts,      setDiscounts]      = useState([]);
+  const [loading,        setLoading]        = useState(true);
   const filterRef = useRef(null);
   const bellRef   = useRef(null);
 
@@ -42,15 +53,34 @@ const Discounts = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
+  // Fetch discounts from Supabase
   useEffect(() => {
-    const h = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) setShowFilter(false);
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    const fetchDiscounts = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('discounts')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        const formattedDiscounts = data.map(discount => ({
+          id: discount.id,
+          name: discount.title,
+          discount: discount.description,
+          category: mapCategory(discount),
+          location: discount.company || 'Various locations',
+          validUntil: discount.valid_until ? `Valid until ${new Date(discount.valid_until).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : null,
+          image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+        }));
+        setDiscounts(formattedDiscounts);
+      }
+      setLoading(false);
     };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    fetchDiscounts();
   }, []);
 
+  // Fetch notifications
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -66,6 +96,15 @@ const Discounts = () => {
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
     fetchNotifs();
+  }, []);
+
+  useEffect(() => {
+    const h = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setShowFilter(false);
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
   }, []);
 
   const markAllRead = useCallback(() => {
@@ -120,6 +159,7 @@ const Discounts = () => {
     <DiscountsView
       isMobile={isMobile}
       isTablet={isTablet}
+      loading={loading}
       // category / filter
       categories={CATEGORIES}
       activeCategory={activeCategory}

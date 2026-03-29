@@ -586,3 +586,93 @@ body {
 
 .pa-refresh-msg.success { color: #009966; }
 .pa-refresh-msg.error   { color: #EF4444; }
+
+/* ─── View Breakdown Button ──────────────────────────────────────────────────── */
+.pa-view-breakdown-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  line-height: 20px;
+  color: #155DFC;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.pa-view-breakdown-btn:hover {
+  color: #0F47CC;
+  background: #F0F6FF;
+}
+
+.pa-view-breakdown-btn:active {
+  transform: scale(0.98);
+}
+
+/* ─── Tab Spacer ─────────────────────────────────────────────────────────────── */
+.pa-tab-spacer {
+  flex: 1;
+}
+
+/* ─── Overview Refresh Bar (without breadcrumb) ──────────────────────────────── */
+.pa-overview-refresh-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+/* ─── Refresh Bar Styles ─────────────────────────────────────────────────────── */
+.pa-refresh-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pa-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #155DFC;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Lexend', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.pa-refresh-btn:hover {
+  background: #0F47CC;
+}
+
+.pa-refresh-btn.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pa-refresh-msg {
+  font-size: 13px;
+  font-weight: 500;
+  animation: fadeOutMsg 3s ease forwards;
+}
+
+.pa-refresh-msg.success {
+  color: #009966;
+}
+
+.pa-refresh-msg.error {
+  color: #EF4444;
+}
+
+@keyframes fadeOutMsg {
+  0%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}

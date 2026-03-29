@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   HiOutlineChatBubbleLeftRight,
   HiOutlineChevronDown,
   HiOutlineStar,
 } from 'react-icons/hi2';
+import {
+  FaSmile,
+  FaMeh,
+  FaFrown,
+  FaBrain,
+  FaChartLine,
+} from 'react-icons/fa';
 import {
   CartesianGrid,
   Legend,
@@ -15,6 +22,9 @@ import {
   YAxis,
 } from 'recharts';
 import '../styles/Responseanalytics.css';
+
+// AI Service URL
+const AI_BASE_URL = 'http://localhost:8000/api';
 
 // ── Which overview cards show per section ─────────────────────────────────────
 const SECTION_CARDS = {
@@ -136,20 +146,93 @@ const RatingBreakdownCard = ({ ratingBreakdown = [] }) => (
   </section>
 );
 
-const OverallSentimentCard = ({ sentiment }) => {
+// ── Enhanced Overall Sentiment Card with AI Insights ──────────────────────────
+const OverallSentimentCard = ({ sentiment, aiInsights, loadingAI }) => {
   const fullStars = Math.floor(sentiment?.score || 0);
+  const [hoveredStar, setHoveredStar] = useState(0);
+  
   return (
     <section className="ra-card ra-card-half ra-sentiment-card">
       <CardTitle title="Overall Sentiment" subtitle="Average satisfaction rating" />
-      <div className="ra-sentiment-body">
-        <div className="ra-sentiment-score">{sentiment?.score ?? 0}</div>
-        <div className="ra-stars">
-          {[...Array(5)].map((_, index) => (
-            <HiOutlineStar key={index} size={22} className={index < fullStars ? 'filled' : ''} />
-          ))}
+      
+      <div className="ra-sentiment-grid">
+        {/* Left side - Rating Display (centered) */}
+        <div className="ra-sentiment-left">
+          <div className="ra-sentiment-score">{sentiment?.score ?? 0}</div>
+          <div className="ra-stars-animated">
+            {[...Array(5)].map((_, index) => {
+              const starValue = index + 1;
+              const isActive = starValue <= fullStars;
+              return (
+                <HiOutlineStar
+                  key={index}
+                  size={28}
+                  className={`star-animated ${isActive ? 'star-filled' : 'star-empty'}`}
+                  style={{
+                    animationDelay: `${index * 0.1}s`,
+                  }}
+                />
+              );
+            })}
+          </div>
+          <div className="ra-sentiment-theme-pill">
+            {(sentiment?.keyword || sentiment?.quote || 'NO FEEDBACK YET').toUpperCase()}
+          </div>
         </div>
-        <div className="ra-sentiment-theme-pill">
-          {(sentiment?.keyword || sentiment?.quote || 'NO FEEDBACK YET').toUpperCase()}
+        
+        {/* Right side - AI Insights */}
+        <div className="ra-sentiment-right">
+          <div className="ai-insights-header">
+            <FaBrain size={14} />
+            <span>AI INSIGHTS</span>
+          </div>
+          
+          {loadingAI ? (
+            <div className="ai-loading-section">
+              <div className="ai-loading-spinner-small"></div>
+              <span>Analyzing feedback...</span>
+            </div>
+          ) : aiInsights && aiInsights.total > 0 ? (
+            <>
+              <div className="ai-sentiment-distribution">
+                <div className="dist-item positive">
+                  <FaSmile size={12} />
+                  <span>{aiInsights.sentiment.positive_percentage}%</span>
+                </div>
+                <div className="dist-item neutral">
+                  <FaMeh size={12} />
+                  <span>{aiInsights.sentiment.neutral_percentage}%</span>
+                </div>
+                <div className="dist-item negative">
+                  <FaFrown size={12} />
+                  <span>{aiInsights.sentiment.negative_percentage}%</span>
+                </div>
+              </div>
+              
+              {aiInsights.themes && aiInsights.themes.length > 0 && (
+                <div className="ai-themes-row">
+                  <span className="ai-label">Key themes:</span>
+                  <div className="theme-chips-row">
+                    {aiInsights.themes.slice(0, 3).map((theme, i) => (
+                      <span key={i} className="theme-chip-mini">{theme.theme}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {aiInsights.keywords && aiInsights.keywords.length > 0 && (
+                <div className="ai-keywords-row">
+                  <FaChartLine size={12} className="keywords-icon" />
+                  <span className="ai-label">Common topics:</span>
+                  <span className="keywords-text">{aiInsights.keywords.slice(0, 5).join(', ')}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="ai-empty-state">
+              <span>No feedback data available</span>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -192,7 +275,6 @@ const ChartTooltip = ({ active, payload, label }) => {
   );
 };
 
-// Updated LineChartCard to match Login Activity Trends design
 const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
   const chartData = labels.map((label, index) => {
     const row = { label };
@@ -204,7 +286,6 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
     return row;
   });
 
-  // Filter out null values for display
   const hasData = chartData.some(row => 
     series.some(line => row[line.dataKey] !== null)
   );
@@ -235,13 +316,7 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
       <div className="ra-recharts-wrap">
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={chartData} margin={{ top: 8, right: 30, left: 0, bottom: 8 }}>
-            {/* Dashed horizontal grid lines */}
-            <CartesianGrid 
-              stroke="#CCCCCC" 
-              strokeDasharray="4 4" 
-              vertical={false}
-            />
-            
+            <CartesianGrid stroke="#CCCCCC" strokeDasharray="4 4" vertical={false} />
             <XAxis 
               dataKey="label" 
               tickLine={false} 
@@ -249,7 +324,6 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
               tick={{ fill: '#666666', fontSize: 11, fontFamily: 'Arimo, Arial' }}
               dy={8}
             />
-            
             <YAxis
               domain={[0, 100]}
               ticks={[0, 25, 50, 75, 100]}
@@ -259,10 +333,7 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
               width={36}
               dx={-8}
             />
-            
             <Tooltip content={<ChartTooltip />} />
-            
-            {/* Legend - matches Login Activity Trends style */}
             <Legend
               verticalAlign="bottom"
               height={48}
@@ -281,7 +352,6 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
                 return value;
               }}
             />
-            
             {series.map((line) => (
               <Line
                 key={line.dataKey}
@@ -290,12 +360,7 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
                 name={line.name}
                 stroke={line.color}
                 strokeWidth={2}
-                dot={{ 
-                  r: 4, 
-                  strokeWidth: 2, 
-                  fill: '#FFFFFF', 
-                  stroke: line.color 
-                }}
+                dot={{ r: 4, strokeWidth: 2, fill: '#FFFFFF', stroke: line.color }}
                 activeDot={{ r: 6 }}
                 connectNulls={false}
               />
@@ -304,7 +369,6 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
         </ResponsiveContainer>
       </div>
       
-      {/* Centered legend for Board Exam chart - matches Login Activity Trends */}
       {title === "Board Exam Pass Rate" && (
         <div className="ra-centered-legend">
           <div className="ra-legend-line">
@@ -318,7 +382,6 @@ const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
         </div>
       )}
       
-      {/* Centered legend for Certification chart */}
       {title === "Certification Status" && (
         <div className="ra-centered-legend">
           <div className="ra-legend-line">
@@ -365,7 +428,30 @@ const SurveyOverviewPage = ({
 }) => {
   const visible = SECTION_CARDS[selectedSection] || SECTION_CARDS['All Sections'];
   const show = (key) => visible.includes(key);
-
+  
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(true);
+  
+  // Fetch AI insights
+  useEffect(() => {
+    const fetchAIInsights = async () => {
+      setLoadingAI(true);
+      try {
+        const response = await fetch(`${AI_BASE_URL}/ai/feedback-insights`);
+        const data = await response.json();
+        if (data.status === 'success') {
+          setAiInsights(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI insights:', error);
+      } finally {
+        setLoadingAI(false);
+      }
+    };
+    fetchAIInsights();
+  }, []);
+  
   return (
     <div className="ra-content-stack">
       <TopFilterRow
@@ -457,8 +543,14 @@ const SurveyOverviewPage = ({
       {/* Feedback ──────────────────────────────────── */}
       {(show('rating') || show('sentiment')) && (
         <div className="ra-grid-two">
-          {show('rating')    && <RatingBreakdownCard ratingBreakdown={ratingBreakdown} />}
-          {show('sentiment') && <OverallSentimentCard sentiment={overviewCards.sentiment} />}
+          {show('rating') && <RatingBreakdownCard ratingBreakdown={ratingBreakdown} />}
+          {show('sentiment') && (
+            <OverallSentimentCard 
+              sentiment={overviewCards.sentiment} 
+              aiInsights={aiInsights}
+              loadingAI={loadingAI}
+            />
+          )}
         </div>
       )}
 
@@ -477,28 +569,63 @@ const SurveyResponsesPage = ({
   selectedSection,
   setSelectedSection,
   sectionOptions,
-}) => (
-  <div className="ra-content-stack">
-    <TopFilterRow
-      selectedSection={selectedSection}
-      setSelectedSection={setSelectedSection}
-      sectionOptions={sectionOptions}
-    />
-    <section className="ra-card ra-card-full">
-      <CardTitle
-        title="Survey Responses"
-        subtitle="View individual alumni feedback and response entries"
+}) => {
+  const [aiInsights, setAiInsights] = useState(null);
+  const [loadingAI, setLoadingAI] = useState(true);
+  
+  useEffect(() => {
+    const fetchAIInsights = async () => {
+      try {
+        const response = await fetch(`${AI_BASE_URL}/ai/feedback-insights`);
+        const data = await response.json();
+        if (data.status === 'success') {
+          setAiInsights(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI insights:', error);
+      } finally {
+        setLoadingAI(false);
+      }
+    };
+    fetchAIInsights();
+  }, []);
+  
+  return (
+    <div className="ra-content-stack">
+      <TopFilterRow
+        selectedSection={selectedSection}
+        setSelectedSection={setSelectedSection}
+        sectionOptions={sectionOptions}
       />
-      <div className="ra-response-list">
-        {surveyResponses.length ? (
-          surveyResponses.map((item) => <ResponseItem key={item.id} item={item} />)
-        ) : (
-          <div className="ra-empty-state">No response entries found for this section yet.</div>
-        )}
-      </div>
-    </section>
-  </div>
-);
+      
+      {/* AI Summary Banner */}
+      {!loadingAI && aiInsights && aiInsights.total > 0 && (
+        <div className="ai-summary-banner">
+          <div className="ai-summary-icon">
+            <FaBrain size={18} />
+          </div>
+          <div className="ai-summary-text">
+            <strong>AI Summary:</strong> {aiInsights.summary}
+          </div>
+        </div>
+      )}
+      
+      <section className="ra-card ra-card-full">
+        <CardTitle
+          title="Survey Responses"
+          subtitle="View individual alumni feedback and response entries"
+        />
+        <div className="ra-response-list">
+          {surveyResponses.length ? (
+            surveyResponses.map((item) => <ResponseItem key={item.id} item={item} />)
+          ) : (
+            <div className="ra-empty-state">No response entries found for this section yet.</div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+};
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 const Responseanalyticsview = ({
