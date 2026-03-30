@@ -1,72 +1,67 @@
 import { supabase } from './supabase';
 
-export const SURVEY_SECTIONS = [
-  {
-    key: 'personal_background',
-    web_route: '/survey/personal-background',
-    mobile_route: '/personal',
-    percentage: 14,
-  },
-  {
-    key: 'educational_background',
-    web_route: '/survey/educational-background',
-    mobile_route: '/education',
-    percentage: 28,
-  },
-  {
-    key: 'certification_achievement',
-    web_route: '/survey/certification-achievement',
-    mobile_route: '/certification',
-    percentage: 42,
-  },
-  {
-    key: 'employment_information',
-    web_route: '/survey/employment-information',
-    mobile_route: '/employment',
-    percentage: 57,
-  },
-  {
-    key: 'job_experience',
-    web_route: '/survey/job-experience',
-    mobile_route: '/job',
-    percentage: 71,
-  },
-  {
-    key: 'skills_competencies',
-    web_route: '/survey/skills-and-competencies',
-    mobile_route: '/skills',
-    percentage: 85,
-  },
-  {
-    key: 'feedback_university',
-    web_route: '/survey/feedback-and-engagement',
-    mobile_route: '/feedback-and-engagement',
-    percentage: 100,
-  },
-];
+// Dynamic section mapping - will be populated from survey_config
+let DYNAMIC_SECTIONS = [];
+
+// Function to load sections from survey_config
+export const loadSurveySections = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('survey_config')
+      .select('config')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !data?.config?.sections) {
+      console.warn('No survey config found, using default sections');
+      return null;
+    }
+
+    // Build dynamic sections array from config
+    DYNAMIC_SECTIONS = data.config.sections.map((section, index) => {
+      const key = section.title.toLowerCase().replace(/\s+/g, '_');
+      const percentage = Math.round(((index + 1) / data.config.sections.length) * 100);
+      return {
+        key,
+        title: section.title,
+        web_route: `/survey/${index + 1}`,
+        mobile_route: `/survey/${index + 1}`,
+        percentage,
+        index: index + 1,
+      };
+    });
+
+    return DYNAMIC_SECTIONS;
+  } catch (err) {
+    console.error('Error loading survey sections:', err);
+    return null;
+  }
+};
+
+// Get sections (waits for dynamic load if needed)
+export const getSurveySections = async () => {
+  if (DYNAMIC_SECTIONS.length === 0) {
+    await loadSurveySections();
+  }
+  return DYNAMIC_SECTIONS;
+};
 
 const COMPLETE_SENTINEL = '__complete__';
 
 const normalizeLegacyWebRoute = (route) => {
   if (!route) return route;
-
-  if (
-    route === '/survey/feedback' ||
-    route === '/survey/alumni-engagement'
-  ) {
+  if (route === '/survey/feedback' || route === '/survey/alumni-engagement') {
     return '/survey/feedback-and-engagement';
   }
-
   return route;
 };
 
 const normalizeLegacyMobileRoute = (route) => {
   if (!route) return route;
-
   if (route === '/feedback' || route === '/engage') {
     return '/feedback-and-engagement';
   }
-
   return route;
 };
 
@@ -88,18 +83,16 @@ const splitMergedFeedbackPayload = (formData = {}) => {
 
 // Save progress when a section is completed
 export const saveSectionProgress = async (sectionKey, formData = null) => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const sectionIndex = SURVEY_SECTIONS.findIndex((section) => section.key === sectionKey);
+  const sections = await getSurveySections();
+  const sectionIndex = sections.findIndex((section) => section.key === sectionKey);
   if (sectionIndex === -1) return;
 
-  const isLast = sectionIndex === SURVEY_SECTIONS.length - 1;
-  const nextSection = SURVEY_SECTIONS[sectionIndex + 1];
-  const percentage = SURVEY_SECTIONS[sectionIndex].percentage;
+  const isLast = sectionIndex === sections.length - 1;
+  const nextSection = sections[sectionIndex + 1];
+  const percentage = sections[sectionIndex].percentage;
 
   const updates = {
     user_id: user.id,
@@ -115,7 +108,6 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
   if (formData) {
     if (sectionKey === 'feedback_university') {
       const { feedbackData, engagementData } = splitMergedFeedbackPayload(formData);
-
       updates.feedback_university_data = feedbackData;
       updates.alumni_engagement_data = engagementData;
       updates.alumni_engagement = true;
@@ -150,10 +142,7 @@ export const loadSectionData = async (sectionKey) => {
 
 // Load full progress row
 export const loadSurveyProgress = async () => {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -173,10 +162,13 @@ export const loadSurveyProgress = async () => {
 // Get the WEB route to resume from
 export const getResumeRoute = async () => {
   const progress = await loadSurveyProgress();
-  if (!progress) return '/survey/personal-background';
+  if (!progress) {
+    const sections = await getSurveySections();
+    return sections[0]?.web_route || '/survey/1';
+  }
 
   if (progress.completed || progress.web_current_route === COMPLETE_SENTINEL) {
-    return '/survey/complete';
+    return '/update-tracer';
   }
 
   if (progress.web_current_route) {
@@ -185,8 +177,8 @@ export const getResumeRoute = async () => {
 
   if (progress.current_route) {
     const normalizedCurrentRoute = normalizeLegacyMobileRoute(progress.current_route);
-
-    const matched = SURVEY_SECTIONS.find(
+    const sections = await getSurveySections();
+    const matched = sections.find(
       (section) => section.mobile_route === normalizedCurrentRoute
     );
     if (matched) return matched.web_route;
@@ -195,12 +187,16 @@ export const getResumeRoute = async () => {
     if (legacyWebRoute?.startsWith('/survey/')) return legacyWebRoute;
   }
 
-  return '/survey/personal-background';
+  const sections = await getSurveySections();
+  return sections[0]?.web_route || '/survey/1';
 };
 
 export const getMobileResumeRoute = async () => {
   const progress = await loadSurveyProgress();
-  if (!progress) return '/personal';
+  if (!progress) {
+    const sections = await getSurveySections();
+    return sections[0]?.mobile_route || '/survey/1';
+  }
 
   if (progress.completed || progress.mobile_current_route === COMPLETE_SENTINEL) {
     return '/survey-complete';
@@ -212,20 +208,59 @@ export const getMobileResumeRoute = async () => {
 
   if (progress.current_route) {
     const normalizedCurrentRoute = normalizeLegacyMobileRoute(progress.current_route);
-
-    const matched = SURVEY_SECTIONS.find(
+    const sections = await getSurveySections();
+    const matched = sections.find(
       (section) => section.mobile_route === normalizedCurrentRoute
     );
     if (matched) return matched.mobile_route;
-
     return normalizedCurrentRoute;
   }
 
-  return '/personal';
+  const sections = await getSurveySections();
+  return sections[0]?.mobile_route || '/survey/1';
 };
 
 export const isSurveyComplete = async () => {
   const progress = await loadSurveyProgress();
   if (!progress) return false;
   return progress.completed === true || progress.percentage >= 100;
+};
+
+// Get current section index
+export const getCurrentSectionIndex = async () => {
+  const progress = await loadSurveyProgress();
+  if (!progress) return 0;
+  return progress.current_section ? progress.current_section - 1 : 0;
+};
+
+// Mark a section as completed (for when user finishes a section)
+export const markSectionComplete = async (sectionKey) => {
+  const sections = await getSurveySections();
+  const sectionIndex = sections.findIndex((s) => s.key === sectionKey);
+  if (sectionIndex === -1) return;
+
+  const isLast = sectionIndex === sections.length - 1;
+  const nextSection = sections[sectionIndex + 1];
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const updates = {
+    user_id: user.id,
+    current_section: sectionIndex + 1,
+    web_current_route: isLast ? COMPLETE_SENTINEL : nextSection?.web_route,
+    mobile_current_route: isLast ? COMPLETE_SENTINEL : nextSection?.mobile_route,
+    percentage: sections[sectionIndex].percentage,
+    completed: isLast,
+    last_updated: new Date().toISOString(),
+    [sectionKey]: true,
+  };
+
+  const { error } = await supabase
+    .from('survey_progress')
+    .upsert(updates, { onConflict: 'user_id' });
+
+  if (error) {
+    console.error('Error marking section complete:', error.message);
+  }
 };

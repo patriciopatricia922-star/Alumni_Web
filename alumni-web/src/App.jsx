@@ -44,6 +44,7 @@ import PrivacyPolicyAbout from './pages/Privacypolicyabout';
 import NotificationsPage from './pages/Notificationspage';
 import FeedbackAndAlumniEngagement from './survey/Feedbackandalumniengagement';
 import ContentManagement from './admin/ContentManagement';
+// import DynamicSurvey from './pages/DynamicSurvey';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
 // Checks for a valid Supabase session before rendering the page.
@@ -118,6 +119,8 @@ function App() {
       <Route path="/jobs" element={<ProtectedRoute allowedRoles={['alumni']}><Jobs /></ProtectedRoute>} />
       <Route path="/update-tracer" element={<ProtectedRoute allowedRoles={['alumni']}><UpdateTracer /></ProtectedRoute>} />
       {/* ── Survey protected routes ── */}
+      {/* <Route path="/survey/:sectionId" element={<DynamicSurvey />} />
+      <Route path="/survey/complete" element={<SurveyComplete />} /> */}
       <Route path="/survey/personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackground /></ProtectedRoute>} />
       <Route path="/survey/educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackground /></ProtectedRoute>} />
       <Route path="/survey/certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />

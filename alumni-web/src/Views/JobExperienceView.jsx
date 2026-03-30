@@ -58,6 +58,7 @@ const JobExperienceView = ({
   formPct, currentSection, totalSections,
   timeToFindJobOptions, employmentDurationOptions,
   firstJobOptions, factorsOptions,
+  getLabel, getPlaceholder,
   handleSave, handleNext,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -70,7 +71,6 @@ const JobExperienceView = ({
       <Sidebar />
       <div className="je-content">
 
-        {/* ── Sticky Header ─────────────────────────────────────────────────── */}
         <div className="je-header">
           <div className="je-topbar">
             <button className="je-back-btn" onClick={() => navigate('/survey/employment-information')}>
@@ -81,7 +81,6 @@ const JobExperienceView = ({
             </button>
             <div className="je-badge">ALUMNI STATUS</div>
 
-            {/* ── Bell ──────────────────────────────────────────────────────── */}
             <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 className={`je-bell${showDropdown ? ' active' : ''}`}
@@ -163,7 +162,6 @@ const JobExperienceView = ({
 
           <h1 className="je-title">Alumni Tracer Survey</h1>
 
-          {/* ── Progress bar ──────────────────────────────────────────────── */}
           <div className="je-progress">
             <div className="je-progress-row">
               <span>Section {currentSection} of {totalSections}</span>
@@ -176,7 +174,6 @@ const JobExperienceView = ({
           </div>
         </div>
 
-        {/* ── Body ────────────────────────────────────────────────────────── */}
         <div className="je-body">
           <div className="je-card" ref={cardRef}>
             <div>
@@ -187,7 +184,10 @@ const JobExperienceView = ({
             <div className="je-questions">
 
               <div className="je-field">
-                <span className="je-label">How long did it take you to find your first job after graduation? <span className="je-req">*</span>{errors.has('time_to_find_job') && <span className="je-field-error">Required</span>}</span>
+                <span className="je-label">
+                  {getLabel('time_to_find_job')} <span className="je-req">*</span>
+                  {errors.has('time_to_find_job') && <span className="je-field-error">Required</span>}
+                </span>
                 <div className="je-radio-group">
                   {timeToFindJobOptions.map(opt => (
                     <label key={opt} className="je-radio-label">
@@ -200,7 +200,10 @@ const JobExperienceView = ({
               </div>
 
               <div className="je-field">
-                <span className="je-label">How long have you been employed in your current job? <span className="je-req">*</span>{errors.has('employment_duration') && <span className="je-field-error">Required</span>}</span>
+                <span className="je-label">
+                  {getLabel('employment_duration')} <span className="je-req">*</span>
+                  {errors.has('employment_duration') && <span className="je-field-error">Required</span>}
+                </span>
                 <div className="je-radio-group">
                   {employmentDurationOptions.map(opt => (
                     <label key={opt} className="je-radio-label">
@@ -211,7 +214,7 @@ const JobExperienceView = ({
                   ))}
                 </div>
                 {form.employment_duration === 'Other' && (
-                  <input className="je-other-input" type="text" placeholder="Please specify"
+                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_employment_duration') || 'Please specify'}
                     value={form.other_employment_duration}
                     onChange={e => set('other_employment_duration', e.target.value)}
                     style={{ borderColor: errors.has('other_employment_duration') ? '#F87171' : undefined }} />
@@ -219,7 +222,10 @@ const JobExperienceView = ({
               </div>
 
               <div className="je-field">
-                <span className="je-label">How did you find your first job? <span className="je-req">*</span>{errors.has('first_job_source') && <span className="je-field-error">Required</span>}</span>
+                <span className="je-label">
+                  {getLabel('first_job_source')} <span className="je-req">*</span>
+                  {errors.has('first_job_source') && <span className="je-field-error">Required</span>}
+                </span>
                 <div className="je-radio-group">
                   {firstJobOptions.map(opt => (
                     <label key={opt} className="je-radio-label">
@@ -230,7 +236,7 @@ const JobExperienceView = ({
                   ))}
                 </div>
                 {form.first_job_source === 'Other' && (
-                  <input className="je-other-input" type="text" placeholder="Please specify"
+                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_first_job_source') || 'Please specify'}
                     value={form.other_first_job_source}
                     onChange={e => set('other_first_job_source', e.target.value)}
                     style={{ borderColor: errors.has('other_first_job_source') ? '#F87171' : undefined }} />
@@ -238,7 +244,10 @@ const JobExperienceView = ({
               </div>
 
               <div className="je-field">
-                <span className="je-label">What factors helped you most in getting your first job? <span className="je-req">*</span>{errors.has('first_job_factors') && <span className="je-field-error">Required</span>}</span>
+                <span className="je-label">
+                  {getLabel('first_job_factors')} <span className="je-req">*</span>
+                  {errors.has('first_job_factors') && <span className="je-field-error">Required</span>}
+                </span>
                 <span className="je-hint">(Check all that apply)</span>
                 <div className="je-radio-group">
                   {factorsOptions.map(opt => (
@@ -250,7 +259,7 @@ const JobExperienceView = ({
                   ))}
                 </div>
                 {form.first_job_factors.includes('Other') && (
-                  <input className="je-other-input" type="text" placeholder="Please specify"
+                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_job_factors') || 'Please specify'}
                     value={form.other_job_factors}
                     onChange={e => set('other_job_factors', e.target.value)}
                     style={{ borderColor: errors.has('other_job_factors') ? '#F87171' : undefined }} />
@@ -259,7 +268,6 @@ const JobExperienceView = ({
 
             </div>
 
-            {/* ── Footer ──────────────────────────────────────────────────── */}
             <div className="je-footer">
               <button className="je-btn-prev" onClick={() => navigate('/survey/employment-information')}>Previous</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

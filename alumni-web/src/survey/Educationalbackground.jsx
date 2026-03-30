@@ -2,14 +2,34 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
-import EducationalBackgroundView from '../Views/EducationalBackgroundView';
+import { loadSurveyConfig } from '../lib/surveyConfig';
+import EducationalBackgroundView from '../views/EducationalBackgroundView';
 
-const TOTAL_SECTIONS  = 7;
+const TOTAL_SECTIONS = 7;
 const CURRENT_SECTION = 2;
 
-const DEGREE_OPTIONS      = ['BA COMM','BS PSYCH','BS PE','BSA','BSMA','BSBA-MM','BSBA-FM','BSBA-HRM','BSTM','BSHM','BS ARCH','BSCE','BSCS-ML','BSCpE','BSIT-MWA','Other'];
-const YEAR_OPTIONS        = Array.from({ length: 10 }, (_, i) => String(2025 + i));
-const DISTINCTION_OPTIONS = ['Summa Cum Laude','Magna Cum Laude','Cum Laude','With Honors','None'];
+const DEFAULT_DEGREE_OPTIONS = ['BA COMM', 'BS PSYCH', 'BS PE', 'BSA', 'BSMA', 'BSBA-MM', 'BSBA-FM', 'BSBA-HRM', 'BSTM', 'BSHM', 'BS ARCH', 'BSCE', 'BSCS-ML', 'BSCpE', 'BSIT-MWA', 'Other'];
+const DEFAULT_YEAR_OPTIONS = Array.from({ length: 10 }, (_, i) => String(2025 + i));
+const DEFAULT_DISTINCTION_OPTIONS = ['Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'With Honors', 'None'];
+const DEFAULT_LICENSURE_OPTIONS = ['Yes', 'No', 'Not applicable'];
+const DEFAULT_LICENSURE_PLANS_OPTIONS = ['Yes', 'No', 'Already taken', 'Not applicable'];
+const DEFAULT_BOARD_RESULT_OPTIONS = ['Passed', 'Failed', 'Pending', 'Not yet taken'];
+
+const DEFAULT_LABELS = {
+  degree_program: 'Degree Program Completed',
+  other_degree: 'Please specify your degree program',
+  reason_for_course: 'Reason(s) of taking the course',
+  year_graduated: 'Year Graduated',
+  distinction: 'Distinction Received',
+  post_grad_plans: 'Do you have plans on taking a post-graduate studies?',
+  post_grad_course: 'If yes, what course?',
+  licensure_reviewing: 'Are you currently taking/reviewing for licensure examination?',
+  licensure_plans: 'Do you have any plans on taking licensure examination?',
+  licensure_reason: 'Reason(s) for not taking or taking licensure examination',
+  board_exam_name: 'Name of board/licensure examination',
+  board_exam_date: 'Date taken/date of examination',
+  board_exam_result: 'Results',
+};
 
 const REQUIRED_FIELDS_BASE = [
   'degree_program', 'reason_for_course', 'year_graduated',
@@ -18,8 +38,8 @@ const REQUIRED_FIELDS_BASE = [
 
 const computeFormPct = (form) => {
   const required = [...REQUIRED_FIELDS_BASE];
-  if (form.degree_program === 'Other')          required.push('other_degree');
-  if (form.post_grad_plans === 'Yes')           required.push('post_grad_course');
+  if (form.degree_program === 'Other') required.push('other_degree');
+  if (form.post_grad_plans === 'Yes') required.push('post_grad_course');
   if (form.licensure_reviewing === 'Yes') {
     required.push('licensure_plans', 'licensure_reason');
     if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
@@ -27,7 +47,7 @@ const computeFormPct = (form) => {
     }
   }
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
+  const SECTION_CAP = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
   const filled = required.filter(k => form[k] && String(form[k]).trim() !== '').length;
   const contribution = (filled / required.length) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(parseFloat((SECTION_BASE + contribution).toFixed(2)), parseFloat(SECTION_CAP.toFixed(2)));
@@ -36,6 +56,16 @@ const computeFormPct = (form) => {
 const EducationalBackground = () => {
   const navigate = useNavigate();
 
+  const [questionLabels, setQuestionLabels] = useState({});
+  const [questionPlaceholders, setQuestionPlaceholders] = useState({});
+  const [degreeOptions, setDegreeOptions] = useState(DEFAULT_DEGREE_OPTIONS);
+  const [yearOptions, setYearOptions] = useState(DEFAULT_YEAR_OPTIONS);
+  const [distinctionOptions, setDistinctionOptions] = useState(DEFAULT_DISTINCTION_OPTIONS);
+  const [licensureOptions, setLicensureOptions] = useState(DEFAULT_LICENSURE_OPTIONS);
+  const [licensurePlansOptions, setLicensurePlansOptions] = useState(DEFAULT_LICENSURE_PLANS_OPTIONS);
+  const [boardResultOptions, setBoardResultOptions] = useState(DEFAULT_BOARD_RESULT_OPTIONS);
+  const [loadingLabels, setLoadingLabels] = useState(true);
+
   const [form, setForm] = useState({
     degree_program: '', other_degree: '', reason_for_course: '',
     year_graduated: '', distinction: '', post_grad_plans: '',
@@ -43,15 +73,46 @@ const EducationalBackground = () => {
     licensure_reason: '', board_exam_name: '', board_exam_date: '', board_exam_result: '',
   });
 
-  const [errors,    setErrors]    = useState(new Set());
+  const [errors, setErrors] = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
   const bellRef = useRef(null);
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const [notifTab, setNotifTab] = useState('all');
+
+  useEffect(() => {
+    const loadDynamicContent = async () => {
+      setLoadingLabels(true);
+      const config = await loadSurveyConfig();
+      
+      if (config?.sections) {
+        const eduSection = config.sections.find(s => s.title === 'Educational Background');
+        if (eduSection?.questions) {
+          const labels = {};
+          const placeholders = {};
+          
+          eduSection.questions.forEach(q => {
+            labels[q.id] = q.label;
+            if (q.placeholder) placeholders[q.id] = q.placeholder;
+            if (q.id === 'degree_program' && q.options) setDegreeOptions(q.options);
+            if (q.id === 'year_graduated' && q.options) setYearOptions(q.options);
+            if (q.id === 'distinction' && q.options) setDistinctionOptions(q.options);
+            if (q.id === 'licensure_reviewing' && q.options) setLicensureOptions(q.options);
+            if (q.id === 'licensure_plans' && q.options) setLicensurePlansOptions(q.options);
+            if (q.id === 'board_exam_result' && q.options) setBoardResultOptions(q.options);
+          });
+          
+          setQuestionLabels(labels);
+          setQuestionPlaceholders(placeholders);
+        }
+      }
+      setLoadingLabels(false);
+    };
+    loadDynamicContent();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -71,7 +132,7 @@ const EducationalBackground = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -100,14 +161,14 @@ const EducationalBackground = () => {
   const groupByDate = (list) => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
     const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if      (d >= today)     groups['Today'].push(n);
+      if (d >= today) groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo)   groups['This Week'].push(n);
-      else                     groups['Earlier'].push(n);
+      else if (d >= weekAgo) groups['This Week'].push(n);
+      else groups['Earlier'].push(n);
     });
     return groups;
   };
@@ -116,9 +177,9 @@ const EducationalBackground = () => {
     if (!iso) return '';
     const d = new Date(iso), now = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff / 60)   + 'm ago';
-    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
@@ -133,21 +194,21 @@ const EducationalBackground = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.degree_program)           e.add('degree_program');
+    if (!form.degree_program) e.add('degree_program');
     if (form.degree_program === 'Other' && !form.other_degree.trim()) e.add('other_degree');
     if (!form.reason_for_course.trim()) e.add('reason_for_course');
-    if (!form.year_graduated)           e.add('year_graduated');
-    if (!form.distinction)              e.add('distinction');
-    if (!form.post_grad_plans)          e.add('post_grad_plans');
+    if (!form.year_graduated) e.add('year_graduated');
+    if (!form.distinction) e.add('distinction');
+    if (!form.post_grad_plans) e.add('post_grad_plans');
     if (form.post_grad_plans === 'Yes' && !form.post_grad_course.trim()) e.add('post_grad_course');
-    if (!form.licensure_reviewing)      e.add('licensure_reviewing');
+    if (!form.licensure_reviewing) e.add('licensure_reviewing');
     if (form.licensure_reviewing === 'Yes') {
-      if (!form.licensure_plans)         e.add('licensure_plans');
+      if (!form.licensure_plans) e.add('licensure_plans');
       if (!form.licensure_reason.trim()) e.add('licensure_reason');
       if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
         if (!form.board_exam_name.trim()) e.add('board_exam_name');
-        if (!form.board_exam_date)        e.add('board_exam_date');
-        if (!form.board_exam_result)      e.add('board_exam_result');
+        if (!form.board_exam_date) e.add('board_exam_date');
+        if (!form.board_exam_result) e.add('board_exam_result');
       }
     }
     return e;
@@ -171,7 +232,23 @@ const EducationalBackground = () => {
       .then(() => navigate('/survey/certification-achievement'));
   };
 
+  const getLabel = (fieldId) => {
+    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
+  };
+
+  const getPlaceholder = (fieldId) => {
+    return questionPlaceholders[fieldId] || '';
+  };
+
   const formPct = computeFormPct(form);
+
+  if (loadingLabels) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
+        <div style={{ color: '#fff' }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <EducationalBackgroundView
@@ -185,12 +262,16 @@ const EducationalBackground = () => {
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      degreeOptions={DEGREE_OPTIONS}
-      yearOptions={YEAR_OPTIONS}
-      distinctionOptions={DISTINCTION_OPTIONS}
+      degreeOptions={degreeOptions}
+      yearOptions={yearOptions}
+      distinctionOptions={distinctionOptions}
+      licensureOptions={licensureOptions}
+      licensurePlansOptions={licensurePlansOptions}
+      boardResultOptions={boardResultOptions}
+      getLabel={getLabel}
+      getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
-      // notifications
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}
@@ -202,7 +283,6 @@ const EducationalBackground = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      // navigation
       navigate={navigate}
     />
   );

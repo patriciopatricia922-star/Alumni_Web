@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import SurveyMgmtView from "./views/Surveymgmtview";
+import { supabase } from "../lib/supabase";
+import SurveyMgmtView from "./views/SurveyMgmtView";
 
 const DEFAULT_SURVEY = {
   title: "Alumni Survey",
@@ -106,22 +107,15 @@ const DEFAULT_SURVEY = {
     },
     { 
       id: 7, 
-      title: "Feedback for the University", 
-      description: "Your insights and feedback", 
+      title: "Feedback and Alumni Engagement", 
+      description: "Share your thoughts and stay connected with us", 
       questions: [
         { id: 1, type: "multiple", label: "How satisfied are you with your education at NU Dasma?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
         { id: 2, type: "multiple", label: "Would you recommend NU Dasma to others?", required: true, options: ["Yes", "No"] },
         { id: 3, type: "long", label: "Suggestions for improving academic programs and alumni services", required: true, placeholder: "Enter your answer" },
-      ]
-    },
-    { 
-      id: 8, 
-      title: "Alumni Engagement", 
-      description: "Your connection with the university", 
-      questions: [
-        { id: 1, type: "multiple", label: "Would you like to be informed about upcoming alumni events and activities?", required: true, options: ["Yes", "No"] },
-        { id: 2, type: "multiple", label: "Would you be willing to participate in:", required: true, options: ["Alumni Seminars/Webinar programs for professional growth", "Career talks for students", "Alumni fundraising events/activities", "Volunteer opportunities", "Not at all", "Other"] },
-        { id: 3, type: "short", label: "Please specify other participation", required: false, placeholder: "Please specify" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about upcoming alumni events and activities?", required: true, options: ["Yes", "No"] },
+        { id: 5, type: "multiple", label: "Would you be willing to participate in:", required: true, options: ["Alumni Seminars/Webinar programs for professional growth", "Career talks for students", "Alumni fundraising events/activities", "Volunteer opportunities", "Not at all", "Other"] },
+        { id: 6, type: "short", label: "Please specify other participation", required: false, placeholder: "Please specify" },
       ]
     },
   ]
@@ -176,8 +170,8 @@ export default function SurveyManagement() {
         if (error || !data?.config?.sections?.length) {
           setSurvey(DEFAULT_SURVEY);
         } else {
-          setConfigId(data.id);
           setSurvey(data.config);
+          setConfigId(data.id);
         }
       } catch (error) {
         console.error("Error loading survey:", error);
@@ -194,25 +188,35 @@ export default function SurveyManagement() {
     setSaving(true);
     setStatus("saving");
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       if (configId) {
         await supabaseAdmin
           .from("survey_config")
-          .update({ config: survey, updated_at: new Date().toISOString() })
+          .update({ 
+            config: survey, 
+            updated_at: new Date().toISOString(),
+            updated_by: user?.id 
+          })
           .eq("id", configId);
       } else {
         const { data } = await supabaseAdmin
           .from("survey_config")
-          .insert({ config: survey })
+          .insert({ 
+            config: survey,
+            updated_by: user?.id
+          })
           .select("id")
           .single();
         if (data) setConfigId(data.id);
       }
       setStatus("saved");
-      showToast("Survey published successfully!", "success");
+      showToast("Survey published successfully! Changes will reflect on the user survey page.", "success");
       setTimeout(() => setStatus(""), 3000);
-    } catch {
+    } catch (error) {
+      console.error("Publish error:", error);
       setStatus("error");
-      showToast("Failed to publish survey", "error");
+      showToast("Failed to publish survey. Please try again.", "error");
     } finally {
       setSaving(false);
     }
@@ -237,7 +241,7 @@ export default function SurveyManagement() {
   const deleteQuestion = (sIdx, qIdx) => {
     const questionLabel = survey.sections[sIdx].questions[qIdx].label;
     showConfirm(
-      `Are you sure you want to delete this question?`,
+      `Are you sure you want to delete "${questionLabel}"?`,
       () => {
         setSurvey((prev) => ({
           ...prev,
@@ -273,16 +277,12 @@ export default function SurveyManagement() {
   const deleteSection = (sIdx) => {
     const sectionTitle = survey.sections[sIdx].title;
     const questionCount = survey.sections[sIdx].questions.length;
-    const warningMessage = questionCount > 0 
-      ? `This section contains ${questionCount} question(s) that will also be deleted.`
-      : `This section is empty.`;
     
     showConfirm(
-      `Are you sure you want to delete the section "${sectionTitle}"?`,
+      `Are you sure you want to delete "${sectionTitle}"? ${questionCount > 0 ? `This section contains ${questionCount} question(s) that will also be deleted.` : ""}`,
       () => {
         setSurvey((prev) => {
           const updatedSections = prev.sections.filter((_, si) => si !== sIdx);
-          // Adjust active section if needed
           if (activeSection >= updatedSections.length) {
             setActiveSection(Math.max(0, updatedSections.length - 1));
           }

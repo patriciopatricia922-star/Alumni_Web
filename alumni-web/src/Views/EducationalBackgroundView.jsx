@@ -59,22 +59,24 @@ const STYLES = `
 `;
 
 const onFocus = e => e.target.style.borderColor = 'rgba(43,114,251,0.6)';
-const onBlur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
+const onBlur = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
 
 const EducationalBackgroundView = ({
   form, set, setLicensureReviewing, setLicensurePlans,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
   degreeOptions, yearOptions, distinctionOptions,
+  licensureOptions, licensurePlansOptions, boardResultOptions,
+  getLabel, getPlaceholder,
   handleSave, handleNext,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
   navigate,
 }) => {
-  const showPostGradCourse  = form.post_grad_plans === 'Yes';
+  const showPostGradCourse = form.post_grad_plans === 'Yes';
   const showLicensureBranch = form.licensure_reviewing === 'Yes';
-  const showBoardExam       = showLicensureBranch &&
+  const showBoardExam = showLicensureBranch &&
     (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken');
 
   return (
@@ -84,7 +86,6 @@ const EducationalBackgroundView = ({
         <Sidebar />
         <div className="eb-content">
 
-          {/* ── Sticky Header ───────────────────────────────────────────────── */}
           <div className="eb-header">
             <div className="eb-topbar">
               <button className="eb-back-btn" onClick={() => navigate('/survey/personal-background')}>
@@ -94,8 +95,6 @@ const EducationalBackgroundView = ({
                 Back
               </button>
               <div className="eb-badge">ALUMNI STATUS</div>
-
-              {/* ── Bell ────────────────────────────────────────────────────── */}
               <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
                 <button
                   className={`eb-bell${showDropdown ? ' active' : ''}`}
@@ -111,7 +110,6 @@ const EducationalBackgroundView = ({
                     </>
                   )}
                 </button>
-
                 {showDropdown && (
                   <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
                     <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -177,7 +175,6 @@ const EducationalBackgroundView = ({
 
             <h1 className="eb-title">Alumni Tracer Survey</h1>
 
-            {/* ── Progress bar ────────────────────────────────────────────── */}
             <div className="eb-progress">
               <div className="eb-progress-row">
                 <span>Section {currentSection} of {totalSections}</span>
@@ -190,7 +187,6 @@ const EducationalBackgroundView = ({
             </div>
           </div>
 
-          {/* ── Body ────────────────────────────────────────────────────────── */}
           <div className="eb-body">
             <div className="eb-card" ref={cardRef}>
               <div>
@@ -201,7 +197,7 @@ const EducationalBackgroundView = ({
               <div className="eb-fields">
 
                 <div className="eb-field">
-                  <label className="eb-label">Degree Program Completed <span className="eb-req">*</span>{errors.has('degree_program') && <span className="eb-field-error">Required</span>}</label>
+                  <label className="eb-label">{getLabel('degree_program')} <span className="eb-req">*</span>{errors.has('degree_program') && <span className="eb-field-error">Required</span>}</label>
                   <div className="eb-select-wrap">
                     <select className="eb-input eb-select" value={form.degree_program} onChange={e => set('degree_program', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
                       <option value="" disabled>Select</option>
@@ -213,18 +209,18 @@ const EducationalBackgroundView = ({
 
                 {form.degree_program === 'Other' && (
                   <div className="eb-field">
-                    <label className="eb-label">Please specify your degree program <span className="eb-req">*</span>{errors.has('other_degree') && <span className="eb-field-error">Required</span>}</label>
-                    <input className="eb-input" placeholder="Enter your degree program" value={form.other_degree} onChange={e => set('other_degree', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
+                    <label className="eb-label">{getLabel('other_degree')} <span className="eb-req">*</span>{errors.has('other_degree') && <span className="eb-field-error">Required</span>}</label>
+                    <input className="eb-input" placeholder={getPlaceholder('other_degree')} value={form.other_degree} onChange={e => set('other_degree', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
                 )}
 
                 <div className="eb-field">
-                  <label className="eb-label">Reason(s) of taking the course <span className="eb-req">*</span>{errors.has('reason_for_course') && <span className="eb-field-error">Required</span>}</label>
-                  <textarea className="eb-textarea" placeholder="Enter your answer" value={form.reason_for_course} onChange={e => set('reason_for_course', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
+                  <label className="eb-label">{getLabel('reason_for_course')} <span className="eb-req">*</span>{errors.has('reason_for_course') && <span className="eb-field-error">Required</span>}</label>
+                  <textarea className="eb-textarea" placeholder={getPlaceholder('reason_for_course')} value={form.reason_for_course} onChange={e => set('reason_for_course', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                 </div>
 
                 <div className="eb-field">
-                  <label className="eb-label">Year Graduated <span className="eb-req">*</span>{errors.has('year_graduated') && <span className="eb-field-error">Required</span>}</label>
+                  <label className="eb-label">{getLabel('year_graduated')} <span className="eb-req">*</span>{errors.has('year_graduated') && <span className="eb-field-error">Required</span>}</label>
                   <div className="eb-select-wrap">
                     <select className="eb-input eb-select" value={form.year_graduated} onChange={e => set('year_graduated', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
                       <option value="" disabled>Select</option>
@@ -235,7 +231,7 @@ const EducationalBackgroundView = ({
                 </div>
 
                 <div className="eb-field">
-                  <label className="eb-label">Distinction Received <span className="eb-req">*</span>{errors.has('distinction') && <span className="eb-field-error">Required</span>}</label>
+                  <label className="eb-label">{getLabel('distinction')} <span className="eb-req">*</span>{errors.has('distinction') && <span className="eb-field-error">Required</span>}</label>
                   <div className="eb-select-wrap">
                     <select className="eb-input eb-select" value={form.distinction} onChange={e => set('distinction', e.target.value)} onFocus={onFocus} onBlur={onBlur}>
                       <option value="" disabled>Select</option>
@@ -246,7 +242,7 @@ const EducationalBackgroundView = ({
                 </div>
 
                 <div className="eb-field">
-                  <label className="eb-label">Do you have plans on taking a post-graduate studies? <span className="eb-req">*</span>{errors.has('post_grad_plans') && <span className="eb-field-error">Required</span>}</label>
+                  <label className="eb-label">{getLabel('post_grad_plans')} <span className="eb-req">*</span>{errors.has('post_grad_plans') && <span className="eb-field-error">Required</span>}</label>
                   <div className="eb-radio-group">
                     {['Yes', 'No'].map(opt => (
                       <label key={opt} className="eb-radio-label">
@@ -258,15 +254,15 @@ const EducationalBackgroundView = ({
 
                 {showPostGradCourse && (
                   <div className="eb-field">
-                    <label className="eb-label-sub">If yes, what course? <span className="eb-req">*</span>{errors.has('post_grad_course') && <span className="eb-field-error">Required</span>}</label>
-                    <textarea className="eb-textarea" placeholder="Enter your answer" value={form.post_grad_course} onChange={e => set('post_grad_course', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
+                    <label className="eb-label-sub">{getLabel('post_grad_course')} <span className="eb-req">*</span>{errors.has('post_grad_course') && <span className="eb-field-error">Required</span>}</label>
+                    <textarea className="eb-textarea" placeholder={getPlaceholder('post_grad_course')} value={form.post_grad_course} onChange={e => set('post_grad_course', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
                 )}
 
                 <div className="eb-field">
-                  <label className="eb-label">Are you currently taking/reviewing for licensure examination? <span className="eb-req">*</span>{errors.has('licensure_reviewing') && <span className="eb-field-error">Required</span>}</label>
+                  <label className="eb-label">{getLabel('licensure_reviewing')} <span className="eb-req">*</span>{errors.has('licensure_reviewing') && <span className="eb-field-error">Required</span>}</label>
                   <div className="eb-radio-group">
-                    {['Yes', 'No', 'Not applicable'].map(opt => (
+                    {licensureOptions.map(opt => (
                       <label key={opt} className="eb-radio-label">
                         <input type="radio" name="licensure_reviewing" value={opt} checked={form.licensure_reviewing === opt} onChange={() => setLicensureReviewing(opt)} />{opt}
                       </label>
@@ -277,9 +273,9 @@ const EducationalBackgroundView = ({
                 {showLicensureBranch && (
                   <>
                     <div className="eb-field">
-                      <label className="eb-label-sub">Do you have any plans on taking licensure examination? <span className="eb-req">*</span>{errors.has('licensure_plans') && <span className="eb-field-error">Required</span>}</label>
+                      <label className="eb-label-sub">{getLabel('licensure_plans')} <span className="eb-req">*</span>{errors.has('licensure_plans') && <span className="eb-field-error">Required</span>}</label>
                       <div className="eb-radio-group">
-                        {['Yes', 'No', 'Already taken', 'Not applicable'].map(opt => (
+                        {licensurePlansOptions.map(opt => (
                           <label key={opt} className="eb-radio-label">
                             <input type="radio" name="licensure_plans" value={opt} checked={form.licensure_plans === opt} onChange={() => setLicensurePlans(opt)} />{opt}
                           </label>
@@ -287,8 +283,8 @@ const EducationalBackgroundView = ({
                       </div>
                     </div>
                     <div className="eb-field">
-                      <label className="eb-label-sub">Reason(s) for not taking or taking licensure examination <span className="eb-req">*</span>{errors.has('licensure_reason') && <span className="eb-field-error">Required</span>}</label>
-                      <textarea className="eb-textarea" placeholder="Enter your answer" value={form.licensure_reason} onChange={e => set('licensure_reason', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
+                      <label className="eb-label-sub">{getLabel('licensure_reason')} <span className="eb-req">*</span>{errors.has('licensure_reason') && <span className="eb-field-error">Required</span>}</label>
+                      <textarea className="eb-textarea" placeholder={getPlaceholder('licensure_reason')} value={form.licensure_reason} onChange={e => set('licensure_reason', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                     </div>
                   </>
                 )}
@@ -296,17 +292,17 @@ const EducationalBackgroundView = ({
                 {showBoardExam && (
                   <>
                     <div className="eb-field">
-                      <label className="eb-label-sub">Name of board/licensure examination <span className="eb-req">*</span>{errors.has('board_exam_name') && <span className="eb-field-error">Required</span>}</label>
-                      <input className="eb-input" placeholder="Enter your answer" value={form.board_exam_name} onChange={e => set('board_exam_name', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
+                      <label className="eb-label-sub">{getLabel('board_exam_name')} <span className="eb-req">*</span>{errors.has('board_exam_name') && <span className="eb-field-error">Required</span>}</label>
+                      <input className="eb-input" placeholder={getPlaceholder('board_exam_name')} value={form.board_exam_name} onChange={e => set('board_exam_name', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                     </div>
                     <div className="eb-field">
-                      <label className="eb-label-sub">Date taken/date of examination <span className="eb-req">*</span>{errors.has('board_exam_date') && <span className="eb-field-error">Required</span>}</label>
+                      <label className="eb-label-sub">{getLabel('board_exam_date')} <span className="eb-req">*</span>{errors.has('board_exam_date') && <span className="eb-field-error">Required</span>}</label>
                       <input type="date" className="eb-input" value={form.board_exam_date} onChange={e => set('board_exam_date', e.target.value)} style={{ colorScheme: 'dark' }} onFocus={onFocus} onBlur={onBlur} />
                     </div>
                     <div className="eb-field">
-                      <label className="eb-label-sub">Results <span className="eb-req">*</span>{errors.has('board_exam_result') && <span className="eb-field-error">Required</span>}</label>
+                      <label className="eb-label-sub">{getLabel('board_exam_result')} <span className="eb-req">*</span>{errors.has('board_exam_result') && <span className="eb-field-error">Required</span>}</label>
                       <div className="eb-radio-group">
-                        {['Passed', 'Failed', 'Pending', 'Not yet taken'].map(opt => (
+                        {boardResultOptions.map(opt => (
                           <label key={opt} className="eb-radio-label">
                             <input type="radio" name="board_exam_result" value={opt} checked={form.board_exam_result === opt} onChange={() => set('board_exam_result', opt)} />{opt}
                           </label>
@@ -318,7 +314,6 @@ const EducationalBackgroundView = ({
 
               </div>
 
-              {/* ── Footer ────────────────────────────────────────────────── */}
               <div className="eb-footer">
                 <button className="eb-btn-prev" onClick={() => navigate('/survey/personal-background')}>Previous</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

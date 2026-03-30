@@ -60,14 +60,14 @@ const STYLES = `
 `;
 
 const onFocus = e => e.target.style.borderColor = 'rgba(43,114,251,0.6)';
-const onBlur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
+const onBlur = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
 
-// ── Multi-select dropdown ──────────────────────────────────────────────────────
-const MultiSelectDropdown = ({ value, onChange, certifications }) => {
+// Multi-select dropdown component
+const MultiSelectDropdown = ({ value, onChange, certifications, placeholder }) => {
   const [open, setOpen] = useState(false);
   const toggle = (cert) => onChange(value.includes(cert) ? value.filter(c => c !== cert) : [...value, cert]);
   const displayText = value.length === 0
-    ? 'Select a certification'
+    ? placeholder || 'Select a certification'
     : value.length === 1
       ? (value[0].length > 45 ? value[0].slice(0, 45) + '…' : value[0])
       : `${value.length} certifications selected`;
@@ -92,12 +92,12 @@ const MultiSelectDropdown = ({ value, onChange, certifications }) => {
   );
 };
 
-// ── Main View ──────────────────────────────────────────────────────────────────
 const CertificationAchievementView = ({
   form, set, setCertiportPasser, setHelpedCareer,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
-  certifications,
+  certifications, yesNoOptions,
+  getLabel, getPlaceholder,
   handleSave, handleNext,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -105,7 +105,7 @@ const CertificationAchievementView = ({
   navigate,
 }) => {
   const showCertFields = form.certiport_passer === 'Yes';
-  const showHowHelped  = showCertFields && form.helped_career === 'Yes';
+  const showHowHelped = showCertFields && form.helped_career === 'Yes';
 
   return (
     <>
@@ -114,7 +114,6 @@ const CertificationAchievementView = ({
         <Sidebar />
         <div className="ca-content">
 
-          {/* ── Sticky Header ───────────────────────────────────────────────── */}
           <div className="ca-header">
             <div className="ca-topbar">
               <button className="ca-back-btn" onClick={() => navigate('/survey/educational-background')}>
@@ -125,7 +124,6 @@ const CertificationAchievementView = ({
               </button>
               <div className="ca-badge">ALUMNI STATUS</div>
 
-              {/* ── Bell ────────────────────────────────────────────────────── */}
               <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
                 <button
                   className={`ca-bell${showDropdown ? ' active' : ''}`}
@@ -207,7 +205,6 @@ const CertificationAchievementView = ({
 
             <h1 className="ca-title">Alumni Tracer Survey</h1>
 
-            {/* ── Progress bar ────────────────────────────────────────────── */}
             <div className="ca-progress">
               <div className="ca-progress-row">
                 <span>Section {currentSection} of {totalSections}</span>
@@ -220,7 +217,6 @@ const CertificationAchievementView = ({
             </div>
           </div>
 
-          {/* ── Body ────────────────────────────────────────────────────────── */}
           <div className="ca-body">
             <div className="ca-card" ref={cardRef}>
               <div>
@@ -231,9 +227,12 @@ const CertificationAchievementView = ({
               <div className="ca-fields">
 
                 <div className="ca-field">
-                  <label className="ca-label">Are you a certiport passer? <span className="ca-req">*</span>{errors.has('certiport_passer') && <span className="ca-field-error">Required</span>}</label>
+                  <label className="ca-label">
+                    {getLabel('certiport_passer')} <span className="ca-req">*</span>
+                    {errors.has('certiport_passer') && <span className="ca-field-error">Required</span>}
+                  </label>
                   <div className="ca-radio-group">
-                    {['Yes', 'No'].map(opt => (
+                    {yesNoOptions.map(opt => (
                       <label key={opt} className="ca-radio-label">
                         <input type="radio" name="certiport_passer" value={opt}
                           checked={form.certiport_passer === opt}
@@ -246,11 +245,15 @@ const CertificationAchievementView = ({
                 {showCertFields && (
                   <>
                     <div className="ca-field">
-                      <label className="ca-label">Please specify any certiport certification earned <span className="ca-req">*</span>{errors.has('certifications') && <span className="ca-field-error">Required</span>}</label>
+                      <label className="ca-label">
+                        {getLabel('certifications')} <span className="ca-req">*</span>
+                        {errors.has('certifications') && <span className="ca-field-error">Required</span>}
+                      </label>
                       <MultiSelectDropdown
                         value={form.certifications}
                         onChange={v => set('certifications', v)}
                         certifications={certifications}
+                        placeholder={getPlaceholder('certifications') || 'Select a certification'}
                       />
                     </div>
 
@@ -266,9 +269,12 @@ const CertificationAchievementView = ({
                     )}
 
                     <div className="ca-field">
-                      <label className="ca-label">Have your certifications helped you in your career? <span className="ca-req">*</span>{errors.has('helped_career') && <span className="ca-field-error">Required</span>}</label>
+                      <label className="ca-label">
+                        {getLabel('helped_career')} <span className="ca-req">*</span>
+                        {errors.has('helped_career') && <span className="ca-field-error">Required</span>}
+                      </label>
                       <div className="ca-radio-group">
-                        {['Yes', 'No'].map(opt => (
+                        {yesNoOptions.map(opt => (
                           <label key={opt} className="ca-radio-label">
                             <input type="radio" name="helped_career" value={opt}
                               checked={form.helped_career === opt}
@@ -280,8 +286,11 @@ const CertificationAchievementView = ({
 
                     {showHowHelped && (
                       <div className="ca-field">
-                        <label className="ca-label">How have your certifications helped you? <span className="ca-req">*</span>{errors.has('how_helped') && <span className="ca-field-error">Required</span>}</label>
-                        <textarea className="ca-textarea" placeholder="Please describe how your certifications have helped your career"
+                        <label className="ca-label">
+                          {getLabel('how_helped')} <span className="ca-req">*</span>
+                          {errors.has('how_helped') && <span className="ca-field-error">Required</span>}
+                        </label>
+                        <textarea className="ca-textarea" placeholder={getPlaceholder('how_helped') || 'Please describe how your certifications have helped your career'}
                           value={form.how_helped} onChange={e => set('how_helped', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                       </div>
                     )}
@@ -290,7 +299,6 @@ const CertificationAchievementView = ({
 
               </div>
 
-              {/* ── Footer ────────────────────────────────────────────────── */}
               <div className="ca-footer">
                 <button className="ca-btn-prev" onClick={() => navigate('/survey/educational-background')}>Previous</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

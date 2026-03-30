@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { getResumeRoute } from '../lib/surveyProgress';
+import { getResumeRoute, getSurveySections } from '../lib/surveyProgress';
 import homeIcon     from '../assets/home_icn.svg';
 import settingsIcon from '../assets/settings_icn.svg';
 import aboutIcon    from '../assets/about_icn.svg';
@@ -24,7 +24,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate  = useNavigate();
   const [user,        setUser]        = useState(null);
-  const [surveyRoute, setSurveyRoute] = useState('/survey/personal-background');
+  const [surveyRoute, setSurveyRoute] = useState('/survey/1');
   const width    = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
@@ -44,6 +44,9 @@ const Sidebar = () => {
 
     const resolveSurveyRoute = async () => {
       try {
+        // Preload survey sections
+        await getSurveySections();
+        
         const { isSurveyComplete } = await import('../lib/surveyProgress');
         const complete = await isSurveyComplete();
         if (complete) {
@@ -52,8 +55,9 @@ const Sidebar = () => {
           const route = await getResumeRoute();
           setSurveyRoute(route);
         }
-      } catch {
-        setSurveyRoute('/survey/personal-background');
+      } catch (error) {
+        console.error('Error resolving survey route:', error);
+        setSurveyRoute('/survey/1');
       }
     };
     resolveSurveyRoute();

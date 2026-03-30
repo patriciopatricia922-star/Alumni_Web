@@ -2,24 +2,45 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
+import { loadSurveyConfig } from '../lib/surveyConfig';
 import SkillsAndCompetenciesView from '../Views/SkillsAndCompetenciesView';
 
-const TOTAL_SECTIONS  = 7;
+const TOTAL_SECTIONS = 7;
 const CURRENT_SECTION = 6;
 
-const COMPETENCIES_OPTIONS = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism'];
-const SKILL_RATINGS_KEYS   = ['Communication Skills','Information & Technology Skills','Leadership Skills','Critical & Problem-Solving Skills','Work Ethics/Professionalism Skills'];
+// Default options
+const DEFAULT_COMPETENCIES_OPTIONS = [
+  'Communication Skills',
+  'Information & Technology Skills',
+  'Leadership Skills',
+  'Critical & Problem-Solving Skills',
+  'Work Ethics/Professionalism'
+];
+
+const DEFAULT_SKILL_RATINGS_KEYS = [
+  'Communication Skills',
+  'Information & Technology Skills',
+  'Leadership Skills',
+  'Critical & Problem-Solving Skills',
+  'Work Ethics/Professionalism Skills'
+];
+
+// Default labels
+const DEFAULT_LABELS = {
+  useful_competencies: 'What are the competencies learned in college did you find very useful?',
+  skills_to_develop: 'What other skills should NU Dasma develop in students to make them more employable?',
+};
 
 const computeFormPct = (form) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
+  const SECTION_CAP = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
 
   // Required: useful_competencies (array), each skill rating (5), skills_to_develop
-  let total  = 1 + SKILL_RATINGS_KEYS.length + 1; // 7
+  let total = 1 + DEFAULT_SKILL_RATINGS_KEYS.length + 1; // 7
   let filled = 0;
 
   if (form.useful_competencies.length > 0) filled++;
-  SKILL_RATINGS_KEYS.forEach(s => { if ((form.skill_ratings[s] || 0) > 0) filled++; });
+  DEFAULT_SKILL_RATINGS_KEYS.forEach(s => { if ((form.skill_ratings[s] || 0) > 0) filled++; });
   if (form.skills_to_develop?.trim()) filled++;
 
   const contribution = (filled / total) * (1 / TOTAL_SECTIONS) * 100;
@@ -28,11 +49,12 @@ const computeFormPct = (form) => {
 
 const SkillsAndCompetencies = () => {
   const navigate = useNavigate();
-  const cardRef  = useRef(null);
-  const bellRef  = useRef(null);
 
-  const [errors,    setErrors]    = useState(new Set());
-  const [saveToast, setSaveToast] = useState(false);
+  const [questionLabels, setQuestionLabels] = useState({});
+  const [questionPlaceholders, setQuestionPlaceholders] = useState({});
+  const [competenciesOptions, setCompetenciesOptions] = useState(DEFAULT_COMPETENCIES_OPTIONS);
+  const [skillRatingsKeys, setSkillRatingsKeys] = useState(DEFAULT_SKILL_RATINGS_KEYS);
+  const [loadingLabels, setLoadingLabels] = useState(true);
 
   const [form, setForm] = useState({
     useful_competencies: [],
@@ -46,13 +68,57 @@ const SkillsAndCompetencies = () => {
     skills_to_develop: '',
   });
 
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [errors, setErrors] = useState(new Set());
+  const [saveToast, setSaveToast] = useState(false);
+  const cardRef = useRef(null);
+
+  const bellRef = useRef(null);
+  const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const [notifTab, setNotifTab] = useState('all');
+
+  // Load dynamic content from survey_config
+  useEffect(() => {
+    const loadDynamicContent = async () => {
+      setLoadingLabels(true);
+      const config = await loadSurveyConfig();
+      
+      if (config?.sections) {
+        const skillsSection = config.sections.find(s => s.title === 'Skills & Competencies');
+        if (skillsSection?.questions) {
+          const labels = {};
+          const placeholders = {};
+          
+          skillsSection.questions.forEach(q => {
+            labels[q.id] = q.label;
+            if (q.placeholder) placeholders[q.id] = q.placeholder;
+            
+            // Load competencies options if provided
+            if (q.id === 'useful_competencies' && q.options) {
+              setCompetenciesOptions(q.options);
+            }
+            // Load skill ratings keys if provided
+            if (q.id === 'skill_ratings' && q.options) {
+              setSkillRatingsKeys(q.options);
+            }
+          });
+          
+          setQuestionLabels(labels);
+          setQuestionPlaceholders(placeholders);
+        }
+      }
+      setLoadingLabels(false);
+    };
+    loadDynamicContent();
+  }, []);
 
   useEffect(() => {
-    loadSectionData('skills_competencies').then(d => { if (d) setForm(f => ({ ...f, ...d })); });
+    const load = async () => {
+      const savedData = await loadSectionData('skills_competencies');
+      if (savedData) setForm(f => ({ ...f, ...savedData }));
+    };
+    load();
   }, []);
 
   useEffect(() => {
@@ -65,7 +131,7 @@ const SkillsAndCompetencies = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -94,14 +160,14 @@ const SkillsAndCompetencies = () => {
   const groupByDate = (list) => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
     const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if      (d >= today)     groups['Today'].push(n);
+      if (d >= today) groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo)   groups['This Week'].push(n);
-      else                     groups['Earlier'].push(n);
+      else if (d >= weekAgo) groups['This Week'].push(n);
+      else groups['Earlier'].push(n);
     });
     return groups;
   };
@@ -110,9 +176,9 @@ const SkillsAndCompetencies = () => {
     if (!iso) return '';
     const d = new Date(iso), now = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff / 60)   + 'm ago';
-    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
@@ -134,7 +200,7 @@ const SkillsAndCompetencies = () => {
   const validate = () => {
     const e = new Set();
     if (form.useful_competencies.length === 0) e.add('useful_competencies');
-    SKILL_RATINGS_KEYS.forEach(s => { if ((form.skill_ratings[s] || 0) === 0) e.add('rating_' + s); });
+    skillRatingsKeys.forEach(s => { if ((form.skill_ratings[s] || 0) === 0) e.add('rating_' + s); });
     if (!form.skills_to_develop?.trim()) e.add('skills_to_develop');
     return e;
   };
@@ -157,7 +223,23 @@ const SkillsAndCompetencies = () => {
       .then(() => navigate('/survey/feedback-and-engagement'));
   };
 
+  const getLabel = (fieldId) => {
+    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
+  };
+
+  const getPlaceholder = (fieldId) => {
+    return questionPlaceholders[fieldId] || '';
+  };
+
   const formPct = computeFormPct(form);
+
+  if (loadingLabels) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
+        <div style={{ color: '#fff' }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <SkillsAndCompetenciesView
@@ -171,8 +253,10 @@ const SkillsAndCompetencies = () => {
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      competenciesOptions={COMPETENCIES_OPTIONS}
-      skillRatingsKeys={SKILL_RATINGS_KEYS}
+      competenciesOptions={competenciesOptions}
+      skillRatingsKeys={skillRatingsKeys}
+      getLabel={getLabel}
+      getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
       // notifications

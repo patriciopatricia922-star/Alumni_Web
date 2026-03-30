@@ -85,7 +85,7 @@ const AdminSidebar = () => {
     { path: '/admin/survey-management', icon: 'RiSurveyFill', label: 'Survey Management' },
     { path: '/admin/response-and-analytics', icon: 'SiGoogleanalytics', label: 'Response & Analytics' },
     { path: '/admin/predictive-analytics', icon: 'RiOrganizationChart', label: 'Predictive Analytics', marginTop: '16px' },
-    { path: '/admin/content-mgmt', icon: 'FaBookBookmark', label: 'Content Engagement', marginTop: '16px' },
+    { path: '/admin/content-mgmt', icon: 'FaBookBookmark', label: 'Content Management', marginTop: '16px' },
   ];
 
   return (

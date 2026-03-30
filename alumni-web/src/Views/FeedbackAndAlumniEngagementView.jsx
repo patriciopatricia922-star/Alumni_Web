@@ -56,7 +56,8 @@ const FeedbackAndAlumniEngagementView = ({
   form, set, toggleParticipate,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
-  satisfactionOptions, participateOptions,
+  satisfactionOptions, participateOptions, yesNoOptions,
+  getLabel, getPlaceholder,
   handleSave, handleSubmit,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -69,7 +70,6 @@ const FeedbackAndAlumniEngagementView = ({
       <Sidebar />
       <div className="fa-content">
 
-        {/* ── Sticky Header ─────────────────────────────────────────────────── */}
         <div className="fa-header">
           <div className="fa-topbar">
             <button className="fa-back-btn" onClick={() => navigate('/survey/skills-and-competencies')}>
@@ -80,7 +80,6 @@ const FeedbackAndAlumniEngagementView = ({
             </button>
             <div className="fa-badge">ALUMNI STATUS</div>
 
-            {/* ── Bell ──────────────────────────────────────────────────────── */}
             <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 className={`fa-bell${showDropdown ? ' active' : ''}`}
@@ -162,7 +161,6 @@ const FeedbackAndAlumniEngagementView = ({
 
           <h1 className="fa-title">Alumni Tracer Survey</h1>
 
-          {/* ── Progress bar ────────────────────────────────────────────────── */}
           <div className="fa-progress">
             <div className="fa-progress-row">
               <span>Section {currentSection} of {totalSections}</span>
@@ -175,7 +173,6 @@ const FeedbackAndAlumniEngagementView = ({
           </div>
         </div>
 
-        {/* ── Body ────────────────────────────────────────────────────────── */}
         <div className="fa-body">
           <div className="fa-card" ref={cardRef}>
             {errors.size > 0 && (
@@ -190,9 +187,11 @@ const FeedbackAndAlumniEngagementView = ({
 
             <div className="fa-questions">
 
-              {/* ── Feedback for University ──────────────────────────────── */}
               <div className="fa-field">
-                <span className="fa-label">How satisfied are you with your education at NU Dasma? <span className="fa-req">*</span>{errors.has('satisfaction') && <span className="fa-field-error">Required</span>}</span>
+                <span className="fa-label">
+                  {getLabel('satisfaction')} <span className="fa-req">*</span>
+                  {errors.has('satisfaction') && <span className="fa-field-error">Required</span>}
+                </span>
                 <div className="fa-radio-group">
                   {satisfactionOptions.map(opt => (
                     <label key={opt} className="fa-radio-label">
@@ -205,9 +204,12 @@ const FeedbackAndAlumniEngagementView = ({
               </div>
 
               <div className="fa-field">
-                <span className="fa-label">Would you recommend NU Dasma to others? <span className="fa-req">*</span>{errors.has('recommend') && <span className="fa-field-error">Required</span>}</span>
+                <span className="fa-label">
+                  {getLabel('recommend')} <span className="fa-req">*</span>
+                  {errors.has('recommend') && <span className="fa-field-error">Required</span>}
+                </span>
                 <div className="fa-radio-group">
-                  {['Yes', 'No'].map(opt => (
+                  {yesNoOptions.map(opt => (
                     <label key={opt} className="fa-radio-label">
                       <input type="radio" name="recommend" value={opt}
                         checked={form.recommend === opt}
@@ -218,19 +220,24 @@ const FeedbackAndAlumniEngagementView = ({
               </div>
 
               <div className="fa-field">
-                <span className="fa-label">Suggestions for improving academic programs and alumni services <span className="fa-req">*</span>{errors.has('suggestions') && <span className="fa-field-error">Required</span>}</span>
-                <textarea className="fa-textarea" placeholder="Enter your answer"
+                <span className="fa-label">
+                  {getLabel('suggestions')} <span className="fa-req">*</span>
+                  {errors.has('suggestions') && <span className="fa-field-error">Required</span>}
+                </span>
+                <textarea className="fa-textarea" placeholder={getPlaceholder('suggestions') || 'Enter your answer'}
                   value={form.suggestions}
                   onChange={e => set('suggestions', e.target.value)} />
               </div>
 
               <div className="fa-divider" />
 
-              {/* ── Alumni Engagement ────────────────────────────────────── */}
               <div className="fa-field">
-                <span className="fa-label">Would you like to be informed about upcoming alumni events and activities? <span className="fa-req">*</span>{errors.has('informed_about_events') && <span className="fa-field-error">Required</span>}</span>
+                <span className="fa-label">
+                  {getLabel('informed_about_events')} <span className="fa-req">*</span>
+                  {errors.has('informed_about_events') && <span className="fa-field-error">Required</span>}
+                </span>
                 <div className="fa-radio-group">
-                  {['Yes', 'No'].map(opt => (
+                  {yesNoOptions.map(opt => (
                     <label key={opt} className="fa-radio-label">
                       <input type="radio" name="informed_about_events" value={opt}
                         checked={form.informed_about_events === opt}
@@ -241,7 +248,10 @@ const FeedbackAndAlumniEngagementView = ({
               </div>
 
               <div className="fa-field">
-                <span className="fa-label">Would you be willing to participate in: <span className="fa-req">*</span>{errors.has('participate_in') && <span className="fa-field-error">Required</span>}</span>
+                <span className="fa-label">
+                  {getLabel('participate_in')} <span className="fa-req">*</span>
+                  {errors.has('participate_in') && <span className="fa-field-error">Required</span>}
+                </span>
                 <div className="fa-radio-group">
                   {participateOptions.map(opt => (
                     <label key={opt} className="fa-checkbox-label">
@@ -254,7 +264,7 @@ const FeedbackAndAlumniEngagementView = ({
                 {form.participate_in.includes('Other') && (
                   <input
                     style={{ width: '100%', height: '44px', background: 'rgba(255,255,255,0.17)', border: errors.has('other_participate') ? '1px solid #F87171' : '0.89px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '10px 16px', fontFamily: 'Arimo, Arial, sans-serif', fontSize: '14px', color: '#fff', outline: 'none', marginTop: '8px' }}
-                    placeholder="Please specify"
+                    placeholder={getPlaceholder('other_participate') || 'Please specify'}
                     value={form.other_participate}
                     onChange={e => set('other_participate', e.target.value)}
                   />
@@ -263,7 +273,6 @@ const FeedbackAndAlumniEngagementView = ({
 
             </div>
 
-            {/* ── Footer ──────────────────────────────────────────────────── */}
             <div className="fa-footer">
               <button className="fa-btn-prev" onClick={() => navigate('/survey/skills-and-competencies')}>Previous</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

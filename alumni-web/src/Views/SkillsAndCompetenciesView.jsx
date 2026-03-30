@@ -54,7 +54,7 @@ const STYLES = `
   @media (max-height: 600px) { .sc-header { padding-bottom: 10px; } .sc-progress { padding: 10px 20px; } .sc-body { padding-top: 14px; } }
 `;
 
-// ── Star Rating ────────────────────────────────────────────────────────────────
+// Star Rating Component
 const StarRating = ({ value, onChange }) => {
   const [hovered, setHovered] = useState(0);
   return (
@@ -74,12 +74,12 @@ const StarRating = ({ value, onChange }) => {
   );
 };
 
-// ── Main View ──────────────────────────────────────────────────────────────────
 const SkillsAndCompetenciesView = ({
   form, toggleCompetency, setSkillRating, setSkillsToDevelop,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
   competenciesOptions, skillRatingsKeys,
+  getLabel, getPlaceholder,
   handleSave, handleNext,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -92,7 +92,6 @@ const SkillsAndCompetenciesView = ({
       <Sidebar />
       <div className="sc-content">
 
-        {/* ── Sticky Header ─────────────────────────────────────────────────── */}
         <div className="sc-header">
           <div className="sc-topbar">
             <button className="sc-back-btn" onClick={() => navigate('/survey/job-experience')}>
@@ -103,7 +102,6 @@ const SkillsAndCompetenciesView = ({
             </button>
             <div className="sc-badge">ALUMNI STATUS</div>
 
-            {/* ── Bell ──────────────────────────────────────────────────────── */}
             <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
                 className={`sc-bell${showDropdown ? ' active' : ''}`}
@@ -185,7 +183,6 @@ const SkillsAndCompetenciesView = ({
 
           <h1 className="sc-title">Alumni Tracer Survey</h1>
 
-          {/* ── Progress bar ────────────────────────────────────────────────── */}
           <div className="sc-progress">
             <div className="sc-progress-row">
               <span>Section {currentSection} of {totalSections}</span>
@@ -198,7 +195,6 @@ const SkillsAndCompetenciesView = ({
           </div>
         </div>
 
-        {/* ── Body ────────────────────────────────────────────────────────── */}
         <div className="sc-body">
           <div className="sc-card" ref={cardRef}>
             {errors.size > 0 && (
@@ -213,7 +209,10 @@ const SkillsAndCompetenciesView = ({
 
             <div className="sc-questions">
               <div className="sc-field">
-                <span className="sc-label">What are the competencies learned in college did you find very useful? <span className="sc-req">*</span>{errors.has('useful_competencies') && <span className="sc-field-error">Required</span>}</span>
+                <span className="sc-label">
+                  {getLabel('useful_competencies')} <span className="sc-req">*</span>
+                  {errors.has('useful_competencies') && <span className="sc-field-error">Required</span>}
+                </span>
                 <div className="sc-radio-group">
                   {competenciesOptions.map(opt => (
                     <label key={opt} className="sc-checkbox-label">
@@ -241,14 +240,16 @@ const SkillsAndCompetenciesView = ({
               </div>
 
               <div className="sc-field">
-                <span className="sc-label">What other skills should NU Dasma develop in students to make them more employable? <span className="sc-req">*</span>{errors.has('skills_to_develop') && <span className="sc-field-error">Required</span>}</span>
-                <textarea className="sc-textarea" placeholder="Enter your answer"
+                <span className="sc-label">
+                  {getLabel('skills_to_develop')} <span className="sc-req">*</span>
+                  {errors.has('skills_to_develop') && <span className="sc-field-error">Required</span>}
+                </span>
+                <textarea className="sc-textarea" placeholder={getPlaceholder('skills_to_develop') || 'Enter your answer'}
                   value={form.skills_to_develop}
                   onChange={e => setSkillsToDevelop(e.target.value)} />
               </div>
             </div>
 
-            {/* ── Footer ──────────────────────────────────────────────────── */}
             <div className="sc-footer">
               <button className="sc-btn-prev" onClick={() => navigate('/survey/job-experience')}>Previous</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

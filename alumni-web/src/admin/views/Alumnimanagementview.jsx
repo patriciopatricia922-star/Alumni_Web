@@ -1,8 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { MdEmail } from "react-icons/md";
 import { MdWork } from "react-icons/md";
 import { MdAssignment } from "react-icons/md";
 import { MdAccountCircle } from "react-icons/md";
+import { FiFilter, FiDownload, FiSearch, FiX } from "react-icons/fi";
+import AdminSidebar from "../components/AdminSidebar";
 import "../styles/Alumnimanagement.css";
 
 // ─── SVG Icons ────────────────────────────────────────────────────────────────
@@ -14,6 +16,7 @@ const IconUsers = ({ color = "#155DFC" }) => (
     <circle cx="17" cy="7" r="3" stroke={color} strokeWidth="2"/>
   </svg>
 );
+
 const IconSurveyDone = ({ color = "#00A63E" }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <rect x="4" y="2" width="14" height="20" rx="2" stroke={color} strokeWidth="2"/>
@@ -21,6 +24,7 @@ const IconSurveyDone = ({ color = "#00A63E" }) => (
     <path d="M14 16l1.5 1.5L18 14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
+
 const IconSurveyPending = ({ color = "#DF7171" }) => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
     <rect x="4" y="2" width="14" height="20" rx="2" stroke={color} strokeWidth="2"/>
@@ -29,70 +33,129 @@ const IconSurveyPending = ({ color = "#DF7171" }) => (
     <circle cx="15" cy="18.5" r="0.75" fill={color}/>
   </svg>
 );
-const IconSearch = () => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
-    style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
-    <circle cx="7.5" cy="7.5" r="5.25" stroke="#90A1B9" strokeWidth="1.5"/>
-    <path d="M11.5 11.5L15.5 15.5" stroke="#90A1B9" strokeWidth="1.5" strokeLinecap="round"/>
-  </svg>
-);
-const IconFilter = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M2 4h12M4 8h8M6 12h4" stroke="#314158" strokeWidth="1.33" strokeLinecap="round"/>
-  </svg>
-);
-const IconExport = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <path d="M8 2v8M5 7l3 3 3-3" stroke="#314158" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 12h12" stroke="#314158" strokeWidth="1.33" strokeLinecap="round"/>
-  </svg>
-);
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
 function EmpBadge({ status }) {
   const s = (status ?? "").toLowerCase();
   let bg, color, label;
-  if      (s === "employed")                              { bg="#DCFCE7"; color="#008236"; label="Employed"; }
-  else if (s === "unemployed")                            { bg="#FFE2E2"; color="#BF0000"; label="Unemployed"; }
-  else if (s === "student" || s.includes("stud"))         { bg="#DBEAFE"; color="#1447E6"; label="Student"; }
-  else if (s.includes("seek") || s.includes("look"))      { bg="#FEF9C2"; color="#A65F00"; label="Seeking"; }
-  else if (s.includes("further") || s.includes("study"))  { bg="#DBEAFE"; color="#1447E6"; label="Further Studies"; }
-  else if (s.includes("self"))                            { bg="#DCFCE7"; color="#008236"; label="Self-Employed"; }
-  else                                                    { bg="#F1F5F9"; color="#45556C"; label=status||"—"; }
+  if (s === "employed") { bg = "#DCFCE7"; color = "#008236"; label = "Employed"; }
+  else if (s === "unemployed") { bg = "#FFE2E2"; color = "#BF0000"; label = "Unemployed"; }
+  else if (s === "student" || s.includes("stud")) { bg = "#DBEAFE"; color = "#1447E6"; label = "Student"; }
+  else if (s.includes("seek") || s.includes("look")) { bg = "#FEF9C2"; color = "#A65F00"; label = "Seeking"; }
+  else if (s.includes("further") || s.includes("study")) { bg = "#DBEAFE"; color = "#1447E6"; label = "Further Studies"; }
+  else if (s.includes("self")) { bg = "#DCFCE7"; color = "#008236"; label = "Self-Employed"; }
+  else { bg = "#F1F5F9"; color = "#45556C"; label = status || "—"; }
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", justifyContent:"center",
-      padding:"2px 10px", borderRadius:9999, fontSize:12, lineHeight:"16px",
-      fontFamily:"Arimo,sans-serif", fontWeight:400, color, background:bg, whiteSpace:"nowrap"
-    }}>{label}</span>
+    <span className={`emp-badge ${s}`}>{label}</span>
   );
 }
 
 function SurveyBadge({ status }) {
   const done = status === "completed";
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", justifyContent:"center",
-      padding:"2px 10px", borderRadius:9999, fontSize:12, lineHeight:"16px",
-      fontFamily:"Arimo,sans-serif", fontWeight:400, whiteSpace:"nowrap",
-      background: done ? "#DCFCE7" : "#FFE2E2",
-      color:      done ? "#008236" : "#BF0000",
-    }}>{done ? "Completed" : "Pending"}</span>
+    <span className={`survey-badge ${done ? "completed" : "pending"}`}>
+      {done ? "Completed" : "Pending"}
+    </span>
   );
 }
 
 function AccountBadge({ status }) {
   const active = (status ?? "active") === "active";
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", justifyContent:"center",
-      padding:"2px 10px", borderRadius:9999, fontSize:12, lineHeight:"16px",
-      fontFamily:"Arimo,sans-serif", fontWeight:400, whiteSpace:"nowrap",
-      background: active ? "rgba(142,201,47,0.28)" : "rgba(255,149,0,0.55)",
-      color:"#4C4C4C",
-    }}>{active ? "Active" : "Inactive"}</span>
+    <span className={`account-badge ${active ? "active" : "inactive"}`}>
+      {active ? "Active" : "Inactive"}
+    </span>
   );
 }
+
+// ─── Filter Modal ────────────────────────────────────────────────────────────
+const FilterModal = ({ filters, onApply, onClear, onClose, availablePrograms, availableBatches }) => {
+  const [localFilters, setLocalFilters] = useState(filters);
+
+  const employmentOptions = ["Employed", "Unemployed", "Student", "Seeking", "Further Studies", "Self-Employed"];
+  const surveyOptions = ["Completed", "Pending"];
+
+  const handleChange = (key, value) => {
+    setLocalFilters({ ...localFilters, [key]: value });
+  };
+
+  const handleApply = () => {
+    onApply(localFilters);
+  };
+
+  const handleClear = () => {
+    setLocalFilters({
+      program: "",
+      batch: "",
+      employmentStatus: "",
+      surveyStatus: "",
+    });
+    onClear();
+  };
+
+  return (
+    <div className="filter-modal-overlay" onClick={onClose}>
+      <div className="filter-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="filter-modal-header">
+          <h3>Filter Alumni</h3>
+          <button className="filter-modal-close" onClick={onClose}>
+            <FiX size={18} />
+          </button>
+        </div>
+
+        <div className="filter-modal-body">
+          <div className="filter-group">
+            <label>Program</label>
+            <select value={localFilters.program} onChange={(e) => handleChange("program", e.target.value)}>
+              <option value="">All Programs</option>
+              {availablePrograms.map((program) => (
+                <option key={program} value={program}>{program}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Batch Year</label>
+            <select value={localFilters.batch} onChange={(e) => handleChange("batch", e.target.value)}>
+              <option value="">All Batches</option>
+              {availableBatches.map((batch) => (
+                <option key={batch} value={batch}>{batch}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Employment Status</label>
+            <select value={localFilters.employmentStatus} onChange={(e) => handleChange("employmentStatus", e.target.value)}>
+              <option value="">All Statuses</option>
+              {employmentOptions.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Survey Status</label>
+            <select value={localFilters.surveyStatus} onChange={(e) => handleChange("surveyStatus", e.target.value)}>
+              <option value="">All Statuses</option>
+              {surveyOptions.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="filter-modal-footer">
+          <button className="filter-btn-clear" onClick={handleClear}>Clear All</button>
+          <div className="filter-actions">
+            <button className="filter-btn-cancel" onClick={onClose}>Cancel</button>
+            <button className="filter-btn-apply" onClick={handleApply}>Apply Filters</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ─── Alumni Profile Modal ─────────────────────────────────────────────────────
 function AlumniProfileModal({ alumni, onClose }) {
@@ -114,20 +177,17 @@ function AlumniProfileModal({ alumni, onClose }) {
     (value ?? "").toLowerCase().replace(/[\s-]+/g, "-");
 
   const detailItems = [
-    { icon: <MdEmail size={18} color="#155DFC" />,       label: "Email Address",     value: alumni.email             || "—", isText: true  },
-    { icon: <MdWork size={18} color="#155DFC" />,        label: "Employment Status", value: alumni.employment_status || "—", isText: true  },
-    { icon: <MdAssignment size={18} color="#155DFC" />,  label: "Survey Status",     value: alumni.survey_status     || "—", isBadge: true },
-    { icon: <MdAccountCircle size={18} color="#155DFC"/>, label: "Account Status",   value: alumni.account_status    || "—", isBadge: true },
+    { icon: <MdEmail size={18} color="#155DFC" />, label: "Email Address", value: alumni.email || "—", isText: true },
+    { icon: <MdWork size={18} color="#155DFC" />, label: "Employment Status", value: alumni.employment_status || "—", isText: true },
+    { icon: <MdAssignment size={18} color="#155DFC" />, label: "Survey Status", value: alumni.survey_status || "—", isBadge: true },
+    { icon: <MdAccountCircle size={18} color="#155DFC" />, label: "Account Status", value: alumni.account_status || "—", isBadge: true },
   ];
 
   return (
     <div className="apm-overlay" onClick={onClose}>
       <div className="apm-drawer" onClick={(e) => e.stopPropagation()}>
-
-        {/* Close */}
         <button className="apm-close" onClick={onClose} aria-label="Close">✕</button>
 
-        {/* Hero */}
         <div className="apm-hero">
           <div className="apm-hero-bg" aria-hidden="true" />
           <div className="apm-avatar-ring">
@@ -140,7 +200,6 @@ function AlumniProfileModal({ alumni, onClose }) {
           </div>
         </div>
 
-        {/* Body */}
         <div className="apm-body">
           <p className="apm-section-title">Profile Details</p>
           <ul className="apm-details-list">
@@ -151,7 +210,7 @@ function AlumniProfileModal({ alumni, onClose }) {
                   <span className="apm-detail-label">{item.label}</span>
                   {item.isBadge ? (
                     <span className={`apm-badge apm-badge--${statusClass(item.value)}`}>
-                      {item.value}
+                      {item.value === "completed" ? "Completed" : item.value === "pending" ? "Pending" : item.value}
                     </span>
                   ) : (
                     <span className="apm-detail-value">{item.value}</span>
@@ -172,10 +231,14 @@ function AlumniManagementView({
   selectedAlumni, completedPct, pendingPct,
   filtered, totalPages, paginated,
   startEntry, endEntry,
-  setSearch, setPage, setSelectedAlumni, updateStatus,
+  setSearch, setPage, setSelectedAlumni,
+  showFilter, onOpenFilter, onCloseFilter, onApplyFilters, onClearFilters,
+  onExport, filters, availablePrograms, availableBatches, hasActiveFilters,
+  onPrevPage, onNextPage, onGoToPage, onCloseModal,
 }) {
   return (
     <div className="am-page">
+      <AdminSidebar />
 
       <div className="am-heading-row">
         <div>
@@ -184,47 +247,18 @@ function AlumniManagementView({
         </div>
       </div>
 
-      {/* ── Metrics ── */}
-      <div className="am-metrics">
-        <div className="am-metric-card">
-          <div className="am-metric-left">
-            <p className="am-metric-label">Active Accounts</p>
-            <p className="am-metric-value">{stats.active}</p>
-            <p className="am-metric-sub">of {alumni.length} total</p>
-          </div>
-          <div className="am-metric-icon am-icon-blue"><IconUsers color="#155DFC" /></div>
-        </div>
-        <div className="am-metric-card">
-          <div className="am-metric-left">
-            <p className="am-metric-label">Inactive Accounts</p>
-            <p className="am-metric-value">{stats.deactivated}</p>
-            <p className="am-metric-sub">of {alumni.length} total</p>
-          </div>
-          <div className="am-metric-icon am-icon-orange"><IconUsers color="#FCC271" /></div>
-        </div>
-        <div className="am-metric-card">
-          <div className="am-metric-left">
-            <p className="am-metric-label">Survey Completed</p>
-            <p className="am-metric-value">{completedPct}%</p>
-            <p className="am-metric-sub">{stats.completed} alumni</p>
-          </div>
-          <div className="am-metric-icon am-icon-green"><IconSurveyDone color="#00A63E" /></div>
-        </div>
-        <div className="am-metric-card">
-          <div className="am-metric-left">
-            <p className="am-metric-label">Survey Pending</p>
-            <p className="am-metric-value">{stats.pending}</p>
-            <p className="am-metric-sub">{pendingPct}% of total</p>
-          </div>
-          <div className="am-metric-icon am-icon-red"><IconSurveyPending color="#DF7171" /></div>
-        </div>
+      {/* ── Export Button Row (outside the card, flex-end) ── */}
+      <div className="am-export-row">
+        <button className="am-export-btn" onClick={onExport}>
+          <FiDownload size={14} /> Export
+        </button>
       </div>
 
       {/* ── Table Card ── */}
       <div className="am-table-card">
         <div className="am-toolbar">
           <div className="am-search-wrap">
-            <IconSearch />
+            <FiSearch size={18} className="search-icon" />
             <input
               type="text"
               placeholder="Search by name, email, or program..."
@@ -233,8 +267,10 @@ function AlumniManagementView({
             />
           </div>
           <div className="am-toolbar-btns">
-            <button className="am-tb-btn"><IconFilter /> Filter</button>
-            <button className="am-tb-btn"><IconExport /> Export</button>
+            <button className={`am-tb-btn ${hasActiveFilters ? "active-filter" : ""}`} onClick={onOpenFilter}>
+              <FiFilter size={14} /> Filter
+              {hasActiveFilters && <span className="filter-badge" />}
+            </button>
           </div>
         </div>
 
@@ -248,7 +284,7 @@ function AlumniManagementView({
                 <th className="tc">Employment Status</th>
                 <th className="tc am-col-survey">Survey Status</th>
                 <th className="tc am-col-account">Account Status</th>
-              </tr>
+               </tr>
             </thead>
             <tbody>
               {paginated.length === 0 ? (
@@ -266,7 +302,7 @@ function AlumniManagementView({
                       </div>
                     </td>
                     <td className="am-col-batch">
-                      {a.batch ? <span className="am-batch">{a.batch}</span> : <span style={{color:"#CBD5E1"}}>—</span>}
+                      {a.batch !== "—" ? <span className="am-batch">{a.batch}</span> : <span style={{ color: "#CBD5E1" }}>—</span>}
                     </td>
                     <td className="am-col-program">{a.program || "—"}</td>
                     <td className="tc"><EmpBadge status={a.employment_status} /></td>
@@ -285,27 +321,39 @@ function AlumniManagementView({
             Showing {startEntry} to {endEntry} of {filtered.length} entries
           </span>
           <div className="am-pages">
-            <button className="am-pg-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Prev</button>
+            <button className="am-pg-btn" disabled={page === 1} onClick={onPrevPage}>Prev</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
               .reduce((acc, p, idx, arr) => {
                 if (idx > 0 && p - arr[idx - 1] > 1)
-                  acc.push(<span key={`g${p}`} style={{ padding:"0 4px", color:"#90A1B9", fontSize:14 }}>…</span>);
+                  acc.push(<span key={`g${p}`} className="pagination-dots">…</span>);
                 acc.push(
-                  <button key={p} className={`am-pg-btn${p === page ? " on" : ""}`} onClick={() => setPage(p)}>{p}</button>
+                  <button key={p} className={`am-pg-btn${p === page ? " on" : ""}`} onClick={() => onGoToPage(p)}>{p}</button>
                 );
                 return acc;
               }, [])}
-            <button className="am-pg-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+            <button className="am-pg-btn" disabled={page === totalPages} onClick={onNextPage}>Next</button>
           </div>
         </div>
       </div>
+
+      {/* ── Filter Modal ── */}
+      {showFilter && (
+        <FilterModal
+          filters={filters}
+          onApply={onApplyFilters}
+          onClear={onClearFilters}
+          onClose={onCloseFilter}
+          availablePrograms={availablePrograms}
+          availableBatches={availableBatches}
+        />
+      )}
 
       {/* ── Profile Modal ── */}
       {selectedAlumni && (
         <AlumniProfileModal
           alumni={selectedAlumni}
-          onClose={() => setSelectedAlumni(null)}
+          onClose={onCloseModal}
         />
       )}
     </div>

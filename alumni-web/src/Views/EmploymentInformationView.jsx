@@ -57,10 +57,10 @@ const STYLES = `
 `;
 
 const onFocus = e => e.target.style.borderColor = 'rgba(43,114,251,0.6)';
-const onBlur  = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
+const onBlur = e => e.target.style.borderColor = 'rgba(255,255,255,0.06)';
 
-// ── Industry Select Dropdown ───────────────────────────────────────────────────
-const SelectDropdown = ({ value, onChange, industryOptions }) => {
+// Industry Select Dropdown
+const SelectDropdown = ({ value, onChange, industryOptions, placeholder }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   useEffect(() => {
@@ -71,7 +71,7 @@ const SelectDropdown = ({ value, onChange, industryOptions }) => {
   return (
     <div className="ei-dropdown" ref={ref}>
       <div className={`ei-dropdown-trigger${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
-        <span style={{ color: value ? '#fff' : 'rgba(255,255,255,0.3)' }}>{value || 'Select'}</span>
+        <span style={{ color: value ? '#fff' : 'rgba(255,255,255,0.3)' }}>{value || placeholder || 'Select'}</span>
         <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
           <path d="M1 1L6 7L11 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -88,22 +88,23 @@ const SelectDropdown = ({ value, onChange, industryOptions }) => {
   );
 };
 
-// ── Main View ──────────────────────────────────────────────────────────────────
 const EmploymentInformationView = ({
   form, set, resetEmploymentBranch,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
   industryOptions, employmentStatusesAll, reasonsForJob,
-  unemployedReasons, monthlyIncome, employedStatuses, unemployedStatuses,
+  unemployedReasons, monthlyIncome, locationOptions,
+  employedStatuses, unemployedStatuses,
+  getLabel, getPlaceholder,
   handleSave, handleNext,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
   navigate,
 }) => {
-  const isEmployed           = employedStatuses.includes(form.employment_status);
-  const isUnemployed         = unemployedStatuses.includes(form.employment_status);
-  const showEmployedFields   = form.employment_status !== '' && isEmployed;
+  const isEmployed = employedStatuses.includes(form.employment_status);
+  const isUnemployed = unemployedStatuses.includes(form.employment_status);
+  const showEmployedFields = form.employment_status !== '' && isEmployed;
   const showUnemployedFields = form.employment_status !== '' && isUnemployed;
 
   return (
@@ -113,7 +114,6 @@ const EmploymentInformationView = ({
         <Sidebar />
         <div className="ei-content">
 
-          {/* ── Sticky Header ───────────────────────────────────────────────── */}
           <div className="ei-header">
             <div className="ei-topbar">
               <button className="ei-back-btn" onClick={() => navigate('/survey/certification-achievement')}>
@@ -124,7 +124,6 @@ const EmploymentInformationView = ({
               </button>
               <div className="ei-badge">ALUMNI STATUS</div>
 
-              {/* ── Bell ────────────────────────────────────────────────────── */}
               <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
                 <button
                   className={`ei-bell${showDropdown ? ' active' : ''}`}
@@ -206,7 +205,6 @@ const EmploymentInformationView = ({
 
             <h1 className="ei-title">Alumni Tracer Survey</h1>
 
-            {/* ── Progress bar ────────────────────────────────────────────── */}
             <div className="ei-progress">
               <div className="ei-progress-row">
                 <span>Section {currentSection} of {totalSections}</span>
@@ -219,7 +217,6 @@ const EmploymentInformationView = ({
             </div>
           </div>
 
-          {/* ── Body ────────────────────────────────────────────────────────── */}
           <div className="ei-body">
             <div className="ei-card" ref={cardRef}>
               <div>
@@ -229,7 +226,10 @@ const EmploymentInformationView = ({
 
               <div className="ei-fields">
                 <div className="ei-field">
-                  <span className="ei-label">Is your current job related to your degree? <span className="ei-req">*</span>{errors.has('job_related_to_degree') && <span className="ei-field-error">Required</span>}</span>
+                  <span className="ei-label">
+                    {getLabel('job_related_to_degree')} <span className="ei-req">*</span>
+                    {errors.has('job_related_to_degree') && <span className="ei-field-error">Required</span>}
+                  </span>
                   <div className="ei-radio-group">
                     {['Yes', 'No'].map(opt => (
                       <label key={opt} className="ei-radio-label">
@@ -242,7 +242,10 @@ const EmploymentInformationView = ({
                 </div>
 
                 <div className="ei-field">
-                  <span className="ei-label">Current Employment Status <span className="ei-req">*</span>{errors.has('employment_status') && <span className="ei-field-error">Required</span>}</span>
+                  <span className="ei-label">
+                    {getLabel('employment_status')} <span className="ei-req">*</span>
+                    {errors.has('employment_status') && <span className="ei-field-error">Required</span>}
+                  </span>
                   <div className="ei-radio-group">
                     {employmentStatusesAll.map(opt => (
                       <label key={opt} className="ei-radio-label">
@@ -253,7 +256,7 @@ const EmploymentInformationView = ({
                     ))}
                   </div>
                   {form.employment_status === 'Other' && (
-                    <input className="ei-input" type="text" placeholder="Please specify"
+                    <input className="ei-input" type="text" placeholder={getPlaceholder('other_employment_status') || 'Please specify'}
                       value={form.other_employment_status}
                       onChange={e => set('other_employment_status', e.target.value)}
                       onFocus={onFocus} onBlur={onBlur}
@@ -263,27 +266,38 @@ const EmploymentInformationView = ({
                 </div>
               </div>
 
-              {/* ── Employed branch ─────────────────────────────────────────── */}
               {showEmployedFields && (
                 <div className="ei-branch">
                   <div className="ei-field">
-                    <span className="ei-label">Job position <span className="ei-req">*</span>{errors.has('job_position') && <span className="ei-field-error">Required</span>}</span>
-                    <input className="ei-input" type="text" placeholder="Enter your answer"
+                    <span className="ei-label">
+                      {getLabel('job_position')} <span className="ei-req">*</span>
+                      {errors.has('job_position') && <span className="ei-field-error">Required</span>}
+                    </span>
+                    <input className="ei-input" type="text" placeholder={getPlaceholder('job_position') || 'Enter your answer'}
                       value={form.job_position} onChange={e => set('job_position', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
                   <div className="ei-field">
-                    <span className="ei-label">Name of company / employer <span className="ei-req">*</span>{errors.has('company_name') && <span className="ei-field-error">Required</span>}</span>
-                    <input className="ei-input" type="text" placeholder="Enter your answer"
+                    <span className="ei-label">
+                      {getLabel('company_name')} <span className="ei-req">*</span>
+                      {errors.has('company_name') && <span className="ei-field-error">Required</span>}
+                    </span>
+                    <input className="ei-input" type="text" placeholder={getPlaceholder('company_name') || 'Enter your answer'}
                       value={form.company_name} onChange={e => set('company_name', e.target.value)} onFocus={onFocus} onBlur={onBlur} />
                   </div>
                   <div className="ei-field">
-                    <span className="ei-label">Type of industry <span className="ei-req">*</span>{errors.has('type_of_industry') && <span className="ei-field-error">Required</span>}</span>
-                    <SelectDropdown value={form.type_of_industry} onChange={v => set('type_of_industry', v)} industryOptions={industryOptions} />
+                    <span className="ei-label">
+                      {getLabel('type_of_industry')} <span className="ei-req">*</span>
+                      {errors.has('type_of_industry') && <span className="ei-field-error">Required</span>}
+                    </span>
+                    <SelectDropdown value={form.type_of_industry} onChange={v => set('type_of_industry', v)} industryOptions={industryOptions} placeholder={getPlaceholder('type_of_industry') || 'Select industry'} />
                   </div>
                   <div className="ei-field">
-                    <span className="ei-label">Location of employment <span className="ei-req">*</span>{errors.has('location_of_employment') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">
+                      {getLabel('location_of_employment')} <span className="ei-req">*</span>
+                      {errors.has('location_of_employment') && <span className="ei-field-error">Required</span>}
+                    </span>
                     <div className="ei-radio-group">
-                      {['Local', 'Abroad'].map(opt => (
+                      {locationOptions.map(opt => (
                         <label key={opt} className="ei-radio-label">
                           <input type="radio" name="location_of_employment" value={opt}
                             checked={form.location_of_employment === opt}
@@ -293,7 +307,10 @@ const EmploymentInformationView = ({
                     </div>
                   </div>
                   <div className="ei-field">
-                    <span className="ei-label">Monthly income range <span className="ei-req">*</span>{errors.has('monthly_income') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">
+                      {getLabel('monthly_income')} <span className="ei-req">*</span>
+                      {errors.has('monthly_income') && <span className="ei-field-error">Required</span>}
+                    </span>
                     <div className="ei-radio-group">
                       {monthlyIncome.map(opt => (
                         <label key={opt} className="ei-radio-label">
@@ -305,7 +322,10 @@ const EmploymentInformationView = ({
                     </div>
                   </div>
                   <div className="ei-field">
-                    <span className="ei-label">Reasons for accepting the job <span className="ei-req">*</span>{errors.has('reason_for_job') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">
+                      {getLabel('reason_for_job')} <span className="ei-req">*</span>
+                      {errors.has('reason_for_job') && <span className="ei-field-error">Required</span>}
+                    </span>
                     <div className="ei-radio-group">
                       {reasonsForJob.map(opt => (
                         <label key={opt} className="ei-radio-label">
@@ -316,7 +336,7 @@ const EmploymentInformationView = ({
                       ))}
                     </div>
                     {form.reason_for_job === 'Other' && (
-                      <input className="ei-input" type="text" placeholder="Please specify"
+                      <input className="ei-input" type="text" placeholder={getPlaceholder('other_reason_for_job') || 'Please specify'}
                         value={form.other_reason_for_job}
                         onChange={e => set('other_reason_for_job', e.target.value)}
                         onFocus={onFocus} onBlur={onBlur}
@@ -327,11 +347,13 @@ const EmploymentInformationView = ({
                 </div>
               )}
 
-              {/* ── Unemployed branch ───────────────────────────────────────── */}
               {showUnemployedFields && (
                 <div className="ei-branch">
                   <div className="ei-field">
-                    <span className="ei-label">Reasons of being unemployed <span className="ei-req">*</span>{errors.has('reasons_unemployed') && <span className="ei-field-error">Required</span>}</span>
+                    <span className="ei-label">
+                      {getLabel('reasons_unemployed')} <span className="ei-req">*</span>
+                      {errors.has('reasons_unemployed') && <span className="ei-field-error">Required</span>}
+                    </span>
                     <div className="ei-radio-group" style={{ gap: '16px' }}>
                       {unemployedReasons.map(reason => (
                         <label key={reason} className="ei-radio-label">
@@ -342,7 +364,7 @@ const EmploymentInformationView = ({
                       ))}
                     </div>
                     {form.reasons_unemployed === 'Other' && (
-                      <input className="ei-input" type="text" placeholder="Please specify"
+                      <input className="ei-input" type="text" placeholder={getPlaceholder('other_reason_unemployed') || 'Please specify'}
                         value={form.other_reason_unemployed}
                         onChange={e => set('other_reason_unemployed', e.target.value)}
                         onFocus={onFocus} onBlur={onBlur}
@@ -353,7 +375,6 @@ const EmploymentInformationView = ({
                 </div>
               )}
 
-              {/* ── Footer ────────────────────────────────────────────────── */}
               <div className="ei-footer">
                 <button className="ei-btn-prev" onClick={() => navigate('/survey/certification-achievement')}>Previous</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
