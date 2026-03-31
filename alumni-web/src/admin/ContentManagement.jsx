@@ -3,12 +3,14 @@ import AdminSidebar from './components/AdminSidebar';
 import Contentmgmtview from './views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
 import { supabaseAdmin } from '../lib/supabaseadmin';
+import { logAction } from '../lib/auditLogger';
 
 const TABS = [
   { key: 'events', label: 'Events' },
   { key: 'announcements', label: 'Announcements' },
   { key: 'jobs', label: 'Jobs' },
   { key: 'discounts', label: 'Discounts' },
+  { key: 'landing', label: 'Landing Page' },
 ];
 
 const tabConfig = {
@@ -40,6 +42,13 @@ const tabConfig = {
     emptyTitle: 'No discounts yet',
     emptyDesc: 'Discount offers will appear here once added.',
   },
+  landing: {
+    sectionTitle: 'Landing Page Content',
+    createLabel: 'Add Section',
+    createDesc: 'Manage content displayed on the landing page.',
+    emptyTitle: 'No landing page sections',
+    emptyDesc: 'Create sections to display on the landing page.',
+  },
 };
 
 const ContentManagement = () => {
@@ -49,14 +58,21 @@ const ContentManagement = () => {
   const [showArchive, setShowArchive] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   
-  // State for each content type
   const [events, setEvents] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [discounts, setDiscounts] = useState([]);
+  const [landingSections, setLandingSections] = useState([]); 
 
-  // Fetch all content
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "" });
+    }, 3000);
+  };
+
   const fetchEvents = async () => {
     const { data, error } = await supabase
       .from('events')
@@ -93,6 +109,16 @@ const ContentManagement = () => {
     return data || [];
   };
 
+  // ✅ ADD LANDING PAGE FETCH
+  const fetchLandingSections = async () => {
+    const { data, error } = await supabase
+      .from('landing_sections')
+      .select('*')
+      .order('order_index', { ascending: true });
+    if (!error) setLandingSections(data || []);
+    return data || [];
+  };
+
   const fetchAllContent = async () => {
     setLoading(true);
     await Promise.all([
@@ -100,6 +126,7 @@ const ContentManagement = () => {
       fetchAnnouncements(),
       fetchJobs(),
       fetchDiscounts(),
+      fetchLandingSections(),
     ]);
     setLoading(false);
   };
@@ -108,7 +135,6 @@ const ContentManagement = () => {
     fetchAllContent();
   }, []);
 
-  // Get archived items (is_active = false)
   const getArchivedItems = () => {
     const archived = [];
     
@@ -156,6 +182,18 @@ const ContentManagement = () => {
       });
     });
     
+    // ✅ ADD LANDING SECTIONS TO ARCHIVE
+    landingSections.filter(l => l.is_active === false).forEach(l => {
+      archived.push({
+        id: l.id,
+        type: 'Landing Section',
+        title: l.title,
+        dateLabel: `Created: ${new Date(l.created_at).toLocaleDateString()}`,
+        description: l.description?.substring(0, 100) + (l.description?.length > 100 ? '...' : ''),
+        createdBy: 'Admin',
+      });
+    });
+    
     return archived;
   };
 
@@ -176,177 +214,440 @@ const ContentManagement = () => {
     setEditingItem(null);
   };
 
-  // Create handlers
+  // ============================================
+  // EVENT HANDLERS with Audit Logs
+  // ============================================
   const handleCreateEvent = async (formData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const eventDate = new Date(`${formData.date}T${formData.startTime || '00:00'}`);
-    const newEvent = {
-      title: formData.title,
-      description: formData.description,
-      event_date: eventDate.toISOString(),
-      location: formData.location,
-      category: formData.category,
-      created_by: user?.id,
-      is_active: true,
-    };
-    
-    const { error } = await supabase.from('events').insert([newEvent]);
-    if (!error) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const eventDate = new Date(`${formData.date}T${formData.startTime || '00:00'}`);
+      const newEvent = {
+        title: formData.title,
+        description: formData.description,
+        event_date: eventDate.toISOString(),
+        location: formData.location,
+        category: formData.category,
+        image_url: formData.image_url,
+        created_by: user?.id,
+        is_active: true,
+      };
+      
+      const { data, error } = await supabase.from('events').insert([newEvent]).select();
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Create',
+        module: 'Events',
+        description: `Created event: ${formData.title}`,
+        recordId: data[0]?.id,
+        status: 'Success'
+      });
+      
       await fetchEvents();
       closeModal();
+      showToast('Event created successfully!', 'success');
+    } catch (error) {
+      console.error('Create event error:', error);
+      showToast('Failed to create event', 'error');
     }
   };
 
   const handleUpdateEvent = async (id, formData) => {
-    const eventDate = new Date(`${formData.date}T${formData.startTime || '00:00'}`);
-    const updates = {
-      title: formData.title,
-      description: formData.description,
-      event_date: eventDate.toISOString(),
-      location: formData.location,
-      category: formData.category,
-    };
-    
-    const { error } = await supabase.from('events').update(updates).eq('id', id);
-    if (!error) {
+    try {
+      const eventDate = new Date(`${formData.date}T${formData.startTime || '00:00'}`);
+      const updates = {
+        title: formData.title,
+        description: formData.description,
+        event_date: eventDate.toISOString(),
+        location: formData.location,
+        category: formData.category,
+        image_url: formData.image_url,
+      };
+      
+      const { error } = await supabase.from('events').update(updates).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Update',
+        module: 'Events',
+        description: `Updated event: ${formData.title}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchEvents();
       closeModal();
+      showToast('Event updated successfully!', 'success');
+    } catch (error) {
+      console.error('Update event error:', error);
+      showToast('Failed to update event', 'error');
     }
   };
 
+  // ============================================
+  // ANNOUNCEMENT HANDLERS with Audit Logs
+  // ============================================
   const handleCreateAnnouncement = async (formData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const newAnnouncement = {
-      title: formData.title,
-      content: formData.content,
-      author_id: user?.id,
-      category: formData.priority === 'High' ? 'News' : 'Activities',
-      is_active: true,
-    };
-    
-    const { error } = await supabase.from('announcements').insert([newAnnouncement]);
-    if (!error) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const newAnnouncement = {
+        title: formData.title,
+        content: formData.content,
+        author_id: user?.id,
+        category: formData.priority === 'High' ? 'News' : 'Activities',
+        is_active: true,
+      };
+      
+      const { data, error } = await supabase.from('announcements').insert([newAnnouncement]).select();
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Create',
+        module: 'Announcements',
+        description: `Created announcement: ${formData.title}`,
+        recordId: data[0]?.id,
+        status: 'Success'
+      });
+      
       await fetchAnnouncements();
       closeModal();
+      showToast('Announcement created successfully!', 'success');
+    } catch (error) {
+      console.error('Create announcement error:', error);
+      showToast('Failed to create announcement', 'error');
     }
   };
 
   const handleUpdateAnnouncement = async (id, formData) => {
-    const updates = {
-      title: formData.title,
-      content: formData.content,
-    };
-    
-    const { error } = await supabase.from('announcements').update(updates).eq('id', id);
-    if (!error) {
+    try {
+      const updates = {
+        title: formData.title,
+        content: formData.content,
+      };
+      
+      const { error } = await supabase.from('announcements').update(updates).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Update',
+        module: 'Announcements',
+        description: `Updated announcement: ${formData.title}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchAnnouncements();
       closeModal();
+      showToast('Announcement updated successfully!', 'success');
+    } catch (error) {
+      console.error('Update announcement error:', error);
+      showToast('Failed to update announcement', 'error');
     }
   };
 
+  // ============================================
+  // JOB HANDLERS with Audit Logs
+  // ============================================
   const handleCreateJob = async (formData) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const newJob = {
-      title: formData.title,
-      company: formData.company || 'Various',
-      description: formData.description,
-      location: formData.location,
-      category: formData.category,
-      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-      posted_by: user?.id,
-      expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-      is_active: true,
-    };
-    
-    const { error } = await supabase.from('jobs').insert([newJob]);
-    if (!error) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const newJob = {
+        title: formData.title,
+        company: formData.company || 'Various',
+        description: formData.description,
+        location: formData.location,
+        category: formData.category,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        image_url: formData.image_url,
+        posted_by: user?.id,
+        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        is_active: true,
+      };
+      
+      const { data, error } = await supabase.from('jobs').insert([newJob]).select();
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Create',
+        module: 'Jobs',
+        description: `Created job: ${formData.title} at ${formData.company}`,
+        recordId: data[0]?.id,
+        status: 'Success'
+      });
+      
       await fetchJobs();
       closeModal();
+      showToast('Job created successfully!', 'success');
+    } catch (error) {
+      console.error('Create job error:', error);
+      showToast('Failed to create job', 'error');
     }
   };
 
   const handleUpdateJob = async (id, formData) => {
-    const updates = {
-      title: formData.title,
-      company: formData.company || 'Various',
-      description: formData.description,
-      location: formData.location,
-      category: formData.category,
-      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
-      expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-    };
-    
-    const { error } = await supabase.from('jobs').update(updates).eq('id', id);
-    if (!error) {
+    try {
+      const updates = {
+        title: formData.title,
+        company: formData.company || 'Various',
+        description: formData.description,
+        location: formData.location,
+        category: formData.category,
+        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+        image_url: formData.image_url,
+        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+      };
+      
+      const { error } = await supabase.from('jobs').update(updates).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Update',
+        module: 'Jobs',
+        description: `Updated job: ${formData.title}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchJobs();
       closeModal();
+      showToast('Job updated successfully!', 'success');
+    } catch (error) {
+      console.error('Update job error:', error);
+      showToast('Failed to update job', 'error');
     }
   };
 
+  // ============================================
+  // DISCOUNT HANDLERS with Audit Logs
+  // ============================================
   const handleCreateDiscount = async (formData) => {
-    const newDiscount = {
-      title: formData.title,
-      description: formData.description,
-      company: formData.company || 'Partner Merchant',
-      discount_code: formData.discountCode || null,
-      valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-      is_active: true,
-    };
-    
-    const { error } = await supabase.from('discounts').insert([newDiscount]);
-    if (!error) {
+    try {
+      const newDiscount = {
+        title: formData.title,
+        description: formData.description,
+        company: formData.company || 'Partner Merchant',
+        discount_code: formData.discountCode || null,
+        image_url: formData.image_url,
+        valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        is_active: true,
+      };
+      
+      const { data, error } = await supabase.from('discounts').insert([newDiscount]).select();
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Create',
+        module: 'Discounts',
+        description: `Created discount: ${formData.title} from ${formData.company}`,
+        recordId: data[0]?.id,
+        status: 'Success'
+      });
+      
       await fetchDiscounts();
       closeModal();
+      showToast('Discount created successfully!', 'success');
+    } catch (error) {
+      console.error('Create discount error:', error);
+      showToast('Failed to create discount', 'error');
     }
   };
 
   const handleUpdateDiscount = async (id, formData) => {
-    const updates = {
-      title: formData.title,
-      description: formData.description,
-      company: formData.company || 'Partner Merchant',
-      discount_code: formData.discountCode || null,
-      valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-    };
-    
-    const { error } = await supabase.from('discounts').update(updates).eq('id', id);
-    if (!error) {
+    try {
+      const updates = {
+        title: formData.title,
+        description: formData.description,
+        company: formData.company || 'Partner Merchant',
+        discount_code: formData.discountCode || null,
+        image_url: formData.image_url,
+        valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+      };
+      
+      const { error } = await supabase.from('discounts').update(updates).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Update',
+        module: 'Discounts',
+        description: `Updated discount: ${formData.title}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchDiscounts();
       closeModal();
+      showToast('Discount updated successfully!', 'success');
+    } catch (error) {
+      console.error('Update discount error:', error);
+      showToast('Failed to update discount', 'error');
     }
   };
 
-  // Archive handlers
-  const handleArchive = async (type, id) => {
-    const table = type === 'events' ? 'events' : 
-                  type === 'announcements' ? 'announcements' :
-                  type === 'jobs' ? 'jobs' : 'discounts';
+  // ============================================
+  // LANDING PAGE HANDLERS with Audit Logs
+  // ============================================
+  const handleCreateLandingSection = async (formData) => {
+  console.log('🟢 [ContentMgmt] handleCreateLandingSection called with:', formData);
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    const newSection = {
+      title: formData.title,
+      description: formData.description,
+      section_type: formData.section_type,
+      content: formData.content,
+      image_url: formData.image_url,
+      order_index: landingSections.length,
+      is_active: true,
+      created_by: user?.id,
+    };
     
-    const { error } = await supabase.from(table).update({ is_active: false }).eq('id', id);
-    if (!error) {
+    console.log('💾 [ContentMgmt] Saving landing section:', newSection);
+    const { data, error } = await supabase.from('landing_sections').insert([newSection]).select();
+    
+    if (error) throw error;
+    
+    await logAction({
+      action: 'Create',
+      module: 'Landing Page',
+      description: `Created landing section: ${formData.title}`,
+      recordId: data[0]?.id,
+      status: 'Success'
+    });
+    
+    await fetchLandingSections();
+    closeModal();
+    showToast('Landing section created successfully!', 'success');
+  } catch (error) {
+    console.error('❌ [ContentMgmt] Create landing section error:', error);
+    showToast('Failed to create landing section: ' + error.message, 'error');
+  }
+};
+
+const handleUpdateLandingSection = async (id, formData) => {
+  console.log('🟢 [ContentMgmt] handleUpdateLandingSection called with:', { id, formData });
+  try {
+    const updates = {
+      title: formData.title,
+      description: formData.description,
+      section_type: formData.section_type,
+      content: formData.content,
+      image_url: formData.image_url,
+    };
+    
+    console.log('💾 [ContentMgmt] Updating landing section with:', updates);
+    const { error } = await supabase.from('landing_sections').update(updates).eq('id', id);
+    
+    if (error) {
+      console.error('❌ [ContentMgmt] Update landing section error:', error);
+      showToast('Failed to update landing section: ' + error.message, 'error');
+      return;
+    }
+    
+    console.log('✅ [ContentMgmt] Landing section updated successfully');
+    
+    // Wait for database to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    await fetchLandingSections();
+    closeModal();
+    showToast('Landing section updated successfully!', 'success');
+  } catch (error) {
+    console.error('❌ [ContentMgmt] Update landing section error:', error);
+    showToast('Failed to update landing section: ' + error.message, 'error');
+  }
+};
+
+  // ============================================
+  // ARCHIVE & RESTORE HANDLERS with Audit Logs
+  // ============================================
+  const handleArchive = async (type, id) => {
+    try {
+      const table = type === 'events' ? 'events' : 
+                    type === 'announcements' ? 'announcements' :
+                    type === 'jobs' ? 'jobs' : 
+                    type === 'discounts' ? 'discounts' : 'landing_sections';
+      
+      let title = '';
+      if (type === 'events') {
+        const item = events.find(e => e.id === id);
+        title = item?.title || id;
+      } else if (type === 'announcements') {
+        const item = announcements.find(a => a.id === id);
+        title = item?.title || id;
+      } else if (type === 'jobs') {
+        const item = jobs.find(j => j.id === id);
+        title = item?.title || id;
+      } else if (type === 'discounts') {
+        const item = discounts.find(d => d.id === id);
+        title = item?.title || id;
+      } else if (type === 'landing') {
+        const item = landingSections.find(l => l.id === id);
+        title = item?.title || id;
+      }
+      
+      const { error } = await supabase.from(table).update({ is_active: false }).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Archive',
+        module: type === 'landing' ? 'Landing Page' : type.charAt(0).toUpperCase() + type.slice(1),
+        description: `Archived ${type === 'landing' ? 'landing section' : type.slice(0, -1)}: ${title}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchAllContent();
+      showToast('Item archived successfully!', 'success');
+    } catch (error) {
+      console.error('Archive error:', error);
+      showToast('Failed to archive item', 'error');
     }
   };
 
   const handleRestore = async (type, id) => {
-    const table = type === 'Event' ? 'events' : 
-                  type === 'Announcement' ? 'announcements' :
-                  type === 'Job' ? 'jobs' : 'discounts';
-    
-    const { error } = await supabase.from(table).update({ is_active: true }).eq('id', id);
-    if (!error) {
+    try {
+      const table = type === 'Event' ? 'events' : 
+                    type === 'Announcement' ? 'announcements' :
+                    type === 'Job' ? 'jobs' : 
+                    type === 'Discount' ? 'discounts' : 'landing_sections';
+      
+      const { error } = await supabase.from(table).update({ is_active: true }).eq('id', id);
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: 'Update',
+        module: type === 'Landing Section' ? 'Landing Page' : type,
+        description: `Restored ${type.toLowerCase()}: ${id}`,
+        recordId: id,
+        status: 'Success'
+      });
+      
       await fetchAllContent();
       setShowArchive(false);
+      showToast('Item restored successfully!', 'success');
+    } catch (error) {
+      console.error('Restore error:', error);
+      showToast('Failed to restore item', 'error');
     }
   };
 
   const archivedItems = getArchivedItems();
 
-  // Get active items for display
   const activeEvents = events.filter(e => e.is_active !== false);
   const activeAnnouncements = announcements.filter(a => a.is_active !== false);
   const activeJobs = jobs.filter(j => j.is_active !== false);
   const activeDiscounts = discounts.filter(d => d.is_active !== false);
+  const activeLandingSections = landingSections.filter(l => l.is_active !== false);
 
   const getActiveItems = () => {
     switch (activeTab) {
@@ -354,6 +655,7 @@ const ContentManagement = () => {
       case 'announcements': return activeAnnouncements;
       case 'jobs': return activeJobs;
       case 'discounts': return activeDiscounts;
+      case 'landing': return activeLandingSections;
       default: return [];
     }
   };
@@ -378,6 +680,7 @@ const ContentManagement = () => {
       onArchive={handleArchive}
       onRestore={handleRestore}
       editingItem={editingItem}
+      toast={toast}
       onCreateEvent={handleCreateEvent}
       onUpdateEvent={handleUpdateEvent}
       onCreateAnnouncement={handleCreateAnnouncement}
@@ -386,6 +689,8 @@ const ContentManagement = () => {
       onUpdateJob={handleUpdateJob}
       onCreateDiscount={handleCreateDiscount}
       onUpdateDiscount={handleUpdateDiscount}
+      onCreateLandingSection={handleCreateLandingSection}
+      onUpdateLandingSection={handleUpdateLandingSection}
     />
   );
 };

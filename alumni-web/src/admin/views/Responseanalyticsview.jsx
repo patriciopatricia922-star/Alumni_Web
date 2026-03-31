@@ -149,7 +149,6 @@ const RatingBreakdownCard = ({ ratingBreakdown = [] }) => (
 // ── Enhanced Overall Sentiment Card with AI Insights ──────────────────────────
 const OverallSentimentCard = ({ sentiment, aiInsights, loadingAI }) => {
   const fullStars = Math.floor(sentiment?.score || 0);
-  const [hoveredStar, setHoveredStar] = useState(0);
   
   return (
     <section className="ra-card ra-card-half ra-sentiment-card">
@@ -652,30 +651,33 @@ const Responseanalyticsview = ({
 
       <TabSwitcher pageTabs={pageTabs} activePage={activePage} setActivePage={setActivePage} />
 
-      {loading ? (
-        <section className="ra-card ra-card-full">
-          <p className="ra-inline-message">Loading survey analytics…</p>
-        </section>
-      ) : error ? (
-        <section className="ra-card ra-card-full">
-          <p className="ra-inline-message ra-inline-message-error">{error}</p>
-        </section>
-      ) : activePage === 'overview' ? (
-        <SurveyOverviewPage
-          overviewCards={overviewCards}
-          ratingBreakdown={ratingBreakdown}
-          selectedSection={selectedSection}
-          setSelectedSection={setSelectedSection}
-          sectionOptions={sectionOptions}
-        />
-      ) : (
-        <SurveyResponsesPage
-          surveyResponses={surveyResponses}
-          selectedSection={selectedSection}
-          setSelectedSection={setSelectedSection}
-          sectionOptions={sectionOptions}
-        />
-      )}
+      {/* Scrollable Content Wrapper - ADD THIS */}
+      <div className="ra-content-scroll">
+        {loading ? (
+          <section className="ra-card ra-card-full">
+            <p className="ra-inline-message">Loading survey analytics…</p>
+          </section>
+        ) : error ? (
+          <section className="ra-card ra-card-full">
+            <p className="ra-inline-message ra-inline-message-error">{error}</p>
+          </section>
+        ) : activePage === 'overview' ? (
+          <SurveyOverviewPage
+            overviewCards={overviewCards}
+            ratingBreakdown={ratingBreakdown}
+            selectedSection={selectedSection}
+            setSelectedSection={setSelectedSection}
+            sectionOptions={sectionOptions}
+          />
+        ) : (
+          <SurveyResponsesPage
+            surveyResponses={surveyResponses}
+            selectedSection={selectedSection}
+            setSelectedSection={setSelectedSection}
+            sectionOptions={sectionOptions}
+          />
+        )}
+      </div>
     </main>
   </div>
 );

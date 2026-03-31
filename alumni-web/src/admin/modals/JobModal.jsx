@@ -8,6 +8,7 @@ import {
   FaAlignRight 
 } from 'react-icons/fa';
 import { FiImage, FiTrash2 } from 'react-icons/fi';
+import { supabase } from '../../lib/supabase';
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
@@ -67,25 +68,25 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   return (
     <div className="rich-text-editor">
       <div className="rich-text-toolbar">
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
-                <FaBold size={14} />
-              </button>
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
-                <FaItalic size={14} />
-              </button>
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
-                <FaUnderline size={14} />
-              </button>
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
-                <FaAlignLeft size={14} />
-              </button>
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
-                <FaAlignCenter size={14} />
-              </button>
-              <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
-                <FaAlignRight size={14} />
-              </button>
-            </div>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
+          <FaBold size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
+          <FaItalic size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
+          <FaUnderline size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
+          <FaAlignLeft size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
+          <FaAlignCenter size={14} />
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
+          <FaAlignRight size={14} />
+        </button>
+      </div>
       <div
         ref={editorRef}
         className="rich-text-content"
@@ -99,19 +100,55 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
 };
 
 // Image Upload Component for Jobs
-const ImageUpload = ({ onImageUpload, currentImage }) => {
+const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'job-images', folder = 'jobs' }) => {
   const [preview, setPreview] = useState(currentImage || null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleImageChange = (e) => {
+  const uploadToSupabase = async (file) => {
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${folder}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
-        onImageUpload(reader.result);
       };
       reader.readAsDataURL(file);
+
+      const publicUrl = await uploadToSupabase(file);
+      if (publicUrl) {
+        onImageUpload(publicUrl);
+      }
     }
+  };
+
+  const handleRemove = () => {
+    setPreview(null);
+    onImageUpload(null);
   };
 
   return (
@@ -119,16 +156,28 @@ const ImageUpload = ({ onImageUpload, currentImage }) => {
       {preview && (
         <div className="image-preview">
           <img src={preview} alt="Preview" />
-          <button type="button" className="remove-image-btn" onClick={() => { setPreview(null); onImageUpload(null); }}>
-          <FiTrash2 size={12} />
-        </button>
+          <button type="button" className="remove-image-btn" onClick={handleRemove}>
+            <FiTrash2 size={12} />
+          </button>
         </div>
       )}
-      <div className="image-upload-area" onClick={() => document.getElementById('event-image-input').click()}>
-      <FiImage size={20} color="#155DFC" />
-      <span>{preview ? 'Change Image' : 'Upload Event Image'}</span>
-      <input id="event-image-input" type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-    </div>
+      <div className="image-upload-area" onClick={() => document.getElementById('job-image-input').click()}>
+        {uploading ? (
+          <div className="uploading-spinner"></div>
+        ) : (
+          <FiImage size={20} color="#155DFC" />
+        )}
+        <span>{uploading ? 'Uploading...' : (preview ? 'Change Logo' : 'Upload Company Logo')}</span>
+        <input 
+          id="job-image-input" 
+          type="file" 
+          accept="image/*" 
+          onChange={handleImageChange} 
+          style={{ display: 'none' }} 
+          disabled={uploading}
+        />
+      </div>
+      <p className="field-hint">Recommended: Square logo, max 2MB</p>
     </div>
   );
 };
@@ -143,7 +192,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
     salary_range: '',
     tags: '',
     expiry: '',
-    image: null,
+    image_url: null,
   });
   const [loading, setLoading] = useState(false);
 
@@ -158,7 +207,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         salary_range: job.salary_range || '',
         tags: Array.isArray(job.tags) ? job.tags.join(', ') : job.tags || '',
         expiry: job.expires_at ? new Date(job.expires_at).toISOString().split('T')[0] : '',
-        image: job.image_url || null,
+        image_url: job.image_url || null,
       });
     } else {
       setForm({
@@ -170,7 +219,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         salary_range: '',
         tags: '',
         expiry: '',
-        image: null,
+        image_url: null,
       });
     }
   }, [mode, job]);
@@ -178,14 +227,20 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-    setLoading(true);
+  setLoading(true);
+  try {
     if (mode === 'edit' && job) {
       await onUpdate(job.id, form);
     } else {
       await onCreate(form);
     }
+  } catch (error) {
+    console.error('Submit error:', error);
+    alert('Failed to save. Please try again.');
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <Modal
@@ -205,8 +260,10 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
 
         <Field label="Company Logo">
           <ImageUpload
-            currentImage={form.image}
-            onImageUpload={(image) => s('image', image)}
+            currentImage={form.image_url}
+            onImageUpload={(url) => s('image_url', url)}
+            bucketName="job-images"
+            folder="jobs"
           />
         </Field>
 

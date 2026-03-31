@@ -5,6 +5,8 @@
   box-sizing: border-box;
 }
 
+
+
 :root {
   font-family: 'Arimo', Arial, Helvetica, sans-serif;
   line-height: 1.5;
@@ -105,3 +107,14 @@ html {
 html {
   scroll-behavior: smooth;
 }
+
+body {
+  overflow: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  font-family: 'Arimo', Arial, sans-serif !important;
+}
+
+
+

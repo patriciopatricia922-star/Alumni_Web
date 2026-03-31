@@ -28,8 +28,17 @@ const CalendarIcon = () => (
 );
 
 // ── Discount Card ─────────────────────────────────────────────────────────────
+// ── Discount Card ─────────────────────────────────────────────────────────────
 const DiscountCard = ({ item }) => {
   const [hovered, setHovered] = useState(false);
+  
+  // Log when a card renders with its image
+  console.log('🃏 Rendering discount card:', { 
+    name: item.name, 
+    image: item.image,
+    hasImage: !!item.image
+  });
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -61,11 +70,16 @@ const DiscountCard = ({ item }) => {
             transition: 'transform 0.35s ease',
             boxShadow: '0px 4px 4px rgba(255,255,255,0.2)',
           }}
-          onError={e => { e.target.style.background = 'rgba(0,40,100,0.5)'; e.target.style.display = 'none'; }}
+          onError={(e) => { 
+            console.error('❌ Image failed to load:', item.image);
+            e.target.style.background = 'rgba(0,40,100,0.5)'; 
+            e.target.style.display = 'none';
+          }}
+          onLoad={() => console.log('✅ Image loaded successfully:', item.name, item.image)}
         />
       </div>
 
-      {/* Body */}
+      {/* Rest of card remains the same... */}
       <div style={{ padding: '20px 28px 0', flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '6px' }}>
           <div style={{ marginTop: '3px', flexShrink: 0 }}><PriceTagIcon /></div>

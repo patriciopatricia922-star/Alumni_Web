@@ -57,13 +57,29 @@ const Discounts = () => {
   useEffect(() => {
     const fetchDiscounts = async () => {
       setLoading(true);
+      console.log('🔍 Fetching discounts from Supabase...');
+      
       const { data, error } = await supabase
         .from('discounts')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       
-      if (!error && data) {
+      if (error) {
+        console.error('❌ Error fetching discounts:', error);
+        setDiscounts([]);
+        setLoading(false);
+        return;
+      }
+      
+      if (data) {
+        console.log('✅ Discounts fetched:', data.length);
+        console.log('📸 Raw discount data with image_url:', data.map(d => ({ 
+          id: d.id, 
+          title: d.title, 
+          image_url: d.image_url 
+        })));
+        
         const formattedDiscounts = data.map(discount => ({
           id: discount.id,
           name: discount.title,
@@ -71,8 +87,14 @@ const Discounts = () => {
           category: mapCategory(discount),
           location: discount.company || 'Various locations',
           validUntil: discount.valid_until ? `Valid until ${new Date(discount.valid_until).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : null,
-          image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+          image: discount.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
         }));
+        
+        console.log('🖼️ Formatted discounts with images:', formattedDiscounts.map(d => ({ 
+          name: d.name, 
+          image: d.image 
+        })));
+        
         setDiscounts(formattedDiscounts);
       }
       setLoading(false);

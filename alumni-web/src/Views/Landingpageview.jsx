@@ -1,8 +1,65 @@
 import React from 'react';
-import Navbar  from '../components/Navbar';
-import capBg   from '../assets/cap_bg.png';
+import Navbar from '../components/Navbar';
+import capBg from '../assets/cap_bg.png';
 import '../styles/Landingpage.css';
 const alumnaiLogo = new URL('../assets/new_lg.svg', import.meta.url).href;
+
+// Helper to strip HTML tags for preview
+const stripHtml = (html) => {
+  if (!html) return '';
+  const tmp = document.createElement('DIV');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+};
+
+// Content Card Component
+const ContentCard = ({ item, type }) => {
+  const getTypeColor = () => {
+    switch (type) {
+      case 'events': return '#155DFC';
+      case 'jobs': return '#10B981';
+      case 'discounts': return '#F59E0B';
+      default: return '#6A7282';
+    }
+  };
+
+  return (
+    <div className="lp-content-card">
+      <div className="lp-card-image">
+        <div className="lp-card-category" style={{ background: getTypeColor() }}>
+          {type === 'events' && 'Event'}
+          {type === 'jobs' && 'Job'}
+          {type === 'discounts' && 'Discount'}
+        </div>
+      </div>
+      <div className="lp-card-body">
+        <h3 className="lp-card-title">{item.title}</h3>
+        <p className="lp-card-description">
+          {stripHtml(item.description)?.substring(0, 100)}
+          {stripHtml(item.description)?.length > 100 ? '...' : ''}
+        </p>
+        {type === 'events' && item.event_date && (
+          <div className="lp-card-meta">
+            <span>📅 {new Date(item.event_date).toLocaleDateString()}</span>
+            {item.location && <span>📍 {item.location}</span>}
+          </div>
+        )}
+        {type === 'jobs' && (
+          <div className="lp-card-meta">
+            {item.company && <span>🏢 {item.company}</span>}
+            {item.location && <span>📍 {item.location}</span>}
+          </div>
+        )}
+        {type === 'discounts' && (
+          <div className="lp-card-meta">
+            {item.company && <span>🏢 {item.company}</span>}
+            {item.discount_code && <span>🎫 {item.discount_code}</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const LandingPageView = ({
   isScrolled,
@@ -10,24 +67,39 @@ const LandingPageView = ({
   missionItems,
   onViewAll,
   onExploreMore,
+  heroSection,
+  statsSection,
+  eventsSection,
+  jobsSection,
+  discountsSection,
+  whyJoinSection,
+  benefitsSection,
+  footerSection,
+  loadingSections,
+  upcomingEvents,
+  jobOpportunities,
+  alumniDiscounts,
+  loadingEvents,
+  loadingJobs,
+  loadingDiscounts,
 }) => (
   <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', fontFamily: 'Arial, sans-serif' }}>
     <Navbar isScrolled={isScrolled} />
 
-    {/* ══ HERO ══════════════════════════════════════════════════════════ */}
-    <section className="lp-hero" style={{ backgroundImage: `url(${capBg})` }}>
+    {/* ══ HERO SECTION ══════════════════════════════════════════════════════════ */}
+    <section className="lp-hero" style={{ backgroundImage: `url(${heroSection?.image_url || capBg})` }}>
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(70.71% 70.71% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%)' }} />
       <div className="lp-hero-content" style={{ zIndex: 1 }}>
         <div className="lp-hero-title-block">
           <p className="lp-hero-subtitle" style={{ fontFamily: 'myPressuru, Impact, Arial, sans-serif', textTransform: 'uppercase', color: '#FFFFFF', WebkitTextStroke: '0.6px rgba(0,0,0,0.6)', textShadow: '0px 2.5px 4px rgba(0,0,0,0.7)', margin: '0 0 -8px', fontWeight: 400 }}>
-            OFFICE OF THE
+            {heroSection?.description || 'OFFICE OF THE'}
           </p>
           <h1 className="lp-hero-title" style={{ fontFamily: 'myPressuru, Impact, Arial, sans-serif', color: '#FFFFFF', WebkitTextStroke: '0.9px rgba(0,0,0,0.7)', textShadow: '0px 4px 4px rgba(0,0,0,0.7)', margin: 0, fontWeight: 400 }}>
-            ALUMNI AFFAIRS
+            {heroSection?.title || 'ALUMNI AFFAIRS'}
           </h1>
         </div>
         <div className="lp-explore-more" onClick={onExploreMore}>
-          <p>Explore More</p>
+          <p>{heroSection?.content || 'Explore More'}</p>
           <svg style={{ animation: 'bounceDown 1.4s ease-in-out infinite' }} width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -35,7 +107,7 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ STATS ═════════════════════════════════════════════════════════ */}
+    {/* ══ STATS SECTION ═════════════════════════════════════════════════════════ */}
     <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
       <div className="lp-stats-grid">
         {stats.map((stat, i) => (
@@ -47,67 +119,111 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ UPCOMING EVENTS ═══════════════════════════════════════════════ */}
+    {/* ══ UPCOMING EVENTS SECTION ═══════════════════════════════════════════════ */}
     <section id="events" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '48px' }}>
-          <h2 className="lp-section-title">Upcoming Events</h2>
-          <p className="lp-section-subtitle">Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community.</p>
+        <div style={{ marginBottom: '48px', textAlign: 'center' }}>
+          <h2 className="lp-section-title">{eventsSection?.title || 'Upcoming Events'}</h2>
+          <p className="lp-section-subtitle">{eventsSection?.description || 'Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community.'}</p>
         </div>
-        <div className="lp-card" style={{ marginBottom: '48px' }}>
-          <h3>No upcoming events</h3>
-          <p>Check back soon for exciting events and gatherings from the alumni community.</p>
+        
+        {loadingEvents ? (
+          <div className="lp-loading-state">Loading events...</div>
+        ) : upcomingEvents.length > 0 ? (
+          <div className="lp-cards-grid">
+            {upcomingEvents.map((event) => (
+              <ContentCard key={event.id} item={event} type="events" />
+            ))}
+          </div>
+        ) : (
+          <div className="lp-card" style={{ textAlign: 'center' }}>
+            <h3>No upcoming events</h3>
+            <p>Check back soon for exciting events and gatherings from the alumni community.</p>
+          </div>
+        )}
+        
+        <div style={{ textAlign: 'center', marginTop: '48px' }}>
+          <button className="lp-view-all" onClick={onViewAll}>View All Events</button>
         </div>
-        <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={onViewAll}>View All</button></div>
       </div>
     </section>
 
-    {/* ══ JOB OPPORTUNITIES ═════════════════════════════════════════════ */}
+    {/* ══ JOB OPPORTUNITIES SECTION ═════════════════════════════════════════════ */}
     <section id="jobs" style={{ width: '100%', background: '#F9FAFB', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '48px' }}>
-          <h2 className="lp-section-title">Job Opportunities</h2>
-          <p className="lp-section-subtitle">Browse through our curated list of job opportunities specifically for NU Dasmariñas alumni.</p>
+        <div style={{ marginBottom: '48px', textAlign: 'center' }}>
+          <h2 className="lp-section-title">{jobsSection?.title || 'Job Opportunities'}</h2>
+          <p className="lp-section-subtitle">{jobsSection?.description || 'Browse through our curated list of job opportunities specifically for NU Dasmariñas alumni.'}</p>
         </div>
-        <div className="lp-card" style={{ marginBottom: '48px' }}>
-          <h3>No job postings available</h3>
-          <p>Check back soon for exciting career opportunities from our partner companies.</p>
+        
+        {loadingJobs ? (
+          <div className="lp-loading-state">Loading jobs...</div>
+        ) : jobOpportunities.length > 0 ? (
+          <div className="lp-cards-grid">
+            {jobOpportunities.map((job) => (
+              <ContentCard key={job.id} item={job} type="jobs" />
+            ))}
+          </div>
+        ) : (
+          <div className="lp-card" style={{ textAlign: 'center' }}>
+            <h3>No job postings available</h3>
+            <p>Check back soon for exciting career opportunities from our partner companies.</p>
+          </div>
+        )}
+        
+        <div style={{ textAlign: 'center', marginTop: '48px' }}>
+          <button className="lp-view-all" onClick={onViewAll}>View All Jobs</button>
         </div>
-        <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={onViewAll}>View All</button></div>
       </div>
     </section>
 
-    {/* ══ ALUMNI DISCOUNTS ══════════════════════════════════════════════ */}
+    {/* ══ ALUMNI DISCOUNTS SECTION ══════════════════════════════════════════════ */}
     <section id="discounts" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '48px' }}>
-          <h2 className="lp-section-title">Alumni Discounts</h2>
-          <p className="lp-section-subtitle">Enjoy exclusive discounts and benefits from our partner establishments.</p>
+        <div style={{ marginBottom: '48px', textAlign: 'center' }}>
+          <h2 className="lp-section-title">{discountsSection?.title || 'Alumni Discounts'}</h2>
+          <p className="lp-section-subtitle">{discountsSection?.description || 'Enjoy exclusive discounts and benefits from our partner establishments.'}</p>
         </div>
-        <div className="lp-card" style={{ marginBottom: '48px' }}>
-          <h3>No discounts available</h3>
-          <p>Check back soon for exclusive discounts and benefits from our partner establishments.</p>
+        
+        {loadingDiscounts ? (
+          <div className="lp-loading-state">Loading discounts...</div>
+        ) : alumniDiscounts.length > 0 ? (
+          <div className="lp-cards-grid">
+            {alumniDiscounts.map((discount) => (
+              <ContentCard key={discount.id} item={discount} type="discounts" />
+            ))}
+          </div>
+        ) : (
+          <div className="lp-card" style={{ textAlign: 'center' }}>
+            <h3>No discounts available</h3>
+            <p>Check back soon for exclusive discounts and benefits from our partner establishments.</p>
+          </div>
+        )}
+        
+        <div style={{ textAlign: 'center', marginTop: '48px' }}>
+          <button className="lp-view-all" onClick={onViewAll}>View All Discounts</button>
         </div>
-        <div style={{ textAlign: 'center' }}><button className="lp-view-all" onClick={onViewAll}>View All</button></div>
       </div>
     </section>
 
-    {/* ══ MISSION & VISION ══════════════════════════════════════════════ */}
+    {/* ══ WHY JOIN ALUMNAI SECTION (Mission & Vision) ════════════════════════════ */}
     <section id="about" style={{ width: '100%', background: '#F9FAFB', padding: '96px 32px 80px' }}>
       <div style={{ maxWidth: '860px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <h2 className="lp-section-title">
-            Why Join{' '}
-            <span style={{ color: '#002263' }}>Alumn</span>
-            <span style={{ color: 'rgba(201,167,0,0.85)' }}>AI</span>?
+            {whyJoinSection?.title?.split(' ')[0] || 'Why Join'}{' '}
+            <span style={{ color: '#002263' }}>{whyJoinSection?.title?.split(' ')[1] || 'Alumn'}</span>
+            <span style={{ color: 'rgba(201,167,0,0.85)' }}>{whyJoinSection?.title?.split(' ')[2] || 'AI'}</span>?
           </h2>
-          <p className="lp-section-subtitle">Connecting National University—Dasmariñas alumni through innovative technology and community engagement.</p>
+          <p className="lp-section-subtitle">{whyJoinSection?.description || 'Connecting National University—Dasmariñas alumni through innovative technology and community engagement.'}</p>
         </div>
+        
+        {/* Mission Content */}
         <div style={{ marginBottom: '56px' }}>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
           <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>
-            Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism, National University is committed to providing relevant, innovative, and accessible quality education and other development programs.
+            {stripHtml(whyJoinSection?.content) || 'Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism, National University is committed to providing relevant, innovative, and accessible quality education and other development programs.'}
           </p>
           <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>We are committed to our:</p>
           {missionItems.map((item, i) => (
@@ -116,6 +232,8 @@ const LandingPageView = ({
             </p>
           ))}
         </div>
+        
+        {/* Vision Content */}
         <div style={{ marginBottom: '0' }}>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Vision</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
@@ -126,12 +244,12 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ BENEFIT CARDS ═════════════════════════════════════════════════ */}
+    {/* ══ WHAT YOU GET AS AN ALUMNI SECTION (Benefits) ═══════════════════════════ */}
     <section style={{ width: '100%', background: '#F9FAFB', padding: '80px 32px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '36px', lineHeight: '44px', color: '#101828', margin: '0 0 12px' }}>What You Get as an Alumni</h2>
-          <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '26px', color: '#4A5565', margin: 0 }}>Membership opens doors to a lifetime of opportunity, connection, and growth.</p>
+          <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '36px', lineHeight: '44px', color: '#101828', margin: '0 0 12px' }}>{benefitsSection?.title || 'What You Get as an Alumni'}</h2>
+          <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '26px', color: '#4A5565', margin: 0 }}>{benefitsSection?.description || 'Membership opens doors to a lifetime of opportunity, connection, and growth.'}</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="lp-why-cards-grid">
           {[

@@ -6,6 +6,7 @@ body {
   margin: 0;
   font-family: 'Arimo', Arial, sans-serif;
   background: #F0F4F9;
+  overflow: auto;
 }
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
@@ -20,6 +21,31 @@ body {
   min-width: 0;
   margin-left: 229px;
   padding: 28px 36px 48px 48px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+/* Scrollable Content Container */
+/* .ra-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+} */
+
+.ra-content-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ra-content-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+.ra-content-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
 }
 
 /* ── Page header ──────────────────────────────────────────────────────────── */
@@ -28,6 +54,7 @@ body {
   flex-direction: column;
   gap: 3px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .ra-page-header h1 {
@@ -51,6 +78,7 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .ra-tab-switcher {
@@ -166,6 +194,7 @@ body {
   display: flex;
   justify-content: flex-start;
   margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .ra-filter-select-wrap {
@@ -497,43 +526,6 @@ body {
   font-size: 13px;
   line-height: 19px;
   color: #475569;
-}
-
-/* ── Responsive ───────────────────────────────────────────────────────────── */
-@media (max-width: 1200px) {
-  .ra-main { padding-left: 36px; }
-  .ra-grid-two { grid-template-columns: 1fr; gap: 18px; }
-}
-
-@media (max-width: 1024px) {
-  .ra-main { margin-left: 229px; padding: 20px 24px; }
-  .ra-horizontal-row { grid-template-columns: 120px 1fr 36px; }
-}
-
-@media (max-width: 768px) {
-  .ra-main { margin-left: 0; padding: 18px 16px 40px; }
-
-  .ra-tab-switcher-wrap { justify-content: stretch; }
-  .ra-tab-switcher { width: 100%; }
-  .ra-tab-btn { flex: 1; padding: 0 10px; }
-
-  .ra-response-top { flex-direction: column; align-items: flex-start; }
-  .ra-response-meta { align-items: flex-start; flex-direction: row; gap: 10px; }
-
-  .ra-horizontal-row { grid-template-columns: 1fr; gap: 6px; }
-  .ra-horizontal-value { text-align: left; }
-
-  .ra-recharts-wrap { height: 220px; }
-  .ra-top-filter-row { justify-content: flex-start; }
-  .ra-filter-select-wrap { width: 100%; min-width: unset; }
-}
-
-@media (max-width: 480px) {
-  .ra-page-header h1 { font-size: 20px; line-height: 26px; }
-  .ra-card { padding: 16px; }
-
-  .ra-rating-row { grid-template-columns: 36px 1fr; }
-  .ra-rating-percent { grid-column: 2; text-align: left; }
 }
 
 /* ── Updated Line Chart Card Styles (matching Login Activity Trends) ──────── */
@@ -881,8 +873,45 @@ body {
   }
 }
 
-/* Responsive */
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .ra-main { padding-left: 36px; }
+  .ra-grid-two { grid-template-columns: 1fr; gap: 18px; }
+}
+
+@media (max-width: 1024px) {
+  .ra-main { margin-left: 229px; padding: 20px 24px; }
+  .ra-horizontal-row { grid-template-columns: 120px 1fr 36px; }
+}
+
 @media (max-width: 768px) {
+  .ra-main { 
+    margin-left: 0; 
+    padding: 18px 16px 0;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  
+  .ra-content-scroll {
+    overflow-y: visible;
+    padding-right: 0;
+  }
+
+  .ra-tab-switcher-wrap { justify-content: stretch; }
+  .ra-tab-switcher { width: 100%; }
+  .ra-tab-btn { flex: 1; padding: 0 10px; }
+
+  .ra-response-top { flex-direction: column; align-items: flex-start; }
+  .ra-response-meta { align-items: flex-start; flex-direction: row; gap: 10px; }
+
+  .ra-horizontal-row { grid-template-columns: 1fr; gap: 6px; }
+  .ra-horizontal-value { text-align: left; }
+
+  .ra-recharts-wrap { height: 220px; }
+  .ra-top-filter-row { justify-content: flex-start; }
+  .ra-filter-select-wrap { width: 100%; min-width: unset; }
+  
   .ra-sentiment-grid {
     flex-direction: column;
     gap: 20px;
@@ -915,14 +944,14 @@ body {
     font-size: 40px;
     line-height: 40px;
   }
-  
-  .ai-sentiment-distribution {
-    gap: 12px;
-  }
-  
-  .dist-item {
-    font-size: 12px;
-  }
+}
+
+@media (max-width: 480px) {
+  .ra-page-header h1 { font-size: 20px; line-height: 26px; }
+  .ra-card { padding: 16px; }
+
+  .ra-rating-row { grid-template-columns: 36px 1fr; }
+  .ra-rating-percent { grid-column: 2; text-align: left; }
   
   .theme-chip-mini {
     font-size: 10px;

@@ -87,3 +87,222 @@
   .lp-explore-more p { font-family: Arial; font-size: clamp(13px, 1.2vw, 16px); color: #FFFFFF; margin: 0; letter-spacing: 0.4px; }
 
   
+  /* ============================================
+   CONTENT CARDS WITH IMAGES (3-Column Grid)
+   ============================================ */
+
+.lp-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 0;
+}
+
+/* Card Styles */
+.lp-content-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-content-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Image */
+.lp-card-image {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: #F1F5F9;
+}
+
+.lp-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.lp-content-card:hover .lp-card-image img {
+  transform: scale(1.05);
+}
+
+/* Category Badge on Image */
+.lp-card-category {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Card Body */
+.lp-card-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-card-title {
+  font-family: 'Arial';
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #101828;
+  margin: 0 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lp-card-description {
+  font-family: 'Arial';
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4A5565;
+  margin: 0 0 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Card Meta Info */
+.lp-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: #6A7282;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.lp-card-meta svg {
+  flex-shrink: 0;
+  color: #94A3B8;
+}
+
+.lp-card-meta span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.lp-discount-code {
+  font-family: monospace;
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #F59E0B;
+}
+
+.lp-card-valid {
+  font-size: 11px;
+  color: #94A3B8;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Empty State Card */
+.lp-empty-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+}
+
+.lp-empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 8px;
+}
+
+.lp-empty-state p {
+  font-size: 14px;
+  color: #64748B;
+  margin: 0;
+}
+
+/* Loading State */
+.lp-loading-grid {
+  text-align: center;
+  padding: 60px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .lp-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  
+  .lp-card-image {
+    height: 160px;
+  }
+}
+
+@media (max-width: 768px) {
+  .lp-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .lp-card-image {
+    height: 200px;
+  }
+  
+  .lp-card-title {
+    font-size: 16px;
+  }
+  
+  .lp-card-description {
+    font-size: 13px;
+  }
+  
+  .lp-card-meta {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-card-image {
+    height: 180px;
+  }
+  
+  .lp-card-body {
+    padding: 16px;
+  }
+  
+  .lp-card-title {
+    font-size: 15px;
+  }
+}
