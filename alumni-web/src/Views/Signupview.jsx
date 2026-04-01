@@ -40,34 +40,27 @@ const EyeIcon = ({ visible }) => (
   )
 );
 
-// Label with inline error next to the asterisk
 const FieldLabel = ({ text, required, error, showError }) => (
   <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
     {text}
     {required && <span style={{ color: '#FF4D4D', fontWeight: 700 }}>*</span>}
     {showError && error && (
-      <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FF6B6B', fontWeight: 400 }}>
-        — {error}
-      </span>
+      <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FF6B6B', fontWeight: 400 }}>— {error}</span>
     )}
   </label>
 );
 
-// Password strength bar + criteria indicators
 const PasswordStrength = ({ password, strength }) => {
   if (!password) return null;
-
   const criteria = [
-    { label: 'Uppercase',  met: /[A-Z]/.test(password) },
-    { label: 'Lowercase',  met: /[a-z]/.test(password) },
-    { label: 'Number',     met: /[0-9]/.test(password) },
-    { label: 'Symbol',     met: /[^A-Za-z0-9]/.test(password) },
-    { label: '8+ chars',   met: password.length >= 8 },
+    { label: 'Uppercase', met: /[A-Z]/.test(password) },
+    { label: 'Lowercase', met: /[a-z]/.test(password) },
+    { label: 'Number',    met: /[0-9]/.test(password) },
+    { label: 'Symbol',    met: /[^A-Za-z0-9]/.test(password) },
+    { label: '8+ chars',  met: password.length >= 8 },
   ];
-
   return (
     <div style={{ marginTop: '6px' }}>
-      {/* Bar */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
         {[1, 2, 3].map(i => (
           <div key={i} style={{
@@ -77,18 +70,14 @@ const PasswordStrength = ({ password, strength }) => {
           }} />
         ))}
       </div>
-      {/* Label + criteria */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-        <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: strength.color, fontWeight: 700 }}>
-          {strength.label}
-        </span>
+        <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: strength.color, fontWeight: 700 }}>{strength.label}</span>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {criteria.map(c => (
             <span key={c.label} style={{
               fontFamily: 'Arimo', fontSize: '10px',
               color: c.met ? '#34D399' : 'rgba(255,255,255,0.35)',
-              display: 'flex', alignItems: 'center', gap: '3px',
-              transition: 'color 0.2s',
+              display: 'flex', alignItems: 'center', gap: '3px', transition: 'color 0.2s',
             }}>
               <span style={{ fontSize: '9px' }}>{c.met ? '✓' : '○'}</span>
               {c.label}
@@ -105,23 +94,29 @@ const SignupView = ({
   showPassword, showConfirmPassword, passwordStrength,
   setShowPassword, setShowConfirmPassword,
   handleChange, handleBlur, handleSignup,
+  // Modal-context props (optional)
+  isModal = false,
+  onSwitchToLogin,
 }) => (
   <>
     <div style={{
-      width: '100%', height: '100vh', background: '#002263',
+      width: '100%', height: isModal ? 'auto' : '100vh', background: '#002263',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', fontFamily: 'Arimo, Arial, sans-serif', overflow: 'hidden',
+      justifyContent: 'center', fontFamily: 'Arimo, Arial, sans-serif',
+      overflow: isModal ? 'visible' : 'hidden',
     }}>
 
-      {/* Back Button */}
-      <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
-        <Link to="/register" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>Back</span>
-        </Link>
-      </div>
+      {/* Back Button — full-page only */}
+      {!isModal && (
+        <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
+          <Link to="/register" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
+          </Link>
+        </div>
+      )}
 
       {/* Main Card */}
       <div className="signup-card" style={{
@@ -132,41 +127,41 @@ const SignupView = ({
       }}>
 
         {/* Top Nav */}
-        <div style={{
-          padding: '20px 20px 0px',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', gap: '12px', flexShrink: 0,
-        }}>
+        <div style={{ padding: '20px 20px 0px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           <img src={AlumnAILogo} alt="AlumnAI Logo" style={{ marginLeft: '45px', width: '205px', height: '93px', objectFit: 'contain' }} />
-          <div style={{
-            width: '352.8px', maxWidth: '90%', height: '36px',
-            background: 'rgba(243,243,245,0.17)', borderRadius: '10px',
-            padding: '3px', display: 'flex', boxSizing: 'border-box',
-          }}>
+          <div style={{ width: '352.8px', maxWidth: '90%', height: '36px', background: 'rgba(243,243,245,0.17)', borderRadius: '10px', padding: '3px', display: 'flex', boxSizing: 'border-box' }}>
+            {/* Sign up tab (active) */}
             <button type="button" style={{
-              flex: 1, height: '100%',
-              background: '#155DFC',
-              borderRadius: '8px', border: 'none',
+              flex: 1, height: '100%', background: '#155DFC', borderRadius: '8px', border: 'none',
               fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px', color: '#FFFFFF',
-              cursor: 'pointer', transition: 'background 0.2s ease',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
             }}>
               <img src={SignupIcon} alt="" style={{ width: '14px', height: '14px' }} />
               Sign up
             </button>
-            <Link to="/login" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
-              <button type="button" style={{
-                width: '100%', flex: 1, height: '100%',
-                background: 'transparent',
-                borderRadius: '8px', border: 'none',
+            {/* Log in tab */}
+            {isModal ? (
+              <button type="button" onClick={onSwitchToLogin} style={{
+                flex: 1, height: '100%', background: 'transparent', borderRadius: '8px', border: 'none',
                 fontFamily: 'Arimo', fontWeight: 400, fontSize: '12px', color: '#FFFFFF',
-                cursor: 'pointer', transition: 'background 0.2s ease',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               }}>
                 <img src={LoginIcon} alt="" style={{ width: '14px', height: '14px' }} />
                 Log in
               </button>
-            </Link>
+            ) : (
+              <Link to="/login" style={{ flex: 1, textDecoration: 'none', display: 'flex' }}>
+                <button type="button" style={{
+                  width: '100%', flex: 1, height: '100%', background: 'transparent',
+                  borderRadius: '8px', border: 'none', fontFamily: 'Arimo', fontWeight: 400,
+                  fontSize: '12px', color: '#FFFFFF', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                }}>
+                  <img src={LoginIcon} alt="" style={{ width: '14px', height: '14px' }} />
+                  Log in
+                </button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -186,196 +181,92 @@ const SignupView = ({
             <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '11px', lineHeight: '16px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>Create your account to join</p>
           </div>
 
-          <div className="custom-scroll" style={{
-            padding: '4px 20px 20px', overflowY: 'auto',
-            display: 'flex', flexDirection: 'column', gap: '24px',
-          }}>
+          <div className="custom-scroll" style={{ padding: '4px 20px 20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-            {/* General error banner — only for non-field-specific errors */}
             {error && (
               <div style={{ background: 'rgba(255,80,80,0.15)', border: '1px solid rgba(255,80,80,0.4)', borderRadius: '8px', padding: '10px 12px' }}>
                 <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: '#FF6B6B', margin: 0 }}>{error}</p>
               </div>
             )}
 
-            {/* ── Personal Information ─────────────────────────────────── */}
+            {/* Personal Information */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <h4 style={sectionTitleStyle}>Personal Information</h4>
-
               <div>
-                <FieldLabel
-                  text="Last Name" required
-                  error="Required"
-                  showError={touched.lastName && !form.lastName}
-                />
-                <input
-                  style={inputStyle}
-                  placeholder="e.g. Dela Cruz"
-                  value={form.lastName}
-                  onChange={e => handleChange('lastName', e.target.value)}
-                  onBlur={() => handleBlur('lastName')}
-                  autoComplete="family-name"
-                />
+                <FieldLabel text="Last Name" required error="Required" showError={touched.lastName && !form.lastName} />
+                <input style={inputStyle} placeholder="e.g. Dela Cruz" value={form.lastName} onChange={e => handleChange('lastName', e.target.value)} onBlur={() => handleBlur('lastName')} autoComplete="family-name" />
               </div>
-
               <div style={{ display: 'flex', gap: '10px' }}>
                 <div style={{ flex: 1 }}>
-                  <FieldLabel
-                    text="First Name" required
-                    error="Required"
-                    showError={touched.firstName && !form.firstName}
-                  />
-                  <input
-                    style={inputStyle}
-                    placeholder="e.g. Juan"
-                    value={form.firstName}
-                    onChange={e => handleChange('firstName', e.target.value)}
-                    onBlur={() => handleBlur('firstName')}
-                    autoComplete="given-name"
-                  />
+                  <FieldLabel text="First Name" required error="Required" showError={touched.firstName && !form.firstName} />
+                  <input style={inputStyle} placeholder="e.g. Juan" value={form.firstName} onChange={e => handleChange('firstName', e.target.value)} onBlur={() => handleBlur('firstName')} autoComplete="given-name" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={labelStyle}>Middle Name</label>
-                  <input
-                    style={inputStyle}
-                    placeholder="e.g. Mendoza"
-                    value={form.middleName}
-                    onChange={e => handleChange('middleName', e.target.value)}
-                    autoComplete="additional-name"
-                  />
+                  <input style={inputStyle} placeholder="e.g. Mendoza" value={form.middleName} onChange={e => handleChange('middleName', e.target.value)} autoComplete="additional-name" />
                 </div>
               </div>
             </div>
 
-            {/* ── Academic Information ──────────────────────────────────── */}
+            {/* Academic Information */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <h4 style={sectionTitleStyle}>Academic Information</h4>
               <div>
                 <label style={labelStyle}>Academic Program</label>
-                <input
-                  style={{ ...inputStyle, background: 'rgba(243,243,245,0.35)', color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)', WebkitTextFillColor: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                  placeholder="e.g. BSCS"
-                  value={idData.program || ''}
-                  readOnly
-                  autoComplete="off"
-                />
+                <input style={{ ...inputStyle, background: 'rgba(243,243,245,0.35)', color: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)', WebkitTextFillColor: idData.program ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }} placeholder="e.g. BSCS" value={idData.program || ''} readOnly autoComplete="off" />
               </div>
               <div>
                 <label style={labelStyle}>Year Graduated</label>
-                <input
-                  style={{ ...inputStyle, background: 'rgba(243,243,245,0.35)', color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)', WebkitTextFillColor: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }}
-                  placeholder="e.g. 2024"
-                  value={idData.batchYear || ''}
-                  readOnly
-                  autoComplete="off"
-                />
+                <input style={{ ...inputStyle, background: 'rgba(243,243,245,0.35)', color: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)', WebkitTextFillColor: idData.batchYear ? '#FFFFFF' : 'rgba(255,255,255,0.4)' }} placeholder="e.g. 2024" value={idData.batchYear || ''} readOnly autoComplete="off" />
               </div>
             </div>
 
-            {/* ── Account Security ──────────────────────────────────────── */}
+            {/* Account Security */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <h4 style={sectionTitleStyle}>Account Security</h4>
-
-              {/* Email */}
               <div>
-                <FieldLabel
-                  text="Email Address" required
-                  error={touched.email && !form.email ? 'Required' : fieldErrors.email}
-                  showError={touched.email && (!form.email || !!fieldErrors.email)}
-                />
+                <FieldLabel text="Email Address" required error={touched.email && !form.email ? 'Required' : fieldErrors.email} showError={touched.email && (!form.email || !!fieldErrors.email)} />
                 <input
-                  style={{
-                    ...inputStyle,
-                    border: touched.email && fieldErrors.email
-                      ? '1.23674px solid rgba(255,80,80,0.6)'
-                      : inputStyle.border,
-                  }}
-                  type="email"
-                  placeholder="e.g. you@gmail.com"
-                  value={form.email}
-                  onChange={e => handleChange('email', e.target.value)}
-                  onBlur={() => handleBlur('email')}
-                  autoComplete="email"
+                  style={{ ...inputStyle, border: touched.email && fieldErrors.email ? '1.23674px solid rgba(255,80,80,0.6)' : inputStyle.border }}
+                  type="email" placeholder="e.g. you@gmail.com"
+                  value={form.email} onChange={e => handleChange('email', e.target.value)} onBlur={() => handleBlur('email')} autoComplete="email"
                 />
               </div>
-
-              {/* Password */}
               <div>
-                <FieldLabel
-                  text="Password" required
-                  error={touched.password && !form.password ? 'Required' : fieldErrors.password}
-                  showError={touched.password && (!form.password || !!fieldErrors.password)}
-                />
+                <FieldLabel text="Password" required error={touched.password && !form.password ? 'Required' : fieldErrors.password} showError={touched.password && (!form.password || !!fieldErrors.password)} />
                 <div style={{ position: 'relative' }}>
-                  <input
-                    style={inputStyle}
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={form.password}
-                    onChange={e => handleChange('password', e.target.value)}
-                    onBlur={() => handleBlur('password')}
-                    autoComplete="new-password"
-                  />
-                  <button type="button" className="eye-btn"
-                    onClick={() => setShowPassword(v => !v)}
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
+                  <input style={inputStyle} type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => handleChange('password', e.target.value)} onBlur={() => handleBlur('password')} autoComplete="new-password" />
+                  <button type="button" className="eye-btn" onClick={() => setShowPassword(v => !v)} tabIndex={-1} aria-label={showPassword ? 'Hide password' : 'Show password'}>
                     <EyeIcon visible={showPassword} />
                   </button>
                 </div>
                 <PasswordStrength password={form.password} strength={passwordStrength} />
               </div>
-
-              {/* Confirm Password */}
               <div>
-                <FieldLabel
-                  text="Confirm Password" required
-                  error={touched.confirmPassword && !form.confirmPassword ? 'Required' : fieldErrors.confirmPassword}
-                  showError={touched.confirmPassword && (!form.confirmPassword || !!fieldErrors.confirmPassword)}
-                />
+                <FieldLabel text="Confirm Password" required error={touched.confirmPassword && !form.confirmPassword ? 'Required' : fieldErrors.confirmPassword} showError={touched.confirmPassword && (!form.confirmPassword || !!fieldErrors.confirmPassword)} />
                 <div style={{ position: 'relative' }}>
                   <input
-                    style={{
-                      ...inputStyle,
-                      border: touched.confirmPassword && fieldErrors.confirmPassword
-                        ? '1.23674px solid rgba(255,80,80,0.6)'
-                        : inputStyle.border,
-                    }}
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={form.confirmPassword}
-                    onChange={e => handleChange('confirmPassword', e.target.value)}
-                    onBlur={() => handleBlur('confirmPassword')}
-                    autoComplete="new-password"
+                    style={{ ...inputStyle, border: touched.confirmPassword && fieldErrors.confirmPassword ? '1.23674px solid rgba(255,80,80,0.6)' : inputStyle.border }}
+                    type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••"
+                    value={form.confirmPassword} onChange={e => handleChange('confirmPassword', e.target.value)} onBlur={() => handleBlur('confirmPassword')} autoComplete="new-password"
                   />
-                  <button type="button" className="eye-btn"
-                    onClick={() => setShowConfirmPassword(v => !v)}
-                    tabIndex={-1}
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                  >
+                  <button type="button" className="eye-btn" onClick={() => setShowConfirmPassword(v => !v)} tabIndex={-1} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
                     <EyeIcon visible={showConfirmPassword} />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Submit */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={handleSignup}
-                disabled={loading}
-                style={{
-                  width: '284px', height: '37px',
-                  background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
-                  boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
-                  border: 'none', borderRadius: '14px',
-                  fontFamily: 'Arimo', fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.2s ease', flexShrink: 0,
-                }}
-              >
+              <button type="button" onClick={handleSignup} disabled={loading} style={{
+                width: '284px', height: '37px',
+                background: loading ? 'rgba(0,40,255,0.35)' : 'rgba(0,40,255,0.7)',
+                boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
+                border: 'none', borderRadius: '14px',
+                fontFamily: 'Arimo', fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s ease', flexShrink: 0,
+              }}>
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </div>

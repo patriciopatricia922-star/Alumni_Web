@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import SignupView from '../Views/Signupview';
 
@@ -11,16 +10,17 @@ const getPasswordStrength = (password) => {
   if (/[a-z]/.test(password))        score++;
   if (/[0-9]/.test(password))        score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
-
   if (score <= 2) return { level: 1, label: 'Weak',   color: '#F87171' };
   if (score <= 3) return { level: 2, label: 'Good',   color: '#FBBF24' };
   return           { level: 3, label: 'Strong', color: '#34D399' };
 };
 
-const Signup = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const idData   = location.state || {};
+/**
+ * Modal-aware Signup — identical Supabase logic to Signup.jsx.
+ * Instead of navigate('/login'), calls onSuccess() to close the modal.
+ */
+const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
+  const idData = idExtracted || {};
 
   const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,7 +40,6 @@ const Signup = () => {
 
   const set   = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const touch = (key)        => setTouched(prev => ({ ...prev, [key]: true }));
-
   const passwordStrength = getPasswordStrength(form.password);
 
   const validateField = (key, value) => {
@@ -50,18 +49,12 @@ const Signup = () => {
         const trimmed = value.toLowerCase().trim();
         if (trimmed && trimmed.includes('@') && !trimmed.endsWith('@gmail.com')) {
           errs.email = 'Only @gmail.com accounts are accepted.';
-        } else {
-          delete errs.email;
-        }
+        } else { delete errs.email; }
         break;
       }
       case 'password': {
-        if (value && value.length < 8) {
-          errs.password = 'Must be at least 8 characters.';
-        } else {
-          delete errs.password;
-        }
-        // Re-validate confirm if already touched
+        if (value && value.length < 8) errs.password = 'Must be at least 8 characters.';
+        else delete errs.password;
         if (touched.confirmPassword && form.confirmPassword) {
           if (form.confirmPassword !== value) errs.confirmPassword = 'Passwords do not match.';
           else delete errs.confirmPassword;
@@ -69,11 +62,8 @@ const Signup = () => {
         break;
       }
       case 'confirmPassword': {
-        if (value && value !== form.password) {
-          errs.confirmPassword = 'Passwords do not match.';
-        } else {
-          delete errs.confirmPassword;
-        }
+        if (value && value !== form.password) errs.confirmPassword = 'Passwords do not match.';
+        else delete errs.confirmPassword;
         break;
       }
       default: break;
@@ -81,31 +71,18 @@ const Signup = () => {
     setFieldErrors(errs);
   };
 
-  const handleChange = (key, value) => {
-    set(key, value);
-    if (touched[key]) validateField(key, value);
-  };
-
-  const handleBlur = (key) => {
-    touch(key);
-    validateField(key, form[key]);
-  };
+  const handleChange = (key, value) => { set(key, value); if (touched[key]) validateField(key, value); };
+  const handleBlur   = (key)         => { touch(key); validateField(key, form[key]); };
 
   const handleSignup = async () => {
     setError('');
-
-    // Touch all required fields to surface errors
-    const required = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
+    const required  = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
     const newTouched = required.reduce((acc, k) => ({ ...acc, [k]: true }), {});
     setTouched(prev => ({ ...prev, ...newTouched }));
 
-    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.confirmPassword) {
+    if (!form.firstName || !form.lastName || !form.email || !form.password || !form.confirmPassword)
       return setError('Please fill in all required fields.');
-    }
-    if (fieldErrors.email) {
-      setTouched(prev => ({ ...prev, email: true }));
-      return;
-    }
+    if (fieldErrors.email)           { setTouched(prev => ({ ...prev, email: true })); return; }
     if (form.password.length < 8)    return setError('Password must be at least 8 characters long.');
     if (fieldErrors.password)        return setError(fieldErrors.password);
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.');
@@ -115,13 +92,7 @@ const Signup = () => {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: {
-          data: {
-            first_name:  form.firstName,
-            middle_name: form.middleName,
-            last_name:   form.lastName,
-          },
-        },
+        options: { data: { first_name: form.firstName, middle_name: form.middleName, last_name: form.lastName } },
       });
       if (signUpError) throw signUpError;
 
@@ -143,12 +114,12 @@ const Signup = () => {
 
       try {
         await supabase.from('alumni_profiles').upsert({
-          user_id:                       data.user.id,
-          profile_completion_percentage: 10,
+          user_id: data.user.id, profile_completion_percentage: 10,
         }, { onConflict: 'user_id' });
       } catch (_) {}
 
-      navigate('/login');
+      // ── Instead of navigate('/login'), switch to login modal ──
+      onSwitchToLogin();
     } catch (err) {
       const msg = err.message || '';
       if (msg.toLowerCase().includes('already registered') || msg.includes('409') || msg.toLowerCase().includes('unique')) {
@@ -178,8 +149,11 @@ const Signup = () => {
       handleChange={handleChange}
       handleBlur={handleBlur}
       handleSignup={handleSignup}
+      // Modal context
+      isModal
+      onSwitchToLogin={onSwitchToLogin}
     />
   );
 };
 
-export default Signup;
+export default ModalSignup;

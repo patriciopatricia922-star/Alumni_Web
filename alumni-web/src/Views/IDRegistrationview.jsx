@@ -11,19 +11,24 @@ const IDRegistrationView = ({
   setAgreed, setShowModal,
   startCamera, stopCamera,
   handleFileChange, handleReset, handleNext,
+  // Modal-context props (optional — only passed when used inside modal)
+  isModal = false,
+  onSwitchToLogin,
 }) => (
   <>
-    <div style={{ width:'100%', height:'100vh', background:'#002263', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:'Arimo,Arial,sans-serif', overflow:'hidden' }}>
+    <div style={{ width:'100%', height: isModal ? 'auto' : '100vh', background:'#002263', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', fontFamily:'Arimo,Arial,sans-serif', overflow: isModal ? 'visible' : 'hidden' }}>
 
-      {/* Back Button */}
-      <div className="aid-back">
-        <Link to="/" style={{ display:'flex', alignItems:'center', gap:'8px', textDecoration:'none' }}>
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{ fontFamily:'Arimo', fontWeight:700, fontSize:'14px', color:'#FFFFFF' }}>Back</span>
-        </Link>
-      </div>
+      {/* Back Button — only shown on full-page route, not in modal */}
+      {!isModal && (
+        <div className="aid-back">
+          <Link to="/" style={{ display:'flex', alignItems:'center', gap:'8px', textDecoration:'none' }}>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span style={{ fontFamily:'Arimo', fontWeight:700, fontSize:'14px', color:'#FFFFFF' }}>Back</span>
+          </Link>
+        </div>
+      )}
 
       {/* ── Choice Modal ──────────────────────────────────────────────────── */}
       {showModal && (
@@ -69,11 +74,9 @@ const IDRegistrationView = ({
 
       {/* ── Camera Fullscreen ──────────────────────────────────────────────── */}
       {cameraActive && (
-        <div style={{ position:'fixed', inset:0, zIndex:100, background:'#000', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px' }}>
+        <div style={{ position:'fixed', inset:0, zIndex: isModal ? 3000 : 100, background:'#000', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px' }}>
           <div style={{ minHeight:'36px', display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.55)', borderRadius:'20px', padding:'0 20px', backdropFilter:'blur(4px)' }}>
-            <p style={{ fontFamily:'Arimo,Arial', fontSize:'14px', fontWeight:600, color:'#FFFFFF', margin:0, letterSpacing:'0.2px', textAlign:'center' }}>
-              {camGuide}
-            </p>
+            <p style={{ fontFamily:'Arimo,Arial', fontSize:'14px', fontWeight:600, color:'#FFFFFF', margin:0, letterSpacing:'0.2px', textAlign:'center' }}>{camGuide}</p>
           </div>
           <div style={{ position:'relative', width:'90%', maxWidth:'600px' }}>
             <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', borderRadius:'16px', display:'block' }} />
@@ -92,12 +95,8 @@ const IDRegistrationView = ({
           </div>
           <canvas ref={canvasRef} style={{ display:'none' }} />
           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'8px' }}>
-            <p style={{ fontFamily:'Arimo,Arial', fontSize:'12px', color:'rgba(255,255,255,0.4)', margin:0 }}>
-              ID will be captured automatically when stable
-            </p>
-            <button onClick={stopCamera} style={{ height:'44px', padding:'0 28px', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:'12px', fontFamily:'Arimo,Arial', fontSize:'14px', color:'#FFFFFF', cursor:'pointer' }}>
-              Cancel
-            </button>
+            <p style={{ fontFamily:'Arimo,Arial', fontSize:'12px', color:'rgba(255,255,255,0.4)', margin:0 }}>ID will be captured automatically when stable</p>
+            <button onClick={stopCamera} style={{ height:'44px', padding:'0 28px', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:'12px', fontFamily:'Arimo,Arial', fontSize:'14px', color:'#FFFFFF', cursor:'pointer' }}>Cancel</button>
           </div>
         </div>
       )}
@@ -218,8 +217,8 @@ const IDRegistrationView = ({
 
         {/* Terms */}
         <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'12px' }}>
-          <input type="checkbox" id="terms" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ width:'17px', height:'17px', accentColor:'#2B72FB', cursor:'pointer', flexShrink:0 }} />
-          <label htmlFor="terms" style={{ fontFamily:'Arimo,Arial', fontWeight:400, fontSize:'13px', lineHeight:'20px', color:'#FFFFFF', cursor:'pointer' }}>
+          <input type="checkbox" id="terms-id" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ width:'17px', height:'17px', accentColor:'#2B72FB', cursor:'pointer', flexShrink:0 }} />
+          <label htmlFor="terms-id" style={{ fontFamily:'Arimo,Arial', fontWeight:400, fontSize:'13px', lineHeight:'20px', color:'#FFFFFF', cursor:'pointer' }}>
             I agree to the{' '}
             <Link to="/terms" style={{ color:'#D9CA81', textDecoration:'none' }}>Terms of Service</Link>
             {' '}and{' '}
@@ -235,9 +234,14 @@ const IDRegistrationView = ({
           {status === 'scanning' ? 'Verifying...' : 'Next'}
         </button>
 
+        {/* Footer link — switches to login in modal, links normally on full page */}
         <p style={{ fontFamily:'Arimo,Arial', fontWeight:400, fontSize:'13px', lineHeight:'20px', color:'#FFFFFF', textAlign:'center', margin:0 }}>
           Already have an account?{' '}
-          <Link to="/login" style={{ color:'#D9CA81', textDecoration:'none',fontWeight: 700 }}>Log in</Link>
+          {isModal ? (
+            <button onClick={onSwitchToLogin} style={{ background:'none', border:'none', padding:0, color:'#D9CA81', fontFamily:'Arimo,Arial', fontSize:'13px', fontWeight:700, cursor:'pointer' }}>Log in</button>
+          ) : (
+            <Link to="/login" style={{ color:'#D9CA81', textDecoration:'none', fontWeight:700 }}>Log in</Link>
+          )}
         </p>
       </div>
     </div>

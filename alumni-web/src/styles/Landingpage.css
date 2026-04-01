@@ -202,10 +202,9 @@
 }
 
 .lp-card-meta span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .lp-discount-code {

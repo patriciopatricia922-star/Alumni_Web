@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getResumeRoute, getSurveySections } from '../lib/surveyProgress';
 import homeIcon     from '../assets/home_icn.svg';
-import settingsIcon from '../assets/settings_icn.svg';
+// import settingsIcon from '../assets/settings_icn.svg';
 import aboutIcon    from '../assets/about_icn.svg';
 import surveyIcon   from '../assets/tracer_ic.svg';
 import profileIcon  from '../assets/profile_icn.svg';
@@ -77,7 +77,6 @@ const Sidebar = () => {
   ];
 
   const helpItems = [
-    { path: '/personal-information', label: 'Settings', icon: settingsIcon },
     { path: '/about',                label: 'About',    icon: aboutIcon    },
   ];
 

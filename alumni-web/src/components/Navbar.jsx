@@ -1,48 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import NavbarView from './Navbarview';
 
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+const Navbar = ({ onOpenRegister, onOpenLogin }) => {
+  const [scrolled,  setScrolled]  = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) setMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const onResize = () => { if (window.innerWidth > 768) setMenuOpen(false); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const smoothScrollTo = (targetY, duration = 600) => {
     const startY = window.scrollY;
-    const diff = targetY - startY;
+    const diff   = targetY - startY;
     let startTime = null;
-
-    const easeInOutCubic = (t) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
+    const easeInOutCubic = (t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
     const step = (timestamp) => {
       if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
+      const elapsed  = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
       window.scrollTo(0, startY + diff * easeInOutCubic(progress));
       if (progress < 1) requestAnimationFrame(step);
     };
-
     requestAnimationFrame(step);
   };
 
   const scrollTo = (id) => {
     const el = document.getElementById(id);
     if (el) {
-      const navHeight = 64;
-      const top = el.getBoundingClientRect().top + window.scrollY - navHeight;
+      const top = el.getBoundingClientRect().top + window.scrollY - 64;
       smoothScrollTo(top, 700);
     } else {
       window.location.href = `/#${id}`;
@@ -64,6 +57,8 @@ const Navbar = () => {
       menuOpen={menuOpen}
       setMenuOpen={setMenuOpen}
       navLinks={navLinks}
+      onOpenRegister={onOpenRegister}
+      onOpenLogin={onOpenLogin}
     />
   );
 };

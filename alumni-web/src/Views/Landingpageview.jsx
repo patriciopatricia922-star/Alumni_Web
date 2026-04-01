@@ -2,9 +2,15 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
 import '../styles/Landingpage.css';
+import {
+  HiOutlineCalendarDays,
+  HiOutlineMapPin,
+  HiOutlineBuildingOffice2,
+  HiOutlineTicket,
+} from 'react-icons/hi2';
+
 const alumnaiLogo = new URL('../assets/new_lg.svg', import.meta.url).href;
 
-// Helper to strip HTML tags for preview
 const stripHtml = (html) => {
   if (!html) return '';
   const tmp = document.createElement('DIV');
@@ -12,14 +18,13 @@ const stripHtml = (html) => {
   return tmp.textContent || tmp.innerText || '';
 };
 
-// Content Card Component
 const ContentCard = ({ item, type }) => {
   const getTypeColor = () => {
     switch (type) {
-      case 'events': return '#155DFC';
-      case 'jobs': return '#10B981';
+      case 'events':    return '#155DFC';
+      case 'jobs':      return '#10B981';
       case 'discounts': return '#F59E0B';
-      default: return '#6A7282';
+      default:          return '#6A7282';
     }
   };
 
@@ -27,8 +32,8 @@ const ContentCard = ({ item, type }) => {
     <div className="lp-content-card">
       <div className="lp-card-image">
         <div className="lp-card-category" style={{ background: getTypeColor() }}>
-          {type === 'events' && 'Event'}
-          {type === 'jobs' && 'Job'}
+          {type === 'events'    && 'Event'}
+          {type === 'jobs'      && 'Job'}
           {type === 'discounts' && 'Discount'}
         </div>
       </div>
@@ -40,20 +45,20 @@ const ContentCard = ({ item, type }) => {
         </p>
         {type === 'events' && item.event_date && (
           <div className="lp-card-meta">
-            <span>📅 {new Date(item.event_date).toLocaleDateString()}</span>
-            {item.location && <span>📍 {item.location}</span>}
+            <span><HiOutlineCalendarDays size={13} />{new Date(item.event_date).toLocaleDateString()}</span>
+            {item.location && <span><HiOutlineMapPin size={13} />{item.location}</span>}
           </div>
         )}
         {type === 'jobs' && (
           <div className="lp-card-meta">
-            {item.company && <span>🏢 {item.company}</span>}
-            {item.location && <span>📍 {item.location}</span>}
+            {item.company  && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
+            {item.location && <span><HiOutlineMapPin size={13} />{item.location}</span>}
           </div>
         )}
         {type === 'discounts' && (
           <div className="lp-card-meta">
-            {item.company && <span>🏢 {item.company}</span>}
-            {item.discount_code && <span>🎫 {item.discount_code}</span>}
+            {item.company       && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
+            {item.discount_code && <span><HiOutlineTicket size={13} />{item.discount_code}</span>}
           </div>
         )}
       </div>
@@ -67,6 +72,8 @@ const LandingPageView = ({
   missionItems,
   onViewAll,
   onExploreMore,
+  onOpenLogin,
+  onOpenRegister,
   heroSection,
   statsSection,
   eventsSection,
@@ -84,9 +91,11 @@ const LandingPageView = ({
   loadingDiscounts,
 }) => (
   <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', fontFamily: 'Arial, sans-serif' }}>
-    <Navbar isScrolled={isScrolled} />
 
-    {/* ══ HERO SECTION ══════════════════════════════════════════════════════════ */}
+    {/* Pass modal openers to Navbar */}
+    <Navbar isScrolled={isScrolled} onOpenRegister={onOpenRegister} onOpenLogin={onOpenLogin} />
+
+    {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
     <section className="lp-hero" style={{ backgroundImage: `url(${heroSection?.image_url || capBg})` }}>
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(70.71% 70.71% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%)' }} />
       <div className="lp-hero-content" style={{ zIndex: 1 }}>
@@ -107,33 +116,30 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ STATS SECTION ═════════════════════════════════════════════════════════ */}
+    {/* ══ STATS ═════════════════════════════════════════════════════════════ */}
     <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
       <div className="lp-stats-grid">
         {stats.map((stat, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
             <h2 className="lp-stat-number" style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '45px', lineHeight: '48px', color: '#002263', margin: '0 0 8px' }}>{stat.number}</h2>
-            <p className="lp-stat-label" style={{ fontFamily: 'Arial', fontSize: '16px', lineHeight: '24px', color: '#0B3D91', margin: 0 }}>{stat.label}</p>
+            <p className="lp-stat-label"   style={{ fontFamily: 'Arial', fontSize: '16px', lineHeight: '24px', color: '#0B3D91', margin: 0 }}>{stat.label}</p>
           </div>
         ))}
       </div>
     </section>
 
-    {/* ══ UPCOMING EVENTS SECTION ═══════════════════════════════════════════════ */}
+    {/* ══ EVENTS ════════════════════════════════════════════════════════════ */}
     <section id="events" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ marginBottom: '48px', textAlign: 'center' }}>
           <h2 className="lp-section-title">{eventsSection?.title || 'Upcoming Events'}</h2>
           <p className="lp-section-subtitle">{eventsSection?.description || 'Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community.'}</p>
         </div>
-        
         {loadingEvents ? (
           <div className="lp-loading-state">Loading events...</div>
         ) : upcomingEvents.length > 0 ? (
           <div className="lp-cards-grid">
-            {upcomingEvents.map((event) => (
-              <ContentCard key={event.id} item={event} type="events" />
-            ))}
+            {upcomingEvents.map((event) => <ContentCard key={event.id} item={event} type="events" />)}
           </div>
         ) : (
           <div className="lp-card" style={{ textAlign: 'center' }}>
@@ -141,28 +147,24 @@ const LandingPageView = ({
             <p>Check back soon for exciting events and gatherings from the alumni community.</p>
           </div>
         )}
-        
         <div style={{ textAlign: 'center', marginTop: '48px' }}>
-          <button className="lp-view-all" onClick={onViewAll}>View All Events</button>
+          <button className="lp-view-all" onClick={onViewAll}>View more</button>
         </div>
       </div>
     </section>
 
-    {/* ══ JOB OPPORTUNITIES SECTION ═════════════════════════════════════════════ */}
+    {/* ══ JOBS ══════════════════════════════════════════════════════════════ */}
     <section id="jobs" style={{ width: '100%', background: '#F9FAFB', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ marginBottom: '48px', textAlign: 'center' }}>
           <h2 className="lp-section-title">{jobsSection?.title || 'Job Opportunities'}</h2>
           <p className="lp-section-subtitle">{jobsSection?.description || 'Browse through our curated list of job opportunities specifically for NU Dasmariñas alumni.'}</p>
         </div>
-        
         {loadingJobs ? (
           <div className="lp-loading-state">Loading jobs...</div>
         ) : jobOpportunities.length > 0 ? (
           <div className="lp-cards-grid">
-            {jobOpportunities.map((job) => (
-              <ContentCard key={job.id} item={job} type="jobs" />
-            ))}
+            {jobOpportunities.map((job) => <ContentCard key={job.id} item={job} type="jobs" />)}
           </div>
         ) : (
           <div className="lp-card" style={{ textAlign: 'center' }}>
@@ -170,28 +172,24 @@ const LandingPageView = ({
             <p>Check back soon for exciting career opportunities from our partner companies.</p>
           </div>
         )}
-        
         <div style={{ textAlign: 'center', marginTop: '48px' }}>
-          <button className="lp-view-all" onClick={onViewAll}>View All Jobs</button>
+          <button className="lp-view-all" onClick={onViewAll}>View more</button>
         </div>
       </div>
     </section>
 
-    {/* ══ ALUMNI DISCOUNTS SECTION ══════════════════════════════════════════════ */}
+    {/* ══ DISCOUNTS ═════════════════════════════════════════════════════════ */}
     <section id="discounts" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ marginBottom: '48px', textAlign: 'center' }}>
           <h2 className="lp-section-title">{discountsSection?.title || 'Alumni Discounts'}</h2>
           <p className="lp-section-subtitle">{discountsSection?.description || 'Enjoy exclusive discounts and benefits from our partner establishments.'}</p>
         </div>
-        
         {loadingDiscounts ? (
           <div className="lp-loading-state">Loading discounts...</div>
         ) : alumniDiscounts.length > 0 ? (
           <div className="lp-cards-grid">
-            {alumniDiscounts.map((discount) => (
-              <ContentCard key={discount.id} item={discount} type="discounts" />
-            ))}
+            {alumniDiscounts.map((discount) => <ContentCard key={discount.id} item={discount} type="discounts" />)}
           </div>
         ) : (
           <div className="lp-card" style={{ textAlign: 'center' }}>
@@ -199,26 +197,28 @@ const LandingPageView = ({
             <p>Check back soon for exclusive discounts and benefits from our partner establishments.</p>
           </div>
         )}
-        
         <div style={{ textAlign: 'center', marginTop: '48px' }}>
-          <button className="lp-view-all" onClick={onViewAll}>View All Discounts</button>
+          <button className="lp-view-all" onClick={onViewAll}>View more</button>
         </div>
       </div>
     </section>
 
-    {/* ══ WHY JOIN ALUMNAI SECTION (Mission & Vision) ════════════════════════════ */}
+    {/* ══ WHY JOIN ══════════════════════════════════════════════════════════ */}
     <section id="about" style={{ width: '100%', background: '#F9FAFB', padding: '96px 32px 80px' }}>
       <div style={{ maxWidth: '860px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <h2 className="lp-section-title">
-            {whyJoinSection?.title?.split(' ')[0] || 'Why Join'}{' '}
-            <span style={{ color: '#002263' }}>{whyJoinSection?.title?.split(' ')[1] || 'Alumn'}</span>
-            <span style={{ color: 'rgba(201,167,0,0.85)' }}>{whyJoinSection?.title?.split(' ')[2] || 'AI'}</span>?
+            {whyJoinSection?.title?.split(' ').slice(0, 2).join(' ') || 'Why Join'}{' '}
+            <span style={{ color: '#002263' }}>
+              {whyJoinSection?.title?.split(' ')[2]?.slice(0, 5) || 'Alumn'}
+            </span>
+            <span style={{ color: 'rgba(201,167,0,0.85)' }}>
+              {whyJoinSection?.title?.split(' ')[2]?.slice(5) || 'AI'}
+            </span>
           </h2>
           <p className="lp-section-subtitle">{whyJoinSection?.description || 'Connecting National University—Dasmariñas alumni through innovative technology and community engagement.'}</p>
         </div>
-        
-        {/* Mission Content */}
+
         <div style={{ marginBottom: '56px' }}>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
@@ -232,9 +232,8 @@ const LandingPageView = ({
             </p>
           ))}
         </div>
-        
-        {/* Vision Content */}
-        <div style={{ marginBottom: '0' }}>
+
+        <div>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Vision</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
           <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: 0, textAlign: 'justify' }}>
@@ -244,7 +243,7 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ WHAT YOU GET AS AN ALUMNI SECTION (Benefits) ═══════════════════════════ */}
+    {/* ══ BENEFITS ══════════════════════════════════════════════════════════ */}
     <section style={{ width: '100%', background: '#F9FAFB', padding: '80px 32px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
@@ -253,26 +252,13 @@ const LandingPageView = ({
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }} className="lp-why-cards-grid">
           {[
-            {
-              icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>),
-              title: 'Stay Connected',
-              desc: 'Build lasting relationships with fellow alumni and expand your professional network across industries and borders.',
-            },
-            {
-              icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>),
-              title: 'Give Back',
-              desc: 'Mentor current students, support scholarship programs, and help shape the next generation of NU Dasmariñas leaders.',
-            },
-            {
-              icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>),
-              title: 'Grow Together',
-              desc: 'Access exclusive job listings, events, partner discounts, and resources designed to fuel your personal and professional growth.',
-            },
+            { icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="9" cy="7" r="4" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>), title: 'Stay Connected', desc: 'Build lasting relationships with fellow alumni and expand your professional network across industries and borders.' },
+            { icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>), title: 'Give Back', desc: 'Mentor current students, support scholarship programs, and help shape the next generation of NU Dasmariñas leaders.' },
+            { icon: (<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>), title: 'Grow Together', desc: 'Access exclusive job listings, events, partner discounts, and resources designed to fuel your personal and professional growth.' },
           ].map((card, i) => (
             <div key={i} style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.07)', transition: 'box-shadow 0.2s, transform 0.2s', cursor: 'default' }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,34,99,0.14)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            >
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.07)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
               <div style={{ width: '100%', height: '8px', background: '#DAA520', flexShrink: 0 }} />
               <div style={{ padding: '36px 28px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ width: '72px', height: '72px', background: 'rgba(0,34,99,0.07)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', flexShrink: 0 }}>{card.icon}</div>
@@ -286,7 +272,7 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ FOOTER ════════════════════════════════════════════════════════ */}
+    {/* ══ FOOTER ════════════════════════════════════════════════════════════ */}
     <footer style={{ width: '100%', background: '#002263', marginTop: '0', flex: 1 }}>
       <div className="lp-footer-inner">
         <div className="lp-footer-logo">
