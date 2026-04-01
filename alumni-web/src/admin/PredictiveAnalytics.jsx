@@ -1,17 +1,18 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import AdminSidebar from './components/AdminSidebar';
-import Predictiveanalyticsview from './Views/Predictiveanalyticsview';
+import Predictiveanalyticsview from './views/Predictiveanalyticsview';
 
+//For the ML-SERVICE under pycharm.
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 const DEPARTMENT_META = {
-  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',    color: 'blue'   },
-  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber'  },
-  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',        color: 'violet' },
+  SECA: { key: 'seca', name: 'School of Engineering and Computer Architecture',    color: 'blue'   },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy',      color: 'amber'  },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',             color: 'violet' },
 };
 
 const Adminpredictiveanalytics = () => {
