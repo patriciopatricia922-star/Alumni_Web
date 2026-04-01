@@ -8,25 +8,22 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-// Department metadata (colors, full names) — not from DB
 const DEPARTMENT_META = {
-  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies', color: 'blue' },
-  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber' },
-  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education', color: 'violet' },
+  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',    color: 'blue'   },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber'  },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',        color: 'violet' },
 };
 
 const Adminpredictiveanalytics = () => {
-  const [activePage, setActivePage] = useState('overview');
+  const [activePage,         setActivePage]         = useState('overview');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshMsg, setRefreshMsg] = useState(null);
+  const [refreshing,         setRefreshing]         = useState(false);
+  const [refreshMsg,         setRefreshMsg]         = useState(null);
+  const [predictions,        setPredictions]        = useState([]);
+  const [loading,            setLoading]            = useState(true);
+  const [error,              setError]              = useState(null);
 
-  // Raw predictions from Supabase
-  const [predictions, setPredictions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch predictions once on mount
+  // ── Fetch predictions on mount ───────────────────────────
   useEffect(() => {
     const fetchPredictions = async () => {
       setLoading(true);
@@ -45,161 +42,149 @@ const Adminpredictiveanalytics = () => {
         setLoading(false);
       }
     };
-
     fetchPredictions();
   }, []);
 
-  // ── Derive overviewTrend ──────────────────────────────────────────────────
-  // Average predicted_rate across all programs per year
+  // ── Derived: overviewTrend ────────────────────────────────
   const overviewTrend = useMemo(() => {
     if (!predictions.length) return [];
-
     const byYear = {};
     predictions.forEach(({ year, predicted_rate }) => {
       if (!byYear[year]) byYear[year] = [];
       byYear[year].push(predicted_rate);
     });
-
     return Object.entries(byYear)
-      .sort(([a], [b]) => a - b)
+      .sort(([a], [b]) => Number(a) - Number(b))
       .map(([year, rates]) => ({
-        year: String(year),
+        year:  String(year),
         value: Math.round(rates.reduce((s, r) => s + r, 0) / rates.length),
       }));
   }, [predictions]);
 
-  // ── Derive departmentCards ────────────────────────────────────────────────
-  // One card per department: current = rate at earliest year, predicted = rate at latest year
+  // ── Derived: departmentCards ──────────────────────────────
   const departmentCards = useMemo(() => {
     if (!predictions.length) return [];
-
     const byDept = {};
     predictions.forEach((row) => {
       if (!byDept[row.department]) byDept[row.department] = [];
       byDept[row.department].push(row);
     });
-
     return Object.entries(byDept).map(([dept, rows]) => {
-      const sorted = [...rows].sort((a, b) => a.year - b.year);
-      const current = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
+      const sorted    = [...rows].sort((a, b) => a.year - b.year);
+      const current   = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
       const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
       const meta      = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
-
-      // Count unique programs in this department
-      const programs = new Set(rows.map((r) => r.program)).size;
-
+      const programs  = new Set(rows.map((r) => r.program)).size;
       return {
-        key: meta.key,
-        code: dept,
-        name: meta.name,
-        color: meta.color,
+        key:      meta.key,
+        code:     dept,
+        name:     meta.name,
+        color:    meta.color,
         current,
         predicted,
-        change: predicted - current,
+        change:   predicted - current,
         programs,
       };
     });
   }, [predictions]);
 
-  // ── Derive departmentTrends (for page 1.3) ────────────────────────────────
-  // Per department: list of programs with current/predicted/change
+  // ── Derived: departmentTrends ─────────────────────────────
   const departmentTrends = useMemo(() => {
     if (!predictions.length) return {};
-
     const byDept = {};
     predictions.forEach((row) => {
       if (!byDept[row.department]) byDept[row.department] = {};
       if (!byDept[row.department][row.program]) byDept[row.department][row.program] = [];
       byDept[row.department][row.program].push(row);
     });
-
     const result = {};
     Object.entries(byDept).forEach(([dept, programs]) => {
       const meta = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept };
-
       const programList = Object.entries(programs).map(([prog, rows]) => {
         const sorted    = [...rows].sort((a, b) => a.year - b.year);
         const current   = Math.round(sorted[0].current_rate);
         const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
         return { code: prog, current, predicted, change: predicted - current };
       });
-
       result[meta.key] = {
-        title: meta.name,
-        subtitle: `Program-level predictions ${predictions[0]?.year ?? 2025} → ${predictions[predictions.length - 1]?.year ?? 2030}`,
+        title:    meta.name,
+        subtitle: `Program-level predictions 2025 → 2030`,
         programs: programList,
       };
     });
-
     return result;
   }, [predictions]);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-const handleRefresh = async () => {
-  setRefreshing(true);
-  setRefreshMsg(null);
-  try {
-    const res = await fetch('http://localhost:8000/api/refresh-predictions', {
-      method: 'POST',
-    });
-    const data = await res.json();
-    if (data.status === 'success') {
-      setRefreshMsg('Predictions updated successfully.');
-      const { data: newData } = await supabase
-        .from('predictions')
-        .select('*')
-        .order('year', { ascending: true });
-      setPredictions(newData || []);
-    } else {
-      setRefreshMsg('Failed: ' + data.message);
+  // ── Handlers ──────────────────────────────────────────────
+
+  /**
+   * Called ONLY by breadcrumb navigation.
+   * Resets selectedDepartment when going back to overview or departments list.
+   */
+  const handleBreadcrumbNav = (targetPage) => {
+    if (targetPage === 'overview') {
+      setActivePage('overview');
+      setSelectedDepartment(null);
+    } else if (targetPage === 'departments') {
+      setActivePage('departments');
+      setSelectedDepartment(null);
     }
-  } catch (err) {
-    setRefreshMsg('Error: ' + err.message);
-  } finally {
-    setRefreshing(false);
-  }
-};
-
-// ← paste here
-useEffect(() => {
-  if (!refreshMsg) return;
-  const timer = setTimeout(() => setRefreshMsg(null), 3000);
-  return () => clearTimeout(timer);
-}, [refreshMsg]);
-
-
-  const handleTabChange = (key) => {
-    setActivePage(key);
-    setSelectedDepartment(null);
   };
 
+  /**
+   * Called when a department card is clicked.
+   * Sets both selectedDepartment AND activePage atomically — no reset race.
+   */
   const handleDepartmentClick = (deptKey) => {
     setSelectedDepartment(deptKey);
     setActivePage('department-detail');
   };
 
+  /**
+   * Called by the "view detailed breakdown" button on Overview page.
+   * Goes to departments list, clears any selected department.
+   */
+  const handleViewBreakdown = () => {
+    setActivePage('departments');
+    setSelectedDepartment(null);
+  };
+
+  // ── Refresh ───────────────────────────────────────────────
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setRefreshMsg(null);
+    try {
+      const res  = await fetch('http://localhost:8000/api/refresh-predictions', { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setRefreshMsg('Predictions updated successfully.');
+        const { data: newData } = await supabase
+          .from('predictions')
+          .select('*')
+          .order('year', { ascending: true });
+        setPredictions(newData || []);
+      } else {
+        setRefreshMsg('Failed: ' + data.message);
+      }
+    } catch (err) {
+      setRefreshMsg('Error: ' + err.message);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!refreshMsg) return;
+    const timer = setTimeout(() => setRefreshMsg(null), 3000);
+    return () => clearTimeout(timer);
+  }, [refreshMsg]);
+
+  // ── Derived view data ─────────────────────────────────────
   const selectedDepartmentData = selectedDepartment
     ? departmentTrends[selectedDepartment] ?? null
     : null;
 
-  const breadcrumbTabs = useMemo(() => {
-    const base = [
-      { key: 'overview',    label: 'Overview' },
-      { key: 'departments', label: 'Departments' },
-    ];
-    if (selectedDepartment) {
-      const dept = departmentCards.find((c) => c.key === selectedDepartment);
-      base.push({
-        key: selectedDepartment,
-        label: dept?.code || 'Detail',
-        isDepartment: true,
-      });
-    }
-    return base;
-  }, [selectedDepartment, departmentCards]);
-
-  // ── Loading / error states ────────────────────────────────────────────────
-
+  // ── Loading / error states ────────────────────────────────
   if (loading) {
     return (
       <div className="pa-layout">
@@ -224,20 +209,17 @@ useEffect(() => {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
+  // ── Render ────────────────────────────────────────────────
   return (
     <Predictiveanalyticsview
       activePage={activePage}
-      setActivePage={handleTabChange}
-      pageTabs={breadcrumbTabs}
-      overviewTrend={overviewTrend}
-      overviewChartTitle="Career to Degree Alignment"
-      overviewChartSubtitle="Predicted alignment rates for all departments"
-      departmentCards={departmentCards}
       selectedDepartment={selectedDepartment}
       selectedDepartmentData={selectedDepartmentData}
+      overviewTrend={overviewTrend}
+      departmentCards={departmentCards}
       onDepartmentClick={handleDepartmentClick}
+      onBreadcrumbNav={handleBreadcrumbNav}
+      onViewBreakdown={handleViewBreakdown}
       sidebar={<AdminSidebar activePage="predictive-analytics" />}
       refreshBar={
         <div className="pa-refresh-bar">

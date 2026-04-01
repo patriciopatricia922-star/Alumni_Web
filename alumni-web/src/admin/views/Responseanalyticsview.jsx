@@ -24,7 +24,7 @@ import {
 import '../styles/Responseanalytics.css';
 
 // AI Service URL
-const AI_BASE_URL = 'http://localhost:8000/api';
+// const AI_BASE_URL = 'http://localhost:8000/api';
 
 // ── Which overview cards show per section ─────────────────────────────────────
 const SECTION_CARDS = {
@@ -147,91 +147,22 @@ const RatingBreakdownCard = ({ ratingBreakdown = [] }) => (
 );
 
 // ── Enhanced Overall Sentiment Card with AI Insights ──────────────────────────
-const OverallSentimentCard = ({ sentiment, aiInsights, loadingAI }) => {
+const OverallSentimentCard = ({ sentiment }) => {
   const fullStars = Math.floor(sentiment?.score || 0);
   
   return (
     <section className="ra-card ra-card-half ra-sentiment-card">
       <CardTitle title="Overall Sentiment" subtitle="Average satisfaction rating" />
       
-      <div className="ra-sentiment-grid">
-        {/* Left side - Rating Display (centered) */}
-        <div className="ra-sentiment-left">
-          <div className="ra-sentiment-score">{sentiment?.score ?? 0}</div>
-          <div className="ra-stars-animated">
-            {[...Array(5)].map((_, index) => {
-              const starValue = index + 1;
-              const isActive = starValue <= fullStars;
-              return (
-                <HiOutlineStar
-                  key={index}
-                  size={28}
-                  className={`star-animated ${isActive ? 'star-filled' : 'star-empty'}`}
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
-                />
-              );
-            })}
-          </div>
-          <div className="ra-sentiment-theme-pill">
-            {(sentiment?.keyword || sentiment?.quote || 'NO FEEDBACK YET').toUpperCase()}
-          </div>
+      <div className="ra-sentiment-left" style={{ width: '100%', textAlign: 'center' }}>
+        <div className="ra-sentiment-score">{sentiment?.score ?? 0}</div>
+        <div className="ra-stars">
+          {[...Array(5)].map((_, index) => (
+            <HiOutlineStar key={index} size={22} className={index < fullStars ? 'filled' : ''} />
+          ))}
         </div>
-        
-        {/* Right side - AI Insights */}
-        <div className="ra-sentiment-right">
-          <div className="ai-insights-header">
-            <FaBrain size={14} />
-            <span>AI INSIGHTS</span>
-          </div>
-          
-          {loadingAI ? (
-            <div className="ai-loading-section">
-              <div className="ai-loading-spinner-small"></div>
-              <span>Analyzing feedback...</span>
-            </div>
-          ) : aiInsights && aiInsights.total > 0 ? (
-            <>
-              <div className="ai-sentiment-distribution">
-                <div className="dist-item positive">
-                  <FaSmile size={12} />
-                  <span>{aiInsights.sentiment.positive_percentage}%</span>
-                </div>
-                <div className="dist-item neutral">
-                  <FaMeh size={12} />
-                  <span>{aiInsights.sentiment.neutral_percentage}%</span>
-                </div>
-                <div className="dist-item negative">
-                  <FaFrown size={12} />
-                  <span>{aiInsights.sentiment.negative_percentage}%</span>
-                </div>
-              </div>
-              
-              {aiInsights.themes && aiInsights.themes.length > 0 && (
-                <div className="ai-themes-row">
-                  <span className="ai-label">Key themes:</span>
-                  <div className="theme-chips-row">
-                    {aiInsights.themes.slice(0, 3).map((theme, i) => (
-                      <span key={i} className="theme-chip-mini">{theme.theme}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {aiInsights.keywords && aiInsights.keywords.length > 0 && (
-                <div className="ai-keywords-row">
-                  <FaChartLine size={12} className="keywords-icon" />
-                  <span className="ai-label">Common topics:</span>
-                  <span className="keywords-text">{aiInsights.keywords.slice(0, 5).join(', ')}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="ai-empty-state">
-              <span>No feedback data available</span>
-            </div>
-          )}
+        <div className="ra-sentiment-theme-pill">
+          {(sentiment?.keyword || sentiment?.quote || 'NO FEEDBACK YET').toUpperCase()}
         </div>
       </div>
     </section>
@@ -428,29 +359,6 @@ const SurveyOverviewPage = ({
   const visible = SECTION_CARDS[selectedSection] || SECTION_CARDS['All Sections'];
   const show = (key) => visible.includes(key);
   
-  // AI Insights state
-  const [aiInsights, setAiInsights] = useState(null);
-  const [loadingAI, setLoadingAI] = useState(true);
-  
-  // Fetch AI insights
-  useEffect(() => {
-    const fetchAIInsights = async () => {
-      setLoadingAI(true);
-      try {
-        const response = await fetch(`${AI_BASE_URL}/ai/feedback-insights`);
-        const data = await response.json();
-        if (data.status === 'success') {
-          setAiInsights(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch AI insights:', error);
-      } finally {
-        setLoadingAI(false);
-      }
-    };
-    fetchAIInsights();
-  }, []);
-  
   return (
     <div className="ra-content-stack">
       <TopFilterRow
@@ -544,11 +452,7 @@ const SurveyOverviewPage = ({
         <div className="ra-grid-two">
           {show('rating') && <RatingBreakdownCard ratingBreakdown={ratingBreakdown} />}
           {show('sentiment') && (
-            <OverallSentimentCard 
-              sentiment={overviewCards.sentiment} 
-              aiInsights={aiInsights}
-              loadingAI={loadingAI}
-            />
+            <OverallSentimentCard sentiment={overviewCards.sentiment} />
           )}
         </div>
       )}

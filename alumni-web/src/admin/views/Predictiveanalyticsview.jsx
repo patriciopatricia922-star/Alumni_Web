@@ -1,98 +1,221 @@
-import '../styles/Predictiveanalytics.css';
 import React, { useState, useRef, useEffect } from 'react';
-import { HiOutlineChartBar, HiOutlineBuildingOffice2, HiOutlineArrowTrendingUp, HiOutlineChevronRight } from 'react-icons/hi2';
+import {
+  HiOutlineChartBar,
+  HiOutlineBuildingOffice2,
+  HiOutlineArrowTrendingUp,
+  HiOutlineChevronRight,
+} from 'react-icons/hi2';
 import { LuArrowUpRight, LuArrowRight } from 'react-icons/lu';
+import { FiBarChart2, FiTrendingUp, FiAlertCircle, FiCpu } from 'react-icons/fi';
+import '../styles/Predictiveanalytics.css';
 
-const Predictiveanalyticsview = (props) => {
-  const {
-    activePage,
-    setActivePage,
-    pageTabs,
-    overviewTrend,
-    departmentCards,
-    selectedDepartment,
-    selectedDepartmentData,
-    onDepartmentClick,
-    sidebar,
-    refreshBar 
-  } = props;
+// ─────────────────────────────────────────────────────────────
+// AI Insights Card
+// ─────────────────────────────────────────────────────────────
+const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData }) => {
+  const [insights, setInsights] = useState(null);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
 
-  // ── Animation state ──────────────────────────────────────
+  const currentView = selectedDepartmentData ? 'department' : 'overview';
+
+  const fetchAIInsights = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        overview_trend: overviewTrend,
+        departments: departmentCards.map((d) => ({
+          code:           d.code,
+          name:           d.name,
+          current_rate:   d.current,
+          predicted_rate: d.predicted,
+          change:         d.change,
+        })),
+        current_view: currentView,
+        selected_department: selectedDepartmentData
+          ? { name: selectedDepartmentData.title, programs: selectedDepartmentData.programs }
+          : null,
+      };
+
+      const response = await fetch('http://localhost:8000/api/ai/predictive-insights', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch insights');
+      setInsights(await response.json());
+    } catch (err) {
+      console.error('AI Insights error:', err);
+      setError('AI insights unavailable');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (overviewTrend.length > 0) fetchAIInsights();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overviewTrend, currentView, selectedDepartmentData]);
+
+  if (loading) {
+    return (
+      <div className="ai-insights-card loading">
+        <div className="ai-insights-header">
+          <FiCpu size={20} /><span>AI Insights</span>
+        </div>
+        <div className="ai-loading-spinner" />
+        <p>Analyzing predictive data…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="ai-insights-card error">
+        <div className="ai-insights-header">
+          <FiAlertCircle size={20} /><span>AI Insights</span>
+        </div>
+        <p>{error}</p>
+        <button onClick={fetchAIInsights} className="ai-retry-btn">Retry</button>
+      </div>
+    );
+  }
+
+  if (!insights) return null;
+
+  return (
+    <div className="ai-insights-card">
+      <div className="ai-insights-header">
+        <FiCpu size={20} />
+        <span>AI Insights</span>
+        <span className="ai-badge">Powered by AI</span>
+      </div>
+
+      <div className="ai-insights-content">
+        <div className="ai-key-insight">
+          <FiTrendingUp size={18} />
+          <div className="ai-insight-text">
+            <strong>Key Insight:</strong> {insights.key_insight}
+          </div>
+        </div>
+
+        <div className="ai-trend-analysis">
+          <FiBarChart2 size={18} />
+          <div className="ai-insight-text">
+            <strong>Trend Analysis:</strong> {insights.trend_analysis}
+          </div>
+        </div>
+
+        {insights.department_insights?.length > 0 && (
+          <div className="ai-department-insights">
+            <strong>Department Highlights:</strong>
+            <div className="ai-insight-bullets">
+              {insights.department_insights.map((item, i) => (
+                <div key={i} className="ai-bullet">
+                  <span className="ai-bullet-dot" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {insights.recommendations?.length > 0 && (
+          <div className="ai-recommendations">
+            <strong>AI Recommendations:</strong>
+            <div className="ai-insight-bullets">
+              {insights.recommendations.map((item, i) => (
+                <div key={i} className="ai-bullet">
+                  <span className="ai-bullet-dot" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {insights.risk_alert && (
+          <div className="ai-risk-alert">
+            <FiAlertCircle size={16} />
+            <span className="risk-text">{insights.risk_alert}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────
+// Main View
+// ─────────────────────────────────────────────────────────────
+const Predictiveanalyticsview = ({
+  activePage,
+  selectedDepartment,
+  selectedDepartmentData,
+  overviewTrend,
+  departmentCards,
+  onDepartmentClick,
+  onBreadcrumbNav,
+  onViewBreakdown,
+  sidebar,
+  refreshBar,
+}) => {
+
+  // ── Animation ─────────────────────────────────────────────
   const [animProgress, setAnimProgress] = useState(0);
   const animRef = useRef(null);
-  
-  // Track if we've navigated to departments view
-  const [showDepartments, setShowDepartments] = useState(false);
-  const [hasSelectedDepartment, setHasSelectedDepartment] = useState(false);
 
   useEffect(() => {
     if (activePage !== 'overview' || !overviewTrend.length) return;
-
     setAnimProgress(0);
     let start = null;
     const duration = 1200;
-
-    const step = (timestamp) => {
-      if (!start) start = timestamp;
-      const elapsed = timestamp - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setAnimProgress(eased);
-      if (progress < 1) {
-        animRef.current = requestAnimationFrame(step);
-      }
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      setAnimProgress(1 - Math.pow(1 - progress, 3));
+      if (progress < 1) animRef.current = requestAnimationFrame(step);
     };
-
     animRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animRef.current);
   }, [activePage, overviewTrend]);
 
-  // Update when selectedDepartment changes
-  useEffect(() => {
-    if (selectedDepartment && selectedDepartmentData) {
-      setHasSelectedDepartment(true);
-      setShowDepartments(true);
-    }
-  }, [selectedDepartment, selectedDepartmentData]);
-
   // ── Chart math ────────────────────────────────────────────
-  const values = overviewTrend.map((d) => d.value);
+  const values  = overviewTrend.map((d) => d.value);
   const dataMin = values.length ? Math.min(...values) : 0;
   const dataMax = values.length ? Math.max(...values) : 100;
-
   const padding = Math.max((dataMax - dataMin) * 0.5, 5);
-  const MIN = Math.max(0, Math.floor(dataMin - padding));
-  const MAX = Math.min(100, Math.ceil(dataMax + padding));
-  const RANGE = MAX - MIN;
+  const MIN     = Math.max(0, Math.floor(dataMin - padding));
+  const MAX     = Math.min(100, Math.ceil(dataMax + padding));
+  const RANGE   = MAX - MIN || 1;
 
-  const toX = (i) =>
-    overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50;
+  const toX = (i) => (overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50);
   const toY = (v) => ((MAX - v) / RANGE) * 100;
 
-  const animatedTrend = overviewTrend.map((d, i) => {
-    const t = i / Math.max(overviewTrend.length - 1, 1);
-    if (t <= animProgress) return d;
-    const prev = overviewTrend[i - 1];
-    if (!prev) return null;
-    const segT = (animProgress - (i - 1) / (overviewTrend.length - 1)) /
-                 (1 / (overviewTrend.length - 1));
-    return { year: d.year, value: prev.value + (d.value - prev.value) * segT };
-  }).filter(Boolean);
+  const animatedTrend = overviewTrend
+    .map((d, i) => {
+      const t = i / Math.max(overviewTrend.length - 1, 1);
+      if (t <= animProgress) return d;
+      const prev = overviewTrend[i - 1];
+      if (!prev) return null;
+      const segLen = 1 / (overviewTrend.length - 1);
+      const segT   = (animProgress - (i - 1) * segLen) / segLen;
+      return { year: d.year, value: prev.value + (d.value - prev.value) * segT };
+    })
+    .filter(Boolean);
 
-  const linePoints = animatedTrend
-    .map((d, i) => `${toX(i)},${toY(d.value)}`)
-    .join(' ');
+  const linePoints  = animatedTrend.map((d, i) => `${toX(i)},${toY(d.value)}`).join(' ');
 
   const upperPoints = [
     ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value + padding * 0.6)}`),
-    ...overviewTrend.slice().reverse()
-      .map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value)}`),
+    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value)}`),
   ].join(' ');
 
   const lowerPoints = [
     ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value)}`),
-    ...overviewTrend.slice().reverse()
-      .map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value - padding * 0.6)}`),
+    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value - padding * 0.6)}`),
   ].join(' ');
 
   const changeVal = values.length > 1
@@ -101,56 +224,30 @@ const Predictiveanalyticsview = (props) => {
 
   const yLabels = [MAX, Math.round(MIN + RANGE * 0.66), Math.round(MIN + RANGE * 0.33), MIN];
 
-  // Determine what to show
-  const showOverviewChart = true; // Always show chart when on overview
-  const showDepartmentsList = showDepartments && !hasSelectedDepartment;
-  const showDepartmentDetail = hasSelectedDepartment && selectedDepartmentData;
+  // ── View flags (derived purely from props, no local page state) ──
+  const showOverview   = activePage === 'overview';
+  const showDeptList   = activePage === 'departments';
+  const showDeptDetail = activePage === 'department-detail' && !!selectedDepartment && !!selectedDepartmentData;
 
-  // Handle breadcrumb click
-  const handleBreadcrumbClick = (target) => {
-    if (target === 'overview') {
-      // Reset everything - go back to just overview
-      setShowDepartments(false);
-      setHasSelectedDepartment(false);
-      setActivePage('overview');
-    } else if (target === 'departments') {
-      // Go back to departments list
-      setHasSelectedDepartment(false);
-      setShowDepartments(true);
-      setActivePage('departments');
-    }
-  };
-
-  // Handle "Click to view detailed breakdown" button
-  const handleViewBreakdown = () => {
-    setShowDepartments(true);
-    setActivePage('departments');
-  };
-
-  // Handle department card click
-  const handleDepartmentCardClick = (deptKey) => {
-    setHasSelectedDepartment(true);
-    onDepartmentClick(deptKey);
-  };
-
-  // Build breadcrumb items
-  const getBreadcrumbItems = () => {
-    const items = [{ key: 'overview', label: 'Overview', icon: <HiOutlineChartBar size={16} /> }];
-    
-    if (showDepartments || hasSelectedDepartment) {
-      items.push({ key: 'departments', label: 'Departments', icon: <HiOutlineBuildingOffice2 size={16} /> });
-    }
-    
-    if (hasSelectedDepartment && selectedDepartmentData) {
+  // ── Breadcrumb items ──────────────────────────────────────
+  const breadcrumbItems = (() => {
+    const items = [
+      { key: 'overview',    label: 'Overview',     icon: <HiOutlineChartBar size={16} />,       active: showOverview   },
+      { key: 'departments', label: 'Departments',  icon: <HiOutlineBuildingOffice2 size={16} />, active: showDeptList   },
+    ];
+    if (showDeptDetail) {
       const dept = departmentCards.find((c) => c.key === selectedDepartment);
-      items.push({ key: 'department-detail', label: dept?.code || 'Detail', icon: <HiOutlineBuildingOffice2 size={16} /> });
+      items.push({
+        key:    'department-detail',
+        label:  dept?.code || 'Detail',
+        icon:   <HiOutlineBuildingOffice2 size={16} />,
+        active: true,
+      });
     }
-    
     return items;
-  };
+  })();
 
-  const breadcrumbItems = getBreadcrumbItems();
-
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="pa-layout">
       {sidebar}
@@ -164,19 +261,13 @@ const Predictiveanalyticsview = (props) => {
           </p>
         </div>
 
-        {/* Breadcrumb Navigation - ALWAYS VISIBLE */}
+        {/* Breadcrumb */}
         <div className="pa-tab-row">
           {breadcrumbItems.map((item, idx) => (
             <React.Fragment key={item.key}>
               <button
-                className={`pa-tab-btn ${
-                  (item.key === 'overview' && !showDepartments && !hasSelectedDepartment) ||
-                  (item.key === 'departments' && showDepartments && !hasSelectedDepartment) ||
-                  (item.key === 'department-detail' && hasSelectedDepartment)
-                    ? 'active' 
-                    : ''
-                }`}
-                onClick={() => handleBreadcrumbClick(item.key)}
+                className={`pa-tab-btn ${item.active ? 'active' : ''}`}
+                onClick={() => onBreadcrumbNav(item.key)}
               >
                 {item.icon}
                 {item.label}
@@ -190,115 +281,74 @@ const Predictiveanalyticsview = (props) => {
           {refreshBar}
         </div>
 
-        {/* SCROLLABLE CONTENT CONTAINER - ADD THIS WRAPPER */}
-        <div className="pa-content-scroll">
-
-          {/* ── OVERVIEW PAGE (Chart + Button) ── */}
-          {showOverviewChart && overviewTrend.length > 0 && !showDepartmentsList && !showDepartmentDetail && (
+        {/* ── PAGE 1 — Overview: chart + AI side-by-side ── */}
+        {showOverview && overviewTrend.length > 0 && (
+          <div className="pa-overview-container">
+            {/* Left — Chart */}
             <div className="pa-chart-card">
-
-              {/* Header */}
               <div className="pa-chart-header">
                 <div className="pa-chart-icon">
                   <HiOutlineArrowTrendingUp size={32} color="#155DFC" />
                 </div>
                 <div className="pa-chart-header-text">
                   <h2 className="pa-chart-title">Career to Degree Alignment</h2>
-                  <p className="pa-chart-subtitle">
-                    Predicted alignment rates for all departments
-                  </p>
+                  <p className="pa-chart-subtitle">Predicted alignment rates for all departments</p>
                 </div>
               </div>
 
-              {/* Legend */}
               <div className="pa-chart-legend">
                 <div className="pa-legend-item">
                   <div className="pa-legend-swatch upper" />
-                  <span className="pa-legend-label upper">Upper Bound</span>
+                  <span className="pa-legend-label">Upper Bound</span>
                 </div>
                 <div className="pa-legend-item">
                   <div className="pa-legend-swatch lower" />
-                  <span className="pa-legend-label lower">Lower Bound</span>
+                  <span className="pa-legend-label">Lower Bound</span>
                 </div>
                 <div className="pa-legend-item">
                   <div className="pa-legend-swatch predicted" />
-                  <span className="pa-legend-label predicted">Predicted Rate</span>
+                  <span className="pa-legend-label">Predicted Rate</span>
                 </div>
               </div>
 
-              {/* Chart */}
               <div className="pa-chart-shell">
                 <div className="pa-chart-y-axis">
-                  {yLabels.map((v) => (
-                    <span key={v}>{v}</span>
-                  ))}
+                  {yLabels.map((v) => <span key={v}>{v}</span>)}
                 </div>
-
                 <div className="pa-chart-main">
                   <div className="pa-chart-grid">
                     <span /><span /><span /><span />
                   </div>
-
-                  <svg
-                    className="pa-chart-svg"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                  >
-                    <polygon
-                      points={upperPoints}
-                      fill="rgba(219,234,254,0.5)"
-                      stroke="none"
-                      style={{ opacity: animProgress }}
-                    />
-                    <polygon
-                      points={lowerPoints}
-                      fill="rgba(219,234,254,0.2)"
-                      stroke="none"
-                      style={{ opacity: animProgress }}
-                    />
-
+                  <svg className="pa-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <polygon points={upperPoints} fill="rgba(219,234,254,0.5)" stroke="none" style={{ opacity: animProgress }} />
+                    <polygon points={lowerPoints} fill="rgba(219,234,254,0.2)" stroke="none" style={{ opacity: animProgress }} />
                     {animatedTrend.length > 1 && (
                       <polyline
-                        fill="none"
-                        stroke="#3B82F6"
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={linePoints}
-                        vectorEffect="non-scaling-stroke"
+                        fill="none" stroke="#3B82F6" strokeWidth="1.5"
+                        strokeLinejoin="round" strokeLinecap="round"
+                        points={linePoints} vectorEffect="non-scaling-stroke"
                       />
                     )}
-
                     {overviewTrend.map((d, i) => {
                       const t = i / Math.max(overviewTrend.length - 1, 1);
-                      const dotOpacity = Math.max(0, Math.min(1,
-                        (animProgress - t) / 0.1
-                      ));
+                      const opacity = Math.max(0, Math.min(1, (animProgress - t) / 0.1));
                       return (
                         <circle
                           key={d.year}
-                          cx={toX(i)}
-                          cy={toY(d.value)}
-                          r="1.8"
-                          fill="#FFFFFF"
-                          stroke="#3B82F6"
-                          strokeWidth="1.2"
+                          cx={toX(i)} cy={toY(d.value)} r="1.8"
+                          fill="#FFFFFF" stroke="#3B82F6" strokeWidth="1.2"
                           vectorEffect="non-scaling-stroke"
-                          style={{ opacity: dotOpacity }}
+                          style={{ opacity }}
                         />
                       );
                     })}
                   </svg>
-
                   <div className="pa-chart-x-axis">
-                    {overviewTrend.map((d) => (
-                      <span key={d.year}>{d.year}</span>
-                    ))}
+                    {overviewTrend.map((d) => <span key={d.year}>{d.year}</span>)}
                   </div>
                 </div>
               </div>
 
-              {/* Summary bar */}
               <div className="pa-chart-summary">
                 <div className="pa-summary-block">
                   <span className="pa-summary-label">Current (2025)</span>
@@ -319,73 +369,87 @@ const Predictiveanalyticsview = (props) => {
                 </div>
               </div>
 
-              {/* View Breakdown Button */}
-              <button
-                className="pa-view-breakdown-btn"
-                onClick={handleViewBreakdown}
-              >
+              <button className="pa-view-breakdown-btn" onClick={onViewBreakdown}>
                 Click to view detailed breakdown by department →
               </button>
             </div>
-          )}
 
-          {/* ── DEPARTMENTS PAGE (Grid of cards) ── */}
-          {showDepartmentsList && (
-            <div className="pa-department-grid">
-              {departmentCards.map((card) => (
-                <div
-                  key={card.key}
-                  className="pa-department-card"
-                  onClick={() => handleDepartmentCardClick(card.key)}
-                >
-                  <div className="pa-department-top">
-                    <div className={`pa-dept-icon ${card.color}`}>
-                      <HiOutlineBuildingOffice2 size={24} />
-                    </div>
-                    <HiOutlineChevronRight size={20} color="#90A1B9" />
-                  </div>
-                  <h3 className="pa-department-code">{card.code}</h3>
-                  <p className="pa-department-name">{card.name}</p>
-                  <div className="pa-department-metrics">
-                    <div className="pa-metric-row">
-                      <span className="pa-metric-label">Current Rate</span>
-                      <span className="pa-metric-value">{card.current}%</span>
-                    </div>
-                    <div className="pa-metric-row">
-                      <span className="pa-metric-label">Predicted {overviewTrend[overviewTrend.length - 1]?.year ?? 2030}</span>
-                      <span className={`pa-metric-value accent ${card.color}`}>
-                        {card.predicted}%
-                      </span>
-                    </div>
-                    <div className="pa-metric-change">
-                      <span className="pa-trend-badge">
-                        <LuArrowUpRight size={12} color="#009966" />
-                        +{card.change}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pa-department-footer">{card.programs} Programs</div>
-                </div>
-              ))}
+            {/* Right — AI Insights */}
+            <div className="pa-ai-card">
+              <AIInsightsCard
+                overviewTrend={overviewTrend}
+                departmentCards={departmentCards}
+                selectedDepartmentData={null}
+              />
             </div>
-          )}
+          </div>
+        )}
 
-          {/* ── DEPARTMENT DETAIL PAGE (Program bars) ── */}
-          {showDepartmentDetail && selectedDepartmentData && (
+        {/* ── PAGE 2 — Departments list: cards only, no AI panel ── */}
+        {showDeptList && (
+          <div className="pa-department-grid">
+            {departmentCards.map((card) => (
+              <div
+                key={card.key}
+                className="pa-department-card"
+                onClick={() => onDepartmentClick(card.key)}
+              >
+                <div className="pa-department-top">
+                  <div className={`pa-dept-icon ${card.color}`}>
+                    <HiOutlineBuildingOffice2 size={24} />
+                  </div>
+                  <HiOutlineChevronRight size={20} color="#90A1B9" />
+                </div>
+                <h3 className="pa-department-code">{card.code}</h3>
+                <p className="pa-department-name">{card.name}</p>
+                <div className="pa-department-metrics">
+                  <div className="pa-metric-row">
+                    <span className="pa-metric-label">Current Rate</span>
+                    <span className="pa-metric-value">{card.current}%</span>
+                  </div>
+                  <div className="pa-metric-row">
+                    <span className="pa-metric-label">
+                      Predicted {overviewTrend[overviewTrend.length - 1]?.year ?? 2030}
+                    </span>
+                    <span className={`pa-metric-value accent ${card.color}`}>
+                      {card.predicted}%
+                    </span>
+                  </div>
+                  <div className="pa-metric-change">
+                    <span className="pa-trend-badge">
+                      <LuArrowUpRight size={12} color="#009966" />
+                      +{card.change}%
+                    </span>
+                  </div>
+                </div>
+                <div className="pa-department-footer">{card.programs} Programs</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── PAGE 3 — Department Detail: programs left, AI right ── */}
+        {showDeptDetail && (
+          <div className="pa-overview-container pa-detail-container">
+            {/* Left — Program bars */}
             <div className="pa-panel">
               <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
-              <p className="pa-section-subtitle" style={{ marginBottom: 20 }}>
+              <p className="pa-section-subtitle">
                 {selectedDepartmentData.subtitle}
               </p>
 
               <div className="pa-bar-legend">
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch current" />
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                  <span className="pa-summary-label">
+                    Current ({overviewTrend[0]?.year ?? 2025})
+                  </span>
                 </div>
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch predicted" />
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
+                  <span className="pa-summary-label">
+                    Predicted ({overviewTrend[overviewTrend.length - 1]?.year ?? 2030})
+                  </span>
                 </div>
               </div>
 
@@ -409,25 +473,27 @@ const Predictiveanalyticsview = (props) => {
                     </div>
                     <div className="pa-bar-pair">
                       <div className="pa-bar-track">
-                        <div
-                          className="pa-bar-fill current"
-                          style={{ width: `${prog.current}%` }}
-                        />
+                        <div className="pa-bar-fill current" style={{ width: `${prog.current}%` }} />
                       </div>
                       <div className="pa-bar-track">
-                        <div
-                          className="pa-bar-fill predicted"
-                          style={{ width: `${prog.predicted}%` }}
-                        />
+                        <div className="pa-bar-fill predicted" style={{ width: `${prog.predicted}%` }} />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
 
-        </div> {/* End of pa-content-scroll */}
+            {/* Right — AI Insights scoped to this department */}
+            <div className="pa-ai-card">
+              <AIInsightsCard
+                overviewTrend={overviewTrend}
+                departmentCards={departmentCards}
+                selectedDepartmentData={selectedDepartmentData}
+              />
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
