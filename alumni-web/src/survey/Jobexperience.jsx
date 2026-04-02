@@ -1,56 +1,61 @@
+// JobExperience.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
-import { loadSurveyConfig } from '../lib/surveyConfig';
+import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import JobExperienceView from '../Views/JobExperienceView';
 
-const TOTAL_SECTIONS = 7;
+const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 5;
 
-// Default options
 const DEFAULT_TIME_TO_FIND_JOB_OPTIONS = [
   'Less than a month', '1–3 months', '4–6 months', '7–12 months',
-  'More than a year', 'Not applicable'
+  'More than a year', 'Not applicable',
 ];
-
 const DEFAULT_EMPLOYMENT_DURATION_OPTIONS = [
   'Less than a month', '1–6 months', '7–11 months',
   '1 year or less than 2 years', '2 years or less than 3 years',
-  '3 years or less than 4 years', 'Other'
+  '3 years or less than 4 years', 'Other',
 ];
-
 const DEFAULT_FIRST_JOB_OPTIONS = [
   'Job/Career Fair', 'Internship Absorption', 'Online',
-  'Recommendation', 'Walk-in Applications', 'Not applicable', 'Other'
+  'Recommendation', 'Walk-in Applications', 'Not applicable', 'Other',
 ];
-
 const DEFAULT_FACTORS_OPTIONS = [
   'Academic performance', 'Internship / On-the-job Training',
   'Personal connections', 'Skills/Competencies acquired in school',
-  'Certifications', 'Not applicable', 'Other'
+  'Certifications', 'Not applicable', 'Other',
 ];
 
-// Default labels
 const DEFAULT_LABELS = {
-  time_to_find_job: 'How long did it take you to find your first job after graduation?',
-  employment_duration: 'How long have you been employed in your current job?',
+  time_to_find_job:        'How long did it take you to find your first job after graduation?',
+  employment_duration:     'How long have you been employed in your current job?',
   other_employment_duration: 'Please specify duration',
-  first_job_source: 'How did you find your first job?',
-  other_first_job_source: 'Please specify other source',
-  first_job_factors: 'What factors helped you most in getting your first job?',
-  other_job_factors: 'Please specify other factors',
+  first_job_source:        'How did you find your first job?',
+  other_first_job_source:  'Please specify other source',
+  first_job_factors:       'What factors helped you most in getting your first job?',
+  other_job_factors:       'Please specify other factors',
 };
+
+// Maps question array index (0-based) → form field key.
+// Order must match DEFAULT_SURVEY Section 5 in SurveyManagement.js:
+// 0:time_to_find_job         1:employment_duration      2:other_employment_duration
+// 3:first_job_source         4:other_first_job_source   5:first_job_factors
+// 6:other_job_factors
+const INDEX_TO_FIELD = [
+  'time_to_find_job', 'employment_duration', 'other_employment_duration',
+  'first_job_source', 'other_first_job_source', 'first_job_factors',
+  'other_job_factors',
+];
 
 const computeFormPct = (form) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const SECTION_CAP = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-  
+  const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
   const required = ['time_to_find_job', 'employment_duration', 'first_job_source', 'first_job_factors'];
-  if (form.employment_duration === 'Other') required.push('other_employment_duration');
-  if (form.first_job_source === 'Other') required.push('other_first_job_source');
-  if (form.first_job_factors.includes('Other')) required.push('other_job_factors');
-  
+  if (form.employment_duration === 'Other')          required.push('other_employment_duration');
+  if (form.first_job_source === 'Other')             required.push('other_first_job_source');
+  if (form.first_job_factors.includes('Other'))      required.push('other_job_factors');
   const filled = required.filter(k => {
     const v = form[k];
     if (Array.isArray(v)) return v.length > 0;
@@ -63,66 +68,86 @@ const computeFormPct = (form) => {
 const JobExperience = () => {
   const navigate = useNavigate();
 
-  const [questionLabels, setQuestionLabels] = useState({});
-  const [questionPlaceholders, setQuestionPlaceholders] = useState({});
-  const [timeToFindJobOptions, setTimeToFindJobOptions] = useState(DEFAULT_TIME_TO_FIND_JOB_OPTIONS);
+  const [questionLabels,            setQuestionLabels]            = useState({});
+  const [questionPlaceholders,      setQuestionPlaceholders]      = useState({});
+  const [timeToFindJobOptions,      setTimeToFindJobOptions]      = useState(DEFAULT_TIME_TO_FIND_JOB_OPTIONS);
   const [employmentDurationOptions, setEmploymentDurationOptions] = useState(DEFAULT_EMPLOYMENT_DURATION_OPTIONS);
-  const [firstJobOptions, setFirstJobOptions] = useState(DEFAULT_FIRST_JOB_OPTIONS);
-  const [factorsOptions, setFactorsOptions] = useState(DEFAULT_FACTORS_OPTIONS);
-  const [loadingLabels, setLoadingLabels] = useState(true);
+  const [firstJobOptions,           setFirstJobOptions]           = useState(DEFAULT_FIRST_JOB_OPTIONS);
+  const [factorsOptions,            setFactorsOptions]            = useState(DEFAULT_FACTORS_OPTIONS);
+  const [loadingLabels,             setLoadingLabels]             = useState(true);
 
   const [form, setForm] = useState({
-    time_to_find_job: '',
-    other_time_to_find_job: '',
-    employment_duration: '',
+    time_to_find_job:          '',
+    other_time_to_find_job:    '',
+    employment_duration:       '',
     other_employment_duration: '',
-    first_job_source: '',
-    other_first_job_source: '',
-    first_job_factors: [],
-    other_job_factors: '',
+    first_job_source:          '',
+    other_first_job_source:    '',
+    first_job_factors:         [],
+    other_job_factors:         '',
   });
 
-  const [errors, setErrors] = useState(new Set());
+  const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-
   const bellRef = useRef(null);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState('all');
 
-  // Load dynamic content from survey_config
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab,     setNotifTab]     = useState('all');
+
+  // ── Applies a config to local state using index-based field mapping ────────
+  const applyConfig = useCallback((config) => {
+    if (!config?.sections) return;
+    const jobSection = config.sections.find(s => s.title === 'Job Experience');
+    if (!jobSection?.questions) return;
+
+    const labels       = {};
+    const placeholders = {};
+
+    jobSection.questions.forEach((q, idx) => {
+      const fieldKey = INDEX_TO_FIELD[idx];
+      if (!fieldKey) return;
+
+      labels[fieldKey] = q.label;
+      if (q.placeholder) placeholders[fieldKey] = q.placeholder;
+
+      if (fieldKey === 'time_to_find_job'      && q.options) setTimeToFindJobOptions(q.options);
+      if (fieldKey === 'employment_duration'   && q.options) setEmploymentDurationOptions(q.options);
+      if (fieldKey === 'first_job_source'      && q.options) setFirstJobOptions(q.options);
+      if (fieldKey === 'first_job_factors'     && q.options) setFactorsOptions(q.options);
+    });
+
+    setQuestionLabels(labels);
+    setQuestionPlaceholders(placeholders);
+  }, []);
+
+  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
+    let cancelled = false;
+
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig();
-      
-      if (config?.sections) {
-        const jobSection = config.sections.find(s => s.title === 'Job Experience');
-        if (jobSection?.questions) {
-          const labels = {};
-          const placeholders = {};
-          
-          jobSection.questions.forEach(q => {
-            labels[q.id] = q.label;
-            if (q.placeholder) placeholders[q.id] = q.placeholder;
-            
-            // Load options for specific fields
-            if (q.id === 'time_to_find_job' && q.options) setTimeToFindJobOptions(q.options);
-            if (q.id === 'employment_duration' && q.options) setEmploymentDurationOptions(q.options);
-            if (q.id === 'first_job_source' && q.options) setFirstJobOptions(q.options);
-            if (q.id === 'first_job_factors' && q.options) setFactorsOptions(q.options);
-          });
-          
-          setQuestionLabels(labels);
-          setQuestionPlaceholders(placeholders);
-        }
+      const config = await loadSurveyConfig(true);
+      if (!cancelled) {
+        applyConfig(config);
+        setLoadingLabels(false);
       }
-      setLoadingLabels(false);
     };
+
     loadDynamicContent();
-  }, []);
+
+    const channel = subscribeToSurveyConfigChanges(async () => {
+      const freshConfig = await loadSurveyConfig(true);
+      if (!cancelled) applyConfig(freshConfig);
+    });
+
+    return () => {
+      cancelled = true;
+      channel.unsubscribe();
+    };
+  }, [applyConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -145,7 +170,10 @@ const JobExperience = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped = data.map(n => ({
+        id: n.id, title: n.title, body: n.content,
+        time: n.published_at, read: readIds.includes(n.id),
+      }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -153,7 +181,9 @@ const JobExperience = () => {
   }, []);
 
   useEffect(() => {
-    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const h = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
@@ -172,16 +202,16 @@ const JobExperience = () => {
   }, []);
 
   const groupByDate = (list) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today     = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if (d >= today) groups['Today'].push(n);
+      if      (d >= today)     groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo) groups['This Week'].push(n);
-      else groups['Earlier'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
     });
     return groups;
   };
@@ -190,9 +220,9 @@ const JobExperience = () => {
     if (!iso) return '';
     const d = new Date(iso), now = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
+    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
@@ -208,13 +238,13 @@ const JobExperience = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.time_to_find_job) e.add('time_to_find_job');
-    if (!form.employment_duration) e.add('employment_duration');
+    if (!form.time_to_find_job)                                                          e.add('time_to_find_job');
+    if (!form.employment_duration)                                                       e.add('employment_duration');
     if (form.employment_duration === 'Other' && !form.other_employment_duration.trim()) e.add('other_employment_duration');
-    if (!form.first_job_source) e.add('first_job_source');
-    if (form.first_job_source === 'Other' && !form.other_first_job_source.trim()) e.add('other_first_job_source');
-    if (form.first_job_factors.length === 0) e.add('first_job_factors');
-    if (form.first_job_factors.includes('Other') && !form.other_job_factors.trim()) e.add('other_job_factors');
+    if (!form.first_job_source)                                                          e.add('first_job_source');
+    if (form.first_job_source === 'Other' && !form.other_first_job_source.trim())       e.add('other_first_job_source');
+    if (form.first_job_factors.length === 0)                                             e.add('first_job_factors');
+    if (form.first_job_factors.includes('Other') && !form.other_job_factors.trim())     e.add('other_job_factors');
     return e;
   };
 
@@ -236,13 +266,8 @@ const JobExperience = () => {
       .then(() => navigate('/survey/skills-and-competencies'));
   };
 
-  const getLabel = (fieldId) => {
-    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
-  };
-
-  const getPlaceholder = (fieldId) => {
-    return questionPlaceholders[fieldId] || '';
-  };
+  const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
+  const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
 
   const formPct = computeFormPct(form);
 
@@ -273,7 +298,6 @@ const JobExperience = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
-      // notifications
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}
@@ -285,7 +309,6 @@ const JobExperience = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      // navigation
       navigate={navigate}
     />
   );

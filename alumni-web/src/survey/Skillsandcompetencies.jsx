@@ -1,20 +1,21 @@
+// SkillsAndCompetencies.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
-import { loadSurveyConfig } from '../lib/surveyConfig';
+import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import SkillsAndCompetenciesView from '../Views/SkillsAndCompetenciesView';
 
-const TOTAL_SECTIONS = 7;
+const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 6;
+const SECTION_KEY     = 'skills_and_competencies';
 
-// Default options
 const DEFAULT_COMPETENCIES_OPTIONS = [
   'Communication Skills',
   'Information & Technology Skills',
   'Leadership Skills',
   'Critical & Problem-Solving Skills',
-  'Work Ethics/Professionalism'
+  'Work Ethics/Professionalism',
 ];
 
 const DEFAULT_SKILL_RATINGS_KEYS = [
@@ -22,27 +23,38 @@ const DEFAULT_SKILL_RATINGS_KEYS = [
   'Information & Technology Skills',
   'Leadership Skills',
   'Critical & Problem-Solving Skills',
-  'Work Ethics/Professionalism Skills'
+  'Work Ethics/Professionalism Skills',
 ];
 
-// Default labels
 const DEFAULT_LABELS = {
   useful_competencies: 'What are the competencies learned in college did you find very useful?',
-  skills_to_develop: 'What other skills should NU Dasma develop in students to make them more employable?',
+  skills_to_develop:   'What other skills should NU Dasma develop in students to make them more employable?',
 };
 
-const computeFormPct = (form) => {
+// Maps question array index (0-based) → form field key.
+// Order must match DEFAULT_SURVEY Section 6 in SurveyManagement.js:
+// 0:useful_competencies
+// 1–5: individual rating questions (Communication, IT, Leadership, Critical, Work Ethics)
+//      these map to skill_ratings entries, not individual form keys
+// 6:skills_to_develop
+const INDEX_TO_FIELD = [
+  'useful_competencies',
+  'rating_Communication Skills',
+  'rating_Information & Technology Skills',
+  'rating_Leadership Skills',
+  'rating_Critical & Problem-Solving Skills',
+  'rating_Work Ethics/Professionalism Skills',
+  'skills_to_develop',
+];
+
+const computeFormPct = (form, skillRatingsKeys) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const SECTION_CAP = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-
-  // Required: useful_competencies (array), each skill rating (5), skills_to_develop
-  let total = 1 + DEFAULT_SKILL_RATINGS_KEYS.length + 1; // 7
-  let filled = 0;
-
+  const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
+  const total  = 1 + skillRatingsKeys.length + 1;
+  let   filled = 0;
   if (form.useful_competencies.length > 0) filled++;
-  DEFAULT_SKILL_RATINGS_KEYS.forEach(s => { if ((form.skill_ratings[s] || 0) > 0) filled++; });
+  skillRatingsKeys.forEach(s => { if ((form.skill_ratings[s] || 0) > 0) filled++; });
   if (form.skills_to_develop?.trim()) filled++;
-
   const contribution = (filled / total) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(parseFloat((SECTION_BASE + contribution).toFixed(2)), parseFloat(SECTION_CAP.toFixed(2)));
 };
@@ -50,72 +62,109 @@ const computeFormPct = (form) => {
 const SkillsAndCompetencies = () => {
   const navigate = useNavigate();
 
-  const [questionLabels, setQuestionLabels] = useState({});
+  const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
-  const [competenciesOptions, setCompetenciesOptions] = useState(DEFAULT_COMPETENCIES_OPTIONS);
-  const [skillRatingsKeys, setSkillRatingsKeys] = useState(DEFAULT_SKILL_RATINGS_KEYS);
-  const [loadingLabels, setLoadingLabels] = useState(true);
+  const [competenciesOptions,  setCompetenciesOptions]  = useState(DEFAULT_COMPETENCIES_OPTIONS);
+  const [skillRatingsKeys,     setSkillRatingsKeys]     = useState(DEFAULT_SKILL_RATINGS_KEYS);
+  const [loadingLabels,        setLoadingLabels]        = useState(true);
 
   const [form, setForm] = useState({
     useful_competencies: [],
     skill_ratings: {
-      'Communication Skills': 0,
-      'Information & Technology Skills': 0,
-      'Leadership Skills': 0,
-      'Critical & Problem-Solving Skills': 0,
+      'Communication Skills':               0,
+      'Information & Technology Skills':    0,
+      'Leadership Skills':                  0,
+      'Critical & Problem-Solving Skills':  0,
       'Work Ethics/Professionalism Skills': 0,
     },
     skills_to_develop: '',
   });
 
-  const [errors, setErrors] = useState(new Set());
+  const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-
   const bellRef = useRef(null);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState('all');
 
-  // Load dynamic content from survey_config
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab,     setNotifTab]     = useState('all');
+
+  // ── Applies a config to local state using index-based field mapping ────────
+  // Section 6 has a mixed structure:
+  //   index 0  → useful_competencies (multiple choice with options)
+  //   index 1–5 → individual rating questions; their labels become the skill keys
+  //   index 6  → skills_to_develop (long answer)
+  const applyConfig = useCallback((config) => {
+    if (!config?.sections) return;
+    const skillsSection = config.sections.find(s => s.title === 'Skills & Competencies');
+    if (!skillsSection?.questions) return;
+
+    const labels       = {};
+    const placeholders = {};
+    const newRatingKeys = [];
+
+    skillsSection.questions.forEach((q, idx) => {
+      if (idx === 0) {
+        // useful_competencies
+        labels['useful_competencies'] = q.label;
+        if (q.options) setCompetenciesOptions(q.options);
+      } else if (idx >= 1 && idx <= 5) {
+        // Rating questions — the label itself is the rating key
+        newRatingKeys.push(q.label);
+      } else if (idx === 6) {
+        // skills_to_develop
+        labels['skills_to_develop'] = q.label;
+        if (q.placeholder) placeholders['skills_to_develop'] = q.placeholder;
+      }
+    });
+
+    if (newRatingKeys.length > 0) {
+      setSkillRatingsKeys(newRatingKeys);
+      // Re-initialise skill_ratings so new keys are present with a 0 default,
+      // preserving any existing ratings already set by the user.
+      setForm(prev => {
+        const updatedRatings = {};
+        newRatingKeys.forEach(key => {
+          updatedRatings[key] = prev.skill_ratings[key] ?? 0;
+        });
+        return { ...prev, skill_ratings: updatedRatings };
+      });
+    }
+
+    setQuestionLabels(labels);
+    setQuestionPlaceholders(placeholders);
+  }, []);
+
+  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
+    let cancelled = false;
+
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig();
-      
-      if (config?.sections) {
-        const skillsSection = config.sections.find(s => s.title === 'Skills & Competencies');
-        if (skillsSection?.questions) {
-          const labels = {};
-          const placeholders = {};
-          
-          skillsSection.questions.forEach(q => {
-            labels[q.id] = q.label;
-            if (q.placeholder) placeholders[q.id] = q.placeholder;
-            
-            // Load competencies options if provided
-            if (q.id === 'useful_competencies' && q.options) {
-              setCompetenciesOptions(q.options);
-            }
-            // Load skill ratings keys if provided
-            if (q.id === 'skill_ratings' && q.options) {
-              setSkillRatingsKeys(q.options);
-            }
-          });
-          
-          setQuestionLabels(labels);
-          setQuestionPlaceholders(placeholders);
-        }
+      const config = await loadSurveyConfig(true);
+      if (!cancelled) {
+        applyConfig(config);
+        setLoadingLabels(false);
       }
-      setLoadingLabels(false);
     };
+
     loadDynamicContent();
-  }, []);
+
+    const channel = subscribeToSurveyConfigChanges(async () => {
+      const freshConfig = await loadSurveyConfig(true);
+      if (!cancelled) applyConfig(freshConfig);
+    });
+
+    return () => {
+      cancelled = true;
+      channel.unsubscribe();
+    };
+  }, [applyConfig]);
 
   useEffect(() => {
     const load = async () => {
-      const savedData = await loadSectionData('skills_competencies');
+      const savedData = await loadSectionData(SECTION_KEY);
       if (savedData) setForm(f => ({ ...f, ...savedData }));
     };
     load();
@@ -131,7 +180,10 @@ const SkillsAndCompetencies = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped  = data.map(n => ({
+        id: n.id, title: n.title, body: n.content,
+        time: n.published_at, read: readIds.includes(n.id),
+      }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -139,7 +191,9 @@ const SkillsAndCompetencies = () => {
   }, []);
 
   useEffect(() => {
-    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const h = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
@@ -158,27 +212,28 @@ const SkillsAndCompetencies = () => {
   }, []);
 
   const groupByDate = (list) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today     = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if (d >= today) groups['Today'].push(n);
+      if      (d >= today)     groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo) groups['This Week'].push(n);
-      else groups['Earlier'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
     });
     return groups;
   };
 
   const formatTime = (iso) => {
     if (!iso) return '';
-    const d = new Date(iso), now = new Date();
+    const d    = new Date(iso);
+    const now  = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
+    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
@@ -206,7 +261,7 @@ const SkillsAndCompetencies = () => {
   };
 
   const handleSave = async () => {
-    await saveSectionProgress('skills_competencies', form);
+    await saveSectionProgress(SECTION_KEY, form);
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };
@@ -219,19 +274,14 @@ const SkillsAndCompetencies = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('skills_competencies', form)
+    saveSectionProgress(SECTION_KEY, form)
       .then(() => navigate('/survey/feedback-and-engagement'));
   };
 
-  const getLabel = (fieldId) => {
-    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
-  };
+  const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
+  const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
 
-  const getPlaceholder = (fieldId) => {
-    return questionPlaceholders[fieldId] || '';
-  };
-
-  const formPct = computeFormPct(form);
+  const formPct = computeFormPct(form, skillRatingsKeys);
 
   if (loadingLabels) {
     return (
@@ -259,7 +309,6 @@ const SkillsAndCompetencies = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
-      // notifications
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}
@@ -271,7 +320,6 @@ const SkillsAndCompetencies = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      // navigation
       navigate={navigate}
     />
   );

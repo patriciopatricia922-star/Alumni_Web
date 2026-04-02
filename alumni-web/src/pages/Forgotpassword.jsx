@@ -56,7 +56,7 @@ const ForgotPassword = () => {
       error={error}
       setError={setError}
       handleSubmit={handleSubmit}
-      onBack={() => navigate('/login')}
+      onBack={() => navigate('/')}
     />
   );
 };

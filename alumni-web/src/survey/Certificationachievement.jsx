@@ -1,14 +1,14 @@
+// CertificationAchievement.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
-import { loadSurveyConfig } from '../lib/surveyConfig';
+import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import CertificationAchievementView from '../Views/CertificationAchievementView';
 
-const TOTAL_SECTIONS = 7;
+const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 3;
 
-// Default certifications list (fallback if admin hasn't published)
 const DEFAULT_CERTIFICATIONS = [
   'Microsoft Office Specialist (MOS) - Word', 'Microsoft Office Specialist (MOS) - Excel',
   'Microsoft Office Specialist (MOS) - PowerPoint', 'Microsoft Office Specialist (MOS) - Outlook',
@@ -48,18 +48,23 @@ const DEFAULT_CERTIFICATIONS = [
   'Unity Certified User - VR Developer', 'Pearson Languages Certifications', 'Other',
 ];
 
-// Default labels
 const DEFAULT_LABELS = {
   certiport_passer: 'Are you a certiport passer?',
-  certifications: 'Please specify any certiport certification earned',
-  helped_career: 'Have your certifications helped you in your career?',
-  how_helped: 'How have your certifications helped you?',
+  certifications:   'Please specify any certiport certification earned',
+  helped_career:    'Have your certifications helped you in your career?',
+  how_helped:       'How have your certifications helped you?',
 };
+
+// Maps question array index (0-based) → form field key.
+// Order must match DEFAULT_SURVEY Section 3 in SurveyManagement.js:
+// 0:certiport_passer  1:certifications  2:helped_career  3:how_helped
+const INDEX_TO_FIELD = [
+  'certiport_passer', 'certifications', 'helped_career', 'how_helped',
+];
 
 const computeFormPct = (form) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const SECTION_CAP = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-  
+  const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
   const required = ['certiport_passer'];
   if (form.certiport_passer === 'Yes') {
     required.push('certifications', 'helped_career');
@@ -77,63 +82,79 @@ const computeFormPct = (form) => {
 const CertificationAchievement = () => {
   const navigate = useNavigate();
 
-  const [questionLabels, setQuestionLabels] = useState({});
+  const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
-  const [certifications, setCertifications] = useState(DEFAULT_CERTIFICATIONS);
-  const [yesNoOptions, setYesNoOptions] = useState(['Yes', 'No']);
-  const [loadingLabels, setLoadingLabels] = useState(true);
+  const [certifications,       setCertifications]       = useState(DEFAULT_CERTIFICATIONS);
+  const [yesNoOptions,         setYesNoOptions]         = useState(['Yes', 'No']);
+  const [loadingLabels,        setLoadingLabels]        = useState(true);
 
   const [form, setForm] = useState({
     certiport_passer: '',
-    certifications: [],
-    helped_career: '',
-    how_helped: '',
+    certifications:   [],
+    helped_career:    '',
+    how_helped:       '',
   });
 
-  const [errors, setErrors] = useState(new Set());
+  const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-
   const bellRef = useRef(null);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState('all');
 
-  // Load dynamic content from survey_config
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab,     setNotifTab]     = useState('all');
+
+  // ── Applies a config to local state using index-based field mapping ────────
+  const applyConfig = useCallback((config) => {
+    if (!config?.sections) return;
+    const certSection = config.sections.find(s => s.title === 'Certification Achievement');
+    if (!certSection?.questions) return;
+
+    const labels       = {};
+    const placeholders = {};
+
+    certSection.questions.forEach((q, idx) => {
+      const fieldKey = INDEX_TO_FIELD[idx];
+      if (!fieldKey) return;
+
+      labels[fieldKey] = q.label;
+      if (q.placeholder) placeholders[fieldKey] = q.placeholder;
+
+      if (fieldKey === 'certifications'   && q.options) setCertifications(q.options);
+      if (fieldKey === 'certiport_passer' && q.options) setYesNoOptions(q.options);
+      if (fieldKey === 'helped_career'    && q.options) setYesNoOptions(q.options);
+    });
+
+    setQuestionLabels(labels);
+    setQuestionPlaceholders(placeholders);
+  }, []);
+
+  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
+    let cancelled = false;
+
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig();
-      
-      if (config?.sections) {
-        const certSection = config.sections.find(s => s.title === 'Certification Achievement');
-        if (certSection?.questions) {
-          const labels = {};
-          const placeholders = {};
-          
-          certSection.questions.forEach(q => {
-            labels[q.id] = q.label;
-            if (q.placeholder) placeholders[q.id] = q.placeholder;
-            
-            // Load certifications list if provided
-            if (q.id === 'certifications' && q.options) {
-              setCertifications(q.options);
-            }
-            // Load Yes/No options if custom
-            if ((q.id === 'certiport_passer' || q.id === 'helped_career') && q.options) {
-              setYesNoOptions(q.options);
-            }
-          });
-          
-          setQuestionLabels(labels);
-          setQuestionPlaceholders(placeholders);
-        }
+      const config = await loadSurveyConfig(true);
+      if (!cancelled) {
+        applyConfig(config);
+        setLoadingLabels(false);
       }
-      setLoadingLabels(false);
     };
+
     loadDynamicContent();
-  }, []);
+
+    const channel = subscribeToSurveyConfigChanges(async () => {
+      const freshConfig = await loadSurveyConfig(true);
+      if (!cancelled) applyConfig(freshConfig);
+    });
+
+    return () => {
+      cancelled = true;
+      channel.unsubscribe();
+    };
+  }, [applyConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -153,7 +174,10 @@ const CertificationAchievement = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped = data.map(n => ({
+        id: n.id, title: n.title, body: n.content,
+        time: n.published_at, read: readIds.includes(n.id),
+      }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -161,7 +185,9 @@ const CertificationAchievement = () => {
   }, []);
 
   useEffect(() => {
-    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const h = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
@@ -180,16 +206,16 @@ const CertificationAchievement = () => {
   }, []);
 
   const groupByDate = (list) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today     = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if (d >= today) groups['Today'].push(n);
+      if      (d >= today)     groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo) groups['This Week'].push(n);
-      else groups['Earlier'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
     });
     return groups;
   };
@@ -198,9 +224,9 @@ const CertificationAchievement = () => {
     if (!iso) return '';
     const d = new Date(iso), now = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
+    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
@@ -217,8 +243,8 @@ const CertificationAchievement = () => {
     const e = new Set();
     if (!form.certiport_passer) e.add('certiport_passer');
     if (form.certiport_passer === 'Yes') {
-      if (form.certifications.length === 0) e.add('certifications');
-      if (!form.helped_career) e.add('helped_career');
+      if (form.certifications.length === 0)                        e.add('certifications');
+      if (!form.helped_career)                                     e.add('helped_career');
       if (form.helped_career === 'Yes' && !form.how_helped.trim()) e.add('how_helped');
     }
     return e;
@@ -242,13 +268,8 @@ const CertificationAchievement = () => {
       .then(() => navigate('/survey/employment-information'));
   };
 
-  const getLabel = (fieldId) => {
-    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
-  };
-
-  const getPlaceholder = (fieldId) => {
-    return questionPlaceholders[fieldId] || '';
-  };
+  const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
+  const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
 
   const formPct = computeFormPct(form);
 
@@ -278,7 +299,6 @@ const CertificationAchievement = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
-      // notifications
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}
@@ -290,7 +310,6 @@ const CertificationAchievement = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      // navigation
       navigate={navigate}
     />
   );

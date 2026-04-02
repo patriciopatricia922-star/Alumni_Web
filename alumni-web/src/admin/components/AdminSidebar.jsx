@@ -17,12 +17,11 @@ const AdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const width = useWindowWidth();
+  const width    = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
@@ -41,51 +40,40 @@ const AdminSidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
-  // Get display name from user data
   const getDisplayName = () => {
-    if (user?.first_name && user?.last_name) {
-      return `${user.first_name} ${user.last_name}`;
-    }
+    if (user?.first_name && user?.last_name) return `${user.first_name} ${user.last_name}`;
     if (user?.first_name) return user.first_name;
-    if (user?.email) return user.email.split('@')[0];
+    if (user?.email)      return user.email.split('@')[0];
     return 'NUD-AAO';
   };
 
-  // Get initials from user data
   const getInitials = () => {
-    if (user?.first_name && user?.last_name) {
-      return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
-    }
-    if (user?.first_name) {
-      return user.first_name.charAt(0).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
+    if (user?.first_name && user?.last_name) return `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`.toUpperCase();
+    if (user?.first_name) return user.first_name.charAt(0).toUpperCase();
+    if (user?.email)      return user.email.charAt(0).toUpperCase();
     return 'N';
   };
 
-  // Get role display name
   const getRoleDisplay = () => {
     if (user?.role === 'superadmin') return 'Super Admin';
-    if (user?.role === 'admin') return 'Admin';
+    if (user?.role === 'admin')      return 'Admin';
     return 'Admin';
   };
 
   const displayName = getDisplayName();
-  const initials = getInitials();
-  const role = getRoleDisplay();
+  const initials    = getInitials();
+  const role        = getRoleDisplay();
 
   const menuItems = [
-    { path: '/admin/admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Dashboard' },
-    { path: '/admin/alumni-management', icon: 'BsFillPeopleFill', label: 'Alumni Management' },
-    { path: '/admin/survey-management', icon: 'RiSurveyFill', label: 'Survey Management' },
-    { path: '/admin/response-and-analytics', icon: 'SiGoogleanalytics', label: 'Response & Analytics' },
-    { path: '/admin/predictive-analytics', icon: 'RiOrganizationChart', label: 'Predictive Analytics', marginTop: '16px' },
-    { path: '/admin/content-mgmt', icon: 'FaBookBookmark', label: 'Content Management', marginTop: '16px' },
+    { path: '/admin/admin-dashboard',          icon: 'TbLayoutDashboardFilled', label: 'Dashboard'            },
+    { path: '/admin/alumni-management',        icon: 'BsFillPeopleFill',        label: 'Alumni Management'    },
+    { path: '/admin/survey-management',        icon: 'RiSurveyFill',            label: 'Survey Management'    },
+    { path: '/admin/response-and-analytics',   icon: 'SiGoogleanalytics',       label: 'Response & Analytics' },
+    { path: '/admin/predictive-analytics',     icon: 'RiOrganizationChart',     label: 'Predictive Analytics', marginTop: '16px' },
+    { path: '/admin/content-mgmt',             icon: 'FaBookBookmark',          label: 'Content Management',   marginTop: '16px' },
   ];
 
   return (

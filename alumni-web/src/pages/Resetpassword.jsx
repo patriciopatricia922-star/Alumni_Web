@@ -9,19 +9,19 @@ const getStrength = (pw) => {
   if (/[A-Z]/.test(pw))        score++;
   if (/[0-9]/.test(pw))        score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  return score; // 0–4
+  return score;
 };
 
 const ResetPassword = () => {
   const navigate = useNavigate();
 
-  const [showNew,          setShowNew]          = useState(false);
-  const [showConfirm,      setShowConfirm]      = useState(false);
-  const [newPassword,      setNewPassword]      = useState('');
-  const [confirmPassword,  setConfirmPassword]  = useState('');
-  const [loading,          setLoading]          = useState(false);
-  const [error,            setError]            = useState('');
-  const [success,          setSuccess]          = useState(false);
+  const [showNew,         setShowNew]         = useState(false);
+  const [showConfirm,     setShowConfirm]     = useState(false);
+  const [newPassword,     setNewPassword]     = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
+  const [success,         setSuccess]         = useState(false);
 
   const strength = getStrength(newPassword);
 
@@ -36,7 +36,8 @@ const ResetPassword = () => {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 2000);
+      // Navigate to landing page — user can open login modal from there
+      setTimeout(() => navigate('/'), 2000);
     } catch (err) {
       setError(err.message || 'Failed to reset password. Please try again.');
     } finally {

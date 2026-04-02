@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const PriceTagIcon = () => (
@@ -17,7 +18,7 @@ const LocationIcon = () => (
 );
 
 const CalendarIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+  <svg width="14" height="14" viewBox="0 0 22 22" fill="none">
     <rect x="2" y="3" width="18" height="17" rx="2" stroke="#FFFFFF" strokeWidth="1.5"/>
     <path d="M2 8h18" stroke="#FFFFFF" strokeWidth="1.5"/>
     <path d="M7 1.5v3M15 1.5v3" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
@@ -27,38 +28,33 @@ const CalendarIcon = () => (
   </svg>
 );
 
-// ── Discount Card ─────────────────────────────────────────────────────────────
-// ── Discount Card ─────────────────────────────────────────────────────────────
+// ── Discount Card — with expand toggle ────────────────────────────────────────
 const DiscountCard = ({ item }) => {
-  const [hovered, setHovered] = useState(false);
-  
-  // Log when a card renders with its image
-  console.log('🃏 Rendering discount card:', { 
-    name: item.name, 
-    image: item.image,
-    hasImage: !!item.image
-  });
+  const [hovered,  setHovered]  = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const hasDetails = item.location || item.validUntil;
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'rgba(0,62,166,0.35)',
-        marginTop: '1px',
-        border: `0.889px solid ${hovered ? 'rgba(43,114,251,0.55)' : 'rgba(255,255,255,0.2)'}`,
-        boxShadow: hovered
+        background:   'rgba(0,62,166,0.35)',
+        marginTop:    '1px',
+        border:       `0.889px solid ${hovered ? 'rgba(43,114,251,0.55)' : 'rgba(255,255,255,0.2)'}`,
+        boxShadow:    hovered
           ? '0px 0px 20px rgba(43,114,251,0.35), 0px 8px 24px rgba(0,0,0,0.4)'
           : '0px 0px 8px rgba(255,255,255,0.25)',
         borderRadius: '16px',
-        overflow: 'hidden',
-        display: 'flex',
+        overflow:     'hidden',
+        display:      'flex',
         flexDirection: 'column',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        transform:    hovered ? 'translateY(-4px)' : 'translateY(0)',
+        transition:   'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
       }}
     >
-      {/* Photo */}
+      {/* ── Photo ── */}
       <div style={{ width: '100%', height: '214px', overflow: 'hidden', flexShrink: 0 }}>
         <img
           src={item.image}
@@ -70,65 +66,107 @@ const DiscountCard = ({ item }) => {
             transition: 'transform 0.35s ease',
             boxShadow: '0px 4px 4px rgba(255,255,255,0.2)',
           }}
-          onError={(e) => { 
-            console.error('❌ Image failed to load:', item.image);
-            e.target.style.background = 'rgba(0,40,100,0.5)'; 
-            e.target.style.display = 'none';
-          }}
-          onLoad={() => console.log('✅ Image loaded successfully:', item.name, item.image)}
+          onError={e => { e.target.style.background = 'rgba(0,40,100,0.5)'; e.target.style.display = 'none'; }}
         />
       </div>
 
-      {/* Rest of card remains the same... */}
-      <div style={{ padding: '20px 28px 0', flex: 1 }}>
+      {/* ── Body ── */}
+      <div style={{ padding: '20px 24px 0', flex: 1 }}>
+        {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '6px' }}>
           <div style={{ marginTop: '3px', flexShrink: 0 }}><PriceTagIcon /></div>
-          <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '16px', lineHeight: '28px', color: '#FFED97', margin: 0 }}>
+          <p style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: '16px', lineHeight: '24px',
+            color: '#FFED97', margin: 0,
+          }}>
             {item.name}
           </p>
         </div>
 
-        <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', margin: '0 0 12px 0' }}>
+        {/* Discount description */}
+        <p style={{
+          fontFamily: 'Arimo, Arial', fontWeight: 600,
+          fontSize: '12px', lineHeight: '18px',
+          color: 'rgba(255,255,255,0.75)', margin: '0 0 14px 0',
+        }}>
           {item.discount}
         </p>
 
-        <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.25)', marginBottom: '12px' }} />
+        {/* Divider */}
+        <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '12px' }} />
 
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '10px' }}>
-          <div style={{ marginTop: '3px', flexShrink: 0 }}><LocationIcon /></div>
-          <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', margin: 0, whiteSpace: 'pre-line' }}>
-            {item.location}
-          </p>
-        </div>
-
-        {item.validUntil && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ flexShrink: 0 }}><CalendarIcon /></div>
-            <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '11px', lineHeight: '20px', color: '#FFFFFF', margin: 0 }}>
-              {item.validUntil}
-            </p>
+        {/* ── Expandable details section ── */}
+        <div style={{
+          overflow:   'hidden',
+          maxHeight:  expanded ? '200px' : '0px',
+          transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}>
+          <div style={{ paddingBottom: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {item.location && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <div style={{ marginTop: '3px', flexShrink: 0 }}><LocationIcon /></div>
+                <p style={{
+                  fontFamily: 'Arimo, Arial', fontWeight: 600,
+                  fontSize: '12px', lineHeight: '18px',
+                  color: '#FFFFFF', margin: 0, whiteSpace: 'pre-line',
+                }}>
+                  {item.location}
+                </p>
+              </div>
+            )}
+            {item.validUntil && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ flexShrink: 0 }}><CalendarIcon /></div>
+                <p style={{
+                  fontFamily: 'Arimo, Arial', fontWeight: 600,
+                  fontSize: '12px', lineHeight: '18px',
+                  color: '#FFFFFF', margin: 0,
+                }}>
+                  {item.validUntil}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
-      {/* View Details button */}
-      <div style={{ padding: '0 19px 20px', marginTop: item.validUntil ? 0 : '16px' }}>
-        <button
-          style={{
-            width: '100%', height: '37px',
-            background: 'rgba(0,40,255,0.7)',
-            boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
-            border: 'none', borderRadius: '14px',
-            fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '13px',
-            lineHeight: '38px', textAlign: 'center', color: '#FFFFFF',
-            cursor: 'pointer', transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,40,255,0.9)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,40,255,0.7)'}
-        >
-          View Details
-        </button>
-      </div>
+      {/* ── Toggle button ── */}
+      {hasDetails && (
+        <div style={{ padding: '0 19px 20px' }}>
+          <button
+            onClick={() => setExpanded(v => !v)}
+            style={{
+              width:        '100%',
+              height:       '37px',
+              background:   expanded ? 'rgba(255,255,255,0.06)' : 'rgba(0,40,255,0.7)',
+              boxShadow:    '0px 2px 2px rgba(255,255,255,0.25)',
+              border:       expanded ? '1px solid rgba(255,255,255,0.12)' : 'none',
+              borderRadius: '14px',
+              fontFamily:   'Arimo, Arial',
+              fontWeight:   700,
+              fontSize:     '13px',
+              lineHeight:   '38px',
+              textAlign:    'center',
+              color:        expanded ? 'rgba(255,255,255,0.7)' : '#FFFFFF',
+              cursor:       'pointer',
+              transition:   'background 0.15s, color 0.15s',
+              display:      'flex',
+              alignItems:   'center',
+              justifyContent: 'center',
+              gap:          '6px',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+          >
+            {expanded ? (
+              <>See Less <FaChevronUp size={10} /></>
+            ) : (
+              <>See More <FaChevronDown size={10} /></>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -151,27 +189,27 @@ const DiscountsView = ({
       <Sidebar />
 
       <div style={{
-        marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
-        flex: 1,
-        padding: isMobile ? '24px 16px 90px' : isTablet ? '37px 28px 48px' : '37px 51px 60px',
-        boxSizing: 'border-box',
-        overflowX: 'hidden',
-        position: 'relative',
+        marginLeft:  isMobile ? 0 : `${sidebarWidth}px`,
+        flex:        1,
+        padding:     isMobile ? '24px 16px 90px' : isTablet ? '37px 28px 48px' : '37px 51px 60px',
+        boxSizing:   'border-box',
+        overflowX:   'hidden',
+        position:    'relative',
       }}>
 
-        {/* ── Notification Bell ──────────────────────────────────────────────── */}
+        {/* ── Notification Bell ── */}
         <div ref={bellRef} style={{
           position: 'absolute',
-          top:   isMobile ? '24px' : '37px',
-          right: isMobile ? '16px' : isTablet ? '28px' : '51px',
-          zIndex: 200,
+          top:      isMobile ? '24px' : '37px',
+          right:    isMobile ? '16px' : isTablet ? '28px' : '51px',
+          zIndex:   200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{
-            width:  isMobile ? '44px' : '58px',
-            height: isMobile ? '44px' : '58px',
+            width:      isMobile ? '44px' : '58px',
+            height:     isMobile ? '44px' : '58px',
             background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
-            border: showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+            border:     showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
+            boxShadow:  '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
             borderRadius: '14px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative', transition: 'all 0.15s',
@@ -201,14 +239,28 @@ const DiscountsView = ({
           </button>
 
           {showDropdown && (
-            <div style={{ position: 'absolute', top: isMobile ? '52px' : '70px', right: 0, width: isMobile ? '90vw' : '380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
+            <div style={{
+              position: 'absolute', top: isMobile ? '52px' : '70px', right: 0,
+              width: isMobile ? '90vw' : '380px', maxHeight: '520px',
+              background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+              display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300,
+            }}>
               <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
                 {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
               </div>
               <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
                 {['all', 'unread'].map(t => (
-                  <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab === t ? '#2B72FB' : 'transparent', border: notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400, color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize' }}>
+                  <button key={t} onClick={() => setNotifTab(t)} style={{
+                    height: '32px', padding: '0 16px',
+                    background: notifTab === t ? '#2B72FB' : 'transparent',
+                    border: notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '20px', cursor: 'pointer',
+                    fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400,
+                    color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize',
+                  }}>
                     {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                   </button>
                 ))}
@@ -263,7 +315,7 @@ const DiscountsView = ({
           )}
         </div>
 
-        {/* ── Back button ─────────────────────────────────────────────────────── */}
+        {/* ── Back Button ── */}
         <button onClick={() => navigate('/dashboard')} style={{
           display: 'flex', alignItems: 'center', gap: '8px',
           background: 'none', border: 'none', cursor: 'pointer',
@@ -275,7 +327,7 @@ const DiscountsView = ({
           <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '15px', lineHeight: '16px', color: '#FFFFFF' }}>Back</span>
         </button>
 
-        {/* ── Header ─────────────────────────────────────────────────────────── */}
+        {/* ── Header ── */}
         <div style={{ marginBottom: isMobile ? '9.5px' : '9.5px', paddingRight: isMobile ? '58px' : '90px' }}>
           <h1 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
@@ -294,13 +346,9 @@ const DiscountsView = ({
           </p>
         </div>
 
-        {/* ── Filter bar ─────────────────────────────────────────────────────── */}
+        {/* ── Filter Bar ── */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '7.5px' : '17.5px', gap: '12px' }}>
-
-          {/* ── Wrapper covers both pill + button so dropdown aligns to pill ── */}
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
-
-            {/* Label pill */}
             <div style={{
               height: '37px', display: 'flex', alignItems: 'center',
               padding: '0 12px', gap: '8px',
@@ -308,7 +356,7 @@ const DiscountsView = ({
               border: '1px solid rgba(255,255,255,0.05)',
               borderRadius: '10px',
               filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
-              minWidth: isMobile ? 0 : '240 px',
+              minWidth: isMobile ? 0 : '240px',
               flex: isMobile ? 1 : 'none',
             }}>
               <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '14px', lineHeight: '20px', color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
@@ -321,7 +369,6 @@ const DiscountsView = ({
               </div>
             </div>
 
-            {/* Filter button */}
             <button
               onClick={() => setShowFilter(f => !f)}
               style={{
@@ -342,15 +389,12 @@ const DiscountsView = ({
               <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '13px', lineHeight: '14px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>FILTER</span>
             </button>
 
-            {/* Dropdown — left: 0 aligns it to the pill's left edge */}
             {showFilter && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 8px)', left: 0,
-                background: 'rgba(0,62,166,0.55)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '12px', overflow: 'hidden',
-                zIndex: 300, minWidth: '240px',
+                background: 'rgba(0,62,166,0.55)', backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
+                overflow: 'hidden', zIndex: 300, minWidth: '240px',
                 boxShadow: '0px 10px 30px rgba(0,0,0,0.5)',
               }}>
                 {categories.map((cat, i) => (
@@ -377,9 +421,14 @@ const DiscountsView = ({
           </div>
         </div>
 
-        {/* ── Cards grid ─────────────────────────────────────────────────────── */}
+        {/* ── Cards grid — alignItems: start keeps cards top-aligned so expansion pushes rows below only ── */}
         {filtered.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: cols, gap: isMobile ? '16px' : isTablet ? '20px' : '24px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: cols,
+            gap: isMobile ? '16px' : isTablet ? '20px' : '24px',
+            alignItems: 'start',
+          }}>
             {filtered.map(item => (
               <DiscountCard key={item.id} item={item} />
             ))}
@@ -389,7 +438,6 @@ const DiscountsView = ({
             No discounts found for this category.
           </div>
         )}
-
       </div>
     </div>
   );

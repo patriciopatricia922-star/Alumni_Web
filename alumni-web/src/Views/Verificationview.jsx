@@ -14,9 +14,9 @@ const VerificationView = ({
     fontFamily: 'Arimo',
   }}>
 
-    {/* Back Button */}
+    {/* Back Button — goes to landing page where login modal can be opened */}
     <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
-      <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
           <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>

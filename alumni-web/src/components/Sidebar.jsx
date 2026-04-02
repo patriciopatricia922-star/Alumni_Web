@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { getResumeRoute, getSurveySections } from '../lib/surveyProgress';
-import homeIcon     from '../assets/home_icn.svg';
-// import settingsIcon from '../assets/settings_icn.svg';
-import aboutIcon    from '../assets/about_icn.svg';
-import surveyIcon   from '../assets/tracer_ic.svg';
-import profileIcon  from '../assets/profile_icn.svg';
-import sidebarLogo  from '../assets/new_lg.svg';
-import SidebarView  from './Sidebarview';
+import {
+  getResumeRoute,
+  getSurveySections,
+  isSurveyComplete,
+} from '../lib/surveyProgress';
+import homeIcon    from '../assets/home_icn.svg';
+import aboutIcon   from '../assets/about_icn.svg';
+import surveyIcon  from '../assets/tracer_ic.svg';
+import profileIcon from '../assets/profile_icn.svg';
+import sidebarLogo from '../assets/new_lg.svg';
+import SidebarView from './Sidebarview';
 
 const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 1440
+  );
   useEffect(() => {
     const handler = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handler);
@@ -22,67 +27,79 @@ const useWindowWidth = () => {
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
+
   const [user,        setUser]        = useState(null);
-  const [surveyRoute, setSurveyRoute] = useState('/survey/1');
+  const [surveyRoute, setSurveyRoute] = useState(null); // null = still resolving
   const width    = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
 
   useEffect(() => {
-    const fetchUser = async () => {
+    let cancelled = false;
+
+    const init = async () => {
+      // ── 1. Auth user ──────────────────────────────────────────────────────
       const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      const { data } = await supabase
+      if (!authUser || cancelled) return;
+
+      // ── 2. Profile data ───────────────────────────────────────────────────
+      const { data: profile } = await supabase
         .from('users')
         .select('first_name, last_name, email')
         .eq('id', authUser.id)
         .single();
-      if (data) setUser(data);
-    };
-    fetchUser();
 
-    const resolveSurveyRoute = async () => {
+      if (!cancelled && profile) setUser(profile);
+
+      // ── 3. Survey route ───────────────────────────────────────────────────
+      // Load sections first (populates cache), then resolve route.
+      // Both calls are awaited sequentially — no race condition.
       try {
-        // Preload survey sections
         await getSurveySections();
-        
-        const { isSurveyComplete } = await import('../lib/surveyProgress');
         const complete = await isSurveyComplete();
+
+        if (cancelled) return;
+
         if (complete) {
           setSurveyRoute('/update-tracer');
         } else {
           const route = await getResumeRoute();
-          setSurveyRoute(route);
+          if (!cancelled) setSurveyRoute(route);
         }
-      } catch (error) {
-        console.error('Error resolving survey route:', error);
-        setSurveyRoute('/survey/1');
+      } catch (err) {
+        console.error('Sidebar: error resolving survey route:', err);
+        if (!cancelled) setSurveyRoute('/survey/personal-background');
       }
     };
-    resolveSurveyRoute();
+
+    init();
+    return () => { cancelled = true; };
   }, []);
 
-  const email       = user?.email || '';
+  // ── Derived display values ────────────────────────────────────────────────
+  const email       = user?.email ?? '';
   const role        = email === 'superadmin@nu-dasma.edu.ph' ? 'Super Admin'
                     : email === 'nudaao@nu-dasma.edu.ph'     ? 'Admin'
                     : 'Alumni';
   const displayName = user ? `${user.first_name} ${user.last_name}` : 'Loading...';
-  const initials    = user ? user.first_name?.charAt(0).toUpperCase() : 'U';
+  const initials    = user?.first_name?.charAt(0).toUpperCase() ?? 'U';
 
+  // surveyRoute stays null while resolving — SidebarView should render
+  // the survey link as disabled/skeleton during this time.
   const menuItems = [
-    { path: '/dashboard', label: 'Home',          icon: homeIcon,    navPath: '/dashboard' },
-    { path: '/survey',    label: 'Tracer Survey', icon: surveyIcon,  navPath: surveyRoute  },
-    { path: '/profile',   label: 'Profile',       icon: profileIcon, navPath: '/profile'   },
+    { path: '/dashboard', label: 'Home',          icon: homeIcon,    navPath: '/dashboard'                    },
+    { path: '/survey',    label: 'Tracer Survey', icon: surveyIcon,  navPath: surveyRoute, loading: !surveyRoute },
+    { path: '/profile',   label: 'Profile',       icon: profileIcon, navPath: '/profile'                      },
   ];
 
   const helpItems = [
-    { path: '/about',                label: 'About',    icon: aboutIcon    },
+    { path: '/about', label: 'About', icon: aboutIcon },
   ];
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   return (

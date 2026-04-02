@@ -17,12 +17,11 @@ const SuperAdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const width = useWindowWidth();
+  const width    = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close drawer on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
@@ -41,19 +40,19 @@ const SuperAdminSidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/login');
+    navigate('/');
   };
 
   const displayName = 'Super Admin';
-  const initials = 'S';
-  const role = 'Super Admin';
+  const initials    = 'S';
+  const role        = 'Super Admin';
 
   const menuItems = [
-    { path: '/superadmin/super-admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Audit Overview' },
-    { path: '/superadmin/audit-logs', icon: 'SiGoogleanalytics', label: 'Audit Logs' },
-    { path: '/superadmin/admin-management', icon: 'BsFillPeopleFill', label: 'Admin Management', split: true },
-    { path: '/superadmin/super-admin-alumni', icon: 'RiSurveyFill', label: 'Alumni Management', split: true },
-    { path: '/superadmin/super-alumni-engagement', icon: 'FaBookBookmark', label: 'Content Management', split: true },
+    { path: '/superadmin/super-admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Audit Overview'     },
+    { path: '/superadmin/audit-logs',            icon: 'SiGoogleanalytics',       label: 'Audit Logs'         },
+    { path: '/superadmin/admin-management',      icon: 'BsFillPeopleFill',        label: 'Admin Management',   split: true },
+    { path: '/superadmin/super-admin-alumni',    icon: 'RiSurveyFill',            label: 'Alumni Management',  split: true },
+    { path: '/superadmin/super-alumni-engagement', icon: 'FaBookBookmark',        label: 'Content Management', split: true },
   ];
 
   return (
