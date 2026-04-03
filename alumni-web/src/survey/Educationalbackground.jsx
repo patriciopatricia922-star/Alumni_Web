@@ -1,4 +1,3 @@
-// EducationalBackground.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -32,12 +31,6 @@ const DEFAULT_LABELS = {
   board_exam_result:   'Results',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 2 in SurveyManagement.js:
-// 0:degree_program  1:other_degree       2:reason_for_course  3:year_graduated
-// 4:distinction     5:post_grad_plans    6:post_grad_course   7:licensure_reviewing
-// 8:licensure_plans 9:licensure_reason  10:board_exam_name   11:board_exam_date
-// 12:board_exam_result
 const INDEX_TO_FIELD = [
   'degree_program', 'other_degree', 'reason_for_course', 'year_graduated',
   'distinction', 'post_grad_plans', 'post_grad_course', 'licensure_reviewing',
@@ -70,15 +63,16 @@ const computeFormPct = (form) => {
 const EducationalBackground = () => {
   const navigate = useNavigate();
 
-  const [questionLabels,        setQuestionLabels]        = useState({});
-  const [questionPlaceholders,  setQuestionPlaceholders]  = useState({});
-  const [degreeOptions,         setDegreeOptions]         = useState(DEFAULT_DEGREE_OPTIONS);
-  const [yearOptions,           setYearOptions]           = useState(DEFAULT_YEAR_OPTIONS);
-  const [distinctionOptions,    setDistinctionOptions]    = useState(DEFAULT_DISTINCTION_OPTIONS);
-  const [licensureOptions,      setLicensureOptions]      = useState(DEFAULT_LICENSURE_OPTIONS);
-  const [licensurePlansOptions, setLicensurePlansOptions] = useState(DEFAULT_LICENSURE_PLANS_OPTIONS);
-  const [boardResultOptions,    setBoardResultOptions]    = useState(DEFAULT_BOARD_RESULT_OPTIONS);
-  const [loadingLabels,         setLoadingLabels]         = useState(true);
+  const [questionLabels,         setQuestionLabels]         = useState({});
+  const [questionPlaceholders,   setQuestionPlaceholders]   = useState({});
+  const [degreeOptions,          setDegreeOptions]          = useState(DEFAULT_DEGREE_OPTIONS);
+  const [yearOptions,            setYearOptions]            = useState(DEFAULT_YEAR_OPTIONS);
+  const [distinctionOptions,     setDistinctionOptions]     = useState(DEFAULT_DISTINCTION_OPTIONS);
+  const [licensureOptions,       setLicensureOptions]       = useState(DEFAULT_LICENSURE_OPTIONS);
+  const [licensurePlansOptions,  setLicensurePlansOptions]  = useState(DEFAULT_LICENSURE_PLANS_OPTIONS);
+  const [boardResultOptions,     setBoardResultOptions]     = useState(DEFAULT_BOARD_RESULT_OPTIONS);
+  const [loadingLabels,          setLoadingLabels]          = useState(true);
+  const [configVersion,          setConfigVersion]          = useState(0);
 
   const [form, setForm] = useState({
     degree_program: '', other_degree: '', reason_for_course: '',
@@ -97,8 +91,8 @@ const EducationalBackground = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  const applyConfig = useCallback((config) => {
+  // FIXED: Logic now maps config to specific state keys and their respective options
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const eduSection = config.sections.find(s => s.title === 'Educational Background');
     if (!eduSection?.questions) return;
@@ -113,6 +107,7 @@ const EducationalBackground = () => {
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
 
+      // Dynamically update options if provided by the DB
       if (fieldKey === 'degree_program'      && q.options) setDegreeOptions(q.options);
       if (fieldKey === 'year_graduated'      && q.options) setYearOptions(q.options);
       if (fieldKey === 'distinction'         && q.options) setDistinctionOptions(q.options);
@@ -121,36 +116,43 @@ const EducationalBackground = () => {
       if (fieldKey === 'board_exam_result'   && q.options) setBoardResultOptions(q.options);
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({ ...prev, ...labels }));
+    setQuestionPlaceholders(prev => ({ ...prev, ...placeholders }));
+  };
 
-  // ── Load dynamic labels on mount + subscribe to live changes ──────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) {
+          applyConfig(config);
+        }
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Educational Background updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []); 
 
+  // Load progress (UNTOUCHED)
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('educational_background');
@@ -159,6 +161,7 @@ const EducationalBackground = () => {
     load();
   }, []);
 
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -247,14 +250,14 @@ const EducationalBackground = () => {
     const e = new Set();
     if (!form.degree_program)                                           e.add('degree_program');
     if (form.degree_program === 'Other' && !form.other_degree.trim())  e.add('other_degree');
-    if (!form.reason_for_course.trim())                                 e.add('reason_for_course');
-    if (!form.year_graduated)                                           e.add('year_graduated');
-    if (!form.distinction)                                              e.add('distinction');
-    if (!form.post_grad_plans)                                          e.add('post_grad_plans');
+    if (!form.reason_for_course.trim())                                e.add('reason_for_course');
+    if (!form.year_graduated)                                          e.add('year_graduated');
+    if (!form.distinction)                                             e.add('distinction');
+    if (!form.post_grad_plans)                                         e.add('post_grad_plans');
     if (form.post_grad_plans === 'Yes' && !form.post_grad_course.trim()) e.add('post_grad_course');
-    if (!form.licensure_reviewing)                                      e.add('licensure_reviewing');
+    if (!form.licensure_reviewing)                                     e.add('licensure_reviewing');
     if (form.licensure_reviewing === 'Yes') {
-      if (!form.licensure_plans)              e.add('licensure_plans');
+      if (!form.licensure_plans)               e.add('licensure_plans');
       if (!form.licensure_reason.trim())      e.add('licensure_reason');
       if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
         if (!form.board_exam_name.trim()) e.add('board_exam_name');

@@ -1,4 +1,3 @@
-// SkillsAndCompetencies.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -31,12 +30,6 @@ const DEFAULT_LABELS = {
   skills_to_develop:   'What other skills should NU Dasma develop in students to make them more employable?',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 6 in SurveyManagement.js:
-// 0:useful_competencies
-// 1–5: individual rating questions (Communication, IT, Leadership, Critical, Work Ethics)
-//      these map to skill_ratings entries, not individual form keys
-// 6:skills_to_develop
 const INDEX_TO_FIELD = [
   'useful_competencies',
   'rating_Communication Skills',
@@ -46,6 +39,12 @@ const INDEX_TO_FIELD = [
   'rating_Work Ethics/Professionalism Skills',
   'skills_to_develop',
 ];
+
+const buildDefaultRatings = (keys) => {
+  const obj = {};
+  keys.forEach(k => { obj[k] = 0; });
+  return obj;
+};
 
 const computeFormPct = (form, skillRatingsKeys) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
@@ -67,16 +66,14 @@ const SkillsAndCompetencies = () => {
   const [competenciesOptions,  setCompetenciesOptions]  = useState(DEFAULT_COMPETENCIES_OPTIONS);
   const [skillRatingsKeys,     setSkillRatingsKeys]     = useState(DEFAULT_SKILL_RATINGS_KEYS);
   const [loadingLabels,        setLoadingLabels]        = useState(true);
+  const [configVersion,        setConfigVersion]        = useState(0);
+
+  // Used to prevent realtime updates from clobbering restored ratings
+  const savedProgressRef = useRef(null);
 
   const [form, setForm] = useState({
     useful_competencies: [],
-    skill_ratings: {
-      'Communication Skills':               0,
-      'Information & Technology Skills':    0,
-      'Leadership Skills':                  0,
-      'Critical & Problem-Solving Skills':  0,
-      'Work Ethics/Professionalism Skills': 0,
-    },
+    skill_ratings: buildDefaultRatings(DEFAULT_SKILL_RATINGS_KEYS),
     skills_to_develop: '',
   });
 
@@ -90,30 +87,22 @@ const SkillsAndCompetencies = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  // Section 6 has a mixed structure:
-  //   index 0  → useful_competencies (multiple choice with options)
-  //   index 1–5 → individual rating questions; their labels become the skill keys
-  //   index 6  → skills_to_develop (long answer)
-  const applyConfig = useCallback((config) => {
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const skillsSection = config.sections.find(s => s.title === 'Skills & Competencies');
     if (!skillsSection?.questions) return;
 
-    const labels       = {};
-    const placeholders = {};
+    const labels        = {};
+    const placeholders  = {};
     const newRatingKeys = [];
 
     skillsSection.questions.forEach((q, idx) => {
       if (idx === 0) {
-        // useful_competencies
         labels['useful_competencies'] = q.label;
         if (q.options) setCompetenciesOptions(q.options);
       } else if (idx >= 1 && idx <= 5) {
-        // Rating questions — the label itself is the rating key
         newRatingKeys.push(q.label);
       } else if (idx === 6) {
-        // skills_to_develop
         labels['skills_to_develop'] = q.label;
         if (q.placeholder) placeholders['skills_to_develop'] = q.placeholder;
       }
@@ -121,55 +110,67 @@ const SkillsAndCompetencies = () => {
 
     if (newRatingKeys.length > 0) {
       setSkillRatingsKeys(newRatingKeys);
-      // Re-initialise skill_ratings so new keys are present with a 0 default,
-      // preserving any existing ratings already set by the user.
       setForm(prev => {
-        const updatedRatings = {};
+        const freshRatings = buildDefaultRatings(newRatingKeys);
+        const savedRatings = savedProgressRef.current?.skill_ratings || {};
+        
         newRatingKeys.forEach(key => {
-          updatedRatings[key] = prev.skill_ratings[key] ?? 0;
+          if ((prev.skill_ratings[key] ?? 0) > 0) {
+            freshRatings[key] = prev.skill_ratings[key];
+          } else if ((savedRatings[key] ?? 0) > 0) {
+            freshRatings[key] = savedRatings[key];
+          }
         });
-        return { ...prev, skill_ratings: updatedRatings };
+        return { ...prev, skill_ratings: freshRatings };
       });
     }
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+  };
 
-  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) applyConfig(config);
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Skills Section updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData(SECTION_KEY);
-      if (savedData) setForm(f => ({ ...f, ...savedData }));
+      if (savedData) {
+        savedProgressRef.current = savedData;
+        setForm(f => ({ ...f, ...savedData }));
+      }
     };
     load();
   }, []);
 
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -179,7 +180,7 @@ const SkillsAndCompetencies = () => {
         .order('published_at', { ascending: false })
         .limit(20);
       if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+      const readIds  = JSON.parse(localStorage.getItem('read_notifs') || '[]');
       const mapped  = data.map(n => ({
         id: n.id, title: n.title, body: n.content,
         time: n.published_at, read: readIds.includes(n.id),
@@ -262,6 +263,7 @@ const SkillsAndCompetencies = () => {
 
   const handleSave = async () => {
     await saveSectionProgress(SECTION_KEY, form);
+    savedProgressRef.current = form;
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };

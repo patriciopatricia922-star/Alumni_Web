@@ -1,4 +1,3 @@
-// PersonalBackground.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -45,16 +44,11 @@ const DEFAULT_PLACEHOLDERS = {
   email:          'e.g. juandelacruz@gmail.com',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match the DEFAULT_SURVEY definition in SurveyManagement.js:
-// 0:last_name 1:first_name 2:middle_name 3:student_number 4:gender
-// 5:birthday  6:civil_status 7:street_address 8:city 9:province
-// 10:zip_code 11:country 12:contact_number 13:email
+// Reusable Index mapping to ensure DB order matches state keys
 const INDEX_TO_FIELD = [
   'last_name', 'first_name', 'middle_name', 'student_number',
   'gender', 'birthday', 'civil_status', 'street_address',
-  'city', 'province', 'zip_code', 'country',
-  'contact_number', 'email',
+  'city', 'province', 'zip_code', 'country', 'contact_number', 'email'
 ];
 
 const computeFormPct = (form) => {
@@ -73,6 +67,7 @@ const PersonalBackground = () => {
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingLabels,        setLoadingLabels]        = useState(true);
+  const [configVersion,        setConfigVersion]        = useState(0);
 
   const [form, setForm] = useState({
     last_name: '', first_name: '', middle_name: '',
@@ -86,68 +81,74 @@ const PersonalBackground = () => {
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-
-  // ── Notifications ──────────────────────────────────────────────────────────
   const bellRef = useRef(null);
+  
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a survey config object to local label/placeholder/options state ─
-  // Uses array index to match questions, since the admin config stores numeric
-  // sequential IDs (1, 2, 3...) that do not match the string field keys used here.
-  const applyConfig = useCallback((config) => {
+  // --- CORE REFLECTION LOGIC ---
+  const applyConfig = useCallback((configData) => {
+    const config = configData?.config ? configData.config : configData;
     if (!config?.sections) return;
-    const personalSection = config.sections.find(s => s.title === 'Personal Background');
+
+    const personalSection = config.sections.find(s => 
+      s.id === 'personal_background' || s.title === 'Personal Background'
+    );
+    
     if (!personalSection?.questions) return;
 
-    const labels       = {};
+    const labels = {};
     const placeholders = {};
-    const options      = {};
+    const options = {};
 
     personalSection.questions.forEach((q, idx) => {
-      const fieldKey = INDEX_TO_FIELD[idx];
+      // Use question ID if available, otherwise fallback to the index map
+      const fieldKey = q.id || INDEX_TO_FIELD[idx]; 
       if (!fieldKey) return;
 
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
-      if (q.options)     options[fieldKey]       = q.options;
+      if (q.options) options[fieldKey] = q.options;
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-    setQuestionOptions(options);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+    setQuestionOptions(prev => ({...prev, ...options}));
   }, []);
 
-  // ── Load dynamic labels on mount — force refresh so admin changes are visible ─
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) applyConfig(config);
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
-    // Realtime: re-fetch config whenever an admin publishes a change
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Personal Background updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
   }, [applyConfig]);
+  // --- END REFLECTION LOGIC ---
 
-  // ── Pre-fill from auth / saved progress ────────────────────────────────────
   useEffect(() => {
     const prefill = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -177,7 +178,7 @@ const PersonalBackground = () => {
     prefill();
   }, []);
 
-  // ── Notifications ──────────────────────────────────────────────────────────
+  // Notifications logic (Untouched)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -214,7 +215,10 @@ const PersonalBackground = () => {
 
   const markOneRead = useCallback((id) => {
     const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
+    if (!readIds.includes(id)) { 
+        readIds.push(id); 
+        localStorage.setItem('read_notifs', JSON.stringify(readIds)); 
+    }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
@@ -256,18 +260,11 @@ const PersonalBackground = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.last_name.trim())      e.add('last_name');
-    if (!form.first_name.trim())     e.add('first_name');
-    if (!form.gender)                e.add('gender');
-    if (!form.birthday)              e.add('birthday');
-    if (!form.civil_status)          e.add('civil_status');
-    if (!form.street_address.trim()) e.add('street_address');
-    if (!form.city.trim())           e.add('city');
-    if (!form.province.trim())       e.add('province');
-    if (!form.zip_code.trim())       e.add('zip_code');
-    if (!form.country)               e.add('country');
-    if (!form.contact_number.trim()) e.add('contact_number');
-    if (!form.email.trim())          e.add('email');
+    REQUIRED_FIELDS.forEach(field => {
+      if (!form[field] || (typeof form[field] === 'string' && !form[field].trim())) {
+        e.add(field);
+      }
+    });
     return e;
   };
 
@@ -291,8 +288,13 @@ const PersonalBackground = () => {
 
   const formPct = computeFormPct(form);
 
-  const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId]       || fieldId;
-  const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || DEFAULT_PLACEHOLDERS[fieldId] || '';
+  const getLabel = useCallback((fieldId) => {
+    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
+  }, [questionLabels]);
+
+  const getPlaceholder = useCallback((fieldId) => {
+    return questionPlaceholders[fieldId] || DEFAULT_PLACEHOLDERS[fieldId] || '';
+  }, [questionPlaceholders]);
 
   if (loadingLabels) {
     return (
@@ -318,9 +320,7 @@ const PersonalBackground = () => {
       handleNext={handleNext}
       getLabel={getLabel}
       getPlaceholder={getPlaceholder}
-      genderOptions={questionOptions['gender']        || ['Male', 'Female', 'Prefer not to say']}
-      civilStatusOptions={questionOptions['civil_status'] || ['Single', 'Married', 'Widowed']}
-      countryOptions={questionOptions['country']      || ['Philippines', 'United States', 'Other']}
+      questionOptions={questionOptions}
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}

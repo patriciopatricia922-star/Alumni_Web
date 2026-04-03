@@ -1,4 +1,3 @@
-// EmploymentInformation.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -59,12 +58,6 @@ const DEFAULT_LABELS = {
   other_reason_unemployed: 'Please specify other reason',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 4 in SurveyManagement.js:
-// 0:job_related_to_degree  1:employment_status       2:other_employment_status
-// 3:job_position           4:company_name            5:type_of_industry
-// 6:location_of_employment 7:monthly_income          8:reason_for_job
-// 9:other_reason_for_job   10:reasons_unemployed     11:other_reason_unemployed
 const INDEX_TO_FIELD = [
   'job_related_to_degree', 'employment_status', 'other_employment_status',
   'job_position', 'company_name', 'type_of_industry',
@@ -102,6 +95,7 @@ const EmploymentInformation = () => {
   const [monthlyIncome,        setMonthlyIncome]        = useState(DEFAULT_MONTHLY_INCOME);
   const [locationOptions,      setLocationOptions]      = useState(DEFAULT_LOCATION_OPTIONS);
   const [loadingLabels,        setLoadingLabels]        = useState(true);
+  const [configVersion,        setConfigVersion]        = useState(0);
 
   const [form, setForm] = useState({
     job_related_to_degree: '',
@@ -128,8 +122,7 @@ const EmploymentInformation = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  const applyConfig = useCallback((config) => {
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const empSection = config.sections.find(s => s.title === 'Employment Information');
     if (!empSection?.questions) return;
@@ -152,35 +145,39 @@ const EmploymentInformation = () => {
       if (fieldKey === 'location_of_employment' && q.options) setLocationOptions(q.options);
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+  };
 
-  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) applyConfig(config);
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Employment Section updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -197,6 +194,7 @@ const EmploymentInformation = () => {
     load();
   }, []);
 
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -285,7 +283,7 @@ const EmploymentInformation = () => {
     if (DEFAULT_EMPLOYED_STATUSES.includes(form.employment_status)) {
       if (!form.job_position.trim())       e.add('job_position');
       if (!form.company_name.trim())       e.add('company_name');
-      if (!form.type_of_industry)         e.add('type_of_industry');
+      if (!form.type_of_industry)          e.add('type_of_industry');
       if (!form.location_of_employment)   e.add('location_of_employment');
       if (!form.monthly_income)           e.add('monthly_income');
       if (!form.reason_for_job)           e.add('reason_for_job');

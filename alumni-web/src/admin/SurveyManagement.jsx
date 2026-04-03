@@ -1,7 +1,7 @@
 // SurveyManagement.js
 import { useState, useEffect } from "react";
+import { supabase }      from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import { supabase } from "../lib/supabase";
 import SurveyMgmtView from "./views/SurveyMgmtView";
 import { logAction } from "../lib/auditLogger";
 import { clearSurveyConfigCache } from "../lib/surveyConfig";
@@ -230,29 +230,39 @@ export default function SurveyManagement() {
     setStatus("saving");
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // We use a high-precision ISO string to ensure the 'updated_at' 
+      // is always different, which triggers the Realtime listener.
+      const timestamp = new Date().toISOString();
 
       if (configId) {
-        await supabaseAdmin
+        const { error } = await supabaseAdmin
           .from("survey_config")
           .update({
             config: survey,
-            updated_at: new Date().toISOString(),
+            updated_at: timestamp, // CRITICAL: This triggers the listener
             updated_by: user?.id,
           })
           .eq("id", configId);
+        
+        if (error) throw error;
       } else {
-        const { data } = await supabaseAdmin
+        const { data, error } = await supabaseAdmin
           .from("survey_config")
-          .insert({ config: survey, updated_by: user?.id })
+          .insert({ 
+            config: survey, 
+            updated_by: user?.id,
+            updated_at: timestamp 
+          })
           .select("id")
           .single();
+          
+        if (error) throw error;
         if (data) setConfigId(data.id);
       }
 
-      // Bust the client-side surveyConfig cache immediately so the next
-      // loadSurveyConfig() call (on any survey page) fetches fresh data.
+      // Force local cleanup
       clearSurveyConfigCache();
-
       setStatus("saved");
 
       await logAction({
@@ -267,7 +277,7 @@ export default function SurveyManagement() {
     } catch (error) {
       console.error("Publish error:", error);
       setStatus("error");
-      showToast("Failed to publish survey. Please try again.", "error");
+      showToast("Failed to publish survey.", "error");
     } finally {
       setSaving(false);
     }

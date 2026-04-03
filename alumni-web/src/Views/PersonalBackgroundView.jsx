@@ -380,6 +380,7 @@ const PersonalBackgroundView = ({
   errors, saveToast, cardRef,
   formPct, sectionPct, currentSection, totalSections,
   handleSave, handleNext,
+  getLabel, getPlaceholder, questionOptions,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
@@ -511,42 +512,42 @@ const PersonalBackgroundView = ({
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Last Name <span className="pb-req">*</span>
+                  {getLabel('last_name')} <span className="pb-req">*</span>
                   {errors.has('last_name') && <span className="pb-field-error">Required</span>}
                 </label>
-                <input className="pb-input" placeholder="e.g. Dela Cruz"
+                <input className="pb-input" placeholder={getPlaceholder('last_name')}
                   value={form.last_name} onChange={set('last_name')} />
               </div>
 
               <div className="pb-row">
                 <div className="pb-field">
                   <label className="pb-label">
-                    First Name <span className="pb-req">*</span>
+                    {getLabel('first_name')} <span className="pb-req">*</span>
                     {errors.has('first_name') && <span className="pb-field-error">Required</span>}
                   </label>
-                  <input className="pb-input" placeholder="e.g. Juan"
+                  <input className="pb-input" placeholder={getPlaceholder('first_name')}
                     value={form.first_name} onChange={set('first_name')} />
                 </div>
                 <div className="pb-field">
-                  <label className="pb-label">Middle Name</label>
-                  <input className="pb-input" placeholder="e.g. Mercado"
+                  <label className="pb-label">{getLabel('middle_name')}</label>
+                  <input className="pb-input" placeholder={getPlaceholder('middle_name')}
                     value={form.middle_name} onChange={set('middle_name')} />
                 </div>
               </div>
 
               <div className="pb-field">
-                <label className="pb-label">Student Number</label>
-                <input className="pb-input" placeholder="e.g. 2023-123456"
+                <label className="pb-label">{getLabel('student_number')}</label>
+                <input className="pb-input" placeholder={getPlaceholder('student_number')}
                   value={form.student_number} onChange={set('student_number')} />
               </div>
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Gender <span className="pb-req">*</span>
+                  {getLabel('gender')} <span className="pb-req">*</span>
                   {errors.has('gender') && <span className="pb-field-error">Required</span>}
                 </label>
                 <div className="pb-radio-group">
-                  {['Male', 'Female', 'Prefer not to say'].map(opt => (
+                  {(questionOptions['gender'] || ['Male', 'Female', 'Prefer not to say']).map(opt => (
                     <label key={opt} className="pb-radio-label">
                       <input type="radio" name="gender" value={opt}
                         checked={form.gender === opt}
@@ -559,7 +560,7 @@ const PersonalBackgroundView = ({
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Birthday <span className="pb-req">*</span>
+                  {getLabel('birthday')} <span className="pb-req">*</span>
                   {errors.has('birthday') && <span className="pb-field-error">Required</span>}
                 </label>
                 <input type="date" className="pb-input"
@@ -569,11 +570,11 @@ const PersonalBackgroundView = ({
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Civil Status <span className="pb-req">*</span>
+                  {getLabel('civil_status')} <span className="pb-req">*</span>
                   {errors.has('civil_status') && <span className="pb-field-error">Required</span>}
                 </label>
                 <div className="pb-radio-group">
-                  {['Single', 'Married', 'Widowed'].map(opt => (
+                  {(questionOptions['civil_status'] || ['Single', 'Married', 'Widowed']).map(opt => (
                     <label key={opt} className="pb-radio-label">
                       <input type="radio" name="civil_status" value={opt}
                         checked={form.civil_status === opt}
@@ -586,28 +587,28 @@ const PersonalBackgroundView = ({
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Street Address <span className="pb-req">*</span>
+                  {getLabel('street_address')} <span className="pb-req">*</span>
                   {errors.has('street_address') && <span className="pb-field-error">Required</span>}
                 </label>
-                <input className="pb-input" placeholder="e.g. Blk 123 Lot 456 AlumnAI St."
+                <input className="pb-input" placeholder={getPlaceholder('street_address')}
                   value={form.street_address} onChange={set('street_address')} />
               </div>
 
               <div className="pb-row">
                 <div className="pb-field">
                   <label className="pb-label">
-                    City <span className="pb-req">*</span>
+                    {getLabel('city')} <span className="pb-req">*</span>
                     {errors.has('city') && <span className="pb-field-error">Required</span>}
                   </label>
-                  <input className="pb-input" placeholder="e.g. Dasmariñas"
+                  <input className="pb-input" placeholder={getPlaceholder('city')}
                     value={form.city} onChange={set('city')} />
                 </div>
                 <div className="pb-field">
                   <label className="pb-label">
-                    Province <span className="pb-req">*</span>
+                    {getLabel('province')} <span className="pb-req">*</span>
                     {errors.has('province') && <span className="pb-field-error">Required</span>}
                   </label>
-                  <input className="pb-input" placeholder="e.g. Cavite"
+                  <input className="pb-input" placeholder={getPlaceholder('province')}
                     value={form.province} onChange={set('province')} />
                 </div>
               </div>
@@ -615,30 +616,30 @@ const PersonalBackgroundView = ({
               <div className="pb-row">
                 <div className="pb-field">
                   <label className="pb-label">
-                    ZIP Code <span className="pb-req">*</span>
+                    {getLabel('zip_code')} <span className="pb-req">*</span>
                     {errors.has('zip_code') && <span className="pb-field-error">Required</span>}
                   </label>
-                  <input className="pb-input" placeholder="e.g. 4114"
+                  <input className="pb-input" placeholder={getPlaceholder('zip_code')}
                     value={form.zip_code} onChange={set('zip_code')} />
                 </div>
                 <div className="pb-field">
                   <label className="pb-label">
-                    Country <span className="pb-req">*</span>
+                    {getLabel('country')} <span className="pb-req">*</span>
                     {errors.has('country') && <span className="pb-field-error">Required</span>}
                   </label>
                   <select className="pb-input pb-input-select"
                     value={form.country} onChange={setCountry}>
                     <option value="" disabled style={{ background: '#001947' }}>Select</option>
-                    <option value="Philippines" style={{ background: '#001947' }}>Philippines</option>
-                    <option value="United States" style={{ background: '#001947' }}>United States</option>
-                    <option value="Other" style={{ background: '#001947' }}>Other</option>
+                    {(questionOptions['country'] || ['Philippines', 'United States', 'Other']).map(opt => (
+                      <option key={opt} value={opt} style={{ background: '#001947' }}>{opt}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Contact Number <span className="pb-req">*</span>
+                  {getLabel('contact_number')} <span className="pb-req">*</span>
                   {errors.has('contact_number') && <span className="pb-field-error">Required</span>}
                 </label>
                 <div className="pb-phone-row">
@@ -655,18 +656,18 @@ const PersonalBackgroundView = ({
                     <div className="pb-phone-prefix">{form.phone_prefix || '+63'}</div>
                   )}
                   <input type="tel" className="pb-input pb-phone-input"
-                    placeholder="e.g. 912-345-6789"
+                    placeholder={getPlaceholder('contact_number')}
                     value={form.contact_number} onChange={set('contact_number')} />
                 </div>
               </div>
 
               <div className="pb-field">
                 <label className="pb-label">
-                  Personal Email Address <span className="pb-req">*</span>
+                  {getLabel('email')} <span className="pb-req">*</span>
                   {errors.has('email') && <span className="pb-field-error">Required</span>}
                 </label>
                 <input type="email" className="pb-input"
-                  placeholder="e.g. juandelacruz@gmail.com"
+                  placeholder={getPlaceholder('email')}
                   value={form.email} onChange={set('email')} />
               </div>
 

@@ -1,4 +1,3 @@
-// JobExperience.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -29,20 +28,15 @@ const DEFAULT_FACTORS_OPTIONS = [
 ];
 
 const DEFAULT_LABELS = {
-  time_to_find_job:        'How long did it take you to find your first job after graduation?',
-  employment_duration:     'How long have you been employed in your current job?',
+  time_to_find_job:         'How long did it take you to find your first job after graduation?',
+  employment_duration:      'How long have you been employed in your current job?',
   other_employment_duration: 'Please specify duration',
-  first_job_source:        'How did you find your first job?',
-  other_first_job_source:  'Please specify other source',
-  first_job_factors:       'What factors helped you most in getting your first job?',
-  other_job_factors:       'Please specify other factors',
+  first_job_source:         'How did you find your first job?',
+  other_first_job_source:   'Please specify other source',
+  first_job_factors:        'What factors helped you most in getting your first job?',
+  other_job_factors:        'Please specify other factors',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 5 in SurveyManagement.js:
-// 0:time_to_find_job         1:employment_duration      2:other_employment_duration
-// 3:first_job_source         4:other_first_job_source   5:first_job_factors
-// 6:other_job_factors
 const INDEX_TO_FIELD = [
   'time_to_find_job', 'employment_duration', 'other_employment_duration',
   'first_job_source', 'other_first_job_source', 'first_job_factors',
@@ -53,9 +47,9 @@ const computeFormPct = (form) => {
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
   const required = ['time_to_find_job', 'employment_duration', 'first_job_source', 'first_job_factors'];
-  if (form.employment_duration === 'Other')          required.push('other_employment_duration');
-  if (form.first_job_source === 'Other')             required.push('other_first_job_source');
-  if (form.first_job_factors.includes('Other'))      required.push('other_job_factors');
+  if (form.employment_duration === 'Other')            required.push('other_employment_duration');
+  if (form.first_job_source === 'Other')              required.push('other_first_job_source');
+  if (form.first_job_factors.includes('Other'))       required.push('other_job_factors');
   const filled = required.filter(k => {
     const v = form[k];
     if (Array.isArray(v)) return v.length > 0;
@@ -75,6 +69,7 @@ const JobExperience = () => {
   const [firstJobOptions,           setFirstJobOptions]           = useState(DEFAULT_FIRST_JOB_OPTIONS);
   const [factorsOptions,            setFactorsOptions]            = useState(DEFAULT_FACTORS_OPTIONS);
   const [loadingLabels,             setLoadingLabels]             = useState(true);
+  const [configVersion,             setConfigVersion]             = useState(0);
 
   const [form, setForm] = useState({
     time_to_find_job:          '',
@@ -97,8 +92,7 @@ const JobExperience = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  const applyConfig = useCallback((config) => {
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const jobSection = config.sections.find(s => s.title === 'Job Experience');
     if (!jobSection?.questions) return;
@@ -119,35 +113,39 @@ const JobExperience = () => {
       if (fieldKey === 'first_job_factors'     && q.options) setFactorsOptions(q.options);
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+  };
 
-  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) applyConfig(config);
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Job Experience Section updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -160,6 +158,7 @@ const JobExperience = () => {
     load();
   }, []);
 
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -238,13 +237,13 @@ const JobExperience = () => {
 
   const validate = () => {
     const e = new Set();
-    if (!form.time_to_find_job)                                                          e.add('time_to_find_job');
-    if (!form.employment_duration)                                                       e.add('employment_duration');
-    if (form.employment_duration === 'Other' && !form.other_employment_duration.trim()) e.add('other_employment_duration');
-    if (!form.first_job_source)                                                          e.add('first_job_source');
-    if (form.first_job_source === 'Other' && !form.other_first_job_source.trim())       e.add('other_first_job_source');
-    if (form.first_job_factors.length === 0)                                             e.add('first_job_factors');
-    if (form.first_job_factors.includes('Other') && !form.other_job_factors.trim())     e.add('other_job_factors');
+    if (!form.time_to_find_job)                                                                        e.add('time_to_find_job');
+    if (!form.employment_duration)                                                                     e.add('employment_duration');
+    if (form.employment_duration === 'Other' && !form.other_employment_duration.trim())                e.add('other_employment_duration');
+    if (!form.first_job_source)                                                                        e.add('first_job_source');
+    if (form.first_job_source === 'Other' && !form.other_first_job_source.trim())                      e.add('other_first_job_source');
+    if (form.first_job_factors.length === 0)                                                           e.add('first_job_factors');
+    if (form.first_job_factors.includes('Other') && !form.other_job_factors.trim())                    e.add('other_job_factors');
     return e;
   };
 

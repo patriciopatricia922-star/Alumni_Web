@@ -1,4 +1,3 @@
-// FeedbackAndAlumniEngagement.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -25,12 +24,12 @@ const DEFAULT_PARTICIPATE_OPTIONS = [
 ];
 
 const DEFAULT_LABELS = {
-  satisfaction:          'How satisfied are you with the education you received from NU Dasmariñas?',
-  recommend:             'Would you recommend NU Dasmariñas to others?',
-  suggestions:           'Do you have any suggestions or feedback for the university?',
+  satisfaction:           'How satisfied are you with the education you received from NU Dasmariñas?',
+  recommend:              'Would you recommend NU Dasmariñas to others?',
+  suggestions:            'Do you have any suggestions or feedback for the university?',
   informed_about_events: 'Are you informed about alumni events and activities?',
-  participate_in:        'Which alumni activities would you be willing to participate in? (Select all that apply)',
-  other_participate:     'Please specify other activities',
+  participate_in:         'Which alumni activities would you be willing to participate in? (Select all that apply)',
+  other_participate:      'Please specify other activities',
 };
 
 const DEFAULT_PLACEHOLDERS = {
@@ -38,10 +37,6 @@ const DEFAULT_PLACEHOLDERS = {
   other_participate: 'Please specify',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 7 in SurveyManagement.js:
-// 0:satisfaction  1:recommend  2:suggestions
-// 3:informed_about_events  4:participate_in  5:other_participate
 const INDEX_TO_FIELD = [
   'satisfaction', 'recommend', 'suggestions',
   'informed_about_events', 'participate_in', 'other_participate',
@@ -71,17 +66,18 @@ const FeedbackAndAlumniEngagement = () => {
   const [yesNoOptions,         setYesNoOptions]         = useState(DEFAULT_YES_NO_OPTIONS);
   const [participateOptions,   setParticipateOptions]   = useState(DEFAULT_PARTICIPATE_OPTIONS);
   const [loadingLabels,        setLoadingLabels]        = useState(true);
+  const [configVersion,        setConfigVersion]        = useState(0);
 
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
 
   const [form, setForm] = useState({
-    satisfaction:          '',
-    recommend:             '',
-    suggestions:           '',
+    satisfaction:           '',
+    recommend:              '',
+    suggestions:            '',
     informed_about_events: '',
-    participate_in:        [],
-    other_participate:     '',
+    participate_in:         [],
+    other_participate:      '',
   });
 
   const [notifs,       setNotifs]       = useState([]);
@@ -89,8 +85,7 @@ const FeedbackAndAlumniEngagement = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  const applyConfig = useCallback((config) => {
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const feedbackSection = config.sections.find(
       s => s.title === 'Feedback and Alumni Engagement'
@@ -107,62 +102,65 @@ const FeedbackAndAlumniEngagement = () => {
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
 
-      if (fieldKey === 'satisfaction'          && q.options) setSatisfactionOptions(q.options);
-      if (fieldKey === 'recommend'             && q.options) setYesNoOptions(q.options);
+      if (fieldKey === 'satisfaction'           && q.options) setSatisfactionOptions(q.options);
+      if (fieldKey === 'recommend'              && q.options) setYesNoOptions(q.options);
       if (fieldKey === 'informed_about_events' && q.options) setYesNoOptions(q.options);
-      if (fieldKey === 'participate_in'        && q.options) setParticipateOptions(q.options);
+      if (fieldKey === 'participate_in'         && q.options) setParticipateOptions(q.options);
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+  };
 
-  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) applyConfig(config);
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Feedback Section updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []);
 
-  // ── Load saved progress ────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       const saved = await loadSectionData(SECTION_KEY);
       if (saved) {
         setForm(f => ({
           ...f,
-          satisfaction:          saved.satisfaction          ?? f.satisfaction,
-          recommend:             saved.recommend             ?? f.recommend,
-          suggestions:           saved.suggestions           ?? f.suggestions,
+          satisfaction:           saved.satisfaction           ?? f.satisfaction,
+          recommend:              saved.recommend              ?? f.recommend,
+          suggestions:            saved.suggestions            ?? f.suggestions,
           informed_about_events: saved.informed_about_events ?? f.informed_about_events,
-          participate_in:        saved.participate_in        ?? f.participate_in,
-          other_participate:     saved.other_participate     ?? f.other_participate,
+          participate_in:         saved.participate_in         ?? f.participate_in,
+          other_participate:      saved.other_participate      ?? f.other_participate,
         }));
       }
     };
     load();
   }, []);
 
-  // ── Notifications ──────────────────────────────────────────────────────────
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -256,12 +254,12 @@ const FeedbackAndAlumniEngagement = () => {
   };
 
   const buildPayload = () => ({
-    satisfaction:          form.satisfaction,
-    recommend:             form.recommend,
-    suggestions:           form.suggestions,
+    satisfaction:           form.satisfaction,
+    recommend:              form.recommend,
+    suggestions:            form.suggestions,
     informed_about_events: form.informed_about_events,
-    participate_in:        form.participate_in,
-    other_participate:     form.other_participate,
+    participate_in:         form.participate_in,
+    other_participate:      form.other_participate,
   });
 
   const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId]       || fieldId;

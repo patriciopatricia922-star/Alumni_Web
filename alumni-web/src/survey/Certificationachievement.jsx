@@ -1,4 +1,3 @@
-// CertificationAchievement.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -55,9 +54,6 @@ const DEFAULT_LABELS = {
   how_helped:       'How have your certifications helped you?',
 };
 
-// Maps question array index (0-based) → form field key.
-// Order must match DEFAULT_SURVEY Section 3 in SurveyManagement.js:
-// 0:certiport_passer  1:certifications  2:helped_career  3:how_helped
 const INDEX_TO_FIELD = [
   'certiport_passer', 'certifications', 'helped_career', 'how_helped',
 ];
@@ -87,6 +83,7 @@ const CertificationAchievement = () => {
   const [certifications,       setCertifications]       = useState(DEFAULT_CERTIFICATIONS);
   const [yesNoOptions,         setYesNoOptions]         = useState(['Yes', 'No']);
   const [loadingLabels,        setLoadingLabels]        = useState(true);
+  const [configVersion,        setConfigVersion]        = useState(0);
 
   const [form, setForm] = useState({
     certiport_passer: '',
@@ -105,8 +102,8 @@ const CertificationAchievement = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Applies a config to local state using index-based field mapping ────────
-  const applyConfig = useCallback((config) => {
+  // FIXED: Logic now maps config to specific state keys for checkboxes/radio options
+  const applyConfig = (config) => {
     if (!config?.sections) return;
     const certSection = config.sections.find(s => s.title === 'Certification Achievement');
     if (!certSection?.questions) return;
@@ -121,41 +118,48 @@ const CertificationAchievement = () => {
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
 
+      // Update specific selection lists
       if (fieldKey === 'certifications'   && q.options) setCertifications(q.options);
       if (fieldKey === 'certiport_passer' && q.options) setYesNoOptions(q.options);
-      if (fieldKey === 'helped_career'    && q.options) setYesNoOptions(q.options);
     });
 
-    setQuestionLabels(labels);
-    setQuestionPlaceholders(placeholders);
-  }, []);
+    setQuestionLabels(prev => ({...prev, ...labels}));
+    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+  };
 
-  // ── Load on mount + subscribe to live changes ──────────────────────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadDynamicContent = async () => {
       setLoadingLabels(true);
-      const config = await loadSurveyConfig(true);
-      if (!cancelled) {
-        applyConfig(config);
-        setLoadingLabels(false);
+      try {
+        const config = await loadSurveyConfig(true);
+        if (!cancelled && config) {
+          applyConfig(config);
+        }
+      } finally {
+        if (!cancelled) setLoadingLabels(false);
       }
     };
 
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
+      console.log("[Realtime] Certifications Section updating...");
       const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled) applyConfig(freshConfig);
+      if (!cancelled && freshConfig) {
+        applyConfig(freshConfig);
+        setConfigVersion(v => v + 1);
+      }
     });
 
     return () => {
       cancelled = true;
-      channel.unsubscribe();
+      if (channel) channel.unsubscribe();
     };
-  }, [applyConfig]);
+  }, []);
 
+  // Load progress (UNTOUCHED)
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('certification_achievement');
@@ -164,6 +168,7 @@ const CertificationAchievement = () => {
     load();
   }, []);
 
+  // Notifications (UNTOUCHED)
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -243,8 +248,8 @@ const CertificationAchievement = () => {
     const e = new Set();
     if (!form.certiport_passer) e.add('certiport_passer');
     if (form.certiport_passer === 'Yes') {
-      if (form.certifications.length === 0)                        e.add('certifications');
-      if (!form.helped_career)                                     e.add('helped_career');
+      if (form.certifications.length === 0)                e.add('certifications');
+      if (!form.helped_career)                             e.add('helped_career');
       if (form.helped_career === 'Yes' && !form.how_helped.trim()) e.add('how_helped');
     }
     return e;
