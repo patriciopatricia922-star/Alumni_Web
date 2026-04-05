@@ -79,19 +79,40 @@ const PrivacyPolicy = () => {
         }}
       >
         {/* Back Button */}
-        <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
-          <Link
-            to="/register"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', lineHeight: '16px', color: '#FFFFFF' }}>
-              Back
-            </span>
-          </Link>
-        </div>
+          <div style={{ position: 'fixed', top: '27px', left: '39px', zIndex: 10 }}>
+            <button
+              onClick={onSwitchToRegister} 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                textDecoration: 'none', 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer',
+                padding: 0
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path 
+                  d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" 
+                  stroke="#FFFFFF" 
+                  strokeWidth="1.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+              </svg>
+              <span style={{ 
+                fontFamily: 'Arimo', 
+                fontWeight: 700, 
+                fontSize: '14px', 
+                lineHeight: '16px', 
+                color: '#FFFFFF' 
+              }}>
+                Back
+              </span>
+            </button>
+          </div>
 
         {/* Card */}
         <div
