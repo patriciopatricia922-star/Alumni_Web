@@ -157,7 +157,7 @@ const SidebarView = ({
         })}
       </div>
 
-      {/* HELP section */}
+      {/* HELP section
       <div style={{ padding: '16px 9px 0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         <p style={{
           fontFamily: 'Arimo', fontWeight: 600, fontSize: '10px',
@@ -197,7 +197,7 @@ const SidebarView = ({
             </Link>
           );
         })}
-      </div>
+      </div> */}
 
       {/* User card + Logout at bottom */}
       <div style={{ marginTop: 'auto', padding: '0 8px 24px' }}>

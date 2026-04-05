@@ -194,7 +194,7 @@ const Jobs = () => {
     return acc;
   }, {});
 
-  const recSubtitle = alumniProgram ? `Based on your program: ${alumniProgram}` : 'Recommended jobs based on your profile';
+  const recSubtitle = alumniProgram ? `program: ${alumniProgram}` : 'Recommended jobs based on your profile';
 
   return (
     <JobsView

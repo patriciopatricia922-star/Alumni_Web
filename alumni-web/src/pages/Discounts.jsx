@@ -57,7 +57,7 @@ const Discounts = () => {
   useEffect(() => {
     const fetchDiscounts = async () => {
       setLoading(true);
-      console.log('🔍 Fetching discounts from Supabase...');
+      
       
       const { data, error } = await supabase
         .from('discounts')
@@ -66,15 +66,13 @@ const Discounts = () => {
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('❌ Error fetching discounts:', error);
         setDiscounts([]);
         setLoading(false);
         return;
       }
       
       if (data) {
-        console.log('✅ Discounts fetched:', data.length);
-        console.log('📸 Raw discount data with image_url:', data.map(d => ({ 
+        console.log('Raw discount data with image_url:', data.map(d => ({ 
           id: d.id, 
           title: d.title, 
           image_url: d.image_url 
@@ -90,7 +88,7 @@ const Discounts = () => {
           image: discount.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
         }));
         
-        console.log('🖼️ Formatted discounts with images:', formattedDiscounts.map(d => ({ 
+        console.log('Formatted discounts with images:', formattedDiscounts.map(d => ({ 
           name: d.name, 
           image: d.image 
         })));

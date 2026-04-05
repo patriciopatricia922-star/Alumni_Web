@@ -145,7 +145,7 @@ const CertificationAchievement = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      console.log("[Realtime] Certifications Section updating...");
+      // console.log("[Realtime] Certifications Section updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);

@@ -138,7 +138,7 @@ const EducationalBackground = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      console.log("[Realtime] Educational Background updating...");
+      // console.log("[Realtime] Educational Background updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);

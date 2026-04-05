@@ -67,21 +67,19 @@ export const subscribeToSurveyConfigChanges = (onUpdate) => {
         table: 'survey_config',
       },
       (payload) => {
-        console.log('[Realtime] Raw Payload:', payload);
+        // console.log('[Realtime] Raw Payload:', payload);
         
-        // FIX: Clear the local cache so subsequent loads get the new data
+        
         clearSurveyConfigCache();
 
-        // FIX: Add a tiny delay (200ms) before telling the UI to refresh.
-        // This ensures that when the component calls loadSurveyConfig(true),
-        // the database is ready to serve the new version.
+        // Add a tiny delay (200ms) before telling the UI to refresh.
         setTimeout(() => {
           onUpdate(payload.new.config); 
         }, 200);
       }
     )
     .subscribe((status) => {
-      console.log(`[Realtime] ${channelId} status:`, status);
+      // console.log(`[Realtime] ${channelId} status:`, status);
     });
 
   return channel;

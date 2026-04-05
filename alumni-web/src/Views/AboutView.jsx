@@ -1,6 +1,6 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
-import AlumnAILogo from '../assets/new_lg.svg';
+import AlumnAILogo from '../assets/AlumnAIAbout.svg';
 
 const AboutView = ({
   isMobile, isTablet,
@@ -144,7 +144,7 @@ const AboutView = ({
                 <img
                   src={AlumnAILogo}
                   alt="AlumnAI"
-                  style={{ width: isMobile ? '140px' : '180px', height: 'auto', objectFit: 'contain' }}
+                  style={{ marginLeft: isMobile ? '50px' : '50px' , width: isMobile ? '299px' : '299px', height: 'auto', objectFit: 'contain' }}
                 />
               </div>
               <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: isMobile ? '13px' : '15px', lineHeight: '1.6', color: '#FFFFFF', textAlign: 'center', margin: 0 }}>

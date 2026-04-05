@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminSidebar from './components/AdminSidebar';
 import Contentmgmtview from './views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
-import { supabaseAdmin } from '../lib/supabaseadmin';
+// import { supabaseAdmin } from '../lib/supabaseadmin';
 import { logAction } from '../lib/auditLogger';
 
 const TABS = [
@@ -495,7 +495,6 @@ const ContentManagement = () => {
   // LANDING PAGE HANDLERS with Audit Logs
   // ============================================
   const handleCreateLandingSection = async (formData) => {
-  console.log('🟢 [ContentMgmt] handleCreateLandingSection called with:', formData);
   try {
     const { data: { user } } = await supabase.auth.getUser();
     const newSection = {
@@ -509,7 +508,7 @@ const ContentManagement = () => {
       created_by: user?.id,
     };
     
-    console.log('💾 [ContentMgmt] Saving landing section:', newSection);
+    
     const { data, error } = await supabase.from('landing_sections').insert([newSection]).select();
     
     if (error) throw error;
@@ -526,13 +525,13 @@ const ContentManagement = () => {
     closeModal();
     showToast('Landing section created successfully!', 'success');
   } catch (error) {
-    console.error('❌ [ContentMgmt] Create landing section error:', error);
+    console.error('[ContentMgmt] Create landing section error:', error);
     showToast('Failed to create landing section: ' + error.message, 'error');
   }
 };
 
 const handleUpdateLandingSection = async (id, formData) => {
-  console.log('🟢 [ContentMgmt] handleUpdateLandingSection called with:', { id, formData });
+  // console.log('[ContentMgmt] handleUpdateLandingSection called with:', { id, formData });
   try {
     const updates = {
       title: formData.title,
@@ -542,16 +541,16 @@ const handleUpdateLandingSection = async (id, formData) => {
       image_url: formData.image_url,
     };
     
-    console.log('💾 [ContentMgmt] Updating landing section with:', updates);
+    // console.log('[ContentMgmt] Updating landing section with:', updates);
     const { error } = await supabase.from('landing_sections').update(updates).eq('id', id);
     
     if (error) {
-      console.error('❌ [ContentMgmt] Update landing section error:', error);
+      console.error('[ContentMgmt] Update landing section error:', error);
       showToast('Failed to update landing section: ' + error.message, 'error');
       return;
     }
     
-    console.log('✅ [ContentMgmt] Landing section updated successfully');
+    // console.log('[ContentMgmt] Landing section updated successfully');
     
     // Wait for database to complete
     await new Promise(resolve => setTimeout(resolve, 500));

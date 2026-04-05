@@ -128,7 +128,7 @@ const FeedbackAndAlumniEngagement = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      console.log("[Realtime] Feedback Section updating...");
+      // console.log("[Realtime] Feedback Section updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);

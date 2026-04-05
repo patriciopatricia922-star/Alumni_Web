@@ -133,7 +133,7 @@ const JobExperience = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      console.log("[Realtime] Job Experience Section updating...");
+      // console.log("[Realtime] Job Experience Section updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);

@@ -667,20 +667,20 @@ const LandingModal = ({ open, onClose, mode, section, onCreate, onUpdate }) => {
   }, [mode, section]);
 
   const handleSubmit = async () => {
-    console.log('🔵 [LandingModal] handleSubmit called - mode:', mode);
-    console.log('🔵 [LandingModal] Form data:', form);
+    // console.log('[LandingModal] handleSubmit called - mode:', mode);
+    // console.log('[LandingModal] Form data:', form);
     
     setLoading(true);
     try {
       if (mode === 'edit' && section) {
-        console.log('🔵 [LandingModal] Calling onUpdate with id:', section.id);
+        // console.log('[LandingModal] Calling onUpdate with id:', section.id);
         await onUpdate(section.id, form);
       } else {
-        console.log('🔵 [LandingModal] Calling onCreate with form:', form);
+        // console.log('[LandingModal] Calling onCreate with form:', form);
         await onCreate(form);
       }
     } catch (error) {
-      console.error('🔴 [LandingModal] Submit error:', error);
+      console.error('[LandingModal] Submit error:', error);
     } finally {
       setLoading(false);
     }

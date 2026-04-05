@@ -112,7 +112,7 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${folder}/${fileName}`;
 
-      console.log('📤 Uploading to:', bucketName, filePath);
+      // console.log('Uploading to:', bucketName, filePath);
 
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -127,7 +127,7 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
         .from(bucketName)
         .getPublicUrl(filePath);
 
-      console.log('✅ Upload successful, public URL:', publicUrl);
+      // console.log('Upload successful, public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('❌ Upload error:', error);
@@ -141,7 +141,7 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log('🖼️ Image selected:', file.name);
+      // console.log('Image selected:', file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -150,14 +150,14 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
 
       const publicUrl = await uploadToSupabase(file);
       if (publicUrl) {
-        console.log('📸 Setting image_url to:', publicUrl);
+        // console.log('Setting image_url to:', publicUrl);
         onImageUpload(publicUrl);
       }
     }
   };
 
   const handleRemove = () => {
-    console.log('🗑️ Removing image');
+    // console.log('Removing image');
     setPreview(null);
     onImageUpload(null);
   };
@@ -207,7 +207,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
 
   useEffect(() => {
     if (mode === 'edit' && discount) {
-      console.log('📝 Loading discount for edit:', discount);
+      // console.log('Loading discount for edit:', discount);
       setForm({
         title: discount.title || '',
         description: discount.description || '',
@@ -231,29 +231,29 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
   }, [mode, discount]);
 
   const s = (k, v) => {
-    console.log(`📝 Setting ${k}:`, v);
+    // console.log(`Setting ${k}:`, v);
     setForm((f) => ({ ...f, [k]: v }));
   };
 
   const handleSubmit = async () => {
-    console.log('🔵 DiscountModal handleSubmit called');
-    console.log('Mode:', mode);
-    console.log('Form data:', form);
-    console.log('image_url value:', form.image_url);
-    console.log('onUpdate prop exists?', typeof onUpdate);
-    console.log('onCreate prop exists?', typeof onCreate);
+    // console.log('DiscountModal handleSubmit called');
+    // console.log('Mode:', mode);
+    // console.log('Form data:', form);
+    // console.log('image_url value:', form.image_url);
+    // console.log('onUpdate prop exists?', typeof onUpdate);
+    // console.log('onCreate prop exists?', typeof onCreate);
     
     setLoading(true);
     try {
       if (mode === 'edit' && discount) {
-        console.log('🔵 Calling onUpdate with id:', discount.id);
+        // console.log('Calling onUpdate with id:', discount.id);
         await onUpdate(discount.id, form);
       } else {
-        console.log('🔵 Calling onCreate with form:', form);
+        //console.log('Calling onCreate with form:', form);
         await onCreate(form);
       }
     } catch (error) {
-      console.error('🔴 Submit error:', error);
+      // console.error('Submit error:', error);
     } finally {
       setLoading(false);
     }
