@@ -99,8 +99,12 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/');
-  };
+    if (onSwitchToLogin) {
+    onSwitchToLogin(); 
+  } else {
+    navigate('/'); 
+  }
+};
 
   return (
     <SidebarView

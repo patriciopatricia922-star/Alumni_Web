@@ -39,8 +39,12 @@ const SuperAdminSidebar = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+      await supabase.auth.signOut();
+      if (onSwitchToLogin) {
+      onSwitchToLogin(); 
+    } else {
+      navigate('/'); 
+    }
   };
 
   const displayName = 'Super Admin';
