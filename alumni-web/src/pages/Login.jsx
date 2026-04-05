@@ -25,6 +25,7 @@ const Login = () => {
       return setError('Please enter your email and password.');
     }
     setLoading(true);
+
     try {
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: form.email,
@@ -32,21 +33,23 @@ const Login = () => {
       });
       if (loginError) throw loginError;
 
-      const email = form.email.toLowerCase().trim();
       const userId = loginData.user?.id;
 
-      // Fetch user role and account status from database
+      // 1. Fetch user metadata
       const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('role, account_status, first_name, last_name')
+        .select('role, account_status')
         .eq('id', userId)
         .single();
 
       if (userError) {
-        console.error('Error fetching user data:', userError);
+        console.error('Database Fetch Error:', userError);
+        // If user exists in Auth but not in public.users, they need to complete profile
+        navigate('/personal-information'); 
+        return;
       }
 
-      // Check if account is disabled
+      // 2. Check Account Status
       if (userData?.account_status === 'disabled') {
         await supabase.auth.signOut();
         setError('Your account has been disabled. Please contact support.');
@@ -54,51 +57,47 @@ const Login = () => {
         return;
       }
 
-      let role = userData?.role || null;
+      // 3. Normalized Role Detection
+      const rawRole = userData?.role?.toLowerCase().trim() || 'alumni';
       let redirectPath = '/dashboard';
       let roleLabel = 'Alumni';
 
-      // Determine role based on database role
-      if (role === 'superadmin') {
-        roleLabel = 'Super Admin';
-        redirectPath = '/superadmin/super-admin-dashboard';
-      } else if (role === 'admin') {
-        roleLabel = 'Admin';
-        redirectPath = '/admin/admin-dashboard';
-      } else if (email.endsWith('@nu-dasma.edu.ph')) {
-        // Fallback for domain-based admin accounts
-        roleLabel = 'Admin';
-        redirectPath = '/admin/admin-dashboard';
-      } else {
-        roleLabel = 'Alumni';
-        redirectPath = '/dashboard';
+      switch (rawRole) {
+        case 'superadmin':
+          roleLabel = 'Super Admin';
+          redirectPath = '/superadmin/super-admin-dashboard';
+          break;
+        case 'admin':
+          roleLabel = 'Admin';
+          redirectPath = '/admin/admin-dashboard';
+          break;
+        case 'alumni':
+        default:
+          roleLabel = 'Alumni';
+          redirectPath = '/dashboard';
+          break;
       }
 
+      // 4. Audit Logging
       await logAction({
-        action:      'Login',
-        module:      'Authentication',
-        description: `${roleLabel} logged in`,
-        status:      'Success',
-        user_id:     userId,
+        action: 'Login',
+        module: 'Authentication',
+        description: `${roleLabel} logged in successfully`,
+        status: 'Success',
+        user_id: userId,
       });
 
+      // 5. Final Navigation
       navigate(redirectPath);
+
     } catch (err) {
-      await supabase.from('audit_logs').insert({
-        user_id:     null,
-        user_email:  form.email,
-        user_role:   null,
-        action:      'Login',
-        module:      'Authentication',
-        description: `Failed login attempt for ${form.email}`,
-        status:      'Failed',
-      });
-      setError(err.message || 'Invalid email or password. Please try again.');
+      console.error('Login Process Error:', err);
+      setError(err.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
   };
-
+  
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);

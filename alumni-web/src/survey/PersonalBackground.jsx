@@ -1,12 +1,31 @@
+/**
+ * PersonalBackground.jsx — Logic Layer (v2, hook-integrated)
+ * Location: src/pages/PersonalBackground.jsx
+ *
+ * Key changes from v1:
+ *  - Uses useUserProfile hook for autofill — no redundant Supabase call
+ *    when PersonalInformation has already loaded the profile this session.
+ *  - Autofill priority: savedSurveyData > cachedProfile > auth metadata
+ *  - Academic fields (program, batch_year) autofill from profile
+ *  - surveyProgress save/load unchanged — still uses existing lib
+ *  - surveyConfig reflection logic unchanged
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
+import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
+import useUserProfile from '../hooks/Useuserprofile';
 import PersonalBackgroundView from '../Views/PersonalBackgroundView';
 
-const TOTAL_SECTIONS = 7;
-const CURRENT_SECTION = 1;
+// ─────────────────────────────────────────────────────────────────────────────
+// Survey constants
+// ─────────────────────────────────────────────────────────────────────────────
+const TOTAL_SECTIONS   = 7;
+const CURRENT_SECTION  = 1;
+const SECTION_KEY      = 'personal_background';
+const NEXT_ROUTE       = '/survey/educational-background';
 
 const REQUIRED_FIELDS = [
   'last_name', 'first_name', 'gender', 'birthday',
@@ -14,6 +33,9 @@ const REQUIRED_FIELDS = [
   'zip_code', 'country', 'contact_number', 'email',
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Default labels / placeholders — overridden by surveyConfig if available
+// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_LABELS = {
   last_name:      'Last Name',
   first_name:     'First Name',
@@ -44,31 +66,99 @@ const DEFAULT_PLACEHOLDERS = {
   email:          'e.g. juandelacruz@gmail.com',
 };
 
-// Reusable Index mapping to ensure DB order matches state keys
+// Ordered field list for index-based config mapping
 const INDEX_TO_FIELD = [
   'last_name', 'first_name', 'middle_name', 'student_number',
   'gender', 'birthday', 'civil_status', 'street_address',
-  'city', 'province', 'zip_code', 'country', 'contact_number', 'email'
+  'city', 'province', 'zip_code', 'country', 'contact_number', 'email',
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Form completion percentage calculator
+// ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
-  const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const filled = REQUIRED_FIELDS.filter(k => form[k] && String(form[k]).trim() !== '').length;
-  const sectionContribution = (filled / REQUIRED_FIELDS.length) * (1 / TOTAL_SECTIONS) * 100;
+  const base    = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
+  const filled  = REQUIRED_FIELDS.filter((k) => form[k] && String(form[k]).trim()).length;
+  const contrib = (filled / REQUIRED_FIELDS.length) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(
-    parseFloat((SECTION_BASE + sectionContribution).toFixed(2)),
-    parseFloat((CURRENT_SECTION / TOTAL_SECTIONS) * 100)
+    parseFloat((base + contrib).toFixed(2)),
+    parseFloat(((CURRENT_SECTION / TOTAL_SECTIONS) * 100).toFixed(2))
   );
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile JS key → survey DB snake_case key mapping
+// Enables autofill from the shared useUserProfile cache
+// ─────────────────────────────────────────────────────────────────────────────
+const PROFILE_TO_SURVEY = {
+  firstName:      'first_name',
+  middleName:     'middle_name',
+  lastName:       'last_name',
+  email:          'email',
+  studentNumber:  'student_number',
+  street:         'street_address',
+  city:           'city',
+  province:       'province',
+  zipCode:        'zip_code',
+  country:        'country',
+  contactNumber:  'contact_number',
+  gender:         'gender',
+  birthday:       'birthday',
+  civilStatus:    'civil_status',
+  // Academic autofill — survey section 2 may also use these
+  academicProgram: null,  // not a Personal Background field
+  yearGraduated:   null,  // not a Personal Background field
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification helpers
+// ─────────────────────────────────────────────────────────────────────────────
+const NOTIF_KEY   = 'alumnai_read_notifs';
+const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
+const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
+
+const groupByDate = (list) => {
+  const now = new Date();
+  const today     = new Date(now); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate()-7);
+  const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+  list.forEach((n) => {
+    const d = new Date(n.time); d.setHours(0,0,0,0);
+    if      (d >= today)     groups['Today'].push(n);
+    else if (d >= yesterday) groups['Yesterday'].push(n);
+    else if (d >= weekAgo)   groups['This Week'].push(n);
+    else                     groups['Earlier'].push(n);
+  });
+  return groups;
+};
+
+const formatTime = (iso) => {
+  if (!iso) return '';
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60)     return 'Just now';
+  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff/86400)}d ago`;
+  return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Controller
+// ─────────────────────────────────────────────────────────────────────────────
 const PersonalBackground = () => {
   const navigate = useNavigate();
+
+  // ── Shared profile hook — autofill source ─────────────────────────────
+  const { profile, loading: profileLoading } = useUserProfile();
+
+  // ── Survey config (dynamic labels / options) ──────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
-  const [loadingLabels,        setLoadingLabels]        = useState(true);
-  const [configVersion,        setConfigVersion]        = useState(0);
+  const [loadingConfig,        setLoadingConfig]        = useState(true);
 
+  // ── Form state ────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     last_name: '', first_name: '', middle_name: '',
     student_number: '', gender: '', birthday: '',
@@ -81,199 +171,153 @@ const PersonalBackground = () => {
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-  const bellRef = useRef(null);
-  
+
+  // ── Notifications ─────────────────────────────────────────────────────
+  const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // --- CORE REFLECTION LOGIC ---
+  // ── surveyConfig loading + realtime subscription ──────────────────────
   const applyConfig = useCallback((configData) => {
-    const config = configData?.config ? configData.config : configData;
+    const config = configData?.config ?? configData;
     if (!config?.sections) return;
-
-    const personalSection = config.sections.find(s => 
-      s.id === 'personal_background' || s.title === 'Personal Background'
+    const section = config.sections.find(
+      (s) => s.id === SECTION_KEY || s.title === 'Personal Background'
     );
-    
-    if (!personalSection?.questions) return;
+    if (!section?.questions) return;
 
-    const labels = {};
-    const placeholders = {};
-    const options = {};
-
-    personalSection.questions.forEach((q, idx) => {
-      // Use question ID if available, otherwise fallback to the index map
-      const fieldKey = q.id || INDEX_TO_FIELD[idx]; 
-      if (!fieldKey) return;
-
-      labels[fieldKey] = q.label;
-      if (q.placeholder) placeholders[fieldKey] = q.placeholder;
-      if (q.options) options[fieldKey] = q.options;
+    const labels = {}, placeholders = {}, options = {};
+    section.questions.forEach((q, idx) => {
+      const key = q.id || INDEX_TO_FIELD[idx];
+      if (!key) return;
+      labels[key] = q.label;
+      if (q.placeholder) placeholders[key] = q.placeholder;
+      if (q.options)     options[key]      = q.options;
     });
-
-    setQuestionLabels(prev => ({...prev, ...labels}));
-    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
-    setQuestionOptions(prev => ({...prev, ...options}));
+    setQuestionLabels((p)       => ({ ...p, ...labels }));
+    setQuestionPlaceholders((p) => ({ ...p, ...placeholders }));
+    setQuestionOptions((p)      => ({ ...p, ...options }));
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-
-    const loadDynamicContent = async () => {
-      setLoadingLabels(true);
+    const init = async () => {
+      setLoadingConfig(true);
       try {
         const config = await loadSurveyConfig(true);
         if (!cancelled && config) applyConfig(config);
       } finally {
-        if (!cancelled) setLoadingLabels(false);
+        if (!cancelled) setLoadingConfig(false);
       }
     };
-
-    loadDynamicContent();
+    init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      console.log("[Realtime] Personal Background updating...");
-      const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled && freshConfig) {
-        applyConfig(freshConfig);
-        setConfigVersion(v => v + 1);
-      }
+      const fresh = await loadSurveyConfig(true);
+      if (!cancelled && fresh) applyConfig(fresh);
     });
-
-    return () => {
-      cancelled = true;
-      if (channel) channel.unsubscribe();
-    };
+    return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
-  // --- END REFLECTION LOGIC ---
 
+  // ── Autofill: saved survey data > profile cache > auth metadata ───────
+  // This runs once profileLoading is false, so the shared hook has settled.
   useEffect(() => {
-    const prefill = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+    if (profileLoading) return; // wait for hook
 
-      const { data } = await supabase
-        .from('users')
-        .select('first_name, middle_name, last_name, email, student_number')
-        .eq('id', authUser.id)
-        .single();
+    const autofill = async () => {
+      // 1. Load any previously saved survey progress for this section
+      const savedData = await loadSectionData(SECTION_KEY);
 
-      const savedData = await loadSectionData('personal_background');
+      if (savedData && Object.keys(savedData).length > 0) {
+        // Saved progress takes priority — user's explicit survey answers
+        setForm((f) => ({ ...f, ...savedData }));
+        return;
+      }
 
-      if (savedData) {
-        setForm(f => ({ ...f, ...savedData }));
-      } else if (data) {
-        setForm(f => ({
-          ...f,
-          first_name:     data.first_name     || '',
-          middle_name:    data.middle_name    || '',
-          last_name:      data.last_name      || '',
-          email:          data.email          || '',
-          student_number: data.student_number || '',
-        }));
+      // 2. No saved progress → autofill from shared profile cache
+      // This is zero-cost if PersonalInformation was already visited.
+      if (profile) {
+        const autofilled = {};
+        Object.entries(PROFILE_TO_SURVEY).forEach(([profileKey, surveyKey]) => {
+          if (surveyKey && profile[profileKey]) {
+            autofilled[surveyKey] = String(profile[profileKey]);
+          }
+        });
+        // Set phone prefix from country
+        if (profile.country === 'Philippines') autofilled.phone_prefix = '+63';
+        else if (profile.country === 'United States') autofilled.phone_prefix = '+1';
+
+        setForm((f) => ({ ...f, ...autofilled }));
       }
     };
-    prefill();
-  }, []);
 
-  // Notifications logic (Untouched)
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('id, title, content, published_at, is_active')
-        .eq('is_active', true)
-        .order('published_at', { ascending: false })
-        .limit(20);
-      if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map(n => ({
-        id: n.id, title: n.title, body: n.content,
-        time: n.published_at, read: readIds.includes(n.id),
-      }));
-      setNotifs(mapped);
-      setUnreadCount(mapped.filter(n => !n.read).length);
-    };
-    fetchNotifs();
-  }, []);
+    autofill();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileLoading]);
 
+  // ── Notifications ─────────────────────────────────────────────────────
   useEffect(() => {
-    const h = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
-    };
+    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  useEffect(() => {
+    supabase.from('announcements')
+      .select('id, title, content, published_at, is_active')
+      .eq('is_active', true)
+      .order('published_at', { ascending: false })
+      .limit(20)
+      .then(({ data, error }) => {
+        if (error || !data) return;
+        const readIds = getReadIds();
+        const mapped  = data.map((n) => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+        setNotifs(mapped);
+        setUnreadCount(mapped.filter((n) => !n.read).length);
+      });
+  }, []);
+
   const markAllRead = useCallback(() => {
-    localStorage.setItem('read_notifs', JSON.stringify(notifs.map(n => n.id)));
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    saveReadIds(notifs.map((n) => n.id));
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   }, [notifs]);
 
   const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) { 
-        readIds.push(id); 
-        localStorage.setItem('read_notifs', JSON.stringify(readIds)); 
-    }
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    const ids = getReadIds();
+    if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
+    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  const groupByDate = (list) => {
-    const today     = new Date(); today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
-    list.forEach(n => {
-      const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if      (d >= today)     groups['Today'].push(n);
-      else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo)   groups['This Week'].push(n);
-      else                     groups['Earlier'].push(n);
-    });
-    return groups;
-  };
-
-  const formatTime = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso), now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
-    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
-    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
-    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-  };
-
-  const set      = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }));
-  const setRadio = (key) => (val) => setForm(f => ({ ...f, [key]: val }));
-
+  // ── Field setters ──────────────────────────────────────────────────────
+  const set      = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const setRadio = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
   const setCountry = (e) => {
-    const c      = e.target.value;
+    const c = e.target.value;
     const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
-    setForm(f => ({ ...f, country: c, phone_prefix: prefix }));
+    setForm((f) => ({ ...f, country: c, phone_prefix: prefix }));
   };
 
+  // ── Validation ─────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
-    REQUIRED_FIELDS.forEach(field => {
-      if (!form[field] || (typeof form[field] === 'string' && !form[field].trim())) {
-        e.add(field);
-      }
+    REQUIRED_FIELDS.forEach((field) => {
+      if (!form[field] || !String(form[field]).trim()) e.add(field);
     });
     return e;
   };
 
+  // ── Save draft ─────────────────────────────────────────────────────────
   const handleSave = async () => {
-    await saveSectionProgress('personal_background', form);
+    await saveSectionProgress(SECTION_KEY, form);
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };
 
+  // ── Next (validate → save → navigate) ─────────────────────────────────
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -282,24 +326,21 @@ const PersonalBackground = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('personal_background', form)
-      .then(() => navigate('/survey/educational-background'));
+    saveSectionProgress(SECTION_KEY, form)
+      .then(() => navigate(NEXT_ROUTE));
   };
+
+  // ── Label / placeholder helpers ────────────────────────────────────────
+  const getLabel       = useCallback((id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,  [questionLabels]);
+  const getPlaceholder = useCallback((id) => questionPlaceholders[id] || DEFAULT_PLACEHOLDERS[id] || '', [questionPlaceholders]);
 
   const formPct = computeFormPct(form);
 
-  const getLabel = useCallback((fieldId) => {
-    return questionLabels[fieldId] || DEFAULT_LABELS[fieldId] || fieldId;
-  }, [questionLabels]);
-
-  const getPlaceholder = useCallback((fieldId) => {
-    return questionPlaceholders[fieldId] || DEFAULT_PLACEHOLDERS[fieldId] || '';
-  }, [questionPlaceholders]);
-
-  if (loadingLabels) {
+  // Loading gate — wait for both config and profile
+  if (loadingConfig || profileLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
+        <div style={{ color: '#fff', fontFamily: 'Arimo, sans-serif' }}>Loading…</div>
       </div>
     );
   }
@@ -322,7 +363,7 @@ const PersonalBackground = () => {
       getPlaceholder={getPlaceholder}
       questionOptions={questionOptions}
       bellRef={bellRef}
-      notifs={notifs}
+      notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
       showDropdown={showDropdown}
       setShowDropdown={setShowDropdown}

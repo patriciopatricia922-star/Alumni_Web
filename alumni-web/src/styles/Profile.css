@@ -1,0 +1,219 @@
+/* Font Utilities */
+.montserrat { font-family: 'Montserrat', sans-serif; }
+.montserrat-medium { font-family: 'Montserrat', sans-serif; font-weight: 500; }
+.montserrat-semibold { font-family: 'Montserrat', sans-serif; font-weight: 600; }
+.montserrat-extrabold { font-family: 'Montserrat', sans-serif; font-weight: 800; }
+
+/* Main Wrapper - Absolute No Scroll */
+.profile-page-wrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: #012E86;
+  color: white;
+  overflow: hidden; /* Prevent body scroll */
+}
+
+.profile-content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.profile-header-bar {
+  width: 100%;
+  height: 60px; /* Reduced header height */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+/* Constrained Area - Viewport Locked */
+.viewport-constrained-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px 20px;
+  gap: 1.5vh; /* Responsive vertical gap */
+  overflow: hidden; /* Strict no scroll */
+}
+
+/* Base Card - Allows shrinking to fit viewport */
+.card-component {
+  width: 100%;
+  max-width: 380px;
+  background: #01256B;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 1; /* Key for fitting height */
+  min-height: 0;
+}
+
+.setup-profile-badge {
+  background: rgba(43, 58, 140, 0.6);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 4px 14px;
+  border-radius: 30px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.8);
+  flex-shrink: 0;
+}
+
+/* Strength Card */
+.strength-card-flutter {
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(43, 114, 251, 0.4) 0%, rgba(30, 37, 85, 0.5) 100%);
+}
+
+.strength-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.strength-title { font-size: 11px; letter-spacing: 0.5px; }
+
+.percentage-circle {
+  background: #FFED97;
+  color: #012E86;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.strength-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+}
+
+.flutter-progress-track {
+  height: 6px;
+  background: rgba(43, 79, 187, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.flutter-progress-fill { height: 100%; background: #FFED97; }
+
+.continue-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Identity Card */
+.identity-card-wrapper {
+  margin-top: 40px; /* Reduced to fit height */
+  padding: 45px 20px 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-hanging-container {
+  position: absolute;
+  top: -40px;
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 4px solid #012E86;
+}
+
+.hanging-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.user-name-text { font-size: 19px; margin-bottom: 2px; }
+.school-label { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+
+.program-year-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 14px;
+}
+
+.dot-separator {
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+}
+
+.edit-profile-btn-flutter {
+  background: #0028FF;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 10px;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  box-shadow: 0 4px 15px rgba(0, 40, 255, 0.3);
+}
+
+/* Settings Container */
+.settings-container-flutter {
+  padding-bottom: 5px;
+}
+
+.settings-header-label {
+  padding: 12px 20px 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.tile-btn {
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.tile-btn:hover { background: rgba(255, 255, 255, 0.04); }
+
+.tile-left { display: flex; align-items: center; gap: 14px; }
+.tile-left span { font-size: 13px; }
+
+.tile-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 20px;
+}
+
+/* Tablet & Desktop */
+@media (min-width: 768px) {
+  .viewport-constrained-area { gap: 2.5vh; }
+  .card-component { max-width: 400px; }
+  .user-name-text { font-size: 22px; }
+}

@@ -1,0 +1,905 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design Tokens
+───────────────────────────────────────────────────────────────────────────── */
+:root {
+  --pi-bg:              #002263;
+  --pi-card-bg:         rgba(13, 19, 56, 0.45);
+  --pi-card-border:     rgba(255, 255, 255, 0.1);
+  --pi-card-radius:     16px;
+
+  --pi-primary:         #2B72FB;
+  --pi-primary-hover:   #1a5de0;
+  --pi-primary-muted:   rgba(43, 114, 251, 0.15);
+  --pi-gold:            #D9CA81;
+  --pi-navy:            #012E86;
+
+  --pi-text:            #FFFFFF;
+  --pi-text-muted:      rgba(255, 255, 255, 0.6);
+  --pi-text-dim:        rgba(255, 255, 255, 0.35);
+
+  --pi-input-bg:        rgba(255, 255, 255, 0.08);
+  --pi-input-border:    rgba(255, 255, 255, 0.12);
+  --pi-input-focus:     rgba(43, 114, 251, 0.55);
+  --pi-input-disabled:  rgba(255, 255, 255, 0.04);
+
+  --pi-error:           #FF6B6B;
+  --pi-error-bg:        rgba(255, 80, 80, 0.12);
+  --pi-error-border:    rgba(255, 80, 80, 0.35);
+  --pi-success:         #00C853;
+  --pi-success-bg:      rgba(0, 200, 83, 0.12);
+  --pi-success-border:  rgba(0, 200, 83, 0.35);
+
+  --pi-divider:         rgba(255, 255, 255, 0.08);
+
+  --pi-sidebar-w:       229px;
+  --pi-sidebar-w-tablet:200px;
+  --pi-bottom-nav-h:    76px;
+
+  --pi-font-display:    'Montserrat', sans-serif;
+  --pi-font-body:       'Arimo', sans-serif;
+
+  --pi-transition:      150ms ease;
+  --pi-transition-med:  220ms ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Layout — Root & Main
+───────────────────────────────────────────────────────────────────────────── */
+.pi-root {
+  display:    flex;
+  height:     100vh;
+  overflow:   hidden;
+  background: var(--pi-bg);
+  font-family: var(--pi-font-body);
+}
+
+.pi-main {
+  margin-left:     var(--pi-sidebar-w);
+  flex:            1;
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: center;
+  padding:         36px 32px 48px;
+  box-sizing:      border-box;
+  overflow-y:      auto;
+  position:        relative;
+  scroll-behavior: smooth;
+}
+
+.pi-main--tablet {
+  margin-left: var(--pi-sidebar-w-tablet);
+  padding:     28px 24px 48px;
+}
+
+.pi-main--mobile {
+  margin-left:  0;
+  padding:      24px 16px calc(var(--pi-bottom-nav-h) + 24px);
+  align-items:  stretch;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Card — mirrors Flutter's translucent Container decoration
+───────────────────────────────────────────────────────────────────────────── */
+.pi-card {
+  display:        flex;
+  flex-direction: column;
+  width:          100%;
+  max-width:      680px;
+  padding:        28px 33px 36px;
+  background:     var(--pi-card-bg);
+  border:         1px solid var(--pi-card-border);
+  border-radius:  var(--pi-card-radius);
+  box-shadow:     0 4px 32px rgba(0, 0, 0, 0.25),
+                  0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  box-sizing:     border-box;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Back button
+───────────────────────────────────────────────────────────────────────────── */
+.pi-back-btn {
+  display:      flex;
+  align-items:  center;
+  gap:          8px;
+  background:   none;
+  border:       none;
+  cursor:       pointer;
+  padding:      0;
+  margin-bottom: 14px;
+  color:        var(--pi-text);
+  font-family:  var(--pi-font-body);
+  font-weight:  700;
+  font-size:    14px;
+  opacity:      0.85;
+  transition:   opacity var(--pi-transition);
+}
+
+.pi-back-btn:hover { opacity: 1; }
+.pi-back-btn:focus-visible {
+  outline: 2px solid var(--pi-primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Card header
+───────────────────────────────────────────────────────────────────────────── */
+.pi-card-header {
+  text-align:   center;
+  margin-bottom: 10px;
+}
+
+.pi-card-title {
+  font-family:  var(--pi-font-display);
+  font-weight:  700;
+  font-size:    clamp(17px, 2.5vw, 22px);
+  color:        var(--pi-text);
+  margin:       0 0 5px;
+  letter-spacing: -0.02em;
+}
+
+.pi-card-subtitle {
+  font-family: var(--pi-font-body);
+  font-size:   14px;
+  color:       var(--pi-text-muted);
+  margin:      0;
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Divider
+───────────────────────────────────────────────────────────────────────────── */
+.pi-divider {
+  height:     1px;
+  background: var(--pi-divider);
+  margin:     10px 0 18px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Section titles — mirrors Flutter's bold section headers
+───────────────────────────────────────────────────────────────────────────── */
+.pi-section-title {
+  font-family:  var(--pi-font-display);
+  font-weight:  700;
+  font-size:    15px;
+  color:        var(--pi-text);
+  margin:       28px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pi-divider);
+  letter-spacing: 0.01em;
+}
+
+.pi-section-title:first-child { margin-top: 0; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Form layout
+───────────────────────────────────────────────────────────────────────────── */
+.pi-form {
+  display:        flex;
+  flex-direction: column;
+}
+
+.pi-field {
+  display:        flex;
+  flex-direction: column;
+  gap:            7px;
+  margin-bottom:  16px;
+}
+
+.pi-field--flex { flex: 1; min-width: 0; }
+
+.pi-row {
+  display: flex;
+  gap:     16px;
+  margin-bottom: 0;  /* fields inside manage own margin */
+}
+
+.pi-row > .pi-field { margin-bottom: 16px; }
+
+.pi-row--col {
+  flex-direction: column;
+  gap:            0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Labels
+───────────────────────────────────────────────────────────────────────────── */
+.pi-label {
+  font-family:  var(--pi-font-body);
+  font-size:    13.5px;
+  font-weight:  400;
+  color:        var(--pi-text-muted);
+  line-height:  1.4;
+  user-select:  none;
+}
+
+.pi-field-error {
+  font-family: var(--pi-font-body);
+  font-size:   12px;
+  color:       var(--pi-error);
+  line-height: 1.3;
+}
+
+.pi-field-hint {
+  font-family: var(--pi-font-body);
+  font-size:   11.5px;
+  color:       var(--pi-text-dim);
+  line-height: 1.3;
+  margin-top:  2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Inputs — mirrors Flutter's _buildInput Container
+───────────────────────────────────────────────────────────────────────────── */
+.pi-input {
+  width:          100%;
+  height:         47px;
+  background:     var(--pi-input-bg);
+  border:         1px solid var(--pi-input-border);
+  border-radius:  10px;
+  padding:        0 14px;
+  font-family:    var(--pi-font-body);
+  font-size:      14px;
+  color:          var(--pi-text);
+  box-sizing:     border-box;
+  outline:        none;
+  transition:     border-color var(--pi-transition),
+                  background   var(--pi-transition),
+                  box-shadow   var(--pi-transition);
+  -webkit-appearance: none;
+  appearance:     none;
+}
+
+.pi-input::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.pi-input:focus {
+  border-color: var(--pi-input-focus);
+  background:   rgba(255, 255, 255, 0.11);
+  box-shadow:   0 0 0 3px rgba(43, 114, 251, 0.12);
+}
+
+.pi-input--error {
+  border-color: var(--pi-error) !important;
+  box-shadow:   0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+.pi-input--disabled {
+  background: var(--pi-input-disabled);
+  opacity:    0.55;
+  cursor:     not-allowed;
+}
+
+/* Date input — fix browser calendar icon color */
+.pi-input--date::-webkit-calendar-picker-indicator {
+  filter:  invert(1) opacity(0.5);
+  cursor:  pointer;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Select — mirrors Flutter's _buildDropdown
+───────────────────────────────────────────────────────────────────────────── */
+.pi-select {
+  width:            100%;
+  height:           47px;
+  background:       var(--pi-input-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 7L11 1' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+  border:           1px solid var(--pi-input-border);
+  border-radius:    10px;
+  padding:          0 36px 0 14px;
+  font-family:      var(--pi-font-body);
+  font-size:        14px;
+  color:            var(--pi-text);
+  box-sizing:       border-box;
+  outline:          none;
+  cursor:           pointer;
+  -webkit-appearance: none;
+  appearance:       none;
+  transition:       border-color var(--pi-transition),
+                    box-shadow   var(--pi-transition);
+}
+
+.pi-select:focus {
+  border-color: var(--pi-input-focus);
+  box-shadow:   0 0 0 3px rgba(43, 114, 251, 0.12);
+}
+
+.pi-select option {
+  background: #01256B;
+  color:      #FFFFFF;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Change Password button — mirrors Flutter's GestureDetector container
+───────────────────────────────────────────────────────────────────────────── */
+.pi-change-pass-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  width:           100%;
+  height:          47px;
+  padding:         0 14px;
+  background:      rgba(0, 26, 110, 0.25);
+  border:          1px solid var(--pi-input-border);
+  border-radius:   10px;
+  font-family:     var(--pi-font-body);
+  font-size:       14px;
+  font-weight:     600;
+  color:           var(--pi-text);
+  cursor:          pointer;
+  box-sizing:      border-box;
+  transition:      border-color var(--pi-transition),
+                   background   var(--pi-transition);
+}
+
+.pi-change-pass-btn:hover {
+  border-color: var(--pi-input-focus);
+  background:   rgba(43, 114, 251, 0.08);
+}
+
+.pi-change-pass-btn:focus-visible {
+  outline:      2px solid var(--pi-primary);
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Feedback banners
+───────────────────────────────────────────────────────────────────────────── */
+.pi-banner {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           10px;
+  padding:       11px 14px;
+  border-radius: 9px;
+  margin-bottom: 14px;
+  line-height:   1.4;
+}
+
+.pi-banner p {
+  margin:      0;
+  font-family: var(--pi-font-body);
+  font-size:   13px;
+}
+
+.pi-banner svg { flex-shrink: 0; margin-top: 1px; }
+
+.pi-banner--error {
+  background:   var(--pi-error-bg);
+  border:       1px solid var(--pi-error-border);
+  color:        var(--pi-error);
+}
+
+.pi-banner--success {
+  background: var(--pi-success-bg);
+  border:     1px solid var(--pi-success-border);
+  color:      var(--pi-success);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Save button
+───────────────────────────────────────────────────────────────────────────── */
+.pi-save-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             10px;
+  width:           100%;
+  height:          50px;
+  background:      var(--pi-primary);
+  border:          none;
+  border-radius:   11px;
+  font-family:     var(--pi-font-body);
+  font-size:       15px;
+  font-weight:     700;
+  color:           #FFFFFF;
+  cursor:          pointer;
+  letter-spacing:  0.02em;
+  box-shadow:      0 2px 12px rgba(43, 114, 251, 0.4),
+                   0 1px 0 rgba(255,255,255,0.15) inset;
+  transition:      background var(--pi-transition),
+                   box-shadow var(--pi-transition),
+                   transform  var(--pi-transition);
+  margin-top:      8px;
+}
+
+.pi-save-btn:hover:not(:disabled) {
+  background:  var(--pi-primary-hover);
+  box-shadow:  0 4px 20px rgba(43, 114, 251, 0.5);
+}
+
+.pi-save-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.pi-save-btn:focus-visible {
+  outline:        2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+.pi-save-btn--saving,
+.pi-save-btn:disabled {
+  background: rgba(43, 114, 251, 0.45);
+  cursor:     not-allowed;
+  box-shadow: none;
+}
+
+/* Spinner for saving state */
+.pi-spinner {
+  display:       inline-block;
+  width:         16px;
+  height:        16px;
+  border:        2px solid rgba(255,255,255,0.3);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation:     pi-spin 0.7s linear infinite;
+  flex-shrink:   0;
+}
+
+@keyframes pi-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Skeleton loader
+───────────────────────────────────────────────────────────────────────────── */
+.pi-skeleton {
+  background: #eee;
+  background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+  background-size: 200% 100%;
+  animation: 1.5s shine linear infinite;
+  border-radius: 4px;
+}
+
+@keyframes shine {
+  to { background-position-x: -200%; }
+}
+
+.pi-skeleton-wrapper {
+  display:        flex;
+  flex-direction: column;
+  gap:            18px;
+  padding-top:    8px;
+}
+
+.pi-skeleton-row {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+}
+
+.pi-skeleton {
+  background:    linear-gradient(90deg,
+                   rgba(255,255,255,0.06) 25%,
+                   rgba(255,255,255,0.1)  50%,
+                   rgba(255,255,255,0.06) 75%);
+  background-size: 200% 100%;
+  border-radius:  8px;
+  animation:      pi-shimmer 1.4s infinite;
+}
+
+.pi-skeleton--label  { height: 14px; width: 35%;  }
+.pi-skeleton--input  { height: 47px; width: 100%; }
+
+@keyframes pi-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Notification Bell
+───────────────────────────────────────────────────────────────────────────── */
+.pi-bell-wrapper {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.pi-bell-btn {
+  width:           46px;
+  height:          46px;
+  background:      rgba(0, 62, 166, 0.35);
+  border:          1.24px solid rgba(255, 255, 255, 0.18);
+  border-radius:   14px;
+  cursor:          pointer;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  position:        relative;
+  color:           #FFFFFF;
+  box-shadow:      0 4px 16px rgba(0,0,0,0.18);
+  transition:      background var(--pi-transition),
+                   border-color var(--pi-transition),
+                   box-shadow var(--pi-transition);
+}
+
+.pi-bell-btn:hover {
+  background:   rgba(43, 114, 251, 0.15);
+  border-color: rgba(43, 114, 251, 0.4);
+}
+
+.pi-bell-btn--active {
+  background:   rgba(43, 114, 251, 0.2);
+  border-color: rgba(43, 114, 251, 0.55);
+  box-shadow:   0 4px 20px rgba(43, 114, 251, 0.2);
+}
+
+.pi-bell-btn:focus-visible {
+  outline:        2px solid var(--pi-primary);
+  outline-offset: 2px;
+}
+
+.pi-bell-badge {
+  position:        absolute;
+  top:             -6px;
+  right:           -6px;
+  min-width:       20px;
+  height:          20px;
+  background:      var(--pi-primary);
+  border-radius:   10px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  padding:         0 5px;
+  font-family:     var(--pi-font-body);
+  font-size:       10px;
+  font-weight:     700;
+  color:           #FFFFFF;
+  border:          2px solid rgba(8, 34, 202, 0.6);
+  box-sizing:      border-box;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Notification Dropdown panel
+───────────────────────────────────────────────────────────────────────────── */
+.pi-notif-panel {
+  position:       absolute;
+  top:            54px;
+  right:          0;
+  width:          380px;
+  max-height:     520px;
+  background:     rgba(10, 15, 50, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border:         1px solid rgba(255, 255, 255, 0.1);
+  border-radius:  16px;
+  box-shadow:     0 24px 64px rgba(0, 0, 0, 0.55);
+  display:        flex;
+  flex-direction: column;
+  overflow:       hidden;
+  z-index:        300;
+  animation:      pi-panel-in 0.18s ease;
+}
+
+.pi-notif-panel--mobile { width: min(90vw, 360px); }
+
+@keyframes pi-panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.pi-notif-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         16px 18px 12px;
+  border-bottom:   1px solid rgba(255,255,255,0.07);
+  flex-shrink:     0;
+}
+
+.pi-notif-title {
+  font-family:  var(--pi-font-body);
+  font-weight:  700;
+  font-size:    16px;
+  color:        var(--pi-text);
+}
+
+.pi-notif-mark-all {
+  background:  none;
+  border:      none;
+  font-family: var(--pi-font-body);
+  font-size:   12px;
+  color:       var(--pi-primary);
+  cursor:      pointer;
+  padding:     0;
+  transition:  opacity var(--pi-transition);
+}
+.pi-notif-mark-all:hover { opacity: 0.8; }
+
+.pi-notif-tabs {
+  display: flex;
+  gap:     4px;
+  padding: 10px 18px 0;
+  flex-shrink: 0;
+}
+
+.pi-notif-tab {
+  height:       32px;
+  padding:      0 16px;
+  background:   transparent;
+  border:       1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  cursor:       pointer;
+  font-family:  var(--pi-font-body);
+  font-size:    13px;
+  font-weight:  400;
+  color:        var(--pi-text);
+  transition:   all var(--pi-transition);
+  text-transform: capitalize;
+}
+
+.pi-notif-tab--active {
+  background:   var(--pi-primary);
+  border-color: var(--pi-primary);
+  font-weight:  700;
+}
+
+.pi-notif-tab:not(.pi-notif-tab--active):hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.pi-notif-list {
+  overflow-y: auto;
+  flex:       1;
+  padding:    8px 0;
+}
+
+.pi-notif-list::-webkit-scrollbar { width: 4px; }
+.pi-notif-list::-webkit-scrollbar-track { background: transparent; }
+.pi-notif-list::-webkit-scrollbar-thumb {
+  background:    rgba(255,255,255,0.15);
+  border-radius: 2px;
+}
+
+.pi-notif-empty {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  padding:         40px 20px;
+  gap:             10px;
+}
+
+.pi-notif-empty p {
+  font-family: var(--pi-font-body);
+  font-size:   13px;
+  color:       rgba(255,255,255,0.3);
+  margin:      0;
+}
+
+.pi-notif-group-label {
+  font-family:    var(--pi-font-body);
+  font-weight:    700;
+  font-size:      11px;
+  color:          rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin:         10px 18px 4px;
+}
+
+.pi-notif-item {
+  display:         flex;
+  align-items:     flex-start;
+  gap:             12px;
+  padding:         10px 18px;
+  background:      transparent;
+  cursor:          pointer;
+  border-left:     3px solid transparent;
+  transition:      background var(--pi-transition);
+}
+
+.pi-notif-item--unread {
+  background:   rgba(43, 114, 251, 0.07);
+  border-color: var(--pi-primary);
+}
+
+.pi-notif-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+.pi-notif-icon {
+  width:            38px;
+  height:           38px;
+  border-radius:    50%;
+  background:       rgba(43,114,251,0.12);
+  border:           1px solid rgba(43,114,251,0.2);
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  flex-shrink:      0;
+  margin-top:       2px;
+}
+
+.pi-notif-content { flex: 1; min-width: 0; }
+
+.pi-notif-item-title {
+  font-family:  var(--pi-font-body);
+  font-size:    13px;
+  font-weight:  400;
+  color:        var(--pi-text);
+  margin:       0 0 2px;
+  line-height:  1.4;
+}
+
+.pi-notif-item-title--unread { font-weight: 700; }
+
+.pi-notif-item-body {
+  font-family:          var(--pi-font-body);
+  font-size:            12px;
+  color:                rgba(255,255,255,0.45);
+  margin:               0 0 4px;
+  line-height:          1.4;
+  display:              -webkit-box;
+  -webkit-line-clamp:   2;
+  -webkit-box-orient:   vertical;
+  overflow:             hidden;
+}
+
+.pi-notif-time {
+  font-family: var(--pi-font-body);
+  font-size:   11px;
+  color:       rgba(255,255,255,0.25);
+}
+
+.pi-notif-dot {
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  background:    var(--pi-primary);
+  flex-shrink:   0;
+  margin-top:    6px;
+}
+
+.pi-notif-footer {
+  padding:      10px 18px;
+  border-top:   1px solid rgba(255,255,255,0.07);
+  flex-shrink:  0;
+}
+
+.pi-notif-see-all {
+  width:         100%;
+  height:        36px;
+  background:    rgba(255,255,255,0.05);
+  border:        1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  font-family:   var(--pi-font-body);
+  font-size:     13px;
+  color:         rgba(255,255,255,0.7);
+  cursor:        pointer;
+  transition:    background var(--pi-transition), color var(--pi-transition);
+}
+
+.pi-notif-see-all:hover {
+  background: rgba(255,255,255,0.1);
+  color:      #FFFFFF;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mobile bottom nav — mirrors Flutter's _buildBottomNav
+───────────────────────────────────────────────────────────────────────────── */
+.pi-bottom-nav {
+  position:   fixed;
+  bottom:     0;
+  left:       0;
+  right:      0;
+  background: var(--pi-navy);
+  z-index:    100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pi-bottom-nav-divider {
+  height:     1px;
+  background: var(--pi-divider);
+}
+
+.pi-bottom-nav-items {
+  display:             grid;
+  grid-template-columns: repeat(3, 1fr);
+  height:              var(--pi-bottom-nav-h);
+  align-items:         center;
+}
+
+.pi-nav-item {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  gap:             5px;
+  background:      none;
+  border:          none;
+  cursor:          pointer;
+  color:           var(--pi-text);
+  padding:         8px 0;
+  transition:      color var(--pi-transition);
+}
+
+.pi-nav-item--active { color: var(--pi-gold); }
+
+.pi-nav-icon-wrap {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           48px;
+  height:          32px;
+  border-radius:   16px;
+  background:      transparent;
+  transition:      background var(--pi-transition);
+}
+
+.pi-nav-item--active .pi-nav-icon-wrap {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pi-nav-label {
+  font-family:  var(--pi-font-body);
+  font-size:    10.5px;
+  font-weight:  400;
+  line-height:  1;
+  text-align:   center;
+}
+
+.pi-nav-item--active .pi-nav-label { font-weight: 700; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive overrides
+───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .pi-bell-wrapper {
+    top:   20px;
+    right: 20px;
+  }
+
+  .pi-card {
+    padding:       20px 18px 28px;
+    border-radius: 14px;
+  }
+
+  .pi-section-title { margin-top: 22px; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pi-bell-wrapper {
+    top:   24px;
+    right: 24px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbar styling for main area
+───────────────────────────────────────────────────────────────────────────── */
+.pi-main::-webkit-scrollbar { width: 5px; }
+.pi-main::-webkit-scrollbar-track { background: transparent; }
+.pi-main::-webkit-scrollbar-thumb {
+  background:    rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+.pi-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Focus-visible global reset for this module
+───────────────────────────────────────────────────────────────────────────── */
+.pi-root *:focus { outline: none; }
+.pi-root *:focus-visible {
+  outline:        2px solid var(--pi-primary);
+  outline-offset: 2px;
+  border-radius:  4px;
+}
+
+.pi-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: pi-spin 0.8s linear infinite;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+@keyframes pi-spin {
+  to { transform: rotate(360deg); }
+}
