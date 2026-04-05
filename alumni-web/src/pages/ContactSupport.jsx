@@ -131,10 +131,10 @@ const ContactSupport = () => {
     { icon: location_icn, label: 'Location', value: "Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114", underline: false },
   ];
 
-  const legalLinks = [
-    { label: 'Terms of Service', route: '/terms'           },
-    { label: 'Privacy Policy',   route: '/privacy'         },
-    { label: 'Contact Support',  route: '/contact-support' },
+  const supportHours = [
+    { day: 'Monday – Friday', time: '7:00 AM – 5:00 PM' },
+    { day: 'Saturday',        time: '7:00 AM – 12:00 NN' },
+    { day: 'Sunday',          time: 'Closed'              },
   ];
 
   // ── Sub-components (scale-aware) ───────────────────────────────────────────
@@ -444,51 +444,61 @@ const ContactSupport = () => {
               ))}
             </div>
 
-            {/* ── Legal links card ────────────────────────────────────── */}
+            {/* ── Support hours card ──────────────────────────────────── */}
             <div style={{
               background:    'rgba(13,19,56,0.4)',
               border:        '1px solid rgba(255,255,255,0.1)',
               boxShadow:     '0px 2px 2px rgba(255,255,255,0.25)',
               borderRadius:  '14px',
-              padding:       `${s(6)}px ${s(28)}px`,
+              padding:       `${s(18)}px ${s(28)}px`,
               display:       'flex',
               flexDirection: 'column',
+              gap:           `${s(12)}px`,
               flexShrink:    0,
             }}>
-              {legalLinks.map((link, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 && (
-                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)' }} />
-                  )}
-                  <button
-                    onClick={() => navigate(link.route)}
-                    style={{
-                      width:          '100%',
-                      display:        'flex',
-                      alignItems:     'center',
-                      justifyContent: 'space-between',
-                      background:     'none',
-                      border:         'none',
-                      cursor:         'pointer',
-                      padding:        `${s(14)}px 0`,
-                      transition:     'opacity 0.15s',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
-                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                  >
-                    <span style={{
-                      fontFamily: 'Arimo',
-                      fontWeight: 700,
-                      fontSize:   `${s(16)}px`,
-                      color:      '#FFFFFF',
-                    }}>
-                      {link.label}
-                    </span>
-                    <svg width="11" height="20" viewBox="0 0 11 20" fill="none" style={{ flexShrink: 0 }}>
-                      <path d="M1 1L10 10L1 19" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                </React.Fragment>
+              {/* Section heading */}
+              <span style={{
+                fontFamily:  'Arimo',
+                fontWeight:  700,
+                fontSize:    `${s(15)}px`,
+                lineHeight:  '1.3',
+                color:       '#FFFFFF',
+                letterSpacing: '0.2px',
+              }}>
+                Support Hours
+              </span>
+
+              {/* Divider under heading */}
+              <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', marginTop: `-${s(4)}px` }} />
+
+              {/* Hours rows */}
+              {supportHours.map((row, i) => (
+                <div key={i} style={{
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'space-between',
+                  gap:            '8px',
+                }}>
+                  <span style={{
+                    fontFamily: 'Arimo',
+                    fontWeight: 400,
+                    fontSize:   `${s(13)}px`,
+                    lineHeight: '1.5',
+                    color:      'rgba(255,255,255,0.65)',
+                  }}>
+                    {row.day}
+                  </span>
+                  <span style={{
+                    fontFamily:  'Arimo',
+                    fontWeight:  600,
+                    fontSize:    `${s(13)}px`,
+                    lineHeight:  '1.5',
+                    color:       row.time === 'Closed' ? 'rgba(255,255,255,0.35)' : '#FFFFFF',
+                    flexShrink:  0,
+                  }}>
+                    {row.time}
+                  </span>
+                </div>
               ))}
             </div>
 
