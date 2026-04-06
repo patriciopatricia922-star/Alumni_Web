@@ -40,11 +40,8 @@ const SuperAdminSidebar = () => {
 
   const handleLogout = async () => {
       await supabase.auth.signOut();
-      if (onSwitchToLogin) {
-      onSwitchToLogin(); 
-    } else {
       navigate('/'); 
-    }
+    
   };
 
   const displayName = 'Super Admin';
@@ -57,6 +54,9 @@ const SuperAdminSidebar = () => {
     { path: '/superadmin/admin-management',      icon: 'BsFillPeopleFill',        label: 'Admin Management',   split: true },
     { path: '/superadmin/super-admin-alumni',    icon: 'RiSurveyFill',            label: 'Alumni Management',  split: true },
     { path: '/superadmin/super-alumni-engagement', icon: 'FaBookBookmark',        label: 'Content Management', split: true },
+    { path: '/superadmin/survey-management',      icon: 'RiSurveyFill',            label: 'Survey Management' },
+    { path: '/superadmin/response-and-analytics', icon: 'SiGoogleanalytics',       label: 'Response & Analytics' },
+    { path: '/superadmin/predictive-analytics',   icon: 'RiOrganizationChart',     label: 'Predictive Analytics', marginTop: '16px' },
   ];
 
   return (

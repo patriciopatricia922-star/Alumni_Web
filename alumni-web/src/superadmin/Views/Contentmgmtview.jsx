@@ -4,6 +4,7 @@ import EventModal from '../modals/EventModal';
 import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal from '../modals/JobModal';
 import DiscountModal from '../modals/DiscountModal';
+import LandingModal from '../modals/LandingModal';
 
 import { 
   FiCalendar, 
@@ -18,7 +19,8 @@ import {
   FiPlus,
   FiChevronRight,
   FiX,
-  FiMenu
+  FiMenu,
+  FiHome
 } from 'react-icons/fi';
 import { HiOutlineBuildingOffice2, HiOutlineChevronRight } from 'react-icons/hi2';
 
@@ -39,6 +41,10 @@ const TabIcon = ({ type, active }) => {
 
   if (type === 'discounts') {
     return <FiPercent size={16} color={c} />;
+  }
+
+  if (type === 'landing') {
+    return <FiHome size={16} color={c} />;
   }
 
   return null;
@@ -84,7 +90,7 @@ const ModalFooter = ({ onCancel, createLabel, loading }) => (
   </div>
 );
 
-// Content Item Card for displaying active items
+// Content Item Card for displaying active items with image preview
 const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   const getTypeColor = () => {
     switch (type) {
@@ -92,6 +98,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
       case 'announcements': return '#F59E0B';
       case 'jobs': return '#10B981';
       case 'discounts': return '#8B5CF6';
+      case 'landing': return '#8B5CF6';
       default: return '#6A7282';
     }
   };
@@ -102,6 +109,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
       case 'announcements': return <FiBell size={16} color="#FFFFFF" />;
       case 'jobs': return <FiBriefcase size={16} color="#FFFFFF" />;
       case 'discounts': return <FiPercent size={16} color="#FFFFFF" />;
+      case 'landing': return <FiHome size={16} color="#FFFFFF" />;
       default: return <FiCalendar size={16} color="#FFFFFF" />;
     }
   };
@@ -114,8 +122,96 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
     return tmp.textContent || tmp.innerText || '';
   };
 
+  // Check if this content type can have an image (events, jobs, discounts, landing)
+  const hasImage = (type === 'events' || type === 'jobs' || type === 'discounts' || type === 'landing') && item.image_url;
+
+  // Format landing section preview based on section type
+  const getLandingPreview = () => {
+    if (type !== 'landing') return null;
+    
+    switch (item.section_type) {
+      case 'hero':
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Main Heading:</strong> {item.title}</div>
+            <div className="preview-row"><strong>Subheading:</strong> {item.description || '—'}</div>
+            <div className="preview-row"><strong>Button Text:</strong> {item.content || '—'}</div>
+            {item.image_url && <div className="preview-row"><strong>Image:</strong> ✓ Uploaded</div>}
+          </div>
+        );
+      case 'stats':
+        const stats = item.description ? item.description.split('\n---\n') : [];
+        const labels = item.content ? item.content.split('\n') : [];
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Alumni:</strong> {stats[0] || '—'} {labels[0] ? `(${labels[0]})` : ''}</div>
+            <div className="preview-row"><strong>Programs:</strong> {stats[1] || '—'} {labels[1] ? `(${labels[1]})` : ''}</div>
+            <div className="preview-row"><strong>Employment Rate:</strong> {stats[2] || '—'} {labels[2] ? `(${labels[2]})` : ''}</div>
+            <div className="preview-row"><strong>Ranking:</strong> {stats[3] || '—'} {labels[3] ? `(${labels[3]})` : ''}</div>
+          </div>
+        );
+      case 'events':
+      case 'jobs':
+      case 'discounts':
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Section Title:</strong> {item.title}</div>
+            <div className="preview-row"><strong>Description:</strong> {stripHtml(item.description)?.substring(0, 80)}</div>
+          </div>
+        );
+      case 'why_join':
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Title:</strong> {item.title}</div>
+            <div className="preview-row"><strong>Subtitle:</strong> {item.description?.substring(0, 60)}...</div>
+            <div className="preview-row"><strong>Content:</strong> {stripHtml(item.content)?.substring(0, 60)}...</div>
+          </div>
+        );
+      case 'benefits':
+      case 'what_we_do':
+        const items = item.content ? item.content.split('\n---\n') : [];
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Title:</strong> {item.title}</div>
+            <div className="preview-row"><strong>Description:</strong> {item.description?.substring(0, 60)}...</div>
+            <div className="preview-row"><strong>Items:</strong> {items.length} {items.length === 1 ? 'item' : 'items'}</div>
+          </div>
+        );
+      case 'footer':
+        const footerFields = item.description ? item.description.split('\n---\n') : [];
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Address:</strong> {footerFields[0]?.substring(0, 40)}...</div>
+            <div className="preview-row"><strong>Phone:</strong> {footerFields[1] || '—'}</div>
+            <div className="preview-row"><strong>Email:</strong> {footerFields[2] || '—'}</div>
+          </div>
+        );
+      default:
+        return (
+          <div className="landing-preview">
+            <div className="preview-row"><strong>Title:</strong> {item.title}</div>
+            <div className="preview-row"><strong>Description:</strong> {stripHtml(item.description)?.substring(0, 60)}</div>
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="content-item-card">
+      {/* Image Preview - shows for events, jobs, discounts, and landing */}
+      {hasImage && (
+        <div className="content-item-image">
+          <img 
+            src={item.image_url} 
+            alt={item.title}
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+      
       <div className="content-item-header">
         <div className="content-item-icon" style={{ background: getTypeColor() }}>
           {getTypeIcon()}
@@ -130,10 +226,17 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
         </div>
       </div>
       <h4 className="content-item-title">{item.title}</h4>
-      <p className="content-item-description">
-        {stripHtml(item.description)?.substring(0, 120)}
-        {stripHtml(item.description)?.length > 120 ? '...' : ''}
-      </p>
+      
+      {/* For landing sections, show detailed preview */}
+      {type === 'landing' ? (
+        getLandingPreview()
+      ) : (
+        <p className="content-item-description">
+          {stripHtml(item.description)?.substring(0, 120)}
+          {stripHtml(item.description)?.length > 120 ? '...' : ''}
+        </p>
+      )}
+      
       {type === 'events' && item.event_date && (
         <div className="content-item-meta">
           <span><FiCalendar size={12} /> {new Date(item.event_date).toLocaleDateString()}</span>
@@ -151,6 +254,11 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
         <div className="content-item-meta">
           {item.company && <span><HiOutlineBuildingOffice2 size={12} /> {item.company}</span>}
           {item.valid_until && <span><FiClock size={12} /> Valid until {new Date(item.valid_until).toLocaleDateString()}</span>}
+        </div>
+      )}
+      {type === 'landing' && item.section_type && (
+        <div className="content-item-meta">
+          <span className="landing-type-badge">{item.section_type.replace('_', ' ').toUpperCase()}</span>
         </div>
       )}
     </div>
@@ -269,6 +377,7 @@ const Contentmgmtview = ({
   onArchive,
   onRestore,
   editingItem,
+  toast = { show: false, message: "", type: "success" },
   onCreateEvent,
   onUpdateEvent,
   onCreateAnnouncement,
@@ -277,9 +386,18 @@ const Contentmgmtview = ({
   onUpdateJob,
   onCreateDiscount,
   onUpdateDiscount,
+  onCreateLandingSection,
+  onUpdateLandingSection,
 }) => {
   return (
     <>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`toast-notification toast-${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
+
       <div className="engagement-layout">
         {sidebar}
 
@@ -380,6 +498,16 @@ const Contentmgmtview = ({
           discount={editingItem}
           onCreate={onCreateDiscount}
           onUpdate={onUpdateDiscount}
+        />
+      )}
+      {!showArchive && activeTab === 'landing' && (
+        <LandingModal
+          open={modalOpen}
+          onClose={closeModal}
+          mode={modalMode}
+          section={editingItem}
+          onCreate={onCreateLandingSection}
+          onUpdate={onUpdateLandingSection}
         />
       )}
     </>

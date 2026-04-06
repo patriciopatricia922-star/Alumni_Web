@@ -44,6 +44,9 @@ import PrivacyPolicyAbout from './pages/Privacypolicyabout';
 import NotificationsPage from './pages/Notificationspage';
 import FeedbackAndAlumniEngagement from './survey/Feedbackandalumniengagement';
 import ContentManagement from './admin/ContentManagement';
+import ResponseAnalytics from './superadmin/Responseandanalytics';
+import PredictiveAnaly from './superadmin/PredictiveAnalytics';
+import SurveyMgmt from './superadmin/SurveyManagement';
 // import DynamicSurvey from './pages/DynamicSurvey';
 
 // ─── Protected Route ──────────────────────────────────────────────────────────
@@ -142,7 +145,9 @@ function App() {
       <Route path= "/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement/></ProtectedRoute>} />
       <Route path= "/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni/></ProtectedRoute>} />
       <Route path= "/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement/></ProtectedRoute>} />
-    
+      <Route path="/superadmin/survey-management" element={<ProtectedRoute allowedRoles={['superadmin']}><SurveyMgmt /></ProtectedRoute>} />
+      <Route path="/superadmin/response-and-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><ResponseAnalytics /></ProtectedRoute>} />
+      <Route path="/superadmin/predictive-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><PredictiveAnaly /></ProtectedRoute>} />
     </Routes>
   );
 }

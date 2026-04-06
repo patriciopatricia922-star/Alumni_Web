@@ -45,13 +45,8 @@
   height: 21px;
 }
 
-.superadmin-mobile-icon-active {
-  color: #D9CA81;
-}
-
-.superadmin-mobile-icon-inactive {
-  color: rgba(255, 255, 255, 0.5);
-}
+.superadmin-mobile-icon-active { color: #D9CA81; }
+.superadmin-mobile-icon-inactive { color: rgba(255, 255, 255, 0.5); }
 
 .superadmin-mobile-label {
   font-family: 'Arimo', sans-serif;
@@ -60,19 +55,11 @@
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: normal;
-  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.superadmin-mobile-label-active {
-  font-weight: 700;
-  color: #D9CA81;
-}
-
-.superadmin-mobile-label-inactive {
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-}
+.superadmin-mobile-label-active { font-weight: 700; color: #D9CA81; }
+.superadmin-mobile-label-inactive { font-weight: 400; color: rgba(255, 255, 255, 0.45); }
 
 .superadmin-mobile-logout-btn {
   display: flex;
@@ -123,26 +110,24 @@
   transition: transform 0.25s ease;
 }
 
-.superadmin-sidebar-mobile {
+.superadmin-sidebar-hidden {
   transform: translateX(-100%);
 }
 
 .superadmin-sidebar-logo-container {
   display: flex;
   justify-content: center;
-  padding: 36px 0 28px;
+  padding: 28px 0 24px;
 }
 
 .superadmin-sidebar-logo {
-  width: 190px;
-  margin-left: 10%;
+  margin-left: 15px;
+  width: 159px;
   height: auto;
   object-fit: contain;
 }
 
-.superadmin-sidebar-logo-tablet {
-  width: 90px;
-}
+.superadmin-sidebar-logo-tablet { width: 139px; }
 
 .superadmin-sidebar-divider {
   width: 100%;
@@ -151,20 +136,19 @@
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.35);
 }
 
-/* Menu Section */
 .superadmin-sidebar-menu-section {
-  padding: 24px 10px 0;
+  padding: 20px 9px 0;
   display: flex;
   flex-direction: column;
-  gap: 19px;
+  gap: 4px;
 }
 
 .superadmin-sidebar-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  margin: 0 7px;
+  gap: 10px;
+  padding: 9px 13px;
+  margin: 0 6px;
   background: transparent;
   border-radius: 14px;
   text-decoration: none;
@@ -172,59 +156,50 @@
 }
 
 .superadmin-sidebar-menu-item-active {
-  background: rgba(217, 202, 129, 0.1);
+  background: rgba(217, 202, 129, 0.1) !important;
 }
 
 .superadmin-sidebar-icon {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-.superadmin-sidebar-icon-active {
-  color: #D9CA81;
-}
-
-.superadmin-sidebar-icon-inactive {
-  color: rgba(255, 255, 255, 0.85);
-}
+.superadmin-sidebar-icon-active { color: #D9CA81; }
+.superadmin-sidebar-icon-inactive { color: rgba(255, 255, 255, 0.85); }
 
 .superadmin-sidebar-label {
   font-family: 'Arimo', sans-serif;
-  font-size: 16.5px;
+  font-size: 15px;
   font-weight: 400;
-  line-height: 20px;
-  letter-spacing: 0.3px;
+  line-height: 24px;
+  letter-spacing: 0.325px;
   color: #FFFFFF;
+  white-space: nowrap;
 }
 
-.superadmin-sidebar-label-tablet {
-  font-size: 16px;
-  line-height: 18px;
-}
+.superadmin-sidebar-label-tablet { font-size: 14px; }
+.superadmin-sidebar-label-active { font-weight: 700; color: #D9CA81; }
 
-.superadmin-sidebar-label-active {
-  font-weight: 700;
-  color: #D9CA81;
-}
-
-/* Footer User Card */
+/* Footer & User Card */
 .superadmin-sidebar-footer {
   margin-top: auto;
-  padding: 0 10px 24px;
+  padding: 0 8px 24px;
 }
 
 .superadmin-sidebar-user-card {
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  gap: 11px;
+  padding: 0 10px 0 12px;
+  gap: 10px;
   height: 56px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
 }
 
 .superadmin-sidebar-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   background: linear-gradient(135deg, #51A2FF 0%, #155DFC 100%);
   border-radius: 50%;
@@ -234,8 +209,8 @@
 }
 
 .superadmin-sidebar-initials {
-  font-family: 'Arimo', sans-serif;
-  font-size: 14px;
+  font-family: 'Arial', sans-serif;
+  font-size: 13px;
   font-weight: 700;
   color: #FFFFFF;
 }
@@ -248,9 +223,9 @@
 }
 
 .superadmin-sidebar-user-name {
-  font-family: 'Arimo', sans-serif;
-  font-size: 13px;
-  line-height: 20px;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  line-height: 18px;
   color: #FFFFFF;
   white-space: nowrap;
   overflow: hidden;
@@ -258,9 +233,9 @@
 }
 
 .superadmin-sidebar-user-role {
-  font-family: 'Arimo', sans-serif;
+  font-family: 'Arial', sans-serif;
   font-size: 11px;
-  line-height: 16px;
+  line-height: 15px;
   color: #D1D5DC;
 }
 
@@ -277,10 +252,9 @@
   border-radius: 6px;
   padding: 0;
   transition: background 0.15s;
-  color: #D1D5DC;
 }
 
-/* Backdrop */
+/* Mobile backdrop */
 .superadmin-sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -289,14 +263,9 @@
   animation: superadminFadeIn 0.2s ease;
 }
 
-/* Animations */
 @keyframes superadminFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -348,7 +317,7 @@
 /* Mobile (below 768px) - for sidebar version when open */
 @media (max-width: 767px) {
   .superadmin-sidebar {
-    width: 250px !important;
+    width: 229px !important;
     border-radius: 0px 20px 20px 0px;
   }
   
