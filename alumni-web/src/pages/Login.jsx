@@ -27,6 +27,7 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // 1. Supabase Auth Sign In
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
@@ -34,8 +35,9 @@ const Login = () => {
       if (loginError) throw loginError;
 
       const userId = loginData.user?.id;
+      const userEmail = loginData.user?.email;
 
-      // 1. Fetch user metadata
+      // 2. Fetch user role and status from 'users' table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('role, account_status')
@@ -44,12 +46,11 @@ const Login = () => {
 
       if (userError) {
         console.error('Database Fetch Error:', userError);
-        // If user exists in Auth but not in public.users, they need to complete profile
-        navigate('/personal-information'); 
-        return;
+        // If there's a database error (like RLS recursion), we stay here and show it
+        throw new Error(`Profile Access Error: ${userError.message}`);
       }
 
-      // 2. Check Account Status
+      // 3. Check Account Status
       if (userData?.account_status === 'disabled') {
         await supabase.auth.signOut();
         setError('Your account has been disabled. Please contact support.');
@@ -57,8 +58,26 @@ const Login = () => {
         return;
       }
 
-      // 3. Normalized Role Detection
+      // 4. Email Domain & Role Validation
       const rawRole = userData?.role?.toLowerCase().trim() || 'alumni';
+      
+      // Enforce: Admin/SuperAdmin must use @nu-dasma.edu.ph
+      if ((rawRole === 'admin' || rawRole === 'superadmin') && !userEmail.endsWith('@nu-dasma.edu.ph')) {
+        await supabase.auth.signOut();
+        setError('Staff/Admin roles must use a @nu-dasma.edu.ph email.');
+        setLoading(false);
+        return;
+      }
+
+      // Enforce: Alumni must use @gmail.com
+      if (rawRole === 'alumni' && !userEmail.endsWith('@gmail.com')) {
+        await supabase.auth.signOut();
+        setError('Alumni accounts must use a @gmail.com email.');
+        setLoading(false);
+        return;
+      }
+
+      // 5. Normalized Role & Redirect Path Detection
       let redirectPath = '/dashboard';
       let roleLabel = 'Alumni';
 
@@ -78,7 +97,7 @@ const Login = () => {
           break;
       }
 
-      // 4. Audit Logging
+      // 6. Audit Logging
       await logAction({
         action: 'Login',
         module: 'Authentication',
@@ -87,12 +106,16 @@ const Login = () => {
         user_id: userId,
       });
 
-      // 5. Final Navigation
+      // 7. Final Navigation
       navigate(redirectPath);
 
     } catch (err) {
       console.error('Login Process Error:', err);
-      setError(err.message || 'Invalid email or password.');
+      // Clean up the error message for the user
+      const friendlyMessage = err.message?.includes('infinite recursion') 
+        ? "Database Policy Error: Please fix RLS recursion in Supabase." 
+        : err.message || 'Invalid email or password.';
+      setError(friendlyMessage);
     } finally {
       setLoading(false);
     }

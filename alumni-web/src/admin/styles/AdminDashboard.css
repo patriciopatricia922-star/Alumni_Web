@@ -1,6 +1,14 @@
+/* ============================================================================
+   THIS IS FOR INLINE STYLES.
+   ============================================================================
+   Purpose: Contains all CSS styles for the Admin Dashboard component.
+            Uses Lexend font for headers and proper grid layouts matching
+            friend's original design.
+   ============================================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
 
-/* Dashboard Layout */
+/* ============================ DASHBOARD LAYOUT ============================ */
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
@@ -30,48 +38,243 @@
   }
 }
 
-/* Dashboard Header */
+/* ============================ HEADER ============================ */
 .dashboard-header {
   margin-bottom: 24px;
 }
 
 .dashboard-header h1 {
-  font-family: 'Lexend', Arial, sans-serif;
+  font-family: 'Lexend', sans-serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 27px;
   color: #324D87;
-  line-height: 36px;
   margin: 0 0 4px;
 }
 
 .dashboard-header p {
-  font-family: 'Lexend', Arial, sans-serif;
-  font-size: 16px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px;
   color: #6A7282;
   margin: 0;
 }
 
-/* Dashboard Section */
-.dashboard-section {
-  margin-bottom: 16px;
+/* ============================ SECTION HEADER ============================ */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 10px;
 }
 
 .section-title {
-  font-family: 'Lexend', Arial, sans-serif;
   font-weight: 700;
-  font-size: 18px;
-  color: #0F172B;
-  margin-bottom: 12px;
+  font-size: 0.90rem;
+  color: #6b7280;
+  margin: 0;
+  font-family: 'Lexend', 'Arimo', Arial;
 }
 
-/* KPI Grid */
-.kpi-grid {
+.section-icon {
+  font-size: 1.2rem;
+  color: #324D87;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* ============================ KPI TABS ============================ */
+.kpi-tabs {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 0;
+  background: #E8EFF7;
+  border-radius: 8px;
+  padding: 3px;
+  width: fit-content;
+  margin-bottom: 14px;
 }
 
-/* Chart Card */
+.kpi-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 7px 18px;
+  border-radius: 6px;
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #6A7282;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.kpi-tab-btn:hover:not(.active) {
+  background: #d4e0ef;
+  color: #324D87;
+}
+
+.kpi-tab-btn.active {
+  background: #ffffff;
+  color: #324D87;
+  box-shadow: 0 1px 4px rgba(50,77,135,0.13);
+}
+
+/* ============================ KPI GRID (3 columns for Institutional KPIs) ============================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+/* ============================ ALUMNI TRACER GRID (4 columns) ============================ */
+.alumni-tracer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================ KPI PROGRESS CARD ============================ */
+.kpi-progress-card {
+  background: #FFFFFF;
+  border: 0.889px solid #9E9E9E;
+  border-radius: 10px;
+  padding: 16px 18px 14px;
+}
+
+.kpi-progress-category {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-weight: 700;
+  font-size: 11px;
+  color: #90A1B9;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.kpi-progress-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.kpi-progress-info {
+  flex: 1;
+}
+
+.kpi-progress-label {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-weight: 600;
+  font-size: 13px;
+  color: #314158;
+  line-height: 1.4;
+  min-height: 36px;
+}
+
+.kpi-progress-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.kpi-progress-target {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-weight: 700;
+  font-size: 22px;
+  color: #0F172B;
+}
+
+.kpi-progress-trend {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kpi-progress-gauge {
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ============================ KPI STAT CARD ============================ */
+.kpi-stat-card {
+  background: #FFFFFF;
+  border: 0.889px solid #9E9E9E;
+  border-radius: 10px;
+  padding: 20px 18px 14px;
+}
+
+.kpi-stat-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.kpi-stat-info {
+  flex: 1;
+}
+
+.kpi-stat-label {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-weight: 400;
+  font-size: 14px;
+  color: #6A7282;
+}
+
+.kpi-stat-value {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-weight: 700;
+  font-size: 30px;
+  color: #101828;
+  margin: 4px 0;
+}
+
+.kpi-stat-sub {
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-size: 12px;
+  color: #00A63E;
+}
+
+.kpi-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* ============================ CHART CARD ============================ */
 .chart-card {
   background: #FFFFFF;
   border: 0.889px solid #9E9E9E;
@@ -88,14 +291,14 @@
 }
 
 .chart-card-title {
-  font-family: 'Lexend', Arial, sans-serif;
+  font-family: 'Lexend', sans-serif;
   font-weight: 700;
   font-size: 18px;
   color: #101828;
 }
 
 .chart-card-subtitle {
-  font-family: 'Lexend', Arial, sans-serif;
+  font-family: 'Lexend', sans-serif;
   font-weight: 400;
   font-size: 14px;
   color: #6A7282;
@@ -108,7 +311,7 @@
   min-height: 320px;
 }
 
-/* Charts Row */
+/* ============================ CHART ROWS ============================ */
 .charts-row {
   display: flex;
   gap: 16px;
@@ -121,14 +324,12 @@
   min-width: 280px;
 }
 
-/* Full Width Chart */
 .full-width-chart {
   margin-bottom: 24px;
 }
 
-/* Empty Chart */
+/* ============================ EMPTY CHART ============================ */
 .empty-chart {
-  height: 280px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -140,12 +341,12 @@
 }
 
 .empty-chart span {
-  font-family: 'Lexend', 'Arimo', Arial, sans-serif;
+  font-family: 'Lexend', 'Arimo', Arial;
   font-size: 13px;
   color: #94A3B8;
 }
 
-/* Recharts Customization */
+/* ============================ RECHARTS CUSTOMIZATION ============================ */
 .recharts-default-tooltip {
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
@@ -165,7 +366,7 @@
   color: #475569 !important;
 }
 
-/* Responsive */
+/* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
   .charts-row {
     flex-direction: column;

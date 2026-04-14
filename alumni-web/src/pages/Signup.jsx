@@ -6,7 +6,7 @@ import SignupView from '../Views/Signupview';
 const getPasswordStrength = (password) => {
   if (!password) return { level: 0, label: '', color: '' };
   let score = 0;
-  if (password.length >= 8)          score++;
+  if (password.length >= 8)           score++;
   if (/[A-Z]/.test(password))        score++;
   if (/[a-z]/.test(password))        score++;
   if (/[0-9]/.test(password))        score++;
@@ -22,7 +22,7 @@ const Signup = () => {
   const location = useLocation();
   const idData   = location.state || {};
 
-  const [showPassword,        setShowPassword]        = useState(false);
+  const [showPassword,         setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading,             setLoading]             = useState(false);
   const [error,               setError]               = useState('');
@@ -61,7 +61,6 @@ const Signup = () => {
         } else {
           delete errs.password;
         }
-        // Re-validate confirm if already touched
         if (touched.confirmPassword && form.confirmPassword) {
           if (form.confirmPassword !== value) errs.confirmPassword = 'Passwords do not match.';
           else delete errs.confirmPassword;
@@ -94,7 +93,6 @@ const Signup = () => {
   const handleSignup = async () => {
     setError('');
 
-    // Touch all required fields to surface errors
     const required = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
     const newTouched = required.reduce((acc, k) => ({ ...acc, [k]: true }), {});
     setTouched(prev => ({ ...prev, ...newTouched }));
@@ -112,6 +110,7 @@ const Signup = () => {
 
     setLoading(true);
     try {
+      // 1. Supabase Auth Signup
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -125,6 +124,7 @@ const Signup = () => {
       });
       if (signUpError) throw signUpError;
 
+      // 2. Insert into public.users table (Requires RLS INSERT policy)
       const { error: insertError } = await supabase.from('users').upsert({
         id:          data.user.id,
         email:       form.email,
@@ -137,16 +137,10 @@ const Signup = () => {
       }, { onConflict: 'id' });
 
       if (insertError) {
+        // Rollback auth if database insert fails
         await supabase.auth.signOut();
         throw new Error('Account setup incomplete. Please try signing up again.');
       }
-
-      try {
-        await supabase.from('alumni_profiles').upsert({
-          user_id:                       data.user.id,
-          profile_completion_percentage: 10,
-        }, { onConflict: 'user_id' });
-      } catch (_) {}
 
       navigate('/login');
     } catch (err) {

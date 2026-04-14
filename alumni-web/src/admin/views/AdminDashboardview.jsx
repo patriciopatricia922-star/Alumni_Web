@@ -1,80 +1,153 @@
-import React from 'react';
+// ============================================================================
+// THIS IS THE UI.
+// ============================================================================
+// Purpose: Renders all visual components for the admin dashboard using
+//          friend's exact design with proper font styling and grid layouts.
+// ============================================================================
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
+import { IoMdSchool } from "react-icons/io";
+import { BiSolidSchool } from "react-icons/bi";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AdminDashboard.css";
 
+// ============================================================================
+// COLOR PALETTE - Used for pie chart segments
+// ============================================================================
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
-// Empty Chart Placeholder
-const EmptyChart = ({ height = 280 }) => (
-  <div className="empty-chart" style={{ height: `${height}px` }}>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5">
-      <line x1="18" y1="20" x2="18" y2="10"/>
-      <line x1="12" y1="20" x2="12" y2="4"/>
-      <line x1="6" y1="20" x2="6" y2="14"/>
+// ============================================================================
+// RADIAL GAUGE CHART - Displays progress toward target as a circular gauge
+// ============================================================================
+function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = false, size = 80 }) {
+  if (isCount || target === 0) {
+    const r = (size / 2) - 7;
+    const cx = size / 2;
+    const cy = size / 2;
+    return (
+      <svg width={size} height={size} style={{ flexShrink: 0 }}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
+        <text x={cx} y={cy + 5} textAnchor="middle" fontSize={11}
+          fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill="#94A3B8">N/A</text>
+      </svg>
+    );
+  }
+
+  const r = (size / 2) - 7;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circumference = 2 * Math.PI * r;
+
+  const clampedProgress = Math.min(progress, 100);
+  const clampedTarget   = Math.min(target, 100);
+
+  const progressOffset = circumference * (1 - clampedProgress / 100);
+  const targetOffset   = circumference * (1 - clampedTarget   / 100);
+
+  const isGood = targetDir === "below"
+    ? progress <= target
+    : progress >= target;
+
+  const progressColor = isGood ? "#00BC7D" : "#F59E0B";
+  const targetColor   = "#324D87";
+
+  return (
+    <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
+      {/* Track */}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
+      {/* Target arc */}
+      {target > 0 && (
+        <circle
+          cx={cx} cy={cy} r={r} fill="none"
+          stroke={targetColor} strokeWidth={4}
+          strokeOpacity={0.18}
+          strokeDasharray={circumference}
+          strokeDashoffset={targetOffset}
+          strokeLinecap="round"
+        />
+      )}
+      {/* Progress arc */}
+      <circle
+        cx={cx} cy={cy} r={r} fill="none"
+        stroke={progressColor} strokeWidth={7}
+        strokeDasharray={circumference}
+        strokeDashoffset={progressOffset}
+        strokeLinecap="round"
+      />
+      {/* Target tick mark */}
+      {target > 0 && (() => {
+        const drawAngle = (clampedTarget / 100) * 2 * Math.PI;
+        const inner = r - 5;
+        const outer = r + 3;
+        const x1 = cx + inner * Math.cos(drawAngle);
+        const y1 = cy + inner * Math.sin(drawAngle);
+        const x2 = cx + outer * Math.cos(drawAngle);
+        const y2 = cy + outer * Math.sin(drawAngle);
+        return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={targetColor} strokeWidth={2.5} strokeLinecap="round" />;
+      })()}
+      {/* Center label */}
+      <text
+        x={cx} y={cy + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={clampedProgress >= 100 ? 10 : 12}
+        fontFamily="Lexend, Arimo, Arial"
+        fontWeight={700}
+        fill={progressColor}
+        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}
+      >
+        {clampedProgress}%
+      </text>
     </svg>
-    <span>No data available yet</span>
-  </div>
-);
+  );
+}
 
-// Chart Card Component
-const ChartCard = ({ title, subtitle, children }) => (
-  <div className="chart-card">
-    <div className="chart-card-header">
-      <div className="chart-card-title">{title}</div>
-      {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
-    </div>
-    <div className="chart-container">
-      {children}
-    </div>
-  </div>
-);
+// ============================================================================
+// KPI PROGRESS CARD - With radial gauge (for Institutional KPIs)
+// ============================================================================
+function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount }) {
+  const trendColor = trend.dir === "up"
+    ? (targetDir === "below" ? "#F59E0B" : "#00A63E")
+    : trend.dir === "down"
+    ? (targetDir === "below" ? "#00A63E" : "#ef4444")
+    : "#90A1B9";
 
-// KPI Progress Card
-const KpiProgressCard = ({ category, label, value, progress, target }) => (
-  <div style={{ 
-    background: "#FFFFFF", 
-    border: "0.889px solid #9E9E9E", 
-    borderRadius: 10, 
-    width: "calc(25% - 12px)", 
-    padding: "16px 18px 14px" 
-  }}>
-    <div style={{ 
-      fontFamily: "Lexend, Arimo, Arial", 
-      fontWeight: 700, 
-      fontSize: 12, 
-      color: "#90A1B9", 
-      letterSpacing: "0.6px", 
-      textTransform: "uppercase", 
-      marginBottom: 2 
-    }}>{category}</div>
-    <div style={{ 
-      fontFamily: "Lexend, Arimo, Arial", 
-      fontWeight: 700, 
-      fontSize: 16, 
-      color: "#314158", 
-      marginBottom: 12 
-    }}>{label}</div>
-    <div style={{ 
-      fontFamily: "Lexend, Arimo, Arial", 
-      fontWeight: 700, 
-      fontSize: 24, 
-      color: "#0F172B", 
-      marginBottom: 8 
-    }}>{value}</div>
-    <div style={{ height: 6, background: "#F1F5F9", borderRadius: 999, overflow: "hidden", marginBottom: 4 }}>
-      <div style={{ width: `${progress}%`, height: "100%", background: "#00BC7D", borderRadius: 999 }} />
-    </div>
-    <div style={{ 
-      fontFamily: "Lexend, Arimo, Arial", 
-      fontSize: 12, 
-      color: "#62748E", 
-      textAlign: "right" 
-    }}>Target: {target}%</div>
-  </div>
-);
+  const trendArrow = trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "";
 
-// KPI Stat Card Icons
+  return (
+    <div className="kpi-progress-card">
+      <div className="kpi-progress-category">{category}</div>
+
+      <div className="kpi-progress-content">
+        <div className="kpi-progress-info">
+          <div className="kpi-progress-label">{label}</div>
+          <div className="kpi-progress-value-row">
+            <div className="kpi-progress-target">{targetLabel}</div>
+            {trend.delta && (
+              <div className="kpi-progress-trend" style={{ color: trendColor }}>
+                {trendArrow} {trend.delta}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="kpi-progress-gauge">
+          <RadialGauge
+            progress={progress}
+            target={target}
+            targetDir={targetDir}
+            isCount={isCount}
+            size={76}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// KPI STAT CARD ICONS
+// ============================================================================
 const statCardIcons = {
   'Registered Alumni': {
     bg: '#EFF6FF',
@@ -117,55 +190,66 @@ const statCardIcons = {
   },
 };
 
-// KPI Stat Card
-const KpiStatCard = ({ label, value, sub }) => {
+// ============================================================================
+// KPI STAT CARD - For Alumni Tracer (4 cards in a row)
+// ============================================================================
+function KpiStatCard({ label, value, sub }) {
   const iconData = statCardIcons[label];
   return (
-    <div style={{ 
-      background: "#FFFFFF", 
-      border: "0.889px solid #9E9E9E", 
-      borderRadius: 10, 
-      width: "calc(25% - 12px)", 
-      padding: "20px 18px 14px" 
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ 
-            fontFamily: "Lexend, Arimo, Arial", 
-            fontWeight: 400, 
-            fontSize: 14, 
-            color: "#6A7282" 
-          }}>{label}</div>
-          <div style={{ 
-            fontFamily: "Lexend, Arimo, Arial", 
-            fontWeight: 700, 
-            fontSize: 30, 
-            color: "#101828", 
-            margin: "4px 0" 
-          }}>{value}</div>
-          <div style={{ 
-            fontFamily: "Lexend, Arimo, Arial", 
-            fontSize: 12, 
-            color: "#00A63E" 
-          }}>{sub}</div>
+    <div className="kpi-stat-card">
+      <div className="kpi-stat-content">
+        <div className="kpi-stat-info">
+          <div className="kpi-stat-label">{label}</div>
+          <div className="kpi-stat-value">{value}</div>
+          <div className="kpi-stat-sub">{sub}</div>
         </div>
         {iconData && (
-          <div style={{
-            width: 44, height: 44, borderRadius: 10,
-            background: iconData.bg,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, marginLeft: 12,
-          }}>
+          <div className="kpi-stat-icon" style={{ background: iconData.bg }}>
             {iconData.icon}
           </div>
         )}
       </div>
     </div>
   );
-};
+}
 
-// Bar Chart Component
-const CustomBarChart = ({ data, dataKey, nameKey, title, subtitle, height = 280 }) => {
+// ============================================================================
+// EMPTY CHART PLACEHOLDER
+// ============================================================================
+function EmptyChart({ height = 280 }) {
+  return (
+    <div className="empty-chart" style={{ height: `${height}px` }}>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      <span>No data available yet</span>
+    </div>
+  );
+}
+
+// ============================================================================
+// CHART CARD COMPONENT
+// ============================================================================
+function ChartCard({ title, subtitle, children }) {
+  return (
+    <div className="chart-card">
+      <div className="chart-card-header">
+        <div className="chart-card-title">{title}</div>
+        {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
+      </div>
+      <div className="chart-container">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// CUSTOM BAR CHART
+// ============================================================================
+function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 }) {
   if (!data || data.length === 0) {
     return (
       <ChartCard title={title} subtitle={subtitle}>
@@ -188,11 +272,12 @@ const CustomBarChart = ({ data, dataKey, nameKey, title, subtitle, height = 280 
       </ResponsiveContainer>
     </ChartCard>
   );
-};
+}
 
-// Pie Chart Component
-const CustomPieChart = ({ data, title, subtitle, height = 280 }) => {
-  // Filter out zero values
+// ============================================================================
+// CUSTOM PIE CHART
+// ============================================================================
+function CustomPieChart({ data, title, subtitle, height = 280 }) {
   const filteredData = data?.filter(d => d.value > 0) || [];
   
   if (!filteredData || filteredData.length === 0) {
@@ -203,23 +288,14 @@ const CustomPieChart = ({ data, title, subtitle, height = 280 }) => {
     );
   }
 
-  // Custom label renderer to prevent overlap
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
     const RADIAN = Math.PI / 180;
     const radius = outerRadius * 1.15;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
     return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="#475569" 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        fontSize={11}
-        fontFamily="Arimo, sans-serif"
-      >
+      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
         {`${name}: ${(percent * 100).toFixed(0)}%`}
       </text>
     );
@@ -231,12 +307,10 @@ const CustomPieChart = ({ data, title, subtitle, height = 280 }) => {
         <PieChart>
           <Pie
             data={filteredData}
-            cx="50%"
-            cy="50%"
+            cx="50%" cy="50%"
             labelLine={true}
             label={renderCustomizedLabel}
             outerRadius={80}
-            fill="#8884d8"
             dataKey="value"
           >
             {filteredData.map((entry, index) => (
@@ -244,19 +318,17 @@ const CustomPieChart = ({ data, title, subtitle, height = 280 }) => {
             ))}
           </Pie>
           <Tooltip formatter={(value) => `${value} alumni`} />
-          <Legend 
-            verticalAlign="bottom" 
-            height={36}
-            wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-          />
+          <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
         </PieChart>
       </ResponsiveContainer>
     </ChartCard>
   );
-};
+}
 
-// Line Chart Component
-const CustomLineChart = ({ data, dataKey, xKey, title, subtitle, height = 280 }) => {
+// ============================================================================
+// CUSTOM LINE CHART
+// ============================================================================
+function CustomLineChart({ data, dataKey, xKey, title, subtitle, height = 280 }) {
   if (!data || data.length === 0) {
     return (
       <ChartCard title={title} subtitle={subtitle}>
@@ -279,48 +351,86 @@ const CustomLineChart = ({ data, dataKey, xKey, title, subtitle, height = 280 })
       </ResponsiveContainer>
     </ChartCard>
   );
-};
+}
 
-// Main View
+// ============================================================================
+// MAIN VIEW COMPONENT
+// ============================================================================
 const AdminDashboardView = ({
-  kpis1,
+  activeKpiTab,
+  setActiveKpiTab,
+  kpiData,
   kpis2,
   employmentAlignmentData,
   employmentStatusData,
-  programPerformanceData,
   inDemandSkillsData,
   employmentForecastData,
   loadingCharts,
 }) => {
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "rgba(225,236,247,0.95)", fontFamily: "Lexend, Arimo, Arial" }}>
+    <div className="dashboard-layout">
       <AdminSidebar />
 
       <main className="dashboard-main">
 
-        {/* Header */}
+        {/* ============================ HEADER ============================ */}
         <div className="dashboard-header">
           <h1>Dashboard Overview</h1>
           <p>Welcome Bark! Here's what's happening with your alumni.</p>
         </div>
 
-        {/* Section: Institution's KPIs */}
+        {/* ============================ INSTITUTIONAL KPIs SECTION ============================ */}
         <div className="dashboard-section">
-          <div className="section-title">Institution's KPIs</div>
+          <div className="section-header">
+            <BiSolidSchool className="section-icon" />
+            <div className="section-title">Institutional KPI</div>
+          </div>
+
+          {/* TABS */}
+          <div className="kpi-tabs">
+            <button
+              className={`kpi-tab-btn${activeKpiTab === "employment" ? " active" : ""}`}
+              onClick={() => setActiveKpiTab("employment")}
+            >
+              EMPLOYMENT
+            </button>
+            <button
+              className={`kpi-tab-btn${activeKpiTab === "career" ? " active" : ""}`}
+              onClick={() => setActiveKpiTab("career")}
+            >
+              CAREER PROGRESS
+            </button>
+            <button
+              className={`kpi-tab-btn${activeKpiTab === "education" ? " active" : ""}`}
+              onClick={() => setActiveKpiTab("education")}
+            >
+              EDUCATION
+            </button>
+          </div>
+
+          {/* KPI GRID - 3 columns */}
           <div className="kpi-grid">
-            {kpis1.map((k) => <KpiProgressCard key={k.label} {...k} />)}
+            {kpiData[activeKpiTab].map(kpi => (
+              <KpiProgressCard key={kpi.id} {...kpi} />
+            ))}
           </div>
         </div>
 
-        {/* Section: Alumni Tracer */}
+        {/* ============================ ALUMNI TRACER SECTION ============================ */}
         <div className="dashboard-section">
-          <div className="section-title">Alumni Tracer</div>
-          <div className="kpi-grid">
-            {kpis2.map((k) => <KpiStatCard key={k.label} {...k} />)}
+          <div className="section-header">
+            <IoMdSchool className="section-icon" />
+            <div className="section-title">Alumni Tracer</div>
+          </div>
+          {/* Alumni Tracer Grid - 4 columns */}
+          <div className="alumni-tracer-grid">
+            {kpis2.map((k) => (
+              <KpiStatCard key={k.label} {...k} />
+            ))}
           </div>
         </div>
 
-        {/* Employment Alignment Rate & Employment Status Distribution */}
+        {/* ============================ CHARTS SECTION ============================ */}
         <div className="charts-row">
           <CustomBarChart
             data={employmentAlignmentData}
@@ -338,28 +448,18 @@ const AdminDashboardView = ({
           />
         </div>
 
-        {/* Program Performance */}
         <div className="full-width-chart">
-          <CustomBarChart
-            data={programPerformanceData}
-            dataKey="predicted"
-            nameKey="program"
-            title="Program Performance"
-            subtitle="Predicted employment rate per program"
-            height={300}
-          />
-        </div>
-
-        {/* Most In-Demand Skills & Employment Probability Forecast */}
-        <div className="charts-row">
           <CustomBarChart
             data={inDemandSkillsData}
             dataKey="count"
             nameKey="name"
             title="Most In-Demand Skills"
             subtitle="Top skills required by employers"
-            height={280}
+            height={300}
           />
+        </div>
+
+        <div className="full-width-chart">
           <CustomLineChart
             data={employmentForecastData}
             dataKey="rate"

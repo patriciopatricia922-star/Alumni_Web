@@ -1,3 +1,11 @@
+/* ============================================================================
+   THIS IS FOR INLINE STYLES.
+   ============================================================================
+   Purpose: Contains all CSS styles for the Predictive Analytics component.
+            Includes layout, chart animations, department cards, AI insights card,
+            responsive breakpoints, and all visual styling from friend's design.
+   ============================================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after {
@@ -7,7 +15,7 @@
 body {
   margin: 0;
   font-family: 'Arimo', Arial, sans-serif;
-  overflow: hidden;
+  background: #E5ECF7F2;
 }
 
 /* ============================================
@@ -23,7 +31,7 @@ body {
   flex: 1;
   min-width: 0;
   margin-left: 229px;
-  padding: 1.25rem 1.5rem 1rem;
+  padding: 37px 32px 60px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -34,70 +42,64 @@ body {
    PAGE HEADER
    ============================================ */
 .pa-page-header {
-  margin-bottom: 0.75rem;
+  margin-bottom: 24px;
   flex-shrink: 0;
 }
 
 .pa-page-title {
-  margin: 0 0 0.25rem;
-  font-family: 'Lexend', Arial, sans-serif;
-  font-size: 1.5rem;
+  margin: 0 0 4px;
+  font-family: 'Lexend', sans-serif;
   font-weight: 700;
-  line-height: 1.3;
-  color: #0F172B;
+  font-size: 27px;
+  color: #324D87;
 }
 
 .pa-page-subtitle {
   margin: 0;
-  font-family: 'Lexend', Arial, sans-serif;
-  font-size: 0.813rem;
-  font-weight: 400;
-  line-height: 1.4;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px;
   color: #6A7282;
 }
 
 /* ============================================
-   BREADCRUMB TAB ROW
+   BREADCRUMB & TAB ROW
    ============================================ */
 .pa-tab-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
+  margin-bottom: 24px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #E2E8F0;
   flex-shrink: 0;
 }
 
-.pa-tab-btn {
-  display: inline-flex;
+.pa-breadcrumb {
+  display: flex;
   align-items: center;
-  gap: 0.375rem;
-  min-height: 2rem;
-  padding: 0 0.75rem;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 0.5rem;
-  font-family: 'Lexend', Arial, sans-serif;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #475467;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.pa-breadcrumb-item {
   cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+  color: #9CA3AF;
+  transition: color 0.2s ease;
 }
 
-.pa-tab-btn:hover {
-  background: #F8FAFC;
-  border-color: #D0D5DD;
-  color: #0F172B;
+.pa-breadcrumb-item:hover {
+  color: #3B82F6;
 }
 
-.pa-tab-btn.active {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #155DFC;
+.pa-breadcrumb-item.active {
+  color: #1E293B;
+  font-weight: 600;
+  cursor: default;
+}
+
+.pa-breadcrumb-sep {
+  color: #9CA3AF;
 }
 
 .pa-tab-spacer {
@@ -110,24 +112,23 @@ body {
 .pa-refresh-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-left: auto;
+  gap: 12px;
 }
 
 .pa-refresh-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.875rem;
+  gap: 6px;
+  padding: 6px 14px;
   background: #155DFC;
-  color: #FFFFFF;
+  color: white;
   border: none;
-  border-radius: 0.5rem;
-  font-family: 'Lexend', Arial, sans-serif;
-  font-size: 0.75rem;
+  border-radius: 8px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.2s ease;
   white-space: nowrap;
 }
 
@@ -141,7 +142,7 @@ body {
 }
 
 .pa-refresh-msg {
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 500;
   animation: fadeOutMsg 3s ease forwards;
 }
@@ -156,14 +157,25 @@ body {
 }
 
 /* ============================================
+   OVERVIEW CONTAINER (Chart + AI)
+   ============================================ */
+.pa-overview-container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================
    CHART CARD
    ============================================ */
 .pa-chart-card {
   background: #FFFFFF;
-  border: 1px solid #E8EEF5;
-  box-shadow: 0 1px 3px rgba(15, 23, 43, 0.06);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.171);
   margin-bottom: 0;
   flex: 1;
   display: flex;
@@ -173,39 +185,52 @@ body {
 
 .pa-chart-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
 .pa-chart-icon {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #EEF2FF;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.pa-chart-header-text { flex: 1; }
+.pa-chart-header-text {
+  flex: 1;
+  margin-left: 14px;
+}
 
 .pa-chart-title {
-  margin: 0 0 4px;
-  font-family: 'Arimo', Arial;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 16px;
-  color: #0A0A0A;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  font-family: 'Lexend', sans-serif;
 }
 
 .pa-chart-subtitle {
-  margin: 0;
-  font-family: 'Arimo', Arial;
-  font-size: 16px;
-  line-height: 24px;
-  color: #717182;
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.pa-chart-nav-arrow {
+  font-size: 18px;
+  color: #9CA3AF;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.pa-chart-nav-arrow:hover {
+  color: #3B82F6;
 }
 
 .pa-chart-legend {
@@ -406,71 +431,98 @@ body {
 }
 
 /* ============================================
-   DEPARTMENT GRID  (Page 2 — cards only)
+   DEPARTMENTS HEADER
+   ============================================ */
+.pa-departments-header {
+  margin-bottom: 24px;
+}
+
+.pa-section-title {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  font-family: 'Lexend', sans-serif;
+}
+
+.pa-section-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6B7280;
+}
+
+/* ============================================
+   DEPARTMENT GRID
    ============================================ */
 .pa-department-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
+  gap: 20px;
   align-content: start;
+  margin-bottom: 24px;
 }
 
 .pa-department-card {
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.171);
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative;
 }
 
 .pa-department-card:hover {
-  border-color: #BFDBFE;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(21, 93, 252, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
 .pa-department-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.75rem;
+  margin-bottom: 14px;
 }
 
 .pa-dept-icon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
 }
 
 .pa-dept-icon.blue   { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
 .pa-dept-icon.amber  { background: rgba(245, 158, 11,  0.1); color: #F59E0B; }
 .pa-dept-icon.violet { background: rgba(139, 92,  246, 0.1); color: #8B5CF6; }
 
-.pa-dept-icon svg { width: 1rem; height: 1rem; }
+.pa-department-arrow {
+  font-size: 18px;
+  color: #9CA3AF;
+}
 
 .pa-department-code {
-  margin: 0 0 0.125rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #0F172B;
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  font-family: 'Lexend', sans-serif;
 }
 
 .pa-department-name {
-  margin: 0 0 0.75rem;
-  font-size: 0.625rem;
-  color: #62748E;
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: #6B7280;
   line-height: 1.3;
 }
 
 .pa-department-metrics {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .pa-metric-row {
@@ -479,56 +531,52 @@ body {
   align-items: center;
 }
 
-.pa-metric-label { font-size: 0.625rem; color: #45556C; }
+.pa-metric-label {
+  font-size: 13px;
+  color: #6B7280;
+}
 
 .pa-metric-value {
-  font-size: 0.875rem;
-  line-height: 1.2;
-  color: #0F172B;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
 }
 
 .pa-metric-value.accent.blue   { color: #3B82F6; }
 .pa-metric-value.accent.amber  { color: #F59E0B; }
 .pa-metric-value.accent.violet { color: #8B5CF6; }
 
+.pa-metric-change {
+  margin-top: 4px;
+}
+
 .pa-department-footer {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
+  padding-top: 12px;
   border-top: 1px solid #F1F5F9;
-  font-size: 0.625rem;
-  color: #62748E;
+  font-size: 12px;
+  color: #9CA3AF;
 }
 
 /* ============================================
-   DEPARTMENT DETAIL PANEL  (Page 3)
+   DEPARTMENT DETAIL PANEL (Page 3)
    ============================================ */
-.pa-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border-radius: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  display: flex;
-  flex-direction: column;
+.pa-detail-container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+  flex: 1;
   min-height: 0;
 }
 
-.pa-section-title {
-  margin: 0 0 0.125rem;
-  font-size: 1rem;
-  line-height: 1.3;
-  font-weight: 600;
-  color: #0F172B;
-  flex-shrink: 0;
-}
-
-.pa-section-subtitle {
-  margin: 0 0 1rem;
-  font-size: 0.688rem;
-  line-height: 1.3;
-  color: #62748E;
-  flex-shrink: 0;
+.pa-panel {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.171);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .pa-bar-legend {
@@ -644,34 +692,8 @@ body {
 .pa-bar-fill.predicted { background: linear-gradient(90deg, #00BC7D, #2DD4BF); }
 
 /* ============================================
-   SIDE-BY-SIDE CONTAINER  (Pages 1 & 3)
+   AI SIDEBAR COLUMN
    ============================================ */
-.pa-overview-container {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
-  align-items: start;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Detail page: stretch both columns to full height */
-.pa-detail-container {
-  align-items: stretch;
-}
-
-.pa-detail-container .pa-panel {
-  height: auto;
-  min-height: 400px;
-}
-
-.pa-overview-container .pa-chart-card,
-.pa-overview-container .pa-panel {
-  margin-bottom: 0;
-  min-width: 0;
-}
-
-/* AI sidebar column */
 .pa-ai-card {
   width: 320px;
   flex-shrink: 0;
@@ -681,6 +703,10 @@ body {
   margin-bottom: 0;
   position: sticky;
   top: 0;
+}
+
+.pa-ai-card-full {
+  margin-top: 0;
 }
 
 /* ============================================
@@ -876,16 +902,17 @@ body {
    RESPONSIVE — Tablet (768–1024px)
    ============================================ */
 @media (min-width: 768px) and (max-width: 1024px) {
-  .pa-main { margin-left: 200px; }
+  .pa-main { margin-left: 200px; padding: 32px 24px 48px; }
 
-  .pa-department-grid { grid-template-columns: repeat(2, 1fr); }
+  .pa-department-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
 
-  .pa-overview-container {
-    grid-template-columns: 1fr 260px;
+  .pa-overview-container,
+  .pa-detail-container {
+    grid-template-columns: 1fr 280px;
     gap: 16px;
   }
 
-  .pa-ai-card { width: 260px; }
+  .pa-ai-card { width: 280px; }
 
   .pa-chart-y-axis { min-height: 200px; }
   .pa-chart-main   { min-height: 220px; }
@@ -897,17 +924,18 @@ body {
    RESPONSIVE — Mobile (≤767px)
    ============================================ */
 @media (max-width: 767px) {
-  .pa-main { margin-left: 0; overflow-y: auto; }
+  .pa-main { margin-left: 0; padding: 24px 16px 32px; overflow-y: auto; }
 
-  .pa-department-grid { grid-template-columns: 1fr; }
+  .pa-page-title { font-size: 24px; }
+  .pa-page-subtitle { font-size: 13px; }
 
-  .pa-tab-row { flex-direction: column; align-items: stretch; }
-
-  .pa-tab-btn { justify-content: center; white-space: normal; }
-
+  .pa-tab-row { flex-direction: column; align-items: stretch; gap: 12px; }
   .pa-refresh-bar { margin-left: 0; justify-content: flex-end; }
 
-  .pa-overview-container {
+  .pa-department-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  .pa-overview-container,
+  .pa-detail-container {
     grid-template-columns: 1fr;
     gap: 16px;
   }
@@ -915,45 +943,68 @@ body {
   .pa-ai-card { width: 100%; }
   .pa-ai-card .ai-insights-card { position: static; }
 
+  .pa-chart-card { padding: 20px; }
+
+  .pa-chart-header { flex-direction: column; text-align: center; gap: 12px; }
+  .pa-chart-header-text { margin-left: 0; }
+  .pa-chart-title { font-size: 18px; }
+  .pa-chart-subtitle { font-size: 12px; }
+
   .pa-chart-summary { flex-direction: column; text-align: center; }
   .pa-summary-arrow { display: none; }
   .pa-summary-change { margin-left: 0; }
 
-  .pa-chart-card { padding: 16px; }
-
-  .pa-chart-header { flex-direction: column; text-align: center; gap: 8px; }
-  .pa-chart-title  { font-size: 14px; }
-  .pa-chart-subtitle { font-size: 12px; line-height: 18px; }
-
   .pa-chart-y-axis { min-height: 160px; font-size: 10px; }
-  .pa-chart-main   { min-height: 180px; }
+  .pa-chart-main { min-height: 180px; }
 
-  .pa-panel { padding: 1rem; }
+  .pa-panel { padding: 20px; }
+
   .pa-overview-card { padding: 1rem; }
-
   .pa-overview-card-top { flex-direction: column; align-items: flex-start; }
-  .pa-overview-stats    { align-self: flex-start; }
+  .pa-overview-stats { align-self: flex-start; }
 
   .pa-bar-pair { grid-template-columns: 1fr; gap: 0.75rem; }
 
   .pa-chart-legend { gap: 16px; }
   .pa-legend-label { font-size: 11px; }
   .pa-legend-swatch { width: 12px; }
+
+  .pa-department-card { padding: 20px; }
+  .pa-department-code { font-size: 16px; }
+  .pa-section-title { font-size: 18px; }
+  .pa-section-subtitle { font-size: 12px; }
 }
 
 /* ============================================
    RESPONSIVE — Small mobile (≤480px)
    ============================================ */
 @media (max-width: 480px) {
-  .pa-main { padding: 1rem; }
+  .pa-main { padding: 16px; }
 
-  .pa-department-grid { gap: 0.75rem; }
+  .pa-page-title { font-size: 22px; }
+  .pa-page-subtitle { font-size: 12px; }
+
+  .pa-chart-card { padding: 16px; }
+  .pa-chart-icon { width: 36px; height: 36px; }
+  .pa-chart-title { font-size: 16px; }
+  .pa-chart-subtitle { font-size: 11px; }
 
   .pa-chart-y-axis { min-height: 140px; font-size: 9px; }
-  .pa-chart-main   { min-height: 160px; }
-
-  .pa-program-code { font-size: 0.875rem; padding: 0.25rem 0.75rem; }
+  .pa-chart-main { min-height: 160px; }
 
   .pa-chart-legend { gap: 12px; }
   .pa-legend-label { font-size: 10px; }
+  .pa-legend-swatch { width: 10px; }
+
+  .pa-program-code { font-size: 0.875rem; padding: 0.25rem 0.75rem; }
+
+  .pa-department-card { padding: 16px; }
+  .pa-dept-icon { width: 36px; height: 36px; font-size: 16px; }
+  .pa-department-code { font-size: 15px; }
+
+  .pa-panel { padding: 16px; }
+
+  .ai-insights-card { padding: 16px; }
+  .ai-insights-header span { font-size: 14px; }
+  .ai-insight-text { font-size: 12px; }
 }
