@@ -1,27 +1,49 @@
+// ============================================================================
+// THIS IS FOR LOGIC.
+// ============================================================================
+// Purpose: Handles all business logic, Supabase API calls, data processing,
+//          filtering, pagination, state management, CSV upload, and event
+//          handlers for alumni management.
+// ============================================================================
+
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import SuperAdminAlumniView from "./Views/SuperAdminAlumniView";
+import AlumniManagementView from "./Views/SuperAdminAlumniView";
+
+const PER_PAGE = 5;
 
 function SuperAdminAlumni() {
-  const [alumni, setAlumni] = useState([]);
-  const [search, setSearch] = useState("");
-  const [stats, setStats] = useState({ completed: 0, pending: 0, active: 0, deactivated: 0 });
-  const [page, setPage] = useState(1);
-  const [selectedAlumni, setSelectedAlumni] = useState(null);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({
+  // ============================ STATE DECLARATIONS ============================
+  const [alumni, setAlumni] = useState([]);                    // Complete alumni list
+  const [search, setSearch] = useState("");                    // Search query string
+  const [stats, setStats] = useState({                         // KPI statistics
+    completed: 0,
+    pending: 0,
+    active: 0,
+    deactivated: 0
+  });
+  const [page, setPage] = useState(1);                         // Current pagination page
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900); // Mobile viewport flag
+  const [selectedAlumni, setSelectedAlumni] = useState(null);   // Currently selected alumni for modal
+  const [showFilter, setShowFilter] = useState(false);          // Filter modal visibility
+  const [showUploadModal, setShowUploadModal] = useState(false); // Upload CSV modal visibility
+  const [filters, setFilters] = useState({                     // Active filter values
     program: "",
     batch: "",
     employmentStatus: "",
     surveyStatus: "",
   });
-  const [availablePrograms, setAvailablePrograms] = useState([]);
-  const [availableBatches, setAvailableBatches] = useState([]);
-  const PER_PAGE = 5;
+  const [availablePrograms, setAvailablePrograms] = useState([]); // Unique programs for filter dropdown
+  const [availableBatches, setAvailableBatches] = useState([]);   // Unique batches for filter dropdown
 
-  const employmentOptions = ["Employed", "Unemployed", "Student", "Seeking", "Further Studies", "Self-Employed"];
-  const surveyOptions = ["Completed", "Pending"];
+  // ============================ RESPONSIVE HANDLER ============================
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
+  // ============================ STATISTICS CALCULATION ============================
   const calcStats = (data) => ({
     completed: data.filter((a) => a.survey_status === "completed").length,
     pending: data.filter((a) => a.survey_status === "pending").length,
@@ -31,6 +53,7 @@ function SuperAdminAlumni() {
     ).length,
   });
 
+  // ============================ LOAD ALUMNI DATA ============================
   const loadAlumni = async () => {
     try {
       const { data: users, error: usersError } = await supabaseAdmin
@@ -54,13 +77,6 @@ function SuperAdminAlumni() {
         }
         empData = empData || {};
         
-        let jobPosition = null;
-        if (empData.job_position) jobPosition = empData.job_position;
-        else if (empData.jobPosition) jobPosition = empData.jobPosition;
-        else if (empData.job_title) jobPosition = empData.job_title;
-        else if (empData.jobTitle) jobPosition = empData.jobTitle;
-        else if (empData.position) jobPosition = empData.position;
-        
         let employmentStatus = empData.employmentStatus
           ?? empData.employment_status
           ?? empData.status
@@ -80,11 +96,8 @@ function SuperAdminAlumni() {
           survey_status: s.completed ? "completed" : "pending",
           percentage: s.percentage ?? 0,
           employment_status: employmentStatus || null,
-          job_position: jobPosition || null,
-          job_company: empData.companyName
-            ?? empData.company
-            ?? empData.employer
-            ?? null,
+          job_position: empData.jobTitle ?? empData.job_title ?? empData.position ?? empData.jobPosition ?? null,
+          job_company: empData.companyName ?? empData.company ?? empData.employer ?? null,
         };
       });
 
@@ -92,7 +105,6 @@ function SuperAdminAlumni() {
         const survey = surveyMap[u.id] || {};
         const fullName = [u.first_name, u.middle_name, u.last_name]
           .filter(Boolean).join(" ");
-        
         return {
           id: u.id,
           name: fullName,
@@ -102,8 +114,8 @@ function SuperAdminAlumni() {
           account_status: u.account_status ?? "active",
           survey_status: survey.survey_status ?? "pending",
           percentage: survey.percentage ?? 0,
-          employment_status: survey.employment_status || null,
-          job_position: survey.job_position || null,
+          employment_status: survey.employment_status ?? null,
+          job_position: survey.job_position ?? null,
           job_company: survey.job_company ?? null,
         };
       });
@@ -120,10 +132,27 @@ function SuperAdminAlumni() {
     }
   };
 
-  useEffect(() => {
-    loadAlumni();
-  }, []);
+  useEffect(() => { loadAlumni(); }, []);
 
+  // ============================ ACCOUNT STATUS UPDATE ============================
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const { error } = await supabaseAdmin
+        .from("users")
+        .update({ account_status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+      const updated = alumni.map((a) =>
+        a.id === id ? { ...a, account_status: newStatus } : a
+      );
+      setAlumni(updated);
+      setStats(calcStats(updated));
+    } catch (e) {
+      console.error("updateStatus error:", e);
+    }
+  };
+
+  // ============================ FILTERING LOGIC ============================
   const applyFilters = (alumniList) => {
     return alumniList.filter((a) => {
       if (filters.program && a.program !== filters.program) return false;
@@ -156,6 +185,7 @@ function SuperAdminAlumni() {
   const startEntry = filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1;
   const endEntry = Math.min(page * PER_PAGE, filtered.length);
 
+  // ============================ HANDLER FUNCTIONS ============================
   const handleSearch = (value) => {
     setSearch(value);
     setPage(1);
@@ -182,17 +212,17 @@ function SuperAdminAlumni() {
   };
 
   const handleOpenFilter = () => {
-    setShowFilterModal(true);
+    setShowFilter(true);
   };
 
   const handleCloseFilter = () => {
-    setShowFilterModal(false);
+    setShowFilter(false);
   };
 
   const handleApplyFilters = (newFilters) => {
     setFilters(newFilters);
     setPage(1);
-    setShowFilterModal(false);
+    setShowFilter(false);
   };
 
   const handleClearFilters = () => {
@@ -203,9 +233,24 @@ function SuperAdminAlumni() {
       surveyStatus: "",
     });
     setPage(1);
-    setShowFilterModal(false);
+    setShowFilter(false);
   };
 
+  // ============================ UPLOAD CSV HANDLERS ============================
+  const handleOpenUploadModal = () => {
+    setShowUploadModal(true);
+  };
+
+  const handleCloseUploadModal = () => {
+    setShowUploadModal(false);
+  };
+
+  const handleUploadSuccess = () => {
+    setShowUploadModal(false);
+    loadAlumni(); // Refresh table after successful upload
+  };
+
+  // ============================ EXPORT TO CSV ============================
   const handleExport = () => {
     const headers = ["Name", "Email", "Program", "Batch", "Employment Status", "Survey Status", "Account Status"];
     const csvData = filtered.map(a => [
@@ -221,50 +266,55 @@ function SuperAdminAlumni() {
     const csvContent = [headers, ...csvData].map(row => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `alumni_export_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `alumni_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
   const hasActiveFilters = filters.program || filters.batch || filters.employmentStatus || filters.surveyStatus;
 
+  // ============================ RENDER ============================
   return (
-    <SuperAdminAlumniView
-      alumni={paginated}
-      allAlumni={alumni}
-      search={search}
-      onSearch={handleSearch}
+    <AlumniManagementView
+      alumni={alumni}
       stats={stats}
+      search={search}
+      page={page}
+      isMobile={isMobile}
+      selectedAlumni={selectedAlumni}
       completedPct={completedPct}
       pendingPct={pendingPct}
-      totalAlumni={total}
-      page={page}
+      filtered={filtered}
       totalPages={totalPages}
+      paginated={paginated}
       startEntry={startEntry}
       endEntry={endEntry}
-      filteredLength={filtered.length}
-      selectedAlumni={selectedAlumni}
-      onSelectAlumni={handleSelectAlumni}
-      onCloseModal={handleCloseModal}
-      onPrevPage={handlePrevPage}
-      onNextPage={handleNextPage}
-      onGoToPage={handleGoToPage}
+      setSearch={handleSearch}
+      setPage={setPage}
+      setSelectedAlumni={handleSelectAlumni}
+      updateStatus={updateStatus}
+      showFilter={showFilter}
+      showUploadModal={showUploadModal}
       onOpenFilter={handleOpenFilter}
-      onExport={handleExport}
-      showFilterModal={showFilterModal}
       onCloseFilter={handleCloseFilter}
+      onOpenUploadModal={handleOpenUploadModal}
+      onCloseUploadModal={handleCloseUploadModal}
+      onUploadSuccess={handleUploadSuccess}
       onApplyFilters={handleApplyFilters}
       onClearFilters={handleClearFilters}
+      onExport={handleExport}
       filters={filters}
       availablePrograms={availablePrograms}
       availableBatches={availableBatches}
-      employmentOptions={employmentOptions}
-      surveyOptions={surveyOptions}
       hasActiveFilters={hasActiveFilters}
+      onPrevPage={handlePrevPage}
+      onNextPage={handleNextPage}
+      onGoToPage={handleGoToPage}
+      onCloseModal={handleCloseModal}
     />
   );
 }

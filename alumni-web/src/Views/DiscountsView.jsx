@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { truncateHtml } from '../utils/textHelpers';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const PriceTagIcon = () => (
@@ -28,7 +29,7 @@ const CalendarIcon = () => (
   </svg>
 );
 
-// ── Discount Card — with expand toggle ────────────────────────────────────────
+// ── Discount Card — with expand toggle (NO modal) ─────────────────────────────
 const DiscountCard = ({ item }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -84,13 +85,13 @@ const DiscountCard = ({ item }) => {
           </p>
         </div>
 
-        {/* Discount description */}
+        {/* ✅ FIXED: Discount description - strip HTML for clean preview */}
         <p style={{
           fontFamily: 'Arimo, Arial', fontWeight: 600,
           fontSize: '12px', lineHeight: '18px',
           color: 'rgba(255,255,255,0.75)', margin: '0 0 14px 0',
         }}>
-          {item.discount}
+          {truncateHtml(item.discount, expanded ? 500 : 80)}
         </p>
 
         {/* Divider */}
@@ -131,7 +132,7 @@ const DiscountCard = ({ item }) => {
         </div>
       </div>
 
-      {/* ── Toggle button ── */}
+      {/* ── Toggle button (expand/collapse only, NO modal) ── */}
       {hasDetails && (
         <div style={{ padding: '0 19px 20px' }}>
           <button
@@ -171,7 +172,7 @@ const DiscountCard = ({ item }) => {
   );
 };
 
-// ── Main View ─────────────────────────────────────────────────────────────────
+// ── Main View (NO modal) ──────────────────────────────────────────────────────
 const DiscountsView = ({
   isMobile, isTablet,
   categories, activeCategory, setActiveCategory,
@@ -197,7 +198,7 @@ const DiscountsView = ({
         position:    'relative',
       }}>
 
-        {/* ── Notification Bell ── */}
+        {/* ── Notification Bell ── (keep as is) */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:      isMobile ? '24px' : '37px',
@@ -421,7 +422,7 @@ const DiscountsView = ({
           </div>
         </div>
 
-        {/* ── Cards grid — alignItems: start keeps cards top-aligned so expansion pushes rows below only ── */}
+        {/* ── Cards grid ── */}
         {filtered.length > 0 ? (
           <div style={{
             display: 'grid',

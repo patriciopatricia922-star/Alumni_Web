@@ -39,10 +39,11 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-const ModalFooter = ({ onCancel, createLabel, loading }) => (
+// FIXED: Added onSubmit prop
+const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
     <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" disabled={loading}>
+    <button className="btn-create" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
@@ -131,13 +132,19 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
+    console.log('[AnnouncementModal] Submitting form:', form);
     setLoading(true);
-    if (mode === 'edit' && announcement) {
-      await onUpdate(announcement.id, form);
-    } else {
-      await onCreate(form);
+    try {
+      if (mode === 'edit' && announcement) {
+        await onUpdate(announcement.id, form);
+      } else {
+        await onCreate(form);
+      }
+    } catch (error) {
+      console.error('[AnnouncementModal] Error:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -182,7 +189,12 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
           <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
         </Field>
 
-        <ModalFooter onCancel={onClose} createLabel={mode === 'edit' ? 'Update Announcement' : 'Create Announcement'} loading={loading} />
+        <ModalFooter 
+          onCancel={onClose} 
+          createLabel={mode === 'edit' ? 'Update Announcement' : 'Create Announcement'} 
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
       </div>
     </Modal>
   );

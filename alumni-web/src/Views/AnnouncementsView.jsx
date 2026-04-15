@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import megaphoneIcon from '../assets/megaphone_ic.svg';
-import calenderIcon  from '../assets/calendar_ic.svg';
-import documentIcon  from '../assets/document_ic.svg';
+import calenderIcon from '../assets/calendar_ic.svg';
+import documentIcon from '../assets/document_ic.svg';
+import { truncateHtml, createMarkup } from '../utils/textHelpers';
 
 const CATEGORY_ICONS = {
   'News':       megaphoneIcon,
@@ -18,9 +19,10 @@ const ClockIcon = () => (
   </svg>
 );
 
-// ── Announcement Card ──────────────────────────────────────────────────────────
+// ── Announcement Card (FIXED: Proper HTML rendering) ──────────────────────────
 const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   const [hovered, setHovered] = useState(false);
+  
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -85,7 +87,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           </div>
         </div>
 
-        {/* Text */}
+        {/* Text - FIXED: Using truncateHtml for clean preview */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3 style={{
             fontFamily: 'Arimo, Arial', fontWeight: 700,
@@ -95,6 +97,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           }}>
             {announcement.title}
           </h3>
+          {/* ✅ FIXED: Strip HTML for clean preview text */}
           <p style={{
             fontFamily: 'Arimo, Arial', fontWeight: 400,
             fontSize: isMobile ? '12px' : '14px', lineHeight: '1.6',
@@ -102,7 +105,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             display: '-webkit-box', WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}>
-            {announcement.description}
+            {truncateHtml(announcement.description, 100)}
           </p>
         </div>
 
@@ -120,6 +123,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
         display: 'flex', alignItems: 'center',
       }}>
         <button
+          onClick={() => {/* Navigate to announcement detail */}}
           style={{
             height: '36px', padding: '0 18px',
             borderRadius: '14px', border: 'none',
@@ -143,6 +147,99 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   );
 };
 
+// ── Announcement Detail Modal (FIXED: Renders HTML properly) ──────────────────
+const AnnouncementDetailModal = ({ announcement, onClose, isMobile }) => {
+  if (!announcement) return null;
+  
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.85)',
+      backdropFilter: 'blur(8px)',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+    }} onClick={onClose}>
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(0,62,166,0.95) 0%, rgba(0,34,102,0.95) 100%)',
+        borderRadius: '24px',
+        maxWidth: '800px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        padding: isMobile ? '24px' : '32px',
+        border: '1px solid rgba(255,255,255,0.2)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+      }} onClick={(e) => e.stopPropagation()}>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+          <h2 style={{
+            fontFamily: 'Arimo, Arial', fontWeight: 700,
+            fontSize: isMobile ? '22px' : '28px',
+            color: '#FFED97',
+            margin: 0,
+          }}>{announcement.title}</h2>
+          <button onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFF',
+            fontSize: '20px',
+          }}>✕</button>
+        </div>
+        
+        <div style={{ marginBottom: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <ClockIcon />
+          <span style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
+            {announcement.time}
+          </span>
+          <span style={{
+            padding: '4px 12px',
+            background: 'rgba(43,114,251,0.2)',
+            borderRadius: '20px',
+            fontSize: '12px',
+            color: '#2B72FB',
+          }}>{announcement.category}</span>
+        </div>
+        
+        {/* ✅ FIXED: Render HTML content properly in detail view */}
+        <div 
+          className="announcement-full-content"
+          style={{
+            fontFamily: 'Arimo, Arial',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            color: 'rgba(255,255,255,0.9)',
+          }}
+          dangerouslySetInnerHTML={createMarkup(announcement.description)}
+        />
+        
+        <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <button onClick={onClose} style={{
+            padding: '10px 24px',
+            background: 'rgba(43,114,251,0.85)',
+            border: 'none',
+            borderRadius: '12px',
+            color: '#FFF',
+            fontFamily: 'Arimo, Arial',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main View ──────────────────────────────────────────────────────────────────
 const AnnouncementsView = ({
   isMobile, isTablet,
@@ -155,6 +252,11 @@ const AnnouncementsView = ({
   navigate,
 }) => {
   const sidebarWidth = isTablet ? 200 : 229;
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+
+  const handleCardClick = (announcement) => {
+    setSelectedAnnouncement(announcement);
+  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#002263' }}>
@@ -299,7 +401,7 @@ const AnnouncementsView = ({
           </p>
         </div>
 
-        {/* ── Featured Banner ─────────────────────────────────────────────────── */}
+        {/* ── Featured Banner (FIXED: HTML rendering) ────────────────────────── */}
         {!isMobile && (
           <div style={{
             position: 'relative',
@@ -329,7 +431,12 @@ const AnnouncementsView = ({
               <h2 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isTablet ? '20px' : '25px', lineHeight: '1.3', letterSpacing: '-0.35px', color: '#FFFFFF', margin: '0 0 8px 0' }}>
                 Alumni Tracer Survey
               </h2>
-              <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '13px', lineHeight: '22px', color: 'rgba(255,255,255,0.65)', margin: '0 0 16px 0' }}>
+              {/* ✅ FIXED: Strip HTML for preview */}
+              <p style={{
+                fontFamily: 'Arimo, Arial', fontWeight: 400,
+                fontSize: '13px', lineHeight: '22px',
+                color: 'rgba(255,255,255,0.65)', margin: '0 0 16px 0',
+              }}>
                 Your feedback matters! Complete our annual survey to help us improve the alumni experience and community engagement.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
@@ -363,10 +470,8 @@ const AnnouncementsView = ({
         {/* ── Filter bar ─────────────────────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '16px' : '24px', gap: '12px' }}>
 
-          {/* ── Wrapper covers both pill + button so dropdown aligns to pill ── */}
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
 
-            {/* Label pill */}
             <div style={{
               height: '37px', display: 'flex', alignItems: 'center',
               padding: '0 12px', gap: '8px',
@@ -387,7 +492,6 @@ const AnnouncementsView = ({
               </div>
             </div>
 
-            {/* Filter button */}
             <button
               onClick={() => setShowFilter(f => !f)}
               style={{
@@ -408,7 +512,6 @@ const AnnouncementsView = ({
               <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '13px', lineHeight: '14px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>FILTER</span>
             </button>
 
-            {/* Dropdown — left: 0 aligns it to the pill's left edge */}
             {showFilter && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 8px)', left: 0,
@@ -455,12 +558,23 @@ const AnnouncementsView = ({
             gap: isMobile ? '14px' : isTablet ? '18px' : '24px',
           }}>
             {filtered.map(a => (
-              <AnnouncementCard key={a.id} announcement={a} isMobile={isMobile} isTablet={isTablet} />
+              <div key={a.id} onClick={() => handleCardClick(a)} style={{ cursor: 'pointer' }}>
+                <AnnouncementCard announcement={a} isMobile={isMobile} isTablet={isTablet} />
+              </div>
             ))}
           </div>
         )}
 
       </div>
+
+      {/* Detail Modal */}
+      {selectedAnnouncement && (
+        <AnnouncementDetailModal 
+          announcement={selectedAnnouncement}
+          onClose={() => setSelectedAnnouncement(null)}
+          isMobile={isMobile}
+        />
+      )}
     </div>
   );
 };

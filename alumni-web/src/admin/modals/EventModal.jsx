@@ -7,7 +7,7 @@ import {
   FaAlignCenter, 
   FaAlignRight 
 } from 'react-icons/fa';
-import { FiImage, FiTrash2, FiUpload } from 'react-icons/fi';
+import { FiImage, FiTrash2 } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
@@ -40,16 +40,16 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-const ModalFooter = ({ onCancel, createLabel, loading }) => (
+// FIXED: Added onSubmit prop
+const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
     <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" disabled={loading}>
+    <button className="btn-create" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
 );
 
-// Rich Text Editor Component
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = React.useRef(null);
 
@@ -100,7 +100,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// Image Upload Component with Supabase Storage
 const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'event-images', folder = 'events' }) => {
   const [preview, setPreview] = useState(currentImage || null);
   const [uploading, setUploading] = useState(false);
@@ -134,14 +133,12 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'event-images',
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
       reader.readAsDataURL(file);
 
-      // Upload to Supabase
       const publicUrl = await uploadToSupabase(file);
       if (publicUrl) {
         onImageUpload(publicUrl);
@@ -227,20 +224,20 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-  setLoading(true);
-  try {
-    if (mode === 'edit' && event) {
-      await onUpdate(event.id, form);
-    } else {
-      await onCreate(form);
+    console.log('[EventModal] Submitting form:', form);
+    setLoading(true);
+    try {
+      if (mode === 'edit' && event) {
+        await onUpdate(event.id, form);
+      } else {
+        await onCreate(form);
+      }
+    } catch (error) {
+      console.error('[EventModal] Error:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Submit error:', error);
-    alert('Failed to save. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <Modal
@@ -298,7 +295,12 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
           <input className="field-input" placeholder="Enter event location" value={form.location} onChange={(e) => s('location', e.target.value)} />
         </Field>
 
-        <ModalFooter onCancel={onClose} createLabel={mode === 'edit' ? 'Update Event' : 'Create Event'} loading={loading} />
+        <ModalFooter 
+          onCancel={onClose} 
+          createLabel={mode === 'edit' ? 'Update Event' : 'Create Event'} 
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
       </div>
     </Modal>
   );

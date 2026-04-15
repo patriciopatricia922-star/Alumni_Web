@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import { truncateHtml, createMarkup, stripHtml } from '../utils/textHelpers';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const BriefcaseIcon = ({ size = 14, opacity = 0.85 }) => (
@@ -25,8 +26,165 @@ const MailIcon = () => (
   </svg>
 );
 
-// ── Shared Job Card ────────────────────────────────────────────────────────────
-const JobCard = ({ job, matchLabel, isMobile, isRecommended = false }) => {
+// ── Job Detail Modal (FIXED: Renders HTML properly) ───────────────────────────
+const JobDetailModal = ({ job, onClose, isMobile }) => {
+  if (!job) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.85)',
+      backdropFilter: 'blur(8px)',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+    }} onClick={onClose}>
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(0,62,166,0.95) 0%, rgba(0,34,102,0.95) 100%)',
+        borderRadius: '24px',
+        maxWidth: '800px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        padding: isMobile ? '24px' : '32px',
+        border: '1px solid rgba(43,114,251,0.3)',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+      }} onClick={(e) => e.stopPropagation()}>
+        
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+          <div>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(81,162,255,0.15)',
+              border: '1px solid #51A2FF',
+              borderRadius: '20px', padding: '4px 12px', marginBottom: '12px',
+            }}>
+              <BriefcaseIcon size={12} opacity={1} />
+              <span style={{ fontFamily: 'Arimo', fontSize: '11px', fontWeight: 700, color: '#51A2FF' }}>{job.category}</span>
+            </div>
+            <h2 style={{
+              fontFamily: 'Arimo, Arial', fontWeight: 700,
+              fontSize: isMobile ? '24px' : '32px',
+              color: '#FFED97',
+              margin: 0,
+            }}>{job.title}</h2>
+            <p style={{
+              fontFamily: 'Arimo, Arial',
+              fontSize: '16px',
+              color: 'rgba(255,255,255,0.7)',
+              margin: '8px 0 0 0',
+            }}>{job.company}</p>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFF',
+            fontSize: '20px',
+          }}>✕</button>
+        </div>
+        
+        {/* Job Image */}
+        {job.image && (
+          <div style={{
+            width: '100%',
+            height: '200px',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            marginBottom: '20px',
+          }}>
+            <img 
+              src={job.image} 
+              alt={job.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+        )}
+        
+        {/* Job Details */}
+        <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+          {job.location && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.485-2.015-4.5-4.5-4.5z" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" fill="none"/>
+                <circle cx="8" cy="6" r="1.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2"/>
+              </svg>
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>{job.location}</span>
+            </div>
+          )}
+          {job.date && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CalendarIcon />
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>{job.date}</span>
+            </div>
+          )}
+          {job.website && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MailIcon />
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.8)' }}>{job.website}</span>
+            </div>
+          )}
+        </div>
+        
+        {/* Tags */}
+        {job.tags && job.tags.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '12px', color: 'rgba(255,255,255,0.5)', marginBottom: '10px' }}>Requirements</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {job.tags.map((tag, i) => (
+                <span key={i} style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.8)',
+                }}>{tag}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/*  Render HTML content properly in detail view */}
+        <div 
+          className="job-full-content"
+          style={{
+            fontFamily: 'Arimo, Arial',
+            fontSize: '15px',
+            lineHeight: '1.7',
+            color: 'rgba(255,255,255,0.9)',
+            marginBottom: '24px',
+          }}
+          dangerouslySetInnerHTML={createMarkup(job.description)}
+        />
+        
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <button onClick={onClose} style={{
+            background: 'none',
+            border: 'none',
+            color: 'rgba(255,255,255,0.5)',
+            cursor: 'pointer',
+            fontSize: '13px',
+          }}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Shared Job Card (FIXED: HTML rendering for description) ────────────────────
+const JobCard = ({ job, matchLabel, isMobile, isRecommended = false, onCardClick }) => {
   const [hovered, setHovered] = useState(false);
 
   const borderColor = isRecommended
@@ -40,6 +198,10 @@ const JobCard = ({ job, matchLabel, isMobile, isRecommended = false }) => {
     : hovered
       ? '0px 0px 20px rgba(43,114,251,0.35), 0px 8px 24px rgba(0,0,0,0.4)'
       : '0px 0px 8px rgba(255,255,255,0.25)';
+
+  const handleCardClick = () => {
+    if (onCardClick) onCardClick(job);
+  };
 
   return (
     <div
@@ -55,7 +217,9 @@ const JobCard = ({ job, matchLabel, isMobile, isRecommended = false }) => {
         flexDirection: 'column',
         transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        cursor: 'pointer',
       }}
+      onClick={handleCardClick}
     >
       {/* Photo area */}
       <div style={{ width: '100%', height: '160px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
@@ -118,17 +282,29 @@ const JobCard = ({ job, matchLabel, isMobile, isRecommended = false }) => {
           <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '10px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.7px', margin: '0 0 7px 0' }}>
             Requirements
           </p>
-          {job.tags ? (
+          {job.tags && job.tags.length > 0 ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {job.tags.map((tag, i) => (
+              {job.tags.slice(0, 3).map((tag, i) => (
                 <span key={i} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '7px', padding: '3px 9px', fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
                   {tag}
                 </span>
               ))}
+              {job.tags.length > 3 && (
+                <span style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '7px', padding: '3px 9px', fontFamily: 'Arimo, Arial', fontWeight: 600, fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+                  +{job.tags.length - 3}
+                </span>
+              )}
             </div>
           ) : (
-            <p style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '12px', lineHeight: '20px', color: 'rgba(255,255,255,0.6)', margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {job.description}
+            //  Strip HTML for description preview
+            <p style={{
+              fontFamily: 'Arimo, Arial', fontWeight: 400,
+              fontSize: '12px', lineHeight: '20px',
+              color: 'rgba(255,255,255,0.6)', margin: 0,
+              display: '-webkit-box', WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical', overflow: 'hidden',
+            }}>
+              {truncateHtml(job.description, 100)}
             </p>
           )}
         </div>
@@ -198,6 +374,11 @@ const JobsView = ({
   const hasRecommended = recommended.length > 0;
   const recCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr';
   const allCols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr';
+  const [selectedJob, setSelectedJob] = useState(null);
+
+  const handleCardClick = (job) => {
+    setSelectedJob(job);
+  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial, sans-serif' }}>
@@ -210,7 +391,7 @@ const JobsView = ({
         boxSizing: 'border-box', overflowX: 'hidden', position: 'relative',
       }}>
 
-        {/* ── Notification Bell ──────────────────────────────────────────────── */}
+        {/* ── Notification Bell ── (keep as is - same pattern as previous) ── */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:   isMobile ? '24px' : '37px',
@@ -350,7 +531,7 @@ const JobsView = ({
             )}
             <div style={{ display: 'grid', gridTemplateColumns: recCols, gap: isMobile ? '12px' : isTablet ? '16px' : '20px', marginBottom: 0 }}>
               {recommended.map(({ job, matchLabel }) => (
-                <JobCard key={job.id} job={job} matchLabel={matchLabel} isMobile={isMobile} isRecommended />
+                <JobCard key={job.id} job={job} matchLabel={matchLabel} isMobile={isMobile} isRecommended onCardClick={handleCardClick} />
               ))}
             </div>
 
@@ -362,7 +543,6 @@ const JobsView = ({
               alignItems: 'center', flexWrap: 'nowrap',
               marginBottom: isMobile ? '14px' : '20px',
             }}>
-              {/* Left — title */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                 <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile ? '15px' : '17px', color: '#FFFFFF' }}>All Jobs</span>
                 <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '8px', padding: '2px 9px' }}>
@@ -370,7 +550,6 @@ const JobsView = ({
                 </div>
               </div>
 
-              {/* Right — pill + filter button */}
               <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', flexShrink: 0 }}>
                 <div style={{
                   height: '37px', display: 'flex', alignItems: 'center',
@@ -446,7 +625,7 @@ const JobsView = ({
         {filtered.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: allCols, gap: isMobile ? '14px' : isTablet ? '18px' : '24px' }}>
             {filtered.map(job => (
-              <JobCard key={job.id} job={job} isMobile={isMobile} />
+              <JobCard key={job.id} job={job} isMobile={isMobile} onCardClick={handleCardClick} />
             ))}
           </div>
         ) : (
@@ -456,6 +635,15 @@ const JobsView = ({
         )}
 
       </div>
+
+      {/* Job Detail Modal */}
+      {selectedJob && (
+        <JobDetailModal 
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          isMobile={isMobile}
+        />
+      )}
     </div>
   );
 };

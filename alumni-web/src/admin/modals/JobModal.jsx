@@ -40,10 +40,11 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-const ModalFooter = ({ onCancel, createLabel, loading }) => (
+// FIXED: Added onSubmit prop
+const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
     <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" disabled={loading}>
+    <button className="btn-create" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
@@ -99,7 +100,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-// Image Upload Component for Jobs
 const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'job-images', folder = 'jobs' }) => {
   const [preview, setPreview] = useState(currentImage || null);
   const [uploading, setUploading] = useState(false);
@@ -227,20 +227,20 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-  setLoading(true);
-  try {
-    if (mode === 'edit' && job) {
-      await onUpdate(job.id, form);
-    } else {
-      await onCreate(form);
+    console.log('[JobModal] Submitting form:', form);
+    setLoading(true);
+    try {
+      if (mode === 'edit' && job) {
+        await onUpdate(job.id, form);
+      } else {
+        await onCreate(form);
+      }
+    } catch (error) {
+      console.error('[JobModal] Error:', error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Submit error:', error);
-    alert('Failed to save. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <Modal
@@ -305,7 +305,12 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
         </Field>
 
-        <ModalFooter onCancel={onClose} createLabel={mode === 'edit' ? 'Update Job' : 'Create Job'} loading={loading} />
+        <ModalFooter 
+          onCancel={onClose} 
+          createLabel={mode === 'edit' ? 'Update Job' : 'Create Job'} 
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
       </div>
     </Modal>
   );

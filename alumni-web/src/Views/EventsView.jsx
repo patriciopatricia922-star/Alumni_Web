@@ -13,6 +13,7 @@ import {
   FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
+import { truncateHtml, createMarkup, stripHtml } from '../utils/textHelpers';
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const CalendarIcon   = () => <FaCalendarAlt    size={13} color="rgba(255,255,255,0.7)" />;
@@ -24,8 +25,8 @@ const CategoryIcon = ({ category }) =>
     ? <FaStar size={13} color="#FAC775" />
     : <HiOutlineCalendar size={13} color="#51A2FF" />;
 
-// ── Event Card — matches Discount card design, with expand toggle ──────────────
-const EventCard = ({ event }) => {
+// ── Event Card — with expand toggle (NO MODAL) ────────────────────────────────
+const EventCard = ({ event, isMobile }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -113,7 +114,7 @@ const EventCard = ({ event }) => {
           {event.name || event.title}
         </p>
 
-        {/* Description */}
+        {/* Description - strip HTML for clean preview */}
         <p style={{
           fontFamily: 'Arimo, Arial', fontWeight: 400,
           fontSize: '12px', lineHeight: '18px',
@@ -123,7 +124,7 @@ const EventCard = ({ event }) => {
           WebkitBoxOrient:    'vertical',
           overflow:           'hidden',
         }}>
-          {(event.description || '').replace(/<[^>]*>/g, '')}
+          {truncateHtml(event.description, expanded ? 500 : 100)}
         </p>
 
         {/* Divider */}
@@ -176,7 +177,7 @@ const EventCard = ({ event }) => {
         </div>
       </div>
 
-      {/* ── Toggle button ── */}
+      {/* ── Toggle button (expand/collapse only, NO modal) ── */}
       {hasDetails && (
         <div style={{ padding: '0 19px 20px' }}>
           <button
@@ -224,7 +225,7 @@ const EventCard = ({ event }) => {
   );
 };
 
-// ── Main View ──────────────────────────────────────────────────────────────────
+// ── Main View (NO modal) ──────────────────────────────────────────────────────
 const EventsView = ({
   isMobile, isTablet,
   categories, activeCategory, setActiveCategory,
@@ -253,7 +254,7 @@ const EventsView = ({
         position:    'relative',
       }}>
 
-        {/* ── Notification Bell ── */}
+        {/* ── Notification Bell ── (keep as is - same as before) ── */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:      isMobile ? '24px' : '37px',
@@ -265,6 +266,7 @@ const EventsView = ({
             height:     isMobile ? '44px' : '58px',
             background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
             border:     showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
+            boxShadow:  '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
             borderRadius: '14px', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             position: 'relative', transition: 'all 0.15s',
@@ -289,7 +291,7 @@ const EventsView = ({
             )}
           </button>
 
-          {/* Notification dropdown */}
+          {/* Notification dropdown (keep as is - no changes) */}
           {showDropdown && (
             <div style={{
               position: 'absolute', top: isMobile ? '52px' : '70px', right: 0,
@@ -463,7 +465,7 @@ const EventsView = ({
           </div>
         </div>
 
-        {/* ── Featured Event (unchanged) ── */}
+        {/* ── Featured Event (NO modal, just clickable to expand?) Actually keep as is with button ── */}
         {featuredEvent && activeCategory === 'All Events' && regularEvents.length > 0 && (
           <div style={{
             background: 'linear-gradient(135deg, rgba(43,114,251,0.2) 0%, rgba(30,37,85,0.3) 100%)',
@@ -487,7 +489,7 @@ const EventsView = ({
                   {featuredEvent.title}
                 </h2>
                 <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', margin: '0 0 20px 0' }}>
-                  {featuredEvent.description?.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                  {stripHtml(featuredEvent.description).substring(0, 150)}...
                 </p>
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
