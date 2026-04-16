@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
+import AdminSidebar from "./components/AdminSidebar";
 import SurveyMgmtView from "./views/SurveyMgmtView";
 
 // ============================================================================
@@ -140,6 +141,37 @@ const TYPE_LABELS = {
   title: "Section Title",
 };
 
+// ============================ LOADING SCREEN COMPONENT (MOVED OUTSIDE) ============================
+const LoadingScreen = ({ message }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return (
+    <>
+      <AdminSidebar />
+      <div style={{ 
+        marginLeft: isMobile ? 0 : "229px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        height: "100vh",
+        background: "#E1ECF7",
+        fontFamily: "Lexend, sans-serif",
+        color: "#6A7282",
+        fontSize: "14px"
+      }}>
+        {message}
+      </div>
+    </>
+  );
+};
+
 // ============================================================================
 // SurveyManagement Component - Main logic controller
 // ============================================================================
@@ -172,9 +204,6 @@ export default function SurveyManagement() {
   const [branchTargetQ, setBranchTargetQ] = useState(null); // Target question for branch scroll
 
   // ============================ TOAST MANAGEMENT ============================
-  // addToast - Displays a temporary notification message
-  // @param message - Text to display in toast
-  // @param type - "success" | "edit" | "copy" | "delete"
   const addToast = useCallback((message, type = "success") => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type, exiting: false }]);
@@ -185,13 +214,9 @@ export default function SurveyManagement() {
   }, []);
 
   // ============================ CONFIRMATION MODAL ============================
-  // askConfirm - Shows delete confirmation dialog
-  // @param message - Confirmation prompt text
-  // @param onConfirm - Callback function when user confirms
   const askConfirm = (message, onConfirm) => setConfirmState({ message, onConfirm });
 
   // ============================ DATA LOADING ============================
-  // useEffect - Loads saved survey config from Supabase on component mount
   useEffect(() => {
     const load = async () => {
       const { data, error } = await supabaseAdmin
@@ -202,7 +227,7 @@ export default function SurveyManagement() {
         .single();
 
       if (error || !data?.config?.sections?.length) {
-        setSurvey(DEFAULT_SURVEY);  // Use default if no config exists
+        setSurvey(DEFAULT_SURVEY);
       } else {
         setConfigId(data.id);
         setSurvey(data.config);
@@ -212,10 +237,6 @@ export default function SurveyManagement() {
   }, []);
 
   // ============================ PUBLISH LOGIC ============================
-  // handlePublish - Saves current survey config to Supabase database
-  // - Updates existing config if configId exists
-  // - Creates new config if no configId exists
-  // - Sets status states for UI feedback
   const handlePublish = async () => {
     if (!survey) return;
     setSaving(true);
@@ -244,7 +265,6 @@ export default function SurveyManagement() {
   };
 
   // ============================ BRANCHING SCROLL LOGIC ============================
-  // useEffect - Scrolls to and highlights target question when entering branch mode
   useEffect(() => {
     if (branchMode && branchTargetQ) {
       requestAnimationFrame(() => {
@@ -259,11 +279,6 @@ export default function SurveyManagement() {
   }, [branchMode, branchTargetQ]);
 
   // ============================ QUESTION CRUD OPERATIONS ============================
-  
-  // updateQuestion - Updates a specific question's properties
-  // @param sIdx - Section index
-  // @param qIdx - Question index within section
-  // @param patch - Object containing properties to update
   const updateQuestion = (sIdx, qIdx, patch) => {
     setSurvey(prev => {
       const s = prev.sections.map((sec, si) => si !== sIdx ? sec : {
@@ -272,15 +287,11 @@ export default function SurveyManagement() {
       });
       return { ...prev, sections: s };
     });
-    // Mark as dirty if currently editing this question
     if (editingQ?.sIdx === sIdx && editingQ?.qIdx === qIdx) {
       setDirtyQ(true);
     }
   };
 
-  // openEdit - Opens edit mode for a question and saves its original state
-  // @param sIdx - Section index
-  // @param qIdx - Question index
   const openEdit = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
     editSnapshotRef.current = JSON.stringify(q);
@@ -288,14 +299,12 @@ export default function SurveyManagement() {
     setEditingQ({ sIdx, qIdx });
   };
 
-  // closeEdit - Closes edit mode without saving changes
   const closeEdit = () => {
     setEditingQ(null);
     setDirtyQ(false);
     editSnapshotRef.current = null;
   };
 
-  // saveEdit - Closes edit mode and shows success toast
   const saveEdit = (sIdx, qIdx) => {
     setEditingQ(null);
     setDirtyQ(false);
@@ -303,10 +312,6 @@ export default function SurveyManagement() {
     addToast("Question updated successfully", "edit");
   };
 
-  // deleteQuestion - Deletes a question after confirmation
-  // @param sIdx - Section index
-  // @param qIdx - Question index
-  // @param label - Question label for confirmation message
   const deleteQuestion = (sIdx, qIdx, label) => {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
@@ -323,8 +328,6 @@ export default function SurveyManagement() {
     );
   };
 
-  // deleteSection - Deletes an entire section after confirmation
-  // @param index - Section index to delete
   const deleteSection = (index) => {
     const sectionTitle = survey.sections[index].title;
     askConfirm(
@@ -341,9 +344,6 @@ export default function SurveyManagement() {
     );
   };
 
-  // duplicateQuestion - Creates a copy of a question and inserts it after original
-  // @param sIdx - Section index
-  // @param qIdx - Question index
   const duplicateQuestion = (sIdx, qIdx) => {
     setSurvey(prev => {
       const sec = prev.sections[sIdx];
@@ -358,8 +358,6 @@ export default function SurveyManagement() {
     addToast("Question duplicated", "copy");
   };
 
-  // addQuestion - Adds a new empty question to a section
-  // @param sIdx - Section index
   const addQuestion = (sIdx) => {
     setSurvey(prev => ({
       ...prev,
@@ -369,7 +367,6 @@ export default function SurveyManagement() {
     }));
   };
 
-  // addSection - Adds a new empty section to the end
   const addSection = () => {
     setSurvey(prev => ({
       ...prev,
@@ -382,20 +379,17 @@ export default function SurveyManagement() {
   };
 
   // ============================ OPTION CRUD OPERATIONS ============================
-  // addOption - Adds a new option to a multiple choice question
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
     updateQuestion(sIdx, qIdx, { options: [...(q.options || []), "New Option"] });
   };
 
-  // updateOption - Updates a specific option text
   const updateOption = (sIdx, qIdx, oIdx, val) => {
     const opts = [...survey.sections[sIdx].questions[qIdx].options];
     opts[oIdx] = val;
     updateQuestion(sIdx, qIdx, { options: opts });
   };
 
-  // deleteOption - Removes an option from a multiple choice question
   const deleteOption = (sIdx, qIdx, oIdx) => {
     const opts = survey.sections[sIdx].questions[qIdx].options.filter((_, i) => i !== oIdx);
     updateQuestion(sIdx, qIdx, { options: opts });
@@ -407,58 +401,41 @@ export default function SurveyManagement() {
     s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title }))
   ) || [];
 
-  // ============================ LOADING STATE ============================
-  if (!survey) return null; // Loading handled by view component
+  // ============================ LOADING STATE (AFTER ALL HOOKS) ============================
+  // IMPORTANT: Conditional return MUST come AFTER all hooks are declared
+  if (!survey) {
+    return <LoadingScreen message="Loading survey configuration..." />;
+  }
 
   // ============================ RENDER ============================
-  // Pass all logic handlers and state to the UI component
   return (
     <SurveyMgmtView
-      // Core data
       survey={survey}
       setSurvey={setSurvey}
       configId={configId}
       setConfigId={setConfigId}
-      
-      // Section navigation
       activeSection={activeSection}
       setActiveSection={setActiveSection}
-      
-      // UI modes
       branchMode={branchMode}
       setBranchMode={setBranchMode}
       editingQ={editingQ}
       setEditingQ={setEditingQ}
-      
-      // Edit tracking
       dirtyQ={dirtyQ}
       editSnapshotRef={editSnapshotRef}
-      
-      // Publication state
       saving={saving}
       status={status}
-      
-      // Branching data
       branches={branches}
       setBranches={setBranches}
       highlightQ={highlightQ}
       branchTargetQ={branchTargetQ}
       setBranchTargetQ={setBranchTargetQ}
-      
-      // Toast notifications
       toasts={toasts}
       addToast={addToast}
-      
-      // Confirmation modal
       confirmState={confirmState}
       setConfirmState={setConfirmState}
       askConfirm={askConfirm}
-      
-      // Data constants
       TYPE_LABELS={TYPE_LABELS}
       DEFAULT_SURVEY={DEFAULT_SURVEY}
-      
-      // Question handlers
       updateQuestion={updateQuestion}
       deleteQuestion={deleteQuestion}
       duplicateQuestion={duplicateQuestion}
@@ -466,20 +443,12 @@ export default function SurveyManagement() {
       openEdit={openEdit}
       closeEdit={closeEdit}
       saveEdit={saveEdit}
-      
-      // Section handlers
       addSection={addSection}
       deleteSection={deleteSection}
-      
-      // Option handlers
       addOption={addOption}
       updateOption={updateOption}
       deleteOption={deleteOption}
-      
-      // Publish handler
       handlePublish={handlePublish}
-      
-      // Derived data
       currentSection={currentSection}
       allQuestions={allQuestions}
     />

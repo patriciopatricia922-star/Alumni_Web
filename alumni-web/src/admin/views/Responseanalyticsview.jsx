@@ -1,589 +1,615 @@
-import React, { useState, useEffect } from 'react';
+// ============================================================================
+// THIS IS THE UI.
+// ============================================================================
+// Purpose: Renders all visual components using friend's exact design with
+//          proper font styling, responsive grids, and modal functionality.
+// ============================================================================
+
+import React, { useRef, useEffect, useState } from 'react';
 import {
-  HiOutlineChatBubbleLeftRight,
-  HiOutlineChevronDown,
-  HiOutlineStar,
-} from 'react-icons/hi2';
-import {
-  FaSmile,
-  FaMeh,
-  FaFrown,
-  FaBrain,
-  FaChartLine,
-} from 'react-icons/fa';
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  BarChart, Bar, LineChart, Line,
+  PieChart, Pie, Cell, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
-import '../styles/Responseanalytics.css';
+import '../styles/ResponseAnalytics.css';
 
-// AI Service URL
-// const AI_BASE_URL = 'http://localhost:8000/api';
-
-// ── Which overview cards show per section ─────────────────────────────────────
-const SECTION_CARDS = {
-  'All Sections':             ['gender','age','boardExam','certification','employment','salary','timeToJob','skills','rating','sentiment'],
-  'Personal Information':     ['gender','age'],
-  'Educational Information':  ['boardExam','certification'],
-  'Certification Achievement':['certification'],
-  'Employment Information':   ['employment','salary'],
-  'Job Search Experience':    ['timeToJob'],
-  'Skills & Competencies':    ['skills'],
-  'Feedback & Engagement':    ['rating','sentiment'],
-};
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-const TabSwitcher = ({ pageTabs, activePage, setActivePage }) => (
-  <div className="ra-tab-switcher-wrap">
-    <div className="ra-tab-switcher">
-      {pageTabs.map((tab) => (
-        <button
-          key={tab.key}
-          className={`ra-tab-btn${activePage === tab.key ? ' active' : ''}`}
-          onClick={() => setActivePage(tab.key)}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  </div>
+// ============================ ICONS ============================
+const IconExport = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 2v8M5 7l3 3 3-3" stroke="#314158" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M2 12h12" stroke="#314158" strokeWidth="1.33" strokeLinecap="round"/>
+  </svg>
 );
 
-const TopFilterRow = ({ selectedSection, setSelectedSection, sectionOptions }) => (
-  <div className="ra-top-filter-row">
-    <div className="ra-filter-select-wrap">
-      <HiOutlineChatBubbleLeftRight size={15} className="ra-filter-left-icon" />
-      <select
-        className="ra-filter-select"
-        value={selectedSection}
-        onChange={(e) => setSelectedSection(e.target.value)}
-      >
-        {sectionOptions.map((option) => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
-      <HiOutlineChevronDown size={15} className="ra-filter-right-icon" />
-    </div>
-  </div>
-);
+// ============================ COLORS ============================
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
-const CardTitle = ({ icon, title, subtitle, rightText }) => (
-  <div className="ra-card-heading">
-    <div className="ra-card-title-row">
-      <div className="ra-card-title-left">
-        {icon && <span className="ra-card-icon">{icon}</span>}
-        <h3>{title}</h3>
-      </div>
-      {rightText && <span className="ra-card-right-text">{rightText}</span>}
-    </div>
-    {subtitle && <p className="ra-card-subtitle">{subtitle}</p>}
-  </div>
-);
+// ============================ CHART WITH RESIZE OBSERVER ============================
+const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = useRef(null);
 
-const DoughnutCard = ({ title, rightText, items = [] }) => {
-  const total = items.reduce((sum, item) => sum + (item.value || 0), 0);
-  let accumulated = 0;
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  const gradient = total
-    ? items.map((item) => {
-        const start = (accumulated / total) * 100;
-        accumulated += item.value || 0;
-        const end = (accumulated / total) * 100;
-        return `${item.color} ${start}% ${end}%`;
-      }).join(', ')
-    : '#E2E8F0 0% 100%';
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
 
-  return (
-    <section className="ra-card ra-card-half">
-      <CardTitle title={title} rightText={rightText} />
-      <div className="ra-doughnut-block">
-        <div className="ra-doughnut-chart" style={{ background: `conic-gradient(${gradient})` }}>
-          <div className="ra-doughnut-center">
-            <strong>{total}</strong>
-            <span>total</span>
-          </div>
-        </div>
-        <div className="ra-legend-inline">
-          {items.map((item) => (
-            <div key={item.label} className="ra-legend-inline-item">
-              <span className="ra-legend-dot" style={{ background: item.color }} />
-              <span>{item.label}</span>
-              <span className="ra-legend-inline-pct">{item.percent}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+    // Initial update
+    updateWidth();
 
-const RatingBreakdownCard = ({ ratingBreakdown = [] }) => (
-  <section className="ra-card ra-card-half">
-    <CardTitle title="Rating Breakdown" subtitle="Alumni satisfaction scores" />
-    <div className="ra-rating-list">
-      {ratingBreakdown.map((item) => (
-        <div key={item.label} className="ra-rating-row">
-          <span className="ra-rating-label">{item.label}</span>
-          <div className="ra-rating-bar-track">
-            <div
-              className="ra-rating-bar-fill"
-              style={{ width: `${item.percent}%`, background: item.color }}
-            >
-              {item.count > 0 && <span>{item.count}</span>}
-            </div>
-          </div>
-          <span className="ra-rating-percent">{item.percent}%</span>
-        </div>
-      ))}
-    </div>
-  </section>
-);
-
-// ── Enhanced Overall Sentiment Card with AI Insights ──────────────────────────
-const OverallSentimentCard = ({ sentiment }) => {
-  const fullStars = Math.floor(sentiment?.score || 0);
-  
-  return (
-    <section className="ra-card ra-card-half ra-sentiment-card">
-      <CardTitle title="Overall Sentiment" subtitle="Average satisfaction rating" />
-      
-      <div className="ra-sentiment-left" style={{ width: '100%', textAlign: 'center' }}>
-        <div className="ra-sentiment-score">{sentiment?.score ?? 0}</div>
-        <div className="ra-stars">
-          {[...Array(5)].map((_, index) => (
-            <HiOutlineStar key={index} size={22} className={index < fullStars ? 'filled' : ''} />
-          ))}
-        </div>
-        <div className="ra-sentiment-theme-pill">
-          {(sentiment?.keyword || sentiment?.quote || 'NO FEEDBACK YET').toUpperCase()}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const HorizontalBarCard = ({ title, subtitle, items = [], max = 100, compact = false }) => (
-  <section className={`ra-card ${compact ? 'ra-card-half' : 'ra-card-full'}`}>
-    <CardTitle title={title} subtitle={subtitle} />
-    <div className="ra-horizontal-chart">
-      {items.map((item) => (
-        <div key={item.label} className="ra-horizontal-row">
-          <span className="ra-horizontal-label" title={item.label}>{item.label}</span>
-          <div className="ra-horizontal-track">
-            <div
-              className="ra-horizontal-fill"
-              style={{ width: `${max ? ((item.value || 0) / max) * 100 : 0}%`, background: item.color }}
-            />
-          </div>
-          <span className="ra-horizontal-value">{item.value}</span>
-        </div>
-      ))}
-    </div>
-  </section>
-);
-
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="ra-chart-tooltip">
-      <div className="ra-chart-tooltip-title">{label}</div>
-      {payload.map((entry) => (
-        <div key={entry.dataKey} className="ra-chart-tooltip-row">
-          <span className="ra-chart-tooltip-dot" style={{ background: entry.color }} />
-          <span>{entry.name}</span>
-          <strong>{entry.value !== null && entry.value !== undefined ? `${entry.value}%` : 'No data'}</strong>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const LineChartCard = ({ title, subtitle, labels = [], series = [] }) => {
-  const chartData = labels.map((label, index) => {
-    const row = { label };
-    series.forEach((line) => { 
-      row[line.dataKey] = line.values?.[index] !== null && line.values?.[index] !== undefined 
-        ? line.values[index] 
-        : null; 
+    // Use ResizeObserver to detect size changes
+    const resizeObserver = new ResizeObserver(() => {
+      updateWidth();
     });
-    return row;
-  });
+    resizeObserver.observe(containerRef.current);
 
-  const hasData = chartData.some(row => 
-    series.some(line => row[line.dataKey] !== null)
-  );
+    // Also listen for window resize
+    window.addEventListener('resize', updateWidth);
 
-  if (!hasData) {
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
+  // If width is not yet available, show loading placeholder
+  if (containerWidth === 0) {
     return (
-      <section className="ra-card ra-card-full">
-        <CardTitle title={title} subtitle={subtitle} />
-        <div className="ra-empty-state">No data available for the selected period</div>
-      </section>
+      <div ref={containerRef} style={{ height: `${height}px`, width: '100%' }}>
+        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ color: '#94A3B8', fontSize: '12px' }}>Loading chart...</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <section className="ra-card ra-card-full ra-line-chart-card">
-      <div className="ra-line-chart-header">
-        <div className="ra-line-chart-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        </div>
-        <div>
-          <div className="ra-line-chart-title">{title}</div>
-          <div className="ra-line-chart-subtitle">{subtitle}</div>
-        </div>
-      </div>
-      
-      <div className="ra-recharts-wrap">
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={chartData} margin={{ top: 8, right: 30, left: 0, bottom: 8 }}>
-            <CartesianGrid stroke="#CCCCCC" strokeDasharray="4 4" vertical={false} />
-            <XAxis 
-              dataKey="label" 
-              tickLine={false} 
-              axisLine={{ stroke: '#666666', strokeWidth: 1 }}
-              tick={{ fill: '#666666', fontSize: 11, fontFamily: 'Arimo, Arial' }}
-              dy={8}
-            />
-            <YAxis
-              domain={[0, 100]}
-              ticks={[0, 25, 50, 75, 100]}
-              tickLine={false}
-              axisLine={{ stroke: '#666666', strokeWidth: 1 }}
-              tick={{ fill: '#666666', fontSize: 11, fontFamily: 'Arimo, Arial' }}
-              width={36}
-              dx={-8}
-            />
-            <Tooltip content={<ChartTooltip />} />
-            <Legend
-              verticalAlign="bottom"
-              height={48}
-              iconType="line"
-              wrapperStyle={{ 
-                color: '#475569', 
-                fontSize: '13px', 
-                fontFamily: 'Arimo, Arial',
-                paddingTop: '16px'
-              }}
-              formatter={(value) => {
-                if (value === 'passed') return 'Passed';
-                if (value === 'failed') return 'Failed';
-                if (value === 'certified') return 'Certified';
-                if (value === 'uncertified') return 'No Certification';
-                return value;
-              }}
-            />
-            {series.map((line) => (
-              <Line
-                key={line.dataKey}
-                type="monotone"
-                dataKey={line.dataKey}
-                name={line.name}
-                stroke={line.color}
-                strokeWidth={2}
-                dot={{ r: 4, strokeWidth: 2, fill: '#FFFFFF', stroke: line.color }}
-                activeDot={{ r: 6 }}
-                connectNulls={false}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      
-      {title === "Board Exam Pass Rate" && (
-        <div className="ra-centered-legend">
-          <div className="ra-legend-line">
-            <div className="ra-legend-line-color" style={{ background: '#22C55E' }}></div>
-            <span>Passed</span>
-          </div>
-          <div className="ra-legend-line">
-            <div className="ra-legend-line-color" style={{ background: '#EF4444' }}></div>
-            <span>Failed</span>
-          </div>
-        </div>
-      )}
-      
-      {title === "Certification Status" && (
-        <div className="ra-centered-legend">
-          <div className="ra-legend-line">
-            <div className="ra-legend-line-color" style={{ background: '#8B5CF6' }}></div>
-            <span>Certified</span>
-          </div>
-          <div className="ra-legend-line">
-            <div className="ra-legend-line-color" style={{ background: '#FB7185' }}></div>
-            <span>No Certification</span>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-};
-
-const ResponseItem = ({ item }) => (
-  <div className="ra-response-item">
-    <div className="ra-response-top">
-      <div>
-        <h4>{item.respondent}</h4>
-        <p>{item.section}</p>
-      </div>
-      <div className="ra-response-meta">
-        <div className="ra-response-stars">
-          {[...Array(5)].map((_, index) => (
-            <HiOutlineStar key={index} size={14} className={index < item.rating ? 'filled' : ''} />
-          ))}
-        </div>
-        <span>{item.submitted}</span>
-      </div>
-    </div>
-    <p className="ra-response-text">{item.response}</p>
-  </div>
-);
-
-// ── Overview page with section-aware filtering ────────────────────────────────
-const SurveyOverviewPage = ({
-  overviewCards,
-  ratingBreakdown,
-  selectedSection,
-  setSelectedSection,
-  sectionOptions,
-}) => {
-  const visible = SECTION_CARDS[selectedSection] || SECTION_CARDS['All Sections'];
-  const show = (key) => visible.includes(key);
-  
-  return (
-    <div className="ra-content-stack">
-      <TopFilterRow
-        selectedSection={selectedSection}
-        setSelectedSection={setSelectedSection}
-        sectionOptions={sectionOptions}
-      />
-
-      {/* Personal ──────────────────────────────────── */}
-      {(show('gender') || show('age')) && (
-        <div className="ra-grid-two">
-          {show('gender') && (
-            <DoughnutCard title="Gender Distribution" rightText="%" items={overviewCards.genderDistribution} />
-          )}
-          {show('age') && (
-            <HorizontalBarCard
-              title="Age Distribution"
-              subtitle="Based on birthdays from saved survey responses"
-              items={overviewCards.ageDistribution}
-              max={overviewCards.ageDistributionMax}
-              compact
-            />
-          )}
-        </div>
-      )}
-
-      {/* Educational ───────────────────────────────── */}
-      {show('boardExam') && overviewCards.boardExamPassRate && (
-        <LineChartCard
-          title="Board Exam Pass Rate"
-          subtitle="Survey entries with board exam results"
-          labels={overviewCards.boardExamPassRate.labels}
-          series={[
-            { dataKey: 'passed', name: 'passed', color: '#22C55E', values: overviewCards.boardExamPassRate.passed },
-            { dataKey: 'failed', name: 'failed', color: '#EF4444', values: overviewCards.boardExamPassRate.failed },
-          ]}
-        />
-      )}
-
-      {show('certification') && overviewCards.certificationStatus && (
-        <LineChartCard
-          title="Certification Status"
-          subtitle="Survey entries grouped by graduation or submission year"
-          labels={overviewCards.certificationStatus.labels}
-          series={[
-            { dataKey: 'certified', name: 'certified', color: '#8B5CF6', values: overviewCards.certificationStatus.certified },
-            { dataKey: 'uncertified', name: 'uncertified', color: '#FB7185', values: overviewCards.certificationStatus.uncertified },
-          ]}
-        />
-      )}
-
-      {/* Employment ────────────────────────────────── */}
-      {(show('employment') || show('salary')) && (
-        <div className="ra-grid-two">
-          {show('employment') && (
-            <DoughnutCard title="Employment Status" rightText="%" items={overviewCards.employmentStatus} />
-          )}
-          {show('salary') && (
-            <HorizontalBarCard
-              title="Salary Range"
-              items={overviewCards.salaryRange}
-              max={overviewCards.salaryRangeMax}
-              compact
-            />
-          )}
-        </div>
-      )}
-
-      {/* Job Search ────────────────────────────────── */}
-      {show('timeToJob') && (
-        <HorizontalBarCard
-          title="Time to First Job"
-          subtitle="Based on saved survey responses"
-          items={overviewCards.timeToFirstJob}
-          max={overviewCards.timeToFirstJobMax}
-        />
-      )}
-
-      {/* Skills ────────────────────────────────────── */}
-      {show('skills') && (
-        <HorizontalBarCard
-          title="Top Skills"
-          subtitle="Most mentioned competencies from alumni responses"
-          items={overviewCards.topSkills}
-          max={overviewCards.topSkillsMax}
-        />
-      )}
-
-      {/* Feedback ──────────────────────────────────── */}
-      {(show('rating') || show('sentiment')) && (
-        <div className="ra-grid-two">
-          {show('rating') && <RatingBreakdownCard ratingBreakdown={ratingBreakdown} />}
-          {show('sentiment') && (
-            <OverallSentimentCard sentiment={overviewCards.sentiment} />
-          )}
-        </div>
-      )}
-
-      {/* Empty state when a section has no charts */}
-      {visible.length === 0 && (
-        <section className="ra-card ra-card-full">
-          <p className="ra-inline-message">No charts available for this section.</p>
-        </section>
-      )}
+    <div ref={containerRef} style={{ height: `${height}px`, width: '100%' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        {children}
+      </ResponsiveContainer>
     </div>
   );
 };
 
-const SurveyResponsesPage = ({
-  surveyResponses,
-  selectedSection,
-  setSelectedSection,
-  sectionOptions,
-}) => {
-  const [aiInsights, setAiInsights] = useState(null);
-  const [loadingAI, setLoadingAI] = useState(true);
-  
+// ============================ RESPONSE MODAL ============================
+const ResponseModal = ({ data, onClose }) => {
   useEffect(() => {
-    const fetchAIInsights = async () => {
-      try {
-        const response = await fetch(`${AI_BASE_URL}/ai/feedback-insights`);
-        const data = await response.json();
-        if (data.status === 'success') {
-          setAiInsights(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch AI insights:', error);
-      } finally {
-        setLoadingAI(false);
-      }
-    };
-    fetchAIInsights();
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => (document.body.style.overflow = "");
   }, []);
-  
+
+  const StarDisplay = ({ rating }) => (
+    <span style={{ color: "#F59E0B", fontSize: "15px", letterSpacing: 2 }}>
+      {"★".repeat(rating)}{"☆".repeat(5 - rating)}
+      <strong style={{ color: "#374151", fontSize: 12, marginLeft: 6 }}>{rating}/5</strong>
+    </span>
+  );
+
+  const Badge = ({ text, color = "blue" }) => {
+    const colors = {
+      blue: { bg: "#dbeafe", text: "#1d4ed8" },
+      purple: { bg: "#f3e8ff", text: "#6d28d9" },
+      green: { bg: "#dcfce7", text: "#166534" },
+      amber: { bg: "#fef3c7", text: "#92400e" },
+      red: { bg: "#fee2e2", text: "#991b1b" },
+      cyan: { bg: "#cffafe", text: "#0e7490" },
+      orange: { bg: "#ffedd5", text: "#9a3412" },
+    };
+    const c = colors[color] || colors.blue;
+    return (
+      <span style={{
+        background: c.bg, color: c.text,
+        padding: "3px 10px", borderRadius: 20,
+        fontSize: 11, fontWeight: 600, display: "inline-block"
+      }}>{text}</span>
+    );
+  };
+
+  const Field = ({ label, value }) => (
+    <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 3 }}>{label}</span>
+      <strong style={{ color: "#111827" }}>{value || "N/A"}</strong>
+    </div>
+  );
+
+  const SectionHeader = ({ title, color }) => (
+    <h3 style={{
+      borderLeft: `3px solid ${color}`, paddingLeft: 8,
+      fontSize: 13, fontWeight: 700, color: "#1f2937",
+      margin: "0 0 10px 0", textTransform: "uppercase", letterSpacing: 0.5
+    }}>{title}</h3>
+  );
+
+  const FullBlock = ({ label, children }) => (
+    <div style={{ background: "#fff5e7", padding: "10px 12px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 6 }}>{label}</span>
+      {children}
+    </div>
+  );
+
+  const completeAddress = [data.streetAddress, data.city, data.province, data.zipCode, data.country]
+    .filter(Boolean)
+    .join(", ");
+
   return (
-    <div className="ra-content-stack">
-      <TopFilterRow
-        selectedSection={selectedSection}
-        setSelectedSection={setSelectedSection}
-        sectionOptions={sectionOptions}
-      />
-      
-      {/* AI Summary Banner */}
-      {!loadingAI && aiInsights && aiInsights.total > 0 && (
-        <div className="ai-summary-banner">
-          <div className="ai-summary-icon">
-            <FaBrain size={18} />
+    <div className="ra-modal-overlay" onClick={onClose}>
+      <div className="ra-modal-card wide" onClick={(e) => e.stopPropagation()}>
+        <div style={{
+          position: "sticky", top: 0, zIndex: 10,
+          background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "16px 24px", borderRadius: "14px 14px 0 0"
+        }}>
+          <button className="ra-modal-close" onClick={onClose}>✕</button>
+          <h2 style={{ margin: 0, fontSize: 17, color: "#1f2937" }}>{data.name}</h2>
+          <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
+            {data.email && <span>{data.email} • </span>}
+            Batch {data.batch}
+          </p>
+        </div>
+
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24, overflowY: "auto", flex: 1 }}>
+          {/* Section 1: Personal Information */}
+          <div>
+            <SectionHeader title="Section 1 — Personal Information" color="#3B82F6" />
+            <div className="ra-grid" style={{ marginBottom: 10 }}>
+              <Field label="Student Number" value={data.studentNumber} />
+              <Field label="Gender" value={data.gender} />
+              <Field label="Birthday" value={data.birthday} />
+              <Field label="Civil Status" value={data.civilStatus} />
+              <Field label="Contact Number" value={data.contact} />
+              <Field label="Personal Email Address" value={data.email} />
+            </div>
+            <FullBlock label="Complete Address">
+              <strong style={{ color: "#111827" }}>{completeAddress || "N/A"}</strong>
+            </FullBlock>
           </div>
-          <div className="ai-summary-text">
-            <strong>AI Summary:</strong> {aiInsights.summary}
+
+          {/* Section 2: Educational Background */}
+          <div>
+            <SectionHeader title="Section 2 — Educational Background" color="#10B981" />
+            <FullBlock label="Degree Program Completed">
+              <strong>{data.program}</strong>
+              {data.programOther && <span style={{ display: "block", marginTop: 4, color: "#6b7280", fontSize: 12 }}>Specified: {data.programOther}</span>}
+            </FullBlock>
+            <FullBlock label="Reason(s) for Taking the Course">
+              <span style={{ color: "#374151", lineHeight: 1.6 }}>{data.reasonTakingCourse || "N/A"}</span>
+            </FullBlock>
+            <div className="ra-grid">
+              <Field label="Year Graduated" value={data.batch} />
+              <Field label="Distinction Received" value={data.distinction} />
+              <Field label="Plans for Post-Graduate Studies" value={data.postGradPlans} />
+              {data.postGradPlans === "Yes" && <Field label="Post-Graduate Course" value={data.postGradCourse} />}
+            </div>
+          </div>
+
+          {/* Section 3: Certification Achievements */}
+          <div>
+            <SectionHeader title="Section 3 — Certification Achievements" color="#F59E0B" />
+            <div className="ra-grid">
+              <Field label="Certiport Passer" value={data.certiportPasser} />
+              <Field label="Certifications Helped in Career" value={data.certificationUseful || "N/A"} />
+            </div>
+            <FullBlock label="Certiport Certifications Earned">
+              {data.certifications && data.certifications.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {data.certifications.map((c, i) => <Badge key={i} text={c} color="blue" />)}
+                </div>
+              ) : <span style={{ color: "#9ca3af" }}>None</span>}
+            </FullBlock>
+          </div>
+
+          {/* Section 4: Employment Information */}
+          <div>
+            <SectionHeader title="Section 4 — Employment Information" color="#EF4444" />
+            <div className="ra-grid">
+              <Field label="Job Related to Degree" value={data.jobRelatedToDegree} />
+              <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>Employment Status</span>
+                <span className={`ra-status ${data.status?.toLowerCase().replace(/ /g, '-') || ''}`}>{data.status}</span>
+              </div>
+            </div>
+            {data.status === "Employed" && (
+              <div className="ra-grid">
+                <Field label="Job Title / Position" value={data.jobTitle} />
+                <Field label="Company / Employer" value={data.company} />
+                <Field label="Type of Industry" value={data.industry} />
+                <Field label="Monthly Income Range" value={data.salary} />
+              </div>
+            )}
+          </div>
+
+          {/* Section 5: Skills & Competencies */}
+          <div>
+            <SectionHeader title="Section 5 — Skills & Competencies" color="#8B5CF6" />
+            <FullBlock label="Competencies Learned in College That Are Very Useful">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {(data.usefulCompetencies || []).map((s, i) => <Badge key={i} text={s} color="purple" />)}
+              </div>
+            </FullBlock>
+            <div style={{ background: "#fff5e7", borderRadius: 8, padding: "12px", fontSize: 13 }}>
+              <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
+                How well did NU Dasma prepare you? (1 = Lowest, 5 = Highest)
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[
+                  ["Communication Skills", data.commSkillRating],
+                  ["Information & Technology Skills", data.itSkillRating],
+                  ["Leadership Skills", data.leadershipRating],
+                  ["Critical & Problem-Solving Skills", data.criticalRating],
+                  ["Work Ethics / Professionalism", data.workEthicsRating],
+                ].map(([label, val], i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ color: "#374151", fontSize: 12 }}>{label}</span>
+                    <StarDisplay rating={Number(val) || 0} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 6: Feedback for the University */}
+          <div>
+            <SectionHeader title="Section 6 — Feedback & Alumni Engagement" color="#F97316" />
+            <div className="ra-grid">
+              <Field label="Satisfaction with NU Dasma Education" value={data.satisfaction} />
+              <Field label="Would Recommend NU Dasma to Others" value={data.wouldRecommend} />
+            </div>
+            <FullBlock label="Suggestions for Improving Academic Programs">
+              <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
+            </FullBlock>
           </div>
         </div>
-      )}
-      
-      <section className="ra-card ra-card-full">
-        <CardTitle
-          title="Survey Responses"
-          subtitle="View individual alumni feedback and response entries"
-        />
-        <div className="ra-response-list">
-          {surveyResponses.length ? (
-            surveyResponses.map((item) => <ResponseItem key={item.id} item={item} />)
-          ) : (
-            <div className="ra-empty-state">No response entries found for this section yet.</div>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
   );
 };
 
-// ── Main view ─────────────────────────────────────────────────────────────────
-const Responseanalyticsview = ({
-  activePage,
-  setActivePage,
-  pageTabs,
-  overviewCards,
-  ratingBreakdown,
-  surveyResponses,
+// ============================ MAIN VIEW COMPONENT ============================
+const ResponseAnalyticsView = ({
+  activeTab,
+  setActiveTab,
   selectedSection,
   setSelectedSection,
-  sectionOptions,
-  loading,
-  error,
+  showFilter,
+  setShowFilter,
+  selectedResponse,
+  setSelectedResponse,
+  stats,
+  respondents,
+  isSectionVisible,
+  renderStars,
   sidebar,
-}) => (
-  <div className="ra-layout">
-    {sidebar}
-    <main className="ra-main">
-      <div className="ra-page-header">
-        <h1>Response &amp; Analytics</h1>
-        <p>View and analyze survey responses</p>
+}) => {
+  const filterRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setShowFilter(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setShowFilter]);
+
+  // Check if data exists for charts
+  const hasGenderData = stats.genderDistribution && stats.genderDistribution.length > 0;
+  const hasAgeData = stats.ageDistribution && stats.ageDistribution.length > 0;
+  const hasBoardExamData = stats.boardExam && stats.boardExam.length > 0;
+  const hasCertificationData = stats.certification && stats.certification.length > 0;
+  const hasEmploymentData = stats.employment && stats.employment.length > 0;
+  const hasSalaryData = stats.salary && stats.salary.length > 0;
+  const hasTimeToJobData = stats.timeToJob && stats.timeToJob.length > 0;
+  const hasSkillsData = stats.skills && stats.skills.length > 0;
+  const hasSatisfactionData = stats.satisfactionScores && stats.satisfactionScores.length > 0;
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #E5ECF7F2; }
+      `}</style>
+
+      {sidebar}
+
+      <div className="ra-page">
+        {/* HEADER */}
+        <div className="ra-header">
+          <h1 className="ra-title">Response & Analytics</h1>
+          <p className="ra-subtitle">View and analyze alumni survey responses and insights.</p>
+        </div>
+
+        {/* TABS */}
+        <div className="ra-tabs-container">
+          <div className="ra-tabs">
+            <button className={`ra-tab ${activeTab === "overview" ? "active" : ""}`} onClick={() => setActiveTab("overview")}>Survey Overview</button>
+            <button className={`ra-tab ${activeTab === "responses" ? "active" : ""}`} onClick={() => setActiveTab("responses")}>Survey Responses</button>
+          </div>
+        </div>
+
+        {/* CONTROLS BAR */}
+        <div className="ra-controls">
+          {activeTab === "overview" && (
+            <div className="ra-controls-left">
+              <span>Total Responses:</span>
+              <span className="ra-total-value">{stats.totalResponses.toLocaleString()}</span>
+            </div>
+          )}
+          <div className="ra-controls-right">
+            {activeTab === "overview" && (
+              <div className="ra-filter-wrapper" ref={filterRef}>
+                <div className="ra-filter" onClick={(e) => { e.stopPropagation(); setShowFilter(!showFilter); }}>
+                  <span>{selectedSection}</span>
+                  <span className="ra-dropdown">▼</span>
+                </div>
+                {showFilter && (
+                  <div className="ra-filter-dropdown">
+                    {[
+                      "All Sections",
+                      "Personal Information",
+                      "Educational Information",
+                      "Certification Achievements",
+                      "Employment Information",
+                      "Job Experience",
+                      "Skills & Competencies",
+                      "Feedback & Engagement"
+                    ].map((section) => (
+                      <div key={section} className="ra-filter-option" onClick={() => { setSelectedSection(section); setShowFilter(false); }}>
+                        {section}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CHARTS / RESPONSES */}
+        <div className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}>
+          {activeTab === "overview" && (
+            <div className="ra-charts-container">
+              {isSectionVisible("personal-information") && (
+                <div className="ra-chart-row">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Gender Distribution</h3>
+                    <ChartWithResponsiveContainer height={190}>
+                      <PieChart>
+                        <Pie data={hasGenderData ? stats.genderDistribution : [{ name: 'No Data', value: 1 }]} dataKey="value" nameKey="name">
+                          {hasGenderData ? (
+                            stats.genderDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))
+                          ) : (
+                            <Cell fill="#CBD5E1" />
+                          )}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Age Distribution</h3>
+                    <ChartWithResponsiveContainer height={190}>
+                      <BarChart data={hasAgeData ? stats.ageDistribution : [{ range: 'No Data', count: 1 }]} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="range" type="category" width={50} />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#10B981" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("educational-information") && (
+                <div className="ra-chart-single">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Board Exam Pass Rate</h3>
+                    <ChartWithResponsiveContainer height={250}>
+                      <BarChart data={hasBoardExamData ? stats.boardExam : [{ category: 'No Data', count: 1 }]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#3B82F6" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("certification-achievements") && (
+                <div className="ra-chart-single">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Certification Status</h3>
+                    <ChartWithResponsiveContainer height={250}>
+                      <LineChart data={hasCertificationData ? stats.certification : [{ status: 'No Data', count: 1 }]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="status" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="count" stroke="#F59E0B" strokeWidth={3} />
+                      </LineChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("employment-information") && (
+                <div className="ra-chart-row">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Employment Status</h3>
+                    <ChartWithResponsiveContainer height={190}>
+                      <PieChart>
+                        <Pie data={hasEmploymentData ? stats.employment : [{ name: 'No Data', value: 1 }]} dataKey="value" nameKey="name">
+                          {hasEmploymentData ? (
+                            stats.employment.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))
+                          ) : (
+                            <Cell fill="#CBD5E1" />
+                          )}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Salary Range</h3>
+                    <ChartWithResponsiveContainer height={190}>
+                      <BarChart data={hasSalaryData ? stats.salary : [{ range: 'No Data', count: 1 }]}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="range" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#EF4444" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("job-experience") && (
+                <div className="ra-chart-single">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Time to First Job</h3>
+                    <ChartWithResponsiveContainer height={250}>
+                      <BarChart data={hasTimeToJobData ? stats.timeToJob : [{ label: 'No Data', count: 1 }]} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="label" type="category" width={80} />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#06B6D4" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("skills-competencies") && (
+                <div className="ra-chart-single">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Top Skills</h3>
+                    <ChartWithResponsiveContainer height={250}>
+                      <BarChart data={hasSkillsData ? stats.skills : [{ skill: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 80, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="skill" type="category" width={80} />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#8B5CF6" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {isSectionVisible("feedback-engagement") && (
+                <div className="ra-chart-row">
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Rating Breakdown</h3>
+                    <ChartWithResponsiveContainer height={190}>
+                      <BarChart data={hasSatisfactionData ? stats.satisfactionScores : [{ score: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 60, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" />
+                        <YAxis dataKey="score" type="category" tickFormatter={(v) => renderStars(parseInt(v))} width={60} />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#F97316" />
+                      </BarChart>
+                    </ChartWithResponsiveContainer>
+                  </div>
+
+                  <div className="ra-chart-inner">
+                    <h3 className="ra-chart-title">Overall Sentiment</h3>
+                    <div style={{ height: 190, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ textAlign: "center" }}>
+                        <h2 style={{ fontSize: "48px", margin: 0 }}>{stats.avgSatisfaction || 0}</h2>
+                        <div style={{ fontSize: "24px", color: "gold" }}>
+                          {"★".repeat(Math.round(stats.avgSatisfaction || 0))}
+                          {"☆".repeat(5 - Math.round(stats.avgSatisfaction || 0))}
+                        </div>
+                        <p style={{ marginTop: "10px", color: "#6B7280" }}>Average satisfaction rating</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "responses" && (
+            <div className="ra-table-container">
+              <div className="ra-table-header">
+                <span><strong>No of Respondents:</strong> {respondents.length} people</span>
+                <button className="am-tb-btn"><IconExport /> Export</button>
+              </div>
+
+              <table className="ra-table">
+                <thead>
+                  <tr>
+                    <th>NAME</th>
+                    <th>BATCH</th>
+                    <th>PROGRAM</th>
+                    <th>EMPLOYMENT STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {respondents.map((a, i) => (
+                    <tr key={i} onClick={() => setSelectedResponse(a)} style={{ cursor: "pointer" }}>
+                      <td>
+                        <div className="ra-name-cell">
+                          <div className="ra-avatar">{a.name?.charAt(0) || '?'}</div>
+                          <div>
+                            <div className="ra-name">{a.name}</div>
+                            <div className="ra-email">{a.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="ra-batch">{a.batch}</span></td>
+                      <td>{a.program?.length > 40 ? a.program.slice(0, 40) + "…" : a.program}</td>
+                      <td>
+                        <span className={`ra-status ${a.status?.toLowerCase().replace(/ /g, '-') || ''}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {selectedResponse && (
+                <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} />
+              )}
+
+              <div className="ra-pagination">
+                <span>Showing 1 to {respondents.length} of {respondents.length} entries</span>
+                <div>
+                  <button>Prev</button>
+                  <button className="active">1</button>
+                  <button>Next</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+    </>
+  );
+};
 
-      <TabSwitcher pageTabs={pageTabs} activePage={activePage} setActivePage={setActivePage} />
-
-      {/* Scrollable Content Wrapper - ADD THIS */}
-      <div className="ra-content-scroll">
-        {loading ? (
-          <section className="ra-card ra-card-full">
-            <p className="ra-inline-message">Loading survey analytics…</p>
-          </section>
-        ) : error ? (
-          <section className="ra-card ra-card-full">
-            <p className="ra-inline-message ra-inline-message-error">{error}</p>
-          </section>
-        ) : activePage === 'overview' ? (
-          <SurveyOverviewPage
-            overviewCards={overviewCards}
-            ratingBreakdown={ratingBreakdown}
-            selectedSection={selectedSection}
-            setSelectedSection={setSelectedSection}
-            sectionOptions={sectionOptions}
-          />
-        ) : (
-          <SurveyResponsesPage
-            surveyResponses={surveyResponses}
-            selectedSection={selectedSection}
-            setSelectedSection={setSelectedSection}
-            sectionOptions={sectionOptions}
-          />
-        )}
-      </div>
-    </main>
-  </div>
-);
-
-export default Responseanalyticsview;
+export default ResponseAnalyticsView;

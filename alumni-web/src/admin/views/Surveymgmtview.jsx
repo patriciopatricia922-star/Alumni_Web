@@ -9,7 +9,7 @@
 // ============================================================================
 
 import AdminSidebar from "../components/AdminSidebar";
-import '../styles/SurveyMgmt.css';
+import '../styles/Surveymgmt.css';
 import { 
   FiTrash2, 
   FiCopy, 
