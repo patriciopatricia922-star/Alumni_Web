@@ -8,7 +8,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { loadSurveyProgress } from '../lib/surveyProgress';
+import { loadSurveyProgress, getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { logAction } from '../lib/auditLogger';
 import announcementIcon from '../assets/announcement_ic.svg';
 import discountIcon from '../assets/discount_ic.svg';
@@ -42,6 +42,9 @@ const AlumniDashboard = () => {
   const [notifTab, setNotifTab] = useState('all');
   const bellRef = useRef(null);
 
+  // Survey route — null while resolving (same pattern as Sidebar)
+  const [surveyRoute, setSurveyRoute] = useState(null);
+
   const [cardBadges, setCardBadges] = useState({
     announcements: false,
     events: false,
@@ -70,6 +73,34 @@ const AlumniDashboard = () => {
       await logAction({ action: 'View', module: 'Dashboard', description: 'Alumni viewed dashboard (web)', status: 'Success' });
     };
     fetchData();
+  }, []);
+
+  // ============================ RESOLVE SURVEY ROUTE ============================
+  // Mirrors the exact same logic used in Sidebar so the Continue button
+  // navigates to the correct step (resume or update-tracer if complete).
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveSurveyRoute = async () => {
+      try {
+        await getSurveySections();
+        const complete = await isSurveyComplete();
+        if (cancelled) return;
+
+        if (complete) {
+          setSurveyRoute('/update-tracer');
+        } else {
+          const route = await getResumeRoute();
+          if (!cancelled) setSurveyRoute(route);
+        }
+      } catch (err) {
+        console.error('AlumniDashboard: error resolving survey route:', err);
+        if (!cancelled) setSurveyRoute('/survey/personal-background');
+      }
+    };
+
+    resolveSurveyRoute();
+    return () => { cancelled = true; };
   }, []);
 
   const firstName = user?.first_name || 'Alumni';
@@ -231,6 +262,7 @@ const AlumniDashboard = () => {
       animatedPercentage={animatedPercentage}
       forYouItems={forYouItems}
       onNavigate={navigate}
+      surveyRoute={surveyRoute}
     />
   );
 };

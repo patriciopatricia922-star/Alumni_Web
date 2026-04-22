@@ -10,7 +10,7 @@ import homeIcon    from '../assets/home_icn.svg';
 import aboutIcon   from '../assets/about_icn.svg';
 import surveyIcon  from '../assets/tracer_ic.svg';
 import profileIcon from '../assets/profile_icn.svg';
-import sidebarLogo from '../assets/new_lg.svg';
+import sidebarLogo from '../assets/alumnai_logo_new.svg';
 import SidebarView from './Sidebarview';
 
 const useWindowWidth = () => {

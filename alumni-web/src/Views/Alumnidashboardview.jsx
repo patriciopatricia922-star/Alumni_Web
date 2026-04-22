@@ -1,9 +1,6 @@
 // ============================================================================
 // THIS IS THE UI.
 // ============================================================================
-// Purpose: Renders all visual components for the Alumni Dashboard following
-//          the exact Figma design specifications.
-// ============================================================================
 
 import React from 'react';
 import Sidebar from '../components/Sidebar';
@@ -48,7 +45,11 @@ const ProgressCircle = ({ animatedPercentage }) => {
 
   return (
     <div className="progress-circle">
-      <svg width={size} height={size} className="progress-svg">
+      <svg
+        viewBox={`0 0 ${size} ${size}`}
+        className="progress-svg"
+        style={{ width: '100%', height: '100%' }}
+      >
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -150,6 +151,7 @@ const AlumniDashboardView = ({
   animatedPercentage,
   forYouItems,
   onNavigate,
+  surveyRoute,   // <-- received from logic layer
 }) => {
   return (
     <div className="alumni-dashboard">
@@ -234,7 +236,7 @@ const AlumniDashboardView = ({
           </p>
         </div>
 
-        {/* ── Top Banner Row: Hello card (left) + Survey Progress card (right) ── */}
+        {/* ── Top Banner Row ── */}
         <div className="top-banner-row">
 
           {/* Hello Card */}
@@ -265,7 +267,14 @@ const AlumniDashboardView = ({
             <div className="survey-card-content">
               <p className="survey-label">SURVEY PROGRESS</p>
               <p className="survey-message">Your alumni tracer survey!</p>
-              <button className="continue-button">
+              {/* Continue button navigates to the resolved survey route,
+                  identical to how the Sidebar handles the Tracer Survey link */}
+              <button
+                className="continue-button"
+                onClick={() => surveyRoute && onNavigate(surveyRoute)}
+                disabled={!surveyRoute}
+                style={{ opacity: surveyRoute ? 1 : 0.5, cursor: surveyRoute ? 'pointer' : 'not-allowed' }}
+              >
                 Continue
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path

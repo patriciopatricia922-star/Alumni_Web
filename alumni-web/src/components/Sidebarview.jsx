@@ -109,7 +109,7 @@ const SidebarView = ({
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ marginLeft: '15px', width: isTablet ? '139px' : '159px', height: 'auto', objectFit: 'contain' }}
+          style={{ marginRight: '20px', marginTop: '14px', width: isTablet ? '175px' : '197px', height: 'auto', objectFit: 'contain' }}
         />
       </div>
 
