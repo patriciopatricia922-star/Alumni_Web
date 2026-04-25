@@ -3,19 +3,18 @@
 /* ============================ MAIN LAYOUT ============================ */
 .alumni-dashboard {
   display: flex;
-  height: 100dvh;        /* KEY: fills exactly one screen, no more */
-  overflow: hidden;       /* KEY: prevents the outer shell from scrolling */
+  height: 100dvh;
+  overflow: hidden;
   background: #DAE5F1;
 }
 
 .dashboard-content {
   flex: 1;
   display: flex;
-  flex-direction: column; /* KEY: children stack and fill height via flex */
+  flex-direction: column;
   height: 100%;
-  overflow: hidden;       /* KEY: inner content must not overflow */
-  /* fluid padding via clamp — shrinks on small viewports */
-  padding: clamp(14px, 3vh, 37px) clamp(16px, 3.5vw, 51px) clamp(14px, 2vh, 28px);
+  overflow: hidden;
+  padding: clamp(20px, 2.8vh, 36px) clamp(20px, 3vw, 48px) clamp(16px, 2vh, 28px);
   box-sizing: border-box;
   position: relative;
 }
@@ -23,16 +22,16 @@
 /* ============================ NOTIFICATION BELL ============================ */
 .notification-bell {
   position: absolute;
-  top: clamp(14px, 3vh, 37px);
-  right: clamp(16px, 3.5vw, 51px);
+  top: clamp(20px, 2.8vh, 36px);
+  right: clamp(20px, 3vw, 48px);
   z-index: 200;
 }
 
 .bell-button {
-  width: clamp(44px, 4vw, 58px);
-  height: clamp(44px, 4vw, 58px);
+  width: 52px;
+  height: 52px;
   background: #003EA6;
-  border: 0.8px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   cursor: pointer;
   display: flex;
@@ -40,55 +39,50 @@
   justify-content: center;
   position: relative;
   transition: all 0.15s ease;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .bell-button.active {
-  background: rgba(43, 114, 251, 0.2);
+  background: rgba(43, 114, 251, 0.25);
   border-color: rgba(43, 114, 251, 0.5);
 }
 
+/* ── Clean single-circle badge matching Figma ── */
 .bell-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 28.81px;
-  height: 28.81px;
-  background: #FF0000;
-  opacity: 0.42;
-  border-radius: 50%;
+  top: -7px;
+  right: -7px;
+  min-width: 20px;
+  height: 20px;
+  background: #E53935;
+  border-radius: 10px;
+  border: 2px solid #DAE5F1;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
-.bell-badge-inner {
-  width: 19.98px;
-  height: 19.98px;
-  background: #FF0000;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bell-badge-inner span {
-  font-family: 'Arimo', Arial;
+.bell-badge span {
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 700;
   color: #FFFFFF;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 /* ============================ NOTIFICATION DROPDOWN ============================ */
 .notification-dropdown {
   position: absolute;
-  top: calc(clamp(44px, 4vw, 58px) + 12px);
+  top: calc(52px + 10px);
   right: 0;
-  width: clamp(300px, 40vw, 380px);
+  width: clamp(300px, 38vw, 370px);
   max-height: 520px;
-  background: rgba(13, 19, 56, 0.97);
+  background: rgba(10, 16, 50, 0.97);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   display: flex;
@@ -96,8 +90,6 @@
   overflow: hidden;
   z-index: 300;
 }
-
-.notification-dropdown.mobile { width: 90vw; }
 
 .dropdown-header {
   padding: 16px 18px 12px;
@@ -109,7 +101,7 @@
 }
 
 .dropdown-header span {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-weight: 700;
   font-size: 16px;
   color: #FFFFFF;
@@ -118,7 +110,7 @@
 .mark-all-read {
   background: none;
   border: none;
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 12px;
   color: #2B72FB;
   cursor: pointer;
@@ -128,29 +120,29 @@
 .dropdown-tabs {
   display: flex;
   padding: 10px 18px 0;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .tab-btn {
-  height: 32px;
-  padding: 0 16px;
+  height: 30px;
+  padding: 0 14px;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   cursor: pointer;
-  font-family: 'Arimo', Arial;
-  font-size: 13px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.7);
   transition: all 0.15s ease;
-  text-transform: capitalize;
 }
 
 .tab-btn.active {
   background: #2B72FB;
-  border: none;
+  border-color: #2B72FB;
   font-weight: 700;
+  color: #FFFFFF;
 }
 
 .dropdown-body {
@@ -169,17 +161,17 @@
 }
 
 .notification-empty p {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.3);
   margin: 0;
 }
 
 .notification-group-label {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-weight: 700;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin: 10px 18px 4px;
@@ -196,15 +188,15 @@
 }
 
 .notification-item.unread {
-  background: rgba(43, 114, 251, 0.07);
+  background: rgba(43, 114, 251, 0.08);
   border-left-color: #2B72FB;
 }
 
 .notification-item:hover { background: rgba(255, 255, 255, 0.05); }
 
 .notification-icon {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(43, 114, 251, 0.15);
   border: 1px solid rgba(43, 114, 251, 0.2);
@@ -218,7 +210,7 @@
 .notification-content { flex: 1; min-width: 0; }
 
 .notification-title {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-weight: 700;
   font-size: 13px;
   color: #FFFFFF;
@@ -229,7 +221,7 @@
 .notification-item:not(.unread) .notification-title { font-weight: 400; }
 
 .notification-body {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.45);
   margin: 0 0 4px 0;
@@ -241,7 +233,7 @@
 }
 
 .notification-time {
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.25);
 }
@@ -267,7 +259,7 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  font-family: 'Arimo', Arial;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
@@ -277,108 +269,106 @@
 .see-all-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
 /* ============================ PAGE HEADER ============================ */
-/*
-  KEY: flex-shrink: 0 ensures the header never collapses.
-  padding-right clears the bell button at all sizes.
-*/
 .dashboard-header {
   flex-shrink: 0;
-  padding-right: clamp(54px, 6vw, 80px);
-  margin-bottom: clamp(10px, 1.5vh, 20px);
+  padding-right: clamp(60px, 7vw, 90px);
+  margin-bottom: clamp(14px, 2vh, 24px);
 }
 
 .dashboard-title {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(20px, 2.8vw, 36px);
+  font-size: clamp(22px, 2.6vw, 34px);
   line-height: 1.2;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   color: #324D87;
   margin: 0;
 }
 
 .dashboard-subtitle {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: clamp(12px, 0.9vw, 14px);
   line-height: 1.5;
   color: #545454;
-  margin: 4px 0 0 0;
+  margin: 3px 0 0 0;
 }
 
 /* ============================ TOP BANNER ROW ============================ */
-/*
-  KEY: flex-shrink: 0 prevents it from being squashed by the for-you section.
-  gap uses clamp so it breathes at all sizes.
-*/
 .top-banner-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(10px, 1.5vw, 20px);
+  gap: clamp(12px, 1.5vw, 20px);
   flex-shrink: 0;
-  margin-bottom: clamp(12px, 2vh, 28px);
+  margin-bottom: clamp(14px, 2vh, 24px);
 }
 
 /* ── Hello Card ── */
 .hello-card {
   position: relative;
-  background: linear-gradient(180deg, #2B72FB -11.25%, #1E2555 100%);
+  background: linear-gradient(160deg, #2B72FB 0%, #1E2555 100%);
   border-radius: 20px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
-  /* KEY: padding scales with viewport — no fixed height */
-  padding: clamp(16px, 2.5vh, 28px) clamp(16px, 2vw, 30px);
+  box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.35);
+  padding: clamp(20px, 3vh, 34px) clamp(20px, 2.5vw, 32px);
   overflow: hidden;
   display: flex;
   align-items: flex-start;
   box-sizing: border-box;
+  min-height: clamp(140px, 18vh, 200px);
 }
 
 .hello-deco-circle {
   position: absolute;
-  background: rgba(217, 217, 217, 0.07);
+  background: rgba(217, 217, 217, 0.08);
   border-radius: 50%;
   pointer-events: none;
 }
 
-.hello-deco-circle--tr { width: 180px; height: 180px; top: -70px; right: -24px; }
-.hello-deco-circle--bl { width: 130px; height: 130px; bottom: -44px; left: -24px; }
+.hello-deco-circle--tr { width: 200px; height: 200px; top: -80px; right: -30px; }
+.hello-deco-circle--bl { width: 140px; height: 140px; bottom: -50px; left: -30px; }
 
 .hello-card-inner { position: relative; z-index: 1; }
 
 .hello-text {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(22px, 2.8vw, 42px);
-  line-height: 1.25;
-  letter-spacing: -0.6px;
+  font-size: clamp(26px, 3.2vw, 46px);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
   color: #FFFFFF;
-  margin: 0 0 clamp(6px, 1vh, 12px) 0;
+  margin: 0 0 clamp(8px, 1.2vh, 14px) 0;
 }
 
+.hello-name { color: #FFFFFF; }
+
 .hello-notification-text {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(12px, 0.9vw, 15px);
+  font-size: clamp(11px, 0.85vw, 14px);
   line-height: 1.5;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.85);
   margin: 0;
 }
 
-.hello-notif-highlight { color: #FFFFFF; font-weight: 600; }
+.hello-notif-highlight {
+  color: #FFFFFF;
+  font-weight: 600;
+}
 
 /* ── Survey Progress Card ── */
 .survey-card {
   position: relative;
-  background: linear-gradient(180deg, #2B72FB -11.25%, #1E2555 100%);
+  background: linear-gradient(160deg, #2B72FB 0%, #1E2555 100%);
   border-radius: 20px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
-  padding: clamp(14px, 2vh, 24px) clamp(16px, 2vw, 28px);
+  box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.35);
+  padding: clamp(18px, 2.5vh, 30px) clamp(20px, 2.5vw, 32px);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(10px, 2vw, 20px);
+  gap: clamp(12px, 2vw, 24px);
   box-sizing: border-box;
+  min-height: clamp(140px, 18vh, 200px);
 }
 
 .survey-blur {
@@ -386,8 +376,8 @@
   width: 220px; height: 220px;
   right: -30px; top: -100px;
   background: #2B72FB;
-  opacity: 0.1;
-  filter: blur(64px);
+  opacity: 0.12;
+  filter: blur(60px);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -399,42 +389,43 @@
   pointer-events: none;
 }
 
-.survey-deco-circle--tl { width: 180px; height: 180px; top: -70px; left: 21px; }
-.survey-deco-circle--br { width: 130px; height: 130px; bottom: -44px; right: 160px; }
+.survey-deco-circle--tl { width: 200px; height: 200px; top: -80px; left: 16px; }
+.survey-deco-circle--br { width: 140px; height: 140px; bottom: -50px; right: 170px; }
 
 .survey-card-content { position: relative; z-index: 1; flex: 1; min-width: 0; }
 
 .survey-label {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(11px, 1vw, 16px);
-  line-height: 1.8;
-  letter-spacing: -0.4px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: clamp(10px, 0.8vw, 13px);
+  line-height: 2;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.75);
   margin: 0;
+  text-transform: uppercase;
 }
 
 .survey-message {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(15px, 2vw, 30px);
-  line-height: 1.25;
-  letter-spacing: -0.6px;
+  font-size: clamp(16px, 2vw, 28px);
+  line-height: 1.2;
+  letter-spacing: -0.4px;
   color: #FFFFFF;
-  margin: 0 0 clamp(8px, 1.2vh, 16px) 0;
+  margin: 0 0 clamp(10px, 1.5vh, 18px) 0;
 }
 
 .continue-button {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(0, 40, 255, 0.85);
-  border-radius: 12px;
+  gap: 8px;
+  background: rgba(0, 40, 220, 0.9);
+  border-radius: 10px;
   border: none;
-  padding: clamp(6px, 0.8vh, 9px) clamp(12px, 1.5vw, 20px);
-  font-family: 'Arimo', Arial;
+  padding: clamp(7px, 0.9vh, 10px) clamp(14px, 1.6vw, 22px);
+  font-family: 'Arimo', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(11px, 0.9vw, 13px);
+  font-size: clamp(11px, 0.85vw, 13px);
   line-height: 1.5;
   color: #FFFFFF;
   cursor: pointer;
@@ -447,101 +438,96 @@
 /* ============================ PROGRESS CIRCLE ============================ */
 .progress-circle {
   position: relative;
-  width: clamp(70px, 9vw, 140px);
-  height: clamp(70px, 9vw, 140px);
+  width: clamp(80px, 10vw, 150px);
+  height: clamp(80px, 10vw, 150px);
   flex-shrink: 0;
 }
 
 .progress-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
-.progress-bg { fill: none; stroke: rgba(255, 255, 255, 0.7); stroke-linecap: round; }
-.progress-fill { fill: none; stroke: #EFC600; stroke-linecap: round; filter: drop-shadow(0px 2px 10px #2B72FB); }
+.progress-bg  { fill: none; stroke: rgba(255, 255, 255, 0.25); stroke-linecap: round; }
+.progress-fill { fill: none; stroke: #EFC600; stroke-linecap: round; filter: drop-shadow(0px 0px 8px rgba(239,198,0,0.5)); }
 
 .progress-percentage {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Rubik', Arial;
+  font-family: 'Rubik', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 34px);
+  font-size: clamp(18px, 2.2vw, 34px);
   line-height: 1;
-  letter-spacing: -0.35px;
+  letter-spacing: -0.5px;
   color: #FFFFFF;
   white-space: nowrap;
 }
 
 /* ============================ FOR YOU SECTION ============================ */
-/*
-  KEY: flex: 1 + min-height: 0 lets this section grow into remaining space
-  without triggering scroll. The grid inside also uses fr rows.
-*/
 .for-you-section {
   flex: 1;
-  min-height: 0;          /* KEY: allows flex child to shrink below content size */
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
 
 .for-you-heading {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(18px, 2vw, 26px);
+  font-size: clamp(16px, 1.8vw, 24px);
   line-height: 1.2;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.4px;
   color: #324D87;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   flex-shrink: 0;
 }
 
 .for-you-subtitle {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(12px, 1vw, 15px);
+  font-size: clamp(11px, 0.85vw, 14px);
   line-height: 1.5;
   color: #545454;
-  margin: 0 0 clamp(10px, 1.5vh, 20px) 0;
+  margin: 0 0 clamp(10px, 1.4vh, 18px) 0;
   flex-shrink: 0;
 }
 
 .for-you-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  /* KEY: rows use fr so cards stretch to fill, never overflow */
   grid-template-rows: repeat(2, 1fr);
-  gap: clamp(10px, 1.5vh, 20px);
+  gap: clamp(10px, 1.4vh, 18px);
   flex: 1;
-  min-height: 0;          /* KEY: same as parent — critical for nested flex/grid */
+  min-height: 0;
 }
 
 /* ============================ FOR YOU CARD ============================ */
 .for-you-card {
   background: #003EA6;
-  border: 0.888889px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
   border-radius: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: clamp(10px, 1.5vh, 18px) clamp(12px, 1.5vw, 18px);
-  gap: clamp(10px, 1.5vw, 18px);
+  padding: clamp(10px, 1.4vh, 16px) clamp(14px, 1.6vw, 20px);
+  gap: clamp(12px, 1.5vw, 20px);
   box-sizing: border-box;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
   position: relative;
-  /* KEY: no min-height — the grid row fr distributes height naturally */
 }
 
 .for-you-card:hover {
-  border-color: rgba(43, 114, 251, 0.55);
+  border-color: rgba(43, 114, 251, 0.6);
   transform: translateY(-2px);
-  box-shadow: 0px 0px 20px rgba(43, 114, 251, 0.3), 0px 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0px 0px 20px rgba(43, 114, 251, 0.25), 0px 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* ── Icon Box — matches Figma dark square with 3D icon ── */
 .for-you-icon-box {
-  width: clamp(54px, 7vw, 100px);
-  height: clamp(54px, 7vw, 100px);
-  min-width: clamp(54px, 7vw, 100px);
-  background: linear-gradient(180deg, rgba(30, 37, 85, 0.8) 0%, rgba(15, 19, 56, 0.8) 100%);
-  box-shadow: 0px 10px 15px rgba(97, 95, 255, 0.5), 0px 4px 6px rgba(43, 114, 251, 0.15);
+  width: clamp(60px, 7.5vw, 106px);
+  height: clamp(60px, 7.5vw, 106px);
+  min-width: clamp(60px, 7.5vw, 106px);
+  background: linear-gradient(180deg, rgba(20, 28, 80, 0.9) 0%, rgba(10, 14, 48, 0.9) 100%);
+  box-shadow: 0px 8px 20px rgba(97, 95, 255, 0.4), 0px 4px 8px rgba(43, 114, 251, 0.1);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -550,51 +536,77 @@
   flex-shrink: 0;
 }
 
-.for-you-icon { width: 95%; height: 95%; object-fit: contain; filter: drop-shadow(0px 4px 4px #2B72FB); }
-.for-you-icon.discount-icon { width: 159%; height: 159%; transform: rotate(10.05deg); margin-left: 2vh; }
-
-.notification-dot {
-  position: absolute; top: -10px; right: -10px;
-  width: 26px; height: 26px;
-  background: #FF0000; opacity: 0.42; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+.for-you-icon {
+  width: 92%;
+  height: 92%;
+  object-fit: contain;
+  filter: drop-shadow(0px 4px 6px rgba(43, 114, 251, 0.6));
 }
 
-.notification-dot-inner { width: 16px; height: 16px; background: #FF0000; border-radius: 50%; }
+.for-you-icon.discount-icon {
+  width: 155%;
+  height: 155%;
+  transform: rotate(10deg);
+  margin-left: 1.5vw;
+}
 
-.for-you-text { flex: 1; min-width: 0; }
+/* ── Notification dot on card icon ── */
+.notification-dot {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  background: #E53935;
+  border-radius: 50%;
+  border: 2px solid #003EA6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.notification-dot-inner {
+  /* kept for compatibility but dot itself is solid now */
+  display: none;
+}
+
+.for-you-text {
+  flex: 1;
+  min-width: 0;
+}
 
 .card-title {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(13px, 1.2vw, 20px);
-  line-height: 1.2;
+  font-size: clamp(13px, 1.2vw, 19px);
+  line-height: 1.25;
   color: #FFED97;
-  margin: 0 0 6px 0;
+  margin: 0 0 5px 0;
 }
 
 .card-description {
-  font-family: 'Montserrat', Arial;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(11px, 0.9vw, 15px);
+  font-size: clamp(10px, 0.85vw, 14px);
   line-height: 1.5;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
 }
 
-.chevron-icon { flex-shrink: 0; margin-left: auto; filter: drop-shadow(4px 4px 10px rgba(0, 0, 0, 0.25)); }
+.chevron-icon {
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.8;
+}
 
 /* ============================ MOBILE BOTTOM NAV ============================ */
-/*
-  On mobile, sidebar becomes a fixed bottom nav bar.
-  The dashboard-content uses padding-bottom to not be hidden behind it.
-*/
 .mobile-bottom-nav {
   display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
   height: 60px;
-  background: #0D1338;
+  background: #00226D;
   z-index: 100;
   align-items: center;
   justify-content: space-around;
@@ -603,50 +615,46 @@
 
 /* ============================ RESPONSIVE BREAKPOINTS ============================ */
 
-/* Tablet landscape (768px–1023px) */
-@media (max-width: 1023px) {
+/* Tablet landscape */
+@media (max-width: 1100px) {
   .dashboard-content {
-    padding: clamp(14px, 2.5vh, 24px) clamp(14px, 2.5vw, 24px) clamp(14px, 2vh, 24px);
+    padding: clamp(16px, 2.5vh, 26px) clamp(16px, 2.5vw, 28px) clamp(14px, 2vh, 22px);
+  }
+  .notification-bell {
+    top: clamp(16px, 2.5vh, 26px);
+    right: clamp(16px, 2.5vw, 28px);
   }
 }
 
-/* Tablet portrait — banner stacks to single column */
+/* Tablet portrait */
 @media (max-width: 767px) {
   .dashboard-content {
     margin-left: 0 !important;
-    padding: clamp(12px, 2vh, 20px) clamp(12px, 4vw, 16px) 70px !important;
+    padding: clamp(14px, 2vh, 20px) clamp(12px, 4vw, 18px) 76px !important;
   }
-
   .top-banner-row {
     grid-template-columns: 1fr;
   }
-
-  /* Survey and hello cards side-by-side on tablet portrait to save vertical space */
-  @media (min-width: 480px) {
-    .top-banner-row { grid-template-columns: 1fr 1fr; }
-  }
-
   .for-you-grid {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: repeat(2, 1fr);
   }
 }
 
-/* Mobile — up to 599px */
-@media (max-width: 599px) {
-  .top-banner-row {
-    grid-template-columns: 1fr;
-  }
+@media (min-width: 480px) and (max-width: 767px) {
+  .top-banner-row { grid-template-columns: 1fr 1fr; }
+}
 
+/* Mobile */
+@media (max-width: 599px) {
+  .top-banner-row { grid-template-columns: 1fr; }
   .for-you-grid {
     grid-template-columns: 1fr;
     grid-template-rows: repeat(4, 1fr);
   }
-
   .mobile-bottom-nav { display: flex; }
-
   .notification-dropdown {
-    width: 94vw;
-    right: clamp(-8px, -1vw, -4px);
+    width: 92vw;
+    right: -4px;
   }
 }

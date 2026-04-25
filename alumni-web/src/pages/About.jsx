@@ -35,7 +35,13 @@ const About = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+      const mapped  = data.map(n => ({
+        id:    n.id,
+        title: n.title,
+        body:  n.content,
+        time:  n.published_at,
+        read:  readIds.includes(n.id),
+      }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
     };
@@ -43,7 +49,9 @@ const About = () => {
   }, []);
 
   useEffect(() => {
-    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const h = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
@@ -56,7 +64,10 @@ const About = () => {
 
   const markOneRead = useCallback((id) => {
     const ids = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!ids.includes(id)) { ids.push(id); localStorage.setItem('read_notifs', JSON.stringify(ids)); }
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem('read_notifs', JSON.stringify(ids));
+    }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
@@ -73,10 +84,10 @@ const About = () => {
   };
 
   const groupByDate = (list) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today     = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
     const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
     list.forEach(n => {
       const d = new Date(n.time); d.setHours(0, 0, 0, 0);
       if      (d >= today)     groups['Today'].push(n);

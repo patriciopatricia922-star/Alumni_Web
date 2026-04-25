@@ -1,9 +1,10 @@
+// ModalLogin.jsx
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 import LoginView from '../Views/LoginView';
 
-const ModalLogin = ({ onSuccess, onSwitchToRegister, onClose }) => {
+const ModalLogin = ({ onSuccess, onSwitchToRegister, onSwitchToForgotPassword, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState('');
@@ -36,7 +37,6 @@ const ModalLogin = ({ onSuccess, onSwitchToRegister, onClose }) => {
 
       if (userError) {
         console.error('Error fetching user data:', userError);
-        // Specifically check for the recursion error message
         const isRecursion = userError.message?.includes('infinite recursion');
         throw new Error(isRecursion ? "Database RLS Error: Fix recursion in SQL Editor." : userError.message);
       }
@@ -137,6 +137,7 @@ const ModalLogin = ({ onSuccess, onSwitchToRegister, onClose }) => {
       handleGoogleLogin={handleGoogleLogin}
       isModal
       onSwitchToRegister={onSwitchToRegister}
+      onSwitchToForgotPassword={onSwitchToForgotPassword}
     />
   );
 };

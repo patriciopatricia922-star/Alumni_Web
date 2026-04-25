@@ -9,7 +9,7 @@ import {
   HiOutlineTicket,
 } from 'react-icons/hi2';
 
-const alumnaiLogo = new URL('../assets/new_lg.svg', import.meta.url).href;
+const alumnaiLogo = new URL('../assets/alumnai_logo_new.svg', import.meta.url).href;
 
 const stripHtml = (html) => {
   if (!html) return '';

@@ -1,0 +1,511 @@
+/* ============================================================
+   Announcements.css — Light-theme visual refresh
+   Palette sourced from Figma spec (Announcements 2.2)
+   ============================================================ */
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --ann-page-bg:           #DAE5F1;
+  --ann-sidebar-bg:        #00226D;
+  --ann-banner-bg:         linear-gradient(180deg, #2B72FB 0%, #1E2555 100%);
+
+  /* Card */
+  --ann-card-bg:           #FFFFFF;
+  --ann-card-border:       #E5E7EB;
+  --ann-card-shadow:       0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06);
+  --ann-card-shadow-hover: 0px 8px 24px rgba(43, 114, 251, 0.14),
+                           0px 2px 8px rgba(0, 0, 0, 0.08);
+  --ann-card-border-hover: #2B72FB;
+
+  /* Typography */
+  --ann-title-color:       #003EA6;
+  --ann-body-color:        #4A5565;
+  --ann-meta-color:        #8A94A6;
+  --ann-timestamp-color:   rgba(74, 85, 101, 0.65);
+  --ann-clock-stroke:      rgba(74, 85, 101, 0.45);
+
+  /* Accents */
+  --ann-accent:            #003EA6;
+  --ann-accent-btn:        #003EA6;
+  --ann-badge-bg:          #2B72FB;
+
+  /* Page */
+  --ann-page-title:        #324D87;
+  --ann-page-subtitle:     #545454;
+  --ann-back-color:        #003EA6;
+
+  /* Icon box */
+  --ann-icon-box-bg:       linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
+  --ann-icon-box-shadow:   0px 4px 10px rgba(43, 114, 251, 0.35);
+
+  /* Notification dot */
+  --ann-notif-dot-outer:   rgba(255, 0, 0, 0.35);
+  --ann-notif-dot-inner:   #FF3B30;
+
+  /* Footer / filter */
+  --ann-footer-border:     #F0F2F5;
+  --ann-filter-bg:         #FFFFFF;
+  --ann-filter-border:     #E5E7EB;
+  --ann-filter-text:       #003EA6;
+  --ann-chevron:           #8A94A6;
+
+  /* Modal */
+  --ann-modal-overlay:     rgba(15, 23, 42, 0.6);
+  --ann-modal-blur:        12px;
+  --ann-modal-bg:          #FFFFFF;
+  --ann-modal-border:      #E5E7EB;
+  --ann-modal-shadow:      0px 24px 64px rgba(0, 0, 0, 0.18), 0px 8px 24px rgba(0, 0, 0, 0.1);
+  --ann-modal-title:       #003EA6;
+  --ann-modal-body:        #4A5565;
+  --ann-modal-meta:        #8A94A6;
+  --ann-modal-divider:     #F0F2F5;
+  --ann-modal-tag-bg:      #EEF4FF;
+  --ann-modal-tag-text:    #2B72FB;
+  --ann-modal-close-bg:    #F5F7FA;
+  --ann-modal-close-hover: #E5E7EB;
+}
+
+/* ── Page wrapper ──────────────────────────────────────────── */
+.ann-page {
+  background: var(--ann-page-bg);
+}
+
+/* ── Header text ───────────────────────────────────────────── */
+.ann-heading {
+  color: var(--ann-page-title);
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.ann-subheading {
+  color: var(--ann-page-subtitle);
+}
+
+/* ── Back button ───────────────────────────────────────────── */
+.ann-back-btn span {
+  color: var(--ann-back-color);
+}
+
+.ann-back-btn svg path {
+  stroke: var(--ann-back-color);
+}
+
+/* ── Featured banner ───────────────────────────────────────── */
+.ann-banner {
+  background: var(--ann-banner-bg) !important;
+}
+
+/* ── Filter bar ────────────────────────────────────────────── */
+.ann-filter-display {
+  background: var(--ann-filter-bg) !important;
+  border: 1px solid var(--ann-filter-border) !important;
+}
+
+.ann-filter-display span {
+  color: var(--ann-filter-text) !important;
+}
+
+/* ── Cards list (single-column, stacked) ───────────────────── */
+.ann-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Announcement Card ─────────────────────────────────────── */
+/*
+   New layout (matches reference image):
+   ┌─────────────────────────────────────────────────────────┐
+   │  [icon]   Title                         2 hours ago 🕐  │
+   │           Description text... See more                  │
+   └─────────────────────────────────────────────────────────┘
+*/
+.ann-card {
+  background: var(--ann-card-bg);
+  border: 1px solid var(--ann-card-border);
+  box-shadow: var(--ann-card-shadow);
+  border-radius: 16px;
+  overflow: visible;
+  cursor: pointer;
+  transition: transform 0.22s ease,
+              box-shadow 0.22s ease,
+              border-color 0.22s ease;
+}
+
+.ann-card:hover {
+  border-color: var(--ann-card-border-hover);
+  box-shadow: var(--ann-card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Body: icon + content side by side */
+.ann-card__body {
+  display: flex;
+  align-items: flex-start;
+  padding: 18px 20px 18px;
+  gap: 16px;
+}
+
+/* Icon box */
+.ann-card__icon-box {
+  background: var(--ann-icon-box-bg);
+  box-shadow: var(--ann-icon-box-shadow);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ann-card:hover .ann-card__icon-box {
+  transform: scale(1.04);
+  box-shadow: 0px 8px 20px rgba(43, 114, 251, 0.45);
+}
+
+/* Notification dot — outer ring */
+.ann-card__notif-ring {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: var(--ann-notif-dot-outer);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Notification dot — inner */
+.ann-card__notif-dot {
+  width: 11px;
+  height: 11px;
+  background: var(--ann-notif-dot-inner);
+  border-radius: 50%;
+}
+
+/* Content area (right of icon) */
+.ann-card__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Top row: title + timestamp on same line */
+.ann-card__top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Title */
+.ann-card__title {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 15.5px;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
+  color: var(--ann-title-color);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Timestamp — top right, inline with title */
+.ann-card__timestamp {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.ann-card__timestamp span {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1px;
+  color: var(--ann-timestamp-color);
+  white-space: nowrap;
+}
+
+/* Description paragraph with inline See more */
+.ann-card__preview {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ann-body-color);
+  margin: 0;
+}
+
+/* Inline "See more" text link */
+.ann-card__see-more-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2B72FB;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s, text-decoration 0.15s;
+  display: inline;
+  line-height: inherit;
+}
+
+.ann-card__see-more-inline:hover {
+  color: var(--ann-title-color);
+  text-decoration: underline;
+}
+
+/* ── Clock icon (shared) ───────────────────────────────────── */
+.ann-clock-circle {
+  stroke: var(--ann-clock-stroke);
+}
+
+.ann-clock-hand {
+  stroke: var(--ann-clock-stroke);
+}
+
+/* ── Modal overlay ─────────────────────────────────────────── */
+.ann-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--ann-modal-overlay);
+  backdrop-filter: blur(var(--ann-modal-blur));
+  -webkit-backdrop-filter: blur(var(--ann-modal-blur));
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: ann-overlay-in 0.2s ease forwards;
+}
+
+@keyframes ann-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal panel ───────────────────────────────────────────── */
+.ann-modal {
+  background: var(--ann-modal-bg);
+  border: 1px solid var(--ann-modal-border);
+  border-radius: 24px;
+  box-shadow: var(--ann-modal-shadow);
+  max-width: 680px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: ann-modal-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
+}
+
+.ann-modal::-webkit-scrollbar        { width: 6px; }
+.ann-modal::-webkit-scrollbar-track  { background: transparent; }
+.ann-modal::-webkit-scrollbar-thumb  { background: #D1D5DB; border-radius: 3px; }
+
+@keyframes ann-modal-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* Modal header bar */
+.ann-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 28px 28px 0;
+}
+
+.ann-modal__icon-wrap {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  background: var(--ann-icon-box-bg);
+  box-shadow: var(--ann-icon-box-shadow);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ann-modal__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ann-modal__title {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+  color: var(--ann-modal-title);
+  margin: 0 0 10px 0;
+}
+
+.ann-modal__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ann-modal__time {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  color: var(--ann-modal-meta);
+}
+
+.ann-modal__tag {
+  display: inline-block;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ann-modal-tag-text);
+  background: var(--ann-modal-tag-bg);
+  border-radius: 6px;
+  padding: 3px 10px;
+  line-height: 1.6;
+}
+
+/* Close button */
+.ann-modal__close {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--ann-modal-border);
+  background: var(--ann-modal-close-bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ann-modal-meta);
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ann-modal__close:hover {
+  background: var(--ann-modal-close-hover);
+  border-color: #D1D5DB;
+  color: var(--ann-modal-title);
+}
+
+/* Divider */
+.ann-modal__divider {
+  height: 1px;
+  background: var(--ann-modal-divider);
+  margin: 20px 28px 0;
+}
+
+/* Body / full content area */
+.ann-modal__body {
+  padding: 20px 28px 0;
+  flex: 1;
+}
+
+.ann-modal__body .announcement-full-content {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ann-modal-body);
+}
+
+.ann-modal__body .announcement-full-content p  { margin: 0 0 14px 0; }
+.ann-modal__body .announcement-full-content ul,
+.ann-modal__body .announcement-full-content ol { padding-left: 20px; margin: 0 0 14px 0; }
+.ann-modal__body .announcement-full-content li { margin-bottom: 6px; }
+.ann-modal__body .announcement-full-content a  { color: var(--ann-accent); }
+.ann-modal__body .announcement-full-content strong { color: var(--ann-modal-title); font-weight: 700; }
+
+/* Footer row */
+.ann-modal__footer {
+  padding: 20px 28px 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ann-modal__close-btn {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: 12px;
+  border: 1px solid var(--ann-card-border);
+  background: #FFFFFF;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ann-body-color);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ann-modal__close-btn:hover {
+  background: #F5F7FA;
+  border-color: #CBD5E1;
+}
+
+/* Scroll-lock helper */
+body.ann-modal-open {
+  overflow: hidden;
+}
+
+/* ── Responsive tweaks ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ann-card__body {
+    padding: 14px 14px 14px;
+    gap: 12px;
+  }
+
+  .ann-card__title {
+    font-size: 14px !important;
+  }
+
+  .ann-card__preview {
+    font-size: 12.5px;
+  }
+
+  .ann-card__see-more-inline {
+    font-size: 12.5px;
+  }
+
+  /* Modal mobile */
+  .ann-modal__header {
+    padding: 20px 20px 0;
+  }
+
+  .ann-modal__title {
+    font-size: 18px;
+  }
+
+  .ann-modal__divider {
+    margin: 16px 20px 0;
+  }
+
+  .ann-modal__body {
+    padding: 16px 20px 0;
+  }
+
+  .ann-modal__footer {
+    padding: 16px 20px 20px;
+  }
+}

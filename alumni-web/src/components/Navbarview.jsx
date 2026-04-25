@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import AlumnAIHorizontal from '../assets/new_lg.svg';
+import AlumnAIHorizontal from '../assets/alumnai_logo_new.svg';
 import './Navbar.css';
 
 const NavbarView = ({

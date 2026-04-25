@@ -1,3 +1,4 @@
+// PrivacyPolicyAbout.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import PrivacyPolicyAboutView from '../Views/PrivacyPolicyAboutView';

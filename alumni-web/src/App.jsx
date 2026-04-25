@@ -111,8 +111,8 @@ function App() {
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['alumni']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/announcements" element={<ProtectedRoute allowedRoles={['alumni']}><Announcements /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={['alumni']}><Profile /></ProtectedRoute>} />
-      <Route path="/personal-information" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalInformation /></ProtectedRoute>} />
-      <Route path="/change-password" element={<ProtectedRoute allowedRoles={['alumni']}><ChangePassword /></ProtectedRoute>} />
+      {/* <Route path="/personal-information" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalInformation /></ProtectedRoute>} />
+      <Route path="/change-password" element={<ProtectedRoute allowedRoles={['alumni']}><ChangePassword /></ProtectedRoute>} /> */}
       <Route path="/about" element={<ProtectedRoute allowedRoles={['alumni']}><About /></ProtectedRoute>} />
       <Route path="/terms-about" element={<ProtectedRoute allowedRoles={['alumni']}><TermsOfServiceAbout/></ProtectedRoute>} />
       <Route path="/privacy-about" element={<ProtectedRoute allowedRoles={['alumni']}><PrivacyPolicyAbout /></ProtectedRoute>} />

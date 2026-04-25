@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import ProfileView from '../Views/Profileview';
+import ProfileView from '../views/ProfileView';
 
+// ── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1440
@@ -15,68 +16,219 @@ const useWindowWidth = () => {
   return width;
 };
 
-const STRENGTH_FIELDS = [
-  'avatar_url',
-  'first_name',
-  'last_name',
-  'program',
-  'batch_year',
-  'bio',
-  'employment_status',
-  'mobile_number',
+// ── Profile strength fields (combined from users and personal_background_data) ──
+const REQUIRED_FIELDS = [
+  'first_name', 'last_name', 'program',
+  'batch_year', 'gender', 'birthday', 'civil_status',
+  'street_address', 'city', 'province', 'zip_code', 'country',
+  'contact_number', 'student_number',
 ];
 
-const calcStrength = (data) => {
-  if (!data) return 0;
-  const filled = STRENGTH_FIELDS.filter((f) => Boolean(data[f])).length;
-  return Math.round((filled / STRENGTH_FIELDS.length) * 100);
+const OPTIONAL_FIELDS = ['avatar_url'];
+
+const normalizeUserData = (userData = {}, surveyData = {}) => ({
+  avatar_url: userData.avatar_url,
+
+  first_name: userData.first_name ?? surveyData.first_name,
+  last_name: userData.last_name ?? surveyData.last_name,
+
+  program: userData.program,
+  batch_year: userData.batch_year,
+
+  gender: surveyData.gender,
+  birthday: surveyData.birthday,
+  civil_status: surveyData.civil_status,
+
+  street_address: surveyData.street_address,
+  city: surveyData.city,
+  province: surveyData.province,
+  zip_code: surveyData.zip_code,
+  country: surveyData.country,
+
+  contact_number: surveyData.contact_number,
+  student_number: surveyData.student_number,
+});
+
+const calcStrength = (userData, surveyData) => {
+  if (!userData) return 0;
+
+  const combined = normalizeUserData(userData, surveyData);
+
+  const filled = REQUIRED_FIELDS.filter((f) => {
+    const val = combined[f];
+    return val !== null && val !== undefined && String(val).trim() !== '';
+  }).length;
+
+  return Math.round((filled / REQUIRED_FIELDS.length) * 100);
 };
 
+// ── Personal Information form config ──────────────────────────────────────
+export const PI_FORM_KEYS = [
+  'firstName', 'middleName', 'lastName',
+  'gender', 'birthday', 'civilStatus',
+  'street', 'city', 'province', 'zipCode', 'country',
+  'contactNumber',
+  'academicProgram', 'yearGraduated', 'studentNumber',
+  'email',
+];
+
+const PI_READ_ONLY = new Set(['email']);
+
+const EMPTY_PI_FORM = Object.fromEntries(PI_FORM_KEYS.map((k) => [k, '']));
+
+export const validatePI = (form) => {
+  const errors = {};
+  if (!form.firstName?.trim())   errors.firstName   = 'First name is required.';
+  if (!form.lastName?.trim())    errors.lastName    = 'Last name is required.';
+  if (form.zipCode && !/^\d{4}$/.test(form.zipCode))
+    errors.zipCode = 'Zip code must be 4 digits.';
+  if (form.contactNumber) {
+    const digits = form.contactNumber.replace(/\D/g, '');
+    if (digits.length < 10 || digits.length > 11)
+      errors.contactNumber = 'Enter a valid 10–11 digit number.';
+  }
+  if (form.yearGraduated && !/^\d{4}$/.test(form.yearGraduated))
+    errors.yearGraduated = 'Enter a valid 4-digit year.';
+  return errors;
+};
+
+// ── Password rules ─────────────────────────────────────────────────────────
+export const PASSWORD_RULES = [
+  { id: 'length',  label: 'At least 8 characters',           test: (v) => v.length >= 8 },
+  { id: 'upper',   label: 'At least one uppercase letter',    test: (v) => /[A-Z]/.test(v) },
+  { id: 'lower',   label: 'At least one lowercase letter',    test: (v) => /[a-z]/.test(v) },
+  { id: 'number',  label: 'At least one number',              test: (v) => /[0-9]/.test(v) },
+  { id: 'special', label: 'At least one special character',   test: (v) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(v) },
+];
+
+// ── Notification helpers ───────────────────────────────────────────────────
+const NOTIF_KEY   = 'alumnai_read_notifs';
+const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
+const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
+
+export const groupByDate = (list) => {
+  const now       = new Date();
+  const today     = new Date(now); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
+  const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+  list.forEach((n) => {
+    const d = new Date(n.time); d.setHours(0, 0, 0, 0);
+    if      (d >= today)     groups['Today'].push(n);
+    else if (d >= yesterday) groups['Yesterday'].push(n);
+    else if (d >= weekAgo)   groups['This Week'].push(n);
+    else                     groups['Earlier'].push(n);
+  });
+  return groups;
+};
+
+export const formatTime = (iso) => {
+  if (!iso) return '';
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60)     return 'Just now';
+  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+};
+
+// ── Format last password change ────────────────────────────────────────────
+export const formatLastPasswordChange = (isoDate) => {
+  if (!isoDate) return null;
+  const date = new Date(isoDate);
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Profile — Main Logic Component
+// ══════════════════════════════════════════════════════════════════════════════
 const Profile = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
+  const width    = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
 
-  const [user, setUser] = useState(null);
-  const [avatarUrl, setAvatarUrl] = useState(null);
-  const [strength, setStrength] = useState(0);
-  const [showModal, setShowModal] = useState(false);
+  // ── User / avatar ────────────────────────────────────────────────────────
+  const [user,               setUser]              = useState(null);
+  const [surveyData,         setSurveyData]        = useState(null);
+  const [avatarUrl,          setAvatarUrl]         = useState(null);
+  const [strength,           setStrength]          = useState(0);
+  const [lastPasswordChange, setLastPasswordChange] = useState(null);
 
-  const bellRef = useRef(null);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  // ── Modal visibility ─────────────────────────────────────────────────────
+  const [showPIModal, setShowPIModal] = useState(false);
+  const [showCPModal, setShowCPModal] = useState(false);
+
+  // ── Personal Information form state ──────────────────────────────────────
+  const [piForm,         setPiForm]        = useState(EMPTY_PI_FORM);
+  const [piFieldErrors,  setPiFieldErrors] = useState({});
+  const [piSaving,       setPiSaving]      = useState(false);
+  const [piSaveSuccess,  setPiSaveSuccess] = useState(false);
+  const [piSaveError,    setPiSaveError]   = useState('');
+  const [piLoading,      setPiLoading]     = useState(false);
+  const piFormInitialized                  = useRef(false);
+
+  // ── Change Password form state ────────────────────────────────────────────
+  const [cpCurrent, setCpCurrent] = useState('');
+  const [cpNew,     setCpNew]     = useState('');
+  const [cpConfirm, setCpConfirm] = useState('');
+  const [cpLoading, setCpLoading] = useState(false);
+  const [cpError,   setCpError]   = useState('');
+  const [cpSuccess, setCpSuccess] = useState(false);
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  const bellRef                             = useRef(null);
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState('all');
+  const [notifTab,     setNotifTab]     = useState('all');
 
-  const fetchUser = useCallback(async () => {
+  // ── Fetch user and survey data ────────────────────────────────────────────
+  const fetchUserAndSurvey = useCallback(async () => {
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
       if (authError || !authUser) return;
 
-      // FIX: Detailed error logging to identify the missing column
-      const { data, error } = await supabase
+      // Fetch last password change from auth metadata
+      const lastChanged = authUser.last_sign_in_at || authUser.updated_at || null;
+      const pwChangedAt = authUser.user_metadata?.password_changed_at || null;
+      setLastPasswordChange(pwChangedAt || lastChanged);
+
+      // Fetch user data from users table
+      const { data: userData, error: userError } = await supabase
         .from('users')
-        .select('*') // Using * temporarily is a good way to check if the table/ID is the issue
+        .select('*')
         .eq('id', authUser.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('Supabase Error Details:', error.message, error.hint, error.details);
-        return;
-      }
+      if (userError) { console.error('Supabase error:', userError.message); return; }
+      
+      // Fetch survey progress data
+      const { data: surveyProgress, error: surveyError } = await supabase
+        .from('survey_progress')
+        .select('personal_background_data')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
 
-      if (!data) {
-        console.warn('No user record found in "users" table for ID:', authUser.id);
-        return;
-      }
+      if (surveyError) console.error('Survey fetch error:', surveyError.message);
 
-      setUser(data);
-      setStrength(calcStrength(data));
-      if (data.avatar_url) setAvatarUrl(data.avatar_url);
+      const personalBgData = surveyProgress?.personal_background_data || {};
+      
+      setSurveyData(personalBgData);
+      
+      if (!userData) { console.warn('No user record for ID:', authUser.id); return; }
+
+      // Merge user data with personal_background_data for display
+      const mergedUser = { ...userData, ...personalBgData };
+      setUser(mergedUser);
+      setStrength(calcStrength(mergedUser, personalBgData));
+      if (userData.avatar_url) setAvatarUrl(userData.avatar_url);
     } catch (err) {
-      console.error('fetchUser unexpected error:', err);
+      console.error('fetchUser error:', err);
     }
   }, []);
 
+  // ── Fetch notifications ────────────────────────────────────────────────────
   const fetchNotifs = useCallback(async () => {
     try {
       const { data, error } = await supabase
@@ -85,27 +237,23 @@ const Profile = () => {
         .eq('is_active', true)
         .order('published_at', { ascending: false })
         .limit(20);
-
       if (error || !data) return;
-
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map((n) => ({
-        id: n.id,
-        title: n.title,
-        body: n.content,
-        time: n.published_at,
-        read: readIds.includes(n.id),
+      const readIds = getReadIds();
+      const mapped  = data.map((n) => ({
+        id: n.id, title: n.title, body: n.content,
+        time: n.published_at, read: readIds.includes(n.id),
       }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter((n) => !n.read).length);
     } catch (err) {
-      console.error('fetchNotifs unexpected error:', err);
+      console.error('fetchNotifs error:', err);
     }
   }, []);
 
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => { fetchUserAndSurvey(); },   [fetchUserAndSurvey]);
   useEffect(() => { fetchNotifs(); }, [fetchNotifs]);
 
+  // Close bell dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -115,76 +263,310 @@ const Profile = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const markAllRead = useCallback(() => {
-    setNotifs((prev) => {
-      const allIds = prev.map((n) => n.id);
-      localStorage.setItem('read_notifs', JSON.stringify(allIds));
-      return prev.map((n) => ({ ...n, read: true }));
-    });
-    setUnreadCount(0);
+  // ── Initialize PI form when modal opens — autofill from Supabase ─────────
+  useEffect(() => {
+    if (showPIModal && user && !piFormInitialized.current) {
+      piFormInitialized.current = true;
+      setPiLoading(true);
+
+      supabase.auth.getUser().then(async ({ data: { user: au } }) => {
+        // Fetch fresh survey data for the form
+        const { data: surveyProgress } = await supabase
+          .from('survey_progress')
+          .select('personal_background_data')
+          .eq('user_id', au?.id)
+          .maybeSingle();
+        
+        const personalBgData = surveyProgress?.personal_background_data || {};
+        
+        // Combine user data with personal_background_data
+        const fullUserData = { ...user, ...personalBgData };
+
+        const mapped = { ...EMPTY_PI_FORM };
+
+        // Map fields from combined data
+        const fieldMappings = {
+          first_name: 'firstName', firstName: 'firstName',
+          middle_name: 'middleName', middleName: 'middleName',
+          last_name: 'lastName', lastName: 'lastName',
+          gender: 'gender',
+          birthday: 'birthday',
+          civil_status: 'civilStatus', civilStatus: 'civilStatus',
+          street_address: 'street', street: 'street',
+          city: 'city',
+          province: 'province',
+          zip_code: 'zipCode', zipCode: 'zipCode',
+          country: 'country',
+          contact_number: 'contactNumber', mobile_number: 'contactNumber',
+          program: 'academicProgram', academicProgram: 'academicProgram',
+          batch_year: 'yearGraduated', yearGraduated: 'yearGraduated',
+          student_number: 'studentNumber', studentNumber: 'studentNumber',
+        };
+
+        Object.entries(fieldMappings).forEach(([dbKey, formKey]) => {
+          if (fullUserData[dbKey] != null && fullUserData[dbKey] !== '') {
+            mapped[formKey] = String(fullUserData[dbKey]);
+          }
+        });
+
+        mapped.email = au?.email || '';
+        setPiForm(mapped);
+        setPiLoading(false);
+      });
+    }
+  }, [showPIModal, user]);
+
+  // Reset PI init flag when modal closes so it re-fetches on next open
+  const handleClosePIModal = useCallback(() => {
+    setShowPIModal(false);
+    piFormInitialized.current = false;
+    setPiFieldErrors({});
+    setPiSaveError('');
+    setPiSaveSuccess(false);
   }, []);
 
-  const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) {
-      readIds.push(id);
-      localStorage.setItem('read_notifs', JSON.stringify(readIds));
+  // ── PI field setter ────────────────────────────────────────────────────────
+  const setPiField = useCallback((key) => (valueOrEvent) => {
+    const value = valueOrEvent && typeof valueOrEvent === 'object' && 'target' in valueOrEvent
+      ? valueOrEvent.target.value : valueOrEvent;
+    setPiForm((prev) => ({ ...prev, [key]: value }));
+    setPiFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
+  // ── PI save — updates both users table and survey_progress ─────────────────
+  const handlePISave = useCallback(async () => {
+    setPiSaveError('');
+    setPiSaveSuccess(false);
+    const errors = validatePI(piForm);
+    if (Object.keys(errors).length > 0) { setPiFieldErrors(errors); return; }
+    setPiSaving(true);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      // Fields that go to users table
+      const userTableFields = {
+        first_name: piForm.firstName !== '' ? piForm.firstName : null,
+        middle_name: piForm.middleName !== '' ? piForm.middleName : null,
+        last_name: piForm.lastName !== '' ? piForm.lastName : null,
+        program: piForm.academicProgram !== '' ? piForm.academicProgram : null,
+        batch_year: piForm.yearGraduated !== '' ? parseInt(piForm.yearGraduated) : null,
+      };
+
+      // Remove null values
+      Object.keys(userTableFields).forEach(key => {
+        if (userTableFields[key] === null) delete userTableFields[key];
+      });
+
+      // Update users table if there are changes
+      if (Object.keys(userTableFields).length > 0) {
+        const { error: userError } = await supabase
+          .from('users')
+          .update(userTableFields)
+          .eq('id', authUser.id);
+        if (userError) throw userError;
+      }
+
+      // Fields that go to personal_background_data (JSONB)
+      const personalBgData = {
+        gender: piForm.gender !== '' ? piForm.gender : null,
+        birthday: piForm.birthday !== '' ? piForm.birthday : null,
+        civil_status: piForm.civilStatus !== '' ? piForm.civilStatus : null,
+        street_address: piForm.street !== '' ? piForm.street : null,
+        city: piForm.city !== '' ? piForm.city : null,
+        province: piForm.province !== '' ? piForm.province : null,
+        zip_code: piForm.zipCode !== '' ? piForm.zipCode : null,
+        country: piForm.country !== '' ? piForm.country : null,
+        contact_number: piForm.contactNumber !== '' ? piForm.contactNumber : null,
+        student_number: piForm.studentNumber !== '' ? piForm.studentNumber : null,
+      };
+
+      // Remove null values
+      Object.keys(personalBgData).forEach(key => {
+        if (personalBgData[key] === null) delete personalBgData[key];
+      });
+
+      // Update survey_progress if there are changes
+      if (Object.keys(personalBgData).length > 0) {
+        // First get existing data
+        const { data: existingProgress } = await supabase
+          .from('survey_progress')
+          .select('personal_background_data')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        const mergedData = { ...existingProgress?.personal_background_data, ...personalBgData };
+
+        const { error: surveyError } = await supabase
+          .from('survey_progress')
+          .upsert({
+            user_id: authUser.id,
+            personal_background_data: mergedData,
+            last_updated: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
+
+        if (surveyError) throw surveyError;
+      }
+
+      await fetchUserAndSurvey();
+      setPiSaving(false);
+      setPiSaveSuccess(true);
+      setTimeout(() => setPiSaveSuccess(false), 3500);
+    } catch (err) {
+      setPiSaving(false);
+      const msg = err.message || 'Failed to save. Please try again.';
+      setPiSaveError(msg);
     }
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  }, [piForm, fetchUserAndSurvey]);
+
+  // ── CP reset on close ──────────────────────────────────────────────────────
+  const handleCloseCPModal = useCallback(() => {
+    setShowCPModal(false);
+    setCpCurrent('');
+    setCpNew('');
+    setCpConfirm('');
+    setCpError('');
+    setCpSuccess(false);
+  }, []);
+
+  // Open CP from PI modal (close PI first)
+  const handleOpenCPFromPI = useCallback(() => {
+    setShowPIModal(false);
+    piFormInitialized.current = false;
+    setShowCPModal(true);
+  }, []);
+
+  // ── CP save — updates password and stores last changed date ────────────────
+  const handleCPSave = useCallback(async () => {
+    setCpError('');
+    setCpSuccess(false);
+    if (!cpCurrent || !cpNew || !cpConfirm) return setCpError('Please fill in all fields.');
+    const allPassed = PASSWORD_RULES.every((r) => r.test(cpNew));
+    if (!allPassed) return setCpError('New password does not meet all requirements.');
+    if (cpNew !== cpConfirm) return setCpError('New passwords do not match.');
+
+    setCpLoading(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      // Verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: authUser.email,
+        password: cpCurrent,
+      });
+      if (signInError) throw new Error('Current password is incorrect.');
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: cpNew,
+        data: { password_changed_at: new Date().toISOString() },
+      });
+      if (updateError) throw updateError;
+
+      // Update local state immediately
+      setLastPasswordChange(new Date().toISOString());
+
+      setCpLoading(false);
+      setCpSuccess(true);
+      setCpCurrent('');
+      setCpNew('');
+      setCpConfirm('');
+      setTimeout(() => { handleCloseCPModal(); }, 2000);
+    } catch (err) {
+      setCpLoading(false);
+      setCpError(err.message || 'Failed to update password. Please try again.');
+    }
+  }, [cpCurrent, cpNew, cpConfirm, handleCloseCPModal]);
+
+  // ── Notification actions ──────────────────────────────────────────────────
+  const markAllRead = useCallback(() => {
+    saveReadIds(notifs.map((n) => n.id));
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
+  }, [notifs]);
+
+  const markOneRead = useCallback((id) => {
+    const ids = getReadIds();
+    if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
+  // ── Avatar upload ──────────────────────────────────────────────────────────
   const handleAvatarUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) return;
-
-      const ext = file.name.split('.').pop();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const ext      = file.name.split('.').pop();
       const filePath = `avatars/${authUser.id}.${ext}`;
-
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) { console.error('Avatar upload error:', uploadError); return; }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
+        .from('avatars').upload(filePath, file, { upsert: true });
+      if (uploadError) { console.error('Upload error:', uploadError); return; }
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
       await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', authUser.id);
-
       setAvatarUrl(publicUrl);
-      fetchUser();
+      fetchUserAndSurvey();
     } catch (err) {
-      console.error('handleAvatarUpload unexpected error:', err);
+      console.error('Avatar upload error:', err);
     }
-  }, [fetchUser]);
+  }, [fetchUserAndSurvey]);
 
   return (
     <ProfileView
+      // layout
+      isMobile={isMobile}
+      isTablet={isTablet}
+      navigate={navigate}
+      // user
       user={user}
       avatarUrl={avatarUrl}
-      width={width}
       strength={strength}
-      showModal={showModal}
-      setShowModal={setShowModal}
+      onAvatarUpload={handleAvatarUpload}
+      lastPasswordChange={lastPasswordChange}
+      // modals
+      showPIModal={showPIModal}
+      setShowPIModal={setShowPIModal}
+      onClosePIModal={handleClosePIModal}
+      showCPModal={showCPModal}
+      setShowCPModal={setShowCPModal}
+      onCloseCPModal={handleCloseCPModal}
+      onOpenCPFromPI={handleOpenCPFromPI}
+      // PI form
+      piForm={piForm}
+      setPiField={setPiField}
+      piFieldErrors={piFieldErrors}
+      piLoading={piLoading}
+      piSaving={piSaving}
+      piSaveSuccess={piSaveSuccess}
+      piSaveError={piSaveError}
+      onPISave={handlePISave}
+      // CP form
+      cpCurrent={cpCurrent}  setCpCurrent={setCpCurrent}
+      cpNew={cpNew}          setCpNew={setCpNew}
+      cpConfirm={cpConfirm}  setCpConfirm={setCpConfirm}
+      cpLoading={cpLoading}
+      cpError={cpError}
+      cpSuccess={cpSuccess}
+      onCPSave={handleCPSave}
+      // notifications
       bellRef={bellRef}
       notifs={notifs}
-      notifTab={notifTab}
-      setNotifTab={setNotifTab}
       unreadCount={unreadCount}
       showDropdown={showDropdown}
       setShowDropdown={setShowDropdown}
+      notifTab={notifTab}
+      setNotifTab={setNotifTab}
       markAllRead={markAllRead}
       markOneRead={markOneRead}
-      onAvatarUpload={handleAvatarUpload}
-      navigate={navigate}
+      groupByDate={groupByDate}
+      formatTime={formatTime}
     />
   );
 };

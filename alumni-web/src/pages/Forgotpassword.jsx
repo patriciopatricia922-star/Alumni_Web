@@ -1,9 +1,10 @@
+// ForgotPassword.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ForgotPasswordView from '../Views/Forgotpasswordview';
 
-const ForgotPassword = () => {
+const ForgotPassword = ({ onSwitchToLogin }) => {
   const navigate = useNavigate();
 
   const [email,   setEmail]   = useState('');
@@ -47,6 +48,14 @@ const ForgotPassword = () => {
     }
   };
 
+  const handleBackToLogin = () => {
+    if (onSwitchToLogin) {
+      onSwitchToLogin();
+    } else {
+      navigate('/', { state: { openLogin: true } });
+    }
+  };
+
   return (
     <ForgotPasswordView
       email={email}
@@ -56,8 +65,7 @@ const ForgotPassword = () => {
       error={error}
       setError={setError}
       handleSubmit={handleSubmit}
-      isModal
-      onSwitchToLogin={onSwitchToLogin}
+      onBack={handleBackToLogin}  
     />
   );
 };

@@ -105,16 +105,31 @@ const SidebarView = ({
     }}>
 
       {/* Logo */}
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 0 24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '28px 0 20px' }}>
         <img
           src={sidebarLogo}
           alt="AlumnAI"
-          style={{ marginRight: '20px', marginTop: '14px', width: isTablet ? '175px' : '197px', height: 'auto', objectFit: 'contain' }}
+          style={{
+            marginRight: '20px',
+            marginTop: '3px',
+            width: isTablet ? '179px' : '198px',
+            height: 'auto',
+            objectFit: 'contain',
+          }}
         />
       </div>
 
+      {/* Divider under logo */}
+      <div style={{
+        height: '1px',
+        marginTop: '-1vw',
+        background: 'rgba(255, 255, 255, 0.15)',
+        margin: '0 20px 4px',
+        flexShrink: 0,
+      }} />
+
       {/* MENU section */}
-      <div style={{ padding: '20px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ marginTop: '.5vw',padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <p style={{
           fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
           lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
@@ -132,8 +147,9 @@ const SidebarView = ({
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 13px',
                 margin: '0 6.5px',
-                background: 'transparent',
+                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
                 borderRadius: '14px', textDecoration: 'none',
+                transition: 'background 0.15s ease',
               }}
             >
               <img src={item.icon} alt={item.label} style={{
@@ -144,7 +160,8 @@ const SidebarView = ({
               }} />
               <span style={{
                 fontFamily: 'Montserrat',
-                fontSize: isTablet ? '14px' : '15px',
+                marginLeft: '20px',
+                fontSize: isTablet ? '14px' : '12.9px',
                 fontWeight: isActive ? 700 : 500,
                 lineHeight: '24px', letterSpacing: '0.325px',
                 color: isActive ? '#FFEC8E' : '#FFFFFF',
@@ -155,11 +172,17 @@ const SidebarView = ({
       </div>
 
       {/* HELP section */}
-      <div style={{ padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ marginTop: '1.2vw',padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <p style={{
-          fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
-          lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.9)', padding: '0 14px', margin: '0 0 8px 0',
+          fontFamily: 'Montserrat', 
+          fontWeight: 600, 
+          fontSize: '10px',
+          lineHeight: '15px', 
+          letterSpacing: '0.5px', 
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.9)', 
+          padding: '0 14px', 
+          margin: '0 0 8px 0',
         }}>HELP</p>
 
         {helpItems.map((item) => {
@@ -172,8 +195,9 @@ const SidebarView = ({
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 13px',
                 margin: '0 6.5px',
-                background: 'transparent',
+                background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
                 borderRadius: '14px', textDecoration: 'none',
+                transition: 'background 0.15s ease',
               }}
             >
               <img src={item.icon} alt={item.label} style={{
@@ -184,7 +208,8 @@ const SidebarView = ({
               }} />
               <span style={{
                 fontFamily: 'Montserrat',
-                fontSize: isTablet ? '14px' : '15px',
+                marginLeft: '20px',
+                fontSize: isTablet ? '14px' : '12.9px',
                 fontWeight: isActive ? 700 : 500,
                 lineHeight: '27px', letterSpacing: '0.325px',
                 color: isActive ? '#FFEC8E' : '#FFFFFF',
@@ -209,7 +234,9 @@ const SidebarView = ({
             background: 'linear-gradient(135deg, #51A2FF 0%, #155DFC 100%)',
             borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF' }}>{initials}</span>
+            <span style={{
+              fontFamily: 'Arial', fontSize: '14px', fontWeight: 700, color: '#FFFFFF',
+            }}>{initials}</span>
           </div>
 
           {/* Name + role */}

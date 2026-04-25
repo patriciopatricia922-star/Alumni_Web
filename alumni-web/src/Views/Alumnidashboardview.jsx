@@ -19,9 +19,7 @@ const ForYouCard = ({ item, onNavigate }) => (
         className={`for-you-icon ${item.title === 'Discounts' ? 'discount-icon' : ''}`}
       />
       {item.showDot && (
-        <div className="notification-dot">
-          <div className="notification-dot-inner" />
-        </div>
+        <div className="notification-dot" />
       )}
     </div>
 
@@ -39,8 +37,8 @@ const ForYouCard = ({ item, onNavigate }) => (
 // ============================ PROGRESS CIRCLE COMPONENT ============================
 const ProgressCircle = ({ animatedPercentage }) => {
   const size = 154;
-  const radius = 68;
-  const strokeWidth = 12;
+  const radius = 64;
+  const strokeWidth = 13;
   const circumference = 2 * Math.PI * radius;
 
   return (
@@ -90,7 +88,12 @@ const NotificationDropdown = ({
     return (
       <div className="notification-empty">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" />
+          <path
+            d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+            stroke="rgba(255,255,255,0.2)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
         </svg>
         <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
       </div>
@@ -112,7 +115,12 @@ const NotificationDropdown = ({
               >
                 <div className="notification-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round" />
+                    <path
+                      d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                      stroke="#2B72FB"
+                      strokeWidth="1.67"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </div>
                 <div className="notification-content">
@@ -151,7 +159,7 @@ const AlumniDashboardView = ({
   animatedPercentage,
   forYouItems,
   onNavigate,
-  surveyRoute,   // <-- received from logic layer
+  surveyRoute,
 }) => {
   return (
     <div className="alumni-dashboard">
@@ -166,7 +174,9 @@ const AlumniDashboardView = ({
           <button
             className={`bell-button ${showDropdown ? 'active' : ''}`}
             onClick={() => setShowDropdown(v => !v)}
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
           >
+            {/* Bell icon */}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path
                 d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
@@ -176,11 +186,11 @@ const AlumniDashboardView = ({
                 strokeLinejoin="round"
               />
             </svg>
+
+            {/* Badge — clean single circle with dynamic count */}
             {unreadCount > 0 && (
               <div className="bell-badge">
-                <div className="bell-badge-inner">
-                  <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
-                </div>
+                <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
               </div>
             )}
           </button>
@@ -267,13 +277,14 @@ const AlumniDashboardView = ({
             <div className="survey-card-content">
               <p className="survey-label">SURVEY PROGRESS</p>
               <p className="survey-message">Your alumni tracer survey!</p>
-              {/* Continue button navigates to the resolved survey route,
-                  identical to how the Sidebar handles the Tracer Survey link */}
               <button
                 className="continue-button"
                 onClick={() => surveyRoute && onNavigate(surveyRoute)}
                 disabled={!surveyRoute}
-                style={{ opacity: surveyRoute ? 1 : 0.5, cursor: surveyRoute ? 'pointer' : 'not-allowed' }}
+                style={{
+                  opacity: surveyRoute ? 1 : 0.5,
+                  cursor: surveyRoute ? 'pointer' : 'not-allowed',
+                }}
               >
                 Continue
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
