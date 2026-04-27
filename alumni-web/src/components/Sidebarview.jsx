@@ -55,7 +55,8 @@ const SidebarView = ({
                   background: '#FFEC8E', borderRadius: '0 0 4px 4px',
                 }} />
               )}
-              <img src={item.icon} alt={item.label} style={{
+              <img src={item.icon} alt={item.label} 
+              style={{
                 width: '21px', height: '21px',
                 filter: isActive
                   ? 'brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%)'
@@ -153,7 +154,7 @@ const SidebarView = ({
               }}
             >
               <img src={item.icon} alt={item.label} style={{
-                width: '15px', height: '15px', flexShrink: 0,
+                width: '13.2px', height: '13.2px', flexShrink: 0,
                 filter: isActive
                   ? 'brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%) hue-rotate(6deg) brightness(100%) contrast(90%)'
                   : 'brightness(0) invert(1) opacity(0.9)',
@@ -201,7 +202,7 @@ const SidebarView = ({
               }}
             >
               <img src={item.icon} alt={item.label} style={{
-                width: '17px', height: '17px', flexShrink: 0,
+                width: '13.2px', height: '13.2px', flexShrink: 0,
                 filter: isActive
                   ? 'brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%) hue-rotate(6deg) brightness(100%) contrast(90%)'
                   : 'brightness(0) invert(1) opacity(0.9)',

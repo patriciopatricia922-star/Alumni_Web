@@ -4,6 +4,7 @@
 
 import React from 'react';
 import Sidebar from '../components/Sidebar';
+import NewArrow from '../assets/new_arrow.svg';
 import '../styles/AlumniDashboard.css';
 
 // ============================ FOR YOU CARD COMPONENT ============================
@@ -28,9 +29,7 @@ const ForYouCard = ({ item, onNavigate }) => (
       <p className="card-description">{item.description}</p>
     </div>
 
-    <svg className="chevron-icon" width="8" height="14" viewBox="0 0 8 14" fill="none">
-      <path d="M1 1L7 7L1 13" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <img src={NewArrow} alt="Arrow" className="chevron-icon" />
   </div>
 );
 
@@ -169,81 +168,79 @@ const AlumniDashboardView = ({
         className="dashboard-content"
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
-        {/* ── Notification Bell ── */}
-        <div ref={bellRef} className={`notification-bell ${isMobile ? 'mobile' : ''}`}>
-          <button
-            className={`bell-button ${showDropdown ? 'active' : ''}`}
-            onClick={() => setShowDropdown(v => !v)}
-            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-          >
-            {/* Bell icon */}
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-                stroke="#FFFFFF"
-                strokeWidth="1.67"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-
-            {/* Badge — clean single circle with dynamic count */}
-            {unreadCount > 0 && (
-              <div className="bell-badge">
-                <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
-              </div>
-            )}
-          </button>
-
-          {showDropdown && (
-            <div className={`notification-dropdown ${isMobile ? 'mobile' : ''}`}>
-              <div className="dropdown-header">
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="mark-all-read">
-                    Mark all read
-                  </button>
-                )}
-              </div>
-              <div className="dropdown-tabs">
-                {['all', 'unread'].map(t => (
-                  <button
-                    key={t}
-                    className={`tab-btn ${notifTab === t ? 'active' : ''}`}
-                    onClick={() => setNotifTab(t)}
-                  >
-                    {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                  </button>
-                ))}
-              </div>
-              <div className="dropdown-body">
-                <NotificationDropdown
-                  notifs={notifs}
-                  unreadCount={unreadCount}
-                  notifTab={notifTab}
-                  setNotifTab={setNotifTab}
-                  markAllRead={markAllRead}
-                  markOneRead={markOneRead}
-                  groupByDate={groupByDate}
-                  formatTime={formatTime}
-                  onSeeAllNotifs={onSeeAllNotifs}
-                />
-              </div>
-              <div className="dropdown-footer">
-                <button onClick={onSeeAllNotifs} className="see-all-btn">
-                  See all notifications
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* ── Page Header ── */}
         <div className="dashboard-header">
-          <h1 className="dashboard-title">Dashboard</h1>
-          <p className="dashboard-subtitle">
-            Welcome Bark! Let's see what's new in your alumni network.
-          </p>
+          <div className="dashboard-header-text">
+            <h1 className="dashboard-title">Dashboard</h1>
+            <p className="dashboard-subtitle">
+              Welcome Bark! Let's see what's new in your alumni network.
+            </p>
+          </div>
+
+          <div ref={bellRef} className={`notification-bell ${isMobile ? 'mobile' : ''}`}>
+            <button
+              className={`bell-button ${showDropdown ? 'active' : ''}`}
+              onClick={() => setShowDropdown(v => !v)}
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
+                  stroke="#FFFFFF"
+                  strokeWidth="1.67"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {unreadCount > 0 && (
+                <div className="bell-badge">
+                  <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
+                </div>
+              )}
+            </button>
+
+            {showDropdown && (
+              <div className={`notification-dropdown ${isMobile ? 'mobile' : ''}`}>
+                <div className="dropdown-header">
+                  <span>Notifications</span>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} className="mark-all-read">
+                      Mark all read
+                    </button>
+                  )}
+                </div>
+                <div className="dropdown-tabs">
+                  {['all', 'unread'].map(t => (
+                    <button
+                      key={t}
+                      className={`tab-btn ${notifTab === t ? 'active' : ''}`}
+                      onClick={() => setNotifTab(t)}
+                    >
+                      {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                    </button>
+                  ))}
+                </div>
+                <div className="dropdown-body">
+                  <NotificationDropdown
+                    notifs={notifs}
+                    unreadCount={unreadCount}
+                    notifTab={notifTab}
+                    setNotifTab={setNotifTab}
+                    markAllRead={markAllRead}
+                    markOneRead={markOneRead}
+                    groupByDate={groupByDate}
+                    formatTime={formatTime}
+                    onSeeAllNotifs={onSeeAllNotifs}
+                  />
+                </div>
+                <div className="dropdown-footer">
+                  <button onClick={onSeeAllNotifs} className="see-all-btn">
+                    See all notifications
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Top Banner Row ── */}
@@ -290,7 +287,7 @@ const AlumniDashboardView = ({
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M3 8H13M13 8L9 4M13 8L9 12"
-                    stroke="#FFFFFF"
+                    stroke="rgba(0, 40, 255, 0.85)"
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import megaphoneIcon from '../assets/megaphone_ic.svg';
 import calenderIcon from '../assets/calendar_ic.svg';
 import documentIcon from '../assets/document_ic.svg';
+import { getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { truncateHtml, createMarkup } from '../utils/textHelpers';
 import '../styles/Announcements.css';
 
@@ -23,15 +24,14 @@ const ClockIcon = () => (
 // ── Announcement Card ─────────────────────────────────────────────────────────
 // Redesigned to match reference: icon-left, content-center, timestamp top-right,
 // "See more" as inline text link at end of description. No separate footer.
-const AnnouncementCard = ({ announcement, isMobile, isTablet, onClick }) => {
+const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
+  const [expanded, setExpanded] = useState(false);
   const iconSize = isMobile ? '48px' : isTablet ? '52px' : '56px';
 
   return (
-    <div className="ann-card" onClick={onClick}>
-      {/* Main body: icon + content */}
+    <div className={`ann-card ${expanded ? 'ann-card--expanded' : ''}`}>
       <div className="ann-card__body">
 
-        {/* Icon box */}
         <div
           className="ann-card__icon-box"
           style={{ width: iconSize, height: iconSize, minWidth: iconSize }}
@@ -40,9 +40,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet, onClick }) => {
             src={getIcon(announcement.category)}
             alt={announcement.category}
             style={{
-              width: '60%',
-              height: '60%',
-              objectFit: 'contain',
+              width: '60%', height: '60%', objectFit: 'contain',
               filter: 'drop-shadow(0px 2px 4px rgba(43,114,251,0.45))',
             }}
           />
@@ -51,115 +49,48 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet, onClick }) => {
           </div>
         </div>
 
-        {/* Text + timestamp */}
         <div className="ann-card__content">
-          {/* Top row: title + timestamp */}
           <div className="ann-card__top-row">
-            <h3 className="ann-card__title">
-              {announcement.title}
-            </h3>
+            <h3 className="ann-card__title">{announcement.title}</h3>
             <div className="ann-card__timestamp">
               <ClockIcon />
               <span>{announcement.time}</span>
             </div>
           </div>
 
-          {/* Description with inline See more */}
-          <p className="ann-card__preview">
-            {truncateHtml(announcement.description, 120)}
-            {' '}
-            <button
-              className="ann-card__see-more-inline"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick && onClick();
-              }}
-            >
-              See more
-            </button>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+          {!expanded && (
+            <p className="ann-card__preview">
+              {truncateHtml(announcement.description, 120)}
+              {' '}
+              <button
+                className="ann-card__see-more-inline"
+                onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              >
+                See more
+              </button>
+            </p>
+          )}
 
-// ── Announcement Detail Modal ─────────────────────────────────────────────────
-const AnnouncementDetailModal = ({ announcement, onClose, isMobile }) => {
-  React.useEffect(() => {
-    document.body.classList.add('ann-modal-open');
-    return () => document.body.classList.remove('ann-modal-open');
-  }, []);
-
-  React.useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
-
-  if (!announcement) return null;
-
-  return (
-    <div className="ann-modal-overlay" onClick={onClose}>
-      <div
-        className="ann-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ann-modal-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* ── Header ── */}
-        <div className="ann-modal__header">
-          <div className="ann-modal__icon-wrap">
-            <img
-              src={getIcon(announcement.category)}
-              alt={announcement.category}
-              style={{ width: '70%', height: '70%', objectFit: 'contain', filter: 'drop-shadow(0px 2px 4px rgba(43,114,251,0.4))' }}
-            />
-          </div>
-
-          <div className="ann-modal__header-text">
-            <h2 id="ann-modal-title" className="ann-modal__title">
-              {announcement.title}
-            </h2>
-            <div className="ann-modal__meta">
-              <span className="ann-modal__time">
-                <ClockIcon />
-                {announcement.time}
-              </span>
-              {announcement.category && (
-                <span className="ann-modal__tag">{announcement.category}</span>
-              )}
+          {expanded && (
+            <div className="ann-card__full-content">
+              <div
+                className="announcement-full-content"
+                dangerouslySetInnerHTML={createMarkup(announcement.description)}
+              />
+              <button
+                className="ann-card__see-more-inline ann-card__see-less"
+                onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+              >
+                See less
+              </button>
             </div>
-          </div>
-
-          <button
-            className="ann-modal__close"
-            onClick={onClose}
-            aria-label="Close announcement"
-          >
-            ✕
-          </button>
-        </div>
-
-        <div className="ann-modal__divider" />
-
-        <div className="ann-modal__body">
-          <div
-            className="announcement-full-content"
-            dangerouslySetInnerHTML={createMarkup(announcement.description)}
-          />
-        </div>
-
-        <div className="ann-modal__footer">
-          <button className="ann-modal__close-btn" onClick={onClose}>
-            Close
-          </button>
+          )}
         </div>
       </div>
     </div>
   );
 };
+
 
 // ── Main View ──────────────────────────────────────────────────────────────────
 const AnnouncementsView = ({
@@ -173,7 +104,30 @@ const AnnouncementsView = ({
   navigate,
 }) => {
   const sidebarWidth = isTablet ? 200 : 229;
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  // const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+const [surveyRoute, setSurveyRoute] = useState(null);
+
+useEffect(() => {
+  let cancelled = false;
+  const resolveSurveyRoute = async () => {
+    try {
+      await getSurveySections();
+      const complete = await isSurveyComplete();
+      if (cancelled) return;
+      if (complete) {
+        setSurveyRoute('/update-tracer');
+      } else {
+        const route = await getResumeRoute();
+        if (!cancelled) setSurveyRoute(route);
+      }
+    } catch (err) {
+      console.error('AnnouncementsView: error resolving survey route:', err);
+      if (!cancelled) setSurveyRoute('/survey/personal-background');
+    }
+  };
+  resolveSurveyRoute();
+  return () => { cancelled = true; };
+}, []);
 
   const handleCardClick = (announcement) => {
     setSelectedAnnouncement(announcement);
@@ -203,11 +157,11 @@ const AnnouncementsView = ({
           <button
             onClick={() => setShowDropdown(v => !v)}
             style={{
-              width:  isMobile ? '44px' : '58px',
-              height: isMobile ? '44px' : '58px',
-              background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
-              border: showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
-              boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+              width: isMobile ? '44px' : '52px',
+              height: isMobile ? '44px' : '52px',
+              background: '#003EA6',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.35)',
               borderRadius: '14px',
               cursor: 'pointer',
               display: 'flex',
@@ -228,23 +182,29 @@ const AnnouncementsView = ({
             </svg>
             {unreadCount > 0 && (
               <div style={{
-                position: 'absolute', top: '-5px', right: '-5px',
-                width: '24px', height: '24px',
-                background: 'rgba(43,114,251,0.42)',
-                borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'absolute',
+                top: '-7px',
+                right: '-7px',
+                minWidth: '20px',
+                height: '20px',
+                background: '#E53935',
+                borderRadius: '10px',
+                border: '2px solid #DAE5F1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 4px',
+                boxSizing: 'border-box',
               }}>
-                <div style={{
-                  width: '17px', height: '17px',
-                  background: '#2B72FB',
-                  borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0px 4px 6px -4px rgba(0,0,0,0.1)',
+                <span style={{
+                  fontFamily: 'Montserrat',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: '#FFFFFF',
+                  lineHeight: 1,
                 }}>
-                  <span style={{ fontFamily: 'Arimo', fontSize: '9px', color: '#FFFFFF', fontWeight: 400 }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                </div>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               </div>
             )}
           </button>
@@ -541,6 +501,8 @@ const AnnouncementsView = ({
                   </span>
                 </div>
                 <button
+                  onClick={() => surveyRoute && navigate(surveyRoute)}
+                  disabled={!surveyRoute}
                   style={{
                     height: '39px', padding: '0 20px',
                     borderRadius: '14px', border: 'none',
@@ -548,11 +510,13 @@ const AnnouncementsView = ({
                     boxShadow: '0px 2px 2px rgba(255,255,255,0.25)',
                     fontFamily: 'Arimo, Arial', fontWeight: 700,
                     fontSize: '13px', color: '#FFFFFF',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                    cursor: surveyRoute ? 'pointer' : 'not-allowed',
+                    opacity: surveyRoute ? 1 : 0.5,
+                    display: 'flex', alignItems: 'center', gap: '8px',
                     transition: 'opacity 0.15s',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                  onMouseEnter={e => { if (surveyRoute) e.currentTarget.style.opacity = '0.85'; }}
+                  onMouseLeave={e => { if (surveyRoute) e.currentTarget.style.opacity = '1'; }}
                 >
                   Continue
                 </button>
@@ -683,22 +647,12 @@ const AnnouncementsView = ({
                 announcement={a}
                 isMobile={isMobile}
                 isTablet={isTablet}
-                onClick={() => handleCardClick(a)}
               />
             ))}
           </div>
         )}
 
       </div>
-
-      {/* ── Detail Modal ─────────────────────────────────────────────────────── */}
-      {selectedAnnouncement && (
-        <AnnouncementDetailModal
-          announcement={selectedAnnouncement}
-          onClose={() => setSelectedAnnouncement(null)}
-          isMobile={isMobile}
-        />
-      )}
     </div>
   );
 };

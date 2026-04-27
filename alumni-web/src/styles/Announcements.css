@@ -509,3 +509,49 @@ body.ann-modal-open {
     padding: 16px 20px 20px;
   }
 }
+
+/* ── Expanded card state ───────────────────────────────────── */
+.ann-card--expanded {
+  border-color: var(--ann-card-border-hover);
+  box-shadow: var(--ann-card-shadow-hover);
+}
+
+.ann-card__full-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: ann-expand-in 0.22s ease;
+}
+
+@keyframes ann-expand-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ann-card__full-content .announcement-full-content {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--ann-body-color);
+}
+
+.ann-card__full-content .announcement-full-content p  { margin: 0 0 10px 0; }
+.ann-card__full-content .announcement-full-content ul,
+.ann-card__full-content .announcement-full-content ol { padding-left: 20px; margin: 0 0 10px 0; }
+.ann-card__full-content .announcement-full-content li { margin-bottom: 5px; }
+.ann-card__full-content .announcement-full-content a  { color: var(--ann-accent); }
+.ann-card__full-content .announcement-full-content strong {
+  color: var(--ann-title-color);
+  font-weight: 700;
+}
+
+.ann-card__see-less {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .ann-card__full-content .announcement-full-content {
+    font-size: 12.5px;
+  }
+}

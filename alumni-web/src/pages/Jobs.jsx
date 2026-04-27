@@ -13,7 +13,7 @@ const useWindowWidth = () => {
   return width;
 };
 
-const CATEGORIES = ['All Jobs', 'Full-time', 'Part-time', 'Remote'];
+const CATEGORIES = ['All Jobs', 'Recommended'];
 
 const getProgramKeywords = (program) => {
   const PROGRAM_KEYWORDS = {
@@ -187,12 +187,12 @@ const Jobs = () => {
 
   const filtered = activeCategory === 'All Jobs'
     ? jobs
-    : jobs.filter(j => j.category === activeCategory);
+    : recommended.map(r => r.job);
 
-  const categoryCounts = CATEGORIES.reduce((acc, cat) => {
-    acc[cat] = cat === 'All Jobs' ? jobs.length : jobs.filter(j => j.category === cat).length;
-    return acc;
-  }, {});
+  const categoryCounts = {
+  'All Jobs':    jobs.length,
+  'Recommended': recommended.length,
+};
 
   const recSubtitle = alumniProgram ? `program: ${alumniProgram}` : 'Recommended jobs based on your profile';
 
