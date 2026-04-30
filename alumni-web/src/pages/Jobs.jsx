@@ -109,14 +109,20 @@ const Jobs = () => {
     if (!alumniProgram || jobs.length === 0) return;
     const programKws = getProgramKeywords(alumniProgram);
     if (programKws.length === 0) return;
-    
+
     const scored = jobs
       .map(job => ({ job, ...scoreJob(job, programKws) }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
-    
+
     setRecommended(scored);
+
+    // On initial page load, default to Recommended if matches exist;
+    // only update when the category hasn't been manually changed yet.
+    setActiveCategory(prev =>
+      prev === 'All Jobs' && scored.length > 0 ? 'Recommended' : prev
+    );
   }, [alumniProgram, jobs]);
 
   // Fetch notifications

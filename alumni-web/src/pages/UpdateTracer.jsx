@@ -4,7 +4,32 @@ import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { getSurveySections, invalidateSectionsCache } from '../lib/surveyProgress';
 
-// ─── Window width hook ────────────────────────────────────────────────────────
+/* ─── Google Fonts: Montserrat (shared with SurveyComplete) ────────────────── */
+const fontLink = document.querySelector('#montserrat-font');
+if (!fontLink) {
+  const link = document.createElement('link');
+  link.id   = 'montserrat-font';
+  link.rel  = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap';
+  document.head.appendChild(link);
+}
+
+/*
+ * ─── Design tokens (mirrors SurveyComplete) ──────────────────────────────────
+ *   Page background : #e8edf5
+ *   Card background : #ffffff
+ *   Card shadow     : 0px 8px 40px rgba(0,0,0,0.12)
+ *   Card radius     : 19px
+ *   Heading color   : #1e3a5f
+ *   Body color      : #4a5565
+ *   Primary blue    : #003ea6
+ *   Font family     : Montserrat
+ *
+ *   Notification bell retains the original dark-panel dropdown
+ *   (it floats over the light page background just as in SurveyComplete).
+ */
+
+// ─── Window width hook (unchanged) ───────────────────────────────────────────
 const useWindowWidth = () => {
   const [width, setWidth] = React.useState(
     typeof window !== 'undefined' ? window.innerWidth : 1440
@@ -18,13 +43,13 @@ const useWindowWidth = () => {
 };
 
 const UpdateTracerPage = () => {
-  const navigate    = useNavigate();
-  const width       = useWindowWidth();
-  const isMobile    = width < 768;
-  const isTablet    = width >= 768 && width < 1024;
+  const navigate     = useNavigate();
+  const width        = useWindowWidth();
+  const isMobile     = width < 768;
+  const isTablet     = width >= 768 && width < 1024;
   const sidebarWidth = 229;
 
-  // ── First-section route (resolved dynamically) ────────────────────────────
+  // ── First-section route (unchanged) ───────────────────────────────────────
   const [firstSectionRoute, setFirstSectionRoute] = useState(null);
 
   useEffect(() => {
@@ -42,7 +67,7 @@ const UpdateTracerPage = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Notification state ─────────────────────────────────────────────────────
+  // ── Notification state (unchanged) ────────────────────────────────────────
   const bellRef                              = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
@@ -101,10 +126,7 @@ const UpdateTracerPage = () => {
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
-  // "Update Response" — invalidate cache so progress reloads fresh, then
-  // navigate to the first survey section (slug-based, not hardcoded).
+  // ── Handlers (unchanged) ──────────────────────────────────────────────────
   const handleUpdateResponse = () => {
     invalidateSectionsCache();
     navigate(firstSectionRoute ?? '/survey/personal-background');
@@ -114,7 +136,7 @@ const UpdateTracerPage = () => {
     navigate('/dashboard');
   };
 
-  // ── Date grouping / formatting ────────────────────────────────────────────
+  // ── Date grouping / formatting (unchanged) ────────────────────────────────
   const groupByDate = (list) => {
     const today     = new Date(); today.setHours(0,0,0,0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
@@ -144,7 +166,14 @@ const UpdateTracerPage = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#002263' }}>
+    /* ── Page wrapper — matches SurveyComplete outer shell ───────────────── */
+    <div style={{
+      display:    'flex',
+      height:     '100vh',
+      overflow:   'hidden',
+      background: '#e8edf5',                            /* ← was #002263 */
+      fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",  /* ← was Arimo */
+    }}>
       <Sidebar />
 
       <div style={{
@@ -158,74 +187,96 @@ const UpdateTracerPage = () => {
         position:       'relative',
       }}>
 
-        {/* ── Notification Bell ──────────────────────────────────────────── */}
+        {/* ── Notification Bell ─────────────────────────────────────────── */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:      isMobile ? '20px' : isTablet ? '28px' : '32px',
           right:    isMobile ? '20px' : isTablet ? '32px' : '51px',
           zIndex:   200,
         }}>
+          {/* Bell button — restyled to match SurveyComplete's solid blue pill */}
           <button
             onClick={() => setShowDropdown(v => !v)}
             style={{
-              width:      '44px',
-              height:     '44px',
-              background: showDropdown
-                ? 'rgba(43,114,251,0.15)'
-                : 'linear-gradient(135deg, rgba(15,22,66,0.1) 0%, rgba(10,15,46,0.05) 100%)',
-              border:      showDropdown
-                ? '1.24px solid rgba(43,114,251,0.4)'
-                : '1.24px solid rgba(255,255,255,0.1)',
-              boxShadow:   '0px 10px 15px -3px rgba(0,0,0,0.1)',
-              borderRadius: '14px',
-              cursor:      'pointer',
-              display:     'flex',
-              alignItems:  'center',
+              width:          '52px',
+              height:         '52px',
+              background:     '#003ea6',                /* ← was transparent/gradient */
+              border:         'none',                   /* ← was rgba border */
+              boxShadow:      '0px 4px 12px rgba(0,62,166,0.35)',
+              borderRadius:   '14px',
+              cursor:         'pointer',
+              display:        'flex',
+              alignItems:     'center',
               justifyContent: 'center',
-              position:    'relative',
-              transition:  'all 0.15s',
+              position:       'relative',
+              transition:     'opacity 0.15s',
             }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M8.33 17.5H11.67M15 7.5C15 5.84 14.16 4.34 12.89 3.39M5 7.5C5 4.74 7.24 2.5 10 2.5C11.33 2.5 12.53 3.02 13.41 3.88M15 7.5C15 11.25 16.67 13.33 16.67 13.33H3.33C3.33 13.33 5 11.25 5 7.5"
-                stroke="rgba(255,255,255,0.8)" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Bell icon — white on blue */}
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M8.33 17.5H11.67M15 7.5C15 5.84 14.16 4.34 12.89 3.39M5 7.5C5 4.74 7.24 2.5 10 2.5C11.33 2.5 12.53 3.02 13.41 3.88M15 7.5C15 11.25 16.67 13.33 16.67 13.33H3.33C3.33 13.33 5 11.25 5 7.5"
+                stroke="#ffffff"
+                strokeWidth="1.67"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
+
+            {/* Unread badge — matches SurveyComplete badge style */}
             {unreadCount > 0 && (
               <div style={{
-                position: 'absolute', top: '-4px', right: '-4px',
-                minWidth: '20px', height: '20px',
-                background: '#2B72FB', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px',
+                position:       'absolute',
+                top:            '-4px',
+                right:          '-4px',
+                minWidth:       '18px',
+                height:         '18px',
+                background:     '#ef4444',
+                borderRadius:   '50%',
+                border:         '2px solid #003ea6',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 3px',
               }}>
-                <span style={{ fontFamily: 'Arimo', fontSize: '10px', color: '#FFFFFF', fontWeight: 700 }}>
+                <span style={{
+                  fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",
+                  fontSize:   '9px',
+                  color:      '#ffffff',
+                  fontWeight: 700,
+                  lineHeight: 1,
+                }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               </div>
             )}
           </button>
 
+          {/* Notification dropdown — dark panel unchanged (floats above page) */}
           {showDropdown && (
             <div style={{
-              position:      'absolute',
-              top:           '52px',
-              right:         0,
-              width:         isMobile ? '92vw' : '380px',
-              maxHeight:     '520px',
-              background:    'rgba(13,19,56,0.97)',
-              backdropFilter:'blur(16px)',
-              border:        '1px solid rgba(255,255,255,0.1)',
-              borderRadius:  '16px',
-              boxShadow:     '0 20px 60px rgba(0,0,0,0.5)',
-              display:       'flex',
-              flexDirection: 'column',
-              overflow:      'hidden',
-              zIndex:        300,
+              position:       'absolute',
+              top:            '60px',
+              right:          0,
+              width:          isMobile ? '92vw' : '380px',
+              maxHeight:      '520px',
+              background:     'rgba(13,19,56,0.97)',
+              backdropFilter: 'blur(16px)',
+              border:         '1px solid rgba(255,255,255,0.1)',
+              borderRadius:   '16px',
+              boxShadow:      '0 20px 60px rgba(0,0,0,0.5)',
+              display:        'flex',
+              flexDirection:  'column',
+              overflow:       'hidden',
+              zIndex:         300,
             }}>
               {/* Header */}
               <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
+                <span style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: '15px', color: '#FFFFFF' }}>Notifications</span>
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>
+                  <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>
                     Mark all read
                   </button>
                 )}
@@ -235,17 +286,17 @@ const UpdateTracerPage = () => {
               <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
                 {['all', 'unread'].map(t => (
                   <button key={t} onClick={() => setNotifTab(t)} style={{
-                    height:     '32px',
-                    padding:    '0 16px',
-                    background: notifTab === t ? '#2B72FB' : 'transparent',
-                    border:     notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '20px',
-                    cursor:     'pointer',
-                    fontFamily: 'Arimo',
-                    fontSize:   '13px',
-                    fontWeight: notifTab === t ? 700 : 400,
-                    color:      '#FFFFFF',
-                    transition: 'all 0.15s',
+                    height:        '32px',
+                    padding:       '0 16px',
+                    background:    notifTab === t ? '#2B72FB' : 'transparent',
+                    border:        notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius:  '20px',
+                    cursor:        'pointer',
+                    fontFamily:    "'Montserrat', Helvetica, Arial, sans-serif",
+                    fontSize:      '12px',
+                    fontWeight:    notifTab === t ? 700 : 400,
+                    color:         '#FFFFFF',
+                    transition:    'all 0.15s',
                     textTransform: 'capitalize',
                   }}>
                     {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
@@ -263,7 +314,7 @@ const UpdateTracerPage = () => {
                         <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
                           stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
-                      <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                      <p style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
                         {notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
                       </p>
                     </div>
@@ -273,7 +324,7 @@ const UpdateTracerPage = () => {
                     if (!items.length) return null;
                     return (
                       <div key={label}>
-                        <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>
+                        <p style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>
                           {label}
                         </p>
                         {items.map(n => (
@@ -299,9 +350,9 @@ const UpdateTracerPage = () => {
                               </svg>
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
+                              <p style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
+                              <p style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                              <span style={{ fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
                             </div>
                             {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2B72FB', flexShrink: 0, marginTop: '6px' }} />}
                           </div>
@@ -316,7 +367,7 @@ const UpdateTracerPage = () => {
               <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
                 <button
                   onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                  style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
+                  style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: "'Montserrat', Helvetica, Arial, sans-serif", fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                 >
@@ -327,11 +378,11 @@ const UpdateTracerPage = () => {
           )}
         </div>
 
-        {/* ── Card ───────────────────────────────────────────────────────── */}
+        {/* ── Card ─────────────────────────────────────────────────────────── */}
         <div style={{
-          background:    'rgba(1,37,107,0.6)',
-          border:        '0.89px solid rgba(255,255,255,0.1)',
-          borderRadius:  '20px',
+          background:    '#ffffff',                          /* ← was rgba(1,37,107,0.6) */
+          border:        'none',                             /* ← was rgba white border */
+          borderRadius:  '19px',                            /* matches SurveyComplete */
           padding:       isMobile ? '32px 24px' : '48px 40px',
           width:         '100%',
           maxWidth:      isMobile ? '100%' : '420px',
@@ -339,64 +390,104 @@ const UpdateTracerPage = () => {
           flexDirection: 'column',
           alignItems:    'center',
           textAlign:     'center',
-          boxShadow:     '0px 10px 40px rgba(0,0,0,0.4)',
+          boxShadow:     '0px 8px 40px rgba(0,0,0,0.12)',   /* ← was dark 0.4 shadow */
         }}>
-          {/* Icon */}
+
+          {/* Icon — dark green circle to match SurveyComplete's check icon style */}
           <div style={{
-            width:         isMobile ? '72px' : '88px',
-            height:        isMobile ? '72px' : '88px',
-            borderRadius:  '50%',
-            border:        '5px solid #FFFFFF',
-            display:       'flex',
-            alignItems:    'center',
-            justifyContent:'center',
-            marginBottom:  '24px',
-            boxShadow:     '0 0 24px rgba(255,255,255,0.25)',
+            width:          isMobile ? '72px' : '75px',
+            height:         isMobile ? '72px' : '75px',
+            borderRadius:   '50%',
+            background:     '#dbeafe',                      /* ← was transparent with white border */
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            marginBottom:   '19px',
           }}>
             <svg width={isMobile ? 30 : 38} height={isMobile ? 30 : 38} viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="white" strokeWidth="1.8"/>
-              <path d="M8 9h8M8 12h8M8 15h5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M14 3v4h4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="4" y="3" width="16" height="18" rx="2" stroke="#003ea6" strokeWidth="1.8"/>  {/* ← was white */}
+              <path d="M8 9h8M8 12h8M8 15h5" stroke="#003ea6" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M14 3v4h4" stroke="#003ea6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
 
-          <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: isMobile ? '22px' : '28px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.5px', margin: '0 0 14px 0' }}>
+          {/* Heading */}
+          <p style={{
+            fontFamily:    "'Montserrat', Helvetica, Arial, sans-serif",  /* ← was Arimo */
+            fontSize:      isMobile ? '22px' : '28px',
+            fontWeight:    700,
+            color:         '#1e3a5f',                        /* ← was #FFFFFF */
+            letterSpacing: '-0.5px',
+            margin:        '0 0 14px 0',
+          }}>
             Update Tracer?
           </p>
 
-          <p style={{ fontFamily: 'Arimo, Arial, sans-serif', fontSize: isMobile ? '13px' : '14px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 32px 0' }}>
+          {/* Body text */}
+          <p style={{
+            fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",     /* ← was Arimo */
+            fontSize:   isMobile ? '13px' : '14px',
+            color:      '#4a5565',                           /* ← was rgba(255,255,255,0.7) */
+            lineHeight: 1.6,
+            margin:     '0 0 32px 0',
+          }}>
             You have previously submitted your response.{' '}
             Do you want to update it?
           </p>
 
+          {/* Update Response button — primary blue */}
           <button
             onClick={handleUpdateResponse}
             disabled={!firstSectionRoute}
             style={{
               width:        '100%',
               padding:      '14px',
-              background:   firstSectionRoute ? '#1E3AFF' : 'rgba(30,58,255,0.4)',
+              background:   firstSectionRoute ? '#003ea6' : 'rgba(0,62,166,0.35)',  /* ← was #1E3AFF */
               border:       'none',
-              borderRadius: '12px',
+              borderRadius: '10px',                          /* matches SurveyComplete button radius */
               color:        '#FFFFFF',
-              fontFamily:   'Arimo, Arial, sans-serif',
+              fontFamily:   "'Montserrat', Helvetica, Arial, sans-serif",
               fontSize:     isMobile ? '14px' : '15px',
-              fontWeight:   600,
+              fontWeight:   700,                             /* ← was 600 */
               cursor:       firstSectionRoute ? 'pointer' : 'not-allowed',
               marginBottom: '12px',
-              boxShadow:    '0px 4px 12px rgba(0,0,0,0.3)',
-              transition:   'background 0.2s',
+              boxShadow:    '0px 4px 6px -4px rgba(0,0,0,0.1), 0px 10px 15px -3px rgba(0,0,0,0.1)',
+              transition:   'opacity 0.15s',
             }}
+            onMouseEnter={e => { if (firstSectionRoute) e.currentTarget.style.opacity = '0.88'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
           >
             {firstSectionRoute ? 'Update Response' : 'Loading…'}
           </button>
 
+          {/* Keep Response button — light ghost variant */}
           <button
             onClick={handleKeepResponse}
-            style={{ width: '100%', padding: '14px', background: '#FFFFFF', border: 'none', borderRadius: '12px', color: '#000000', fontFamily: 'Arimo, Arial, sans-serif', fontSize: isMobile ? '14px' : '15px', fontWeight: 600, cursor: 'pointer' }}
+            style={{
+              width:        '100%',
+              padding:      '14px',
+              background:   'transparent',                   /* ← was solid #FFFFFF */
+              border:       '1.5px solid #003ea6',           /* ← adds contrast on white card */
+              borderRadius: '10px',
+              color:        '#003ea6',                       /* ← was #000000 */
+              fontFamily:   "'Montserrat', Helvetica, Arial, sans-serif",
+              fontSize:     isMobile ? '14px' : '15px',
+              fontWeight:   700,
+              cursor:       'pointer',
+              transition:   'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = '#003ea6';
+              e.currentTarget.style.color      = '#ffffff';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color      = '#003ea6';
+            }}
           >
             Keep Response
           </button>
+
         </div>
       </div>
     </div>

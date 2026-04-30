@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
+import useUserProfile from '../hooks/Useuserprofile';
 import EducationalBackgroundView from '../views/EducationalBackgroundView';
 
 const TOTAL_SECTIONS  = 7;
@@ -63,6 +64,9 @@ const computeFormPct = (form) => {
 const EducationalBackground = () => {
   const navigate = useNavigate();
 
+  // ── Shared profile hook — source for locked academic fields ───────────
+  const { profile, loading: profileLoading } = useUserProfile();
+
   const [questionLabels,         setQuestionLabels]         = useState({});
   const [questionPlaceholders,   setQuestionPlaceholders]   = useState({});
   const [degreeOptions,          setDegreeOptions]          = useState(DEFAULT_DEGREE_OPTIONS);
@@ -73,6 +77,12 @@ const EducationalBackground = () => {
   const [boardResultOptions,     setBoardResultOptions]     = useState(DEFAULT_BOARD_RESULT_OPTIONS);
   const [loadingLabels,          setLoadingLabels]          = useState(true);
   const [configVersion,          setConfigVersion]          = useState(0);
+
+  // ── Locked field tracking — set once from profile, never overwritten ──
+  const [lockedFields, setLockedFields] = useState({
+    degree_program: false,
+    year_graduated: false,
+  });
 
   const [form, setForm] = useState({
     degree_program: '', other_degree: '', reason_for_course: '',
@@ -91,7 +101,6 @@ const EducationalBackground = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // FIXED: Logic now maps config to specific state keys and their respective options
   const applyConfig = (config) => {
     if (!config?.sections) return;
     const eduSection = config.sections.find(s => s.title === 'Educational Background');
@@ -107,7 +116,6 @@ const EducationalBackground = () => {
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
 
-      // Dynamically update options if provided by the DB
       if (fieldKey === 'degree_program'      && q.options) setDegreeOptions(q.options);
       if (fieldKey === 'year_graduated'      && q.options) setYearOptions(q.options);
       if (fieldKey === 'distinction'         && q.options) setDistinctionOptions(q.options);
@@ -138,7 +146,6 @@ const EducationalBackground = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      // console.log("[Realtime] Educational Background updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);
@@ -150,9 +157,9 @@ const EducationalBackground = () => {
       cancelled = true;
       if (channel) channel.unsubscribe();
     };
-  }, []); 
+  }, []);
 
-  // Load progress (UNTOUCHED)
+  // Load saved progress (UNTOUCHED)
   useEffect(() => {
     const load = async () => {
       const savedData = await loadSectionData('educational_background');
@@ -160,6 +167,42 @@ const EducationalBackground = () => {
     };
     load();
   }, []);
+
+  // ── Autofill degree_program + year_graduated from users table via profile hook
+  // Runs once when profile finishes loading. Fields are locked after autofill.
+  useEffect(() => {
+    if (profileLoading || !profile) return;
+
+    const autofilled = {};
+    const locked     = { degree_program: false, year_graduated: false };
+
+    // profile.program  → degree_program
+    // profile.batch_year → year_graduated
+    if (profile.program && String(profile.program).trim()) {
+      autofilled.degree_program = String(profile.program).trim();
+      locked.degree_program     = true;
+    }
+
+    if (profile.batch_year && String(profile.batch_year).trim()) {
+      autofilled.year_graduated = String(profile.batch_year).trim();
+      locked.year_graduated     = true;
+    }
+
+    if (Object.keys(autofilled).length > 0) {
+      // Only set fields that aren't already populated by saved survey data,
+      // but always lock them regardless — the profile value is authoritative.
+      setForm(f => {
+        const updated = { ...f };
+        Object.entries(autofilled).forEach(([key, value]) => {
+          // Overwrite with profile value to guarantee consistency
+          updated[key] = value;
+        });
+        return updated;
+      });
+      setLockedFields(locked);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileLoading]);
 
   // Notifications (UNTOUCHED)
   useEffect(() => {
@@ -229,7 +272,11 @@ const EducationalBackground = () => {
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
 
-  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+  // ── Field setter — respects locked fields ─────────────────────────────
+  const set = (key, val) => {
+    if (lockedFields[key]) return; // silently block edits to locked fields
+    setForm(prev => ({ ...prev, [key]: val }));
+  };
 
   const setLicensureReviewing = (val) =>
     setForm(prev => ({
@@ -258,7 +305,7 @@ const EducationalBackground = () => {
     if (!form.licensure_reviewing)                                     e.add('licensure_reviewing');
     if (form.licensure_reviewing === 'Yes') {
       if (!form.licensure_plans)               e.add('licensure_plans');
-      if (!form.licensure_reason.trim())      e.add('licensure_reason');
+      if (!form.licensure_reason.trim())       e.add('licensure_reason');
       if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
         if (!form.board_exam_name.trim()) e.add('board_exam_name');
         if (!form.board_exam_date)        e.add('board_exam_date');
@@ -321,6 +368,7 @@ const EducationalBackground = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
+      lockedFields={lockedFields}
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}

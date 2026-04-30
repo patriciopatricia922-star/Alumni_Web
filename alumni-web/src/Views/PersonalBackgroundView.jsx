@@ -9,7 +9,7 @@ const STYLES = `
   .pb-root {
     display: flex;
     min-height: 100vh;
-    background: #002263;
+    background: #DAE5F1;
     font-family: 'Arimo', Arial, sans-serif;
   }
 
@@ -23,9 +23,9 @@ const STYLES = `
     position: sticky;
     top: 0;
     z-index: 40;
-    background: #002263;
+    background: #DAE5F1;
     padding-bottom: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 
   .pb-topbar {
@@ -46,12 +46,12 @@ const STYLES = `
     font-family: 'Arimo', Arial, sans-serif;
     font-weight: 700;
     font-size: 14px;
-    color: #fff;
+    color: #002263;
     flex-shrink: 0;
   }
 
   .pb-badge {
-    background: linear-gradient(90deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+    background: #003EA6;
     border: 1.24px solid rgba(99,102,241,0.3);
     border-radius: 999px;
     padding: 7px 20px;
@@ -65,9 +65,9 @@ const STYLES = `
   .pb-bell {
     width: 48px;
     height: 48px;
-    background: rgba(0,62,166,0.35);
+    background: #003EA6;
     border: 1.24px solid rgba(255,255,255,0.2);
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 14px;
     cursor: pointer;
     display: flex;
@@ -78,15 +78,15 @@ const STYLES = `
     transition: all 0.15s;
   }
   .pb-bell.active {
-    background: rgba(43,114,251,0.2);
-    border-color: rgba(43,114,251,0.5);
+    background: #002263;
+    border-color: rgba(0,34,99,0.5);
   }
 
   .pb-bell-dot {
     position: absolute;
     top: -4.41px; right: -4.41px;
     width: 28.81px; height: 28.81px;
-    background: #2B72FB;
+    background: rgba(255, 0, 0, 0.7);
     opacity: 0.42;
     border-radius: 50%;
   }
@@ -95,7 +95,7 @@ const STYLES = `
     position: absolute;
     top: -1px; right: -1px;
     min-width: 20px; height: 20px;
-    background: #2B72FB;
+    background: rgba(255, 0, 0, 0.7);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     padding: 0 4px;
@@ -111,14 +111,24 @@ const STYLES = `
     font-size: 28px;
     line-height: 1.4;
     letter-spacing: -0.7px;
-    color: #fff;
+    color: #2D467C;
+  }
+
+  .pb-subtitle {
+    text-align: center;
+    padding: 4px 51px 0;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #4A5565;
   }
 
   .pb-progress {
     margin: 12px 51px 0;
-    background: #001743;
-    border: 1px solid #01122F;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    background: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     border-radius: 16px;
     padding: 18px 30px 16px;
   }
@@ -129,30 +139,32 @@ const STYLES = `
     align-items: center;
     margin-bottom: 8px;
     font-family: 'Arimo', Arial, sans-serif;
-    font-size: 16px;
-    color: rgba(255,255,255,0.99);
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E3A5F;
   }
 
   .pb-progress-track {
     width: 100%;
-    height: 11px;
-    background: #D9CA81;
-    border-radius: 10px;
+    height: 12px;
+    background: #E5E7EB;
+    border-radius: 9999px;
     margin-bottom: 10px;
     overflow: hidden;
   }
 
   .pb-progress-fill {
     height: 100%;
-    background: #51A2FF;
-    border-radius: 10px;
+    background: #EFC600;
+    border-radius: 9999px;
     transition: width 0.4s ease;
   }
 
   .pb-progress-label {
     font-family: 'Arimo', Arial, sans-serif;
-    font-size: 17px;
-    color: rgba(255,255,255,0.99);
+    font-size: 14px;
+    font-weight: 500;
+    color: #4A5565;
   }
 
   .pb-body {
@@ -160,10 +172,10 @@ const STYLES = `
   }
 
   .pb-card {
-    background: rgba(13, 19, 56, 0.4);
-    border: 0.89px solid rgba(255,255,255,0.1);
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
-    border-radius: 16px;
+    background: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 25px;
     padding: 32px 32px 32px;
     display: flex;
     flex-direction: column;
@@ -171,20 +183,20 @@ const STYLES = `
   }
 
   .pb-section-title {
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-weight: 700;
-    font-size: 20px;
-    line-height: 1.5;
-    color: #fff;
+    font-size: 24px;
+    line-height: 30px;
+    color: #003EA6;
     text-align: center;
   }
 
   .pb-section-sub {
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-weight: 400;
     font-size: 13px;
     line-height: 20px;
-    color: rgba(255,255,255,0.6);
+    color: #003EA6;
     margin-top: 6px;
     text-align: center;
   }
@@ -204,33 +216,36 @@ const STYLES = `
   }
 
   .pb-label {
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 21px;
-    color: rgba(255,255,255,0.7);
+    color: #003EA6;
   }
 
   .pb-input {
     width: 100%;
     height: 47px;
-    background: rgba(255,255,255,0.17);
-    border: 0.89px solid rgba(255,255,255,0.06);
+    background: #F9FAFB;
+    border: 0.8px solid #D1D5DC;
     border-radius: 10px;
     padding: 12px 16px;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-size: 14px;
-    color: #fff;
+    color: #0A0A0A;
     outline: none;
     transition: border-color 0.15s;
   }
-  .pb-input:focus { border-color: rgba(43,114,251,0.6); }
-  .pb-input option { background: #001947; }
+  .pb-input::placeholder {
+    color: rgba(10, 10, 10, 0.3);
+  }
+  .pb-input:focus { border-color: #003EA6; }
+  .pb-input option { background: #F9FAFB; color: #0A0A0A; }
 
   .pb-input-select {
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%2300226D' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 16px center;
     cursor: pointer;
@@ -254,15 +269,15 @@ const STYLES = `
     align-items: center;
     gap: 10px;
     cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.7);
+    color: #4A5565;
     line-height: 1.4;
   }
 
   .pb-radio-label input[type="radio"] {
     width: 16px; height: 16px;
-    accent-color: #51A2FF;
+    accent-color: #003EA6;
     cursor: pointer;
     flex-shrink: 0;
   }
@@ -275,13 +290,13 @@ const STYLES = `
   .pb-phone-prefix {
     width: 58px; height: 47px;
     flex-shrink: 0;
-    background: rgba(255,255,255,0.17);
-    border: 0.89px solid rgba(255,255,255,0.06);
+    background: #F9FAFB;
+    border: 0.8px solid #D1D5DC;
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(10, 10, 10, 0.3);
   }
 
   .pb-phone-input { flex: 1; min-width: 0; }
@@ -295,35 +310,36 @@ const STYLES = `
   }
 
   .pb-btn-save {
-    width: 88px;
+    width: 100px;
     height: 45px;
-    background: transparent;
-    border: 1.24px solid rgba(255,255,255,0.3);
-    border-radius: 10px;
+    background: #FFFFFF;
+    border: 0.8px solid rgba(0, 34, 99, 0.6);
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
     cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-weight: 400;
-    font-size: 14px;
-    color: rgba(255,255,255,0.8);
-    transition: border-color 0.15s, color 0.15s;
+    font-size: 16px;
+    color: #002263;
+    transition: border-color 0.15s, background 0.15s;
   }
-  .pb-btn-save:hover { border-color: rgba(255,255,255,0.7); color: #fff; }
+  .pb-btn-save:hover { background: #f0f4fb; border-color: #002263; }
 
   .pb-btn-next {
-    width: 88px;
+    width: 100px;
     height: 45px;
-    background: #0028FF;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.25);
+    background: #003EA6;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 10px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     cursor: pointer;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-weight: 400;
-    font-size: 14px;
-    color: #fff;
+    font-size: 16px;
+    color: #FFFFFF;
     transition: background 0.15s;
   }
-  .pb-btn-next:hover { background: rgba(0,40,255,0.85); }
+  .pb-btn-next:hover { background: #002a80; }
 
   .pb-req { color: #F87171; font-weight: 700; margin-left: 2px; }
 
@@ -397,7 +413,7 @@ const PersonalBackgroundView = ({
           <div className="pb-topbar">
             <button className="pb-back-btn" onClick={() => navigate('/dashboard')}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Back
             </button>
@@ -422,14 +438,14 @@ const PersonalBackgroundView = ({
               </button>
 
               {showDropdown && (
-                <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
-                  <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
-                    {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
+                <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: '#FFFFFF', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
+                  <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#003EA6' }}>Notifications</span>
+                    {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#003EA6', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
                   </div>
                   <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
                     {['all', 'unread'].map(t => (
-                      <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab === t ? '#2B72FB' : 'transparent', border: notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400, color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize' }}>
+                      <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab === t ? '#003EA6' : 'transparent', border: notifTab === t ? 'none' : '1px solid #D1D5DC', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400, color: notifTab === t ? '#FFFFFF' : '#4A5565', transition: 'all 0.15s', textTransform: 'capitalize' }}>
                         {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                       </button>
                     ))}
@@ -439,30 +455,30 @@ const PersonalBackgroundView = ({
                       const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
                       if (!list.length) return (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                          <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                          <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(0,0,0,0.3)', margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
                         </div>
                       );
                       return Object.entries(groupByDate(list)).map(([label, items]) => {
                         if (!items.length) return null;
                         return (
                           <div key={label}>
-                            <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
+                            <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
                             {items.map(n => (
                               <div key={n.id} onClick={() => markOneRead(n.id)}
-                                style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(43,114,251,0.07)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : '3px solid #2B72FB' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(43,114,251,0.07)'}
+                                style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                                onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
                               >
-                                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.15)', border: '1px solid rgba(43,114,251,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/></svg>
+                                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(0,62,166,0.08)', border: '1px solid rgba(0,62,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/></svg>
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                  <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                                  <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                                  <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
+                                  <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#0A0A0A', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
+                                  <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: '#4A5565', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                                  <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(0,0,0,0.35)' }}>{formatTime(n.time)}</span>
                                 </div>
-                                {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2B72FB', flexShrink: 0, marginTop: '6px' }} />}
+                                {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003EA6', flexShrink: 0, marginTop: '6px' }} />}
                               </div>
                             ))}
                           </div>
@@ -470,11 +486,11 @@ const PersonalBackgroundView = ({
                       });
                     })()}
                   </div>
-                  <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+                  <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
                     <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                      style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                      style={{ width: '100%', height: '36px', background: '#F9FAFB', border: '1px solid #D1D5DC', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: '#4A5565', cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
                     >
                       See all notifications
                     </button>
@@ -485,12 +501,13 @@ const PersonalBackgroundView = ({
           </div>
 
           <h1 className="pb-title">Alumni Tracer Survey</h1>
+          <p className="pb-subtitle">Please complete all sections to update your alumni status.</p>
 
           {/* ── Progress bar — driven by form fill % ──────────────────────── */}
           <div className="pb-progress">
             <div className="pb-progress-row">
               <span>Section {currentSection} of {totalSections}</span>
-              <span style={{ color: '#51A2FF', fontWeight: 700 }}>{formPct}%</span>
+              <span style={{ color: '#003EA6', fontWeight: 700 }}>{formPct}% Complete</span>
             </div>
             <div className="pb-progress-track">
               <div className="pb-progress-fill" style={{ width: `${formPct}%` }} />
@@ -565,7 +582,7 @@ const PersonalBackgroundView = ({
                 </label>
                 <input type="date" className="pb-input"
                   value={form.birthday} onChange={set('birthday')}
-                  style={{ colorScheme: 'dark' }} />
+                  style={{ colorScheme: 'light' }} />
               </div>
 
               <div className="pb-field">
@@ -629,9 +646,9 @@ const PersonalBackgroundView = ({
                   </label>
                   <select className="pb-input pb-input-select"
                     value={form.country} onChange={setCountry}>
-                    <option value="" disabled style={{ background: '#001947' }}>Select</option>
+                    <option value="" disabled style={{ background: '#F9FAFB', color: 'rgba(10,10,10,0.3)' }}>Select</option>
                     {(questionOptions['country'] || ['Philippines', 'United States', 'Other']).map(opt => (
-                      <option key={opt} value={opt} style={{ background: '#001947' }}>{opt}</option>
+                      <option key={opt} value={opt} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{opt}</option>
                     ))}
                   </select>
                 </div>
@@ -676,7 +693,7 @@ const PersonalBackgroundView = ({
             {/* ── Footer ──────────────────────────────────────────────────── */}
             <div className="pb-footer">
               {saveToast && (
-                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: 'rgba(81,210,130,0.9)', marginRight: 'auto' }}>
+                <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#15803d', marginRight: 'auto' }}>
                   Progress saved
                 </span>
               )}

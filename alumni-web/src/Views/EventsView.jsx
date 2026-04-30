@@ -2,44 +2,103 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   FaCalendarAlt,
-  FaClock,
   FaMapMarkerAlt,
   FaStar,
-  FaChevronRight,
   FaArrowLeft,
   FaFilter,
   FaBell,
-  FaChevronDown,
   FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
-import { truncateHtml, createMarkup, stripHtml } from '../utils/textHelpers';
+import { truncateHtml, stripHtml } from '../utils/textHelpers';
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
-const CalendarIcon   = () => <FaCalendarAlt    size={13} color="rgba(255,255,255,0.7)" />;
-const ClockIcon      = () => <HiOutlineClock   size={13} color="rgba(255,255,255,0.55)" />;
-const LocationIcon   = () => <HiOutlineLocationMarker size={13} color="rgba(255,255,255,0.55)" />;
+// ── Design tokens (mirrors Announcements.css) ──────────────────────────────
+const T = {
+  pageBg:          '#DAE5F1',
+  cardBg:          '#FFFFFF',
+  cardBorder:      '#E5E7EB',
+  cardBorderHover: '#2B72FB',
+  cardShadow:      '0px 2px 8px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.06)',
+  cardShadowHover: '0px 8px 24px rgba(43,114,251,0.14), 0px 2px 8px rgba(0,0,0,0.08)',
+  titleColor:      '#003EA6',
+  bodyColor:       '#4A5565',
+  metaColor:       '#8A94A6',
+  timestampColor:  'rgba(74,85,101,0.65)',
+  accent:          '#2B72FB',
+  pageTitle:       '#314C86',
+  pageSubtitle:    '#545454',
+  backColor:       '#003EA6',
+  iconBoxBg:       'linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%)',
+  iconBoxShadow:   '0px 4px 10px rgba(43,114,251,0.35)',
+  iconBoxShadowHover: '0px 8px 20px rgba(43,114,251,0.45)',
+  filterBg:        '#FFFFFF',
+  filterBorder:    '#E5E7EB',
+  filterText:      '#003EA6',
+  badgeBg:         '#2B72FB',
+  exclusiveBadge:  '#FAC775',
+  footerBorder:    '#F0F2F5',
+};
 
-const CategoryIcon = ({ category }) =>
-  category === 'Exclusive Events'
-    ? <FaStar size={13} color="#FAC775" />
-    : <HiOutlineCalendar size={13} color="#51A2FF" />;
+// ── Clock SVG ────────────────────────────────────────────────────────────────
+const ClockSVG = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(74,85,101,0.45)" strokeWidth="1.2" />
+    <path d="M6.5 3.5V6.5L8.5 8" stroke="rgba(74,85,101,0.45)" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+);
 
-// ── Event Card — with expand toggle (NO MODAL) ────────────────────────────────
+// ── Category badge ────────────────────────────────────────────────────────────
+const CategoryBadge = ({ category }) => {
+  const isExclusive = category === 'Exclusive Events';
+  return (
+    <div style={{
+      display:       'inline-flex',
+      alignItems:    'center',
+      gap:           '5px',
+      background:    isExclusive ? 'rgba(250,199,117,0.15)' : '#EEF4FF',
+      border:        `1px solid ${isExclusive ? T.exclusiveBadge : T.accent}`,
+      borderRadius:  '20px',
+      padding:       '3px 10px',
+      alignSelf:     'flex-start',
+    }}>
+      {isExclusive
+        ? <FaStar size={10} color={T.exclusiveBadge} />
+        : <HiOutlineCalendar size={11} color={T.accent} />}
+      <span style={{
+        fontFamily:    "'Montserrat', Arial, sans-serif",
+        fontSize:      '10px',
+        fontWeight:    700,
+        color:         isExclusive ? T.exclusiveBadge : T.accent,
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+      }}>
+        {isExclusive ? 'Exclusive' : 'Upcoming'}
+      </span>
+    </div>
+  );
+};
+
+// ── Meta item ─────────────────────────────────────────────────────────────────
+const MetaItem = ({ icon, text }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <span style={{ color: T.metaColor, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+    <span style={{
+      fontFamily: "'Arimo', Arial, sans-serif",
+      fontSize:   '12.5px',
+      color:      T.bodyColor,
+      lineHeight: '1.4',
+    }}>
+      {text}
+    </span>
+  </div>
+);
+
+// ── Event Card ────────────────────────────────────────────────────────────────
 const EventCard = ({ event, isMobile }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const isExclusive    = event.category === 'Exclusive Events';
-  const categoryColor  = isExclusive ? '#FAC775' : '#51A2FF';
-  const categoryBg     = isExclusive ? 'rgba(250,199,117,0.15)' : 'rgba(81,162,255,0.15)';
-
-  const getEventImage = () => {
-    if (event.image_url) return event.image_url;
-    return isExclusive
-      ? 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80'
-      : 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80';
-  };
+  const isExclusive = event.category === 'Exclusive Events';
 
   const formatEventDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -47,185 +106,213 @@ const EventCard = ({ event, isMobile }) => {
   const formatEventTime = (dateStr) =>
     new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  const hasDetails = event.location || event.event_date;
+  const relativeTime = (dateStr) => {
+    if (!dateStr) return '2 hours ago';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const hrs   = Math.floor(diff / 3600000);
+    if (hrs < 1)  return 'just now';
+    if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+
+  const hasDetails  = event.location || event.event_date;
+  const previewText = stripHtml(event.description || '');
+  const needsTrunc  = previewText.length > 120;
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background:   'rgba(0,62,166,0.35)',
-        marginTop:    '1px',
-        border:       `0.889px solid ${hovered ? categoryColor : 'rgba(255,255,255,0.2)'}`,
-        boxShadow:    hovered
-          ? `0px 0px 20px ${categoryColor}40, 0px 8px 24px rgba(0,0,0,0.4)`
-          : '0px 0px 8px rgba(255,255,255,0.25)',
+        background:   T.cardBg,
+        border:       `1px solid ${hovered || expanded ? T.cardBorderHover : T.cardBorder}`,
+        boxShadow:    hovered || expanded ? T.cardShadowHover : T.cardShadow,
         borderRadius: '16px',
-        overflow:     'hidden',
-        display:      'flex',
-        flexDirection: 'column',
-        transform:    hovered ? 'translateY(-4px)' : 'translateY(0)',
-        transition:   'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        overflow:     'visible',
+        cursor:       'pointer',
+        transform:    hovered ? 'translateY(-2px)' : 'translateY(0)',
+        transition:   'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
       }}
     >
-      {/* ── Photo ── */}
-      <div style={{ width: '100%', height: '214px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-        <img
-          src={getEventImage()}
-          alt={event.name || event.title}
-          style={{
-            width: '100%', height: '100%', objectFit: 'cover',
-            display: 'block',
-            transform: hovered ? 'scale(1.04)' : 'scale(1)',
-            transition: 'transform 0.35s ease',
-            boxShadow: '0px 4px 4px rgba(255,255,255,0.2)',
-          }}
-          onError={e => {
-            e.target.src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80';
-          }}
-        />
-        {/* Category badge */}
+      {/* ── Card body ── */}
+      <div style={{
+        display:    'flex',
+        alignItems: 'flex-start',
+        padding:    isMobile ? '14px' : '18px 20px',
+        gap:        '16px',
+      }}>
+        {/* Icon box */}
         <div style={{
-          position:   'absolute', top: '12px', left: '12px',
-          background: categoryBg,
-          border:     `1px solid ${categoryColor}`,
-          borderRadius: '20px',
-          padding:    '4px 12px',
-          display:    'flex', alignItems: 'center', gap: '6px',
+          width:          48,
+          height:         48,
+          minWidth:       48,
+          background:     T.iconBoxBg,
+          boxShadow:      hovered ? T.iconBoxShadowHover : T.iconBoxShadow,
+          borderRadius:   '14px',
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'center',
+          flexShrink:     0,
+          transform:      hovered ? 'scale(1.04)' : 'scale(1)',
+          transition:     'transform 0.3s ease, box-shadow 0.3s ease',
         }}>
-          <CategoryIcon category={event.category} />
-          <span style={{
-            fontFamily: 'Arimo, Arial', fontSize: '11px', fontWeight: 700,
-            color: categoryColor, textTransform: 'uppercase', letterSpacing: '0.5px',
-          }}>
-            {isExclusive ? 'Exclusive' : 'Upcoming'}
-          </span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="3" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" />
+            <path d="M3 9H21" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" />
+            <path d="M8 2V5M16 2V5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
+            <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="rgba(255,255,255,0.9)" />
+            <rect x="11" y="13" width="2.5" height="2.5" rx="0.5" fill="rgba(255,255,255,0.9)" />
+          </svg>
         </div>
-      </div>
 
-      {/* ── Body ── */}
-      <div style={{ padding: '20px 24px 0', flex: 1 }}>
-        {/* Title */}
-        <p style={{
-          fontFamily: 'Arimo, Arial', fontWeight: 700,
-          fontSize: '16px', lineHeight: '24px',
-          color: '#FFED97', margin: '0 0 6px 0',
-        }}>
-          {event.name || event.title}
-        </p>
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
 
-        {/* Description - strip HTML for clean preview */}
-        <p style={{
-          fontFamily: 'Arimo, Arial', fontWeight: 400,
-          fontSize: '12px', lineHeight: '18px',
-          color: 'rgba(255,255,255,0.65)', margin: '0 0 14px 0',
-          display:            '-webkit-box',
-          WebkitLineClamp:    expanded ? 'none' : 2,
-          WebkitBoxOrient:    'vertical',
-          overflow:           'hidden',
-        }}>
-          {truncateHtml(event.description, expanded ? 500 : 100)}
-        </p>
-
-        {/* Divider */}
-        <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.15)', marginBottom: '12px' }} />
-
-        {/* ── Expandable details section ── */}
-        <div style={{
-          overflow:   'hidden',
-          maxHeight:  expanded ? '200px' : '0px',
-          transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}>
-          <div style={{ paddingBottom: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {event.location && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <div style={{ marginTop: '2px', flexShrink: 0 }}><LocationIcon /></div>
-                <p style={{
-                  fontFamily: 'Arimo, Arial', fontWeight: 600,
-                  fontSize: '12px', lineHeight: '18px',
-                  color: '#FFFFFF', margin: 0,
-                }}>
-                  {event.location}
-                </p>
-              </div>
-            )}
-            {event.event_date && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ flexShrink: 0 }}><CalendarIcon /></div>
-                <p style={{
-                  fontFamily: 'Arimo, Arial', fontWeight: 600,
-                  fontSize: '12px', lineHeight: '18px',
-                  color: '#FFFFFF', margin: 0,
-                }}>
-                  {formatEventDate(event.event_date)}
-                </p>
-              </div>
-            )}
-            {event.event_date && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ flexShrink: 0 }}><ClockIcon /></div>
-                <p style={{
-                  fontFamily: 'Arimo, Arial', fontWeight: 600,
-                  fontSize: '12px', lineHeight: '18px',
-                  color: 'rgba(255,255,255,0.7)', margin: 0,
-                }}>
-                  {formatEventTime(event.event_date)}
-                </p>
-              </div>
-            )}
+          {/* Top row: badge + timestamp */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+            <CategoryBadge category={event.category} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, paddingTop: '2px' }}>
+              <ClockSVG />
+              <span style={{
+                fontFamily: "'Arimo', Arial, sans-serif",
+                fontSize:   '11px',
+                color:      T.timestampColor,
+                whiteSpace: 'nowrap',
+              }}>
+                {relativeTime(event.created_at || event.event_date)}
+              </span>
+            </div>
           </div>
+
+          {/* Title */}
+          <p style={{
+            fontFamily:    "'Montserrat', Arial, sans-serif",
+            fontWeight:    700,
+            fontSize:      isMobile ? '14px' : '15.5px',
+            lineHeight:    '1.35',
+            letterSpacing: '-0.2px',
+            color:         T.titleColor,
+            margin:        0,
+          }}>
+            {event.name || event.title}
+          </p>
+
+          {/* Description with inline See more */}
+          <p style={{
+            fontFamily: "'Arimo', Arial, sans-serif",
+            fontWeight: 400,
+            fontSize:   isMobile ? '12.5px' : '13.5px',
+            lineHeight: '1.65',
+            color:      T.bodyColor,
+            margin:     0,
+          }}>
+            {expanded
+              ? previewText
+              : needsTrunc
+                ? previewText.substring(0, 120) + '… '
+                : previewText}
+            {!expanded && needsTrunc && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+                style={{
+                  background:  'none',
+                  border:      'none',
+                  padding:     0,
+                  fontFamily:  "'Arimo', Arial, sans-serif",
+                  fontSize:    isMobile ? '12.5px' : '13.5px',
+                  fontWeight:  700,
+                  color:       T.accent,
+                  cursor:      'pointer',
+                  display:     'inline',
+                  lineHeight:  'inherit',
+                }}
+              >
+                See more
+              </button>
+            )}
+          </p>
+
+          {/* Compact meta (always visible) */}
+          {!expanded && hasDetails && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', paddingTop: '2px' }}>
+              {event.event_date && (
+                <MetaItem
+                  icon={<FaCalendarAlt size={11} color={T.metaColor} />}
+                  text={formatEventDate(event.event_date)}
+                />
+              )}
+              {event.location && (
+                <MetaItem
+                  icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
+                  text={event.location}
+                />
+              )}
+              {event.event_date && (
+                <MetaItem
+                  icon={<HiOutlineClock size={13} color={T.metaColor} />}
+                  text={formatEventTime(event.event_date)}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Expanded: full meta + See less */}
+          {expanded && hasDetails && (
+            <div style={{
+              display:       'flex',
+              flexDirection: 'column',
+              gap:           '8px',
+              paddingTop:    '4px',
+            }}>
+              <div style={{ height: '1px', background: T.footerBorder, margin: '4px 0' }} />
+              {event.location && (
+                <MetaItem
+                  icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
+                  text={event.location}
+                />
+              )}
+              {event.event_date && (
+                <MetaItem
+                  icon={<FaCalendarAlt size={11} color={T.metaColor} />}
+                  text={formatEventDate(event.event_date)}
+                />
+              )}
+              {event.event_date && (
+                <MetaItem
+                  icon={<HiOutlineClock size={13} color={T.metaColor} />}
+                  text={formatEventTime(event.event_date)}
+                />
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+                style={{
+                  background:  'none',
+                  border:      'none',
+                  padding:     0,
+                  fontFamily:  "'Arimo', Arial, sans-serif",
+                  fontSize:    isMobile ? '12.5px' : '13.5px',
+                  fontWeight:  700,
+                  color:       T.accent,
+                  cursor:      'pointer',
+                  display:     'inline-flex',
+                  alignItems:  'center',
+                  gap:         '4px',
+                  marginTop:   '4px',
+                  alignSelf:   'flex-start',
+                }}
+              >
+                See less <FaChevronUp size={9} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* ── Toggle button (expand/collapse only, NO modal) ── */}
-      {hasDetails && (
-        <div style={{ padding: '0 19px 20px' }}>
-          <button
-            onClick={() => setExpanded(v => !v)}
-            style={{
-              width:        '100%',
-              height:       '37px',
-              background:   expanded
-                ? 'rgba(255,255,255,0.06)'
-                : isExclusive
-                  ? 'rgba(250,199,117,0.15)'
-                  : 'rgba(0,40,255,0.7)',
-              boxShadow:    '0px 2px 2px rgba(255,255,255,0.25)',
-              border:       expanded
-                ? '1px solid rgba(255,255,255,0.12)'
-                : isExclusive
-                  ? `1px solid ${categoryColor}`
-                  : 'none',
-              borderRadius: '14px',
-              fontFamily:   'Arimo, Arial',
-              fontWeight:   700,
-              fontSize:     '13px',
-              lineHeight:   '38px',
-              textAlign:    'center',
-              color:        expanded ? 'rgba(255,255,255,0.7)' : isExclusive ? '#FAC775' : '#FFFFFF',
-              cursor:       'pointer',
-              transition:   'background 0.15s, color 0.15s',
-              display:      'flex',
-              alignItems:   'center',
-              justifyContent: 'center',
-              gap:          '6px',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '0.85'; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
-          >
-            {expanded ? (
-              <>See Less <FaChevronUp size={10} /></>
-            ) : (
-              <>See More <FaChevronDown size={10} /></>
-            )}
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
-// ── Main View (NO modal) ──────────────────────────────────────────────────────
+// ── Main View ─────────────────────────────────────────────────────────────────
 const EventsView = ({
   isMobile, isTablet,
   categories, activeCategory, setActiveCategory,
@@ -236,25 +323,33 @@ const EventsView = ({
   navigate,
 }) => {
   const sidebarWidth = isTablet ? 200 : 229;
-  const cols = isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr';
 
-  const featuredEvent  = filtered.find(e => e.category === 'Exclusive Events') || filtered[0];
-  const regularEvents  = filtered.filter(e => e.id !== featuredEvent?.id);
+  const featuredEvent = filtered.find(e => e.category === 'Exclusive Events') || filtered[0];
+  const regularEvents = filtered.filter(e => e.id !== featuredEvent?.id);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#002263', fontFamily: 'Arimo, Arial, sans-serif' }}>
+    <div style={{
+      display:    'flex',
+      minHeight:  '100vh',
+      background: T.pageBg,
+      fontFamily: "'Montserrat', Arial, sans-serif",
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+      `}</style>
+
       <Sidebar />
 
       <div style={{
-        marginLeft:  isMobile ? 0 : `${sidebarWidth}px`,
-        flex:        1,
-        padding:     isMobile ? '24px 16px 90px' : isTablet ? '37px 28px 48px' : '37px 51px 60px',
-        boxSizing:   'border-box',
-        overflowX:   'hidden',
-        position:    'relative',
+        marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
+        flex:       1,
+        padding:    isMobile ? '24px 16px 90px' : isTablet ? '37px 28px 48px' : '37px 51px 60px',
+        boxSizing:  'border-box',
+        overflowX:  'hidden',
+        position:   'relative',
       }}>
 
-        {/* ── Notification Bell ── (keep as is - same as before) ── */}
+        {/* ── Notification Bell ── */}
         <div ref={bellRef} style={{
           position: 'absolute',
           top:      isMobile ? '24px' : '37px',
@@ -262,26 +357,41 @@ const EventsView = ({
           zIndex:   200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{
-            width:      isMobile ? '44px' : '58px',
-            height:     isMobile ? '44px' : '58px',
-            background: showDropdown ? 'rgba(43,114,251,0.2)' : 'rgba(0,62,166,0.35)',
-            border:     showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
-            boxShadow:  '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
-            borderRadius: '14px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative', transition: 'all 0.15s',
+            width:          isMobile ? '44px' : '58px',
+            height:         isMobile ? '44px' : '58px',
+            background:     showDropdown ? 'rgba(43,114,251,0.5)' : 'rgba(0,62,166,0.7)',
+            border:         showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
+            boxShadow:      '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+            borderRadius:   '14px',
+            cursor:         'pointer',
+            display:        'flex',
+            alignItems:     'center',
+            justifyContent: 'center',
+            position:       'relative',
+            transition:     'all 0.15s',
           }}>
             <FaBell size={22} color="#FFFFFF" />
             {unreadCount > 0 && (
               <div style={{
-                position: 'absolute', top: '-5px', right: '-5px',
-                width: '24px', height: '24px',
-                background: 'rgba(43,114,251,0.42)', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position:       'absolute',
+                top:            '-5px',
+                right:          '-5px',
+                width:          '24px',
+                height:         '24px',
+                background:     'rgba(255,0,0,0.35)',
+                borderRadius:   '50%',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
               }}>
                 <div style={{
-                  width: '17px', height: '17px', background: '#2B72FB', borderRadius: '50%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width:          '17px',
+                  height:         '17px',
+                  background:     '#FF3B30',
+                  borderRadius:   '50%',
+                  display:        'flex',
+                  alignItems:     'center',
+                  justifyContent: 'center',
                 }}>
                   <span style={{ fontFamily: 'Arimo', fontSize: '9px', color: '#FFFFFF' }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -291,29 +401,42 @@ const EventsView = ({
             )}
           </button>
 
-          {/* Notification dropdown (keep as is - no changes) */}
+          {/* Notification dropdown */}
           {showDropdown && (
             <div style={{
-              position: 'absolute', top: isMobile ? '52px' : '70px', right: 0,
-              width: isMobile ? '90vw' : '380px', maxHeight: '520px',
-              background: 'rgba(13,19,56,0.97)', backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-              display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300,
+              position:       'absolute',
+              top:            isMobile ? '52px' : '70px',
+              right:          0,
+              width:          isMobile ? '90vw' : '380px',
+              maxHeight:      '520px',
+              background:     T.cardBg,
+              border:         `1px solid ${T.cardBorder}`,
+              borderRadius:   '16px',
+              boxShadow:      '0 20px 60px rgba(0,0,0,0.12)',
+              display:        'flex',
+              flexDirection:  'column',
+              overflow:       'hidden',
+              zIndex:         300,
             }}>
-              <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#FFFFFF' }}>Notifications</span>
-                {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
+              <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${T.footerBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Montserrat', Arial", fontWeight: 700, fontSize: '16px', color: T.titleColor }}>Notifications</span>
+                {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: T.accent, cursor: 'pointer', padding: 0 }}>Mark all read</button>}
               </div>
               <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
                 {['all', 'unread'].map(t => (
                   <button key={t} onClick={() => setNotifTab(t)} style={{
-                    height: '32px', padding: '0 16px',
-                    background: notifTab === t ? '#2B72FB' : 'transparent',
-                    border: notifTab === t ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '20px', cursor: 'pointer',
-                    fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400,
-                    color: '#FFFFFF', transition: 'all 0.15s', textTransform: 'capitalize',
+                    height:        '32px',
+                    padding:       '0 16px',
+                    background:    notifTab === t ? T.accent : 'transparent',
+                    border:        notifTab === t ? 'none' : `1px solid ${T.cardBorder}`,
+                    borderRadius:  '20px',
+                    cursor:        'pointer',
+                    fontFamily:    'Arimo',
+                    fontSize:      '13px',
+                    fontWeight:    notifTab === t ? 700 : 400,
+                    color:         notifTab === t ? '#FFFFFF' : T.bodyColor,
+                    transition:    'all 0.15s',
+                    textTransform: 'capitalize',
                   }}>
                     {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                   </button>
@@ -324,30 +447,30 @@ const EventsView = ({
                   const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
                   if (!list.length) return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                      <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke={T.metaColor} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: T.metaColor, margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
                     </div>
                   );
                   return Object.entries(groupByDate(list)).map(([label, items]) => {
                     if (!items.length) return null;
                     return (
                       <div key={label}>
-                        <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
+                        <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: T.metaColor, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
                         {items.map(n => (
                           <div key={n.id} onClick={() => markOneRead(n.id)}
-                            style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(43,114,251,0.07)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : '3px solid #2B72FB' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                            onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(43,114,251,0.07)'}
+                            style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(43,114,251,0.04)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : `3px solid ${T.accent}` }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                            onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(43,114,251,0.04)'}
                           >
-                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.15)', border: '1px solid rgba(43,114,251,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/></svg>
+                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.08)', border: `1px solid rgba(43,114,251,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke={T.accent} strokeWidth="1.67" strokeLinecap="round"/></svg>
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#FFFFFF', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{formatTime(n.time)}</span>
+                              <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: T.titleColor, margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
+                              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: T.bodyColor, margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
+                              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: T.metaColor }}>{formatTime(n.time)}</span>
                             </div>
-                            {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2B72FB', flexShrink: 0, marginTop: '6px' }} />}
+                            {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: T.accent, flexShrink: 0, marginTop: '6px' }} />}
                           </div>
                         ))}
                       </div>
@@ -355,12 +478,12 @@ const EventsView = ({
                   });
                 })()}
               </div>
-              <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+              <div style={{ padding: '10px 18px', borderTop: `1px solid ${T.footerBorder}`, flexShrink: 0 }}>
                 <button
                   onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                  style={{ width: '100%', height: '36px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                  style={{ width: '100%', height: '36px', background: '#F5F7FA', border: `1px solid ${T.cardBorder}`, borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: T.bodyColor, cursor: 'pointer' }}
+                  onMouseEnter={e => e.currentTarget.style.background = T.cardBorder}
+                  onMouseLeave={e => e.currentTarget.style.background = '#F5F7FA'}
                 >
                   See all notifications
                 </button>
@@ -371,28 +494,46 @@ const EventsView = ({
 
         {/* ── Back Button ── */}
         <button onClick={() => navigate('/dashboard')} style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'none', border: 'none', cursor: 'pointer',
-          padding: 0, marginBottom: isMobile ? '16px' : '24px',
+          display:      'flex',
+          alignItems:   'center',
+          gap:          '8px',
+          background:   'none',
+          border:       'none',
+          cursor:       'pointer',
+          padding:      0,
+          marginBottom: isMobile ? '16px' : '24px',
         }}>
-          <FaArrowLeft size={14} color="#FFFFFF" />
-          <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '15px', color: '#FFFFFF' }}>Back</span>
+          <FaArrowLeft size={14} color={T.backColor} />
+          <span style={{
+            fontFamily: "'Montserrat', Arial, sans-serif",
+            fontWeight: 700,
+            fontSize:   '15px',
+            color:      T.backColor,
+          }}>
+            Back
+          </span>
         </button>
 
         {/* ── Header ── */}
         <div style={{ marginBottom: isMobile ? '20px' : '28px', paddingRight: isMobile ? '58px' : '90px' }}>
           <h1 style={{
-            fontFamily: 'Arimo, Arial', fontWeight: 700,
-            fontSize: isMobile ? '28px' : isTablet ? '32px' : '40px',
-            lineHeight: '1.2', letterSpacing: '-1px',
-            color: '#FFFFFF', margin: '0 0 8px 0',
+            fontFamily:    "'Montserrat', Arial, sans-serif",
+            fontWeight:    700,
+            fontSize:      isMobile ? '28px' : isTablet ? '32px' : '40px',
+            lineHeight:    '1.2',
+            letterSpacing: '-1px',
+            color:         T.pageTitle,
+            margin:        '0 0 8px 0',
           }}>
             Events
           </h1>
           <p style={{
-            fontFamily: 'Arimo', fontWeight: 400,
-            fontSize: isMobile ? '13px' : '16px', lineHeight: '22px',
-            color: 'rgba(255,255,255,0.6)', margin: 0,
+            fontFamily: "'Montserrat', Arial, sans-serif",
+            fontWeight: 400,
+            fontSize:   isMobile ? '13px' : '16px',
+            lineHeight: '22.5px',
+            color:      T.pageSubtitle,
+            margin:     0,
           }}>
             Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community
           </p>
@@ -402,61 +543,88 @@ const EventsView = ({
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '16px' : '28px', gap: '12px' }}>
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
             <div style={{
-              height: '37px', display: 'flex', alignItems: 'center',
-              padding: '0 12px', gap: '8px',
-              background: 'rgba(0,62,166,0.35)',
-              border: '1px solid rgba(255,255,255,0.05)',
+              height:       '37px',
+              display:      'flex',
+              alignItems:   'center',
+              padding:      '0 12px',
+              gap:          '8px',
+              background:   T.filterBg,
+              border:       `1px solid ${T.filterBorder}`,
               borderRadius: '10px',
-              filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
-              minWidth: isMobile ? 0 : '211px',
-              flex: isMobile ? 1 : 'none',
+              boxShadow:    T.cardShadow,
+              minWidth:     isMobile ? 0 : '211px',
+              flex:         isMobile ? 1 : 'none',
             }}>
-              <span style={{ fontFamily: 'Arimo', fontSize: '14px', color: 'rgba(255,255,255,0.9)', flex: 1 }}>
+              <span style={{ fontFamily: "'Montserrat', Arial", fontSize: '13px', fontWeight: 600, color: T.filterText, flex: 1 }}>
                 {activeCategory}
               </span>
-              <div style={{ background: '#2B72FB', borderRadius: '8px', minWidth: '22.63px', height: '19.98px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
+              <div style={{ background: T.badgeBg, borderRadius: '8px', minWidth: '22.63px', height: '19.98px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>{filtered.length}</span>
               </div>
             </div>
-            <button onClick={() => setShowFilter(f => !f)} style={{
-              height: '37px', padding: '0 18px',
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(0,40,255,0.85)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px', cursor: 'pointer',
-              filter: 'drop-shadow(0px 2px 2px rgba(255,255,255,0.15))',
-              transition: 'opacity 0.15s',
-            }}
+            <button
+              onClick={() => setShowFilter(f => !f)}
+              style={{
+                height:       '37px',
+                padding:      '0 18px',
+                display:      'flex',
+                alignItems:   'center',
+                gap:          '8px',
+                background:   T.titleColor,
+                border:       'none',
+                borderRadius: '8px',
+                cursor:       'pointer',
+                boxShadow:    T.cardShadow,
+                transition:   'opacity 0.15s',
+              }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               <FaFilter size={12} color="#FFFFFF" />
-              <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '13px', color: '#FFFFFF' }}>FILTER</span>
+              <span style={{ fontFamily: "'Montserrat', Arial", fontWeight: 700, fontSize: '12px', color: '#FFFFFF', letterSpacing: '0.5px' }}>FILTER</span>
             </button>
+
             {showFilter && (
               <div style={{
-                position: 'absolute', top: 'calc(100% + 8px)', left: 0,
-                background: 'rgba(0,62,166,0.55)', backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px',
-                overflow: 'hidden', zIndex: 300, minWidth: '220px',
-                boxShadow: '0px 10px 30px rgba(0,0,0,0.5)',
+                position:     'absolute',
+                top:          'calc(100% + 8px)',
+                left:         0,
+                background:   T.cardBg,
+                border:       `1px solid ${T.cardBorder}`,
+                borderRadius: '12px',
+                overflow:     'hidden',
+                zIndex:       300,
+                minWidth:     '220px',
+                boxShadow:    '0px 10px 30px rgba(0,0,0,0.12)',
               }}>
                 {categories.map((cat, i) => (
-                  <button key={cat} onClick={() => { setActiveCategory(cat); setShowFilter(false); }}
+                  <button key={cat}
+                    onClick={() => { setActiveCategory(cat); setShowFilter(false); }}
                     style={{
-                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      background: activeCategory === cat ? 'rgba(43,114,251,0.25)' : 'transparent',
-                      border: 'none',
-                      borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-                      cursor: 'pointer', transition: 'background 0.15s',
+                      width:          '100%',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'space-between',
+                      padding:        '12px 16px',
+                      background:     activeCategory === cat ? 'rgba(43,114,251,0.08)' : 'transparent',
+                      border:         'none',
+                      borderTop:      i > 0 ? `1px solid ${T.footerBorder}` : 'none',
+                      cursor:         'pointer',
+                      transition:     'background 0.15s',
                     }}
-                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
                     onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <span style={{ fontSize: '14px', color: activeCategory === cat ? '#FFFFFF' : 'rgba(255,255,255,0.7)', fontWeight: activeCategory === cat ? 700 : 400 }}>{cat}</span>
-                    <div style={{ background: activeCategory === cat ? '#2B72FB' : 'rgba(43,114,251,0.25)', borderRadius: '6px', padding: '1px 7px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#FFFFFF' }}>{categoryCounts[cat]}</span>
+                    <span style={{
+                      fontFamily: "'Montserrat', Arial",
+                      fontSize:   '13px',
+                      color:      activeCategory === cat ? T.titleColor : T.bodyColor,
+                      fontWeight: activeCategory === cat ? 700 : 400,
+                    }}>
+                      {cat}
+                    </span>
+                    <div style={{ background: activeCategory === cat ? T.accent : 'rgba(43,114,251,0.12)', borderRadius: '6px', padding: '1px 7px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: activeCategory === cat ? '#FFFFFF' : T.accent }}>{categoryCounts[cat]}</span>
                     </div>
                   </button>
                 ))}
@@ -465,50 +633,55 @@ const EventsView = ({
           </div>
         </div>
 
-        {/* ── Featured Event (NO modal, just clickable to expand?) Actually keep as is with button ── */}
+        {/* ── Featured Event Banner ── */}
         {featuredEvent && activeCategory === 'All Events' && regularEvents.length > 0 && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(43,114,251,0.2) 0%, rgba(30,37,85,0.3) 100%)',
-            border: '1px solid rgba(43,114,251,0.3)',
-            borderRadius: '20px', marginBottom: '32px', overflow: 'hidden',
+            background:   'linear-gradient(180deg, #2B72FB 0%, #1E2555 100%)',
+            borderRadius: '20px',
+            marginBottom: '32px',
+            overflow:     'hidden',
+            padding:      isMobile ? '20px' : '28px 32px',
+            boxShadow:    '0px 8px 24px rgba(43,114,251,0.25)',
           }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
-              <div style={{ width: isMobile ? '100%' : '280px', height: isMobile ? '180px' : '200px', overflow: 'hidden' }}>
-                <img
-                  src={featuredEvent.image_url || 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&q=80'}
-                  alt={featuredEvent.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(250,199,117,0.15)', border: '1px solid #FAC775', borderRadius: '20px', padding: '4px 12px', alignSelf: 'flex-start' }}>
+                <FaStar size={12} color="#FAC775" />
+                <span style={{ fontFamily: "'Montserrat', Arial", fontSize: '11px', fontWeight: 700, color: '#FAC775', textTransform: 'uppercase' }}>Featured Event</span>
               </div>
-              <div style={{ padding: isMobile ? '20px' : '24px 28px', flex: 1 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(250,199,117,0.15)', border: '1px solid #FAC775', borderRadius: '20px', padding: '4px 12px', marginBottom: '12px' }}>
-                  <FaStar size={12} color="#FAC775" />
-                  <span style={{ fontFamily: 'Arimo', fontSize: '11px', fontWeight: 700, color: '#FAC775', textTransform: 'uppercase' }}>Featured Event</span>
-                </div>
-                <h2 style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: isMobile ? '22px' : '28px', color: '#FFED97', margin: '0 0 12px 0' }}>
-                  {featuredEvent.title}
-                </h2>
-                <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', margin: '0 0 20px 0' }}>
-                  {stripHtml(featuredEvent.description).substring(0, 150)}...
-                </p>
-                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '20px' }}>
+              <h2 style={{ fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 700, fontSize: isMobile ? '22px' : '28px', color: '#FFED97', margin: 0, letterSpacing: '-0.5px' }}>
+                {featuredEvent.title || featuredEvent.name}
+              </h2>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', margin: 0, fontFamily: 'Arimo, Arial', lineHeight: '1.6' }}>
+                {stripHtml(featuredEvent.description || '').substring(0, 150)}...
+              </p>
+              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                {featuredEvent.event_date && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FaCalendarAlt size={12} color="rgba(255,255,255,0.7)" />
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Arimo, Arial' }}>
                       {new Date(featuredEvent.event_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                  {featuredEvent.location && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <FaMapMarkerAlt size={12} color="rgba(255,255,255,0.7)" />
-                      <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>{featuredEvent.location}</span>
-                    </div>
-                  )}
-                </div>
+                )}
+                {featuredEvent.location && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FaMapMarkerAlt size={12} color="rgba(255,255,255,0.7)" />
+                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Arimo, Arial' }}>{featuredEvent.location}</span>
+                  </div>
+                )}
+              </div>
+              <div>
                 <button style={{
-                  height: '42px', padding: '0 28px',
-                  background: 'linear-gradient(135deg, rgba(250,199,117,0.9) 0%, rgba(255,180,50,0.9) 100%)',
-                  border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '14px', color: '#0A0A0A', cursor: 'pointer',
+                  height:       '42px',
+                  padding:      '0 28px',
+                  background:   'linear-gradient(135deg, rgba(250,199,117,0.9) 0%, rgba(255,180,50,0.9) 100%)',
+                  border:       'none',
+                  borderRadius: '12px',
+                  fontFamily:   "'Montserrat', Arial, sans-serif",
+                  fontWeight:   700,
+                  fontSize:     '14px',
+                  color:        '#0A0A0A',
+                  cursor:       'pointer',
                 }}>
                   Register Now
                 </button>
@@ -517,20 +690,21 @@ const EventsView = ({
           </div>
         )}
 
-        {/* ── Events Grid ── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: cols,
-          gap: isMobile ? '16px' : isTablet ? '20px' : '24px',
-          alignItems: 'start',
-        }}>
+        {/* ── Events List (stacked, full-width cards) ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {(activeCategory === 'All Events' ? regularEvents : filtered).map(event => (
             <EventCard key={event.id} event={event} isMobile={isMobile} />
           ))}
         </div>
 
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>
+          <div style={{
+            textAlign:  'center',
+            padding:    '80px 0',
+            color:      T.metaColor,
+            fontSize:   '15px',
+            fontFamily: "'Montserrat', Arial, sans-serif",
+          }}>
             No events found for this category.
           </div>
         )}

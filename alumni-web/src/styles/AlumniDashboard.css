@@ -526,7 +526,7 @@
 .for-you-heading {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(17px, 1.8vw, 26px);
+  font-size: clamp(17px, 1.8vw, 25px);
   line-height: 1.2;
   letter-spacing: -0.6px;
   color: #324D87;
@@ -537,7 +537,7 @@
 .for-you-subtitle {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(11px, 0.9vw, 16px);
+  font-size: clamp(11px, 9.9vw, 14.1px);
   line-height: 1.5;
   color: #545454;
   margin: 0 0 clamp(8px, 1.2vh, 16px) 0;
