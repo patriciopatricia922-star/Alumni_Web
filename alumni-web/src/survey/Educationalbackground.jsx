@@ -11,7 +11,7 @@ const CURRENT_SECTION = 2;
 
 const DEFAULT_DEGREE_OPTIONS          = ['BA COMM', 'BS PSYCH', 'BS PE', 'BSA', 'BSMA', 'BSBA-MM', 'BSBA-FM', 'BSBA-HRM', 'BSTM', 'BSHM', 'BS ARCH', 'BSCE', 'BSCS-ML', 'BSCpE', 'BSIT-MWA', 'Other'];
 const DEFAULT_YEAR_OPTIONS            = Array.from({ length: 10 }, (_, i) => String(2025 + i));
-const DEFAULT_DISTINCTION_OPTIONS     = ['Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'With Honors', 'None'];
+const DEFAULT_DISTINCTION_OPTIONS     = ['Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'None'];
 const DEFAULT_LICENSURE_OPTIONS       = ['Yes', 'No', 'Not applicable'];
 const DEFAULT_LICENSURE_PLANS_OPTIONS = ['Yes', 'No', 'Already taken', 'Not applicable'];
 const DEFAULT_BOARD_RESULT_OPTIONS    = ['Passed', 'Failed', 'Pending', 'Not yet taken'];
@@ -46,49 +46,104 @@ const REQUIRED_FIELDS_BASE = [
 
 const computeFormPct = (form) => {
   const required = [...REQUIRED_FIELDS_BASE];
-  if (form.degree_program === 'Other') required.push('other_degree');
-  if (form.post_grad_plans === 'Yes')  required.push('post_grad_course');
+  if (form.degree_program === 'Other')    required.push('other_degree');
+  if (form.post_grad_plans === 'Yes')     required.push('post_grad_course');
   if (form.licensure_reviewing === 'Yes') {
     required.push('licensure_plans', 'licensure_reason');
     if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
       required.push('board_exam_name', 'board_exam_date', 'board_exam_result');
     }
   }
+  // ── NEW: count the "No" branch fields toward completion ─────────────────
+  if (form.licensure_reviewing === 'No') {
+    required.push('licensure_no_plans', 'licensure_no_reason');
+  }
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-  const filled = required.filter(k => form[k] && String(form[k]).trim() !== '').length;
+  const filled       = required.filter(k => form[k] && String(form[k]).trim() !== '').length;
   const contribution = (filled / required.length) * (1 / TOTAL_SECTIONS) * 100;
-  return Math.min(parseFloat((SECTION_BASE + contribution).toFixed(2)), parseFloat(SECTION_CAP.toFixed(2)));
+  return Math.min(
+    parseFloat((SECTION_BASE + contribution).toFixed(2)),
+    parseFloat(SECTION_CAP.toFixed(2))
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper — extract the two lockable values from a resolved profile object.
+//
+// useUserProfile maps DB columns to camelCase JS keys:
+//   users.program    → profile.academicProgram
+//   users.batch_year → profile.yearGraduated
+//
+// Previous code read profile.program / profile.batch_year (the raw DB names)
+// which are always undefined coming out of the hook — that was the root cause
+// of the autofill never working.
+// ─────────────────────────────────────────────────────────────────────────────
+const extractProfileAcademicFields = (profile) => {
+  if (!profile) return null;
+
+  // useUserProfile camelCase keys (see DB_TO_PROFILE in the hook)
+  const program   = profile.academicProgram ?? profile.program   ?? null;
+  const batchYear = profile.yearGraduated   ?? profile.batch_year ?? null;
+
+  const result = {};
+  if (program   && String(program).trim())   result.degree_program = String(program).trim();
+  if (batchYear && String(batchYear).trim()) result.year_graduated = String(batchYear).trim();
+
+  return Object.keys(result).length > 0 ? result : null;
 };
 
 const EducationalBackground = () => {
   const navigate = useNavigate();
 
-  // ── Shared profile hook — source for locked academic fields ───────────
-  const { profile, loading: profileLoading } = useUserProfile();
+  // ── Shared profile hook ───────────────────────────────────────────────────
+  const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  const [questionLabels,         setQuestionLabels]         = useState({});
-  const [questionPlaceholders,   setQuestionPlaceholders]   = useState({});
-  const [degreeOptions,          setDegreeOptions]          = useState(DEFAULT_DEGREE_OPTIONS);
-  const [yearOptions,            setYearOptions]            = useState(DEFAULT_YEAR_OPTIONS);
-  const [distinctionOptions,     setDistinctionOptions]     = useState(DEFAULT_DISTINCTION_OPTIONS);
-  const [licensureOptions,       setLicensureOptions]       = useState(DEFAULT_LICENSURE_OPTIONS);
-  const [licensurePlansOptions,  setLicensurePlansOptions]  = useState(DEFAULT_LICENSURE_PLANS_OPTIONS);
-  const [boardResultOptions,     setBoardResultOptions]     = useState(DEFAULT_BOARD_RESULT_OPTIONS);
-  const [loadingLabels,          setLoadingLabels]          = useState(true);
-  const [configVersion,          setConfigVersion]          = useState(0);
+  // ── Config state ──────────────────────────────────────────────────────────
+  const [questionLabels,        setQuestionLabels]        = useState({});
+  const [questionPlaceholders,  setQuestionPlaceholders]  = useState({});
+  const [degreeOptions,         setDegreeOptions]         = useState(DEFAULT_DEGREE_OPTIONS);
+  const [yearOptions,           setYearOptions]           = useState(DEFAULT_YEAR_OPTIONS);
+  const [distinctionOptions,    setDistinctionOptions]    = useState(DEFAULT_DISTINCTION_OPTIONS);
+  const [licensureOptions,      setLicensureOptions]      = useState(DEFAULT_LICENSURE_OPTIONS);
+  const [licensurePlansOptions, setLicensurePlansOptions] = useState(DEFAULT_LICENSURE_PLANS_OPTIONS);
+  const [boardResultOptions,    setBoardResultOptions]    = useState(DEFAULT_BOARD_RESULT_OPTIONS);
+  const [loadingLabels,         setLoadingLabels]         = useState(true);
 
-  // ── Locked field tracking — set once from profile, never overwritten ──
+  // ── Locked-field tracking ─────────────────────────────────────────────────
+  // lockedFields[key] = true  → field was populated from the users table and
+  //                             must not be editable.
   const [lockedFields, setLockedFields] = useState({
     degree_program: false,
     year_graduated: false,
   });
 
+  // Ref that always holds the authoritative profile values so the savedData
+  // merge (Step 1) can re-assert them even if it runs after Step 2.
+  const profileValuesRef = useRef({});
+
+  // ── Load control ──────────────────────────────────────────────────────────
+  const [hasLoadedSavedData,   setHasLoadedSavedData]   = useState(false);
+  const [hasAttemptedAutofill, setHasAttemptedAutofill] = useState(false);
+
+  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
-    degree_program: '', other_degree: '', reason_for_course: '',
-    year_graduated: '', distinction: '', post_grad_plans: '',
-    post_grad_course: '', licensure_reviewing: '', licensure_plans: '',
-    licensure_reason: '', board_exam_name: '', board_exam_date: '', board_exam_result: '',
+    degree_program:      '',
+    other_degree:        '',
+    reason_for_course:   '',
+    year_graduated:      '',
+    distinction:         '',
+    post_grad_plans:     '',
+    post_grad_course:    '',
+    licensure_reviewing: '',
+    licensure_plans:     '',
+    licensure_reason:    '',
+    board_exam_name:     '',
+    board_exam_date:     '',
+    board_exam_result:   '',
+    // ── NEW: "No" branch fields ───────────────────────────────────────────
+    licensure_no_plans:  '',   // shown when licensure_reviewing === 'No'
+    licensure_no_reason: '',   // shown when licensure_reviewing === 'No'
   });
 
   const [errors,    setErrors]    = useState(new Set());
@@ -96,12 +151,20 @@ const EducationalBackground = () => {
   const cardRef = useRef(null);
   const bellRef = useRef(null);
 
+  // ── Notifications ─────────────────────────────────────────────────────────
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  const applyConfig = (config) => {
+  // ── Force fresh profile on mount (picks up Profile modal saves) ───────────
+  useEffect(() => {
+    refreshProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Survey config ─────────────────────────────────────────────────────────
+  const applyConfig = useCallback((config) => {
     if (!config?.sections) return;
     const eduSection = config.sections.find(s => s.title === 'Educational Background');
     if (!eduSection?.questions) return;
@@ -112,10 +175,8 @@ const EducationalBackground = () => {
     eduSection.questions.forEach((q, idx) => {
       const fieldKey = INDEX_TO_FIELD[idx];
       if (!fieldKey) return;
-
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
-
       if (fieldKey === 'degree_program'      && q.options) setDegreeOptions(q.options);
       if (fieldKey === 'year_graduated'      && q.options) setYearOptions(q.options);
       if (fieldKey === 'distinction'         && q.options) setDistinctionOptions(q.options);
@@ -124,110 +185,124 @@ const EducationalBackground = () => {
       if (fieldKey === 'board_exam_result'   && q.options) setBoardResultOptions(q.options);
     });
 
-    setQuestionLabels(prev => ({ ...prev, ...labels }));
+    setQuestionLabels(prev       => ({ ...prev, ...labels }));
     setQuestionPlaceholders(prev => ({ ...prev, ...placeholders }));
-  };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadDynamicContent = async () => {
+    const loadConfig = async () => {
       setLoadingLabels(true);
       try {
         const config = await loadSurveyConfig(true);
-        if (!cancelled && config) {
-          applyConfig(config);
-        }
+        if (!cancelled && config) applyConfig(config);
       } finally {
         if (!cancelled) setLoadingLabels(false);
       }
     };
-
-    loadDynamicContent();
+    loadConfig();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      const freshConfig = await loadSurveyConfig(true);
-      if (!cancelled && freshConfig) {
-        applyConfig(freshConfig);
-        setConfigVersion(v => v + 1);
-      }
+      const fresh = await loadSurveyConfig(true);
+      if (!cancelled && fresh) applyConfig(fresh);
     });
 
-    return () => {
-      cancelled = true;
-      if (channel) channel.unsubscribe();
-    };
-  }, []);
+    return () => { cancelled = true; channel?.unsubscribe(); };
+  }, [applyConfig]);
 
-  // Load saved progress (UNTOUCHED)
+  // ── STEP 1: Load saved survey data ────────────────────────────────────────
+  // After merging, re-assert any profile values already in the ref so a slow
+  // DB read can never silently overwrite the locked fields.
   useEffect(() => {
     const load = async () => {
-      const savedData = await loadSectionData('educational_background');
-      if (savedData) setForm(f => ({ ...f, ...savedData }));
+      try {
+        const savedData = await loadSectionData('educational_background');
+        if (savedData && Object.keys(savedData).length > 0) {
+          setForm(f => {
+            const merged = { ...f, ...savedData };
+            // Re-assert authoritative profile values (may be {} on first render
+            // if the autofill effect hasn't run yet — that is fine, it will run
+            // after profileLoading resolves and will overwrite again).
+            Object.entries(profileValuesRef.current).forEach(([key, val]) => {
+              merged[key] = val;
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.error('[EducationalBackground] Error loading saved data:', err);
+      } finally {
+        setHasLoadedSavedData(true);
+      }
     };
     load();
   }, []);
 
-  // ── Autofill degree_program + year_graduated from users table via profile hook
-  // Runs once when profile finishes loading. Fields are locked after autofill.
+  // ── STEP 2: Autofill degree_program + year_graduated from profile ─────────
+  //
+  // FIX: Read profile.academicProgram / profile.yearGraduated — the camelCase
+  // keys that useUserProfile actually produces — instead of profile.program /
+  // profile.batch_year which are always undefined from the hook.
+  //
+  // The effect re-runs whenever profileLoading or profile changes, so it fires
+  // correctly whether the hook resolves before or after saved data loads.
   useEffect(() => {
-    if (profileLoading || !profile) return;
+    if (!hasLoadedSavedData) return; // wait for DB load
+    if (profileLoading)      return; // wait for hook
+    if (hasAttemptedAutofill) return; // run only once
 
-    const autofilled = {};
-    const locked     = { degree_program: false, year_graduated: false };
+    console.log('[EducationalBackground] Attempting academic autofill...');
+    console.log('[EducationalBackground] Profile:', profile);
 
-    // profile.program  → degree_program
-    // profile.batch_year → year_graduated
-    if (profile.program && String(profile.program).trim()) {
-      autofilled.degree_program = String(profile.program).trim();
-      locked.degree_program     = true;
-    }
+    const academicValues = extractProfileAcademicFields(profile);
 
-    if (profile.batch_year && String(profile.batch_year).trim()) {
-      autofilled.year_graduated = String(profile.batch_year).trim();
-      locked.year_graduated     = true;
-    }
+    if (academicValues) {
+      console.log('[EducationalBackground] Applying academic values:', academicValues);
 
-    if (Object.keys(autofilled).length > 0) {
-      // Only set fields that aren't already populated by saved survey data,
-      // but always lock them regardless — the profile value is authoritative.
-      setForm(f => {
-        const updated = { ...f };
-        Object.entries(autofilled).forEach(([key, value]) => {
-          // Overwrite with profile value to guarantee consistency
-          updated[key] = value;
-        });
-        return updated;
+      // Persist in ref so Step 1 re-assert (above) can use them if it runs
+      // after this effect (race condition avoidance).
+      profileValuesRef.current = academicValues;
+
+      // Overwrite form fields unconditionally — these come from the authoritative
+      // users table and the user must not be able to change them.
+      setForm(f => ({ ...f, ...academicValues }));
+
+      setLockedFields({
+        degree_program: !!academicValues.degree_program,
+        year_graduated: !!academicValues.year_graduated,
       });
-      setLockedFields(locked);
+    } else {
+      console.log('[EducationalBackground] No academic profile data found for autofill');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileLoading]);
 
-  // Notifications (UNTOUCHED)
+    setHasAttemptedAutofill(true);
+  }, [profileLoading, profile, hasLoadedSavedData, hasAttemptedAutofill]);
+
+  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('id, title, content, published_at, is_active')
-        .eq('is_active', true)
-        .order('published_at', { ascending: false })
-        .limit(20);
-      if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped = data.map(n => ({
-        id: n.id, title: n.title, body: n.content,
-        time: n.published_at, read: readIds.includes(n.id),
-      }));
-      setNotifs(mapped);
-      setUnreadCount(mapped.filter(n => !n.read).length);
-    };
-    fetchNotifs();
+    supabase
+      .from('announcements')
+      .select('id, title, content, published_at, is_active')
+      .eq('is_active', true)
+      .order('published_at', { ascending: false })
+      .limit(20)
+      .then(({ data, error }) => {
+        if (error || !data) return;
+        const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+        const mapped  = data.map(n => ({
+          id: n.id, title: n.title, body: n.content,
+          time: n.published_at, read: readIds.includes(n.id),
+        }));
+        setNotifs(mapped);
+        setUnreadCount(mapped.filter(n => !n.read).length);
+      });
   }, []);
 
   useEffect(() => {
     const h = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+      if (bellRef.current && !bellRef.current.contains(e.target))
+        setShowDropdown(false);
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
@@ -241,12 +316,15 @@ const EducationalBackground = () => {
 
   const markOneRead = useCallback((id) => {
     const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem('read_notifs', JSON.stringify(readIds));
+    }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
-  const groupByDate = (list) => {
+  const groupByDate = useCallback((list) => {
     const today     = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
     const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
@@ -259,58 +337,89 @@ const EducationalBackground = () => {
       else                     groups['Earlier'].push(n);
     });
     return groups;
-  };
+  }, []);
 
-  const formatTime = (iso) => {
+  const formatTime = useCallback((iso) => {
     if (!iso) return '';
-    const d = new Date(iso), now = new Date();
-    const diff = Math.floor((now - d) / 1000);
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
     if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
-    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
-    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
-    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-  };
+    if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  }, []);
 
-  // ── Field setter — respects locked fields ─────────────────────────────
-  const set = (key, val) => {
-    if (lockedFields[key]) return; // silently block edits to locked fields
+  // ── Field setter — hard-blocks writes to locked fields ────────────────────
+  // State-level protection: even if the View somehow calls set() for a locked
+  // field (e.g. via a programmatic event), the value is silently discarded.
+  const set = useCallback((key, val) => {
+    if (lockedFields[key]) {
+      console.warn(`[EducationalBackground] Blocked write to locked field "${key}"`);
+      return;
+    }
     setForm(prev => ({ ...prev, [key]: val }));
-  };
+    // Clear validation error for the field being edited
+    setErrors(prev => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  }, [lockedFields]);
 
-  const setLicensureReviewing = (val) =>
+  // Clears ALL sub-fields for both branches whenever the parent answer changes,
+  // preventing stale values from a previous selection persisting in saved data.
+  const setLicensureReviewing = useCallback((val) =>
     setForm(prev => ({
       ...prev,
-      licensure_reviewing: val,
-      licensure_plans: '', licensure_reason: '',
-      board_exam_name: '', board_exam_date: '', board_exam_result: '',
-    }));
+      licensure_reviewing:  val,
+      // ── "Yes" branch ────────────────────────────────────────────────────
+      licensure_plans:      '',
+      licensure_reason:     '',
+      board_exam_name:      '',
+      board_exam_date:      '',
+      board_exam_result:    '',
+      // ── "No" branch ─────────────────────────────────────────────────────
+      licensure_no_plans:   '',
+      licensure_no_reason:  '',
+    })), []);
 
-  const setLicensurePlans = (val) =>
+  const setLicensurePlans = useCallback((val) =>
     setForm(prev => ({
       ...prev,
-      licensure_plans: val,
-      board_exam_name: '', board_exam_date: '', board_exam_result: '',
-    }));
+      licensure_plans:   val,
+      board_exam_name:   '',
+      board_exam_date:   '',
+      board_exam_result: '',
+    })), []);
 
+  // ── NEW: setter for the "No" branch plans radio ───────────────────────────
+  const setLicensureNoPlans = useCallback((val) =>
+    setForm(prev => ({ ...prev, licensure_no_plans: val })), []);
+
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
-    if (!form.degree_program)                                           e.add('degree_program');
-    if (form.degree_program === 'Other' && !form.other_degree.trim())  e.add('other_degree');
-    if (!form.reason_for_course.trim())                                e.add('reason_for_course');
-    if (!form.year_graduated)                                          e.add('year_graduated');
-    if (!form.distinction)                                             e.add('distinction');
-    if (!form.post_grad_plans)                                         e.add('post_grad_plans');
+    if (!form.degree_program)                                            e.add('degree_program');
+    if (form.degree_program === 'Other' && !form.other_degree.trim())   e.add('other_degree');
+    if (!form.reason_for_course.trim())                                 e.add('reason_for_course');
+    if (!form.year_graduated)                                           e.add('year_graduated');
+    if (!form.distinction)                                              e.add('distinction');
+    if (!form.post_grad_plans)                                          e.add('post_grad_plans');
     if (form.post_grad_plans === 'Yes' && !form.post_grad_course.trim()) e.add('post_grad_course');
-    if (!form.licensure_reviewing)                                     e.add('licensure_reviewing');
+    if (!form.licensure_reviewing)                                      e.add('licensure_reviewing');
     if (form.licensure_reviewing === 'Yes') {
-      if (!form.licensure_plans)               e.add('licensure_plans');
-      if (!form.licensure_reason.trim())       e.add('licensure_reason');
+      if (!form.licensure_plans)         e.add('licensure_plans');
+      if (!form.licensure_reason.trim()) e.add('licensure_reason');
       if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
         if (!form.board_exam_name.trim()) e.add('board_exam_name');
         if (!form.board_exam_date)        e.add('board_exam_date');
         if (!form.board_exam_result)      e.add('board_exam_result');
       }
+    // ── NEW: validate "No" branch ─────────────────────────────────────────
+    } else if (form.licensure_reviewing === 'No') {
+      if (!form.licensure_no_plans)          e.add('licensure_no_plans');
+      if (!form.licensure_no_reason.trim())  e.add('licensure_no_reason');
     }
     return e;
   };
@@ -333,15 +442,18 @@ const EducationalBackground = () => {
       .then(() => navigate('/survey/certification-achievement'));
   };
 
-  const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
-  const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
+  const getLabel       = useCallback((fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId, [questionLabels]);
+  const getPlaceholder = useCallback((fieldId) => questionPlaceholders[fieldId] || '', [questionPlaceholders]);
 
   const formPct = computeFormPct(form);
 
-  if (loadingLabels) {
+  if (loadingLabels || !hasLoadedSavedData) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        height: '100vh', background: '#002263',
+      }}>
+        <div style={{ color: '#fff', fontFamily: 'Arimo, sans-serif' }}>Loading…</div>
       </div>
     );
   }
@@ -352,6 +464,7 @@ const EducationalBackground = () => {
       set={set}
       setLicensureReviewing={setLicensureReviewing}
       setLicensurePlans={setLicensurePlans}
+      setLicensureNoPlans={setLicensureNoPlans}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
@@ -370,7 +483,7 @@ const EducationalBackground = () => {
       handleNext={handleNext}
       lockedFields={lockedFields}
       bellRef={bellRef}
-      notifs={notifs}
+      notifs={notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs}
       unreadCount={unreadCount}
       showDropdown={showDropdown}
       setShowDropdown={setShowDropdown}

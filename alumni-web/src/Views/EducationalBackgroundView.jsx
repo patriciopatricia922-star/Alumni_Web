@@ -54,75 +54,43 @@ const STYLES = `
   .eb-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .eb-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
 
-  /* ── Locked field styles ───────────────────────────────────────────── */
-  .eb-input-locked {
+  /* ── Locked field styles ─────────────────────────────────────────────────── */
+  /*
+   * We do NOT use HTML disabled on the <select> because browsers apply an
+   * OS-level colour tint that makes the text hard to read and cannot be
+   * reliably overridden across all browsers + OS combinations.
+   *
+   * Instead we use a visually-styled read-only element plus pointer-events:none
+   * and tabIndex=-1 to achieve the same effect without the browser quirks.
+   */
+  .eb-locked-display {
     width: 100%;
     height: 47px;
     background: #F0F4FB;
-    border: 0.8px solid #C5D0E8;
+    border: 0.8px solid #B8C8E8;
     border-radius: 10px;
-    padding: 12px 16px;
-    padding-right: 44px;
+    padding: 0 40px 0 16px;       /* right padding leaves room for lock icon */
     font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-size: 14px;
-    color: #3A4E72;
-    outline: none;
-    cursor: not-allowed;
-    pointer-events: none;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .eb-locked-wrap {
-    position: relative;
-    width: 100%;
-  }
-  .eb-lock-icon {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
+    color: #2D467C;
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: #6B84B8;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: not-allowed;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
-  .eb-locked-hint {
-    font-family: 'Arimo', Arial, sans-serif;
-    font-size: 11.5px;
-    color: #6B84B8;
-    margin-top: 4px;
+  .eb-lock-hint {
     display: flex;
     align-items: center;
     gap: 5px;
-    letter-spacing: 0.1px;
-  }
-  .eb-label-locked {
-    font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 21px;
-    color: #003EA6;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .eb-locked-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    background: #EBF0FA;
-    border: 0.8px solid #C5D0E8;
-    border-radius: 6px;
-    padding: 1px 7px 1px 5px;
     font-family: 'Arimo', Arial, sans-serif;
-    font-size: 10.5px;
-    font-weight: 600;
-    color: #5070AA;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    vertical-align: middle;
+    font-size: 11.5px;
+    color: #6B7E9F;
+    margin-top: -4px;
   }
 
   @media (max-width: 1100px) { .eb-topbar { padding: 24px 32px 0; } .eb-title { padding: 14px 32px 0; font-size: 26px; } .eb-subtitle { padding: 4px 32px 0; } .eb-progress { margin: 12px 32px 0; } .eb-body { padding: 20px 32px 60px; } .eb-card { padding: 32px 32px 28px; } }
@@ -132,49 +100,73 @@ const STYLES = `
   @media (max-height: 600px) { .eb-header { padding-bottom: 10px; } .eb-progress { padding: 10px 20px; } .eb-body { padding-top: 14px; } }
 `;
 
-const onFocus = e => e.target.style.borderColor = '#003EA6';
-const onBlur  = e => e.target.style.borderColor = '#D1D5DC';
+const onFocus = e => { if (!e.target.readOnly && !e.target.disabled) e.target.style.borderColor = '#003EA6'; };
+const onBlur  = e => { if (!e.target.readOnly && !e.target.disabled) e.target.style.borderColor = '#D1D5DC'; };
 
-// Lock icon SVG — padlock, consistent with form's design language
+// ── Lock icon ─────────────────────────────────────────────────────────────────
 const LockIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="2.5" y="6.5" width="10" height="7" rx="1.5" stroke="#6B84B8" strokeWidth="1.2"/>
-    <path d="M5 6.5V4.5a2.5 2.5 0 0 1 5 0v2" stroke="#6B84B8" strokeWidth="1.2" strokeLinecap="round"/>
-    <circle cx="7.5" cy="10" r="1" fill="#6B84B8"/>
+  <svg width="11" height="11" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+    <rect x="1" y="6" width="10" height="7" rx="1.5" stroke="#6B7E9F" strokeWidth="1.2"/>
+    <path d="M4 6V4a2 2 0 114 0v2" stroke="#6B7E9F" strokeWidth="1.2" strokeLinecap="round"/>
   </svg>
 );
 
-// Renders a select that is visually locked — displayed as a read-only styled div
-// mirroring the select's appearance so layout stays identical to the editable version.
-const LockedSelect = ({ value, label }) => (
-  <div className="eb-locked-wrap">
-    <div className="eb-input-locked" aria-readonly="true" title={`${label} is pre-filled from your profile and cannot be changed.`}>
-      {value || <span style={{ color: 'rgba(58,78,114,0.4)' }}>—</span>}
+// ── Hint shown beneath a locked field ─────────────────────────────────────────
+const LockedHint = () => (
+  <span className="eb-lock-hint" role="note">
+    <LockIcon />
+    Pre-filled from your profile — cannot be edited
+  </span>
+);
+
+// ── Locked field display ───────────────────────────────────────────────────────
+// Replaces the <select> entirely with a styled <div> so there is zero chance
+// of any browser interaction (no click, no keyboard, no focus).
+const LockedField = ({ value }) => (
+  <div className="eb-select-wrap">
+    <div
+      className="eb-locked-display"
+      aria-readonly="true"
+      role="textbox"
+      tabIndex={-1}
+    >
+      {value || '—'}
     </div>
-    <span className="eb-lock-icon">
+    {/* Lock icon in place of the chevron arrow */}
+    <span style={{
+      position: 'absolute', right: 14, top: '50%',
+      transform: 'translateY(-50%)', pointerEvents: 'none',
+    }}>
       <LockIcon />
     </span>
   </div>
 );
 
+// ═════════════════════════════════════════════════════════════════════════════
+// View
+// ═════════════════════════════════════════════════════════════════════════════
 const EducationalBackgroundView = ({
-  form, set, setLicensureReviewing, setLicensurePlans,
+  form, set, setLicensureReviewing, setLicensurePlans, setLicensureNoPlans,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
   degreeOptions, yearOptions, distinctionOptions,
   licensureOptions, licensurePlansOptions, boardResultOptions,
   getLabel, getPlaceholder,
   handleSave, handleNext,
-  lockedFields = {},          // { degree_program: bool, year_graduated: bool }
+  lockedFields = {},
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
   navigate,
 }) => {
-  const showPostGradCourse  = form.post_grad_plans === 'Yes';
-  const showLicensureBranch = form.licensure_reviewing === 'Yes';
-  const showBoardExam       = showLicensureBranch &&
+  const showPostGradCourse    = form.post_grad_plans === 'Yes';
+  const showLicensureBranch   = form.licensure_reviewing === 'Yes';
+  // ── NEW: show the "No" branch when the user selects "No" ─────────────────
+  const showLicensureNoBranch = form.licensure_reviewing === 'No';
+  const showBoardExam         = showLicensureBranch &&
     (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken');
+
+  const isLocked = (field) => !!lockedFields[field];
 
   return (
     <>
@@ -183,7 +175,7 @@ const EducationalBackgroundView = ({
         <Sidebar />
         <div className="eb-content">
 
-          {/* ── Header ──────────────────────────────────────────────────── */}
+          {/* ── Header ── */}
           <div className="eb-header">
             <div className="eb-topbar">
               <button className="eb-back-btn" onClick={() => navigate('/survey/personal-background')}>
@@ -197,6 +189,7 @@ const EducationalBackgroundView = ({
                 <button
                   className={`eb-bell${showDropdown ? ' active' : ''}`}
                   onClick={() => setShowDropdown(v => !v)}
+                  aria-label="Notifications"
                 >
                   <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
                     <path d="M10.8 22.75H15.2M20.8 9.75C20.8 6.215 17.206 3.25 13 3.25C8.794 3.25 5.2 6.215 5.2 9.75C5.2 14.625 3.25 16.9 3.25 16.9H22.75C22.75 16.9 20.8 14.625 20.8 9.75Z" stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
@@ -209,7 +202,7 @@ const EducationalBackgroundView = ({
                   )}
                 </button>
 
-                {/* Notification dropdown — unchanged */}
+                {/* ── Notification dropdown ── */}
                 {showDropdown && (
                   <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: '#FFFFFF', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
                     <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -225,7 +218,7 @@ const EducationalBackgroundView = ({
                     </div>
                     <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
                       {(() => {
-                        const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+                        const list = notifs;
                         if (!list.length) return (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
                             <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
@@ -288,7 +281,7 @@ const EducationalBackgroundView = ({
             </div>
           </div>
 
-          {/* ── Body ────────────────────────────────────────────────────── */}
+          {/* ── Body ── */}
           <div className="eb-body">
             <div className="eb-card" ref={cardRef}>
               <div>
@@ -300,29 +293,17 @@ const EducationalBackgroundView = ({
 
                 {/* ── Degree Program ─────────────────────────────────────── */}
                 <div className="eb-field">
-                  {lockedFields.degree_program ? (
-                    <label className="eb-label-locked">
-                      {getLabel('degree_program')}
-                      <span className="eb-req">*</span>
-                      <span className="eb-locked-badge">
-                        <LockIcon />
-                        Pre-filled
-                      </span>
-                    </label>
-                  ) : (
-                    <label className="eb-label">
-                      {getLabel('degree_program')} <span className="eb-req">*</span>
-                      {errors.has('degree_program') && <span className="eb-field-error">Required</span>}
-                    </label>
-                  )}
+                  <label className="eb-label">
+                    {getLabel('degree_program')}
+                    {/* No asterisk for locked fields — they are always valid */}
+                    {!isLocked('degree_program') && <span className="eb-req">*</span>}
+                    {errors.has('degree_program') && <span className="eb-field-error">Required</span>}
+                  </label>
 
-                  {lockedFields.degree_program ? (
+                  {isLocked('degree_program') ? (
                     <>
-                      <LockedSelect value={form.degree_program} label={getLabel('degree_program')} />
-                      <span className="eb-locked-hint">
-                        <LockIcon />
-                        This field is pre-filled from your profile and cannot be changed.
-                      </span>
+                      <LockedField value={form.degree_program} />
+                      <LockedHint />
                     </>
                   ) : (
                     <div className="eb-select-wrap">
@@ -363,7 +344,7 @@ const EducationalBackgroundView = ({
                   </div>
                 )}
 
-                {/* ── Reason for Course ──────────────────────────────────── */}
+                {/* ── Reason for course ──────────────────────────────────── */}
                 <div className="eb-field">
                   <label className="eb-label">
                     {getLabel('reason_for_course')} <span className="eb-req">*</span>
@@ -381,29 +362,16 @@ const EducationalBackgroundView = ({
 
                 {/* ── Year Graduated ─────────────────────────────────────── */}
                 <div className="eb-field">
-                  {lockedFields.year_graduated ? (
-                    <label className="eb-label-locked">
-                      {getLabel('year_graduated')}
-                      <span className="eb-req">*</span>
-                      <span className="eb-locked-badge">
-                        <LockIcon />
-                        Pre-filled
-                      </span>
-                    </label>
-                  ) : (
-                    <label className="eb-label">
-                      {getLabel('year_graduated')} <span className="eb-req">*</span>
-                      {errors.has('year_graduated') && <span className="eb-field-error">Required</span>}
-                    </label>
-                  )}
+                  <label className="eb-label">
+                    {getLabel('year_graduated')}
+                    {!isLocked('year_graduated') && <span className="eb-req">*</span>}
+                    {errors.has('year_graduated') && <span className="eb-field-error">Required</span>}
+                  </label>
 
-                  {lockedFields.year_graduated ? (
+                  {isLocked('year_graduated') ? (
                     <>
-                      <LockedSelect value={form.year_graduated} label={getLabel('year_graduated')} />
-                      <span className="eb-locked-hint">
-                        <LockIcon />
-                        This field is pre-filled from your profile and cannot be changed.
-                      </span>
+                      <LockedField value={form.year_graduated} />
+                      <LockedHint />
                     </>
                   ) : (
                     <div className="eb-select-wrap">
@@ -451,7 +419,7 @@ const EducationalBackgroundView = ({
                   </div>
                 </div>
 
-                {/* ── Post-grad Plans ────────────────────────────────────── */}
+                {/* ── Post-grad plans ────────────────────────────────────── */}
                 <div className="eb-field">
                   <label className="eb-label">
                     {getLabel('post_grad_plans')} <span className="eb-req">*</span>
@@ -490,7 +458,7 @@ const EducationalBackgroundView = ({
                   </div>
                 )}
 
-                {/* ── Licensure Reviewing ────────────────────────────────── */}
+                {/* ── Licensure reviewing ────────────────────────────────── */}
                 <div className="eb-field">
                   <label className="eb-label">
                     {getLabel('licensure_reviewing')} <span className="eb-req">*</span>
@@ -512,6 +480,7 @@ const EducationalBackgroundView = ({
                   </div>
                 </div>
 
+                {/* ── "Yes" branch ───────────────────────────────────────── */}
                 {showLicensureBranch && (
                   <>
                     <div className="eb-field">
@@ -534,6 +503,7 @@ const EducationalBackgroundView = ({
                         ))}
                       </div>
                     </div>
+
                     <div className="eb-field">
                       <label className="eb-label-sub">
                         {getLabel('licensure_reason')} <span className="eb-req">*</span>
@@ -551,6 +521,7 @@ const EducationalBackgroundView = ({
                   </>
                 )}
 
+                {/* ── Board exam fields (nested inside "Yes" branch) ─────── */}
                 {showBoardExam && (
                   <>
                     <div className="eb-field">
@@ -567,6 +538,7 @@ const EducationalBackgroundView = ({
                         onBlur={onBlur}
                       />
                     </div>
+
                     <div className="eb-field">
                       <label className="eb-label-sub">
                         {getLabel('board_exam_date')} <span className="eb-req">*</span>
@@ -582,6 +554,7 @@ const EducationalBackgroundView = ({
                         onBlur={onBlur}
                       />
                     </div>
+
                     <div className="eb-field">
                       <label className="eb-label-sub">
                         {getLabel('board_exam_result')} <span className="eb-req">*</span>
@@ -605,11 +578,61 @@ const EducationalBackgroundView = ({
                   </>
                 )}
 
-              </div>
+                {/* ── "No" branch ────────────────────────────────────────── */}
+                {showLicensureNoBranch && (
+                  <>
+                    {/* Field 1 — future plans radio */}
+                    <div className="eb-field">
+                      <label className="eb-label-sub">
+                        Do you have any plans on taking the Licensure Examination?
+                        <span className="eb-req">*</span>
+                        {errors.has('licensure_no_plans') && (
+                          <span className="eb-field-error">Required</span>
+                        )}
+                      </label>
+                      <div className="eb-radio-group">
+                        {['Yes', 'No', 'Maybe', 'Not at all'].map(opt => (
+                          <label key={opt} className="eb-radio-label">
+                            <input
+                              type="radio"
+                              name="licensure_no_plans"
+                              value={opt}
+                              checked={form.licensure_no_plans === opt}
+                              onChange={() => setLicensureNoPlans(opt)}
+                            />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
 
-              {/* ── Footer ────────────────────────────────────────────────── */}
+                    {/* Field 2 — reason textarea */}
+                    <div className="eb-field">
+                      <label className="eb-label-sub">
+                        {getLabel('licensure_reason')}
+                        <span className="eb-req">*</span>
+                        {errors.has('licensure_no_reason') && (
+                          <span className="eb-field-error">Required</span>
+                        )}
+                      </label>
+                      <textarea
+                        className="eb-textarea"
+                        placeholder={getPlaceholder('licensure_reason')}
+                        value={form.licensure_no_reason}
+                        onChange={e => set('licensure_no_reason', e.target.value)}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                      />
+                    </div>
+                  </>
+                )}
+
+              </div>{/* /eb-fields */}
+
               <div className="eb-footer">
-                <button className="eb-btn-prev" onClick={() => navigate('/survey/personal-background')}>Previous</button>
+                <button className="eb-btn-prev" onClick={() => navigate('/survey/personal-background')}>
+                  Previous
+                </button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {saveToast && (
                     <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#15803d' }}>

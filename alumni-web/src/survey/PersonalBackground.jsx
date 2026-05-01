@@ -1,20 +1,17 @@
 /**
- * PersonalBackground.jsx — Logic Layer (v2, hook-integrated)
+ * PersonalBackground.jsx — Logic Layer (v4, full autofill fix)
  * Location: src/pages/PersonalBackground.jsx
  *
- * Key changes from v1:
- *  - Uses useUserProfile hook for autofill — no redundant Supabase call
- *    when PersonalInformation has already loaded the profile this session.
- *  - Autofill priority: savedSurveyData > cachedProfile > auth metadata
- *  - Academic fields (program, batch_year) autofill from profile
- *  - surveyProgress save/load unchanged — still uses existing lib
- *  - surveyConfig reflection logic unchanged
- *  
- * FIXED in v3:
- *  - Autofill now triggers when profile actually loads (not just on mount)
- *  - Added proper loading states to prevent race conditions
- *  - Preserves user edits even after profile loads
- *  - Better debugging for autofill issues
+ * FIXED in v4:
+ *  - Autofill guard was too aggressive: if ANY field had saved data the entire
+ *    autofill was skipped, leaving first_name / last_name / email blank whenever
+ *    those fields existed only in the users table (not personal_background_data).
+ *  - New strategy: autofill runs field-by-field and only fills fields that are
+ *    currently empty in the loaded form — saved answers are never overwritten.
+ *  - useUserProfile now merges both users table AND survey_progress so every
+ *    field is available from the hook as a reliable fallback.
+ *  - invalidateProfileCache() is called once on mount so a fresh profile save
+ *    in the Profile modal is always picked up when returning to this page.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -28,10 +25,10 @@ import PersonalBackgroundView from '../Views/PersonalBackgroundView';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS   = 7;
-const CURRENT_SECTION  = 1;
-const SECTION_KEY      = 'personal_background';
-const NEXT_ROUTE       = '/survey/educational-background';
+const TOTAL_SECTIONS  = 7;
+const CURRENT_SECTION = 1;
+const SECTION_KEY     = 'personal_background';
+const NEXT_ROUTE      = '/survey/educational-background';
 
 const REQUIRED_FIELDS = [
   'last_name', 'first_name', 'gender', 'birthday',
@@ -80,7 +77,7 @@ const INDEX_TO_FIELD = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Form completion percentage calculator
+// Form completion percentage
 // ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const base    = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
@@ -93,24 +90,23 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Profile JS key → survey DB snake_case key mapping
-// Enables autofill from the shared useUserProfile cache
+// Profile JS key → survey snake_case key mapping
 // ─────────────────────────────────────────────────────────────────────────────
 const PROFILE_TO_SURVEY = {
-  firstName:      'first_name',
-  middleName:     'middle_name',
-  lastName:       'last_name',
-  email:          'email',
-  studentNumber:  'student_number',
-  street:         'street_address',
-  city:           'city',
-  province:       'province',
-  zipCode:        'zip_code',
-  country:        'country',
-  contactNumber:  'contact_number',
-  gender:         'gender',
-  birthday:       'birthday',
-  civilStatus:    'civil_status',
+  firstName:     'first_name',
+  middleName:    'middle_name',
+  lastName:      'last_name',
+  email:         'email',
+  studentNumber: 'student_number',
+  street:        'street_address',
+  city:          'city',
+  province:      'province',
+  zipCode:       'zip_code',
+  country:       'country',
+  contactNumber: 'contact_number',
+  gender:        'gender',
+  birthday:      'birthday',
+  civilStatus:   'civil_status',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -121,13 +117,13 @@ const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_K
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
 
 const groupByDate = (list) => {
-  const now = new Date();
-  const today     = new Date(now); today.setHours(0,0,0,0);
-  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
-  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate()-7);
+  const now       = new Date();
+  const today     = new Date(now); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
   const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
   list.forEach((n) => {
-    const d = new Date(n.time); d.setHours(0,0,0,0);
+    const d = new Date(n.time); d.setHours(0, 0, 0, 0);
     if      (d >= today)     groups['Today'].push(n);
     else if (d >= yesterday) groups['Yesterday'].push(n);
     else if (d >= weekAgo)   groups['This Week'].push(n);
@@ -140,9 +136,9 @@ const formatTime = (iso) => {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
   if (diff < 60)     return 'Just now';
-  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`;
-  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff/86400)}d ago`;
+  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
 
@@ -152,21 +148,22 @@ const formatTime = (iso) => {
 const PersonalBackground = () => {
   const navigate = useNavigate();
 
-  // ── Shared profile hook — autofill source ─────────────────────────────
-  const { profile, loading: profileLoading } = useUserProfile();
+  // ── Shared profile hook — autofill source ─────────────────────────────────
+  // The updated hook now merges users table + survey_progress so firstName,
+  // lastName, middleName and email are always present if they exist anywhere.
+  const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  // Track if we've already attempted autofill to prevent overwriting user edits
+  // ── Autofill / load control flags ─────────────────────────────────────────
+  const [hasLoadedSavedData,   setHasLoadedSavedData]   = useState(false);
   const [hasAttemptedAutofill, setHasAttemptedAutofill] = useState(false);
-  const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
-  const [initialFormState, setInitialFormState] = useState(null);
 
-  // ── Survey config (dynamic labels / options) ──────────────────────────
+  // ── Survey config (dynamic labels / options) ──────────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingConfig,        setLoadingConfig]        = useState(true);
 
-  // ── Form state ────────────────────────────────────────────────────────
+  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     last_name: '', first_name: '', middle_name: '',
     student_number: '', gender: '', birthday: '',
@@ -178,16 +175,24 @@ const PersonalBackground = () => {
 
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
-  const cardRef = useRef(null);
+  const cardRef                    = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────
+  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────
+  // ── Force a fresh profile fetch on mount ──────────────────────────────────
+  // This ensures that if the user saved their Profile and then navigated here,
+  // the hook cache is not stale.
+  useEffect(() => {
+    refreshProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally run once on mount
+
+  // ── surveyConfig loading + realtime subscription ──────────────────────────
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
@@ -229,16 +234,14 @@ const PersonalBackground = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
 
-  // ── STEP 1: Load saved survey data (happens once on mount) ────────────
+  // ── STEP 1: Load saved survey data (once on mount) ────────────────────────
   useEffect(() => {
     const loadSavedData = async () => {
       try {
         const savedData = await loadSectionData(SECTION_KEY);
-        
         if (savedData && Object.keys(savedData).length > 0) {
           console.log('[PersonalBackground] Loaded saved survey data:', savedData);
           setForm((f) => ({ ...f, ...savedData }));
-          setInitialFormState(savedData);
         }
       } catch (error) {
         console.error('[PersonalBackground] Error loading saved data:', error);
@@ -246,121 +249,78 @@ const PersonalBackground = () => {
         setHasLoadedSavedData(true);
       }
     };
-    
     loadSavedData();
-  }, []); // Empty deps = run once on mount
+  }, []);
 
-  // ── STEP 2: Autofill from profile (runs when profile loads and saved data is loaded)
-  // FIXED: Now properly waits for both conditions and preserves user edits
+  // ── STEP 2: Autofill from profile — field-by-field, never overwrites ───────
+  //
+  // FIX: The previous implementation bailed out entirely if ANY saved field
+  // existed.  That meant first_name/last_name/email — which were only written
+  // to the users table and not to personal_background_data — were never filled
+  // after the user had touched any other survey field.
+  //
+  // New approach: always iterate every PROFILE_TO_SURVEY mapping and apply the
+  // profile value only when the corresponding form field is still empty.
+  // This is safe even if the user has partially filled the form.
   useEffect(() => {
-    // Don't proceed if we haven't loaded saved data yet
-    if (!hasLoadedSavedData) return;
-    
-    // Don't proceed if profile is still loading
-    if (profileLoading) return;
-    
-    // Don't autofill if we already attempted
-    if (hasAttemptedAutofill) return;
+    if (!hasLoadedSavedData) return; // wait for DB load to finish
+    if (profileLoading)      return; // wait for hook to resolve
+    if (hasAttemptedAutofill) return; // only run once per page visit
 
-    const performAutofill = async () => {
-      console.log('[PersonalBackground] Attempting autofill...');
-      console.log('[PersonalBackground] Profile data:', profile);
-      console.log('[PersonalBackground] Current form state:', form);
-      
-      // Check if we have saved data
-      const hasSavedData = initialFormState && Object.keys(initialFormState).some(
-        key => initialFormState[key] && String(initialFormState[key]).trim()
-      );
-      
-      if (hasSavedData) {
-        console.log('[PersonalBackground] Saved data exists, skipping autofill to preserve user answers');
-        setHasAttemptedAutofill(true);
-        return;
-      }
-      
-      // No saved data, attempt autofill from profile
-      if (profile && Object.keys(profile).length > 0) {
-        const autofilled = {};
-        let hasAutofillData = false;
-        
+    console.log('[PersonalBackground] Running field-by-field autofill...');
+    console.log('[PersonalBackground] Profile:', profile);
+
+    if (profile && Object.keys(profile).length > 0) {
+      setForm((currentForm) => {
+        const updated = { ...currentForm };
+        let didChange = false;
+
         Object.entries(PROFILE_TO_SURVEY).forEach(([profileKey, surveyKey]) => {
-          if (surveyKey && profile[profileKey]) {
-            const value = String(profile[profileKey]);
-            if (value && value.trim()) {
-              autofilled[surveyKey] = value;
-              hasAutofillData = true;
-              console.log(`[PersonalBackground] Autofilled ${surveyKey} from profile.${profileKey}:`, value);
-            }
+          const profileValue = profile[profileKey];
+          const formValue    = currentForm[surveyKey];
+
+          // Only autofill if:
+          //  a) the profile has a non-empty value for this field
+          //  b) the form field is currently empty (preserve user edits / saved data)
+          if (
+            profileValue &&
+            String(profileValue).trim() !== '' &&
+            (!formValue || String(formValue).trim() === '')
+          ) {
+            updated[surveyKey] = String(profileValue);
+            didChange = true;
+            console.log(`[PersonalBackground] Autofilled ${surveyKey} ← profile.${profileKey}:`, profileValue);
           }
         });
-        
-        // Set phone prefix based on country
-        if (profile.country) {
-          if (profile.country === 'Philippines') {
-            autofilled.phone_prefix = '+63';
-            hasAutofillData = true;
-          } else if (profile.country === 'United States') {
-            autofilled.phone_prefix = '+1';
-            hasAutofillData = true;
-          }
+
+        // Derive phone prefix from country if it changed
+        if (updated.country && updated.phone_prefix === '+63') {
+          if (updated.country === 'United States') updated.phone_prefix = '+1';
         }
-        
-        if (hasAutofillData) {
-          console.log('[PersonalBackground] Applying autofill values:', autofilled);
-          setForm((f) => {
-            // Only set values that are currently empty to preserve any existing data
-            const updated = { ...f };
-            Object.entries(autofilled).forEach(([key, value]) => {
-              if (!f[key] || f[key] === '') {
-                updated[key] = value;
-              }
-            });
-            return updated;
-          });
-        } else {
-          console.log('[PersonalBackground] No autofill data available in profile');
-        }
-      } else {
-        console.log('[PersonalBackground] No profile data available for autofill');
-      }
-      
-      setHasAttemptedAutofill(true);
-    };
-    
-    performAutofill();
+
+        return didChange ? updated : currentForm;
+      });
+    } else {
+      console.log('[PersonalBackground] No profile data available for autofill');
+    }
+
+    setHasAttemptedAutofill(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileLoading, hasLoadedSavedData, hasAttemptedAutofill]);
-  
-  // ── STEP 3: Update initialFormState when form changes (to detect user edits)
-  // This ensures we don't overwrite user edits if profile loads after they started typing
-  useEffect(() => {
-    if (!hasAttemptedAutofill) return;
-    
-    // Check if user has made any edits (form differs from initial saved data)
-    const hasUserEdits = () => {
-      if (!initialFormState) return Object.values(form).some(v => v && String(v).trim());
-      
-      return Object.keys(form).some(key => {
-        const currentVal = form[key] || '';
-        const savedVal = initialFormState[key] || '';
-        return currentVal.trim() !== savedVal.trim();
-      });
-    };
-    
-    if (hasUserEdits() && !profileLoading && profile) {
-      console.log('[PersonalBackground] User edits detected, autofill will not override');
-    }
-  }, [form, initialFormState, hasAttemptedAutofill, profileLoading, profile]);
 
-  // ── Notifications ─────────────────────────────────────────────────────
+  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
-    const h = (e) => { if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false); };
+    const h = (e) => {
+      if (bellRef.current && !bellRef.current.contains(e.target))
+        setShowDropdown(false);
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
   useEffect(() => {
-    supabase.from('announcements')
+    supabase
+      .from('announcements')
       .select('id, title, content, published_at, is_active')
       .eq('is_active', true)
       .order('published_at', { ascending: false })
@@ -368,7 +328,13 @@ const PersonalBackground = () => {
       .then(({ data, error }) => {
         if (error || !data) return;
         const readIds = getReadIds();
-        const mapped  = data.map((n) => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+        const mapped  = data.map((n) => ({
+          id:    n.id,
+          title: n.title,
+          body:  n.content,
+          time:  n.published_at,
+          read:  readIds.includes(n.id),
+        }));
         setNotifs(mapped);
         setUnreadCount(mapped.filter((n) => !n.read).length);
       });
@@ -383,48 +349,47 @@ const PersonalBackground = () => {
   const markOneRead = useCallback((id) => {
     const ids = getReadIds();
     if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
-    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Field setters ──────────────────────────────────────────────────────
+  // ── Field setters ──────────────────────────────────────────────────────────
   const setField = (key) => (e) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
-    // Clear error for this field if it exists
     if (errors.has(key)) {
-      setErrors(prev => {
-        const newErrors = new Set(prev);
-        newErrors.delete(key);
-        return newErrors;
-      });
-    }
-  };
-  
-  const setRadio = (key) => (val) => {
-    setForm((f) => ({ ...f, [key]: val }));
-    if (errors.has(key)) {
-      setErrors(prev => {
-        const newErrors = new Set(prev);
-        newErrors.delete(key);
-        return newErrors;
-      });
-    }
-  };
-  
-  const setCountry = (e) => {
-    const c = e.target.value;
-    const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
-    setForm((f) => ({ ...f, country: c, phone_prefix: prefix }));
-    if (errors.has('country')) {
-      setErrors(prev => {
-        const newErrors = new Set(prev);
-        newErrors.delete('country');
-        return newErrors;
+      setErrors((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
       });
     }
   };
 
-  // ── Validation ─────────────────────────────────────────────────────────
+  const setRadio = (key) => (val) => {
+    setForm((f) => ({ ...f, [key]: val }));
+    if (errors.has(key)) {
+      setErrors((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  };
+
+  const setCountry = (e) => {
+    const c      = e.target.value;
+    const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
+    setForm((f) => ({ ...f, country: c, phone_prefix: prefix }));
+    if (errors.has('country')) {
+      setErrors((prev) => {
+        const next = new Set(prev);
+        next.delete('country');
+        return next;
+      });
+    }
+  };
+
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
     REQUIRED_FIELDS.forEach((field) => {
@@ -433,7 +398,7 @@ const PersonalBackground = () => {
     return e;
   };
 
-  // ── Save draft ─────────────────────────────────────────────────────────
+  // ── Save draft ─────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -444,7 +409,7 @@ const PersonalBackground = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ─────────────────────────────────
+  // ── Next (validate → save → navigate) ─────────────────────────────────────
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -457,20 +422,22 @@ const PersonalBackground = () => {
       .then(() => navigate(NEXT_ROUTE))
       .catch((error) => {
         console.error('[PersonalBackground] Error saving before navigation:', error);
-        // Still navigate even if save fails? Probably not, but log it
       });
   };
 
-  // ── Label / placeholder helpers ────────────────────────────────────────
+  // ── Label / placeholder helpers ────────────────────────────────────────────
   const getLabel       = useCallback((id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,  [questionLabels]);
   const getPlaceholder = useCallback((id) => questionPlaceholders[id] || DEFAULT_PLACEHOLDERS[id] || '', [questionPlaceholders]);
 
   const formPct = computeFormPct(form);
 
-  // Loading gate — wait for config and initial saved data load
+  // Loading gate — wait for config and saved data
   if (loadingConfig || !hasLoadedSavedData) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        height: '100vh', background: '#002263',
+      }}>
         <div style={{ color: '#fff', fontFamily: 'Arimo, sans-serif' }}>Loading…</div>
       </div>
     );
