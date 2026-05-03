@@ -1,24 +1,23 @@
 import React, { useState, useEffect } from 'react';
-
-import { 
-  FaBold, 
-  FaItalic, 
-  FaUnderline, 
-  FaAlignLeft, 
-  FaAlignCenter, 
-  FaAlignRight 
+import {
+  FaBold,
+  FaItalic,
+  FaUnderline,
+  FaAlignLeft,
+  FaAlignCenter,
+  FaAlignRight,
 } from 'react-icons/fa';
 
+// ── Shared modal shell ────────────────────────────────────────────────────────
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+        <button className="modal-close" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6"  y2="18" />
+            <line x1="6"  y1="6" x2="18" y2="18" />
           </svg>
         </button>
         <h2 className="modal-title">{title}</h2>
@@ -29,6 +28,7 @@ const Modal = ({ open, onClose, title, subtitle, children }) => {
   );
 };
 
+// ── Field wrapper ─────────────────────────────────────────────────────────────
 const Field = ({ label, required, children }) => (
   <div className="field-wrap">
     <label className="field-label">
@@ -39,7 +39,7 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-// FIXED: Added onSubmit prop
+// ── Footer ────────────────────────────────────────────────────────────────────
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
     <button className="btn-cancel" onClick={onCancel}>Cancel</button>
@@ -49,13 +49,13 @@ const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   </div>
 );
 
+// ── Rich text editor ──────────────────────────────────────────────────────────
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = React.useRef(null);
 
-  const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
-    const content = editorRef.current.innerHTML;
-    onChange(content);
+  const execCommand = (command) => {
+    document.execCommand(command, false, null);
+    onChange(editorRef.current.innerHTML);
     editorRef.current.focus();
   };
 
@@ -68,24 +68,12 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   return (
     <div className="rich-text-editor">
       <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
-          <FaBold size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
-          <FaItalic size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
-          <FaUnderline size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
-          <FaAlignLeft size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
-          <FaAlignCenter size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
-          <FaAlignRight size={14} />
-        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')}          title="Bold">          <FaBold        size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')}        title="Italic">        <FaItalic      size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')}     title="Underline">     <FaUnderline   size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')}   title="Align Left">    <FaAlignLeft   size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">  <FaAlignCenter size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')}  title="Align Right">   <FaAlignRight  size={13} /></button>
       </div>
       <div
         ref={editorRef}
@@ -99,40 +87,35 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
+// ── AnnouncementModal ─────────────────────────────────────────────────────────
+// No image upload — announcements are text-only.
 const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpdate }) => {
   const [form, setForm] = useState({
-    title: '',
-    content: '',
+    title:    '',
+    content:  '',
     priority: 'Medium',
     audience: 'All Alumni',
-    expiry: '',
+    expiry:   '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && announcement) {
       setForm({
-        title: announcement.title || '',
-        content: announcement.content || '',
+        title:    announcement.title    || '',
+        content:  announcement.content  || '',
         priority: announcement.priority || 'Medium',
         audience: announcement.audience || 'All Alumni',
-        expiry: announcement.expiry || '',
+        expiry:   announcement.expiry   || '',
       });
     } else {
-      setForm({
-        title: '',
-        content: '',
-        priority: 'Medium',
-        audience: 'All Alumni',
-        expiry: '',
-      });
+      setForm({ title: '', content: '', priority: 'Medium', audience: 'All Alumni', expiry: '' });
     }
   }, [mode, announcement]);
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-    console.log('[AnnouncementModal] Submitting form:', form);
     setLoading(true);
     try {
       if (mode === 'edit' && announcement) {
@@ -140,8 +123,8 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
       } else {
         await onCreate(form);
       }
-    } catch (error) {
-      console.error('[AnnouncementModal] Error:', error);
+    } catch (err) {
+      console.error('[AnnouncementModal] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -156,7 +139,12 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
     >
       <div className="modal-form">
         <Field label="Announcement Title" required>
-          <input className="field-input" placeholder="Enter announcement title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="Enter announcement title"
+            value={form.title}
+            onChange={(e) => s('title', e.target.value)}
+          />
         </Field>
 
         <Field label="Content" required>
@@ -175,7 +163,6 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
               <option>High</option>
             </select>
           </Field>
-
           <Field label="Target Audience" required>
             <select className="field-select" value={form.audience} onChange={(e) => s('audience', e.target.value)}>
               <option>All Alumni</option>
@@ -186,12 +173,17 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
         </div>
 
         <Field label="Expiry Date">
-          <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+          <input
+            className="field-input"
+            type="date"
+            value={form.expiry}
+            onChange={(e) => s('expiry', e.target.value)}
+          />
         </Field>
 
-        <ModalFooter 
-          onCancel={onClose} 
-          createLabel={mode === 'edit' ? 'Update Announcement' : 'Create Announcement'} 
+        <ModalFooter
+          onCancel={onClose}
+          createLabel={mode === 'edit' ? 'Update Announcement' : 'Create Announcement'}
           loading={loading}
           onSubmit={handleSubmit}
         />

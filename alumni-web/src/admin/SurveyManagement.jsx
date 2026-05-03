@@ -141,6 +141,13 @@ const TYPE_LABELS = {
   title: "Section Title",
 };
 
+// ============================================================================
+// FIX (Bug 3 & 4): Stable unique ID generator.
+// Using Date.now() alone can collide when questions are added rapidly.
+// This combines a timestamp with a random suffix to guarantee uniqueness.
+// ============================================================================
+const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
 // ============================ LOADING SCREEN COMPONENT (MOVED OUTSIDE) ============================
 const LoadingScreen = ({ message }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -230,7 +237,14 @@ export default function SurveyManagement() {
         setSurvey(DEFAULT_SURVEY);
       } else {
         setConfigId(data.id);
-        setSurvey(data.config);
+
+        // FIX (Bug 1 & 2): Destructure branches out of the saved config so
+        // survey state only ever holds section/question data, while branches
+        // are restored into their own dedicated state. Previously, branches
+        // were never written to the DB and never read back on load.
+        const { branches: savedBranches, ...surveyData } = data.config;
+        setSurvey(surveyData);
+        if (savedBranches) setBranches(savedBranches);
       }
     };
     load();
@@ -242,15 +256,20 @@ export default function SurveyManagement() {
     setSaving(true);
     setStatus("saving");
     try {
+      // FIX (Bug 1): Merge branches into the config payload before saving.
+      // Previously only `survey` was persisted, so all branching config was
+      // silently dropped on every publish.
+      const payload = { ...survey, branches };
+
       if (configId) {
         await supabaseAdmin
           .from("survey_config")
-          .update({ config: survey, updated_at: new Date().toISOString() })
+          .update({ config: payload, updated_at: new Date().toISOString() })
           .eq("id", configId);
       } else {
         const { data } = await supabaseAdmin
           .from("survey_config")
-          .insert({ config: survey })
+          .insert({ config: payload })
           .select("id")
           .single();
         if (data) setConfigId(data.id);
@@ -316,6 +335,21 @@ export default function SurveyManagement() {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
       () => {
+        // FIX (Bug 3): Clean up any branch rules that referenced the deleted
+        // question. Keys are now `q-{question.id}` so we can find and remove
+        // them accurately, even after prior reordering.
+        const deletedId = survey.sections[sIdx].questions[qIdx].id;
+        setBranches(prev => {
+          const next = { ...prev };
+          Object.keys(next).forEach(k => {
+            // Remove rules where this question is the source
+            if (k.startsWith(`q-${deletedId}`)) delete next[k];
+            // Remove rules where this question is the destination
+            if (next[k] === `q-${deletedId}`) delete next[k];
+          });
+          return next;
+        });
+
         setSurvey(prev => ({
           ...prev,
           sections: prev.sections.map((sec, si) => si !== sIdx ? sec : {
@@ -333,6 +367,26 @@ export default function SurveyManagement() {
     askConfirm(
       `Delete the section "${sectionTitle}" and all its questions? This action cannot be undone.`,
       () => {
+        // FIX (Bug 3): Clean up branch rules for every question in the
+        // deleted section, same approach as deleteQuestion above.
+        const deletedIds = new Set(
+          survey.sections[index].questions.map(q => q.id)
+        );
+        setBranches(prev => {
+          const next = { ...prev };
+          Object.keys(next).forEach(k => {
+            const sourceId = k.split("-opt")[0].replace("q-", "");
+            if (deletedIds.has(Number(sourceId)) || deletedIds.has(sourceId)) {
+              delete next[k];
+            }
+            if (deletedIds.has(Number(next[k]?.replace("q-", ""))) ||
+                deletedIds.has(next[k]?.replace("q-", ""))) {
+              delete next[k];
+            }
+          });
+          return next;
+        });
+
         setSurvey(prev => ({
           ...prev,
           sections: prev.sections.filter((_, i) => i !== index),
@@ -347,7 +401,9 @@ export default function SurveyManagement() {
   const duplicateQuestion = (sIdx, qIdx) => {
     setSurvey(prev => {
       const sec = prev.sections[sIdx];
-      const q = { ...sec.questions[qIdx], id: Date.now() };
+      // FIX (Bug 3 & 4): Use uid() instead of Date.now() alone to guarantee
+      // the duplicate gets a truly unique, stable id.
+      const q = { ...sec.questions[qIdx], id: uid() };
       const qs = [...sec.questions];
       qs.splice(qIdx + 1, 0, q);
       return {
@@ -362,7 +418,12 @@ export default function SurveyManagement() {
     setSurvey(prev => ({
       ...prev,
       sections: prev.sections.map((s, si) => si !== sIdx ? s : {
-        ...s, questions: [...s.questions, { id: Date.now(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" }],
+        ...s,
+        questions: [
+          ...s.questions,
+          // FIX (Bug 3 & 4): Use uid() for collision-safe stable IDs.
+          { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
+        ],
       }),
     }));
   };
@@ -372,7 +433,7 @@ export default function SurveyManagement() {
       ...prev,
       sections: [
         ...prev.sections,
-        { id: Date.now(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] }
+        { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] }
       ]
     }));
     setActiveSection(survey.sections.length);
@@ -391,6 +452,25 @@ export default function SurveyManagement() {
   };
 
   const deleteOption = (sIdx, qIdx, oIdx) => {
+    // FIX (Bug 3): Clean up branch rules that targeted the deleted option.
+    const qId = survey.sections[sIdx].questions[qIdx].id;
+    const optKey = `q-${qId}-opt${oIdx}`;
+    setBranches(prev => {
+      const next = { ...prev };
+      delete next[optKey];
+      // Re-index option keys above the deleted index so they stay aligned.
+      const higherKeys = Object.keys(next).filter(k =>
+        k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx
+      );
+      higherKeys.forEach(k => {
+        const oldIdx = parseInt(k.split("opt")[1], 10);
+        const newKey = `q-${qId}-opt${oldIdx - 1}`;
+        next[newKey] = next[k];
+        delete next[k];
+      });
+      return next;
+    });
+
     const opts = survey.sections[sIdx].questions[qIdx].options.filter((_, i) => i !== oIdx);
     updateQuestion(sIdx, qIdx, { options: opts });
   };

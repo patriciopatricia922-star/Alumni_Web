@@ -263,16 +263,21 @@ export default function SurveyMgmtView({
                           {section.title}
                         </div>
                         {sectionQuestions.map((q, qIdx) => {
-                          const realQIdx = survey.sections[sIdx].questions.findIndex(qq => qq.id === q.id);
-                          const key = `${sIdx}-${realQIdx}`;
+                          // FIX (Bug 3 & 4): Use q.id (stable) instead of qIdx
+                          // (positional) as the branch key. This means deleting,
+                          // duplicating, or reordering questions no longer shifts
+                          // or silently orphans existing branch rules.
+                          const key = `q-${q.id}`;
+                          const domId = `q-${sIdx}-${qIdx}`;
+
                           return (
                             <div
                               key={key}
-                              id={`q-${sIdx}-${realQIdx}`}
+                              id={domId}
                               style={{
                                 marginBottom: "1.25rem", paddingBottom: "1rem",
                                 borderBottom: "1px solid #e5e7eb",
-                                background: highlightQ === `q-${sIdx}-${realQIdx}` ? "#eef6ff" : "transparent",
+                                background: highlightQ === domId ? "#eef6ff" : "transparent",
                                 transition: "all 0.3s ease",
                               }}
                             >
@@ -283,7 +288,11 @@ export default function SurveyMgmtView({
                               {/* Multiple choice branching - each option can have different destination */}
                               {q.type === "multiple" ? (
                                 (q.options || []).map((opt, oIdx) => {
-                                  const optKey = `${key}-opt${oIdx}`;
+                                  // FIX (Bug 3 & 4): Option key is now `q-{q.id}-opt{oIdx}`.
+                                  // The question segment is stable; oIdx within a single
+                                  // question's options list is still positional but that
+                                  // is handled by deleteOption() re-indexing in logic.
+                                  const optKey = `q-${q.id}-opt${oIdx}`;
                                   return (
                                     <div key={oIdx} style={{
                                       display: "flex", alignItems: "center", gap: "0.75rem",
@@ -304,8 +313,10 @@ export default function SurveyMgmtView({
                                         style={{ padding: "0.3rem 0.5rem", borderRadius: "0.4rem", border: "1px solid #d1d5db", fontSize: "0.78rem", width: "130px", maxWidth: "130px" }}
                                       >
                                         <option value="next">Next question</option>
+                                        {/* FIX (Bug 4): Destination value uses `q-{dest.id}` so
+                                            it remains valid across section reorders. */}
                                         {allQuestions.map((dest, j) => (
-                                          <option key={j} value={`${dest.sIdx}-${dest.qIdx}`}>
+                                          <option key={j} value={`q-${dest.id}`}>
                                             {dest.sectionTitle} → {dest.label}
                                           </option>
                                         ))}
@@ -327,8 +338,9 @@ export default function SurveyMgmtView({
                                     style={{ padding: "0.3rem 0.5rem", borderRadius: "0.4rem", border: "1px solid #d1d5db", fontSize: "0.78rem", width: "130px", maxWidth: "130px" }}
                                   >
                                     <option value="next">Next question</option>
+                                    {/* FIX (Bug 4): Same stable-id destination values. */}
                                     {allQuestions.map((dest, j) => (
-                                      <option key={j} value={`${dest.sIdx}-${dest.qIdx}`}>
+                                      <option key={j} value={`q-${dest.id}`}>
                                         {dest.sectionTitle} → {dest.label}
                                       </option>
                                     ))}
@@ -574,6 +586,9 @@ export default function SurveyMgmtView({
                           <button
                             className="branch-btn"
                             onClick={() => {
+                              // domId format kept for scroll targeting (sIdx/qIdx is fine
+                              // here since it's only used for the one-time scroll animation,
+                              // not for persisted data).
                               setBranchTargetQ(`q-${activeSection}-${qIdx}`);
                               setBranchMode(true);
                             }}

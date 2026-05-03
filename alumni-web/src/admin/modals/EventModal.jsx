@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaBold, 
-  FaItalic, 
-  FaUnderline, 
-  FaAlignLeft, 
-  FaAlignCenter, 
-  FaAlignRight 
+import {
+  FaBold,
+  FaItalic,
+  FaUnderline,
+  FaAlignLeft,
+  FaAlignCenter,
+  FaAlignRight,
 } from 'react-icons/fa';
-import { FiImage, FiTrash2 } from 'react-icons/fi';
-import { supabase } from '../../lib/supabase';
 
+// ── Shared modal shell ────────────────────────────────────────────────────────
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+        <button className="modal-close" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round">
+            <line x1="18" y1="6" x2="6"  y2="18" />
+            <line x1="6"  y1="6" x2="18" y2="18" />
           </svg>
         </button>
         <h2 className="modal-title">{title}</h2>
@@ -30,6 +28,7 @@ const Modal = ({ open, onClose, title, subtitle, children }) => {
   );
 };
 
+// ── Field wrapper ─────────────────────────────────────────────────────────────
 const Field = ({ label, required, children }) => (
   <div className="field-wrap">
     <label className="field-label">
@@ -40,7 +39,7 @@ const Field = ({ label, required, children }) => (
   </div>
 );
 
-// FIXED: Added onSubmit prop
+// ── Footer ────────────────────────────────────────────────────────────────────
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
     <button className="btn-cancel" onClick={onCancel}>Cancel</button>
@@ -50,13 +49,13 @@ const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   </div>
 );
 
+// ── Rich text editor ──────────────────────────────────────────────────────────
 const RichTextEditor = ({ value, onChange, placeholder }) => {
   const editorRef = React.useRef(null);
 
-  const execCommand = (command, value = null) => {
-    document.execCommand(command, false, value);
-    const content = editorRef.current.innerHTML;
-    onChange(content);
+  const execCommand = (command) => {
+    document.execCommand(command, false, null);
+    onChange(editorRef.current.innerHTML);
     editorRef.current.focus();
   };
 
@@ -69,24 +68,12 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   return (
     <div className="rich-text-editor">
       <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
-          <FaBold size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
-          <FaItalic size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
-          <FaUnderline size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
-          <FaAlignLeft size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
-          <FaAlignCenter size={14} />
-        </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
-          <FaAlignRight size={14} />
-        </button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')}          title="Bold">          <FaBold        size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')}        title="Italic">        <FaItalic      size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')}     title="Underline">     <FaUnderline   size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')}   title="Align Left">    <FaAlignLeft   size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">  <FaAlignCenter size={13} /></button>
+        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')}  title="Align Right">   <FaAlignRight  size={13} /></button>
       </div>
       <div
         ref={editorRef}
@@ -100,123 +87,35 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
-const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'event-images', folder = 'events' }) => {
-  const [preview, setPreview] = useState(currentImage || null);
-  const [uploading, setUploading] = useState(false);
-
-  const uploadToSupabase = async (file) => {
-    setUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${folder}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      return publicUrl;
-    } catch (error) {
-      console.error('Upload error:', error);
-      return null;
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      const publicUrl = await uploadToSupabase(file);
-      if (publicUrl) {
-        onImageUpload(publicUrl);
-      }
-    }
-  };
-
-  const handleRemove = () => {
-    setPreview(null);
-    onImageUpload(null);
-  };
-
-  return (
-    <div className="image-upload-container">
-      {preview && (
-        <div className="image-preview">
-          <img src={preview} alt="Preview" />
-          <button type="button" className="remove-image-btn" onClick={handleRemove}>
-            <FiTrash2 size={12} />
-          </button>
-        </div>
-      )}
-      <div className="image-upload-area" onClick={() => document.getElementById('event-image-input').click()}>
-        {uploading ? (
-          <div className="uploading-spinner"></div>
-        ) : (
-          <FiImage size={20} color="#155DFC" />
-        )}
-        <span>{uploading ? 'Uploading...' : (preview ? 'Change Image' : 'Upload Image')}</span>
-        <input 
-          id="event-image-input" 
-          type="file" 
-          accept="image/*" 
-          onChange={handleImageChange} 
-          style={{ display: 'none' }} 
-          disabled={uploading}
-        />
-      </div>
-      <p className="field-hint">Supported formats: JPG, PNG, GIF. Max size: 5MB</p>
-    </div>
-  );
-};
-
+// ── EventModal ────────────────────────────────────────────────────────────────
+// Image upload has been fully removed from this modal.
 const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
   const [form, setForm] = useState({
-    title: '',
+    title:       '',
     description: '',
-    date: '',
-    category: 'Upcoming Events',
-    startTime: '',
-    endTime: '',
-    location: '',
-    image_url: null,
+    date:        '',
+    category:    'Upcoming Events',
+    startTime:   '',
+    endTime:     '',
+    location:    '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && event) {
       setForm({
-        title: event.title || '',
+        title:       event.title       || '',
         description: event.description || '',
-        date: event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : '',
-        category: event.category || 'Upcoming Events',
-        startTime: event.event_date ? new Date(event.event_date).toTimeString().slice(0, 5) : '',
-        endTime: event.end_time || '',
-        location: event.location || '',
-        image_url: event.image_url || null,
+        date:        event.event_date  ? new Date(event.event_date).toISOString().split('T')[0] : '',
+        category:    event.category    || 'Upcoming Events',
+        startTime:   event.event_date  ? new Date(event.event_date).toTimeString().slice(0, 5)  : '',
+        endTime:     event.end_time    || '',
+        location:    event.location    || '',
       });
     } else {
       setForm({
-        title: '',
-        description: '',
-        date: '',
-        category: 'Upcoming Events',
-        startTime: '',
-        endTime: '',
-        location: '',
-        image_url: null,
+        title: '', description: '', date: '',
+        category: 'Upcoming Events', startTime: '', endTime: '', location: '',
       });
     }
   }, [mode, event]);
@@ -224,7 +123,6 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleSubmit = async () => {
-    console.log('[EventModal] Submitting form:', form);
     setLoading(true);
     try {
       if (mode === 'edit' && event) {
@@ -232,8 +130,8 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
       } else {
         await onCreate(form);
       }
-    } catch (error) {
-      console.error('[EventModal] Error:', error);
+    } catch (err) {
+      console.error('[EventModal] Error:', err);
     } finally {
       setLoading(false);
     }
@@ -248,15 +146,11 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
     >
       <div className="modal-form">
         <Field label="Event Title" required>
-          <input className="field-input" placeholder="Enter event title" value={form.title} onChange={(e) => s('title', e.target.value)} />
-        </Field>
-
-        <Field label="Event Image">
-          <ImageUpload
-            currentImage={form.image_url}
-            onImageUpload={(url) => s('image_url', url)}
-            bucketName="event-images"
-            folder="events"
+          <input
+            className="field-input"
+            placeholder="Enter event title"
+            value={form.title}
+            onChange={(e) => s('title', e.target.value)}
           />
         </Field>
 
@@ -270,9 +164,13 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
 
         <div className="field-grid">
           <Field label="Date" required>
-            <input className="field-input" type="date" value={form.date} onChange={(e) => s('date', e.target.value)} />
+            <input
+              className="field-input"
+              type="date"
+              value={form.date}
+              onChange={(e) => s('date', e.target.value)}
+            />
           </Field>
-
           <Field label="Category" required>
             <select className="field-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
               <option>Upcoming Events</option>
@@ -285,19 +183,23 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
           <Field label="Start Time" required>
             <input className="field-input" type="time" value={form.startTime} onChange={(e) => s('startTime', e.target.value)} />
           </Field>
-
           <Field label="End Time">
             <input className="field-input" type="time" value={form.endTime} onChange={(e) => s('endTime', e.target.value)} />
           </Field>
         </div>
 
         <Field label="Location" required>
-          <input className="field-input" placeholder="Enter event location" value={form.location} onChange={(e) => s('location', e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="Enter event location"
+            value={form.location}
+            onChange={(e) => s('location', e.target.value)}
+          />
         </Field>
 
-        <ModalFooter 
-          onCancel={onClose} 
-          createLabel={mode === 'edit' ? 'Update Event' : 'Create Event'} 
+        <ModalFooter
+          onCancel={onClose}
+          createLabel={mode === 'edit' ? 'Update Event' : 'Create Event'}
           loading={loading}
           onSubmit={handleSubmit}
         />
