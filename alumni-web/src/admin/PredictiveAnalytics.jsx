@@ -12,7 +12,12 @@ import Predictiveanalyticsview from './views/Predictiveanalyticsview';
 import AdminSidebar from './components/AdminSidebar';
 
 // ============================================================================
-// SUPABASE CLIENT - Database connection for predictions data
+// API BASE URL — set VITE_API_BASE_URL in your .env to override
+// ============================================================================
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+
+// ============================================================================
+// SUPABASE CLIENT
 // ============================================================================
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -20,32 +25,33 @@ const supabase = createClient(
 );
 
 // ============================================================================
-// DEPARTMENT METADATA - Maps department codes to display info
+// DEPARTMENT METADATA
 // ============================================================================
 const DEPARTMENT_META = {
-  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies', color: 'blue' },
-  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber' },
-  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education', color: 'violet' },
+  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',       color: 'blue'   },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy',    color: 'amber'  },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',           color: 'violet' },
 };
 
 // ============================================================================
-// AdminPredictiveAnalytics Component - Main logic controller
+// AdminPredictiveAnalytics — main logic controller
 // ============================================================================
 const AdminPredictiveAnalytics = () => {
-  // ============================ UI STATE ============================
-  const [activePage, setActivePage] = useState('overview');
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
-  // ============================ REFRESH STATE ============================
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshMsg, setRefreshMsg] = useState(null);
+  // ── UI state ───────────────────────────────────────────────────────────────
+  const [activePage,          setActivePage]          = useState('overview');
+  const [selectedDepartment,  setSelectedDepartment]  = useState(null);
 
-  // ============================ PREDICTIONS DATA STATE ============================
+  // ── Refresh state ──────────────────────────────────────────────────────────
+  const [refreshing,  setRefreshing]  = useState(false);
+  const [refreshMsg,  setRefreshMsg]  = useState(null);
+
+  // ── Predictions data state ─────────────────────────────────────────────────
   const [predictions, setPredictions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState(null);
 
-  // ============================ FETCH PREDICTIONS ON MOUNT ============================
+  // ── Fetch predictions on mount ─────────────────────────────────────────────
   useEffect(() => {
     const fetchPredictions = async () => {
       setLoading(true);
@@ -67,8 +73,7 @@ const AdminPredictiveAnalytics = () => {
     fetchPredictions();
   }, []);
 
-  // ============================ OVERVIEW TREND DATA ============================
-  // IMPORTANT: Returns data with { year, value } structure that the chart expects
+  // ── Overview trend — { year, value } pairs averaged across all departments ─
   const overviewTrend = useMemo(() => {
     if (!predictions.length) return [];
     const byYear = {};
@@ -79,12 +84,12 @@ const AdminPredictiveAnalytics = () => {
     return Object.entries(byYear)
       .sort(([a], [b]) => Number(a) - Number(b))
       .map(([year, rates]) => ({
-        year: String(year),
+        year:  String(year),
         value: Math.round(rates.reduce((s, r) => s + r, 0) / rates.length),
       }));
   }, [predictions]);
 
-  // ============================ DEPARTMENT CARDS DATA ============================
+  // ── Department cards ───────────────────────────────────────────────────────
   const departmentCards = useMemo(() => {
     if (!predictions.length) return [];
     const byDept = {};
@@ -93,48 +98,50 @@ const AdminPredictiveAnalytics = () => {
       byDept[row.department].push(row);
     });
     return Object.entries(byDept).map(([dept, rows]) => {
-      const sorted = [...rows].sort((a, b) => a.year - b.year);
-      const current = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
+      const sorted    = [...rows].sort((a, b) => a.year - b.year);
+      const current   = Math.round(sorted[0].current_rate   ?? sorted[0].predicted_rate ?? 0);
       const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
-      const meta = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
+      const meta      = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
+
       const programsList = [...new Set(rows.map((r) => r.program))];
       const programs = programsList.map((prog) => {
-        const progRows = rows.filter((r) => r.program === prog).sort((a, b) => a.year - b.year);
-        const progCurrent = Math.round(progRows[0].current_rate ?? progRows[0].predicted_rate ?? 0);
+        const progRows      = rows.filter((r) => r.program === prog).sort((a, b) => a.year - b.year);
+        const progCurrent   = Math.round(progRows[0].current_rate ?? progRows[0].predicted_rate ?? 0);
         const progPredicted = Math.round(progRows[progRows.length - 1].predicted_rate);
         return {
-          code: prog,
-          current: progCurrent,
+          code:      prog,
+          current:   progCurrent,
           predicted: progPredicted,
-          change: progPredicted - progCurrent,
+          change:    progPredicted - progCurrent,
         };
       });
+
       return {
-        key: meta.key,
-        code: dept,
-        name: meta.name,
-        color: meta.color,
+        key:      meta.key,
+        code:     dept,
+        name:     meta.name,
+        color:    meta.color,
         current,
         predicted,
-        change: predicted - current,
+        change:   predicted - current,
         programs,
       };
     });
   }, [predictions]);
 
-  // ============================ SELECTED DEPARTMENT DETAIL DATA ============================
+  // ── Selected department detail ─────────────────────────────────────────────
   const selectedDepartmentData = useMemo(() => {
     if (!selectedDepartment || !departmentCards.length) return null;
     const dept = departmentCards.find((d) => d.key === selectedDepartment);
     if (!dept) return null;
     return {
-      title: dept.name,
+      title:    dept.name,
       subtitle: `Program-level predictions ${overviewTrend[0]?.year || 2025} → ${overviewTrend[overviewTrend.length - 1]?.year || 2030}`,
       programs: dept.programs,
     };
   }, [selectedDepartment, departmentCards, overviewTrend]);
 
-  // ============================ NAVIGATION HANDLERS ============================
+  // ── Navigation handlers ────────────────────────────────────────────────────
   const handleBreadcrumbNav = (targetPage) => {
     if (targetPage === 'overview') {
       setActivePage('overview');
@@ -155,12 +162,23 @@ const AdminPredictiveAnalytics = () => {
     setSelectedDepartment(null);
   };
 
-  // ============================ REFRESH PREDICTIONS ============================
+  // ── Refresh predictions ────────────────────────────────────────────────────
   const handleRefresh = async () => {
     setRefreshing(true);
     setRefreshMsg(null);
     try {
-      const res = await fetch('http://localhost:8000/api/refresh-predictions', { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/refresh-predictions`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        setRefreshMsg(
+          `Failed: HTTP ${res.status}${body ? ' — ' + body.slice(0, 120) : ''}`
+        );
+        return;
+      }
+
       const data = await res.json();
       if (data.status === 'success') {
         setRefreshMsg('Predictions updated successfully.');
@@ -170,7 +188,7 @@ const AdminPredictiveAnalytics = () => {
           .order('year', { ascending: true });
         setPredictions(newData || []);
       } else {
-        setRefreshMsg('Failed: ' + data.message);
+        setRefreshMsg('Failed: ' + (data.message ?? 'Unknown error'));
       }
     } catch (err) {
       setRefreshMsg('Error: ' + err.message);
@@ -185,7 +203,7 @@ const AdminPredictiveAnalytics = () => {
     return () => clearTimeout(timer);
   }, [refreshMsg]);
 
-  // ============================ LOADING / ERROR STATES ============================
+  // ── Loading / error states ─────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="pa-layout">
@@ -210,7 +228,7 @@ const AdminPredictiveAnalytics = () => {
     );
   }
 
-  // ============================ RENDER ============================
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <Predictiveanalyticsview
       activePage={activePage}
