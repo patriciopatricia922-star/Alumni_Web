@@ -87,7 +87,7 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
       let bright = 0;
       for (let i = 0; i < data.length; i += 4) bright += (data[i] + data[i+1] + data[i+2]) / 3;
       const avgBright = bright / (W * H);
-      if (avgBright < 35)  { setCamGuide('Too dark — move to a brighter area');             stable = 0; detectionRef.current = requestAnimationFrame(analyse); return; }
+      if (avgBright < 35)  { setCamGuide('Too dark — move to a brighter area');               stable = 0; detectionRef.current = requestAnimationFrame(analyse); return; }
       if (avgBright > 230) { setCamGuide('Too bright — reduce glare or move away from light'); stable = 0; detectionRef.current = requestAnimationFrame(analyse); return; }
 
       const g = (i) => (data[i*4] + data[i*4+1] + data[i*4+2]) / 3;
@@ -112,8 +112,10 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
         for (let x = W-BORDER; x < W; x++) if (edge[y*W+x]) rightE++;
       }
 
-      const topScore = topE / (W*BORDER); const botScore = botE / (W*BORDER);
-      const leftScore = leftE / (H*BORDER); const rightScore = rightE / (H*BORDER);
+      const topScore   = topE   / (W*BORDER);
+      const botScore   = botE   / (W*BORDER);
+      const leftScore  = leftE  / (H*BORDER);
+      const rightScore = rightE / (H*BORDER);
       const BORDER_THRESH = 0.12;
       const cardFillsFrame = topScore > BORDER_THRESH && botScore > BORDER_THRESH && leftScore > BORDER_THRESH && rightScore > BORDER_THRESH;
       let totalEdge = 0; for (let i = 0; i < edge.length; i++) if (edge[i]) totalEdge++;
@@ -244,8 +246,8 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
       handleFileChange={handleFileChange}
       handleReset={handleReset}
       handleNext={handleNext}
-      // Modal context — hides the full-page Back button, shows Switch to Login
       isModal
+      onClose={onClose}
       onSwitchToLogin={onSwitchToLogin}
     />
   );

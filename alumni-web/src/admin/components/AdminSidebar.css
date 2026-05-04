@@ -1,5 +1,6 @@
 /* ────────────────────────────────────────────────────────────────────────────
    Mobile Bottom Navigation (768px and below)
+   Admin Sidebar css
    ──────────────────────────────────────────────────────────────────────────── */
 .admin-mobile-bottom-nav {
   position: fixed;
@@ -46,11 +47,11 @@
 }
 
 .admin-mobile-icon-active {
-  color: #D9CA81;
+  filter: brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%);
 }
 
 .admin-mobile-icon-inactive {
-  color: rgba(255, 255, 255, 0.5);
+  filter: brightness(0) invert(1) opacity(0.5);
 }
 
 .admin-mobile-label {
@@ -155,7 +156,19 @@
   padding: 20px 9px 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+}
+
+.admin-sidebar-menu-heading {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 15px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0 14px;
+  margin: 0 0 8px 0;
 }
 
 .admin-sidebar-menu-item {
@@ -181,11 +194,11 @@
 }
 
 .admin-sidebar-icon-active {
-  color: #D9CA81;
+  filter: brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%);
 }
 
 .admin-sidebar-icon-inactive {
-  color: rgba(255, 255, 255, 0.85);
+  filter: brightness(0) invert(1) opacity(0.85);
 }
 
 .admin-sidebar-label {

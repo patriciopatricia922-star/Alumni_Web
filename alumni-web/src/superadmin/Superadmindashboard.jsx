@@ -1,734 +1,616 @@
-import React, { useState, useEffect } from 'react';
-import SuperAdSidebar from '../superadmin/SuperAdsidebar';
-import { supabase } from '../lib/supabase';
+// src/pages/SuperAdminDashboard.jsx
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import SuperAdminDashboardView from "./views/SuperAdminDashboardView";
 
-const FONT_STYLE = `@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');`;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const formatDate = iso => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+// ============================================================================
+// SATISFACTION SCORE MAPPING - Maps survey satisfaction text to numeric scores
+// ============================================================================
+const SATISFACTION_SCORE = {
+  'Very Satisfied':    5,
+  'Very satisfied':    5,
+  'Satisfied':         4,
+  'Neutral':           3,
+  'Dissatisfied':      2,
+  'Very Dissatisfied': 1,
+  'Very dissatisfied': 1,
 };
 
-const formatRelative = iso => {
-  if (!iso) return '—';
-  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (diff < 60)   return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+// ============================================================================
+// EMPLOYMENT STATUS MAPPING - Maps employment status values to categories
+// ============================================================================
+const STATUS_MAPPING = {
+  'Regular / Permanent': 'Employed',
+  'Probationary': 'Employed',
+  'Regular': 'Employed',
+  'Permanent': 'Employed',
+  'Full-time': 'Employed',
+  'Part-time': 'Employed',
+  'Regular/Full-time': 'Employed',
+  'Part-time/Full-time': 'Employed',
+  'Unemployed': 'Unemployed',
+  'Not employed': 'Unemployed',
+  'Looking for work': 'Unemployed',
+  'Unemployed, but looking for work': 'Unemployed',
+  'Unemployed, but not looking for work': 'Unemployed',
+  'Self-employed': 'Self-Employed',
+  'Self-Employed': 'Self-Employed',
+  'Business owner': 'Self-Employed',
+  'Freelance': 'Freelance',
+  'Student': 'Student',
+  'Studying': 'Student',
+  'Contractual': 'Contractual',
+  'Contract based': 'Contractual',
 };
 
-// ─── Tag / Status Styles ──────────────────────────────────────────────────────
-const tagColors = {
-  'Update':      { bg: '#155DFC', color: '#FFFFFF' },
-  'Login':       { bg: '#EDE9FE', color: '#6D28D9' },
-  'Create':      { bg: '#DCFCE7', color: '#15803D' },
-  'Delete':      { bg: '#FEE2E2', color: '#B91C1C' },
-  'Export':      { bg: '#155DFC', color: '#FFFFFF' },
-  'Archive':     { bg: '#FF720D', color: '#FFFFFF' },
-  'Super Admin': { bg: 'transparent', color: '#0A0A0A', border: '1px solid rgba(0,0,0,0.1)' },
-  'Admin':       { bg: 'transparent', color: '#0A0A0A', border: '1px solid rgba(0,0,0,0.1)' },
-  'Alumni':      { bg: '#E0E7FF', color: '#3730A3' },
-};
-const getTagStyle    = tag    => tagColors[tag]   || { bg: '#F3F4F6', color: '#374151' };
-const getStatusStyle = status => status === 'Success'
-  ? { bg: 'transparent', color: '#0A0A0A', border: '1px solid rgba(0,0,0,0.1)' }
-  : { bg: '#FEE2E2', color: '#B91C1C', border: 'none' };
+// ============================================================================
+// SUPERVISORY KEYWORDS - Used to detect supervisory job positions
+// ============================================================================
+const SUPERVISORY_KEYWORDS = [
+  'manager', 'supervisor', 'lead', 'leader', 'head',
+  'director', 'chief', 'officer', 'coordinator', 'superintendent',
+  'foreman', 'overseer', 'team lead', 'senior', 'principal',
+];
 
-const Tag = ({ label }) => {
-  const s = getTagStyle(label);
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '2px 8px', borderRadius: '8px',
-      fontSize: '12px', fontFamily: 'Arimo, Arial', fontWeight: 400,
-      background: s.bg, color: s.color,
-      border: s.border || 'none',
-      whiteSpace: 'nowrap', lineHeight: '16px',
-    }}>{label}</span>
-  );
-};
+// ============================================================================
+// UNEMPLOYED STATUSES
+// ============================================================================
+const UNEMPLOYED_STATUSES = new Set([
+  'Unemployed',
+  'Unemployed, but looking for work',
+  'Unemployed, but not looking for work',
+  'Not employed',
+  'Looking for work',
+]);
 
-const StatusBadge = ({ status }) => {
-  const s = getStatusStyle(status);
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '2px 8px', borderRadius: '8px',
-      fontSize: '12px', fontFamily: 'Arimo, Arial', fontWeight: 400,
-      background: s.bg, color: s.color,
-      border: s.border || 'none',
-      whiteSpace: 'nowrap', lineHeight: '16px',
-    }}>{status}</span>
-  );
+// ============================================================================
+// WITHIN_ONE_YEAR_VALUES
+// ============================================================================
+const WITHIN_ONE_YEAR_VALUES = new Set([
+  'Less than a month',
+  '1–3 months',
+  '4–6 months',
+  '7–12 months',
+]);
+
+// ============================================================================
+// safe JSON parse helper
+// ============================================================================
+const safeParse = (value) => {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try { return JSON.parse(value); } catch { return null; }
 };
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-const StatCard = ({ title, value, subtitle, subtitleColor, IconEl, iconBg }) => (
-  <div style={{
-    background: '#FFFFFF',
-    border: '0.888889px solid #9E9E9E',
-    borderRadius: '10px',
-    padding: '24.8889px',
-    display: 'flex', justifyContent: 'space-between',
-    alignItems: 'flex-start', flex: 1, minWidth: 0,
-  }}>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <span style={{ fontFamily: 'Lexend, Arial', fontSize: '14px', color: '#6A7282', lineHeight: '20px' }}>{title}</span>
-      <span style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', lineHeight: '36px' }}>{value}</span>
-      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: subtitleColor || '#6A7282', lineHeight: '16px' }}>{subtitle}</span>
-    </div>
-    <div style={{ width: '48px', height: '48px', flexShrink: 0, background: iconBg, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <IconEl />
-    </div>
-  </div>
-);
-
-// ─── Empty Placeholder ────────────────────────────────────────────────────────
-const EmptyState = ({ message = 'No data available yet' }) => (
-  <div style={{
-    display: 'flex', flexDirection: 'column', alignItems: 'center',
-    justifyContent: 'center', padding: '48px 24px', gap: '10px',
-    background: '#F8FAFC', borderRadius: '10px', border: '1px dashed #CBD5E1',
-  }}>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-    </svg>
-    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#94A3B8' }}>{message}</span>
-  </div>
-);
-
-// ─── Pie Chart — matches Figma "Activity by Role" screenshot ─────────────────
-// Large centered pie, floating outside labels like "Admin: 45", spin-in animation
-const PIE_ANIM_STYLE = `
-  @keyframes pie-spin-in {
-    from { opacity: 0; transform: rotate(-90deg) scale(0.7); }
-    to   { opacity: 1; transform: rotate(0deg)   scale(1);   }
-  }
-  @keyframes label-fade-in {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0);   }
-  }
-  .pie-chart-wrap { animation: pie-spin-in 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards; transform-origin: center; }
-  .pie-label      { animation: label-fade-in 0.4s ease forwards; }
-`;
-
-const DonutChart = ({ data }) => {
-  if (!data || data.length === 0 || data.every(d => d.value === 0))
-    return <EmptyState />;
-
-  const COLORS = ['#4D81F3', '#51A2FF', '#00A63E', '#DAA520', '#FF720D', '#6D28D9'];
-  const total  = data.reduce((s, d) => s + d.value, 0);
-
-  // SVG canvas — big enough to fit the pie + outside labels
-  const W = 340, H = 300;
-  const cx = W / 2, cy = H / 2;
-  const r  = 110; // pie radius
-  const labelR = r + 36; // label anchor distance from center
-
-  // Build slices
-  const slices = [];
-  let startAngle = -Math.PI / 2;
-  data.forEach((d, i) => {
-    if (d.value === 0) return;
-    const slice    = (d.value / total) * 2 * Math.PI;
-    const endAngle = startAngle + slice;
-    const midAngle = startAngle + slice / 2;
-
-    const x1 = cx + r * Math.cos(startAngle);
-    const y1 = cy + r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle);
-    const y2 = cy + r * Math.sin(endAngle);
-    const large = slice > Math.PI ? 1 : 0;
-    const path  = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
-
-    // Label position — push out past the edge
-    const lx = cx + labelR * Math.cos(midAngle);
-    const ly = cy + labelR * Math.sin(midAngle);
-    const anchor = Math.cos(midAngle) > 0 ? 'start' : 'end';
-
-    slices.push({ path, color: COLORS[i % COLORS.length], lx, ly, anchor, label: d.label, value: d.value, delay: i * 80 });
-    startAngle = endAngle;
-  });
-
-  return (
-    <>
-      <style>{PIE_ANIM_STYLE}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <svg
-          width={W} height={H}
-          viewBox={`0 0 ${W} ${H}`}
-          style={{ maxWidth: '100%', overflow: 'visible' }}
-        >
-          {/* Pie slices — animated as a group */}
-          <g className="pie-chart-wrap" style={{ transformOrigin: `${cx}px ${cy}px` }}>
-            {slices.map((s, i) => (
-              <path
-                key={i}
-                d={s.path}
-                fill={s.color}
-                stroke="#FFFFFF"
-                strokeWidth="2"
-                style={{ cursor: 'default', transition: 'opacity 0.2s' }}
-                onMouseEnter={e => e.currentTarget.setAttribute('opacity', '0.85')}
-                onMouseLeave={e => e.currentTarget.setAttribute('opacity', '1')}
-              />
-            ))}
-          </g>
-          {/* Floating labels — each fades in with a slight delay */}
-          {slices.map((s, i) => (
-            <text
-              key={`lbl-${i}`}
-              className="pie-label"
-              x={s.lx}
-              y={s.ly}
-              textAnchor={s.anchor}
-              dominantBaseline="middle"
-              fontSize="12"
-              fontWeight="500"
-              fill={s.color}
-              fontFamily="Arimo,Arial"
-              style={{ animationDelay: `${0.5 + s.delay / 1000}s`, opacity: 0 }}
-            >
-              {s.label}: {s.value}
-            </text>
-          ))}
-        </svg>
-      </div>
-    </>
-  );
+// ============================================================================
+// INSTITUTIONAL KPIs STRUCTURE - 9 KPIs across 3 tabs
+// ============================================================================
+const institutionalKpis = {
+  employment: [
+    {
+      id: "internship_absorption",
+      category: "Career Services",
+      label: "Absorption from Internship",
+      value: "0%", progress: 0, target: 0,
+      targetLabel: "Goal: —",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "employment_two_years",
+      category: "Employment",
+      label: "Employed Within 2 Yrs of Graduation",
+      value: "0%", progress: 0, target: 85,
+      targetLabel: "Goal: 85%",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "field_related",
+      category: "Employment",
+      label: "Employed in Field / Related Field",
+      value: "0%", progress: 0, target: 70,
+      targetLabel: "Goal: 70%",
+      trend: { dir: "none", delta: "" },
+    },
+  ],
+  career: [
+    {
+      id: "outside_field",
+      category: "Career",
+      label: "Employed Outside Field of Specialization",
+      value: "0%", progress: 0, target: 20,
+      targetLabel: "Goal: <20%",
+      targetDir: "below",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "entrepreneurship",
+      category: "Career",
+      label: "Engaged in Entrepreneurship",
+      value: "0%", progress: 0, target: 0,
+      targetLabel: "Goal: —",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "supervisory",
+      category: "Career",
+      label: "Occupying Supervisory Positions",
+      value: "0%", progress: 0, target: 15,
+      targetLabel: "Goal: 15%",
+      trend: { dir: "none", delta: "" },
+    },
+  ],
+  education: [
+    {
+      id: "grad_studies",
+      category: "Education",
+      label: "Pursued Graduate Studies (within 1 yr)",
+      value: "0%", progress: 0, target: 10,
+      targetLabel: "Goal: 10%",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "nu_grad_studies",
+      category: "Education",
+      label: "Pursued Graduate Studies at NU",
+      value: "0%", progress: 0, target: 30,
+      targetLabel: "Goal: 30% (pending NU field)",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "prof_org",
+      category: "Leadership",
+      label: "In Positions in Professional Organizations",
+      value: "0", progress: 0, target: 0,
+      targetLabel: "Goal: —",
+      isCount: true,
+      trend: { dir: "none", delta: "" },
+    },
+  ],
 };
 
-// ─── Bar Chart — matches screenshot "Activity by Module" ─────────────────────
-// Bars: #3B82F6, dashed grid both axes, angled X labels, grow-up animation
-const BAR_ANIM_STYLE = `
-  @keyframes bar-grow-up {
-    from { transform: scaleY(0); }
-    to   { transform: scaleY(1); }
-  }
-  .bar-rect {
-    transform-origin: bottom;
-    animation: bar-grow-up 0.5s cubic-bezier(0.34,1.28,0.64,1) forwards;
-    opacity: 0;
-  }
-`;
-
-const BarChart = ({ data }) => {
-  if (!data || data.length === 0) return <EmptyState />;
-
-  const W = 480, H = 300;
-  const padL = 40, padR = 12, padT = 16, padB = 90; // extra bottom for angled labels
-  const chartW = W - padL - padR;
-  const chartH = H - padT - padB;
-  const max    = Math.max(...data.map(d => d.value), 1);
-
-  // Y grid — 5 lines matching screenshot (0, ~15, ~30, ~45, ~60)
-  const gridCount  = 4;
-  const gridStep   = Math.ceil(max / gridCount) || 1;
-  const yMax       = gridStep * gridCount;
-  const gridVals   = Array.from({ length: gridCount + 1 }, (_, i) => i * gridStep);
-
-  const barSlot = chartW / data.length;
-  const barW    = Math.max(14, barSlot * 0.55);
-  const baseY   = padT + chartH; // y-coordinate of x-axis
-
-  return (
-    <>
-      <style>{BAR_ANIM_STYLE}</style>
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
-
-        {/* Dashed horizontal grid lines + Y-axis labels */}
-        {gridVals.map((val, i) => {
-          const y = padT + chartH - (val / yMax) * chartH;
-          return (
-            <g key={i}>
-              <line x1={padL} y1={y} x2={W - padR} y2={y}
-                stroke="#CCCCCC" strokeWidth="1" strokeDasharray="4,4" />
-              <text x={padL - 6} y={y + 4} textAnchor="end"
-                fontSize="10" fill="#666666" fontFamily="Arimo,Arial">{val}</text>
-            </g>
-          );
-        })}
-
-        {/* Dashed vertical grid lines (one per bar centre) */}
-        {data.map((_, i) => {
-          const cx = padL + i * barSlot + barSlot / 2;
-          return (
-            <line key={`vg${i}`} x1={cx} y1={padT} x2={cx} y2={baseY}
-              stroke="#CCCCCC" strokeWidth="1" strokeDasharray="4,4" />
-          );
-        })}
-
-        {/* X axis solid line */}
-        <line x1={padL} y1={baseY} x2={W - padR} y2={baseY}
-          stroke="#666666" strokeWidth="1" />
-
-        {/* Bars — each animates with a staggered delay */}
-        {data.map((d, i) => {
-          const barH = Math.max(d.value > 0 ? 3 : 0, Math.round((d.value / yMax) * chartH));
-          const cx   = padL + i * barSlot + barSlot / 2;
-          const x    = cx - barW / 2;
-          const y    = baseY - barH;
-          return (
-            <rect
-              key={i}
-              className="bar-rect"
-              x={x} y={y} width={barW} height={barH} rx="3"
-              fill="#3B82F6"
-              style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'forwards' }}
-            />
-          );
-        })}
-
-        {/* Angled X-axis labels — rotated -45° anchored at bar centre */}
-        {data.map((d, i) => {
-          const cx = padL + i * barSlot + barSlot / 2;
-          return (
-            <text
-              key={`lbl${i}`}
-              x={cx}
-              y={baseY + 8}
-              textAnchor="end"
-              fontSize="11"
-              fill="#666666"
-              fontFamily="Arimo,Arial"
-              transform={`rotate(-45, ${cx}, ${baseY + 8})`}
-            >
-              {d.label}
-            </text>
-          );
-        })}
-
-      </svg>
-    </>
-  );
-};
-
-// ─── Login Trends Line Chart — matches Figma exactly ─────────────────────────
-// Green #10B981 success line, Red #EF4444 failed line
-// Dashed grid, dots on each point, centered legend below
-const LoginTrendsChart = ({ data }) => {
-  if (!data || data.length === 0) return <EmptyState message="No login data yet" />;
-
-  const W = 900, H = 280;
-  const padL = 52, padR = 8, padT = 8, padB = 56;
-  const chartW = W - padL - padR;
-  const chartH = H - padT - padB;
-  const maxVal = Math.max(...data.map(d => Math.max(d.success, d.failed)), 1);
-
-  // 5 grid lines matching Figma: 0, 20, 40, 60, 80
-  const gridCount = 4;
-  const step      = Math.ceil(maxVal / gridCount) || 1;
-  const yMax      = step * gridCount;
-  const gridVals  = Array.from({ length: gridCount + 1 }, (_, i) => i * step);
-
-  const xPos = i  => padL + (i / Math.max(data.length - 1, 1)) * chartW;
-  const yPos = v  => padT + chartH - (v / yMax) * chartH;
-
-  const buildPath = key =>
-    data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xPos(i).toFixed(1)} ${yPos(d[key]).toFixed(1)}`).join(' ');
-
-  const successPath = buildPath('success');
-  const failedPath  = buildPath('failed');
-
-  return (
-    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet">
-      {/* Dashed horizontal grid lines */}
-      {gridVals.map((val, i) => {
-        const y = yPos(val);
-        return (
-          <g key={i}>
-            <line x1={padL} y1={y} x2={W - padR} y2={y}
-              stroke="#CCCCCC" strokeWidth="1" strokeDasharray="4,4" />
-            <text x={padL - 8} y={y + 4} textAnchor="end"
-              fontSize="11" fill="#666666" fontFamily="Arimo,Arial">{val}</text>
-          </g>
-        );
-      })}
-      {/* Dashed vertical grid lines */}
-      {data.map((_, i) => (
-        <line key={i} x1={xPos(i)} y1={padT} x2={xPos(i)} y2={padT + chartH}
-          stroke="#CCCCCC" strokeWidth="1" strokeDasharray="4,4" />
-      ))}
-      {/* X axis solid */}
-      <line x1={padL} y1={padT + chartH} x2={W - padR} y2={padT + chartH}
-        stroke="#666666" strokeWidth="1" />
-      {/* Lines */}
-      <path d={successPath} fill="none" stroke="#10B981" strokeWidth="2" strokeLinejoin="round" />
-      <path d={failedPath}  fill="none" stroke="#EF4444" strokeWidth="2" strokeLinejoin="round" />
-      {/* Dots + X labels */}
-      {data.map((d, i) => (
-        <g key={i}>
-          {/* Success dot */}
-          <circle cx={xPos(i)} cy={yPos(d.success)} r="4"
-            fill="#FFFFFF" stroke="#10B981" strokeWidth="2" />
-          {/* Failed dot */}
-          <circle cx={xPos(i)} cy={yPos(d.failed)} r="4"
-            fill="#FFFFFF" stroke="#EF4444" strokeWidth="2" />
-          {/* X-axis date label */}
-          <text x={xPos(i)} y={padT + chartH + 16}
-            textAnchor="middle" fontSize="11" fill="#666666" fontFamily="Arimo,Arial">{d.label}</text>
-          {/* Tick mark */}
-          <line x1={xPos(i)} y1={padT + chartH} x2={xPos(i)} y2={padT + chartH + 5}
-            stroke="#666666" strokeWidth="1" />
-        </g>
-      ))}
-      {/* Centered legend — matching Figma layout */}
-      <g transform={`translate(${W / 2 - 145}, ${H - 18})`}>
-        <line x1="0" y1="7" x2="14" y2="7" stroke="#10B981" strokeWidth="1.75" />
-        <text x="20" y="12" fontSize="14" fill="#10B981" fontFamily="Arimo,Arial">Successful Logins</text>
-        <line x1="160" y1="7" x2="174" y2="7" stroke="#EF4444" strokeWidth="1.75" />
-        <text x="180" y="12" fontSize="14" fill="#EF4444" fontFamily="Arimo,Arial">Failed Logins</text>
-      </g>
-    </svg>
-  );
-};
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ============================================================================
+// SuperAdminDashboard Component - Reuses Admin Dashboard Logic
+// ============================================================================
 const SuperAdminDashboard = () => {
-  const [loading,         setLoading]         = useState(true);
-  const [alumniCount,     setAlumniCount]     = useState(0);
-  const [actionsToday,    setActionsToday]    = useState(0);
-  const [recordsModified, setRecordsModified] = useState(0);
-  const [archivedCount,   setArchivedCount]   = useState(0);
-  const [recentActions,   setRecentActions]   = useState([]);
-  const [roleData,        setRoleData]        = useState([]);
-  const [actionData,      setActionData]      = useState([]);
-  const [loginTrends,     setLoginTrends]     = useState([]);
+  // ============================ TAB STATE ============================
+  const [activeKpiTab, setActiveKpiTab] = useState("employment");
 
+  // ============================ KPI STATE ============================
+  const [alumniCount, setAlumniCount] = useState('—');
+  const [surveyCompletionRate, setSurveyCompletionRate] = useState('—');
+  const [alumniSubText, setAlumniSubText] = useState('loading...');
+  const [surveySubText, setSurveySubText] = useState('loading...');
+  const [activePrograms, setActivePrograms] = useState('—');
+  const [activeProgramsSub, setActiveProgramsSub] = useState('from survey responses');
+  const [alumniSatisfaction, setAlumniSatisfaction] = useState('—');
+  const [satisfactionSub, setSatisfactionSub] = useState('based on feedback');
+
+  // ============================ INSTITUTIONAL KPI DATA STATES ============================
+  const [kpiData, setKpiData] = useState(institutionalKpis);
+
+  // ============================ CHART DATA STATES ============================
+  const [employmentAlignmentData, setEmploymentAlignmentData] = useState([]);
+  const [employmentStatusData, setEmploymentStatusData] = useState([]);
+  const [inDemandSkillsData, setInDemandSkillsData] = useState([]);
+  const [employmentForecastData, setEmploymentForecastData] = useState([]);
+  const [loadingCharts, setLoadingCharts] = useState(true);
+
+  // ============================ KPI DATA FETCHING ============================
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
+    const fetchStats = async () => {
+
+      // --------------------------------------------------------------------
+      // 1. FETCH REGISTERED ALUMNI COUNT
+      // --------------------------------------------------------------------
+      const { count: alumniTotal, error: alumniErr } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'alumni');
+      if (!alumniErr) setAlumniCount(String(alumniTotal ?? 0));
+      else console.error('Alumni count error:', alumniErr.message);
+
+      // --------------------------------------------------------------------
+      // 2. FETCH NEW ALUMNI THIS MONTH
+      // --------------------------------------------------------------------
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count: newThisMonth, error: newErr } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'alumni')
+        .gte('created_at', startOfMonth);
+      if (!newErr) setAlumniSubText(`+${newThisMonth ?? 0} new this month`);
+
+      // --------------------------------------------------------------------
+      // 3. FETCH SURVEY COMPLETION RATE
+      // --------------------------------------------------------------------
+      const { count: completed, error: surveyErr } = await supabase
+        .from('survey_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('completed', true);
+
+      if (!surveyErr) {
+        const total = alumniTotal ?? 0;
+        const rate = total > 0 ? Math.round(((completed ?? 0) / total) * 100) : 0;
+        setSurveyCompletionRate(`${rate}%`);
+
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+        const { count: completedThisMonth } = await supabase
+          .from('survey_progress').select('*', { count: 'exact', head: true })
+          .eq('completed', true).gte('last_updated', startOfMonth);
+        const { count: completedLastMonth } = await supabase
+          .from('survey_progress').select('*', { count: 'exact', head: true })
+          .eq('completed', true).gte('last_updated', startOfLastMonth).lt('last_updated', startOfMonth);
+
+        const thisM = completedThisMonth ?? 0;
+        const lastM = completedLastMonth ?? 0;
+        if (lastM === 0) {
+          setSurveySubText(thisM > 0 ? `+${thisM} completed this month` : 'No completions yet');
+        } else {
+          const diff = thisM - lastM;
+          setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} vs last month`);
+        }
+      } else {
+        console.error('Survey completion error:', surveyErr.message);
+      }
+
+      // --------------------------------------------------------------------
+      // 4. FETCH ACTIVE PROGRAMS
+      // --------------------------------------------------------------------
       try {
-        // ── 1. Alumni count ──────────────────────────────────────────────
-        const { count: alumCount } = await supabase
-          .from('users')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'alumni');
-        setAlumniCount(alumCount ?? 0);
+        const { data: eduRows, error: eduErr } = await supabase
+          .from('survey_progress')
+          .select('educational_background_data');
 
-        // ── 2. Today's audit stats ───────────────────────────────────────
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
-
-        const { count: todayCount } = await supabase
-          .from('audit_logs')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', todayStart.toISOString());
-        setActionsToday(todayCount ?? 0);
-
-        const { count: modCount } = await supabase
-          .from('audit_logs')
-          .select('*', { count: 'exact', head: true })
-          .in('action', ['Create', 'Update', 'Delete'])
-          .gte('created_at', todayStart.toISOString());
-        setRecordsModified(modCount ?? 0);
-
-        const { count: archCount } = await supabase
-          .from('audit_logs')
-          .select('*', { count: 'exact', head: true })
-          .eq('action', 'Archive');
-        setArchivedCount(archCount ?? 0);
-
-        // ── 3. Recent critical actions (last 8) ──────────────────────────
-        const { data: recent } = await supabase
-          .from('audit_logs')
-          .select('id, created_at, user_email, user_role, action, module, description, status')
-          .in('action', ['Create', 'Update', 'Delete', 'Archive', 'Export'])
-          .order('created_at', { ascending: false })
-          .limit(8);
-        setRecentActions(recent ?? []);
-
-        // ── 4. Role breakdown (donut) + Module breakdown (bar) ──────────
-        const { data: allLogs } = await supabase
-          .from('audit_logs')
-          .select('user_role, module');
-
-        if (allLogs && allLogs.length > 0) {
-          // Role breakdown for donut chart
-          const roleCounts = allLogs.reduce((acc, l) => {
-            if (l.user_role) acc[l.user_role] = (acc[l.user_role] || 0) + 1;
-            return acc;
-          }, {});
-          setRoleData(Object.entries(roleCounts).map(([label, value]) => ({ label, value })));
-
-          // Module breakdown for bar chart — matching screenshot labels
-          const moduleOrder = ['Alumni Profile', 'Events', 'Donations', 'Feedback', 'User Management', 'System Settings', 'Reports'];
-          const moduleCounts = allLogs.reduce((acc, l) => {
-            if (l.module) acc[l.module] = (acc[l.module] || 0) + 1;
-            return acc;
-          }, {});
-          // Include any extra modules not in the default order
-          const extraModules = Object.keys(moduleCounts).filter(m => !moduleOrder.includes(m));
-          const allModules = [...moduleOrder, ...extraModules];
-          setActionData(allModules
-            .filter(m => moduleCounts[m] > 0)
-            .map(m => ({ label: m, value: moduleCounts[m] }))
+        if (eduErr) {
+          console.error('Active programs error:', eduErr.message);
+          setActivePrograms('—');
+          setActiveProgramsSub('Unable to load');
+        } else if (eduRows) {
+          const programs = new Set(
+            eduRows
+              .filter(r => r.educational_background_data !== null)
+              .map(r => {
+                const parsed = safeParse(r.educational_background_data);
+                return parsed?.degreeProgram || parsed?.degree_program || null;
+              })
+              .filter(Boolean)
           );
+          const count = programs.size;
+          setActivePrograms(String(count));
+          setActiveProgramsSub(count === 1 ? '1 active program' : `${count} active programs`);
+        }
+      } catch (e) { console.error('Active programs error:', e); }
+
+      // --------------------------------------------------------------------
+      // 5. FETCH ALUMNI SATISFACTION
+      // --------------------------------------------------------------------
+      try {
+        const { data: feedbackRows, error: feedbackErr } = await supabase
+          .from('survey_progress')
+          .select('feedback_university_data');
+
+        if (feedbackErr) {
+          console.error('Alumni satisfaction error:', feedbackErr.message);
+          setAlumniSatisfaction('—');
+          setSatisfactionSub('Unable to load');
+        } else if (feedbackRows) {
+          const scores = feedbackRows
+            .filter(r => r.feedback_university_data !== null)
+            .map(r => {
+              const parsed = safeParse(r.feedback_university_data);
+              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
+            })
+            .filter(Boolean);
+
+          if (scores.length > 0) {
+            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+            setAlumniSatisfaction(avg.toFixed(1));
+            setSatisfactionSub(`Based on ${scores.length} response${scores.length !== 1 ? 's' : ''}`);
+          } else {
+            setAlumniSatisfaction('N/A');
+            setSatisfactionSub('No feedback yet');
+          }
+        }
+      } catch (e) { console.error('Alumni satisfaction error:', e); }
+
+      // ====================================================================
+      // 6. COMPUTE ALL 9 INSTITUTIONAL KPIs
+      // ====================================================================
+      const { data: allRows, error: allErr } = await supabase
+        .from('survey_progress')
+        .select(
+          'employment_information_data, educational_background_data, alumni_engagement_data'
+        );
+
+      if (allErr) {
+        console.error('Institutional KPI fetch error:', allErr.message);
+        return;
+      }
+
+      const parsed = (allRows ?? []).map(row => ({
+        emp: safeParse(row.employment_information_data),
+        edu: safeParse(row.educational_background_data),
+        eng: safeParse(row.alumni_engagement_data),
+      }));
+
+      const isEmployed = (emp) => {
+        if (!emp) return false;
+        const status = emp.employment_status || emp.employmentStatus || emp.current_employment_status || '';
+        if (!status) {
+          return !!(emp.job_position || emp.company_name);
+        }
+        return !UNEMPLOYED_STATUSES.has(status);
+      };
+
+      const withEmpData   = parsed.filter(r => r.emp !== null);
+      const withEduData   = parsed.filter(r => r.edu !== null);
+      const employedRows  = withEmpData.filter(r => isEmployed(r.emp));
+
+      // Employment KPIs
+      const internshipCount = employedRows.filter(r => {
+        const src = r.emp.how_found_first_job || r.emp.first_job_source || r.emp.how_did_you_find_first_job || '';
+        return src === 'Internship Absorption';
+      }).length;
+      const internshipPct = employedRows.length > 0 ? Math.round((internshipCount / employedRows.length) * 100) : 0;
+
+      const empWithinTwoYears = withEmpData.filter(r => isEmployed(r.emp)).length;
+      const empTwoYearsPct = withEmpData.length > 0 ? Math.round((empWithinTwoYears / withEmpData.length) * 100) : 0;
+
+      const fieldRelatedCount = employedRows.filter(r => {
+        const val = r.emp.job_related_to_degree || r.emp.is_job_related_to_degree || r.emp.jobRelatedToDegree || '';
+        return val === 'Yes' || val === true;
+      }).length;
+      const fieldRelatedPct = employedRows.length > 0 ? Math.round((fieldRelatedCount / employedRows.length) * 100) : 0;
+
+      // Career KPIs
+      const outsideFieldCount = employedRows.filter(r => {
+        const val = r.emp.job_related_to_degree || r.emp.is_job_related_to_degree || r.emp.jobRelatedToDegree || '';
+        return val === 'No' || val === false;
+      }).length;
+      const outsideFieldPct = employedRows.length > 0 ? Math.round((outsideFieldCount / employedRows.length) * 100) : 0;
+
+      const entrepreneurCount = withEmpData.filter(r => {
+        const status = r.emp.employment_status || r.emp.current_employment_status || r.emp.employmentStatus || '';
+        return status === 'Self-Employed' || status === 'Self-employed';
+      }).length;
+      const entrepreneurPct = withEmpData.length > 0 ? Math.round((entrepreneurCount / withEmpData.length) * 100) : 0;
+
+      const supervisoryCount = employedRows.filter(r => {
+        const pos = (r.emp.job_position || r.emp.jobPosition || r.emp.position || '').toLowerCase();
+        return SUPERVISORY_KEYWORDS.some(kw => pos.includes(kw));
+      }).length;
+      const supervisoryPct = employedRows.length > 0 ? Math.round((supervisoryCount / employedRows.length) * 100) : 0;
+
+      // Education KPIs
+      const gradStudiesCount = withEduData.filter(r => {
+        const val = r.edu.plans_postgraduate || r.edu.do_you_have_plans_postgrad || r.edu.plansPostgraduate || r.edu.post_graduate_plans || '';
+        return val === 'Yes' || val === true;
+      }).length;
+      const gradStudiesPct = withEduData.length > 0 ? Math.round((gradStudiesCount / withEduData.length) * 100) : 0;
+
+      const nuGradStudiesPct = 0;
+
+      const withEngData = parsed.filter(r => r.eng !== null);
+      const profOrgCount = withEngData.filter(r => {
+        const participates = r.eng.willing_to_participate || r.eng.willingness_to_participate || r.eng.willing_participate || [];
+        const arr = Array.isArray(participates) ? participates : [participates];
+        return arr.some(opt => opt && opt !== 'Not at all' && opt !== 'Other');
+      }).length;
+
+      // Apply all computed KPIs
+      setKpiData({
+        employment: institutionalKpis.employment.map(kpi => {
+          switch (kpi.id) {
+            case 'internship_absorption':
+              return { ...kpi, value: `${internshipPct}%`, progress: internshipPct, targetLabel: 'N/A' };
+            case 'employment_two_years':
+              return { ...kpi, value: `${empTwoYearsPct}%`, progress: empTwoYearsPct };
+            case 'field_related':
+              return { ...kpi, value: `${fieldRelatedPct}%`, progress: fieldRelatedPct };
+            default:
+              return kpi;
+          }
+        }),
+        career: institutionalKpis.career.map(kpi => {
+          switch (kpi.id) {
+            case 'outside_field':
+              return { ...kpi, value: `${outsideFieldPct}%`, progress: outsideFieldPct };
+            case 'entrepreneurship':
+              return { ...kpi, value: `${entrepreneurPct}%`, progress: entrepreneurPct, targetLabel: 'N/A' };
+            case 'supervisory':
+              return { ...kpi, value: `${supervisoryPct}%`, progress: supervisoryPct };
+            default:
+              return kpi;
+          }
+        }),
+        education: institutionalKpis.education.map(kpi => {
+          switch (kpi.id) {
+            case 'grad_studies':
+              return { ...kpi, value: `${gradStudiesPct}%`, progress: gradStudiesPct };
+            case 'nu_grad_studies':
+              return { ...kpi, value: `${nuGradStudiesPct}%`, progress: nuGradStudiesPct, targetLabel: 'Goal: 30% (pending NU field)' };
+            case 'prof_org':
+              return { ...kpi, value: String(profOrgCount), progress: 0, targetLabel: 'N/A' };
+            default:
+              return kpi;
+          }
+        }),
+      });
+    };
+
+    fetchStats();
+  }, []);
+
+  // ============================ CHART DATA FETCHING ============================
+  useEffect(() => {
+    const fetchChartData = async () => {
+      setLoadingCharts(true);
+
+      try {
+        // Fetch predictions data
+        const { data: predictions, error } = await supabase
+          .from('predictions')
+          .select('*')
+          .order('year', { ascending: true });
+
+        if (!error && predictions && predictions.length > 0) {
+          const programs = [...new Set(predictions.map(p => p.program))];
+          const latestYear = Math.max(...predictions.map(p => p.year));
+          const alignmentByProgram = programs.map(program => {
+            const programPredictions = predictions.filter(p => p.program === program);
+            const latest = programPredictions.find(p => p.year === latestYear);
+            return { name: program, alignment: latest?.predicted_rate || 0 };
+          }).sort((a, b) => b.alignment - a.alignment);
+          setEmploymentAlignmentData(alignmentByProgram.slice(0, 6));
+
+          const years = [...new Set(predictions.map(p => p.year))].sort();
+          const avgByYear = years.map(year => {
+            const yearPredictions = predictions.filter(p => p.year === year);
+            const avg = yearPredictions.reduce((sum, p) => sum + (p.predicted_rate || 0), 0) / yearPredictions.length;
+            return { year: String(year), rate: Math.round(avg) };
+          });
+          setEmploymentForecastData(avgByYear);
         }
 
-        // ── 5. Login trends — last 7 days ────────────────────────────────
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
+        // Fetch employment status data
+        const { data: surveyData } = await supabase
+          .from('survey_progress')
+          .select('employment_information_data');
 
-        const { data: loginLogs } = await supabase
-          .from('audit_logs')
-          .select('created_at, status')
-          .eq('action', 'Login')
-          .gte('created_at', sevenDaysAgo.toISOString())
-          .order('created_at', { ascending: true });
+        const employmentStatuses = {
+          'Employed': 0,
+          'Unemployed': 0,
+          'Self-Employed': 0,
+          'Student': 0,
+          'Contractual': 0,
+        };
 
-        const days = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - (6 - i));
-          d.setHours(0, 0, 0, 0);
-          return d;
+        surveyData?.forEach(row => {
+          const parsed = safeParse(row.employment_information_data);
+          if (!parsed) return;
+          const status = parsed.employment_status || parsed.current_employment_status || parsed.employmentStatus || '';
+          if (status) {
+            const mapped = STATUS_MAPPING[status];
+            if (mapped) {
+              employmentStatuses[mapped]++;
+            } else if (status.toLowerCase().includes('regular') || status.toLowerCase().includes('permanent')) {
+              employmentStatuses.Employed++;
+            } else if (status.toLowerCase().includes('self')) {
+              employmentStatuses['Self-Employed']++;
+            } else if (status.toLowerCase().includes('student')) {
+              employmentStatuses.Student++;
+            } else if (parsed.company_name || parsed.job_position) {
+              employmentStatuses.Employed++;
+            }
+          } else if (parsed.company_name || parsed.job_position) {
+            employmentStatuses.Employed++;
+          }
         });
 
-        const trends = days.map(day => {
-          const label   = day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const nextDay = new Date(day);
-          nextDay.setDate(nextDay.getDate() + 1);
-          const dayLogs = (loginLogs ?? []).filter(l => {
-            const t = new Date(l.created_at);
-            return t >= day && t < nextDay;
+        const statusData = Object.entries(employmentStatuses)
+          .filter(([_, v]) => v > 0)
+          .map(([name, value]) => ({ name, value }));
+        setEmploymentStatusData(statusData);
+
+        // Fetch in-demand skills
+        const skillCount = {};
+        const { data: jobsData } = await supabase
+          .from('jobs')
+          .select('tags')
+          .eq('is_active', true);
+
+        jobsData?.forEach(job => {
+          if (!job.tags) return;
+          let tagsArray = [];
+          if (Array.isArray(job.tags)) {
+            tagsArray = job.tags;
+          } else if (typeof job.tags === 'string') {
+            try {
+              const p = JSON.parse(job.tags);
+              tagsArray = Array.isArray(p) ? p : [p];
+            } catch {
+              tagsArray = job.tags.split(',').map(t => t.trim());
+            }
+          }
+          tagsArray.forEach(tag => {
+            if (tag?.length > 0) {
+              const skill = tag.toLowerCase().trim();
+              skillCount[skill] = (skillCount[skill] || 0) + 1;
+            }
           });
-          return {
-            label,
-            success: dayLogs.filter(l => l.status === 'Success').length,
-            failed:  dayLogs.filter(l => l.status === 'Failed').length,
-          };
         });
-        setLoginTrends(trends);
+
+        if (Object.keys(skillCount).length === 0) {
+          const { data: surveyEmpData } = await supabase
+            .from('survey_progress')
+            .select('employment_information_data');
+
+          surveyEmpData?.forEach(row => {
+            const parsed = safeParse(row.employment_information_data);
+            if (!parsed) return;
+            const factors = parsed.job_factors || parsed.first_job_factors;
+            if (Array.isArray(factors)) {
+              factors.forEach(factor => {
+                if (factor && factor !== 'Other') {
+                  const skill = factor.toLowerCase().trim();
+                  skillCount[skill] = (skillCount[skill] || 0) + 1;
+                }
+              });
+            }
+          });
+        }
+
+        if (Object.keys(skillCount).length === 0) {
+          const sampleSkills = [
+            'Leadership', 'Communication', 'Problem Solving', 'Teamwork',
+            'Project Management', 'Critical Thinking', 'Adaptability', 'Digital Literacy',
+          ];
+          sampleSkills.forEach((skill, i) => {
+            skillCount[skill.toLowerCase()] = sampleSkills.length - i;
+          });
+        }
+
+        const topSkills = Object.entries(skillCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8)
+          .map(([name, count]) => ({
+            name: name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            count,
+          }));
+        setInDemandSkillsData(topSkills);
 
       } catch (err) {
-        console.error('SuperAdmin dashboard fetch error:', err.message);
+        console.error('Error fetching chart data:', err);
       } finally {
-        setLoading(false);
+        setLoadingCharts(false);
       }
     };
 
-    fetchAll();
+    fetchChartData();
   }, []);
 
-  const stats = [
-    {
-      title: 'Actions Today', value: loading ? '—' : String(actionsToday),
-      subtitle: 'Total actions', subtitleColor: '#155DFC', iconBg: '#EFF6FF',
-      IconEl: () => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#155DFC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-        </svg>
-      ),
-    },
-    {
-      title: 'Records Modified', value: loading ? '—' : String(recordsModified),
-      subtitle: 'Across all modules', subtitleColor: '#DAA520', iconBg: 'rgba(217,202,129,0.35)',
-      IconEl: () => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DAA520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-      ),
-    },
-    {
-      title: 'Total Alumni', value: loading ? '—' : String(alumniCount),
-      subtitle: 'Total registered', subtitleColor: '#00A63E', iconBg: 'rgba(0,166,62,0.12)',
-      IconEl: () => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00A63E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-          <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
-        </svg>
-      ),
-    },
-    {
-      title: 'Archived', value: loading ? '—' : String(archivedCount),
-      subtitle: 'Total archive actions', subtitleColor: '#FF720D', iconBg: 'rgba(255,164,85,0.49)',
-      IconEl: () => (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF720D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
-          <line x1="10" y1="12" x2="14" y2="12"/>
-        </svg>
-      ),
-    },
+  // ============================ ALUMNI TRACER KPIs ============================
+  const kpis2 = [
+    { label: "Registered Alumni",    value: alumniCount,          sub: alumniSubText },
+    { label: "Survey Response Rate", value: surveyCompletionRate, sub: surveySubText },
+    { label: "Active Programs",      value: activePrograms,       sub: activeProgramsSub },
+    { label: "Alumni Satisfaction",  value: alumniSatisfaction,   sub: satisfactionSub },
   ];
 
-  // Shared card header style
-  const CardHeader = ({ title, subtitle, icon }) => (
-    <div style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-        {icon && icon}
-        <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '16px', color: '#0A0A0A', lineHeight: '16px' }}>{title}</span>
-      </div>
-      <span style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: '#717182', lineHeight: '24px' }}>{subtitle}</span>
-    </div>
-  );
-
-  const LoadingBox = () => (
-    <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontSize: '13px', fontFamily: 'Arimo, Arial' }}>Loading…</div>
-  );
-
+  // ============================ RENDER ============================
   return (
-    <>
-      <style>{FONT_STYLE}</style>
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Lexend, Arimo, Arial' }}>
-        <SuperAdSidebar activePage="super-admin" />
-
-        <main style={{ marginLeft: '229px', flex: 1, padding: '40px 40px 60px', overflowX: 'hidden' }}>
-
-          {/* ── Header ── */}
-          <div style={{ marginBottom: '32px' }}>
-            <h1 style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '30px', color: '#101828', margin: '0 0 4px', lineHeight: '36px' }}>
-              Audit Overview
-            </h1>
-            <p style={{ fontFamily: 'Lexend, Arial', fontSize: '16px', color: '#6A7282', margin: 0 }}>
-              Welcome bark! Here's what's happening with your alumni network.
-            </p>
-          </div>
-
-          {/* ── Stat Cards ── */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '28px', flexWrap: 'wrap' }}>
-            {stats.map((s, i) => <StatCard key={i} {...s} />)}
-          </div>
-
-          {/* ── Charts Row: Activity by Role + Activity by Action ── */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-
-            {/* Activity by Role — Donut */}
-            <div style={{
-              background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '14px', padding: '24px', flex: 1,
-            }}>
-              <CardHeader
-                title="Activity by Role"
-                subtitle="Distribution of actions across user roles"
-              />
-              {loading ? <LoadingBox /> : <DonutChart data={roleData} />}
-            </div>
-
-            {/* Activity by Action — Bar */}
-            <div style={{
-              background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-              borderRadius: '14px', padding: '24px', flex: 1,
-            }}>
-              <CardHeader
-                title="Activity by Module"
-                subtitle="Actions performed in each system module"
-              />
-              {loading ? <LoadingBox /> : <BarChart data={actionData} />}
-            </div>
-          </div>
-
-          {/* ── Login Activity Trends — full width ── */}
-          <div style={{
-            background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: '14px', padding: '24px', marginBottom: '20px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              {/* Activity/chart icon matching Figma */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '16px', color: '#0A0A0A', lineHeight: '16px' }}>
-                Login Activity Trends
-              </span>
-            </div>
-            <div style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: '#717182', lineHeight: '24px', marginBottom: '20px' }}>
-              Successful and failed login attempts over the past 7 days
-            </div>
-            {loading ? <LoadingBox /> : <LoginTrendsChart data={loginTrends} />}
-          </div>
-
-          {/* ── Recent Critical Actions ── */}
-          {/* Figma shows this as a card with individual action rows, each in their own bordered container */}
-          <div style={{
-            background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: '14px', padding: '24px',
-          }}>
-            <div style={{ fontFamily: 'Arimo, Arial', fontWeight: 400, fontSize: '16px', color: '#0A0A0A', marginBottom: '4px' }}>
-              Recent Critical Actions
-            </div>
-            <div style={{ fontFamily: 'Arimo, Arial', fontSize: '16px', color: '#717182', lineHeight: '24px', marginBottom: '20px' }}>
-              Latest admin-level operations and important system changes
-            </div>
-
-            {loading ? (
-              <LoadingBox />
-            ) : recentActions.length === 0 ? (
-              <EmptyState message="No actions recorded yet" />
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {recentActions.map((a) => (
-                  <div key={a.id} style={{
-                    border: '1px solid rgba(0,0,0,0.1)',
-                    borderRadius: '10px',
-                    padding: '12px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                  }}>
-                    {/* Left: action info */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {/* Row 1: action tag + module + role tag */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        {a.action && <Tag label={a.action} />}
-                        <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#0A0A0A', lineHeight: '20px' }}>
-                          {a.module || '—'}
-                        </span>
-                        {a.user_role && (
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center',
-                            padding: '2px 8px', borderRadius: '8px',
-                            fontSize: '12px', fontFamily: 'Arimo, Arial',
-                            background: 'transparent', color: '#0A0A0A',
-                            border: '1px solid rgba(0,0,0,0.1)',
-                            lineHeight: '16px',
-                          }}>{a.user_role}</span>
-                        )}
-                      </div>
-                      {/* Row 2: description */}
-                      <div style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: '#0A0A0A', lineHeight: '20px' }}>
-                        {a.description || '—'}
-                      </div>
-                      {/* Row 3: meta — user · time · record id */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        {a.user_email && (
-                          <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>
-                            User: {a.user_email}
-                          </span>
-                        )}
-                        <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>•</span>
-                        <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>
-                          {formatDate(a.created_at)}
-                        </span>
-                        {a.record_id && (
-                          <>
-                            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>•</span>
-                            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: '#717182' }}>
-                              ID: {a.record_id}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {/* Right: status badge */}
-                    <div style={{ flexShrink: 0 }}>
-                      {a.status && <StatusBadge status={a.status} />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-        </main>
-      </div>
-    </>
+    <SuperAdminDashboardView
+      activeKpiTab={activeKpiTab}
+      setActiveKpiTab={setActiveKpiTab}
+      kpiData={kpiData}
+      kpis2={kpis2}
+      employmentAlignmentData={employmentAlignmentData}
+      employmentStatusData={employmentStatusData}
+      inDemandSkillsData={inDemandSkillsData}
+      employmentForecastData={employmentForecastData}
+      loadingCharts={loadingCharts}
+    />
   );
 };
 

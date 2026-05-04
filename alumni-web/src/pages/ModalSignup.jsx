@@ -17,11 +17,12 @@ const getPasswordStrength = (password) => {
 
 /**
  * Modal-aware Signup — identical Supabase logic to Signup.jsx.
- * Instead of navigate('/login'), calls onSuccess() to close the modal.
+ * Instead of navigate('/login'), calls onSwitchToLogin() to close the modal.
  */
 const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
   const idData = idExtracted || {};
 
+  const [agreed,              setAgreed]              = useState(false);
   const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading,             setLoading]             = useState(false);
@@ -76,12 +77,14 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
 
   const handleSignup = async () => {
     setError('');
-    const required  = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
+    const required   = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
     const newTouched = required.reduce((acc, k) => ({ ...acc, [k]: true }), {});
     setTouched(prev => ({ ...prev, ...newTouched }));
 
     if (!form.firstName || !form.lastName || !form.email || !form.password || !form.confirmPassword)
       return setError('Please fill in all required fields.');
+    if (!agreed)
+      return setError('Please agree to the Terms of Service and Privacy Policy.');
     if (fieldErrors.email)           { setTouched(prev => ({ ...prev, email: true })); return; }
     if (form.password.length < 8)    return setError('Password must be at least 8 characters long.');
     if (fieldErrors.password)        return setError(fieldErrors.password);
@@ -141,9 +144,11 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
       fieldErrors={fieldErrors}
       touched={touched}
       loading={loading}
+      agreed={agreed}
       showPassword={showPassword}
       showConfirmPassword={showConfirmPassword}
       passwordStrength={passwordStrength}
+      setAgreed={setAgreed}
       setShowPassword={setShowPassword}
       setShowConfirmPassword={setShowConfirmPassword}
       handleChange={handleChange}
@@ -151,6 +156,7 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
       handleSignup={handleSignup}
       // Modal context
       isModal
+      onClose={onClose}
       onSwitchToLogin={onSwitchToLogin}
     />
   );

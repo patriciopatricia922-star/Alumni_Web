@@ -1,21 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TbLayoutDashboardFilled } from 'react-icons/tb';
-import { FaBookBookmark } from 'react-icons/fa6';
-import { RiSurveyFill, RiOrganizationChart } from 'react-icons/ri';
-import { SiGoogleanalytics } from 'react-icons/si';
-import { BsFillPeopleFill } from 'react-icons/bs';
 import { FiMenu, FiX } from 'react-icons/fi';
-import sidebarLogo from '../../assets/new_lg.svg';
+import sidebarLogo from '../../assets/alumnai_logo_new.svg';
+import dashboardIcon from '../../assets/dashboard_icn.svg';
+import contentIcon from '../../assets/content_icn.svg';
+import predictIcon from '../../assets/predict_icn.svg';
+import analyticsIcon from '../../assets/analytics_icn.svg';
+import surveyIcon from '../../assets/survey_icn.svg';
+import alumniIcon from '../../assets/alumni_icn.svg';
+import adminIcon from '../../assets/admin_icn.svg';
+import auditsIcon from '../../assets/audits_icn.svg';
 import '../styles/SuperAdSidebar.css';
 
 const iconMap = {
-  TbLayoutDashboardFilled,
-  BsFillPeopleFill,
-  RiSurveyFill,
-  SiGoogleanalytics,
-  RiOrganizationChart,
-  FaBookBookmark,
+  dashboard_icn: dashboardIcon,
+  content_icn: contentIcon,
+  predict_icn: predictIcon,
+  analytics_icn: analyticsIcon,
+  survey_icn: surveyIcon,
+  alumni_icn: alumniIcon,
+  admin_icn: adminIcon,
+  audits_icn: auditsIcon,
+  // Legacy fallback keys (in case menuItems still pass old names)
+  TbLayoutDashboardFilled: dashboardIcon,
+  BsFillPeopleFill: alumniIcon,
+  RiSurveyFill: surveyIcon,
+  SiGoogleanalytics: analyticsIcon,
+  RiOrganizationChart: adminIcon,
+  FaBookBookmark: contentIcon,
 };
 
 const LogoutIcon = () => (
@@ -46,12 +58,13 @@ const SuperAdminSidebarView = ({
         <nav className="superadmin-mobile-bottom-nav">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
-            const IconComponent = iconMap[item.icon];
+            const iconSrc = iconMap[item.icon];
             return (
               <Link key={item.path} to={item.path} className="superadmin-mobile-nav-item">
                 {isActive && <div className="superadmin-mobile-active-indicator" />}
-                <IconComponent
-                  size={21}
+                <img
+                  src={iconSrc}
+                  alt={item.label}
                   className={`superadmin-mobile-icon ${isActive ? 'superadmin-mobile-icon-active' : 'superadmin-mobile-icon-inactive'}`}
                 />
                 <span className={`superadmin-mobile-label ${isActive ? 'superadmin-mobile-label-active' : 'superadmin-mobile-label-inactive'}`}>
@@ -97,9 +110,10 @@ const SuperAdminSidebarView = ({
         <div className="superadmin-sidebar-divider" />
 
         <div className="superadmin-sidebar-menu-section">
+          <p className="superadmin-sidebar-menu-heading">MENU</p>
           {menuItems.map(({ path, icon, label, marginTop }) => {
             const isActive = location.pathname === path;
-            const IconComponent = iconMap[icon];
+            const iconSrc = iconMap[icon];
             return (
               <Link
                 key={path}
@@ -113,8 +127,9 @@ const SuperAdminSidebarView = ({
                   if (!isActive) e.currentTarget.style.background = 'transparent';
                 }}
               >
-                <IconComponent
-                  size={20}
+                <img
+                  src={iconSrc}
+                  alt={label}
                   className={`superadmin-sidebar-icon ${isActive ? 'superadmin-sidebar-icon-active' : 'superadmin-sidebar-icon-inactive'}`}
                 />
                 <span className={`superadmin-sidebar-label ${isTablet ? 'superadmin-sidebar-label-tablet' : ''} ${isActive ? 'superadmin-sidebar-label-active' : ''}`}>

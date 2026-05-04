@@ -25,23 +25,39 @@ const SuperAdminSidebar = () => {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-      const { data } = await supabase
-        .from('users')
-        .select('first_name, last_name, email')
-        .eq('id', authUser.id)
-        .single();
-      if (data) setUser(data);
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser || !isMounted) return;
+        
+        const { data } = await supabase
+          .from('users')
+          .select('first_name, last_name, email')
+          .eq('id', authUser.id)
+          .single();
+        
+        if (data && isMounted) setUser(data);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
     };
+    
     fetchUser();
-  }, []);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only fetch once on mount
 
   const handleLogout = async () => {
+    try {
       await supabase.auth.signOut();
       navigate('/'); 
-    
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const displayName = 'Super Admin';
@@ -49,7 +65,7 @@ const SuperAdminSidebar = () => {
   const role        = 'Super Admin';
 
   const menuItems = [
-    { path: '/superadmin/super-admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Audit Overview'     },
+    { path: '/superadmin/super-admin-dashboard', icon: 'TbLayoutDashboardFilled', label: 'Dashboard'     },
     { path: '/superadmin/audit-logs',            icon: 'SiGoogleanalytics',       label: 'Audit Logs'         },
     { path: '/superadmin/admin-management',      icon: 'BsFillPeopleFill',        label: 'Admin Management',   split: true },
     { path: '/superadmin/super-admin-alumni',    icon: 'RiSurveyFill',            label: 'Alumni Management',  split: true },

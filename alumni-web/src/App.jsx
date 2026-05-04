@@ -29,8 +29,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
 import ResponseAndAnalytics from './admin/Responseandanalytics';
 import PredictiveAnalytics from './admin/PredictiveAnalytics';
-import SuperAdminDashboard from './superadmin/Superadmindashboard';
-import DetailedAuditLogs from './superadmin/Detailedauditlogs';
+import AuditLogs from './superadmin/AuditLogs';
 import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
 import VerificationCode from './pages/Verificationcode';
@@ -47,54 +46,119 @@ import ContentManagement from './admin/ContentManagement';
 import ResponseAnalytics from './superadmin/Responseandanalytics';
 import PredictiveAnaly from './superadmin/PredictiveAnalytics';
 import SurveyMgmt from './superadmin/SurveyManagement';
-// import DynamicSurvey from './pages/DynamicSurvey';
+import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
 
-// ─── Protected Route ──────────────────────────────────────────────────────────
-// Checks for a valid Supabase session before rendering the page.
-// If no session then redirect to /login.
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const [status, setStatus] = useState('checking'); // 'checking' | 'allowed' | 'denied'
-  const location = useLocation();
+// Cache for auth state to prevent repeated checks
+let cachedSession = null;
+let cachedUserRole = null;
+let authCheckPromise = null;
 
-  useEffect(() => {
-    const check = async () => {
+const getAuthState = async () => {
+  // Return cached values if they exist
+  if (cachedSession !== null && cachedUserRole !== null) {
+    return { session: cachedSession, userRole: cachedUserRole };
+  }
+  
+  // Prevent multiple simultaneous checks
+  if (authCheckPromise) {
+    return authCheckPromise;
+  }
+  
+  authCheckPromise = (async () => {
+    try {
       const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        setStatus('denied');
-        return;
-      }
-
-      // If specific roles are required, verify per public.users
-      if (allowedRoles) {
+      cachedSession = session;
+      
+      if (session?.user?.id) {
         const { data: userData } = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
           .maybeSingle();
+        cachedUserRole = userData?.role || null;
+      } else {
+        cachedUserRole = null;
+      }
+      
+      return { session: cachedSession, userRole: cachedUserRole };
+    } catch (error) {
+      console.error('Auth check error:', error);
+      return { session: null, userRole: null };
+    } finally {
+      authCheckPromise = null;
+    }
+  })();
+  
+  return authCheckPromise;
+};
 
-        if (!userData || !allowedRoles.includes(userData.role)) {
-          setStatus('denied');
-          return;
-        }
+// Clear auth cache on logout/expiry
+const clearAuthCache = () => {
+  cachedSession = null;
+  cachedUserRole = null;
+  authCheckPromise = null;
+};
+
+// Listen for auth changes to clear cache
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+    clearAuthCache();
+  } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    cachedSession = session;
+    // Clear role cache to force refresh
+    cachedUserRole = null;
+  }
+});
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const [status, setStatus] = useState('checking');
+  const location = useLocation();
+  const [prevPath, setPrevPath] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const check = async () => {
+      // Don't re-check if we're already authenticated and path hasn't changed significantly
+      if (status === 'allowed' && prevPath === location.pathname) {
+        return;
+      }
+      
+      const { session, userRole } = await getAuthState();
+      
+      if (!isMounted) return;
+      
+      if (!session) { 
+        setStatus('denied'); 
+        return; 
       }
 
+      if (allowedRoles && allowedRoles.length > 0) {
+        if (!userRole || !allowedRoles.includes(userRole)) { 
+          setStatus('denied'); 
+          return; 
+        }
+      }
+      
       setStatus('allowed');
+      setPrevPath(location.pathname);
     };
-
+    
     check();
-  }, [location.pathname]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname, allowedRoles, status, prevPath]);
 
-  if (status === 'checking') return null; 
+  if (status === 'checking') return null;
   if (status === 'denied') return <Navigate to="/login" replace />;
   return children;
 };
 
-// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   return (
     <Routes>
-      {/* ── Public routes ── */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<AlumniIDRegistration />} />
       <Route path="/terms" element={<TermsOfService />} />
@@ -106,22 +170,16 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
-      {/* ── Alumni protected routes ── */}
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['alumni']}><AlumniDashboard /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['alumni']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/announcements" element={<ProtectedRoute allowedRoles={['alumni']}><Announcements /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={['alumni']}><Profile /></ProtectedRoute>} />
-      {/* <Route path="/personal-information" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalInformation /></ProtectedRoute>} />
-      <Route path="/change-password" element={<ProtectedRoute allowedRoles={['alumni']}><ChangePassword /></ProtectedRoute>} /> */}
       <Route path="/about" element={<ProtectedRoute allowedRoles={['alumni']}><About /></ProtectedRoute>} />
-      {/* <Route path="/terms-about" element={<ProtectedRoute allowedRoles={['alumni']}><TermsOfServiceAbout/></ProtectedRoute>} />
-      <Route path="/privacy-about" element={<ProtectedRoute allowedRoles={['alumni']}><PrivacyPolicyAbout /></ProtectedRoute>} />
-      <Route path="/contact-support" element={<ProtectedRoute allowedRoles={['alumni']}><ContactSupport /></ProtectedRoute>} /> */}
       <Route path="/discounts" element={<ProtectedRoute allowedRoles={['alumni']}><Discounts /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute allowedRoles={['alumni']}><Events /></ProtectedRoute>} />
       <Route path="/jobs" element={<ProtectedRoute allowedRoles={['alumni']}><Jobs /></ProtectedRoute>} />
       <Route path="/update-tracer" element={<ProtectedRoute allowedRoles={['alumni']}><UpdateTracer /></ProtectedRoute>} />
-      {/* ── Survey protected routes ── */}
+
       <Route path="/survey/personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackground /></ProtectedRoute>} />
       <Route path="/survey/educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackground /></ProtectedRoute>} />
       <Route path="/survey/certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />
@@ -131,20 +189,18 @@ function App() {
       <Route path="/survey/feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagement /></ProtectedRoute>} />
       <Route path="/survey/complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
 
-      {/* ── Admin protected routes (For testing) ── */}
       <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
       <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
       <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
       <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
-      <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement/></ProtectedRoute>} />
+      <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement /></ProtectedRoute>} />
 
-      {/* ── Super Admin protected routes (For testing) ── */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
-      <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><DetailedAuditLogs /></ProtectedRoute>} />
-      <Route path= "/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement/></ProtectedRoute>} />
-      <Route path= "/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni/></ProtectedRoute>} />
-      <Route path= "/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement/></ProtectedRoute>} />
+      <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><AuditLogs /></ProtectedRoute>} />
+      <Route path="/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement /></ProtectedRoute>} />
+      <Route path="/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni /></ProtectedRoute>} />
+      <Route path="/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement /></ProtectedRoute>} />
       <Route path="/superadmin/survey-management" element={<ProtectedRoute allowedRoles={['superadmin']}><SurveyMgmt /></ProtectedRoute>} />
       <Route path="/superadmin/response-and-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><ResponseAnalytics /></ProtectedRoute>} />
       <Route path="/superadmin/predictive-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><PredictiveAnaly /></ProtectedRoute>} />

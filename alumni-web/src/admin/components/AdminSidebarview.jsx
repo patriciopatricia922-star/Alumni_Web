@@ -1,21 +1,33 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TbLayoutDashboardFilled } from 'react-icons/tb';
-import { FaBookBookmark } from 'react-icons/fa6';
-import { RiSurveyFill, RiOrganizationChart } from 'react-icons/ri';
-import { SiGoogleanalytics } from 'react-icons/si';
-import { BsFillPeopleFill } from 'react-icons/bs';
-import { FiLogOut, FiMenu, FiX } from 'react-icons/fi';
-import sidebarLogo from '../../assets/new_lg.svg';
+import { FiMenu, FiX } from 'react-icons/fi';
+import sidebarLogo from '../../assets/alumnai_logo_new.svg';
+import dashboardIcon from '../../assets/dashboard_icn.svg';
+import contentIcon from '../../assets/content_icn.svg';
+import predictIcon from '../../assets/predict_icn.svg';
+import analyticsIcon from '../../assets/analytics_icn.svg';
+import surveyIcon from '../../assets/survey_icn.svg';
+import alumniIcon from '../../assets/alumni_icn.svg';
+import adminIcon from '../../assets/admin_icn.svg';
+import auditsIcon from '../../assets/audits_icn.svg';
 import './AdminSidebar.css';
 
 const iconMap = {
-  TbLayoutDashboardFilled: TbLayoutDashboardFilled,
-  BsFillPeopleFill: BsFillPeopleFill,
-  RiSurveyFill: RiSurveyFill,
-  SiGoogleanalytics: SiGoogleanalytics,
-  RiOrganizationChart: RiOrganizationChart,
-  FaBookBookmark: FaBookBookmark,
+  dashboard_icn: dashboardIcon,
+  content_icn: contentIcon,
+  predict_icn: predictIcon,
+  analytics_icn: analyticsIcon,
+  survey_icn: surveyIcon,
+  alumni_icn: alumniIcon,
+  admin_icn: adminIcon,
+  audits_icn: auditsIcon,
+  // Legacy fallback keys (in case menuItems still pass old names)
+  TbLayoutDashboardFilled: dashboardIcon,
+  BsFillPeopleFill: alumniIcon,
+  RiSurveyFill: surveyIcon,
+  SiGoogleanalytics: analyticsIcon,
+  RiOrganizationChart: adminIcon,
+  FaBookBookmark: contentIcon,
 };
 
 const LogoutIcon = () => (
@@ -47,12 +59,13 @@ const AdminSidebarView = ({
         <nav className="admin-mobile-bottom-nav">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
-            const IconComponent = iconMap[item.icon];
+            const iconSrc = iconMap[item.icon];
             return (
               <Link key={item.path} to={item.path} className="admin-mobile-nav-item">
                 {isActive && <div className="admin-mobile-active-indicator" />}
-                <IconComponent
-                  size={21}
+                <img
+                  src={iconSrc}
+                  alt={item.label}
                   className={`admin-mobile-icon ${isActive ? 'admin-mobile-icon-active' : 'admin-mobile-icon-inactive'}`}
                 />
                 <span className={`admin-mobile-label ${isActive ? 'admin-mobile-label-active' : 'admin-mobile-label-inactive'}`}>
@@ -104,9 +117,10 @@ const AdminSidebarView = ({
 
         {/* MENU section */}
         <div className="admin-sidebar-menu-section">
+          <p className="admin-sidebar-menu-heading">MENU</p>
           {menuItems.map(({ path, icon, label, marginTop }) => {
             const isActive = location.pathname === path;
-            const IconComponent = iconMap[icon];
+            const iconSrc = iconMap[icon];
             return (
               <Link
                 key={path}
@@ -124,8 +138,9 @@ const AdminSidebarView = ({
                   }
                 }}
               >
-                <IconComponent
-                  size={20}
+                <img
+                  src={iconSrc}
+                  alt={label}
                   className={`admin-sidebar-icon ${isActive ? 'admin-sidebar-icon-active' : 'admin-sidebar-icon-inactive'}`}
                 />
                 <span className={`admin-sidebar-label ${isTablet ? 'admin-sidebar-label-tablet' : ''} ${isActive ? 'admin-sidebar-label-active' : ''}`}>

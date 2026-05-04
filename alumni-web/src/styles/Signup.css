@@ -1,43 +1,467 @@
-/* for signupview */
-@font-face {
-    font-family: 'Arimo';
-    font-weight: 400;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
-  }
+/* ============================================================
+   Signup.css
+   Floating-card web layout — mirrors IDRegistration.css
+   Color palette: #003EA6 (primary), #FFFFFF, #D9CA81 (accent)
+   Font: Montserrat (replaces Arimo)
+   ============================================================ */
 
-@font-face {
-    font-family: 'Arimo';
-    font-weight: 700;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
-  }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-  .custom-scroll::-webkit-scrollbar { width: 6px; }
-  .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
-  .custom-scroll::-webkit-scrollbar-thumb { background: rgba(217,202,129,0.4); border-radius: 10px; }
-  .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(217,202,129,0.8); }
+/* ── Keyframes ─────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .signup-card { width: 440px; height: 900px; max-height: 95vh; }
-  @media (max-width: 500px) { .signup-card { width: 95vw; } }
+@keyframes sup-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  input[type="password"]::-ms-reveal,
-  input[type="password"]::-ms-clear,
-  input[type="text"]::-ms-reveal,
-  input[type="text"]::-ms-clear { display: none !important; }
-  input::-webkit-credentials-auto-fill-button,
-  input::-webkit-strong-password-auto-fill-button { visibility: hidden !important; display: none !important; pointer-events: none !important; }
+/* ── Page root ───────────────────────────────────────────────
+   Default: full-page standalone route — dark blue backdrop.
+   Modifier --modal: parent overlay owns the backdrop.
+   ─────────────────────────────────────────────────────────── */
+.sup-page-root {
+  width: 100%;
+  min-height: 100vh;
+  background: #002263;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
 
-.eye-btn {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; padding: 0;
-    display: flex; align-items: center; justify-content: center;
-    line-height: 0; -webkit-appearance: none;
-  }
-  .eye-btn:focus { outline: none; }
+/* Modal context — strip the dark backdrop completely */
+.sup-page-root--modal {
+  min-height: unset;
+  background: transparent;
+  padding: 0;
+  width: auto;
+}
 
-  input::placeholder { color: rgba(255,255,255,0.3) !important; opacity: 1; }
-  input::-webkit-input-placeholder { color: rgba(255,255,255,0.3) !important; -webkit-text-fill-color: rgba(255,255,255,0.3) !important; }
-  input::-moz-placeholder { color: rgba(255,255,255,0.3) !important; opacity: 1; }
-  .pw-strength-bar { height: 4px; border-radius: 4px; transition: width 0.3s ease, background 0.3s ease; }
+/* ── Back button (full-page route only) ──────────────────────── */
+.sup-back {
+  position: fixed;
+  top: 27px;
+  left: 39px;
+  z-index: 10;
+}
 
+/* ══════════════════════════════════════════════════════════════
+   FLOATING CARD — main shell
+   480 px wide white card with blue header band (matches IDReg)
+   ══════════════════════════════════════════════════════════════ */
+.sup-floating-card {
+  width: 480px;
+  max-width: 95vw;
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: sup-fade-in 0.3s ease both;
+}
+
+/* ── Card header band ────────────────────────────────────────── */
+.sup-card-header {
+  background: #003EA6;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Icon badge in header */
+.sup-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(209, 213, 220, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sup-header-text { flex: 1; }
+
+.sup-header-title {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #FFFFFF;
+  margin: 0 0 2px;
+}
+
+.sup-header-sub {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+/* Close / back button in header */
+.sup-header-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.sup-header-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* ── Card body ───────────────────────────────────────────────── */
+.sup-card-body {
+  padding: 24px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: calc(90vh - 88px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.sup-card-body::-webkit-scrollbar        { width: 4px; }
+.sup-card-body::-webkit-scrollbar-track  { background: transparent; }
+.sup-card-body::-webkit-scrollbar-thumb  { background: rgba(0,62,166,0.15); border-radius: 4px; }
+.sup-card-body::-webkit-scrollbar-thumb:hover { background: rgba(0,62,166,0.3); }
+
+/* ── Section ─────────────────────────────────────────────────── */
+.sup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.sup-section:last-of-type { margin-bottom: 0; }
+
+.sup-section-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #003EA6;
+  margin: 0 0 4px;
+}
+
+/* ── Field wrapper ───────────────────────────────────────────── */
+.sup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sup-field-row {
+  display: flex;
+  gap: 12px;
+}
+.sup-field-row .sup-field { flex: 1; }
+
+/* ── Field label ─────────────────────────────────────────────── */
+.sup-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 14px;
+  color: #003EA6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sup-label-required {
+  color: #FF4D4D;
+  font-weight: 700;
+}
+
+.sup-label-error {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 10px;
+  color: #FF6B6B;
+  font-weight: 400;
+}
+
+/* ── Text input ──────────────────────────────────────────────── */
+.sup-input {
+  width: 100%;
+  height: 36px;
+  background: #FFFFFF;
+  border: 0.8px solid #4A5565;
+  border-radius: 14px;
+  padding: 4px 12px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 24px;
+  color: #0A0A0A;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.sup-input::placeholder {
+  color: rgba(10, 10, 10, 0.5);
+  opacity: 1;
+}
+
+.sup-input:focus {
+  border-color: #003EA6;
+  box-shadow: 0 0 0 3px rgba(0, 62, 166, 0.08);
+}
+
+.sup-input--error {
+  border-color: rgba(255, 80, 80, 0.6);
+}
+.sup-input--error:focus {
+  border-color: #FF4D4D;
+  box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.08);
+}
+
+/* Read-only (pre-filled from ID scan) */
+.sup-input--readonly {
+  background: rgba(0, 62, 166, 0.04);
+  border-color: rgba(0, 62, 166, 0.18);
+  color: #0A0A0A;
+  cursor: default;
+}
+.sup-input--readonly:focus {
+  border-color: rgba(0, 62, 166, 0.18);
+  box-shadow: none;
+}
+
+/* ── Password wrapper ────────────────────────────────────────── */
+.sup-pw-wrap {
+  position: relative;
+}
+
+.sup-pw-wrap .sup-input {
+  padding-right: 38px;
+}
+
+/* Eye toggle button */
+.sup-eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  -webkit-appearance: none;
+}
+.sup-eye-btn:focus { outline: none; }
+
+/* ── Password strength ───────────────────────────────────────── */
+.sup-pw-strength {
+  margin-top: 6px;
+}
+
+.sup-pw-bars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.sup-pw-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.sup-pw-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sup-pw-level-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sup-pw-criteria {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sup-pw-criterion {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.2s;
+}
+
+/* ── Password hint text ──────────────────────────────────────── */
+.sup-pw-hint {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 9px;
+  line-height: 16px;
+  color: #4A5565;
+  margin: 4px 0 0;
+}
+
+/* ── Error banner ────────────────────────────────────────────── */
+.sup-error-banner {
+  background: rgba(255, 80, 80, 0.08);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.sup-error-banner p {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 11px;
+  color: #FF6B6B;
+  margin: 0;
+}
+
+/* ── Terms row ───────────────────────────────────────────────── */
+.sup-terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.sup-checkbox {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #012E86;
+  border-radius: 3px;
+  accent-color: #003EA6;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.sup-terms-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 22px;
+  color: #4A5565;
+  cursor: pointer;
+}
+
+.sup-legal-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #003EA6;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.sup-legal-btn:hover { opacity: 0.75; }
+
+/* ── Submit button ───────────────────────────────────────────── */
+.sup-submit-btn {
+  width: 100%;
+  height: 42px;
+  background: rgba(0, 62, 166, 0.28);
+  border: none;
+  border-radius: 36px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.12);
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #FFFFFF;
+  cursor: not-allowed;
+  transition: background 0.25s ease, box-shadow 0.2s;
+  margin-bottom: 14px;
+}
+.sup-submit-btn--active {
+  background: #003EA6;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 62, 166, 0.35);
+}
+.sup-submit-btn--active:hover { background: #002d7a; }
+.sup-submit-btn--loading {
+  background: rgba(0, 62, 166, 0.5);
+  cursor: not-allowed;
+}
+
+/* ── Footer link ─────────────────────────────────────────────── */
+.sup-footer-text {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 38px;
+  color: #4A5565;
+  text-align: center;
+  margin: 0;
+}
+
+.sup-login-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #003EA6;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.sup-login-link:hover { opacity: 0.75; }
+
+/* ── Divider between sections ────────────────────────────────── */
+.sup-divider {
+  height: 1px;
+  background: rgba(0, 62, 166, 0.08);
+  margin: 4px 0 20px;
+  border: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .sup-back          { top: 16px; left: 16px; }
+  .sup-floating-card { width: 420px; }
+  .sup-card-body     { padding: 20px 22px 24px; }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .sup-back            { top: 12px; left: 12px; }
+  .sup-page-root       { padding: 16px 8px; align-items: flex-start; }
+  .sup-floating-card   { width: 100%; border-radius: 16px; }
+  .sup-card-header     { padding: 16px 18px; border-radius: 16px 16px 0 0; }
+  .sup-header-title    { font-size: 14px; }
+  .sup-card-body       { padding: 16px 16px 20px; max-height: calc(85vh - 72px); }
+  .sup-field-row       { flex-direction: column; gap: 10px; }
+  .sup-submit-btn      { height: 40px; font-size: 13px; }
+}

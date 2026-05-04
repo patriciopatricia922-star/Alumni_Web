@@ -1,16 +1,9 @@
-// ============================================================================
-// THIS IS THE UI.
-// ============================================================================
-// Purpose: Renders all visual components for the admin dashboard using
-//          friend's exact design with proper font styling and grid layouts.
-// ============================================================================
-
-import { useNavigate } from "react-router-dom";
+// src/pages/views/SuperAdminDashboardView.jsx
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
 import { IoMdSchool } from "react-icons/io";
 import { BiSolidSchool } from "react-icons/bi";
-import AdminSidebar from "../components/AdminSidebar";
-import "../styles/AdminDashboard.css";
+import SuperAdminSidebar from "../SuperAdsidebar";
+import "../styles/SuperAdminDashboard.css";
 
 // ============================================================================
 // COLOR PALETTE - Used for pie chart segments
@@ -54,9 +47,7 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
 
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
-      {/* Track */}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-      {/* Target arc */}
       {target > 0 && (
         <circle
           cx={cx} cy={cy} r={r} fill="none"
@@ -67,7 +58,6 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
           strokeLinecap="round"
         />
       )}
-      {/* Progress arc */}
       <circle
         cx={cx} cy={cy} r={r} fill="none"
         stroke={progressColor} strokeWidth={7}
@@ -75,7 +65,6 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
         strokeDashoffset={progressOffset}
         strokeLinecap="round"
       />
-      {/* Target tick mark */}
       {target > 0 && (() => {
         const drawAngle = (clampedTarget / 100) * 2 * Math.PI;
         const inner = r - 5;
@@ -86,7 +75,6 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
         const y2 = cy + outer * Math.sin(drawAngle);
         return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={targetColor} strokeWidth={2.5} strokeLinecap="round" />;
       })()}
-      {/* Center label */}
       <text
         x={cx} y={cy + 1}
         textAnchor="middle"
@@ -123,7 +111,6 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
   return (
     <div className="kpi-progress-card">
       <div className="kpi-progress-category">{category}</div>
-
       <div className="kpi-progress-content">
         <div className="kpi-progress-info">
           <div className="kpi-progress-label">{label}</div>
@@ -136,15 +123,8 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
             )}
           </div>
         </div>
-
         <div className="kpi-progress-gauge">
-          <RadialGauge
-            progress={progress}
-            target={target}
-            targetDir={targetDir}
-            isCount={isCount}
-            size={76}
-          />
+          <RadialGauge progress={progress} target={target} targetDir={targetDir} isCount={isCount} size={76} />
         </div>
       </div>
     </div>
@@ -253,93 +233,6 @@ function ChartCard({ title, subtitle, children }) {
 }
 
 // ============================================================================
-// NAVIGABLE CHART CARD
-// Wraps ChartCard with full-card keyboard + pointer navigation.
-//
-// Design decisions:
-//   • role="button" + tabIndex={0} — makes the card a focusable, announced
-//     interactive element without the semantics of an <a> tag (no href needed).
-//   • onKeyDown Enter/Space — standard keyboard activation pattern for role=button.
-//   • onClick on the outer wrapper uses a mousedown timestamp guard to
-//     distinguish real user clicks from Recharts' synthetic bubbled events.
-//     Recharts fires its own onClick on SVG elements; those propagate up but
-//     happen within the same JS task so they share the same timestamp. We
-//     capture the timestamp on the wrapper's onMouseDown and only navigate
-//     if the click timestamp matches, ensuring a single navigation per gesture.
-//   • The Recharts container sits inside a div with pointer-events: auto so
-//     tooltips and segment hover still work normally — we never suppress those.
-//   • cursor: pointer on the wrapper gives a clear affordance; the chart area
-//     inherits it but Recharts overrides with its own cursor on active segments,
-//     which is correct and expected behavior.
-// ============================================================================
-function NavigableChartCard({ title, subtitle, to, children }) {
-  const navigate = useNavigate();
-
-  // Track the timestamp of the most recent mousedown on the card wrapper.
-  // Used to verify the click originated here and not from a bubbled Recharts event.
-  const mouseDownTimeRef = { current: null };
-
-  const handleMouseDown = () => {
-    mouseDownTimeRef.current = Date.now();
-  };
-
-  const handleClick = (e) => {
-    // If the click timestamp doesn't match the recorded mousedown, it's a
-    // bubbled synthetic event from Recharts — ignore it.
-    if (mouseDownTimeRef.current === null) return;
-    if (Date.now() - mouseDownTimeRef.current > 300) return; // stale — ignore
-    mouseDownTimeRef.current = null;
-    navigate(to);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault(); // prevent page scroll on Space
-      navigate(to);
-    }
-  };
-
-  return (
-    <div
-      className="chart-card chart-card--navigable"
-      role="button"
-      tabIndex={0}
-      aria-label={`${title} — click to view full report`}
-      onMouseDown={handleMouseDown}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-    >
-      <div className="chart-card-header">
-        <div className="chart-card-title">
-          {title}
-          {/* Small external-link indicator so the affordance is visible */}
-          <svg
-            className="chart-card-nav-icon"
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-          </svg>
-        </div>
-        {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
-      </div>
-      <div className="chart-container">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
 // CUSTOM BAR CHART
 // ============================================================================
 function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 }) {
@@ -369,22 +262,15 @@ function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 
 
 // ============================================================================
 // CUSTOM PIE CHART
-// Accepts an optional `navigateTo` prop. When provided, the card becomes a
-// navigable element via NavigableChartCard; otherwise it falls back to the
-// plain ChartCard — no other behaviour changes.
 // ============================================================================
-function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
+function CustomPieChart({ data, title, subtitle, height = 280 }) {
   const filteredData = data?.filter(d => d.value > 0) || [];
-
-  const CardWrapper = navigateTo
-    ? (props) => <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo} {...props} />
-    : (props) => <ChartCard title={title} subtitle={subtitle} {...props} />;
 
   if (!filteredData || filteredData.length === 0) {
     return (
-      <CardWrapper>
+      <ChartCard title={title} subtitle={subtitle}>
         <EmptyChart height={height} />
-      </CardWrapper>
+      </ChartCard>
     );
   }
 
@@ -401,7 +287,7 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
   };
 
   return (
-    <CardWrapper>
+    <ChartCard title={title} subtitle={subtitle}>
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
@@ -420,7 +306,7 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
           <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
         </PieChart>
       </ResponsiveContainer>
-    </CardWrapper>
+    </ChartCard>
   );
 }
 
@@ -455,7 +341,7 @@ function CustomLineChart({ data, dataKey, xKey, title, subtitle, height = 280 })
 // ============================================================================
 // MAIN VIEW COMPONENT
 // ============================================================================
-const AdminDashboardView = ({
+const SuperAdminDashboardView = ({
   activeKpiTab,
   setActiveKpiTab,
   kpiData,
@@ -467,19 +353,19 @@ const AdminDashboardView = ({
   loadingCharts,
 }) => {
   return (
-    <div className="dashboard-layout">
-      <AdminSidebar />
+    <div className="super-dashboard-layout">
+      <SuperAdminSidebar />
 
-      <main className="dashboard-main">
+      <main className="super-dashboard-main">
 
         {/* ============================ HEADER ============================ */}
-        <div className="dashboard-header">
-          <h1>Dashboard Overview</h1>
-          <p>Welcome Bark! Here's what's happening with your alumni.</p>
+        <div className="super-dashboard-header">
+          <h1>Super Admin Dashboard Overview</h1>
+          <p>Welcome Super Admin! Here's the complete institutional overview.</p>
         </div>
 
         {/* ============================ INSTITUTIONAL KPIs SECTION ============================ */}
-        <div className="dashboard-section">
+        <div className="super-dashboard-section">
           <div className="section-header">
             <BiSolidSchool className="section-icon" />
             <div className="section-title">Institutional KPI</div>
@@ -516,12 +402,11 @@ const AdminDashboardView = ({
         </div>
 
         {/* ============================ ALUMNI TRACER SECTION ============================ */}
-        <div className="dashboard-section">
+        <div className="super-dashboard-section">
           <div className="section-header">
             <IoMdSchool className="section-icon" />
             <div className="section-title">Alumni Tracer</div>
           </div>
-          {/* Alumni Tracer Grid - 4 columns */}
           <div className="alumni-tracer-grid">
             {kpis2.map((k) => (
               <KpiStatCard key={k.label} {...k} />
@@ -539,17 +424,11 @@ const AdminDashboardView = ({
             subtitle="Percentage of employed alumni per program"
             height={280}
           />
-          {/*
-            Employment Status Distribution — navigates to the full analytics
-            page on click. The `navigateTo` prop opts this chart into the
-            NavigableChartCard wrapper; all other charts remain plain cards.
-          */}
           <CustomPieChart
             data={employmentStatusData}
             title="Employment Status Distribution"
             subtitle="Breakdown of alumni by employment type"
             height={280}
-            navigateTo="/admin/response-and-analytics"
           />
         </div>
 
@@ -580,4 +459,4 @@ const AdminDashboardView = ({
   );
 };
 
-export default AdminDashboardView;
+export default SuperAdminDashboardView;

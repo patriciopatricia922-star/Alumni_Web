@@ -1,5 +1,5 @@
 // ============================================================================
-// THIS IS THE UI.
+// THIS IS THE UI for Content Management ADMIN
 // ============================================================================
 
 import React, { useEffect, useCallback } from 'react';

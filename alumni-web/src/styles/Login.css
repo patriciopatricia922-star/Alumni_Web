@@ -1,52 +1,387 @@
-/* For Loginview */
+/* ============================================================
+   Login.css
+   Floating-card web layout — mirrors IDRegistration.css / Signup.css
+   Color palette: #003EA6 (primary), #FFFFFF, #D9CA81 (accent)
+   Font: Montserrat
+   ============================================================ */
 
-@font-face {
-    font-family: 'Arimo';
-    font-weight: 400;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Regular.ttf') format('truetype');
-  }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-@font-face {
-    font-family: 'Arimo';
-    font-weight: 700;
-    font-style: normal;
-    src: url('../assets/fonts/Arimo-Bold.ttf') format('truetype');
-  }
+/* ── Keyframes ─────────────────────────────────────────────── */
+@keyframes lgn-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-.login-card { width: 500px; height: 730px; max-height: 95vh; }
-@media (max-width: 500px) { .login-card { width: 95vw; } }
+/* ── Page root ───────────────────────────────────────────────
+   Default: full-page standalone route — dark blue backdrop.
+   Modifier --modal: parent overlay owns the backdrop.
+   ─────────────────────────────────────────────────────────── */
+.lgn-page-root {
+  width: 100%;
+  min-height: 100vh;
+  background: #002263;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
 
-  input[type="password"]::-ms-reveal,
-  input[type="password"]::-ms-clear,
-  input[type="text"]::-ms-reveal,
-  input[type="text"]::-ms-clear { display: none !important; }
-  input::-webkit-credentials-auto-fill-button,
-  input::-webkit-strong-password-auto-fill-button { visibility: hidden !important; display: none !important; pointer-events: none !important; }
+.lgn-page-root--modal {
+  min-height: unset;
+  background: transparent;
+  padding: 0;
+  width: auto;
+}
 
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px rgba(13, 19, 56, 0.6) inset !important;
-    -webkit-text-fill-color: #FFFFFF !important;
-    caret-color: #FFFFFF !important;
-    transition: background-color 9999s ease-in-out 0s;
-  }
+/* ── Back button (full-page route only) ──────────────────────── */
+.lgn-back {
+  position: fixed;
+  top: 27px;
+  left: 39px;
+  z-index: 10;
+}
 
-.eye-btn-login {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 0;
-    -webkit-appearance: none;
-  }
-.eye-btn-login:focus { outline: none; }
+/* ══════════════════════════════════════════════════════════════
+   FLOATING CARD — white card with blue header band
+   ══════════════════════════════════════════════════════════════ */
+.lgn-floating-card {
+  width: 480px;
+  max-width: 95vw;
+  background: #FFFFFF;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: lgn-fade-in 0.3s ease both;
+}
+
+/* ── Card header band ────────────────────────────────────────── */
+.lgn-card-header {
+  background: #003EA6;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lgn-header-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(209, 213, 220, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.lgn-header-text { flex: 1; }
+
+.lgn-header-title {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #FFFFFF;
+  margin: 0 0 2px;
+}
+
+.lgn-header-sub {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.lgn-header-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.lgn-header-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+/* ── Card body ───────────────────────────────────────────────── */
+.lgn-card-body {
+  padding: 24px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* Let content determine height — no max-height clipping */
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ── Google button ───────────────────────────────────────────── */
+.lgn-google-btn {
+  width: 100%;
+  height: 42px;
+  background: #F3F3F5;
+  border: 1.23674px solid rgba(0, 0, 0, 0.25);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.lgn-google-btn:hover:not(:disabled) { background: #e8e8eb; }
+.lgn-google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.lgn-google-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  color: #003EA6;
+  white-space: nowrap;
+}
+
+/* ── OR divider ──────────────────────────────────────────────── */
+.lgn-or-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lgn-or-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(10, 10, 10, 0.15);
+  border: none;
+}
+
+.lgn-or-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 9px;
+  color: #0A0A0A;
+  flex-shrink: 0;
+}
+
+/* ── Field wrapper ───────────────────────────────────────────── */
+.lgn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* ── Field label ─────────────────────────────────────────────── */
+.lgn-label {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 14px;
+  color: #003EA6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lgn-label-required { color: #FF4D4D; font-weight: 700; }
+
+/* ── Text input ──────────────────────────────────────────────── */
+.lgn-input {
+  width: 100%;
+  height: 36px;
+  background: #FFFFFF;
+  border: 0.8px solid #4A5565;
+  border-radius: 14px;
+  padding: 4px 12px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 24px;
+  color: #0A0A0A;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lgn-input::placeholder {
+  color: rgba(10, 10, 10, 0.5);
+  opacity: 1;
+}
+
+.lgn-input:focus {
+  border-color: #003EA6;
+  box-shadow: 0 0 0 3px rgba(0, 62, 166, 0.08);
+}
+
+.lgn-input--error {
+  border-color: rgba(255, 80, 80, 0.6);
+}
+.lgn-input--error:focus {
+  border-color: #FF4D4D;
+  box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.08);
+}
+
+/* Autofill override — keep white background */
+.lgn-input:-webkit-autofill,
+.lgn-input:-webkit-autofill:hover,
+.lgn-input:-webkit-autofill:focus,
+.lgn-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0A0A0A !important;
+  caret-color: #0A0A0A !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ── Password wrapper ────────────────────────────────────────── */
+.lgn-pw-wrap { position: relative; }
+.lgn-pw-wrap .lgn-input { padding-right: 38px; }
+
+.lgn-eye-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  -webkit-appearance: none;
+}
+.lgn-eye-btn:focus { outline: none; }
+
+/* ── Forgot password link ────────────────────────────────────── */
+.lgn-forgot-link {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 24px;
+  color: #003EA6;
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+.lgn-forgot-link:hover { opacity: 0.75; }
+
+/* ── Error banner ────────────────────────────────────────────── */
+.lgn-error-banner {
+  background: rgba(255, 80, 80, 0.08);
+  border: 1px solid rgba(255, 80, 80, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.lgn-error-banner p {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 11px;
+  color: #FF6B6B;
+  margin: 0;
+}
+
+/* ── Log in button ───────────────────────────────────────────── */
+.lgn-submit-btn {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;           /* prevent shrink */
+  flex-shrink: 0;             /* prevent flex shrink */
+  background: #003EA6;
+  border: none;
+  border-radius: 36px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.25s ease, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.lgn-submit-btn:hover:not(:disabled) {
+  background: #002d7a;
+  box-shadow: 0 4px 12px rgba(0, 62, 166, 0.35);
+}
+.lgn-submit-btn:disabled {
+  background: rgba(0, 62, 166, 0.5);
+  cursor: not-allowed;
+}
+
+/* ── Footer link ─────────────────────────────────────────────── */
+.lgn-footer-text {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 38px;
+  color: #4A5565;
+  text-align: center;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.lgn-signup-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #003EA6;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.lgn-signup-link:hover { opacity: 0.75; }
+
+/* ══════════════════════════════════════════════════════════════
+   FIX: Prevent button shrinking in ALL modal cards
+   These rules ensure submit/action buttons never collapse
+   regardless of parent flex/height constraints.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Signup modal */
+.sup-submit-btn {
+  flex-shrink: 0 !important;
+  min-height: 42px !important;
+}
+
+/* ID Registration modal */
+.aid-next-btn {
+  flex-shrink: 0 !important;
+  min-height: 42px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .lgn-back          { top: 16px; left: 16px; }
+  .lgn-floating-card { width: 420px; }
+  .lgn-card-body     { padding: 20px 22px 24px; }
+}
+
+@media (max-width: 480px) {
+  .lgn-back            { top: 12px; left: 12px; }
+  .lgn-page-root       { padding: 16px 8px; align-items: flex-start; }
+  .lgn-floating-card   { width: 100%; border-radius: 16px; }
+  .lgn-card-header     { padding: 16px 18px; border-radius: 16px 16px 0 0; }
+  .lgn-header-title    { font-size: 14px; }
+  .lgn-card-body       { padding: 16px 16px 20px; gap: 12px; }
+  .lgn-submit-btn      { height: 40px; min-height: 40px; font-size: 13px; }
+  .lgn-google-btn      { height: 40px; }
+}
