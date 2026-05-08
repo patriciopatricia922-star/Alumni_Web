@@ -10,7 +10,7 @@ const STYLES = `
     display: flex;
     min-height: 100vh;
     background: #DAE5F1;
-    font-family: 'Arimo', Arial, sans-serif;
+    font-family: 'Montserrat', Arial, sans-serif;
   }
 
   .pb-content {

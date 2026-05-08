@@ -1,9 +1,9 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.
+   AlumniManagement.css
    ============================================================================
-   Purpose: Contains all CSS styles for the Alumni Management component.
-            Includes layout, table styling, badges, modals, filters,
-            pagination, and responsive breakpoints.
+   Styles for the Alumni Management component.
+   Includes layout, table, badges, modals, filters, pagination, and
+   responsive breakpoints.
    ============================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
@@ -15,15 +15,19 @@ body { margin: 0; background: #E5ECF7F2; }
    MAIN PAGE LAYOUT
    ============================================ */
 .am-page {
-  min-height: 100vh;
-  background: rgba(225,236,247,0.95);
+  height: 100vh;
+  overflow: hidden;
+  background: rgba(225, 236, 247, 0.95);
   margin-left: 229px;
   padding: 37px 32px 60px;
   font-family: 'Arimo', Arial, sans-serif;
 }
 
 @media (max-width: 900px) {
-  .am-page { margin-left: 0 !important; padding: 20px 16px 48px; }
+  .am-page {
+    margin-left: 0 !important;
+    padding: 20px 16px 48px;
+  }
 }
 
 /* ============================================
@@ -70,19 +74,19 @@ body { margin: 0; background: #E5ECF7F2; }
   align-items: center;
   gap: 8px;
   padding: 8px 20px;
-  background: #001947;
+  background: #4FA3F7;
   border: none;
   border-radius: 8px;
   font-family: 'Arimo', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .am-export-btn:hover {
-  background: #002570;
+  background: #3d8fd6;
 }
 
 .am-export-btn svg {
@@ -97,12 +101,12 @@ body { margin: 0; background: #E5ECF7F2; }
   background: #F8F9FB;
   border: 1px solid #E2E8F0;
   border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
 /* ============================================
-   TOOLBAR (Search + Filter)
+   TOOLBAR (Search + Buttons)
    ============================================ */
 .am-toolbar {
   display: flex;
@@ -111,7 +115,7 @@ body { margin: 0; background: #E5ECF7F2; }
   flex-wrap: wrap;
   gap: 10px;
   padding: 16px;
-  background: rgba(248,250,252,.5);
+  background: rgba(248, 250, 252, 0.5);
   border-bottom: 1px solid #E2E8F0;
 }
 
@@ -143,7 +147,7 @@ body { margin: 0; background: #E5ECF7F2; }
 }
 
 .am-search-wrap input::placeholder {
-  color: rgba(15,23,43,.5);
+  color: rgba(15, 23, 43, 0.5);
 }
 
 .am-toolbar-btns {
@@ -165,7 +169,7 @@ body { margin: 0; background: #E5ECF7F2; }
   font-family: 'Arimo', sans-serif;
   font-size: 14px;
   color: #314158;
-  transition: background .12s;
+  transition: background 0.12s;
   position: relative;
 }
 
@@ -187,7 +191,7 @@ body { margin: 0; background: #E5ECF7F2; }
   height: 10px;
   background: #155DFC;
   border-radius: 50%;
-  border: 2px solid #FFFFFF;
+  border: 2px solid #ffffff;
 }
 
 /* ============================================
@@ -196,6 +200,8 @@ body { margin: 0; background: #E5ECF7F2; }
 .am-table-wrap {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
 }
 
 .am-table {
@@ -207,6 +213,9 @@ body { margin: 0; background: #E5ECF7F2; }
 .am-table thead tr {
   background: #F8FAFC;
   border-bottom: 1px solid #E2E8F0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .am-table th {
@@ -215,20 +224,21 @@ body { margin: 0; background: #E5ECF7F2; }
   font-weight: 700;
   font-size: 12px;
   line-height: 16px;
-  letter-spacing: .6px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #62748E;
   text-align: left;
   white-space: nowrap;
 }
 
-.am-table th.tc, .am-table td.tc {
+.am-table th.tc,
+.am-table td.tc {
   text-align: center;
 }
 
 .am-table tbody tr {
   border-bottom: 1px solid #E2E8F0;
-  transition: background .12s;
+  transition: background 0.12s;
 }
 
 .am-table tbody tr:last-child {
@@ -255,7 +265,7 @@ body { margin: 0; background: #E5ECF7F2; }
   font-style: italic;
 }
 
-/* Name Cell */
+/* ── Name cell ─────────────────────────────── */
 .am-name-cell {
   display: flex;
   align-items: center;
@@ -398,7 +408,7 @@ body { margin: 0; background: #E5ECF7F2; }
   font-family: 'Arimo', sans-serif;
   font-size: 14px;
   color: #0F172B;
-  transition: background .12s;
+  transition: background 0.12s;
 }
 
 .am-pg-btn:hover:not(:disabled) {
@@ -406,7 +416,7 @@ body { margin: 0; background: #E5ECF7F2; }
 }
 
 .am-pg-btn:disabled {
-  opacity: .45;
+  opacity: 0.45;
   cursor: default;
 }
 
@@ -459,7 +469,7 @@ body { margin: 0; background: #E5ECF7F2; }
 }
 
 .filter-modal {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   width: 420px;
   max-width: 90vw;
@@ -529,7 +539,7 @@ body { margin: 0; background: #E5ECF7F2; }
   padding: 0 12px;
   border: 1px solid #E2E8F0;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
   font-family: 'Arimo', sans-serif;
   font-size: 14px;
   color: #0A0A0A;
@@ -604,7 +614,7 @@ body { margin: 0; background: #E5ECF7F2; }
   font-family: 'Arimo', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -629,7 +639,7 @@ body { margin: 0; background: #E5ECF7F2; }
 
 @keyframes apm-fade-in {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 .apm-drawer {
@@ -647,7 +657,7 @@ body { margin: 0; background: #E5ECF7F2; }
 
 @keyframes apm-slide-up {
   from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 .apm-close {
@@ -687,7 +697,13 @@ body { margin: 0; background: #E5ECF7F2; }
   position: absolute;
   inset: 0;
   opacity: 0.07;
-  background: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%);
+  background: repeating-linear-gradient(
+    45deg,
+    #fff 0,
+    #fff 1px,
+    transparent 0,
+    transparent 50%
+  );
   background-size: 12px 12px;
 }
 
@@ -760,7 +776,7 @@ body { margin: 0; background: #E5ECF7F2; }
   font-family: 'Lexend', sans-serif;
   font-weight: 700;
   font-size: 12px;
-  letter-spacing: .6px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #62748E;
   margin: 0 0 14px;
@@ -822,46 +838,23 @@ body { margin: 0; background: #E5ECF7F2; }
   font-weight: 400;
 }
 
-.apm-badge--completed {
-  background: #DCFCE7;
-  color: #008236;
-}
-
-.apm-badge--pending {
-  background: #FFE2E2;
-  color: #BF0000;
-}
-
-.apm-badge--active {
-  background: rgba(142, 201, 47, 0.28);
-  color: #4C4C4C;
-}
-
+.apm-badge--completed    { background: #DCFCE7; color: #008236; }
+.apm-badge--pending      { background: #FFE2E2; color: #BF0000; }
+.apm-badge--active       { background: rgba(142, 201, 47, 0.28); color: #4C4C4C; }
 .apm-badge--inactive,
-.apm-badge--deactivated {
-  background: rgba(255, 149, 0, 0.55);
-  color: #4C4C4C;
-}
+.apm-badge--deactivated  { background: rgba(255, 149, 0, 0.55);  color: #4C4C4C; }
 
-.apm-row-clickable {
-  cursor: pointer;
-}
+.apm-row-clickable { cursor: pointer; }
 
 /* ============================================
    ANIMATIONS
    ============================================ */
 @keyframes fadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }

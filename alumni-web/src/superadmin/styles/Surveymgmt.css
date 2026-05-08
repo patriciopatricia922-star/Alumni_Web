@@ -10,6 +10,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&display=swap');
 
 /* ============================ BASE BODY STYLES ============================ */
+html, body, #root {
+  background-color: #E1ECF7;
+  margin: 0;
+  padding: 0;
+}
+
 body { 
   background-color: #E1ECF7; 
 }
@@ -21,6 +27,8 @@ body {
   gap: 1.5rem;
   font-family: "Lexend", sans-serif;
   margin-left: 229px;
+  background-color: #E1ECF7;  /* FIXED: Added background color */
+  min-height: 100vh;
 }
 
 /* Responsive: Hide margin on mobile screens */
@@ -101,6 +109,7 @@ body {
   gap: 1.25rem;
   padding: 0 2rem;
   align-items: start;
+  background: transparent;  /* FIXED: Ensure transparent background */
 }
 
 /* Responsive: Stack vertically on smaller screens */
@@ -118,6 +127,7 @@ body {
   position: sticky;
   top: 7.5rem;
   height: max-content;
+  background: transparent;  /* FIXED: Ensure transparent background */
 }
 
 /* Add Section button */
@@ -212,6 +222,13 @@ body {
   font-size: 0.8rem; 
   color: #6b7280; 
   margin: 0; 
+}
+
+/* ============================ BUILDER CONTAINER ============================ */
+.survey-builder { 
+  margin-bottom: 3rem; 
+  min-width: 0; 
+  background: transparent;  /* FIXED: Ensure transparent background */
 }
 
 /* ============================ QUESTION CARD ============================ */

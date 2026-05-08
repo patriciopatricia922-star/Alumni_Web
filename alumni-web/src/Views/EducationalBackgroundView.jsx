@@ -115,7 +115,7 @@ const LockIcon = () => (
 const LockedHint = () => (
   <span className="eb-lock-hint" role="note">
     <LockIcon />
-    Pre-filled from your profile — cannot be edited
+    Pre-filled from your Alumni ID — cannot be edited
   </span>
 );
 

@@ -272,8 +272,8 @@ const JobExperience = () => {
 
   if (loadingLabels) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff' }}>
+        <div style={{ color: '#002263' }}>Loading...</div>
       </div>
     );
   }

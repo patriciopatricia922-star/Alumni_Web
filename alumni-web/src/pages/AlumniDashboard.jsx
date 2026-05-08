@@ -1,5 +1,5 @@
 // ============================================================================
-// THIS IS FOR LOGIC. (unchanged — only view/CSS updated)
+// THIS IS FOR LOGIC.
 // ============================================================================
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for the Alumni Dashboard.
@@ -15,6 +15,32 @@ import discountIcon from '../assets/discount_ic.svg';
 import eventsIcon from '../assets/events_ic.svg';
 import jobsIcon from '../assets/jobs_ic.svg';
 import AlumniDashboardView from '../views/Alumnidashboardview';
+import DataPrivacyModal from '../modals/DataPrivacyModal';
+import { useDpaGate } from '../hooks/useDpaGate';
+
+// ============================ STORAGE KEYS ============================
+// Centralised localStorage keys for all four badge categories.
+// announcements: array of read IDs  (existing behaviour — unchanged)
+// events|discounts|jobs: numeric count watermark — badge shows when
+//   active item count exceeds the stored watermark.
+const STORAGE_KEYS = {
+  announcements: 'read_notifs',
+  events:        'read_events_badge',
+  discounts:     'read_discounts_badge',
+  jobs:          'read_jobs_badge',
+};
+
+// ============================ HELPERS ============================
+// Returns true when the user has already seen all items in `category`.
+const isCategoryDismissed = (category, currentCount) => {
+  const stored = parseInt(localStorage.getItem(STORAGE_KEYS[category]) || '0', 10);
+  return stored >= currentCount;
+};
+
+// Persist the current count as the "seen" watermark for a category.
+const persistDismissed = (category, count) => {
+  localStorage.setItem(STORAGE_KEYS[category], String(count));
+};
 
 // ============================ WINDOW WIDTH HOOK ============================
 const useWindowWidth = () => {
@@ -32,6 +58,9 @@ const AlumniDashboard = () => {
   const navigate = useNavigate();
   const width = useWindowWidth();
 
+  // ============================ DPA GATE ============================
+  const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
+
   // ============================ STATE DECLARATIONS ============================
   const [user, setUser] = useState(null);
   const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
@@ -47,9 +76,9 @@ const AlumniDashboard = () => {
 
   const [cardBadges, setCardBadges] = useState({
     announcements: false,
-    events: false,
-    discounts: false,
-    jobs: false,
+    events:        false,
+    discounts:     false,
+    jobs:          false,
   });
 
   // ============================ RESPONSIVE BREAKPOINTS ============================
@@ -76,8 +105,6 @@ const AlumniDashboard = () => {
   }, []);
 
   // ============================ RESOLVE SURVEY ROUTE ============================
-  // Mirrors the exact same logic used in Sidebar so the Continue button
-  // navigates to the correct step (resume or update-tracer if complete).
   useEffect(() => {
     let cancelled = false;
 
@@ -103,7 +130,7 @@ const AlumniDashboard = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const firstName = user?.first_name || 'Alumni';
+  const firstName  = user?.first_name || 'Alumni';
   const progressPct = Math.min(surveyProgress?.percentage || 0, 100);
 
   // ============================ ANIMATE PROGRESS CIRCLE ============================
@@ -125,7 +152,7 @@ const AlumniDashboard = () => {
     return () => clearInterval(timer);
   }, [progressPct]);
 
-  // ============================ FETCH NOTIFICATIONS ============================
+  // ============================ FETCH NOTIFICATIONS (ANNOUNCEMENTS) ============================
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -135,13 +162,13 @@ const AlumniDashboard = () => {
         .order('published_at', { ascending: false })
         .limit(20);
       if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+      const readIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.announcements) || '[]');
       const mapped = data.map(n => ({
-        id: n.id,
+        id:    n.id,
         title: n.title,
-        body: n.content,
-        time: n.published_at,
-        read: readIds.includes(n.id)
+        body:  n.content,
+        time:  n.published_at,
+        read:  readIds.includes(n.id),
       }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
@@ -150,19 +177,26 @@ const AlumniDashboard = () => {
     fetchNotifs();
   }, []);
 
-  // ============================ FETCH CARD BADGES ============================
+  // ============================ FETCH CARD BADGES (EVENTS / DISCOUNTS / JOBS) ============================
+  // Badge is shown when: active items exist AND stored watermark < current count.
+  // This means the badge automatically reappears when an admin adds new content.
   useEffect(() => {
     const fetchBadges = async () => {
       const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-        supabase.from('events').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('events').select('id',    { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('jobs').select('id',      { count: 'exact', head: true }).eq('is_active', true),
       ]);
+
+      const eventsCount    = eventsRes.count    || 0;
+      const discountsCount = discountsRes.count || 0;
+      const jobsCount      = jobsRes.count      || 0;
+
       setCardBadges(prev => ({
         ...prev,
-        events: (eventsRes.count || 0) > 0,
-        discounts: (discountsRes.count || 0) > 0,
-        jobs: (jobsRes.count || 0) > 0,
+        events:    eventsCount    > 0 && !isCategoryDismissed('events',    eventsCount),
+        discounts: discountsCount > 0 && !isCategoryDismissed('discounts', discountsCount),
+        jobs:      jobsCount      > 0 && !isCategoryDismissed('jobs',      jobsCount),
       }));
     };
     fetchBadges();
@@ -178,19 +212,51 @@ const AlumniDashboard = () => {
   }, []);
 
   // ============================ NOTIFICATION HANDLERS ============================
-  const markAllRead = useCallback(() => {
+
+  // Bulk dismiss — clears every category at once.
+  // Announcements: marks every fetched notification ID as read in localStorage.
+  // Events / Discounts / Jobs: writes current count as watermark so badge stays
+  // gone until new content is added.
+  const markAllRead = useCallback(async () => {
+    // ── Announcements ──
     const allIds = notifs.map(n => n.id);
-    localStorage.setItem('read_notifs', JSON.stringify(allIds));
+    localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(allIds));
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
-    setCardBadges(prev => ({ ...prev, announcements: false }));
+
+    // ── Events / Discounts / Jobs ──
+    // Optimistically clear all dots immediately; then persist the watermarks.
+    setCardBadges({
+      announcements: false,
+      events:        false,
+      discounts:     false,
+      jobs:          false,
+    });
+
+    try {
+      const [eventsRes, discountsRes, jobsRes] = await Promise.all([
+        supabase.from('events').select('id',    { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('jobs').select('id',      { count: 'exact', head: true }).eq('is_active', true),
+      ]);
+      persistDismissed('events',    eventsRes.count    || 0);
+      persistDismissed('discounts', discountsRes.count || 0);
+      persistDismissed('jobs',      jobsRes.count      || 0);
+    } catch (err) {
+      // Fetch failed — write a safe sentinel so badges stay cleared.
+      console.warn('AlumniDashboard: markAllRead badge fetch failed', err);
+      persistDismissed('events',    999999);
+      persistDismissed('discounts', 999999);
+      persistDismissed('jobs',      999999);
+    }
   }, [notifs]);
 
+  // Per-item announcement read (existing behaviour — unchanged).
   const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
+    const readIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.announcements) || '[]');
     if (!readIds.includes(id)) {
       readIds.push(id);
-      localStorage.setItem('read_notifs', JSON.stringify(readIds));
+      localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(readIds));
     }
     setNotifs(prev => {
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
@@ -198,6 +264,31 @@ const AlumniDashboard = () => {
       return updated;
     });
     setUnreadCount(prev => Math.max(0, prev - 1));
+  }, []);
+
+  // Per-card dismiss for Events / Discounts / Jobs.
+  // Called the moment the user clicks a ForYouCard so the dot vanishes
+  // before the route transition completes.
+  // Announcements are handled exclusively through markOneRead / markAllRead
+  // (their IDs are already tracked individually), so this is a no-op for them.
+  const dismissBadge = useCallback(async (category) => {
+    if (category === 'announcements') return;
+
+    // Optimistic UI clear — instant feedback.
+    setCardBadges(prev => ({ ...prev, [category]: false }));
+
+    // Persist watermark so the badge stays gone after a page refresh.
+    try {
+      const { count } = await supabase
+        .from(category)
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true);
+      persistDismissed(category, count || 0);
+    } catch (err) {
+      console.warn(`AlumniDashboard: dismissBadge fetch failed for "${category}"`, err);
+      // Optimistic clear is already applied; use sentinel as fallback.
+      persistDismissed(category, 999999);
+    }
   }, []);
 
   // ============================ HELPER FUNCTIONS ============================
@@ -212,58 +303,76 @@ const AlumniDashboard = () => {
     list.forEach(n => {
       const d = new Date(n.time);
       d.setHours(0, 0, 0, 0);
-      if (d >= today) groups['Today'].push(n);
+      if (d >= today)     groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo) groups['This Week'].push(n);
-      else groups['Earlier'].push(n);
+      else if (d >= weekAgo)   groups['This Week'].push(n);
+      else                     groups['Earlier'].push(n);
     });
     return groups;
   };
 
   const formatTime = (iso) => {
     if (!iso) return '';
-    const d = new Date(iso);
-    const now = new Date();
+    const d    = new Date(iso);
+    const now  = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    if (diff < 60)     return 'Just now';
+    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
+    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
     if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
 
   // ============================ FOR YOU ITEMS ============================
+  // `category` is the dismissBadge key; must match a STORAGE_KEYS entry and
+  // the Supabase table name for events / discounts / jobs.
   const forYouItems = [
-    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news', path: '/announcements', showDot: cardBadges.announcements },
-    { icon: eventsIcon, title: 'Events', description: '5 upcoming events', path: '/events', showDot: cardBadges.events },
-    { icon: discountIcon, title: 'Discounts', description: '8 offers available', path: '/discounts', showDot: cardBadges.discounts },
-    { icon: jobsIcon, title: 'Jobs', description: '3 listings available', path: '/jobs', showDot: cardBadges.jobs },
+    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news',    path: '/announcements', category: 'announcements', showDot: cardBadges.announcements },
+    { icon: eventsIcon,       title: 'Events',        description: '5 upcoming events',    path: '/events',        category: 'events',        showDot: cardBadges.events        },
+    { icon: discountIcon,     title: 'Discounts',     description: '8 offers available',   path: '/discounts',     category: 'discounts',     showDot: cardBadges.discounts     },
+    { icon: jobsIcon,         title: 'Jobs',          description: '3 listings available', path: '/jobs',          category: 'jobs',          showDot: cardBadges.jobs          },
   ];
+
+  // ============================ SURVEY NAVIGATION (DPA-GATED) ============================
+  const handleSurveyNavigate = useCallback((route) => {
+    requestNavigation(route);
+  }, [requestNavigation]);
 
   // ============================ RENDER ============================
   return (
-    <AlumniDashboardView
-      isMobile={isMobile}
-      isTablet={isTablet}
-      sidebarWidth={sidebarWidth}
-      firstName={firstName}
-      bellRef={bellRef}
-      notifs={notifs}
-      unreadCount={unreadCount}
-      showDropdown={showDropdown}
-      notifTab={notifTab}
-      setShowDropdown={setShowDropdown}
-      setNotifTab={setNotifTab}
-      markAllRead={markAllRead}
-      markOneRead={markOneRead}
-      groupByDate={groupByDate}
-      formatTime={formatTime}
-      onSeeAllNotifs={() => { setShowDropdown(false); navigate('/notifications'); }}
-      animatedPercentage={animatedPercentage}
-      forYouItems={forYouItems}
-      onNavigate={navigate}
-      surveyRoute={surveyRoute}
-    />
+    <>
+      {showModal && (
+        <DataPrivacyModal
+          onAccept={handleAccept}
+          onDecline={handleDecline}
+        />
+      )}
+
+      <AlumniDashboardView
+        isMobile={isMobile}
+        isTablet={isTablet}
+        sidebarWidth={sidebarWidth}
+        firstName={firstName}
+        bellRef={bellRef}
+        notifs={notifs}
+        unreadCount={unreadCount}
+        showDropdown={showDropdown}
+        notifTab={notifTab}
+        setShowDropdown={setShowDropdown}
+        setNotifTab={setNotifTab}
+        markAllRead={markAllRead}
+        markOneRead={markOneRead}
+        groupByDate={groupByDate}
+        formatTime={formatTime}
+        onSeeAllNotifs={() => { setShowDropdown(false); navigate('/notifications'); }}
+        animatedPercentage={animatedPercentage}
+        forYouItems={forYouItems}
+        onNavigate={navigate}
+        onDismissBadge={dismissBadge}
+        surveyRoute={surveyRoute}
+        onSurveyNavigate={handleSurveyNavigate}
+      />
+    </>
   );
 };
 

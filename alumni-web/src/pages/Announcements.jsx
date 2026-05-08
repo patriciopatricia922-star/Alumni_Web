@@ -15,6 +15,8 @@ const useWindowWidth = () => {
 
 const CATEGORIES = ['All Announcements', 'Activities', 'News'];
 
+const STORAGE_KEY_ANNOUNCEMENTS = 'read_notifs';
+
 function formatTime(iso) {
   if (!iso) return '';
   const d = new Date(iso), now = new Date();
@@ -54,14 +56,14 @@ const Announcements = () => {
         .select('id, title, content, published_at, is_active, category')
         .eq('is_active', true)
         .order('published_at', { ascending: false });
-      
+
       if (!error && data) {
         const formattedAnnouncements = data.map(a => ({
-          id: a.id,
-          title: a.title,
-          description: a.content,
-          time: formatTime(a.published_at),
-          category: a.category || 'News',
+          id:           a.id,
+          title:        a.title,
+          description:  a.content,
+          time:         formatTime(a.published_at),
+          category:     a.category || 'News',
           published_at: a.published_at,
         }));
         setAnnouncements(formattedAnnouncements);
@@ -71,7 +73,9 @@ const Announcements = () => {
     fetchAnnouncements();
   }, []);
 
-  // Fetch notifications (same as announcements but limited)
+  // Fetch notifications for the bell dropdown AND auto-mark all as read
+  // because the user is on the Announcements page — they are actively
+  // viewing the content, so the red indicator should clear immediately.
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -81,10 +85,26 @@ const Announcements = () => {
         .order('published_at', { ascending: false })
         .limit(20);
       if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-      const mapped  = data.map(n => ({ id: n.id, title: n.title, body: n.content, time: n.published_at, read: readIds.includes(n.id) }));
+
+      // Auto-mark every fetched announcement as read in localStorage.
+      // This mirrors the exact same key used by AlumniDashboard so the
+      // dashboard bell badge clears the next time it mounts/re-renders.
+      const allIds = data.map(n => n.id);
+      const existingReadIds = JSON.parse(localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS) || '[]');
+      const mergedReadIds   = Array.from(new Set([...existingReadIds, ...allIds]));
+      localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(mergedReadIds));
+
+      // Build notif list with every item pre-marked read so the bell
+      // dropdown also reflects the cleared state instantly.
+      const mapped = data.map(n => ({
+        id:    n.id,
+        title: n.title,
+        body:  n.content,
+        time:  n.published_at,
+        read:  true,   // all read — user is on this page
+      }));
       setNotifs(mapped);
-      setUnreadCount(mapped.filter(n => !n.read).length);
+      setUnreadCount(0);  // clear the red badge on the bell immediately
     };
     fetchNotifs();
   }, []);
@@ -98,15 +118,22 @@ const Announcements = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // markAllRead is kept for the dropdown's "Mark all read" button;
+  // on this page it is effectively a no-op since all are already read,
+  // but we preserve the handler so the view contract is unchanged.
   const markAllRead = useCallback(() => {
-    localStorage.setItem('read_notifs', JSON.stringify(notifs.map(n => n.id)));
+    const allIds = notifs.map(n => n.id);
+    localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(allIds));
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
   }, [notifs]);
 
   const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
+    const readIds = JSON.parse(localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS) || '[]');
+    if (!readIds.includes(id)) {
+      readIds.push(id);
+      localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(readIds));
+    }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);

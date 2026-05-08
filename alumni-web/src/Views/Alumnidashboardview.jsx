@@ -1,17 +1,16 @@
-// ============================================================================
-// THIS IS THE UI.
-// ============================================================================
-
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 import NewArrow from '../assets/new_arrow.svg';
 import '../styles/AlumniDashboard.css';
 
 // ============================ FOR YOU CARD COMPONENT ============================
-const ForYouCard = ({ item, onNavigate }) => (
+const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
   <div
     className="for-you-card"
-    onClick={() => onNavigate(item.path)}
+    onClick={() => {
+      onDismissBadge(item.category);
+      onNavigate(item.path);
+    }}
   >
     <div className="for-you-icon-box">
       <img
@@ -35,9 +34,9 @@ const ForYouCard = ({ item, onNavigate }) => (
 
 // ============================ PROGRESS CIRCLE COMPONENT ============================
 const ProgressCircle = ({ animatedPercentage }) => {
-  const size = 154;
-  const radius = 64;
-  const strokeWidth = 13;
+  const size          = 154;
+  const radius        = 64;
+  const strokeWidth   = 13;
   const circumference = 2 * Math.PI * radius;
 
   return (
@@ -89,7 +88,7 @@ const NotificationDropdown = ({
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
           <path
             d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-            stroke="rgba(255,255,255,0.2)"
+            stroke="rgba(0,0,0,0.2)"
             strokeWidth="1.5"
             strokeLinecap="round"
           />
@@ -116,7 +115,7 @@ const NotificationDropdown = ({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                      stroke="#2B72FB"
+                      stroke="#003EA6"
                       strokeWidth="1.67"
                       strokeLinecap="round"
                     />
@@ -158,7 +157,9 @@ const AlumniDashboardView = ({
   animatedPercentage,
   forYouItems,
   onNavigate,
+  onDismissBadge,
   surveyRoute,
+  onSurveyNavigate,
 }) => {
   return (
     <div className="alumni-dashboard">
@@ -171,7 +172,6 @@ const AlumniDashboardView = ({
         {/* ── Page Header ── */}
         <div className="dashboard-header">
           <div className="dashboard-header-text">
-            <h1 className="dashboard-title">Dashboard</h1>
             <p className="dashboard-subtitle">
               Welcome Bark! Let's see what's new in your alumni network.
             </p>
@@ -274,16 +274,17 @@ const AlumniDashboardView = ({
             <div className="survey-card-content">
               <p className="survey-label">SURVEY PROGRESS</p>
               <p className="survey-message">Your alumni tracer survey!</p>
+
               <button
                 className="continue-button"
-                onClick={() => surveyRoute && onNavigate(surveyRoute)}
+                onClick={() => surveyRoute && onSurveyNavigate(surveyRoute)}
                 disabled={!surveyRoute}
                 style={{
                   opacity: surveyRoute ? 1 : 0.5,
-                  cursor: surveyRoute ? 'pointer' : 'not-allowed',
+                  cursor:  surveyRoute ? 'pointer' : 'not-allowed',
                 }}
               >
-                Continue
+                Proceed
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path
                     d="M3 8H13M13 8L9 4M13 8L9 12"
@@ -307,7 +308,12 @@ const AlumniDashboardView = ({
 
           <div className="for-you-grid">
             {forYouItems.map((item, i) => (
-              <ForYouCard key={i} item={item} onNavigate={onNavigate} />
+              <ForYouCard
+                key={i}
+                item={item}
+                onNavigate={onNavigate}
+                onDismissBadge={onDismissBadge}
+              />
             ))}
           </div>
         </div>

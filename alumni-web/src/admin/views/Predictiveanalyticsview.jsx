@@ -1,5 +1,10 @@
 // ============================================================================
-// THIS IS THE UI
+// Predictiveanalyticsview — UI / Presentation Layer
+// ============================================================================
+// Renders the Predictive Analytics dashboard across three pages:
+//   1. Overview  — animated trend chart + AI insights sidebar
+//   2. Departments — department cards grid
+//   3. Department Detail — per-program bar charts + AI insights sidebar
 // ============================================================================
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -13,11 +18,11 @@ import { LuArrowUpRight, LuArrowRight } from 'react-icons/lu';
 import { FiBarChart2, FiTrendingUp, FiAlertCircle, FiCpu } from 'react-icons/fi';
 import '../styles/PredictiveAnalytics.css';
 
-// ─── API base URL (mirrors the logic file) ───────────────────────────────────
+// ── API base URL (mirrors the logic file) ────────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
 // ============================================================================
-// AI INSIGHTS CARD
+// AIInsightsCard — fetches and renders AI-generated analytics insights
 // ============================================================================
 const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData }) => {
   const [insights, setInsights] = useState(null);
@@ -30,7 +35,6 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
     setLoading(true);
     setError(null);
     try {
-      // Build the payload that matches InsightsRequest on the backend
       const payload = {
         overview_trend: overviewTrend,
         departments: departmentCards.map((d) => ({
@@ -47,7 +51,7 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
       };
 
       const response = await fetch(`${API_BASE}/api/ai/predictive-insights`, {
-        method:  'POST',                                    // must be POST — backend is @app.post
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(payload),
       });
@@ -74,7 +78,10 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
   if (loading) {
     return (
       <div className="ai-insights-card loading">
-        <div className="ai-insights-header"><FiCpu size={20} /><span>AI Insights</span></div>
+        <div className="ai-insights-header">
+          <FiCpu size={20} />
+          <span>AI Insights</span>
+        </div>
         <div className="ai-loading-spinner" />
         <p>Analyzing predictive data…</p>
       </div>
@@ -84,7 +91,10 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
   if (error) {
     return (
       <div className="ai-insights-card error">
-        <div className="ai-insights-header"><FiAlertCircle size={20} /><span>AI Insights</span></div>
+        <div className="ai-insights-header">
+          <FiAlertCircle size={20} />
+          <span>AI Insights</span>
+        </div>
         <p>{error}</p>
         <button onClick={fetchAIInsights} className="ai-retry-btn">Retry</button>
       </div>
@@ -160,7 +170,7 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
 };
 
 // ============================================================================
-// MAIN VIEW COMPONENT
+// Predictiveanalyticsview — main view component
 // ============================================================================
 const Predictiveanalyticsview = ({
   activePage,
@@ -175,7 +185,7 @@ const Predictiveanalyticsview = ({
   refreshBar,
 }) => {
 
-  // ── Chart animation ────────────────────────────────────────────────────────
+  // ── Chart draw animation ───────────────────────────────────────────────────
   const [animProgress, setAnimProgress] = useState(0);
   const animRef = useRef(null);
 
@@ -263,14 +273,20 @@ const Predictiveanalyticsview = ({
   const showDeptList   = activePage === 'departments';
   const showDeptDetail = activePage === 'department-detail' && !!selectedDepartment && !!selectedDepartmentData;
 
+  // ── Breadcrumb items ───────────────────────────────────────────────────────
   const breadcrumbItems = (() => {
     const items = [
-      { key: 'overview',     label: 'Overview',     icon: <HiOutlineChartBar size={16} />,        active: showOverview  },
-      { key: 'departments',  label: 'Departments',  icon: <HiOutlineBuildingOffice2 size={16} />,  active: showDeptList  },
+      { key: 'overview',    label: 'Overview',    icon: <HiOutlineChartBar size={16} />,       active: showOverview },
+      { key: 'departments', label: 'Departments', icon: <HiOutlineBuildingOffice2 size={16} />, active: showDeptList },
     ];
     if (showDeptDetail) {
       const dept = departmentCards?.find((c) => c.key === selectedDepartment);
-      items.push({ key: 'department-detail', label: dept?.code || 'Detail', icon: <HiOutlineBuildingOffice2 size={16} />, active: true });
+      items.push({
+        key:    'department-detail',
+        label:  dept?.code || 'Detail',
+        icon:   <HiOutlineBuildingOffice2 size={16} />,
+        active: true,
+      });
     }
     return items;
   })();
@@ -281,11 +297,15 @@ const Predictiveanalyticsview = ({
       {sidebar}
       <main className="pa-main">
 
+        {/* Page header */}
         <div className="pa-page-header">
           <h1 className="pa-page-title">Predictive Analytics</h1>
-          <p className="pa-page-subtitle">Welcome back! Here's what's happening with your alumni insights.</p>
+          <p className="pa-page-subtitle">
+            Welcome back! Here's what's happening with your alumni insights.
+          </p>
         </div>
 
+        {/* Breadcrumb nav + refresh bar */}
         <div className="pa-tab-row">
           {breadcrumbItems.map((item, idx) => (
             <React.Fragment key={item.key}>
@@ -304,9 +324,10 @@ const Predictiveanalyticsview = ({
           {refreshBar}
         </div>
 
-        {/* ── OVERVIEW ── */}
+        {/* ── OVERVIEW PAGE ── */}
         {showOverview && (
           <div className="pa-overview-container">
+            {/* Trend chart */}
             <div className="pa-chart-card">
               <div className="pa-chart-header">
                 <div className="pa-chart-icon">
@@ -314,14 +335,25 @@ const Predictiveanalyticsview = ({
                 </div>
                 <div className="pa-chart-header-text">
                   <h2 className="pa-chart-title">Career to Degree Alignment</h2>
-                  <p className="pa-chart-subtitle">Predicted alignment rates for all departments</p>
+                  <p className="pa-chart-subtitle">
+                    Predicted alignment rates for all departments
+                  </p>
                 </div>
               </div>
 
               <div className="pa-chart-legend">
-                <div className="pa-legend-item"><div className="pa-legend-swatch upper"     /><span className="pa-legend-label">Upper Bound</span></div>
-                <div className="pa-legend-item"><div className="pa-legend-swatch lower"     /><span className="pa-legend-label">Lower Bound</span></div>
-                <div className="pa-legend-item"><div className="pa-legend-swatch predicted" /><span className="pa-legend-label">Predicted Rate</span></div>
+                <div className="pa-legend-item">
+                  <div className="pa-legend-swatch upper" />
+                  <span className="pa-legend-label">Upper Bound</span>
+                </div>
+                <div className="pa-legend-item">
+                  <div className="pa-legend-swatch lower" />
+                  <span className="pa-legend-label">Lower Bound</span>
+                </div>
+                <div className="pa-legend-item">
+                  <div className="pa-legend-swatch predicted" />
+                  <span className="pa-legend-label">Predicted Rate</span>
+                </div>
               </div>
 
               <div className="pa-chart-shell">
@@ -329,10 +361,26 @@ const Predictiveanalyticsview = ({
                   {yLabels.map((v) => <span key={v}>{v}</span>)}
                 </div>
                 <div className="pa-chart-main">
-                  <div className="pa-chart-grid"><span /><span /><span /><span /></div>
-                  <svg className="pa-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <polygon points={upperPoints} fill="rgba(219,234,254,0.5)" stroke="none" style={{ opacity: animProgress }} />
-                    <polygon points={lowerPoints} fill="rgba(219,234,254,0.2)" stroke="none" style={{ opacity: animProgress }} />
+                  <div className="pa-chart-grid">
+                    <span /><span /><span /><span />
+                  </div>
+                  <svg
+                    className="pa-chart-svg"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <polygon
+                      points={upperPoints}
+                      fill="rgba(219,234,254,0.5)"
+                      stroke="none"
+                      style={{ opacity: animProgress }}
+                    />
+                    <polygon
+                      points={lowerPoints}
+                      fill="rgba(219,234,254,0.2)"
+                      stroke="none"
+                      style={{ opacity: animProgress }}
+                    />
                     {animatedTrend.length > 1 && (
                       <polyline
                         fill="none"
@@ -363,19 +411,27 @@ const Predictiveanalyticsview = ({
                     })}
                   </svg>
                   <div className="pa-chart-x-axis">
-                    {overviewTrend.map((d) => <span key={d.year}>{d.year}</span>)}
+                    {overviewTrend.map((d) => (
+                      <span key={d.year}>{d.year}</span>
+                    ))}
                   </div>
                 </div>
               </div>
 
               <div className="pa-chart-summary">
                 <div className="pa-summary-block">
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                  <span className="pa-summary-label">
+                    Current ({overviewTrend[0]?.year})
+                  </span>
                   <strong>{overviewTrend[0]?.value}%</strong>
                 </div>
-                <div className="pa-summary-arrow"><LuArrowRight size={24} color="#51A2FF" /></div>
+                <div className="pa-summary-arrow">
+                  <LuArrowRight size={24} color="#51A2FF" />
+                </div>
                 <div className="pa-summary-block">
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
+                  <span className="pa-summary-label">
+                    Predicted ({overviewTrend[overviewTrend.length - 1]?.year})
+                  </span>
                   <strong>{overviewTrend[overviewTrend.length - 1]?.value}%</strong>
                 </div>
                 <div className="pa-summary-change">
@@ -391,6 +447,7 @@ const Predictiveanalyticsview = ({
               </button>
             </div>
 
+            {/* AI insights sidebar */}
             <div className="pa-ai-card">
               <AIInsightsCard
                 overviewTrend={overviewTrend}
@@ -401,13 +458,19 @@ const Predictiveanalyticsview = ({
           </div>
         )}
 
-        {/* ── DEPARTMENTS LIST ── */}
+        {/* ── DEPARTMENTS LIST PAGE ── */}
         {showDeptList && (
           <div className="pa-department-grid">
             {departmentCards?.map((card) => (
-              <div key={card.key} className="pa-department-card" onClick={() => onDepartmentClick(card.key)}>
+              <div
+                key={card.key}
+                className="pa-department-card"
+                onClick={() => onDepartmentClick(card.key)}
+              >
                 <div className="pa-department-top">
-                  <div className={`pa-dept-icon ${card.color}`}><HiOutlineBuildingOffice2 size={24} /></div>
+                  <div className={`pa-dept-icon ${card.color}`}>
+                    <HiOutlineBuildingOffice2 size={24} />
+                  </div>
                   <HiOutlineChevronRight size={20} color="#90A1B9" />
                 </div>
                 <h3 className="pa-department-code">{card.code}</h3>
@@ -418,8 +481,12 @@ const Predictiveanalyticsview = ({
                     <span className="pa-metric-value">{card.current}%</span>
                   </div>
                   <div className="pa-metric-row">
-                    <span className="pa-metric-label">Predicted {overviewTrend[overviewTrend.length - 1]?.year}</span>
-                    <span className={`pa-metric-value accent ${card.color}`}>{card.predicted}%</span>
+                    <span className="pa-metric-label">
+                      Predicted {overviewTrend[overviewTrend.length - 1]?.year}
+                    </span>
+                    <span className={`pa-metric-value accent ${card.color}`}>
+                      {card.predicted}%
+                    </span>
                   </div>
                   <div className="pa-metric-change">
                     <span className="pa-trend-badge">
@@ -428,15 +495,18 @@ const Predictiveanalyticsview = ({
                     </span>
                   </div>
                 </div>
-                <div className="pa-department-footer">{card.programs?.length} Programs</div>
+                <div className="pa-department-footer">
+                  {card.programs?.length} Programs
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ── DEPARTMENT DETAIL ── */}
+        {/* ── DEPARTMENT DETAIL PAGE ── */}
         {showDeptDetail && selectedDepartmentData && (
           <div className="pa-overview-container pa-detail-container">
+            {/* Per-program bar charts */}
             <div className="pa-panel">
               <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
               <p className="pa-section-subtitle">{selectedDepartmentData.subtitle}</p>
@@ -444,11 +514,15 @@ const Predictiveanalyticsview = ({
               <div className="pa-bar-legend">
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch current" />
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                  <span className="pa-summary-label">
+                    Current ({overviewTrend[0]?.year})
+                  </span>
                 </div>
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch predicted" />
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
+                  <span className="pa-summary-label">
+                    Predicted ({overviewTrend[overviewTrend.length - 1]?.year})
+                  </span>
                 </div>
               </div>
 
@@ -467,18 +541,31 @@ const Predictiveanalyticsview = ({
                         <span className="pa-overview-years">
                           {overviewTrend[0]?.year} → {overviewTrend[overviewTrend.length - 1]?.year}
                         </span>
-                        <span className="pa-overview-values">{prog.current}% → {prog.predicted}%</span>
+                        <span className="pa-overview-values">
+                          {prog.current}% → {prog.predicted}%
+                        </span>
                       </div>
                     </div>
                     <div className="pa-bar-pair">
-                      <div className="pa-bar-track"><div className="pa-bar-fill current"   style={{ width: `${prog.current}%`   }} /></div>
-                      <div className="pa-bar-track"><div className="pa-bar-fill predicted" style={{ width: `${prog.predicted}%` }} /></div>
+                      <div className="pa-bar-track">
+                        <div
+                          className="pa-bar-fill current"
+                          style={{ width: `${prog.current}%` }}
+                        />
+                      </div>
+                      <div className="pa-bar-track">
+                        <div
+                          className="pa-bar-fill predicted"
+                          style={{ width: `${prog.predicted}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
+            {/* AI insights sidebar */}
             <div className="pa-ai-card">
               <AIInsightsCard
                 overviewTrend={overviewTrend}

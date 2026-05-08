@@ -122,22 +122,34 @@
   margin: 0;
 }
 
-/* Close / back button in header */
+/* Close / back button in header
+   Intentionally icon-only: no circular background, no border,
+   no border-radius. Sizing kept so the click target remains
+   comfortable (32 × 32 px) without any visible shape.
+   Hover subtly dims the icon instead of filling a pill/circle.
+   Focus ring is supplied via onFocus/onBlur in the JSX for
+   accessibility without reintroducing any fill. */
 .aid-header-close {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: none;
   border: none;
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
   text-decoration: none;
-  transition: background 0.2s;
+  padding: 0;
+  transition: opacity 0.2s;
 }
-.aid-header-close:hover { background: rgba(255, 255, 255, 0.22); }
+
+.aid-header-close:hover {
+  opacity: 0.7;
+  background: none;
+}
 
 /* ── Card body ───────────────────────────────────────────────── */
 .aid-card-body {

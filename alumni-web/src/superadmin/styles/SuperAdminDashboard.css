@@ -1,4 +1,14 @@
-/* src/styles/SuperAdminDashboard.css */
+/* ============================================================================
+   SuperAdminDashboard.css
+   ============================================================================
+   Visual design updated to match AdminDashboard.css patterns:
+     - Identical card, typography, spacing, and colour tokens
+     - NavigableChartCard hover / focus / active rules
+     - KPI alert text + modal (added — were missing from original)
+     - "No Goal" / isCount gauge sub-label support
+   All SuperAdmin-specific class prefixes (super-dashboard-*) are preserved
+   so no changes are needed in SuperAdminDashboardView or the router.
+   ============================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
 
@@ -17,7 +27,6 @@
   min-height: 100vh;
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
   .super-dashboard-main {
     margin-left: 200px;
@@ -34,6 +43,9 @@
 
 /* ============================ HEADER ============================ */
 .super-dashboard-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 24px;
 }
 
@@ -50,6 +62,11 @@
   font-size: 14px;
   color: #6A7282;
   margin: 0;
+}
+
+/* ============================ SECTION ============================ */
+.super-dashboard-section {
+  margin-bottom: 8px;
 }
 
 /* ============================ SECTION HEADER ============================ */
@@ -108,7 +125,7 @@
 .kpi-tab-btn.active {
   background: #ffffff;
   color: #324D87;
-  box-shadow: 0 1px 4px rgba(50,77,135,0.13);
+  box-shadow: 0 1px 4px rgba(50, 77, 135, 0.13);
 }
 
 /* ============================ KPI GRID (3 columns) ============================ */
@@ -127,29 +144,19 @@
   margin-bottom: 24px;
 }
 
-/* Responsive grid adjustments */
 @media (max-width: 1200px) {
-  .kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .alumni-tracer-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .kpi-grid           { grid-template-columns: repeat(3, 1fr); }
+  .alumni-tracer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 900px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .kpi-grid           { grid-template-columns: repeat(2, 1fr); }
+  .alumni-tracer-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 600px) {
-  .kpi-grid {
-    grid-template-columns: 1fr;
-  }
-  .alumni-tracer-grid {
-    grid-template-columns: 1fr;
-  }
+  .kpi-grid           { grid-template-columns: 1fr; }
+  .alumni-tracer-grid { grid-template-columns: 1fr; }
 }
 
 /* ============================ KPI PROGRESS CARD ============================ */
@@ -197,6 +204,7 @@
   margin-top: 6px;
 }
 
+/* Shows the goal label in the same large-number style as AdminDashboard */
 .kpi-progress-target {
   font-family: 'Lexend', 'Arimo', Arial;
   font-weight: 700;
@@ -215,6 +223,20 @@
   flex-shrink: 0;
 }
 
+/* ============================ KPI ALERT TEXT ============================ */
+/* Added — was missing from original SuperAdmin CSS */
+.kpi-alert-text {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #EF4444;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kpi-alert-text:hover {
+  text-decoration: underline;
+}
+
 /* ============================ KPI STAT CARD ============================ */
 .kpi-stat-card {
   background: #FFFFFF;
@@ -229,9 +251,7 @@
   align-items: flex-start;
 }
 
-.kpi-stat-info {
-  flex: 1;
-}
+.kpi-stat-info { flex: 1; }
 
 .kpi-stat-label {
   font-family: 'Lexend', 'Arimo', Arial;
@@ -276,9 +296,8 @@
 }
 
 .chart-card-header {
-  padding: 20px 24px 0;
+  padding: 20px 24px 16px;
   border-bottom: 0.889px solid #E2E8F0;
-  padding-bottom: 16px;
 }
 
 .chart-card-title {
@@ -286,6 +305,9 @@
   font-weight: 700;
   font-size: 18px;
   color: #101828;
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 .chart-card-subtitle {
@@ -300,6 +322,45 @@
   padding: 16px 20px 20px;
   height: auto;
   min-height: 320px;
+}
+
+/* ============================ NAVIGABLE CHART CARD ============================ */
+.chart-card--navigable {
+  cursor: pointer;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  pointer-events: auto;
+}
+
+.chart-card--navigable:hover {
+  box-shadow: 0 6px 24px 0 rgba(50, 77, 135, 0.13);
+  transform: translateY(-2px);
+}
+
+.chart-card--navigable:focus-visible {
+  outline: 2.5px solid #3B82F6;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.chart-card--navigable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px 0 rgba(50, 77, 135, 0.10);
+}
+
+.chart-card-nav-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  color: #94A3B8;
+  position: relative;
+  top: -1px;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.chart-card--navigable:hover .chart-card-nav-icon,
+.chart-card--navigable:focus-visible .chart-card-nav-icon {
+  color: #3B82F6;
 }
 
 /* ============================ CHART ROWS ============================ */
@@ -357,24 +418,118 @@
   color: #475569 !important;
 }
 
+/* ============================ KPI ALERT MODAL ============================ */
+/* Added — was missing from original SuperAdmin CSS */
+.kpi-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.kpi-modal {
+  width: 420px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  font-family: 'Lexend', sans-serif;
+  animation: kpiModalFadeIn 0.2s ease;
+}
+
+@keyframes kpiModalFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.kpi-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kpi-modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+}
+
+.kpi-modal-close-icon {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #64748B;
+}
+
+.kpi-modal-status {
+  margin-top: 10px;
+  display: inline-block;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.kpi-modal-desc {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.kpi-modal-suggestions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kpi-suggestion-item {
+  display: flex;
+  gap: 10px;
+  background: #F8FAFC;
+  padding: 10px;
+  border-radius: 10px;
+  align-items: flex-start;
+}
+
+.suggestion-icon { font-size: 16px; }
+
+.suggestion-text {
+  font-size: 13px;
+  color: #334155;
+}
+
+.kpi-modal-footer {
+  margin-top: 18px;
+  text-align: right;
+}
+
+.kpi-modal-close {
+  background: #324D87;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Lexend', sans-serif;
+}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
-  .charts-row {
-    flex-direction: column;
-  }
-  
-  .chart-card {
-    width: 100%;
-  }
+  .charts-row     { flex-direction: column; }
+  .chart-card     { width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .chart-card-header {
-    padding: 16px 20px 0;
-  }
-  
-  .chart-container {
-    padding: 12px 16px 16px;
-    min-height: 280px;
-  }
+  .chart-card-header { padding: 16px 20px 0; }
+  .chart-container   { padding: 12px 16px 16px; min-height: 280px; }
 }

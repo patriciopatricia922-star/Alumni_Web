@@ -1,0 +1,344 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   EditPermissionsModal.css
+   All selectors are namespaced under .ep-* to guarantee zero collision with
+   existing modal, table, or layout styles.
+───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.ep-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── Modal shell ─────────────────────────────────────────────────────────── */
+.ep-modal {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 32px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ep-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ep-header-text h2 {
+  font-family: 'Lexend', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: #101828;
+  margin: 0 0 6px;
+}
+
+.ep-header-text p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #717182;
+  flex-wrap: wrap;
+}
+
+.ep-admin-name {
+  font-weight: 600;
+  color: #374151;
+}
+
+.ep-role-pill--admin {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Arimo', Arial, sans-serif;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  white-space: nowrap;
+}
+
+.ep-close-btn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #62748E;
+  transition: color 0.2s;
+  line-height: 0;
+}
+
+.ep-close-btn:hover {
+  color: #0A0A0A;
+}
+
+/* ── Superadmin notice ───────────────────────────────────────────────────── */
+.ep-superadmin-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #1D4ED8;
+}
+
+.ep-superadmin-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Error banner ────────────────────────────────────────────────────────── */
+.ep-error {
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #B91C1C;
+}
+
+/* ── Section ─────────────────────────────────────────────────────────────── */
+.ep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ep-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ep-section-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.ep-select-all-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #155DFC;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+  outline-offset: 3px;
+}
+
+.ep-select-all-btn:hover {
+  color: #0040CC;
+}
+
+/* ── Checkbox grid ───────────────────────────────────────────────────────── */
+.ep-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+.ep-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+  transition: background 0.15s;
+  position: relative;
+}
+
+.ep-item:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+.ep-item:nth-child(even) {
+  border-right: none;
+}
+
+.ep-item:hover {
+  background: #F8FAFC;
+}
+
+.ep-item--checked {
+  background: #F0F7FF;
+}
+
+.ep-item--checked:hover {
+  background: #E8F2FF;
+}
+
+/* Hidden native checkbox */
+.ep-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Custom checkbox box */
+.ep-checkbox {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #F3F3F5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ep-checkbox--checked {
+  background: #155DFC;
+  border-color: #155DFC;
+}
+
+/* Module name */
+.ep-item-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #0A0A0A;
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.ep-item--checked .ep-item-label {
+  color: #001947;
+  font-weight: 500;
+}
+
+/* Focus ring for keyboard nav */
+.ep-item:focus-within .ep-checkbox {
+  outline: 2px solid #155DFC;
+  outline-offset: 2px;
+}
+
+/* Selection summary */
+.ep-summary {
+  margin: 8px 0 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  color: #62748E;
+  line-height: 1.4;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.ep-footer {
+  display: flex;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.ep-btn-cancel {
+  flex: 1;
+  height: 40px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ep-btn-cancel:hover:not(:disabled) {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.ep-btn-save {
+  flex: 1;
+  height: 40px;
+  background: #001947;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ep-btn-save:hover:not(:disabled) {
+  background: #002570;
+}
+
+.ep-btn-cancel:disabled,
+.ep-btn-save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .ep-modal {
+    padding: 24px;
+  }
+
+  .ep-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ep-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .ep-item:last-child {
+    border-bottom: none;
+  }
+
+  .ep-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ep-btn-cancel,
+  .ep-btn-save {
+    width: 100%;
+  }
+}

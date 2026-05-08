@@ -21,6 +21,7 @@ const SidebarView = ({
   helpItems,
   sidebarLogo,
   handleLogout,
+  onNavClick,   // ← required: called for every menu item click (includes DPA gate)
 }) => {
 
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
@@ -41,12 +42,20 @@ const SidebarView = ({
           const isActive = location.pathname === item.path ||
             (item.path === '/survey' && location.pathname.startsWith('/survey'));
           return (
-            <Link key={item.path} to={item.navPath} style={{
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: '3px', flex: 1, height: '100%',
-              textDecoration: 'none', position: 'relative',
-            }}>
+            // FIX: use button + onNavClick instead of <Link> so the DPA gate
+            // in Sidebar.jsx (handleNavClick → requestNavigation) is always invoked.
+            <button
+              key={item.path}
+              onClick={() => onNavClick(item)}
+              disabled={item.loading}
+              style={{
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: '3px', flex: 1, height: '100%',
+                background: 'none', border: 'none', cursor: item.loading ? 'not-allowed' : 'pointer',
+                padding: 0, position: 'relative',
+              }}
+            >
               {isActive && (
                 <div style={{
                   position: 'absolute', top: 0, left: '50%',
@@ -55,7 +64,7 @@ const SidebarView = ({
                   background: '#FFEC8E', borderRadius: '0 0 4px 4px',
                 }} />
               )}
-              <img src={item.icon} alt={item.label} 
+              <img src={item.icon} alt={item.label}
               style={{
                 width: '21px', height: '21px',
                 filter: isActive
@@ -71,7 +80,7 @@ const SidebarView = ({
               }}>
                 {item.label}
               </span>
-            </Link>
+            </button>
           );
         })}
 
@@ -130,7 +139,7 @@ const SidebarView = ({
       }} />
 
       {/* MENU section */}
-      <div style={{ marginTop: '.5vw',padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ marginTop: '.5vw', padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <p style={{
           fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
           lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
@@ -140,16 +149,26 @@ const SidebarView = ({
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path === '/survey' && location.pathname.startsWith('/survey'));
+
+          // FIX: render as a styled button that always calls onNavClick.
+          // This ensures every entry point — including new-user first-time visits
+          // and resume actions — passes through the DPA gate in Sidebar.jsx
+          // before any survey route is resolved and navigated to.
           return (
-            <Link
+            <button
               key={item.path}
-              to={item.navPath}
+              onClick={() => onNavClick(item)}
+              disabled={item.loading}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '9px 13px',
                 margin: '0 6.5px',
                 background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                borderRadius: '14px', textDecoration: 'none',
+                borderRadius: '14px',
+                border: 'none',
+                cursor: item.loading ? 'not-allowed' : 'pointer',
+                width: 'calc(100% - 13px)',
+                textAlign: 'left',
                 transition: 'background 0.15s ease',
               }}
             >
@@ -167,22 +186,22 @@ const SidebarView = ({
                 lineHeight: '24px', letterSpacing: '0.325px',
                 color: isActive ? '#FFEC8E' : '#FFFFFF',
               }}>{item.label}</span>
-            </Link>
+            </button>
           );
         })}
       </div>
 
-      {/* HELP section */}
-      <div style={{ marginTop: '1.2vw',padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      {/* HELP section — uses Link directly (not survey-gated) */}
+      <div style={{ marginTop: '1.2vw', padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <p style={{
-          fontFamily: 'Montserrat', 
-          fontWeight: 600, 
+          fontFamily: 'Montserrat',
+          fontWeight: 600,
           fontSize: '10px',
-          lineHeight: '15px', 
-          letterSpacing: '0.5px', 
+          lineHeight: '15px',
+          letterSpacing: '0.5px',
           textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.9)', 
-          padding: '0 14px', 
+          color: 'rgba(255,255,255,0.9)',
+          padding: '0 14px',
           margin: '0 0 8px 0',
         }}>HELP</p>
 

@@ -1,16 +1,3 @@
-/**
- * ProfileView.jsx — Presentation Layer
- *
- * Layout strategy (CSS grid on .prof-main):
- *   Row 1 → .prof-back        (auto height)
- *   Row 2 → .prof-page-header (auto height)
- *   Row 3 → .prof-top-row     (var(--prof-top-h), hard-locked)
- *   Row 4 → .prof-bottom-row  (1fr — all remaining space)
- *
- * No JSX structural changes required from the CSS fix.
- * The 4 direct children of .prof-main must remain in this exact order.
- */
-
 import React, { memo, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { PASSWORD_RULES } from '../pages/Profile';
@@ -25,9 +12,6 @@ import phoneIcon        from '../assets/ph_icn.svg';
 import emailIcon        from '../assets/mail_icn.svg';
 import '../styles/Profile.css';
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Helpers
-───────────────────────────────────────────────────────────────────────────── */
 const getStrengthLabel = (pct) => {
   if (pct >= 100) return 'Excellent';
   if (pct >= 80)  return 'Very Good';
@@ -52,9 +36,6 @@ const formatDate = (isoDate) => {
   });
 };
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Eye toggle icon
-───────────────────────────────────────────────────────────────────────────── */
 const EyeIcon = memo(({ visible }) => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
     {visible ? (
@@ -70,9 +51,6 @@ const EyeIcon = memo(({ visible }) => (
   </svg>
 ));
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Password input
-───────────────────────────────────────────────────────────────────────────── */
 const PasswordInput = memo(({ label, value, onChange, placeholder }) => {
   const [show, setShow] = useState(false);
   return (
@@ -100,9 +78,6 @@ const PasswordInput = memo(({ label, value, onChange, placeholder }) => {
   );
 });
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Password rules
-───────────────────────────────────────────────────────────────────────────── */
 const PasswordRules = memo(({ value }) => {
   if (!value) return null;
   return (
@@ -129,9 +104,363 @@ const PasswordRules = memo(({ value }) => {
   );
 });
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Notification Bell
-───────────────────────────────────────────────────────────────────────────── */
+const countryData = [
+  { code: '+63', name: 'Philippines', flag: '🇵🇭', dial: '+63' },
+  { code: '+1', name: 'United States', flag: '🇺🇸', dial: '+1' },
+  { code: '+44', name: 'United Kingdom', flag: '🇬🇧', dial: '+44' },
+  { code: '+61', name: 'Australia', flag: '🇦🇺', dial: '+61' },
+  { code: '+81', name: 'Japan', flag: '🇯🇵', dial: '+81' },
+  { code: '+82', name: 'South Korea', flag: '🇰🇷', dial: '+82' },
+  { code: '+86', name: 'China', flag: '🇨🇳', dial: '+86' },
+  { code: '+91', name: 'India', flag: '🇮🇳', dial: '+91' },
+  { code: '+49', name: 'Germany', flag: '🇩🇪', dial: '+49' },
+  { code: '+33', name: 'France', flag: '🇫🇷', dial: '+33' },
+  { code: '+39', name: 'Italy', flag: '🇮🇹', dial: '+39' },
+  { code: '+34', name: 'Spain', flag: '🇪🇸', dial: '+34' },
+  { code: '+55', name: 'Brazil', flag: '🇧🇷', dial: '+55' },
+  { code: '+52', name: 'Mexico', flag: '🇲🇽', dial: '+52' },
+  { code: '+7', name: 'Russia', flag: '🇷🇺', dial: '+7' },
+  { code: '+27', name: 'South Africa', flag: '🇿🇦', dial: '+27' },
+  { code: '+20', name: 'Egypt', flag: '🇪🇬', dial: '+20' },
+  { code: '+62', name: 'Indonesia', flag: '🇮🇩', dial: '+62' },
+  { code: '+60', name: 'Malaysia', flag: '🇲🇾', dial: '+60' },
+  { code: '+65', name: 'Singapore', flag: '🇸🇬', dial: '+65' },
+  { code: '+66', name: 'Thailand', flag: '🇹🇭', dial: '+66' },
+  { code: '+84', name: 'Vietnam', flag: '🇻🇳', dial: '+84' },
+];
+
+const fullCountryList = [
+  { name: 'Afghanistan', flag: '🇦🇫' },
+  { name: 'Albania', flag: '🇦🇱' },
+  { name: 'Algeria', flag: '🇩🇿' },
+  { name: 'Andorra', flag: '🇦🇩' },
+  { name: 'Angola', flag: '🇦🇴' },
+  { name: 'Antigua and Barbuda', flag: '🇦🇬' },
+  { name: 'Argentina', flag: '🇦🇷' },
+  { name: 'Armenia', flag: '🇦🇲' },
+  { name: 'Australia', flag: '🇦🇺' },
+  { name: 'Austria', flag: '🇦🇹' },
+  { name: 'Azerbaijan', flag: '🇦🇿' },
+  { name: 'Bahamas', flag: '🇧🇸' },
+  { name: 'Bahrain', flag: '🇧🇭' },
+  { name: 'Bangladesh', flag: '🇧🇩' },
+  { name: 'Barbados', flag: '🇧🇧' },
+  { name: 'Belarus', flag: '🇧🇾' },
+  { name: 'Belgium', flag: '🇧🇪' },
+  { name: 'Belize', flag: '🇧🇿' },
+  { name: 'Benin', flag: '🇧🇯' },
+  { name: 'Bhutan', flag: '🇧🇹' },
+  { name: 'Bolivia', flag: '🇧🇴' },
+  { name: 'Bosnia and Herzegovina', flag: '🇧🇦' },
+  { name: 'Botswana', flag: '🇧🇼' },
+  { name: 'Brazil', flag: '🇧🇷' },
+  { name: 'Brunei', flag: '🇧🇳' },
+  { name: 'Bulgaria', flag: '🇧🇬' },
+  { name: 'Burkina Faso', flag: '🇧🇫' },
+  { name: 'Burundi', flag: '🇧🇮' },
+  { name: 'Cabo Verde', flag: '🇨🇻' },
+  { name: 'Cambodia', flag: '🇰🇭' },
+  { name: 'Cameroon', flag: '🇨🇲' },
+  { name: 'Canada', flag: '🇨🇦' },
+  { name: 'Central African Republic', flag: '🇨🇫' },
+  { name: 'Chad', flag: '🇹🇩' },
+  { name: 'Chile', flag: '🇨🇱' },
+  { name: 'China', flag: '🇨🇳' },
+  { name: 'Colombia', flag: '🇨🇴' },
+  { name: 'Comoros', flag: '🇰🇲' },
+  { name: 'Congo', flag: '🇨🇬' },
+  { name: 'Costa Rica', flag: '🇨🇷' },
+  { name: 'Croatia', flag: '🇭🇷' },
+  { name: 'Cuba', flag: '🇨🇺' },
+  { name: 'Cyprus', flag: '🇨🇾' },
+  { name: 'Czech Republic', flag: '🇨🇿' },
+  { name: 'Denmark', flag: '🇩🇰' },
+  { name: 'Djibouti', flag: '🇩🇯' },
+  { name: 'Dominica', flag: '🇩🇲' },
+  { name: 'Dominican Republic', flag: '🇩🇴' },
+  { name: 'Ecuador', flag: '🇪🇨' },
+  { name: 'Egypt', flag: '🇪🇬' },
+  { name: 'El Salvador', flag: '🇸🇻' },
+  { name: 'Equatorial Guinea', flag: '🇬🇶' },
+  { name: 'Eritrea', flag: '🇪🇷' },
+  { name: 'Estonia', flag: '🇪🇪' },
+  { name: 'Eswatini', flag: '🇸🇿' },
+  { name: 'Ethiopia', flag: '🇪🇹' },
+  { name: 'Fiji', flag: '🇫🇯' },
+  { name: 'Finland', flag: '🇫🇮' },
+  { name: 'France', flag: '🇫🇷' },
+  { name: 'Gabon', flag: '🇬🇦' },
+  { name: 'Gambia', flag: '🇬🇲' },
+  { name: 'Georgia', flag: '🇬🇪' },
+  { name: 'Germany', flag: '🇩🇪' },
+  { name: 'Ghana', flag: '🇬🇭' },
+  { name: 'Greece', flag: '🇬🇷' },
+  { name: 'Grenada', flag: '🇬🇩' },
+  { name: 'Guatemala', flag: '🇬🇹' },
+  { name: 'Guinea', flag: '🇬🇳' },
+  { name: 'Guinea-Bissau', flag: '🇬🇼' },
+  { name: 'Guyana', flag: '🇬🇾' },
+  { name: 'Haiti', flag: '🇭🇹' },
+  { name: 'Honduras', flag: '🇭🇳' },
+  { name: 'Hungary', flag: '🇭🇺' },
+  { name: 'Iceland', flag: '🇮🇸' },
+  { name: 'India', flag: '🇮🇳' },
+  { name: 'Indonesia', flag: '🇮🇩' },
+  { name: 'Iran', flag: '🇮🇷' },
+  { name: 'Iraq', flag: '🇮🇶' },
+  { name: 'Ireland', flag: '🇮🇪' },
+  { name: 'Israel', flag: '🇮🇱' },
+  { name: 'Italy', flag: '🇮🇹' },
+  { name: 'Jamaica', flag: '🇯🇲' },
+  { name: 'Japan', flag: '🇯🇵' },
+  { name: 'Jordan', flag: '🇯🇴' },
+  { name: 'Kazakhstan', flag: '🇰🇿' },
+  { name: 'Kenya', flag: '🇰🇪' },
+  { name: 'Kiribati', flag: '🇰🇮' },
+  { name: 'Korea, North', flag: '🇰🇵' },
+  { name: 'Korea, South', flag: '🇰🇷' },
+  { name: 'Kosovo', flag: '🇽🇰' },
+  { name: 'Kuwait', flag: '🇰🇼' },
+  { name: 'Kyrgyzstan', flag: '🇰🇬' },
+  { name: 'Laos', flag: '🇱🇦' },
+  { name: 'Latvia', flag: '🇱🇻' },
+  { name: 'Lebanon', flag: '🇱🇧' },
+  { name: 'Lesotho', flag: '🇱🇸' },
+  { name: 'Liberia', flag: '🇱🇷' },
+  { name: 'Libya', flag: '🇱🇾' },
+  { name: 'Liechtenstein', flag: '🇱🇮' },
+  { name: 'Lithuania', flag: '🇱🇹' },
+  { name: 'Luxembourg', flag: '🇱🇺' },
+  { name: 'Madagascar', flag: '🇲🇬' },
+  { name: 'Malawi', flag: '🇲🇼' },
+  { name: 'Malaysia', flag: '🇲🇾' },
+  { name: 'Maldives', flag: '🇲🇻' },
+  { name: 'Mali', flag: '🇲🇱' },
+  { name: 'Malta', flag: '🇲🇹' },
+  { name: 'Marshall Islands', flag: '🇲🇭' },
+  { name: 'Mauritania', flag: '🇲🇷' },
+  { name: 'Mauritius', flag: '🇲🇺' },
+  { name: 'Mexico', flag: '🇲🇽' },
+  { name: 'Micronesia', flag: '🇫🇲' },
+  { name: 'Moldova', flag: '🇲🇩' },
+  { name: 'Monaco', flag: '🇲🇨' },
+  { name: 'Mongolia', flag: '🇲🇳' },
+  { name: 'Montenegro', flag: '🇲🇪' },
+  { name: 'Morocco', flag: '🇲🇦' },
+  { name: 'Mozambique', flag: '🇲🇿' },
+  { name: 'Myanmar', flag: '🇲🇲' },
+  { name: 'Namibia', flag: '🇳🇦' },
+  { name: 'Nauru', flag: '🇳🇷' },
+  { name: 'Nepal', flag: '🇳🇵' },
+  { name: 'Netherlands', flag: '🇳🇱' },
+  { name: 'New Zealand', flag: '🇳🇿' },
+  { name: 'Nicaragua', flag: '🇳🇮' },
+  { name: 'Niger', flag: '🇳🇪' },
+  { name: 'Nigeria', flag: '🇳🇬' },
+  { name: 'North Macedonia', flag: '🇲🇰' },
+  { name: 'Norway', flag: '🇳🇴' },
+  { name: 'Oman', flag: '🇴🇲' },
+  { name: 'Pakistan', flag: '🇵🇰' },
+  { name: 'Palau', flag: '🇵🇼' },
+  { name: 'Palestine', flag: '🇵🇸' },
+  { name: 'Panama', flag: '🇵🇦' },
+  { name: 'Papua New Guinea', flag: '🇵🇬' },
+  { name: 'Paraguay', flag: '🇵🇾' },
+  { name: 'Peru', flag: '🇵🇪' },
+  { name: 'Philippines', flag: '🇵🇭' },
+  { name: 'Poland', flag: '🇵🇱' },
+  { name: 'Portugal', flag: '🇵🇹' },
+  { name: 'Qatar', flag: '🇶🇦' },
+  { name: 'Romania', flag: '🇷🇴' },
+  { name: 'Russia', flag: '🇷🇺' },
+  { name: 'Rwanda', flag: '🇷🇼' },
+  { name: 'Saint Kitts and Nevis', flag: '🇰🇳' },
+  { name: 'Saint Lucia', flag: '🇱🇨' },
+  { name: 'Saint Vincent and the Grenadines', flag: '🇻🇨' },
+  { name: 'Samoa', flag: '🇼🇸' },
+  { name: 'San Marino', flag: '🇸🇲' },
+  { name: 'Sao Tome and Principe', flag: '🇸🇹' },
+  { name: 'Saudi Arabia', flag: '🇸🇦' },
+  { name: 'Senegal', flag: '🇸🇳' },
+  { name: 'Serbia', flag: '🇷🇸' },
+  { name: 'Seychelles', flag: '🇸🇨' },
+  { name: 'Sierra Leone', flag: '🇸🇱' },
+  { name: 'Singapore', flag: '🇸🇬' },
+  { name: 'Slovakia', flag: '🇸🇰' },
+  { name: 'Slovenia', flag: '🇸🇮' },
+  { name: 'Solomon Islands', flag: '🇸🇧' },
+  { name: 'Somalia', flag: '🇸🇴' },
+  { name: 'South Africa', flag: '🇿🇦' },
+  { name: 'South Sudan', flag: '🇸🇸' },
+  { name: 'Spain', flag: '🇪🇸' },
+  { name: 'Sri Lanka', flag: '🇱🇰' },
+  { name: 'Sudan', flag: '🇸🇩' },
+  { name: 'Suriname', flag: '🇸🇷' },
+  { name: 'Sweden', flag: '🇸🇪' },
+  { name: 'Switzerland', flag: '🇨🇭' },
+  { name: 'Syria', flag: '🇸🇾' },
+  { name: 'Taiwan', flag: '🇹🇼' },
+  { name: 'Tajikistan', flag: '🇹🇯' },
+  { name: 'Tanzania', flag: '🇹🇿' },
+  { name: 'Thailand', flag: '🇹🇭' },
+  { name: 'Timor-Leste', flag: '🇹🇱' },
+  { name: 'Togo', flag: '🇹🇬' },
+  { name: 'Tonga', flag: '🇹🇴' },
+  { name: 'Trinidad and Tobago', flag: '🇹🇹' },
+  { name: 'Tunisia', flag: '🇹🇳' },
+  { name: 'Turkey', flag: '🇹🇷' },
+  { name: 'Turkmenistan', flag: '🇹🇲' },
+  { name: 'Tuvalu', flag: '🇹🇻' },
+  { name: 'Uganda', flag: '🇺🇬' },
+  { name: 'Ukraine', flag: '🇺🇦' },
+  { name: 'United Arab Emirates', flag: '🇦🇪' },
+  { name: 'United Kingdom', flag: '🇬🇧' },
+  { name: 'United States', flag: '🇺🇸' },
+  { name: 'Uruguay', flag: '🇺🇾' },
+  { name: 'Uzbekistan', flag: '🇺🇿' },
+  { name: 'Vanuatu', flag: '🇻🇺' },
+  { name: 'Vatican City', flag: '🇻🇦' },
+  { name: 'Venezuela', flag: '🇻🇪' },
+  { name: 'Vietnam', flag: '🇻🇳' },
+  { name: 'Yemen', flag: '🇾🇪' },
+  { name: 'Zambia', flag: '🇿🇲' },
+  { name: 'Zimbabwe', flag: '🇿🇼' },
+];
+
+const CountryCodeSelector = memo(({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const selectedCountry = countryData.find(c => c.dial === value) || countryData[0];
+  
+  const filteredCountries = countryData.filter(country =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    country.dial.includes(searchTerm)
+  );
+  
+  const handleSelect = (country) => {
+    onChange(country.dial);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+  
+  return (
+    <div className="prof-country-code-search">
+      <button
+        type="button"
+        className="prof-country-code-selector-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span>{selectedCountry.flag}</span>
+          <span>{selectedCountry.dial}</span>
+        </span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M3 4.5L6 7.5L9 4.5" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="prof-country-dropdown">
+          <div className="prof-country-search">
+            <input
+              type="text"
+              placeholder="Search country..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="prof-country-list">
+            {filteredCountries.map((country) => (
+              <div
+                key={country.dial}
+                className="prof-country-option"
+                onClick={() => handleSelect(country)}
+              >
+                <span className="prof-country-flag">{country.flag}</span>
+                <span>{country.name}</span>
+                <span className="prof-country-dial-code">{country.dial}</span>
+              </div>
+            ))}
+            {filteredCountries.length === 0 && (
+              <div className="prof-country-search-empty">
+                No countries found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+const CountrySelector = memo(({ value, onChange, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const selectedCountry = fullCountryList.find(c => c.name === value);
+  
+  const filteredCountries = fullCountryList.filter(country =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const handleSelect = (country) => {
+    onChange(country.name);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+  
+  return (
+    <div className="prof-country-selector">
+      <button
+        type="button"
+        className="prof-country-selector-btn"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>
+          {selectedCountry && <span style={{ fontSize: '18px', marginRight: '8px' }}>{selectedCountry.flag}</span>}
+          <span>{value || placeholder || 'Select country'}</span>
+        </span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M3 4.5L6 7.5L9 4.5" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="prof-country-dropdown">
+          <div className="prof-country-search">
+            <input
+              type="text"
+              placeholder="Search country..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="prof-country-list">
+            {filteredCountries.map((country) => (
+              <div
+                key={country.name}
+                className="prof-country-option"
+                onClick={() => handleSelect(country)}
+              >
+                <span className="prof-country-flag">{country.flag}</span>
+                <span>{country.name}</span>
+              </div>
+            ))}
+            {filteredCountries.length === 0 && (
+              <div className="prof-country-search-empty">
+                No countries found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 const NotificationBell = memo(({
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -143,7 +472,7 @@ const NotificationBell = memo(({
       onClick={() => setShowDropdown(v => !v)}
       aria-label="Notifications"
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
           stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
@@ -180,7 +509,7 @@ const NotificationBell = memo(({
               <div className="prof-notif-empty">
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
                   <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                    stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
+                    stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
               </div>
@@ -199,7 +528,7 @@ const NotificationBell = memo(({
                       <div className="prof-notif-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                           <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                            stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/>
+                            stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/>
                         </svg>
                       </div>
                       <div className="prof-notif-content">
@@ -231,20 +560,25 @@ const NotificationBell = memo(({
   </div>
 ));
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Personal Information Modal
-───────────────────────────────────────────────────────────────────────────── */
 const PersonalInformationModal = memo(({
   isMobile, piForm, setPiField, piFieldErrors,
   piLoading, piSaving, piSaveSuccess, piSaveError,
-  onPISave, onClose, onOpenCP,
+  onPISave, onClose,
 }) => {
   const row = isMobile ? 'prof-pi-row prof-pi-row--col' : 'prof-pi-row';
 
   const handleContactNumberChange = (e) => {
     let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
+    if (value.length > 15) value = value.slice(0, 15);
     setPiField('contactNumber')(value);
+  };
+
+  const handleCountryCodeChange = (code) => {
+    setPiField('countryCode')(code);
+  };
+
+  const handleCountryChange = (country) => {
+    setPiField('country')(country);
   };
 
   return (
@@ -315,12 +649,20 @@ const PersonalInformationModal = memo(({
 
               <div className="prof-pi-field">
                 <label className="prof-pi-label">Gender</label>
-                <select className="prof-pi-select" value={piForm.gender} onChange={setPiField('gender')}>
-                  <option value="" disabled hidden>Select gender</option>
-                  {['Male', 'Female', 'Prefer not to say'].map(o => (
-                    <option key={o} value={o}>{o}</option>
+                <div className="prof-radio-group">
+                  {['Male', 'Female', 'Prefer not to say'].map(option => (
+                    <label key={option} className="prof-radio-option">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={option}
+                        checked={piForm.gender === option}
+                        onChange={setPiField('gender')}
+                      />
+                      <span>{option}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="prof-pi-field">
@@ -336,12 +678,20 @@ const PersonalInformationModal = memo(({
 
               <div className="prof-pi-field">
                 <label className="prof-pi-label">Civil Status</label>
-                <select className="prof-pi-select" value={piForm.civilStatus} onChange={setPiField('civilStatus')}>
-                  <option value="" disabled hidden>Select civil status</option>
-                  {['Single', 'Married', 'Other'].map(o => (
-                    <option key={o} value={o}>{o}</option>
+                <div className="prof-radio-group">
+                  {['Single', 'Married', 'Other'].map(option => (
+                    <label key={option} className="prof-radio-option">
+                      <input
+                        type="radio"
+                        name="civilStatus"
+                        value={option}
+                        checked={piForm.civilStatus === option}
+                        onChange={setPiField('civilStatus')}
+                      />
+                      <span>{option}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div className="prof-pi-field">
@@ -394,29 +744,52 @@ const PersonalInformationModal = memo(({
                 </div>
                 <div className="prof-pi-field">
                   <label className="prof-pi-label">Country</label>
-                  <input
-                    className="prof-pi-input"
+                  <CountrySelector
                     value={piForm.country}
-                    onChange={setPiField('country')}
-                    placeholder="Philippines"
-                    autoComplete="country-name"
+                    onChange={handleCountryChange}
+                    placeholder="Select country"
                   />
                 </div>
               </div>
 
+              <h3 className="prof-pi-section-title">Contact Information</h3>
+
+              <div className="prof-pi-field">
+                <label className="prof-pi-label">Email Address</label>
+                <input
+                  className="prof-pi-input"
+                  value={piForm.email}
+                  onChange={() => {}}
+                  type="email"
+                  disabled
+                  autoComplete="email"
+                />
+                <p className="prof-pi-hint">Email is managed by your authentication provider.</p>
+              </div>
+
               <div className="prof-pi-field">
                 <label className="prof-pi-label">Contact Number</label>
-                <input
-                  className={`prof-pi-input${piFieldErrors.contactNumber ? ' prof-pi-input--error' : ''}`}
-                  value={piForm.contactNumber}
-                  onChange={handleContactNumberChange}
-                  placeholder="e.g. 09123456789"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                />
+                <div className="prof-contact-row">
+                  <div className="prof-country-code-select">
+                    <CountryCodeSelector
+                      value={piForm.countryCode || '+63'}
+                      onChange={handleCountryCodeChange}
+                    />
+                  </div>
+                  <div className="prof-phone-number-input">
+                    <input
+                      className={`prof-pi-input${piFieldErrors.contactNumber ? ' prof-pi-input--error' : ''}`}
+                      value={piForm.contactNumber}
+                      onChange={handleContactNumberChange}
+                      placeholder="e.g. 9123456789"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                    />
+                  </div>
+                </div>
                 {piFieldErrors.contactNumber && <span className="prof-pi-error-text">{piFieldErrors.contactNumber}</span>}
-                <p className="prof-pi-hint">Enter a valid 10–11 digit mobile number.</p>
+                <p className="prof-pi-hint">Enter a valid mobile number without the country code.</p>
               </div>
 
               <h3 className="prof-pi-section-title">Academic Information</h3>
@@ -455,32 +828,6 @@ const PersonalInformationModal = memo(({
                   autoComplete="off"
                 />
                 {piFieldErrors.yearGraduated && <span className="prof-pi-error-text">{piFieldErrors.yearGraduated}</span>}
-              </div>
-
-              <h3 className="prof-pi-section-title">Account Security</h3>
-
-              <div className="prof-pi-field">
-                <label className="prof-pi-label">Email Address</label>
-                <input
-                  className="prof-pi-input"
-                  value={piForm.email}
-                  onChange={() => {}}
-                  type="email"
-                  disabled
-                  autoComplete="email"
-                />
-                <p className="prof-pi-hint">Email is managed by your authentication provider.</p>
-              </div>
-
-              <div className="prof-pi-field">
-                <label className="prof-pi-label">Password</label>
-                <button className="prof-pi-change-pass-btn" onClick={onOpenCP} type="button">
-                  <span>Change Password</span>
-                  <svg width="13" height="13" viewBox="0 0 15 15" fill="none">
-                    <path d="M2 7.5H13M13 7.5L8 2.5M13 7.5L8 12.5"
-                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
               </div>
 
               {piSaveError && (
@@ -527,9 +874,6 @@ const PersonalInformationModal = memo(({
   );
 });
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Change Password Modal
-───────────────────────────────────────────────────────────────────────────── */
 const NewPasswordField = memo(({ value, onChange }) => {
   const [show, setShow] = useState(false);
   return (
@@ -638,9 +982,6 @@ const ChangePasswordModal = memo(({
   </div>
 ));
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Info Row
-───────────────────────────────────────────────────────────────────────────── */
 const InfoRow = memo(({ icon, value, placeholder }) => (
   <div className="prof-info-row">
     <span className="prof-info-icon">{icon}</span>
@@ -650,9 +991,6 @@ const InfoRow = memo(({ icon, value, placeholder }) => (
   </div>
 ));
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   Main View
-───────────────────────────────────────────────────────────────────────────── */
 const ProfileView = ({
   isMobile, isTablet, navigate,
   user, avatarUrl, strength, onAvatarUpload,
@@ -680,7 +1018,9 @@ const ProfileView = ({
   const gender      = user?.gender || '';
   const birthday    = user?.birthday || '';
   const civilStatus = user?.civil_status || user?.civilStatus || '';
-  const phone       = user?.contact_number || user?.mobile_number || user?.contactNumber || '';
+  const countryCode = user?.country_code || '+63';
+  const phoneNumber = user?.contact_number || user?.mobile_number || user?.contactNumber || '';
+  const phone = phoneNumber ? `${countryCode} ${phoneNumber}` : '';
   const addressParts = [
     user?.street_address || user?.street,
     user?.city,
@@ -700,21 +1040,8 @@ const ProfileView = ({
       {!isMobile && <Sidebar />}
 
       <div className="prof-content-wrapper">
-        {/*
-         * .prof-main has exactly 4 direct children — this is required
-         * for the CSS grid-template-rows layout to work correctly:
-         *
-         *   Row 1 → .prof-back        (auto)
-         *   Row 2 → .prof-page-header (auto)
-         *   Row 3 → .prof-top-row     (var(--prof-top-h), hard-locked)
-         *   Row 4 → .prof-bottom-row  (1fr, all remaining space)
-         *
-         * Do NOT add or remove direct children without updating
-         * grid-template-rows in Profile.css accordingly.
-         */}
         <main className={`prof-main${isMobile ? ' prof-main--mobile' : ''}`}>
 
-          {/* Row 1: Back button */}
           <button className="prof-back" onClick={() => navigate('/dashboard')}>
             <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
               <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
@@ -723,7 +1050,6 @@ const ProfileView = ({
             <span>Back</span>
           </button>
 
-          {/* Row 2: Page header (title left, bell right) */}
           <div className="prof-page-header">
             <div className="prof-page-header-text">
               <h1 className="prof-page-title">Profile</h1>
@@ -749,7 +1075,6 @@ const ProfileView = ({
             />
           </div>
 
-          {/* Row 3: Hero cards (hard-locked height via --prof-top-h) */}
           <div className="prof-top-row">
             <div className="prof-hero-card">
               <div className="prof-hero-left">
@@ -809,10 +1134,8 @@ const ProfileView = ({
             </div>
           </div>
 
-          {/* Row 4: Info + Change Password cards (1fr — fills all remaining space) */}
           <div className="prof-bottom-row">
 
-            {/* Personal Information card */}
             <div className="prof-info-card">
               <div className="prof-info-card-header">
                 <div className="prof-info-card-icon prof-info-card-icon--primary">
@@ -834,11 +1157,6 @@ const ProfileView = ({
                 </button>
               </div>
 
-              {/*
-               * Info list — 8 rows, each with flex:1 1 0.
-               * They divide the card's remaining height equally.
-               * No overflow, no scroll — rows shrink on short viewports.
-               */}
               <div className="prof-info-list">
                 <InfoRow icon={<img src={nameIcon}     alt="Name"/>}         value={fullName}             placeholder="Name not set"/>
                 <InfoRow icon={<img src={idIcon}       alt="Student ID"/>}   value={studentNum}           placeholder="Student number not set"/>
@@ -855,7 +1173,6 @@ const ProfileView = ({
               </button>
             </div>
 
-            {/* Change Password card */}
             <div className="prof-cp-card">
               <div className="prof-info-card-header">
                 <div className="prof-info-card-icon prof-info-card-icon--red">
@@ -903,7 +1220,6 @@ const ProfileView = ({
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
       {isMobile && (
         <nav className="prof-bottom-nav" aria-label="Main navigation">
           <div className="prof-bottom-nav-divider"/>
@@ -960,7 +1276,6 @@ const ProfileView = ({
           piSaveError={piSaveError}
           onPISave={onPISave}
           onClose={onClosePIModal}
-          onOpenCP={onOpenCPFromPI}
         />
       )}
 

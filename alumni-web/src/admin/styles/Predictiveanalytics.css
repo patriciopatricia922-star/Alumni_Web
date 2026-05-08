@@ -1,9 +1,9 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.
+   PredictiveAnalytics.css
    ============================================================================
-   Purpose: Contains all CSS styles for the Predictive Analytics component.
-            Includes layout, chart animations, department cards, AI insights card,
-            responsive breakpoints, and all visual styling from friend's design.
+   Purpose: All styles for the Predictive Analytics dashboard.
+            Covers layout, chart, department cards, AI insights card,
+            and responsive breakpoints for tablet and mobile.
    ============================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
@@ -157,7 +157,7 @@ body {
 }
 
 /* ============================================
-   OVERVIEW CONTAINER (Chart + AI)
+   OVERVIEW CONTAINER (Chart + AI sidebar)
    ============================================ */
 .pa-overview-container {
   display: grid;
@@ -558,7 +558,7 @@ body {
 }
 
 /* ============================================
-   DEPARTMENT DETAIL PANEL (Page 3)
+   DEPARTMENT DETAIL PANEL
    ============================================ */
 .pa-detail-container {
   display: grid;
@@ -926,10 +926,10 @@ body {
 @media (max-width: 767px) {
   .pa-main { margin-left: 0; padding: 24px 16px 32px; overflow-y: auto; }
 
-  .pa-page-title { font-size: 24px; }
+  .pa-page-title    { font-size: 24px; }
   .pa-page-subtitle { font-size: 13px; }
 
-  .pa-tab-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .pa-tab-row    { flex-direction: column; align-items: stretch; gap: 12px; }
   .pa-refresh-bar { margin-left: 0; justify-content: flex-end; }
 
   .pa-department-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -945,23 +945,23 @@ body {
 
   .pa-chart-card { padding: 20px; }
 
-  .pa-chart-header { flex-direction: column; text-align: center; gap: 12px; }
+  .pa-chart-header     { flex-direction: column; text-align: center; gap: 12px; }
   .pa-chart-header-text { margin-left: 0; }
-  .pa-chart-title { font-size: 18px; }
-  .pa-chart-subtitle { font-size: 12px; }
+  .pa-chart-title      { font-size: 18px; }
+  .pa-chart-subtitle   { font-size: 12px; }
 
-  .pa-chart-summary { flex-direction: column; text-align: center; }
-  .pa-summary-arrow { display: none; }
+  .pa-chart-summary  { flex-direction: column; text-align: center; }
+  .pa-summary-arrow  { display: none; }
   .pa-summary-change { margin-left: 0; }
 
   .pa-chart-y-axis { min-height: 160px; font-size: 10px; }
-  .pa-chart-main { min-height: 180px; }
+  .pa-chart-main   { min-height: 180px; }
 
   .pa-panel { padding: 20px; }
 
-  .pa-overview-card { padding: 1rem; }
+  .pa-overview-card     { padding: 1rem; }
   .pa-overview-card-top { flex-direction: column; align-items: flex-start; }
-  .pa-overview-stats { align-self: flex-start; }
+  .pa-overview-stats    { align-self: flex-start; }
 
   .pa-bar-pair { grid-template-columns: 1fr; gap: 0.75rem; }
 
@@ -971,7 +971,7 @@ body {
 
   .pa-department-card { padding: 20px; }
   .pa-department-code { font-size: 16px; }
-  .pa-section-title { font-size: 18px; }
+  .pa-section-title   { font-size: 18px; }
   .pa-section-subtitle { font-size: 12px; }
 }
 
@@ -981,30 +981,30 @@ body {
 @media (max-width: 480px) {
   .pa-main { padding: 16px; }
 
-  .pa-page-title { font-size: 22px; }
+  .pa-page-title    { font-size: 22px; }
   .pa-page-subtitle { font-size: 12px; }
 
-  .pa-chart-card { padding: 16px; }
-  .pa-chart-icon { width: 36px; height: 36px; }
-  .pa-chart-title { font-size: 16px; }
+  .pa-chart-card    { padding: 16px; }
+  .pa-chart-icon    { width: 36px; height: 36px; }
+  .pa-chart-title   { font-size: 16px; }
   .pa-chart-subtitle { font-size: 11px; }
 
   .pa-chart-y-axis { min-height: 140px; font-size: 9px; }
-  .pa-chart-main { min-height: 160px; }
+  .pa-chart-main   { min-height: 160px; }
 
-  .pa-chart-legend { gap: 12px; }
-  .pa-legend-label { font-size: 10px; }
+  .pa-chart-legend  { gap: 12px; }
+  .pa-legend-label  { font-size: 10px; }
   .pa-legend-swatch { width: 10px; }
 
   .pa-program-code { font-size: 0.875rem; padding: 0.25rem 0.75rem; }
 
   .pa-department-card { padding: 16px; }
-  .pa-dept-icon { width: 36px; height: 36px; font-size: 16px; }
+  .pa-dept-icon       { width: 36px; height: 36px; font-size: 16px; }
   .pa-department-code { font-size: 15px; }
 
   .pa-panel { padding: 16px; }
 
-  .ai-insights-card { padding: 16px; }
+  .ai-insights-card       { padding: 16px; }
   .ai-insights-header span { font-size: 14px; }
-  .ai-insight-text { font-size: 12px; }
+  .ai-insight-text        { font-size: 12px; }
 }

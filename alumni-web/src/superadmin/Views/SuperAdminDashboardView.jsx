@@ -1,90 +1,98 @@
 // src/pages/views/SuperAdminDashboardView.jsx
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
-import { IoMdSchool } from "react-icons/io";
+// ============================================================================
+// CHART REFACTOR — aligned with AdminDashboard UI/UX patterns:
+//
+//   • CustomLineChart (Employment Probability Forecast) removed.
+//     It was receiving employmentForecastData (year-averaged predicted_rate),
+//     which is the wrong data source for a career alignment view.
+//
+//   • CareerAlignmentChart (grouped bar: Predicted vs Actual) added.
+//     Receives careerAlignmentData — the same { program, predicted, actual }
+//     shape produced by buildCareerAlignmentData in AdminDashboard.
+//     Navigates to /superadmin/response-and-analytics on click.
+//
+//   • Chart layout now matches AdminDashboard section order:
+//       1. Degree Alignment Rate (bar)      ┐ charts-row (side-by-side)
+//       2. Employment Status Distribution   ┘
+//       3. Career Alignment Prediction (grouped bar) — full-width
+//       4. Most In-Demand Skills (bar)               — full-width
+//
+//   • All SuperAdmin-specific routes, sidebar, class prefixes, stat card
+//     icons (including the purple "Active Programs" icon), and the
+//     CustomLineChart import are preserved where they remain relevant.
+//     The unused CustomLineChart component is removed to keep the file clean.
+//
+// Props contract change (parent SuperAdminDashboard.jsx updated in parallel):
+//   REMOVED: employmentForecastData
+//   ADDED:   careerAlignmentData
+// ============================================================================
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  BarChart, Bar,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { IoMdSchool }    from "react-icons/io";
 import { BiSolidSchool } from "react-icons/bi";
 import SuperAdminSidebar from "../SuperAdsidebar";
 import "../styles/SuperAdminDashboard.css";
 
-// ============================================================================
-// COLOR PALETTE - Used for pie chart segments
-// ============================================================================
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 // ============================================================================
-// RADIAL GAUGE CHART - Displays progress toward target as a circular gauge
+// RADIAL GAUGE — exact parity with AdminDashboard's RadialGauge.
 // ============================================================================
-function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = false, size = 80 }) {
+function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = false, size = 80, valueLabel }) {
+  const r  = (size / 2) - 7;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  // ── isCount / no-goal branch ─────────────────────────────────────────────
   if (isCount || target === 0) {
-    const r = (size / 2) - 7;
-    const cx = size / 2;
-    const cy = size / 2;
+    const circumference   = 2 * Math.PI * r;
+    const clampedProgress = Math.min(Math.max(progress, 0), 100);
+    const progressOffset  = circumference * (1 - clampedProgress / 100);
+    const progressColor   = "#00BC7D";
+
     return (
-      <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-        <text x={cx} y={cy + 5} textAnchor="middle" fontSize={11}
-          fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill="#94A3B8">N/A</text>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
+          strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
+        <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+          fontSize={clampedProgress >= 100 ? 10 : 12}
+          fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
+          {valueLabel || `${clampedProgress}%`}
+        </text>
+        <text x={cx} y={cy + 10} textAnchor="middle" dominantBaseline="middle"
+          fontSize={8} fontFamily="Lexend, Arimo, Arial" fontWeight={600} fill="#94A3B8"
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
+          No Goal
+        </text>
       </svg>
     );
   }
 
-  const r = (size / 2) - 7;
-  const cx = size / 2;
-  const cy = size / 2;
-  const circumference = 2 * Math.PI * r;
-
+  // ── with-goal branch — track + progress arc only ─────────────────────────
+  const circumference   = 2 * Math.PI * r;
   const clampedProgress = Math.min(progress, 100);
-  const clampedTarget   = Math.min(target, 100);
-
-  const progressOffset = circumference * (1 - clampedProgress / 100);
-  const targetOffset   = circumference * (1 - clampedTarget   / 100);
-
-  const isGood = targetDir === "below"
-    ? progress <= target
-    : progress >= target;
-
-  const progressColor = isGood ? "#00BC7D" : "#F59E0B";
-  const targetColor   = "#324D87";
+  const progressOffset  = circumference * (1 - clampedProgress / 100);
+  const isGood          = targetDir === "below" ? progress <= target : progress >= target;
+  const progressColor   = isGood ? "#00BC7D" : "#F59E0B";
 
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-      {target > 0 && (
-        <circle
-          cx={cx} cy={cy} r={r} fill="none"
-          stroke={targetColor} strokeWidth={4}
-          strokeOpacity={0.18}
-          strokeDasharray={circumference}
-          strokeDashoffset={targetOffset}
-          strokeLinecap="round"
-        />
-      )}
-      <circle
-        cx={cx} cy={cy} r={r} fill="none"
-        stroke={progressColor} strokeWidth={7}
-        strokeDasharray={circumference}
-        strokeDashoffset={progressOffset}
-        strokeLinecap="round"
-      />
-      {target > 0 && (() => {
-        const drawAngle = (clampedTarget / 100) * 2 * Math.PI;
-        const inner = r - 5;
-        const outer = r + 3;
-        const x1 = cx + inner * Math.cos(drawAngle);
-        const y1 = cy + inner * Math.sin(drawAngle);
-        const x2 = cx + outer * Math.cos(drawAngle);
-        const y2 = cy + outer * Math.sin(drawAngle);
-        return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={targetColor} strokeWidth={2.5} strokeLinecap="round" />;
-      })()}
-      <text
-        x={cx} y={cy + 1}
-        textAnchor="middle"
-        dominantBaseline="middle"
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
+        strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
         fontSize={clampedProgress >= 100 ? 10 : 12}
-        fontFamily="Lexend, Arimo, Arial"
-        fontWeight={700}
-        fill={progressColor}
-        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}
-      >
+        fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
+        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
         {clampedProgress}%
       </text>
     </svg>
@@ -92,7 +100,7 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
 }
 
 // ============================================================================
-// KPI PROGRESS CARD - With radial gauge (for Institutional KPIs)
+// KPI PROGRESS CARD
 // ============================================================================
 function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount }) {
   const trendColor = trend.dir === "up"
@@ -100,13 +108,16 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
     : trend.dir === "down"
     ? (targetDir === "below" ? "#00A63E" : "#ef4444")
     : "#90A1B9";
-
   const trendArrow = trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "";
 
   const resolvedTargetLabel =
     !targetLabel || targetLabel === 'N/A' || /^Goal:\s*[—-]/.test(targetLabel)
-      ? 'N/A'
+      ? 'Not Provided'
       : targetLabel;
+
+  const isNotMet = target > 0 && (
+    targetDir === "below" ? progress > target : progress < target
+  );
 
   return (
     <div className="kpi-progress-card">
@@ -122,9 +133,24 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
               </div>
             )}
           </div>
+          {isNotMet && (
+            <div
+              className="kpi-alert-text"
+              onClick={() => window.dispatchEvent(new CustomEvent('openKpiModal', { detail: { label } }))}
+            >
+              ⚠ Goal not met — click for suggestions
+            </div>
+          )}
         </div>
         <div className="kpi-progress-gauge">
-          <RadialGauge progress={progress} target={target} targetDir={targetDir} isCount={isCount} size={76} />
+          <RadialGauge
+            progress={progress}
+            target={target}
+            targetDir={targetDir}
+            isCount={isCount}
+            size={76}
+            valueLabel={value}
+          />
         </div>
       </div>
     </div>
@@ -132,7 +158,8 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
 }
 
 // ============================================================================
-// KPI STAT CARD ICONS
+// STAT CARD ICONS
+// SuperAdmin-specific "Active Programs" icon (purple/violet) preserved.
 // ============================================================================
 const statCardIcons = {
   'Registered Alumni': {
@@ -177,7 +204,7 @@ const statCardIcons = {
 };
 
 // ============================================================================
-// KPI STAT CARD - For Alumni Tracer (4 cards in a row)
+// KPI STAT CARD
 // ============================================================================
 function KpiStatCard({ label, value, sub }) {
   const iconData = statCardIcons[label];
@@ -208,7 +235,7 @@ function EmptyChart({ height = 280 }) {
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5">
         <line x1="18" y1="20" x2="18" y2="10"/>
         <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
       </svg>
       <span>No data available yet</span>
     </div>
@@ -216,7 +243,7 @@ function EmptyChart({ height = 280 }) {
 }
 
 // ============================================================================
-// CHART CARD COMPONENT
+// CHART CARD
 // ============================================================================
 function ChartCard({ title, subtitle, children }) {
   return (
@@ -225,9 +252,55 @@ function ChartCard({ title, subtitle, children }) {
         <div className="chart-card-title">{title}</div>
         {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
       </div>
-      <div className="chart-container">
-        {children}
+      <div className="chart-container">{children}</div>
+    </div>
+  );
+}
+
+// ============================================================================
+// NAVIGABLE CHART CARD
+// Long mouse-hold suppression, keyboard navigation, and nav icon — identical
+// to AdminDashboard's NavigableChartCard.
+// ============================================================================
+function NavigableChartCard({ title, subtitle, to, children }) {
+  const navigate = useNavigate();
+  const mouseDownTimeRef = { current: null };
+
+  const handleMouseDown = () => { mouseDownTimeRef.current = Date.now(); };
+  const handleClick     = () => {
+    if (mouseDownTimeRef.current === null) return;
+    if (Date.now() - mouseDownTimeRef.current > 300) return;
+    mouseDownTimeRef.current = null;
+    navigate(to);
+  };
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(to); }
+  };
+
+  return (
+    <div
+      className="chart-card chart-card--navigable"
+      role="button"
+      tabIndex={0}
+      aria-label={`${title} — click to view full report`}
+      onMouseDown={handleMouseDown}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="chart-card-header">
+        <div className="chart-card-title">
+          {title}
+          <svg className="chart-card-nav-icon" width="13" height="13" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </div>
+        {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
       </div>
+      <div className="chart-container">{children}</div>
     </div>
   );
 }
@@ -235,17 +308,10 @@ function ChartCard({ title, subtitle, children }) {
 // ============================================================================
 // CUSTOM BAR CHART
 // ============================================================================
-function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 }) {
-  if (!data || data.length === 0) {
-    return (
-      <ChartCard title={title} subtitle={subtitle}>
-        <EmptyChart height={height} />
-      </ChartCard>
-    );
-  }
-
-  return (
-    <ChartCard title={title} subtitle={subtitle}>
+function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280, navigateTo }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -256,49 +322,40 @@ function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 
           <Bar dataKey={dataKey} fill="#3B82F6" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </ChartCard>
-  );
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
 // ============================================================================
 // CUSTOM PIE CHART
 // ============================================================================
-function CustomPieChart({ data, title, subtitle, height = 280 }) {
+function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
   const filteredData = data?.filter(d => d.value > 0) || [];
 
-  if (!filteredData || filteredData.length === 0) {
-    return (
-      <ChartCard title={title} subtitle={subtitle}>
-        <EmptyChart height={height} />
-      </ChartCard>
-    );
-  }
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
+  const renderLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
     const RADIAN = Math.PI / 180;
     const radius = outerRadius * 1.15;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return (
-      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
+      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
         {`${name}: ${(percent * 100).toFixed(0)}%`}
       </text>
     );
   };
 
-  return (
-    <ChartCard title={title} subtitle={subtitle}>
+  const content = filteredData.length === 0
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
-          <Pie
-            data={filteredData}
-            cx="50%" cy="50%"
-            labelLine={true}
-            label={renderCustomizedLabel}
-            outerRadius={80}
-            dataKey="value"
-          >
-            {filteredData.map((entry, index) => (
+          <Pie data={filteredData} cx="50%" cy="50%" labelLine label={renderLabel}
+            outerRadius={80} dataKey="value">
+            {filteredData.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -306,40 +363,127 @@ function CustomPieChart({ data, title, subtitle, height = 280 }) {
           <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
         </PieChart>
       </ResponsiveContainer>
-    </ChartCard>
-  );
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
 // ============================================================================
-// CUSTOM LINE CHART
+// CAREER ALIGNMENT PREDICTION CHART (Grouped Bar) — Navigable
+//
+// ADDED: replaces the CustomLineChart that was incorrectly showing a
+// year-averaged employment forecast. This grouped bar shows predicted vs.
+// actual career alignment rate per program, matching AdminDashboard exactly.
+//
+// Props: data — array of { program: string, predicted: number, actual: number }
+//        navigateTo — SuperAdmin-specific route (/superadmin/response-and-analytics)
 // ============================================================================
-function CustomLineChart({ data, dataKey, xKey, title, subtitle, height = 280 }) {
-  if (!data || data.length === 0) {
-    return (
-      <ChartCard title={title} subtitle={subtitle}>
-        <EmptyChart height={height} />
-      </ChartCard>
-    );
-  }
-
-  return (
-    <ChartCard title={title} subtitle={subtitle}>
+function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
-          <Tooltip />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
-          <Line type="monotone" dataKey={dataKey} stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} />
-        </LineChart>
+          <XAxis
+            dataKey="program"
+            tick={{ fontSize: 11, fontFamily: 'Lexend, Arimo, Arial' }}
+          />
+          <YAxis
+            domain={[0, 100]}
+            tick={{ fontSize: 11 }}
+            tickFormatter={(v) => `${v}%`}
+            label={{
+              value: 'Alignment Rate (%)',
+              angle: -90,
+              position: 'insideLeft',
+              offset: -5,
+              style: { fontSize: 11, fill: '#6A7282', fontFamily: 'Lexend, Arimo, Arial' },
+            }}
+          />
+          <Tooltip
+            formatter={(value, name) => [
+              `${value}%`,
+              name === 'predicted' ? 'Predicted' : 'Actual',
+            ]}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: '12px' }}
+            formatter={(value) => value === 'predicted' ? 'Predicted Rate' : 'Actual Rate'}
+          />
+          <Bar dataKey="predicted" name="predicted" fill="#324D87" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="actual"    name="actual"    fill="#00BC7D" radius={[6, 6, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
-    </ChartCard>
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
+}
+
+// ============================================================================
+// KPI SUGGESTIONS — used by the alert modal
+// ============================================================================
+const getKpiSuggestions = (label) => {
+  const map = {
+    "Absorption from Internship":               ["Strengthen industry partnerships", "Improve internship-to-hire programs"],
+    "Employed Within 2 Yrs of Graduation":      ["Enhance career placement services", "Conduct job readiness workshops"],
+    "Employed in Field / Related Field":        ["Align curriculum with industry needs", "Increase internship relevance"],
+    "Employed Outside Field of Specialization": ["Review program alignment", "Provide career guidance earlier"],
+    "Engaged in Entrepreneurship":             ["Offer startup incubation programs", "Promote entrepreneurship training"],
+    "Occupying Supervisory Positions":          ["Provide leadership training", "Encourage career progression planning"],
+    "Pursued Graduate Studies (within 1 yr)":   ["Promote postgraduate opportunities", "Offer scholarships"],
+    "Pursued Graduate Studies at NU":           ["Strengthen internal graduate programs", "Offer alumni incentives"],
+    "In Positions in Professional Organizations": ["Encourage professional membership", "Host networking events"],
+  };
+  return map[label] || ["No suggestions available"];
+};
+
+// ============================================================================
+// KPI ALERT MODAL
+// ============================================================================
+function KpiAlertModal({ label, onClose }) {
+  return (
+    <div className="kpi-modal-overlay">
+      <div className="kpi-modal">
+        <div className="kpi-modal-header">
+          <h2>{label}</h2>
+          <button className="kpi-modal-close-icon" onClick={onClose}>✕</button>
+        </div>
+        <div className="kpi-modal-status">⚠ Below Target Performance</div>
+        <p className="kpi-modal-desc">
+          This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:
+        </p>
+        <div className="kpi-modal-suggestions">
+          {getKpiSuggestions(label).map((s, i) => (
+            <div key={i} className="kpi-suggestion-item">
+              <div className="suggestion-icon">💡</div>
+              <div className="suggestion-text">{s}</div>
+            </div>
+          ))}
+        </div>
+        <div className="kpi-modal-footer">
+          <button className="kpi-modal-close" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 // ============================================================================
 // MAIN VIEW COMPONENT
+//
+// Props contract change vs. previous version:
+//   REMOVED: employmentForecastData  (was feeding the now-deleted CustomLineChart)
+//   ADDED:   careerAlignmentData     (feeds the new CareerAlignmentChart)
+//
+// Chart layout — matches AdminDashboard section order:
+//   Row 1: Degree Alignment Rate (bar) + Employment Status Distribution (pie)
+//   Full:  Career Alignment Prediction (grouped bar) ← NEW
+//   Full:  Most In-Demand Skills (bar)
 // ============================================================================
 const SuperAdminDashboardView = ({
   activeKpiTab,
@@ -349,51 +493,52 @@ const SuperAdminDashboardView = ({
   employmentAlignmentData,
   employmentStatusData,
   inDemandSkillsData,
-  employmentForecastData,
+  careerAlignmentData,
   loadingCharts,
 }) => {
+  const [activeKpiModal, setActiveKpiModal] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => setActiveKpiModal(e.detail.label);
+    window.addEventListener('openKpiModal', handler);
+    return () => window.removeEventListener('openKpiModal', handler);
+  }, []);
+
   return (
     <div className="super-dashboard-layout">
       <SuperAdminSidebar />
 
       <main className="super-dashboard-main">
 
-        {/* ============================ HEADER ============================ */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="super-dashboard-header">
-          <h1>Super Admin Dashboard Overview</h1>
-          <p>Welcome Super Admin! Here's the complete institutional overview.</p>
+          <h1>Dashboard Overview</h1>
+          <p>Welcome! Here's the complete institutional overview.</p>
         </div>
 
-        {/* ============================ INSTITUTIONAL KPIs SECTION ============================ */}
+        {/* ── Institutional KPIs ─────────────────────────────────────────── */}
         <div className="super-dashboard-section">
           <div className="section-header">
             <BiSolidSchool className="section-icon" />
             <div className="section-title">Institutional KPI</div>
           </div>
 
-          {/* TABS */}
           <div className="kpi-tabs">
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "employment" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("employment")}
-            >
-              EMPLOYMENT
-            </button>
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "career" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("career")}
-            >
-              CAREER PROGRESS
-            </button>
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "education" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("education")}
-            >
-              EDUCATION
-            </button>
+            {[
+              { id: "employment", label: "EMPLOYMENT" },
+              { id: "career",     label: "CAREER PROGRESS" },
+              { id: "education",  label: "EDUCATION" },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                className={`kpi-tab-btn${activeKpiTab === id ? " active" : ""}`}
+                onClick={() => setActiveKpiTab(id)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* KPI GRID - 3 columns */}
           <div className="kpi-grid">
             {kpiData[activeKpiTab].map(kpi => (
               <KpiProgressCard key={kpi.id} {...kpi} />
@@ -401,7 +546,7 @@ const SuperAdminDashboardView = ({
           </div>
         </div>
 
-        {/* ============================ ALUMNI TRACER SECTION ============================ */}
+        {/* ── Alumni Tracer ───────────────────────────────────────────────── */}
         <div className="super-dashboard-section">
           <div className="section-header">
             <IoMdSchool className="section-icon" />
@@ -414,24 +559,41 @@ const SuperAdminDashboardView = ({
           </div>
         </div>
 
-        {/* ============================ CHARTS SECTION ============================ */}
+        {/* ── Degree Alignment Rate + Employment Status ───────────────────── */}
         <div className="charts-row">
           <CustomBarChart
             data={employmentAlignmentData}
             dataKey="alignment"
             nameKey="name"
-            title="Employment Alignment Rate"
-            subtitle="Percentage of employed alumni per program"
+            title="Degree Alignment Rate"
+            subtitle="Percentage of alumni aligned with their degree per program"
             height={280}
+            navigateTo="/superadmin/response-and-analytics"
           />
           <CustomPieChart
             data={employmentStatusData}
             title="Employment Status Distribution"
             subtitle="Breakdown of alumni by employment type"
             height={280}
+            navigateTo="/superadmin/response-and-analytics"
           />
         </div>
 
+        {/* ── Career Alignment Prediction (grouped bar) ─────────────────────
+             REFACTOR: replaces CustomLineChart / employmentForecastData.
+             Uses careerAlignmentData ({ program, predicted, actual }) from
+             buildCareerAlignmentData — the same source as AdminDashboard.    */}
+        <div className="full-width-chart">
+          <CareerAlignmentChart
+            data={careerAlignmentData}
+            title="Career Alignment Prediction"
+            subtitle="Predicted vs. actual career alignment rate by program"
+            height={300}
+            navigateTo="/superadmin/response-and-analytics"
+          />
+        </div>
+
+        {/* ── Most In-Demand Skills ─────────────────────────────────────────── */}
         <div className="full-width-chart">
           <CustomBarChart
             data={inDemandSkillsData}
@@ -443,16 +605,10 @@ const SuperAdminDashboardView = ({
           />
         </div>
 
-        <div className="full-width-chart">
-          <CustomLineChart
-            data={employmentForecastData}
-            dataKey="rate"
-            xKey="year"
-            title="Employment Probability Forecast"
-            subtitle="Predicted employment outcomes over time"
-            height={280}
-          />
-        </div>
+        {/* ── KPI Alert Modal ──────────────────────────────────────────────── */}
+        {activeKpiModal && (
+          <KpiAlertModal label={activeKpiModal} onClose={() => setActiveKpiModal(null)} />
+        )}
 
       </main>
     </div>

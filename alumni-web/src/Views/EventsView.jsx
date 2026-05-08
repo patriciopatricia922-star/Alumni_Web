@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   FaCalendarAlt,
-  FaMapMarkerAlt,
   FaStar,
   FaArrowLeft,
   FaFilter,
@@ -324,9 +323,6 @@ const EventsView = ({
 }) => {
   const sidebarWidth = isTablet ? 200 : 229;
 
-  const featuredEvent = filtered.find(e => e.category === 'Exclusive Events') || filtered[0];
-  const regularEvents = filtered.filter(e => e.id !== featuredEvent?.id);
-
   return (
     <div style={{
       display:    'flex',
@@ -633,66 +629,9 @@ const EventsView = ({
           </div>
         </div>
 
-        {/* ── Featured Event Banner ── */}
-        {featuredEvent && activeCategory === 'All Events' && regularEvents.length > 0 && (
-          <div style={{
-            background:   'linear-gradient(180deg, #2B72FB 0%, #1E2555 100%)',
-            borderRadius: '20px',
-            marginBottom: '32px',
-            overflow:     'hidden',
-            padding:      isMobile ? '20px' : '28px 32px',
-            boxShadow:    '0px 8px 24px rgba(43,114,251,0.25)',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(250,199,117,0.15)', border: '1px solid #FAC775', borderRadius: '20px', padding: '4px 12px', alignSelf: 'flex-start' }}>
-                <FaStar size={12} color="#FAC775" />
-                <span style={{ fontFamily: "'Montserrat', Arial", fontSize: '11px', fontWeight: 700, color: '#FAC775', textTransform: 'uppercase' }}>Featured Event</span>
-              </div>
-              <h2 style={{ fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 700, fontSize: isMobile ? '22px' : '28px', color: '#FFED97', margin: 0, letterSpacing: '-0.5px' }}>
-                {featuredEvent.title || featuredEvent.name}
-              </h2>
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', margin: 0, fontFamily: 'Arimo, Arial', lineHeight: '1.6' }}>
-                {stripHtml(featuredEvent.description || '').substring(0, 150)}...
-              </p>
-              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                {featuredEvent.event_date && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FaCalendarAlt size={12} color="rgba(255,255,255,0.7)" />
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Arimo, Arial' }}>
-                      {new Date(featuredEvent.event_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  </div>
-                )}
-                {featuredEvent.location && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FaMapMarkerAlt size={12} color="rgba(255,255,255,0.7)" />
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Arimo, Arial' }}>{featuredEvent.location}</span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <button style={{
-                  height:       '42px',
-                  padding:      '0 28px',
-                  background:   'linear-gradient(135deg, rgba(250,199,117,0.9) 0%, rgba(255,180,50,0.9) 100%)',
-                  border:       'none',
-                  borderRadius: '12px',
-                  fontFamily:   "'Montserrat', Arial, sans-serif",
-                  fontWeight:   700,
-                  fontSize:     '14px',
-                  color:        '#0A0A0A',
-                  cursor:       'pointer',
-                }}>
-                  Register Now
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── Events List (stacked, full-width cards) ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {(activeCategory === 'All Events' ? regularEvents : filtered).map(event => (
+          {filtered.map(event => (
             <EventCard key={event.id} event={event} isMobile={isMobile} />
           ))}
         </div>

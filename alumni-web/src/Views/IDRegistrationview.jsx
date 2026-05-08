@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CameraIcon from '../assets/camera_icn.svg';
+import CameraIconBlue from '../assets/camerablue_icn.svg';
 import '../styles/IDregistration.css';
 import TermsModal         from '../modals/TermsModal';
 import PrivacyPolicyModal from '../modals/PrivacyPolicyModal';
@@ -193,20 +194,57 @@ const IDRegistrationView = ({
 
             {/* Close button:
                   • Modal context    → calls onClose to dismiss the parent modal
-                  • Full-page route  → navigates back to "/" via Link              */}
+                  • Full-page route  → navigates back to "/" via Link
+                  Focus ring is added via onFocus/onBlur for accessibility
+                  without reintroducing any background or circular styling. */}
             {isModal ? (
               <button
                 className="aid-header-close"
                 onClick={onClose}
                 title="Close"
                 aria-label="Close registration modal"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 0,
+                  boxShadow: 'none',
+                  padding: 0,
+                  outline: 'none',
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.outline = '2px solid rgba(255, 255, 255, 0.7)';
+                  e.currentTarget.style.outlineOffset = '3px';
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.outline = 'none';
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M1 1l12 12M13 1L1 13" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             ) : (
-              <Link to="/" className="aid-header-close" title="Back" aria-label="Go back">
+              <Link
+                to="/"
+                className="aid-header-close"
+                title="Back"
+                aria-label="Go back"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderRadius: 0,
+                  boxShadow: 'none',
+                  padding: 0,
+                  outline: 'none',
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.outline = '2px solid rgba(255, 255, 255, 0.7)';
+                  e.currentTarget.style.outlineOffset = '3px';
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.outline = 'none';
+                }}
+              >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M1 1l12 12M13 1L1 13" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
                 </svg>
@@ -239,9 +277,9 @@ const IDRegistrationView = ({
                 ) : (
                   <div className="aid-upload-placeholder">
                     <img
-                      src={CameraIcon}
+                      src={CameraIconBlue}
                       alt="Upload ID"
-                      style={{ width: '52px', height: '52px', opacity: 0.55 }}
+                      style={{ width: '52px', height: '52px', opacity: 1 }}
                     />
                     <p className="aid-upload-hint">Click to upload or use camera</p>
                   </div>

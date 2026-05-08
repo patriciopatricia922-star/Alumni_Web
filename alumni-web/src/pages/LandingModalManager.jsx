@@ -1,7 +1,11 @@
-import React, { useCallback, useEffect } from 'react';
+// LandingModalManager.jsx
+import React, { useEffect } from 'react';
 import ModalIDRegistration from './ModalIDRegistration';
 import ModalSignup         from './ModalSignup';
 import ModalLogin          from './ModalLogin';
+import ModalForgotPassword from './ModalForgotPassword';
+import ModalVerification   from './ModalVerification';
+import ModalResetPassword  from './ModalResetPassword';
 
 const LandingModalManager = ({
   modal,
@@ -12,6 +16,10 @@ const LandingModalManager = ({
   onLoginSuccess,
   onSwitchToLogin,
   onSwitchToRegister,
+  forgotPasswordEmail,
+  onSwitchToForgotPassword,
+  onSwitchToVerification,
+  onSwitchToResetPassword,
 }) => {
   // Close on Escape key
   useEffect(() => {
@@ -30,51 +38,22 @@ const LandingModalManager = ({
     <div
       onClick={onClose}
       style={{
-        position:       'fixed',
-        inset:          0,
-        zIndex:         2000,
-        background:     'rgba(0, 0, 0, 0.72)',
-        backdropFilter: 'blur(6px)',
+        position:             'fixed',
+        inset:                0,
+        zIndex:               2000,
+        background:           'rgba(0, 0, 0, 0.72)',
+        backdropFilter:       'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
-        display:        'flex',
-        alignItems:     'center',
-        justifyContent: 'center',
-        padding:        '16px',
-        boxSizing:      'border-box',
-        animation:      'lmm-fade-in 0.18s ease',
+        display:              'flex',
+        alignItems:           'center',
+        justifyContent:       'center',
+        padding:              '16px',
+        boxSizing:            'border-box',
+        animation:            'lmm-fade-in 0.18s ease',
       }}
     >
       {/* Stop click-through on the card itself */}
       <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-
-        {/* ── Close button (top-right of overlay, always visible) ── */}
-        <button
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            position:   'absolute',
-            top:        '-14px',
-            right:      '-14px',
-            zIndex:     10,
-            width:      '32px',
-            height:     '32px',
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.12)',
-            border:     '1px solid rgba(255,255,255,0.2)',
-            color:      '#FFFFFF',
-            fontSize:   '16px',
-            lineHeight: '1',
-            cursor:     'pointer',
-            display:    'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.22)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-        >
-          ×
-        </button>
 
         {modal === 'register' && (
           <ModalIDRegistration
@@ -97,9 +76,41 @@ const LandingModalManager = ({
           <ModalLogin
             onSuccess={onLoginSuccess}
             onSwitchToRegister={onSwitchToRegister}
+            onSwitchToForgotPassword={onSwitchToForgotPassword}
             onClose={onClose}
           />
         )}
+
+        {modal === 'forgot-password' && (
+          <ModalForgotPassword
+            onSwitchToLogin={onSwitchToLogin}
+            onClose={onClose}
+            // ModalForgotPassword renders ModalVerification as an internal
+            // sub-view (view state: 'forgotPassword' → 'verification').
+            // onResetPassword is threaded through so that internal
+            // ModalVerification can fire onSwitchToResetPassword on the
+            // outer LandingPage state after a successful OTP verification.
+            onResetPassword={onSwitchToResetPassword}
+          />
+        )}
+
+        {/* Fallback: if anything sets modal = 'verification' directly */}
+        {modal === 'verification' && (
+          <ModalVerification
+            email={forgotPasswordEmail}
+            onBack={onSwitchToForgotPassword}
+            onClose={onClose}
+            onResetPassword={onSwitchToResetPassword}
+          />
+        )}
+
+        {modal === 'reset-password' && (
+          <ModalResetPassword
+            onBack={onSwitchToLogin}
+            onClose={onClose}
+          />
+        )}
+
       </div>
 
       <style>{`

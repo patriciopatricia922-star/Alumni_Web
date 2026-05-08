@@ -18,9 +18,14 @@ const AdminAccountManagement = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // ── Permission-edit state ────────────────────────────────────────────────────
+  // Stores the admin ID being edited (not the full object) to prevent stale
+  // object references from closing the modal when admins[] re-renders.
+  const [editPermUserId, setEditPermUserId] = useState(null);
+
   // Stats
-  const [statsTotal, setStatsTotal] = useState(0);
-  const [statsActive, setStatsActive] = useState(0);
+  const [statsTotal,    setStatsTotal]    = useState(0);
+  const [statsActive,   setStatsActive]   = useState(0);
   const [statsInactive, setStatsInactive] = useState(0);
   const [statsDisabled, setStatsDisabled] = useState(0);
 
@@ -34,7 +39,8 @@ const AdminAccountManagement = () => {
 
   useEffect(() => { setPage(1); }, [roleFilter, statusFilter, debouncedSearch]);
 
-  // Fetch stats
+  // Fetch stats — depends on refreshTrigger so it re-runs after every
+  // access toggle, keeping the Disabled Access counter in sync.
   const fetchStats = useCallback(async () => {
     const { count: tot } = await supabaseAdmin
       .from('users').select('*', { count: 'exact', head: true })
@@ -58,34 +64,39 @@ const AdminAccountManagement = () => {
       .in('role', ['admin', 'superadmin'])
       .eq('account_status', 'disabled');
     setStatsDisabled(dis ?? 0);
-  }, []);
+  }, [refreshTrigger]); // re-fetch whenever a toggle fires
 
-  // Fetch admin list
+  // Fetch admin list — module_permissions included in select
   const fetchAdmins = useCallback(async () => {
     setLoading(true);
     try {
       let q = supabaseAdmin
         .from('users')
-        .select('id, first_name, last_name, email, role, account_status, created_at', { count: 'exact' })
+        .select(
+          'id, first_name, last_name, email, role, account_status, created_at, module_permissions',
+          { count: 'exact' }
+        )
         .in('role', ['admin', 'superadmin'])
         .order('created_at', { ascending: false })
         .range((page - 1) * PER_PAGE, page * PER_PAGE - 1);
 
-      if (roleFilter === 'Admin') q = q.eq('role', 'admin');
+      if (roleFilter === 'Admin')       q = q.eq('role', 'admin');
       if (roleFilter === 'Super Admin') q = q.eq('role', 'superadmin');
 
-      if (statusFilter === 'Active') q = q.eq('account_status', 'active');
+      if (statusFilter === 'Active')   q = q.eq('account_status', 'active');
       if (statusFilter === 'Inactive') q = q.eq('account_status', 'inactive');
       if (statusFilter === 'Disabled') q = q.eq('account_status', 'disabled');
 
       if (debouncedSearch.trim()) {
-        q = q.or(`first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`);
+        q = q.or(
+          `first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`
+        );
       }
 
       const { data, count, error } = await q;
       if (error) throw error;
 
-      // Fetch last login from audit_logs for each user
+      // Fetch last login from audit_logs
       const ids = (data || []).map(u => u.id);
       let lastLogins = {};
       if (ids.length > 0) {
@@ -114,63 +125,51 @@ const AdminAccountManagement = () => {
 
   useEffect(() => {
     fetchStats();
-    logAction({ action: 'View', module: 'User Management', description: 'Accessed admin account management page' });
+    logAction({
+      action:      'View',
+      module:      'User Management',
+      description: 'Accessed admin account management page',
+    });
   }, [fetchStats]);
 
   useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
 
-  // Toggle access - Disable/Enable user using supabaseAdmin
+  // Toggle access
   const handleToggleAccess = async () => {
     if (!confirmUser) return;
     setConfirmLoading(true);
     try {
       const { user, currentEnabled } = confirmUser;
       const newStatus = currentEnabled ? 'disabled' : 'active';
-      
-      console.log(`Attempting to update user ${user.id} from ${user.account_status} to ${newStatus}`);
-      console.log('Using supabaseAdmin for update');
-      
-      // Update account status using supabaseAdmin to bypass RLS
+
       const { error: updateError } = await supabaseAdmin
         .from('users')
         .update({ account_status: newStatus })
         .eq('id', user.id);
-      
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Update successful, new status should be:', newStatus);
 
-      // Verify the update by fetching the updated user
+      if (updateError) throw updateError;
+
       const { data: verifyData, error: verifyError } = await supabaseAdmin
         .from('users')
         .select('account_status')
         .eq('id', user.id)
         .single();
-      
-      if (!verifyError) {
-        console.log('Verified new status from DB:', verifyData.account_status);
-        
-        if (verifyData.account_status !== newStatus) {
-          console.error('Status mismatch! Expected:', newStatus, 'Got:', verifyData.account_status);
-        }
+
+      if (!verifyError && verifyData.account_status !== newStatus) {
+        console.error('Status mismatch! Expected:', newStatus, 'Got:', verifyData.account_status);
       }
 
       await logAction({
-        action: 'Update',
-        module: 'User Management',
+        action:      'Update',
+        module:      'User Management',
         description: `${currentEnabled ? 'Disabled' : 'Enabled'} admin access for ${user.email}`,
-        recordId: user.id,
+        recordId:    user.id,
       });
 
-      // Close modal and refresh data
       setConfirmUser(null);
-      
-      // Force immediate refresh
+      // Incrementing refreshTrigger causes both fetchAdmins and fetchStats
+      // to re-run (via their useCallback deps), so all counters stay in sync.
       setRefreshTrigger(prev => prev + 1);
-      
     } catch (err) {
       console.error('toggleAccess error:', err);
     } finally {
@@ -178,29 +177,53 @@ const AdminAccountManagement = () => {
     }
   };
 
-  const handleCreateAdmin = () => {
-    setShowCreate(true);
-  };
+  const handleCreateAdmin   = ()  => setShowCreate(true);
+  const handleCloseCreate   = ()  => setShowCreate(false);
+  const handleAdminCreated  = ()  => setRefreshTrigger(prev => prev + 1);
+  const handleConfirmToggle = (user, currentEnabled) => setConfirmUser({ user, currentEnabled });
+  const handleCloseConfirm  = ()  => setConfirmUser(null);
 
-  const handleCloseCreate = () => {
-    setShowCreate(false);
-  };
+  // ── Permission-edit handlers ─────────────────────────────────────────────────
 
-  const handleAdminCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
+  /** Open the edit modal — store only the ID, not the full object reference */
+  const handleOpenEditPerm = useCallback((admin) => {
+    setEditPermUserId(admin.id);
+  }, []);
 
-  const handleConfirmToggle = (user, currentEnabled) => {
-    setConfirmUser({ user, currentEnabled });
-  };
+  /** Close without saving */
+  const handleCloseEditPerm = useCallback(() => {
+    setEditPermUserId(null);
+  }, []);
 
-  const handleCloseConfirm = () => {
-    setConfirmUser(null);
-  };
+  /**
+   * Called by EditPermissionsModal on successful save.
+   * Patches the local `admins` array in-place so the permissions column
+   * updates instantly without a full re-fetch.
+   *
+   * NOTE: does NOT close the modal here — the modal calls onClose() itself
+   * after onSaved(), so closing is handled exactly once via handleCloseEditPerm.
+   */
+  const handlePermSaved = useCallback((updatedAdmin) => {
+    setAdmins(prev =>
+      prev.map(a =>
+        a.id === updatedAdmin.id
+          ? { ...a, module_permissions: updatedAdmin.module_permissions }
+          : a
+      )
+    );
+    // Do NOT call setEditPermUserId(null) here — the modal's own onClose prop
+    // (handleCloseEditPerm) will fire after this callback and close cleanly.
+  }, []);
+
+  // Derive the full admin object from the stable ID so the modal always gets
+  // a fresh reference from the current admins array, not a stale closure.
+  const editPermUser = editPermUserId
+    ? admins.find(a => a.id === editPermUserId) ?? null
+    : null;
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const startEntry = total === 0 ? 0 : (page - 1) * PER_PAGE + 1;
-  const endEntry = Math.min(page * PER_PAGE, total);
+  const endEntry   = Math.min(page * PER_PAGE, total);
 
   return (
     <AdminAccountManagementView
@@ -232,6 +255,11 @@ const AdminAccountManagement = () => {
       handleAdminCreated={handleAdminCreated}
       handleConfirmToggle={handleConfirmToggle}
       handleCloseConfirm={handleCloseConfirm}
+      // permission-edit props
+      editPermUser={editPermUser}
+      handleOpenEditPerm={handleOpenEditPerm}
+      handleCloseEditPerm={handleCloseEditPerm}
+      handlePermSaved={handlePermSaved}
     />
   );
 };

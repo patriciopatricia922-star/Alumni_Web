@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { getSurveySections, invalidateSectionsCache } from '../lib/surveyProgress';
+import DataPrivacyModal from '../modals/DataPrivacyModal';
+import { useDpaGate } from '../hooks/useDpaGate';
 
 /* ─── Google Fonts: Montserrat (shared with SurveyComplete) ────────────────── */
 const fontLink = document.querySelector('#montserrat-font');
@@ -13,21 +15,6 @@ if (!fontLink) {
   link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap';
   document.head.appendChild(link);
 }
-
-/*
- * ─── Design tokens (mirrors SurveyComplete) ──────────────────────────────────
- *   Page background : #e8edf5
- *   Card background : #ffffff
- *   Card shadow     : 0px 8px 40px rgba(0,0,0,0.12)
- *   Card radius     : 19px
- *   Heading color   : #1e3a5f
- *   Body color      : #4a5565
- *   Primary blue    : #003ea6
- *   Font family     : Montserrat
- *
- *   Notification bell retains the original dark-panel dropdown
- *   (it floats over the light page background just as in SurveyComplete).
- */
 
 // ─── Window width hook (unchanged) ───────────────────────────────────────────
 const useWindowWidth = () => {
@@ -48,6 +35,9 @@ const UpdateTracerPage = () => {
   const isMobile     = width < 768;
   const isTablet     = width >= 768 && width < 1024;
   const sidebarWidth = 229;
+
+  // ── DPA gate ──────────────────────────────────────────────────────────────
+  const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
 
   // ── First-section route (unchanged) ───────────────────────────────────────
   const [firstSectionRoute, setFirstSectionRoute] = useState(null);
@@ -126,10 +116,14 @@ const UpdateTracerPage = () => {
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
 
-  // ── Handlers (unchanged) ──────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  // "Update Response" — invalidate cache first, then go through DPA gate.
+  // forceShow: true ensures the DPA modal ALWAYS appears on the UpdateTracer
+  // flow, even if the user has accepted it before. Re-submission means fresh
+  // consent is required for each new data submission.
   const handleUpdateResponse = () => {
     invalidateSectionsCache();
-    navigate(firstSectionRoute ?? '/survey/personal-background');
+    requestNavigation(firstSectionRoute ?? '/survey/personal-background', { forceShow: true });
   };
 
   const handleKeepResponse = () => {
@@ -166,14 +160,21 @@ const UpdateTracerPage = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    /* ── Page wrapper — matches SurveyComplete outer shell ───────────────── */
     <div style={{
       display:    'flex',
       height:     '100vh',
       overflow:   'hidden',
-      background: '#e8edf5',                            /* ← was #002263 */
-      fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",  /* ← was Arimo */
+      background: '#e8edf5',
+      fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",
     }}>
+      {/* DPA Modal gate */}
+      {showModal && (
+        <DataPrivacyModal
+          onAccept={handleAccept}
+          onDecline={handleDecline}
+        />
+      )}
+
       <Sidebar />
 
       <div style={{
@@ -194,14 +195,13 @@ const UpdateTracerPage = () => {
           right:    isMobile ? '20px' : isTablet ? '32px' : '51px',
           zIndex:   200,
         }}>
-          {/* Bell button — restyled to match SurveyComplete's solid blue pill */}
           <button
             onClick={() => setShowDropdown(v => !v)}
             style={{
               width:          '52px',
               height:         '52px',
-              background:     '#003ea6',                /* ← was transparent/gradient */
-              border:         'none',                   /* ← was rgba border */
+              background:     '#003ea6',
+              border:         'none',
               boxShadow:      '0px 4px 12px rgba(0,62,166,0.35)',
               borderRadius:   '14px',
               cursor:         'pointer',
@@ -214,7 +214,6 @@ const UpdateTracerPage = () => {
             onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            {/* Bell icon — white on blue */}
             <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
               <path
                 d="M8.33 17.5H11.67M15 7.5C15 5.84 14.16 4.34 12.89 3.39M5 7.5C5 4.74 7.24 2.5 10 2.5C11.33 2.5 12.53 3.02 13.41 3.88M15 7.5C15 11.25 16.67 13.33 16.67 13.33H3.33C3.33 13.33 5 11.25 5 7.5"
@@ -225,7 +224,6 @@ const UpdateTracerPage = () => {
               />
             </svg>
 
-            {/* Unread badge — matches SurveyComplete badge style */}
             {unreadCount > 0 && (
               <div style={{
                 position:       'absolute',
@@ -254,7 +252,7 @@ const UpdateTracerPage = () => {
             )}
           </button>
 
-          {/* Notification dropdown — dark panel unchanged (floats above page) */}
+          {/* Notification dropdown */}
           {showDropdown && (
             <div style={{
               position:       'absolute',
@@ -380,9 +378,9 @@ const UpdateTracerPage = () => {
 
         {/* ── Card ─────────────────────────────────────────────────────────── */}
         <div style={{
-          background:    '#ffffff',                          /* ← was rgba(1,37,107,0.6) */
-          border:        'none',                             /* ← was rgba white border */
-          borderRadius:  '19px',                            /* matches SurveyComplete */
+          background:    '#ffffff',
+          border:        'none',
+          borderRadius:  '19px',
           padding:       isMobile ? '32px 24px' : '48px 40px',
           width:         '100%',
           maxWidth:      isMobile ? '100%' : '420px',
@@ -390,44 +388,41 @@ const UpdateTracerPage = () => {
           flexDirection: 'column',
           alignItems:    'center',
           textAlign:     'center',
-          boxShadow:     '0px 8px 40px rgba(0,0,0,0.12)',   /* ← was dark 0.4 shadow */
+          boxShadow:     '0px 8px 40px rgba(0,0,0,0.12)',
         }}>
 
-          {/* Icon — dark green circle to match SurveyComplete's check icon style */}
           <div style={{
             width:          isMobile ? '72px' : '75px',
             height:         isMobile ? '72px' : '75px',
             borderRadius:   '50%',
-            background:     '#dbeafe',                      /* ← was transparent with white border */
+            background:     '#dbeafe',
             display:        'flex',
             alignItems:     'center',
             justifyContent: 'center',
             marginBottom:   '19px',
           }}>
             <svg width={isMobile ? 30 : 38} height={isMobile ? 30 : 38} viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="3" width="16" height="18" rx="2" stroke="#003ea6" strokeWidth="1.8"/>  {/* ← was white */}
+              <rect x="4" y="3" width="16" height="18" rx="2" stroke="#003ea6" strokeWidth="1.8"/>
               <path d="M8 9h8M8 12h8M8 15h5" stroke="#003ea6" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M14 3v4h4" stroke="#003ea6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
 
-          {/* Heading */}
           <p style={{
-            fontFamily:    "'Montserrat', Helvetica, Arial, sans-serif",  /* ← was Arimo */
+            fontFamily:    "'Montserrat', Helvetica, Arial, sans-serif",
             fontSize:      isMobile ? '22px' : '28px',
             fontWeight:    700,
-            color:         '#1e3a5f',                        /* ← was #FFFFFF */
+            color:         '#1e3a5f',
             letterSpacing: '-0.5px',
             margin:        '0 0 14px 0',
           }}>
             Update Tracer?
           </p>
 
-          {/* Body text */}
           <p style={{
-            fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",     /* ← was Arimo */
+            fontFamily: "'Montserrat', Helvetica, Arial, sans-serif",
             fontSize:   isMobile ? '13px' : '14px',
-            color:      '#4a5565',                           /* ← was rgba(255,255,255,0.7) */
+            color:      '#4a5565',
             lineHeight: 1.6,
             margin:     '0 0 32px 0',
           }}>
@@ -435,20 +430,19 @@ const UpdateTracerPage = () => {
             Do you want to update it?
           </p>
 
-          {/* Update Response button — primary blue */}
           <button
             onClick={handleUpdateResponse}
             disabled={!firstSectionRoute}
             style={{
               width:        '100%',
               padding:      '14px',
-              background:   firstSectionRoute ? '#003ea6' : 'rgba(0,62,166,0.35)',  /* ← was #1E3AFF */
+              background:   firstSectionRoute ? '#003ea6' : 'rgba(0,62,166,0.35)',
               border:       'none',
-              borderRadius: '10px',                          /* matches SurveyComplete button radius */
+              borderRadius: '10px',
               color:        '#FFFFFF',
               fontFamily:   "'Montserrat', Helvetica, Arial, sans-serif",
               fontSize:     isMobile ? '14px' : '15px',
-              fontWeight:   700,                             /* ← was 600 */
+              fontWeight:   700,
               cursor:       firstSectionRoute ? 'pointer' : 'not-allowed',
               marginBottom: '12px',
               boxShadow:    '0px 4px 6px -4px rgba(0,0,0,0.1), 0px 10px 15px -3px rgba(0,0,0,0.1)',
@@ -460,16 +454,15 @@ const UpdateTracerPage = () => {
             {firstSectionRoute ? 'Update Response' : 'Loading…'}
           </button>
 
-          {/* Keep Response button — light ghost variant */}
           <button
             onClick={handleKeepResponse}
             style={{
               width:        '100%',
               padding:      '14px',
-              background:   'transparent',                   /* ← was solid #FFFFFF */
-              border:       '1.5px solid #003ea6',           /* ← adds contrast on white card */
+              background:   'transparent',
+              border:       '1.5px solid #003ea6',
               borderRadius: '10px',
-              color:        '#003ea6',                       /* ← was #000000 */
+              color:        '#003ea6',
               fontFamily:   "'Montserrat', Helvetica, Arial, sans-serif",
               fontSize:     isMobile ? '14px' : '15px',
               fontWeight:   700,

@@ -12,6 +12,8 @@ import surveyIcon  from '../assets/tracer_ic.svg';
 import profileIcon from '../assets/profile_icn.svg';
 import sidebarLogo from '../assets/alumnai_logo_new.svg';
 import SidebarView from './Sidebarview';
+import DataPrivacyModal from '../modals/DataPrivacyModal';
+import { useDpaGate } from '../hooks/useDpaGate';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -35,6 +37,9 @@ const Sidebar = () => {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
 
+  // ── DPA gate ──────────────────────────────────────────────────────────────
+  const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -53,8 +58,6 @@ const Sidebar = () => {
       if (!cancelled && profile) setUser(profile);
 
       // ── 3. Survey route ───────────────────────────────────────────────────
-      // Load sections first (populates cache), then resolve route.
-      // Both calls are awaited sequentially — no race condition.
       try {
         await getSurveySections();
         const complete = await isSurveyComplete();
@@ -85,12 +88,22 @@ const Sidebar = () => {
   const displayName = user ? `${user.first_name} ${user.last_name}` : 'Loading...';
   const initials    = user?.first_name?.charAt(0).toUpperCase() ?? 'U';
 
-  // surveyRoute stays null while resolving — SidebarView should render
-  // the survey link as disabled/skeleton during this time.
+  // ── Nav click handler — gate the survey item through DPA ─────────────────
+  const handleNavClick = (item) => {
+    if (!item.navPath) return; // still loading
+
+    const isSurveyItem = item.path === '/survey';
+    if (isSurveyItem) {
+      requestNavigation(item.navPath);
+    } else {
+      navigate(item.navPath);
+    }
+  };
+
   const menuItems = [
-    { path: '/dashboard', label: 'Home',          icon: homeIcon,    navPath: '/dashboard'                    },
-    { path: '/survey',    label: 'Tracer Survey', icon: surveyIcon,  navPath: surveyRoute, loading: !surveyRoute },
-    { path: '/profile',   label: 'Profile',       icon: profileIcon, navPath: '/profile'                      },
+    { path: '/dashboard', label: 'Home',          icon: homeIcon,    navPath: '/dashboard',  loading: false          },
+    { path: '/survey',    label: 'Tracer Survey', icon: surveyIcon,  navPath: surveyRoute,   loading: !surveyRoute   },
+    { path: '/profile',   label: 'Profile',       icon: profileIcon, navPath: '/profile',    loading: false          },
   ];
 
   const helpItems = [
@@ -99,23 +112,34 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate('/'); 
-};
+    navigate('/');
+  };
 
   return (
-    <SidebarView
-      location={location}
-      isMobile={isMobile}
-      isTablet={isTablet}
-      user={user}
-      role={role}
-      displayName={displayName}
-      initials={initials}
-      menuItems={menuItems}
-      helpItems={helpItems}
-      sidebarLogo={sidebarLogo}
-      handleLogout={handleLogout}
-    />
+    <>
+      {/* DPA Modal gate — rendered outside SidebarView so it overlays everything */}
+      {showModal && (
+        <DataPrivacyModal
+          onAccept={handleAccept}
+          onDecline={handleDecline}
+        />
+      )}
+
+      <SidebarView
+        location={location}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        user={user}
+        role={role}
+        displayName={displayName}
+        initials={initials}
+        menuItems={menuItems}
+        helpItems={helpItems}
+        sidebarLogo={sidebarLogo}
+        handleLogout={handleLogout}
+        onNavClick={handleNavClick}
+      />
+    </>
   );
 };
 

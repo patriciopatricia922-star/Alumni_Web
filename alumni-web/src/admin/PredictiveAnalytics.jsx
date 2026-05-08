@@ -1,9 +1,9 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
+// AdminPredictiveAnalytics — Business Logic Controller
 // ============================================================================
-// Purpose: Handles all business logic, Supabase API calls, ML service
-//          integration (PyCharm backend), AI insights fetching, data
-//          processing, and state management for predictive analytics.
+// Handles all business logic, Supabase API calls, ML service integration,
+// AI insights fetching, data processing, and state management for
+// predictive analytics.
 // ============================================================================
 
 import React, { useMemo, useState, useEffect } from 'react';
@@ -12,7 +12,7 @@ import Predictiveanalyticsview from './views/Predictiveanalyticsview';
 import AdminSidebar from './components/AdminSidebar';
 
 // ============================================================================
-// API BASE URL — set VITE_API_BASE_URL in your .env to override
+// API BASE URL — set VITE_API_BASE_URL in your .env to override localhost
 // ============================================================================
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -25,12 +25,12 @@ const supabase = createClient(
 );
 
 // ============================================================================
-// DEPARTMENT METADATA
+// DEPARTMENT METADATA — maps department codes to display info
 // ============================================================================
 const DEPARTMENT_META = {
-  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',       color: 'blue'   },
-  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy',    color: 'amber'  },
-  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',           color: 'violet' },
+  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',    color: 'blue'   },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber'  },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',        color: 'violet' },
 };
 
 // ============================================================================
@@ -39,12 +39,12 @@ const DEPARTMENT_META = {
 const AdminPredictiveAnalytics = () => {
 
   // ── UI state ───────────────────────────────────────────────────────────────
-  const [activePage,          setActivePage]          = useState('overview');
-  const [selectedDepartment,  setSelectedDepartment]  = useState(null);
+  const [activePage,         setActivePage]         = useState('overview');
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   // ── Refresh state ──────────────────────────────────────────────────────────
-  const [refreshing,  setRefreshing]  = useState(false);
-  const [refreshMsg,  setRefreshMsg]  = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState(null);
 
   // ── Predictions data state ─────────────────────────────────────────────────
   const [predictions, setPredictions] = useState([]);
@@ -99,7 +99,7 @@ const AdminPredictiveAnalytics = () => {
     });
     return Object.entries(byDept).map(([dept, rows]) => {
       const sorted    = [...rows].sort((a, b) => a.year - b.year);
-      const current   = Math.round(sorted[0].current_rate   ?? sorted[0].predicted_rate ?? 0);
+      const current   = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
       const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
       const meta      = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
 
@@ -197,13 +197,14 @@ const AdminPredictiveAnalytics = () => {
     }
   };
 
+  // ── Auto-clear refresh message after 3 s ──────────────────────────────────
   useEffect(() => {
     if (!refreshMsg) return;
     const timer = setTimeout(() => setRefreshMsg(null), 3000);
     return () => clearTimeout(timer);
   }, [refreshMsg]);
 
-  // ── Loading / error states ─────────────────────────────────────────────────
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="pa-layout">
@@ -215,6 +216,7 @@ const AdminPredictiveAnalytics = () => {
     );
   }
 
+  // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
       <div className="pa-layout">
@@ -243,7 +245,11 @@ const AdminPredictiveAnalytics = () => {
       refreshBar={
         <div className="pa-refresh-bar">
           {refreshMsg && (
-            <span className={`pa-refresh-msg ${refreshMsg.includes('success') ? 'success' : 'error'}`}>
+            <span
+              className={`pa-refresh-msg ${
+                refreshMsg.includes('success') ? 'success' : 'error'
+              }`}
+            >
               {refreshMsg}
             </span>
           )}

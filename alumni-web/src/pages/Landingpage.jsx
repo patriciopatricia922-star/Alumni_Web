@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import LandingPageView from '../Views/Landingpageview';
@@ -18,31 +18,55 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   // ── Modal state ──────────────────────────────────────────
-  // modal: null | 'register' | 'signup' | 'login'
-  const [modal,         setModal]         = useState(null);
-  const [idExtracted,   setIdExtracted]   = useState(null); // data from ID scan → pre-fill signup
+  // modal: null | 'register' | 'signup' | 'login' | 'forgot-password' | 'verification' | 'reset-password'
+  const [modal, setModal] = useState(null);
+  const [idExtracted, setIdExtracted] = useState(null);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
-  const openRegister = () => { setIdExtracted(null); setModal('register'); };
-  const openLogin    = () => setModal('login');
-  const closeModal   = () => setModal(null);
+  const openRegister = useCallback(() => {
+    setIdExtracted(null);
+    setModal('register');
+  }, []);
+
+  const openLogin = useCallback(() => setModal('login'), []);
+
+  const closeModal = useCallback(() => {
+    setModal(null);
+    setForgotPasswordEmail('');
+  }, []);
 
   // Called by IDRegistration when verified → advance to signup panel
-  const handleIDVerified = (extractedData) => {
+  const handleIDVerified = useCallback((extractedData) => {
     setIdExtracted(extractedData);
     setModal('signup');
-  };
+  }, []);
 
   // Called by Signup on success → close modal, stay on landing
-  const handleSignupSuccess = () => {
+  const handleSignupSuccess = useCallback(() => {
     setModal(null);
     setIdExtracted(null);
-  };
+  }, []);
 
   // Called by Login on success → navigate normally
-  const handleLoginSuccess = (redirectPath) => {
+  const handleLoginSuccess = useCallback((redirectPath) => {
     setModal(null);
     navigate(redirectPath);
-  };
+  }, [navigate]);
+
+  // ── Forgot password flow handlers ─────────────────────────
+  const handleSwitchToForgotPassword = useCallback(() => {
+    setModal('forgot-password');
+    setForgotPasswordEmail('');
+  }, []);
+
+  const handleSwitchToVerification = useCallback((email) => {
+    setForgotPasswordEmail(email);
+    setModal('verification');
+  }, []);
+
+  const handleSwitchToResetPassword = useCallback(() => {
+    setModal('reset-password');
+  }, []);
 
   // ── Scroll ────────────────────────────────────────────────
   const [isScrolled, setIsScrolled] = useState(false);
@@ -53,19 +77,19 @@ const LandingPage = () => {
   }, []);
 
   // ── Stats ─────────────────────────────────────────────────
-  const [alumniCount,    setAlumniCount]    = useState('...');
+  const [alumniCount, setAlumniCount] = useState('...');
   const [employmentRate, setEmploymentRate] = useState('...');
 
   // ── CMS sections ─────────────────────────────────────────
-  const [landingSections,  setLandingSections]  = useState([]);
-  const [loadingSections,  setLoadingSections]  = useState(true);
+  const [landingSections, setLandingSections] = useState([]);
+  const [loadingSections, setLoadingSections] = useState(true);
 
   // ── Content ───────────────────────────────────────────────
-  const [upcomingEvents,   setUpcomingEvents]   = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [jobOpportunities, setJobOpportunities] = useState([]);
-  const [alumniDiscounts,  setAlumniDiscounts]  = useState([]);
-  const [loadingEvents,    setLoadingEvents]    = useState(true);
-  const [loadingJobs,      setLoadingJobs]      = useState(true);
+  const [alumniDiscounts, setAlumniDiscounts] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [loadingJobs, setLoadingJobs] = useState(true);
   const [loadingDiscounts, setLoadingDiscounts] = useState(true);
 
   useEffect(() => {
@@ -95,9 +119,9 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { count: alumni }    = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'alumni');
+        const { count: alumni } = await supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'alumni');
         const { count: completed } = await supabase.from('survey_progress').select('*', { count: 'exact', head: true }).eq('completed', true);
-        const alumniTotal    = alumni    ?? 0;
+        const alumniTotal = alumni ?? 0;
         const completedTotal = completed ?? 0;
         setAlumniCount(alumniTotal > 0 ? alumniTotal.toLocaleString() : '0');
         setEmploymentRate(alumniTotal > 0 ? `${((completedTotal / alumniTotal) * 100).toFixed(1)}%` : '0%');
@@ -123,18 +147,18 @@ const LandingPage = () => {
   const statsLabels  = parseSeparatedContent(statsSection?.content, 4);
 
   const stats = [
-    { number: alumniCount,                        label: statsLabels[0] || 'Alumni' },
-    { number: statsNumbers[1] || '44',             label: statsLabels[1] || 'Undergraduate and Postgraduate Programmes' },
-    { number: employmentRate,                      label: statsLabels[2] || 'Employment Rate' },
-    { number: statsNumbers[3] || '#1201-1300',     label: statsLabels[3] || 'Asia University Ranking' },
+    { number: alumniCount,              label: statsLabels[0] || 'Alumni' },
+    { number: statsNumbers[1] || '44',  label: statsLabels[1] || 'Undergraduate and Postgraduate Programmes' },
+    { number: employmentRate,           label: statsLabels[2] || 'Employment Rate' },
+    { number: statsNumbers[3] || '#1201-1300', label: statsLabels[3] || 'Asia University Ranking' },
   ];
 
   const missionItems = [
-    { label: 'STUDENTS',                       desc: 'by molding them into ethical, spiritual and responsible citizens.' },
-    { label: 'FACULTY and EMPLOYEES',          desc: 'by enhancing their competencies, cultivating their commitment and providing a just and fulfilling work environment.' },
-    { label: 'ALUMNI',                         desc: 'by instilling in them a sense of pride, commitment, and loyalty to their alma mater.' },
+    { label: 'STUDENTS',                        desc: 'by molding them into ethical, spiritual and responsible citizens.' },
+    { label: 'FACULTY and EMPLOYEES',           desc: 'by enhancing their competencies, cultivating their commitment and providing a just and fulfilling work environment.' },
+    { label: 'ALUMNI',                          desc: 'by instilling in them a sense of pride, commitment, and loyalty to their alma mater.' },
     { label: 'INDUSTRY PARTNERS and EMPLOYERS', desc: 'by providing them Nationalians who will contribute to their growth and development.' },
-    { label: 'COMMUNITY',                      desc: "by contributing to the improvement of life's conditions." },
+    { label: 'COMMUNITY',                       desc: "by contributing to the improvement of life's conditions." },
   ];
 
   const handleExploreMore = () => document.getElementById('stats')?.scrollIntoView({ behavior: 'smooth' });
@@ -171,12 +195,16 @@ const LandingPage = () => {
         <LandingModalManager
           modal={modal}
           idExtracted={idExtracted}
+          forgotPasswordEmail={forgotPasswordEmail}
           onClose={closeModal}
           onIDVerified={handleIDVerified}
           onSignupSuccess={handleSignupSuccess}
           onLoginSuccess={handleLoginSuccess}
-          onSwitchToLogin={() => setModal('login')}
+          onSwitchToLogin={openLogin}
           onSwitchToRegister={openRegister}
+          onSwitchToForgotPassword={handleSwitchToForgotPassword}
+          onSwitchToVerification={handleSwitchToVerification}
+          onSwitchToResetPassword={handleSwitchToResetPassword}
         />
       )}
     </>

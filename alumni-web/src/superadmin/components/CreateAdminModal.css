@@ -1,3 +1,13 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   CreateAdminModal.css
+   All original rules are preserved exactly.
+   Module Permissions additions are in the clearly marked section at the bottom.
+───────────────────────────────────────────────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ORIGINAL STYLES — DO NOT MODIFY
+══════════════════════════════════════════════════════════════════════════════ */
+
 .create-admin-modal {
   background: #FFFFFF;
   border-radius: 14px;
@@ -171,23 +181,24 @@
   .create-admin-modal {
     padding: 24px;
   }
-  
+
   .form-row {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .modal-footer {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .btn-cancel,
   .btn-create {
     width: 100%;
   }
 }
 
+/* Email hint */
 .email-hint {
   display: block;
   font-size: 11px;
@@ -297,11 +308,204 @@
   color: #BF0000;
 }
 
-/* Email hint */
-.email-hint {
-  display: block;
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODULE PERMISSIONS — NEW STYLES
+   All selectors are scoped to .module-* to guarantee zero collision with
+   existing rules.
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* Container — override generic .form-field gap for this section */
+.module-permissions-field {
+  gap: 0;             /* internal spacing handled by children */
+  margin-top: 4px;    /* visual breathing room from the Role field */
+}
+
+/* ── Header row (label + Select All button) ── */
+.module-permissions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.module-permissions-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  /* Override cursor inherited from parent <label> — this span is not interactive */
+  cursor: default;
+  pointer-events: none;
+}
+
+.module-select-all-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #155DFC;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+  /* Prevent text-decoration from covering the button outline on focus */
+  outline-offset: 3px;
+}
+
+.module-select-all-btn:hover {
+  color: #0040CC;
+}
+
+/* ── Superadmin informational notice ── */
+.module-superadmin-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #1D4ED8;
+}
+
+.module-superadmin-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Checkbox grid — 2 columns, matches Figma layout ── */
+.module-permissions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+
+/* Each checkbox item — acts as the visible label+checkbox row */
+.module-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+  transition: background 0.15s;
+  /* Ensure the native checkbox is accessible but invisible */
+  position: relative;
+}
+
+/* Remove border from the last row of items (handles odd/even item counts) */
+.module-checkbox-item:nth-last-child(-n+2) {
+  border-bottom: none;
+}
+
+/* Remove right border from even items (right column) */
+.module-checkbox-item:nth-child(even) {
+  border-right: none;
+}
+
+.module-checkbox-item:hover {
+  background: #F8FAFC;
+}
+
+.module-checkbox-item--checked {
+  background: #F0F7FF;
+}
+
+.module-checkbox-item--checked:hover {
+  background: #E8F2FF;
+}
+
+/* Hide the native checkbox — we render a custom box instead */
+.module-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Custom checkbox visual */
+.module-checkbox-box {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #F3F3F5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.module-checkbox-box--checked {
+  background: #155DFC;
+  border-color: #155DFC;
+}
+
+/* Module label text */
+.module-checkbox-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #0A0A0A;
+  line-height: 1.4;
+  transition: color 0.15s;
+}
+
+.module-checkbox-item--checked .module-checkbox-label {
+  color: #001947;
+  font-weight: 500;
+}
+
+/* Focus-visible ring on the label (keyboard nav) */
+.module-checkbox-item:focus-within .module-checkbox-box {
+  outline: 2px solid #155DFC;
+  outline-offset: 2px;
+}
+
+/* ── Selection summary text ── */
+.module-selection-summary {
+  margin: 8px 0 0;
+  font-family: 'Arimo', Arial, sans-serif;
   font-size: 11px;
   color: #62748E;
-  margin-top: 4px;
-  font-family: 'Arimo', sans-serif;
+  line-height: 1.4;
+}
+
+/* ── Responsive: stack grid to single column on narrow viewports ── */
+@media (max-width: 480px) {
+  .module-permissions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* In single-column mode every item has no right border and a bottom border */
+  .module-checkbox-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .module-checkbox-item:last-child {
+    border-bottom: none;
+  }
+}
+
+/* ── Wider modal to comfortably fit the grid ── */
+@media (min-width: 540px) {
+  .create-admin-modal {
+    width: 520px;
+  }
 }

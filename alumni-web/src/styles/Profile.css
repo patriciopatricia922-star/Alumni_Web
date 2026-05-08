@@ -1,13 +1,5 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   Profile.css
-   ─ Header row restored: back+title left, bell right (AlumniDashboard pattern)
-   ─ Viewport-contained layout: no overflow outside the page
-   ─ Cards non-scrollable: info rows scale via spacing, not overflow-y
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Arimo:wght@400;500;600;700&display=swap');
 
-/* ── Tokens ─────────────────────────────────────────────────────────────── */
 :root {
   --prof-sidebar-w:        clamp(12.5rem, 15vw, 14.3125rem);
   --prof-sidebar-w-tablet: 12.5rem;
@@ -45,17 +37,10 @@
   --prof-font-body:        'Arimo', sans-serif;
   --prof-transition:       150ms ease;
 
-  /*
-   * The two key sizing tokens.
-   * --prof-top-h   : exact allocated height for .prof-top-row (hero cards).
-   * --prof-header-h: estimated height consumed by back-btn + page-header + gaps.
-   * These drive the layout math so everything else is derived, not guessed.
-   */
   --prof-top-h:            220px;
-  --prof-header-h:         110px; /* back ~20px + gap + header ~56px + gap */
+  --prof-header-h:         110px;
 }
 
-/* ── Reset ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body, #root {
@@ -63,12 +48,8 @@ html, body, #root {
   padding: 0;
   height: 100%;
   background: var(--prof-bg) !important;
-  /* Remove overflow: hidden from here */
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Shell
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-root {
   display: flex;
   height: 100dvh;
@@ -77,41 +58,26 @@ html, body, #root {
   font-family: var(--prof-font-body);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Content wrapper
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-content-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100dvh;        /* anchor to full viewport height */
+  height: 100dvh;
   overflow: hidden;
   margin-left: var(--prof-sidebar-w);
-  /* Keep original padding values */
   padding: clamp(16px, 2.4vh, 36px) clamp(24px, 3.2vw, 56px)
            clamp(12px, 1.8vh, 29px) clamp(40px, 8.2vw, 97.1px);
   box-sizing: border-box;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Main
-   ─ 4 direct children in order: .prof-back, .prof-page-header,
-     .prof-top-row, .prof-bottom-row
-   ─ Strategy: use CSS grid with named rows so every child gets an
-     explicit, measured allocation rather than negotiating via flex.
-   ─ Row 1 (back)   : auto  — shrinks to content (~20px)
-   ─ Row 2 (header) : auto  — shrinks to content (~56px)
-   ─ Row 3 (top-row): var(--prof-top-h) — hard-locked hero card height
-   ─ Row 4 (bottom) : 1fr   — takes ALL remaining space
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-main {
   display: grid;
   grid-template-rows:
-    auto               /* .prof-back */
-    auto               /* .prof-page-header */
-    var(--prof-top-h)  /* .prof-top-row — hero cards, hard height */
-    1fr;               /* .prof-bottom-row — fills everything left */
-  flex: 1;             /* fill .prof-content-wrapper */
+    auto
+    auto
+    var(--prof-top-h)
+    1fr;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
   gap: clamp(8px, 1.2vh, 14px);
@@ -121,9 +87,6 @@ html, body, #root {
   padding-bottom: calc(var(--prof-bottom-nav-h) + 0.5rem);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Back button
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-back {
   display: inline-flex;
   align-items: center;
@@ -133,7 +96,6 @@ html, body, #root {
   cursor: pointer;
   padding: 0;
   width: fit-content;
-  /* grid child: sits in row 1, never grows */
   align-self: center;
   transition: opacity var(--prof-transition);
 }
@@ -148,16 +110,12 @@ html, body, #root {
 .prof-back svg path { stroke: #002263; }
 .prof-back:hover    { opacity: 0.7; }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Page header — row 2, auto height
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-page-header {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
   width: 100%;
-  /* grid child: never shrinks below content */
   min-height: 0;
 }
 
@@ -188,9 +146,6 @@ html, body, #root {
   margin: 0;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Notification Bell
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-bell-wrap {
   position: relative;
   flex-shrink: 0;
@@ -198,9 +153,9 @@ html, body, #root {
 }
 
 .prof-bell-btn {
-  width:  clamp(2.75rem, 4vw, 3.25rem);
-  height: clamp(2.75rem, 4vw, 3.25rem);
-  background: var(--prof-blue-btn);
+  width: clamp(44px, 4vw, 52px);
+  height: clamp(44px, 4vw, 52px);
+  background: #003EA6;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   cursor: pointer;
@@ -208,9 +163,8 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   position: relative;
-  color: var(--prof-white);
+  transition: all 0.15s ease;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
-  transition: all var(--prof-transition);
 }
 
 .prof-bell-btn:hover,
@@ -227,72 +181,72 @@ html, body, #root {
   height: 20px;
   background: #E53935;
   border-radius: 10px;
-  border: 2px solid var(--prof-bg);
+  border: 2px solid #DAE5F1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 4px;
-  font-family: var(--prof-font-body);
-  font-size: 0.625rem;
+  box-sizing: border-box;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--prof-white);
+  color: #FFFFFF;
+  line-height: 1;
 }
 
 .prof-notif-panel {
   position: absolute;
-  top: calc(clamp(2.75rem, 4vw, 3.25rem) + 10px);
+  top: calc(clamp(44px, 4vw, 52px) + 10px);
   right: 0;
-  width: clamp(300px, 38vw, 370px);
-  max-height: min(80vh, 520px);
-  background: rgba(10, 16, 50, 0.97);
+  width: clamp(300px, 38vw, 380px);
+  max-height: 520px;
+  background: #FFFFFF;
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid #E5E7EB;
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 300;
-  animation: prof-panel-in 0.18s ease;
 }
 
-.prof-notif-panel--mobile { width: min(90vw, 22.5rem); }
-
-@keyframes prof-panel-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+.prof-notif-panel--mobile {
+  right: 0;
+  width: 92vw;
 }
 
 .prof-notif-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #F0F2F5;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
   flex-shrink: 0;
 }
 
 .prof-notif-title {
-  font-family: var(--prof-font-body);
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: 1rem;
-  color: var(--prof-white);
+  font-size: 16px;
+  color: #003EA6;
 }
 
 .prof-notif-mark-all {
   background: none;
   border: none;
-  font-family: var(--prof-font-body);
-  font-size: 0.75rem;
-  color: var(--prof-primary);
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2B72FB;
   cursor: pointer;
   padding: 0;
 }
 
 .prof-notif-tabs {
   display: flex;
-  gap: 4px;
   padding: 10px 18px 0;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -300,20 +254,21 @@ html, body, #root {
   height: 30px;
   padding: 0 14px;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid #D1D5DC;
   border-radius: 20px;
   cursor: pointer;
-  font-family: var(--prof-font-body);
-  font-size: 0.8125rem;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 12px;
   font-weight: 400;
-  color: var(--prof-white);
-  transition: all var(--prof-transition);
+  color: #4A5565;
+  transition: all 0.15s ease;
 }
 
 .prof-notif-tab--active {
-  background: var(--prof-primary);
-  border-color: var(--prof-primary);
+  background: #003EA6;
+  border-color: #003EA6;
   font-weight: 700;
+  color: #FFFFFF;
 }
 
 .prof-notif-list {
@@ -325,7 +280,7 @@ html, body, #root {
 .prof-notif-list::-webkit-scrollbar { width: 4px; }
 .prof-notif-list::-webkit-scrollbar-track { background: transparent; }
 .prof-notif-list::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.15);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 2px;
 }
 
@@ -339,17 +294,17 @@ html, body, #root {
 }
 
 .prof-notif-empty p {
-  font-family: var(--prof-font-body);
-  font-size: 0.8125rem;
-  color: rgba(255,255,255,0.3);
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.3);
   margin: 0;
 }
 
 .prof-notif-group-label {
-  font-family: var(--prof-font-body);
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
   font-size: 10px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(0, 0, 0, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin: 10px 18px 4px;
@@ -361,23 +316,23 @@ html, body, #root {
   gap: 12px;
   padding: 10px 18px;
   cursor: pointer;
-  transition: background var(--prof-transition);
+  transition: background 0.12s ease;
   border-left: 3px solid transparent;
 }
 
 .prof-notif-item--unread {
-  background: rgba(43, 114, 251, 0.08);
-  border-left-color: var(--prof-primary);
+  background: rgba(0, 62, 166, 0.05);
+  border-left-color: #003EA6;
 }
 
-.prof-notif-item:hover { background: rgba(255,255,255,0.05); }
+.prof-notif-item:hover { background: rgba(0, 0, 0, 0.03); }
 
 .prof-notif-icon {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(43,114,251,0.15);
-  border: 1px solid rgba(43,114,251,0.2);
+  background: rgba(0, 62, 166, 0.08);
+  border: 1px solid rgba(0, 62, 166, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,21 +343,22 @@ html, body, #root {
 .prof-notif-content { flex: 1; min-width: 0; }
 
 .prof-notif-item-title {
-  font-family: var(--prof-font-body);
-  font-weight: 400;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 700;
   font-size: 13px;
-  color: var(--prof-white);
-  margin: 0 0 2px;
+  color: #0A0A0A;
+  margin: 0 0 2px 0;
   line-height: 1.4;
 }
 
 .prof-notif-item-title--unread { font-weight: 700; }
+.prof-notif-item:not(.prof-notif-item--unread) .prof-notif-item-title { font-weight: 400; }
 
 .prof-notif-item-body {
-  font-family: var(--prof-font-body);
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 12px;
-  color: rgba(255,255,255,0.45);
-  margin: 0 0 4px;
+  color: #4A5565;
+  margin: 0 0 4px 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -411,56 +367,49 @@ html, body, #root {
 }
 
 .prof-notif-time {
-  font-family: var(--prof-font-body);
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 11px;
-  color: rgba(255,255,255,0.25);
+  color: rgba(0, 0, 0, 0.35);
 }
 
 .prof-notif-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--prof-primary);
+  background: #003EA6;
   flex-shrink: 0;
   margin-top: 6px;
 }
 
 .prof-notif-footer {
   padding: 10px 18px;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid #F0F2F5;
   flex-shrink: 0;
 }
 
 .prof-notif-see-all {
   width: 100%;
   height: 36px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: #F9FAFB;
+  border: 1px solid #D1D5DC;
   border-radius: 10px;
-  font-family: var(--prof-font-body);
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 13px;
-  color: rgba(255,255,255,0.7);
+  color: #4A5565;
   cursor: pointer;
-  transition: background var(--prof-transition);
+  transition: background 0.15s ease;
 }
 
-.prof-notif-see-all:hover { background: rgba(255,255,255,0.1); }
+.prof-notif-see-all:hover { background: #F0F4FB; }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Top row — row 3 of .prof-main grid
-   Height is set by grid-template-rows: var(--prof-top-h).
-   Cards must fill 100% of this row via height:100%.
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-top-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(16px, 3.2vw, 38px);
-  /* grid child of .prof-main — height comes from grid row, not here */
   min-height: 0;
   overflow: hidden;
 }
 
-/* Hero card */
 .prof-hero-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -472,7 +421,6 @@ html, body, #root {
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
-  /* fill the grid row height exactly */
   height: 100%;
   min-height: 0;
 }
@@ -583,7 +531,6 @@ html, body, #root {
   margin: 0;
 }
 
-/* Strength card */
 .prof-strength-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -595,7 +542,6 @@ html, body, #root {
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
-  /* fill the grid row height exactly */
   height: 100%;
   min-height: 0;
 }
@@ -664,22 +610,14 @@ html, body, #root {
   z-index: 1;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Bottom row — row 4 of .prof-main grid (1fr = all remaining space)
-   Cards fill the row via height:100%.
-   Info list fills the card via flex:1.
-   Info rows divide the list equally via flex:1 1 0.
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(16px, 3.2vw, 38px);
-  /* grid child of .prof-main — height is the 1fr remainder */
   min-height: 0;
   overflow: hidden;
 }
 
-/* Info card & CP card shared */
 .prof-info-card,
 .prof-cp-card {
   background: var(--prof-card-bg);
@@ -691,12 +629,10 @@ html, body, #root {
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
-  /* fill the grid cell — this is what gives the cards measured height */
   height: 100%;
   box-sizing: border-box;
 }
 
-/* Card header */
 .prof-info-card-header {
   display: flex;
   align-items: flex-start;
@@ -764,12 +700,6 @@ html, body, #root {
   border-color: #D1D5DB;
 }
 
-/*
- * Info list:
- * flex:1 → expands to fill everything the card has left after
- *          header (flex-shrink:0) and button (flex-shrink:0).
- * overflow:hidden → rows share the space, no scrollbar ever appears.
- */
 .prof-info-list {
   display: flex;
   flex-direction: column;
@@ -778,13 +708,6 @@ html, body, #root {
   overflow: hidden;
 }
 
-/*
- * Info row:
- * flex:1 1 0 → each of the 8 rows claims an equal 1/8 of the list height.
- * min-height:0 → allows shrinking below content size on short viewports.
- * No fixed padding — the row's allocated height IS the breathing room.
- * align-items:center → icon and text are always vertically centred.
- */
 .prof-info-row {
   display: flex;
   align-items: center;
@@ -821,7 +744,6 @@ html, body, #root {
   font-style: italic;
 }
 
-/* Action buttons */
 .prof-info-card-action-btn,
 .prof-cp-card-action-btn {
   width: 100%;
@@ -854,7 +776,6 @@ html, body, #root {
 .prof-info-card-action-btn:active,
 .prof-cp-card-action-btn:active { transform: scale(0.99); }
 
-/* Change Password card body */
 .prof-cp-card-body {
   flex: 1;
   display: flex;
@@ -893,9 +814,6 @@ html, body, #root {
 
 .prof-cp-last-changed { font-weight: 700 !important; }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Modal
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-modal-overlay {
   position: fixed;
   inset: 0;
@@ -1019,7 +937,6 @@ html, body, #root {
   gap: 8px;
 }
 
-/* Form fields (modal only) */
 .prof-pi-form { display: flex; flex-direction: column; gap: 14px; }
 
 .prof-pi-section-title {
@@ -1066,7 +983,56 @@ html, body, #root {
 
 .prof-pi-input--error { border-color: var(--prof-error) !important; }
 
-.prof-pi-select {
+.prof-radio-group {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.prof-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.prof-radio-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--prof-blue-btn);
+}
+
+.prof-radio-option label {
+  font-family: var(--prof-font-display);
+  font-size: 13px;
+  color: var(--prof-text-tertiary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.prof-contact-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.prof-country-code-select {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.prof-phone-number-input {
+  flex: 1;
+}
+
+.prof-country-selector {
+  position: relative;
+  width: 100%;
+}
+
+.prof-country-selector-btn {
   width: 100%;
   height: 38px;
   padding: 0 12px;
@@ -1076,11 +1042,87 @@ html, body, #root {
   font-family: var(--prof-font-display);
   font-size: 13px;
   color: var(--prof-text-tertiary);
-  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
+  transition: border-color var(--prof-transition);
 }
 
-.prof-pi-select:focus { border-color: var(--prof-input-focus); }
+.prof-country-selector-btn:hover {
+  border-color: var(--prof-input-focus);
+}
+
+.prof-country-selector-btn span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prof-country-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid var(--prof-card-border);
+  border-radius: 8px;
+  box-shadow: var(--prof-card-shadow);
+  z-index: 500;
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.prof-country-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--prof-card-border);
+}
+
+.prof-country-search input {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--prof-card-border);
+  border-radius: 6px;
+  font-family: var(--prof-font-display);
+  font-size: 12px;
+}
+
+.prof-country-list {
+  overflow-y: auto;
+  max-height: 250px;
+}
+
+.prof-country-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background var(--prof-transition);
+  font-family: var(--prof-font-display);
+  font-size: 12px;
+  color: var(--prof-text-tertiary);
+}
+
+.prof-country-option:hover {
+  background: var(--prof-input-bg);
+}
+
+.prof-country-option .prof-country-flag {
+  font-size: 18px;
+}
+
+.prof-country-search-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--prof-text-muted);
+  font-family: var(--prof-font-display);
+  font-size: 12px;
+}
 
 .prof-pi-hint {
   font-family: var(--prof-font-display);
@@ -1094,23 +1136,6 @@ html, body, #root {
   font-size: 11px;
   color: var(--prof-error);
 }
-
-.prof-pi-change-pass-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: none;
-  border: 1px solid var(--prof-card-border);
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-family: var(--prof-font-display);
-  font-size: 13px;
-  color: var(--prof-primary);
-  cursor: pointer;
-  transition: background var(--prof-transition);
-}
-
-.prof-pi-change-pass-btn:hover { background: #F3F4F6; }
 
 .prof-pi-banner,
 .prof-cp-banner {
@@ -1141,7 +1166,6 @@ html, body, #root {
   margin: 0;
 }
 
-/* Skeleton loader */
 .prof-pi-skeleton-wrap { display: flex; flex-direction: column; gap: 16px; }
 .prof-pi-skeleton-row  { display: flex; flex-direction: column; gap: 6px; }
 .prof-pi-skeleton {
@@ -1209,7 +1233,6 @@ html, body, #root {
   transition: color var(--prof-transition);
 }
 
-/* Spinner */
 .prof-spinner {
   display: inline-block;
   width: 14px; height: 14px;
@@ -1221,9 +1244,6 @@ html, body, #root {
 
 @keyframes prof-spin { to { transform: rotate(360deg); } }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Mobile bottom nav
-   ═══════════════════════════════════════════════════════════════════════════ */
 .prof-bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -1278,11 +1298,6 @@ html, body, #root {
 
 .prof-nav-item--active .prof-nav-label { font-weight: 700; }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Responsive
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Tablet (768–1023px) */
 @media (min-width: 768px) and (max-width: 1023px) {
   :root {
     --prof-top-h: 190px;
@@ -1298,7 +1313,6 @@ html, body, #root {
   .prof-bottom-row { gap: clamp(12px, 2vw, 20px); }
 }
 
-/* Short viewports (e.g. 768px tall or less) — shrink hero row */
 @media (max-height: 768px) and (min-width: 768px) {
   :root {
     --prof-top-h: 170px;
@@ -1311,7 +1325,6 @@ html, body, #root {
   }
 }
 
-/* Mobile (≤767px) — natural scroll layout, no fixed heights */
 @media (max-width: 767px) {
   html, body, #root {
     overflow: auto;
@@ -1331,7 +1344,6 @@ html, body, #root {
   }
 
   .prof-main {
-    /* revert to flex column for natural scroll on mobile */
     display: flex;
     flex-direction: column;
     overflow: visible;
@@ -1381,9 +1393,16 @@ html, body, #root {
   .prof-cp-modal-footer { flex-direction: column; }
 
   .prof-pi-row { grid-template-columns: 1fr; }
+  
+  .prof-contact-row {
+    flex-direction: column;
+  }
+  
+  .prof-country-code-select {
+    width: 100%;
+  }
 }
 
-/* Large screens (≥1440px) — Figma-exact values */
 @media (min-width: 1440px) {
   :root {
     --prof-top-h: 249px;

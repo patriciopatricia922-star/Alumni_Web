@@ -172,15 +172,15 @@ const JobExperienceView = ({
             <div className="je-progress-track">
               <div className="je-progress-fill" style={{ width: `${formPct}%` }} />
             </div>
-            <span className="je-progress-label">Job Experience</span>
+            <span className="je-progress-label">Work Experience</span>
           </div>
         </div>
 
         <div className="je-body">
           <div className="je-card" ref={cardRef}>
             <div>
-              <h2 className="je-section-title">Job search experience</h2>
-              <p className="je-section-sub">Your job hunting experience</p>
+              <h2 className="je-section-title">Work Search Experience</h2>
+              <p className="je-section-sub">Your work search experience</p>
             </div>
 
             <div className="je-questions">

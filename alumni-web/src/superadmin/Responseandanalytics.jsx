@@ -1,87 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import SuperAdSidebar from '../superadmin/SuperAdsidebar';
-import Responseanalyticsview from './Views/Responseanalyticsview';
+// ============================================================================
+// THIS IS FOR LOGIC.
+// ============================================================================
+// Purpose: Handles all business logic, Supabase API calls, data processing,
+//          state management, and event handlers for Response & Analytics.
+// ============================================================================
+
+import React, { useState, useEffect } from 'react';
+import AdminSidebar from "./SuperAdsidebar";
+import ResponseAnalyticsView from './views/ResponseAnalyticsView';
 import { supabase } from '../lib/supabase';
 
-
-const PAGE_TABS = [
-  { key: 'overview', label: 'Survey Overview' },
-  { key: 'responses', label: 'Survey Responses' },
-];
-
-const SECTION_OPTIONS = [
-  'All Sections',
-  'Personal Information',
-  'Educational Information',
-  'Certification Achievement',
-  'Employment Information',
-  'Job Search Experience',
-  'Skills & Competencies',
-  'Feedback & Engagement',
-];
-
-const COLORS = {
-  green: '#22C55E',
-  lime: '#84CC16',
-  yellow: '#EAB308',
-  orange: '#F97316',
-  red: '#EF4444',
-  blue: '#3B82F6',
-  violet: '#8B5CF6',
-  pink: '#FB7185',
-  cyan: '#06B6D4',
-  emerald: '#00C950',
-  deepOrange: '#FF6900',
-  danger: '#FB2C36',
-  neutral: '#CBD5E1',
-};
-
-const AGE_BUCKETS = ['18-24', '25-29', '30-34', '35-39', '40+'];
-const EMPLOYMENT_ORDER = [
-  'Regular / Permanent',
-  'Contractual',
-  'Probationary',
-  'Part-time',
-  'Self-employed',
-  'Casual',
-  'Unemployed',
-];
-const TIME_TO_JOB_ORDER = [
-  'Less than a month',
-  '1–3 months',
-  '3–6 months',
-  '7–11 months',
-  '1 year or more',
-  'Not Applicable',
-];
-const SALARY_ORDER = [
-  'Below ₱15,000',
-  '₱15,001 – ₱30,000',
-  '₱30,001 – ₱50,000',
-  'Above ₱50,000',
-];
-
-const SATISFACTION_MAP = {
-  'very satisfied': 5,
-  satisfied: 4,
-  neutral: 3,
-  dissatisfied: 2,
-  'very dissatisfied': 1,
-};
-
-const STOP_WORDS = new Set([
-  'the', 'and', 'for', 'that', 'with', 'this', 'from', 'have', 'has', 'had',
-  'was', 'were', 'are', 'is', 'be', 'been', 'being', 'you', 'your', 'our',
-  'their', 'they', 'them', 'about', 'into', 'than', 'then', 'very', 'more',
-  'most', 'much', 'many', 'such', 'also', 'only', 'just', 'not', 'out',
-  'can', 'could', 'would', 'should', 'will', 'may', 'might', 'able', 'school',
-  'university', 'student', 'students', 'alumni', 'course', 'program', 'programs',
-  'good', 'great', 'help', 'helpful', 'like', 'really', 'well', 'yes', 'no',
-  'still', 'need', 'needs', 'one', 'two', 'get', 'got', 'made', 'make', 'using',
-  'used', 'overall', 'better', 'best',
-]);
-
-const safeText = (value) => (typeof value === 'string' ? value.trim() : '');
+// ============================ HELPER FUNCTIONS ============================
+const safeText = (value) => (typeof value === 'string' ? value.trim() : (value || ''));
 
 const toArray = (value) => {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -90,22 +20,36 @@ const toArray = (value) => {
   return [];
 };
 
-const formatDate = (value) => {
-  if (!value) return 'No submission date';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No submission date';
-  return date.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+const getRatingValue = (feedback) => {
+  const satisfactionMap = {
+    'very satisfied': 5,
+    'satisfied': 4,
+    'neutral': 3,
+    'dissatisfied': 2,
+    'very dissatisfied': 1,
+  };
+  const raw = safeText(feedback?.satisfaction).toLowerCase();
+  if (satisfactionMap[raw]) return satisfactionMap[raw];
+  const numeric = Number(raw);
+  if (!isNaN(numeric) && numeric >= 1 && numeric <= 5) return numeric;
+  return null;
 };
 
-const percentageOf = (count, total) => (total ? Number(((count / total) * 100).toFixed(2)) : 0);
-
-const average = (values) => {
-  if (!values.length) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+const getAgeBucket = (birthday) => {
+  if (!birthday) return null;
+  const date = new Date(birthday);
+  if (isNaN(date.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const monthDiff = today.getMonth() - date.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+    age -= 1;
+  }
+  if (age <= 24) return '18-24';
+  if (age <= 29) return '25-29';
+  if (age <= 34) return '30-34';
+  if (age <= 39) return '35-39';
+  return '40+';
 };
 
 const extractYear = (value) => {
@@ -115,553 +59,439 @@ const extractYear = (value) => {
     return match ? match[0] : null;
   }
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : String(date.getFullYear());
+  return !isNaN(date.getTime()) ? String(date.getFullYear()) : null;
 };
 
-const getRollingYears = (count = 4) => {
-  const currentYear = new Date().getFullYear();
-  return Array.from({ length: count }, (_, index) => String(currentYear - (count - 1 - index)));
-};
+// ============================ SINGLE RESPONSE EXTRACTION ============================
+const extractRespondentData = (row, userEmail = '') => {
+  const personal = row.personal_background_data || {};
+  const educational = row.educational_background_data || {};
+  const certificationData = row.certification_achievement_data || {};
+  const employmentData = row.employment_information_data || {};
+  const jobExperience = row.job_experience_data || {};
+  const skillsData = row.skills_competencies_data || {};
+  const feedback = row.feedback_university_data || {};
+  const engagement = row.alumni_engagement_data || {};
 
-const getAgeBucket = (birthday) => {
-  if (!birthday) return null;
-  const date = new Date(birthday);
-  if (Number.isNaN(date.getTime())) return null;
+  const firstName = safeText(personal.first_name);
+  const lastName = safeText(personal.last_name);
+  const middleName = safeText(personal.middle_name);
+  const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ') || 'Anonymous';
 
-  const today = new Date();
-  let age = today.getFullYear() - date.getFullYear();
-  const monthDiff = today.getMonth() - date.getMonth();
+  const email = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
+  const batch = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
+  const program = safeText(educational.degree_program) || 'Not specified';
+  const employmentStatus = safeText(employmentData.employment_status) || 'Not specified';
 
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
-    age -= 1;
-  }
+  const skillRatings = skillsData.skill_ratings || {};
+  
+  const commSkillRating = skillRatings.communication_skills || 
+                          skillRatings.communicationSkills || 
+                          skillRatings.communication || 
+                          skillRatings['Communication Skills'] || 0;
 
-  if (age <= 24) return '18-24';
-  if (age <= 29) return '25-29';
-  if (age <= 34) return '30-34';
-  if (age <= 39) return '35-39';
-  return '40+';
-};
+  const itSkillRating = skillRatings.information_technology_skills || 
+                        skillRatings.informationTechnologySkills || 
+                        skillRatings.it_skills ||
+                        skillRatings.itSkills ||
+                        skillRatings['Information & Technology Skills'] ||
+                        skillRatings['Information Technology Skills'] || 0;
 
-const getRatingValue = (feedback) => {
-  const raw = safeText(feedback?.satisfaction).toLowerCase();
-  if (SATISFACTION_MAP[raw]) return SATISFACTION_MAP[raw];
-  const numeric = Number(raw);
-  if (!Number.isNaN(numeric) && numeric >= 1 && numeric <= 5) return numeric;
-  return null;
-};
+  const leadershipRating = skillRatings.leadership_skills || 
+                           skillRatings.leadershipSkills || 
+                           skillRatings.leadership ||
+                           skillRatings['Leadership Skills'] || 0;
 
-const countValues = (values, orderedLabels = [], palette = []) => {
-  const counts = new Map();
+  const criticalRating = skillRatings.critical_problem_solving_skills || 
+                         skillRatings.criticalProblemSolvingSkills || 
+                         skillRatings.critical_thinking ||
+                         skillRatings['Critical & Problem-Solving Skills'] ||
+                         skillRatings.criticalThinking || 0;
 
-  values.filter(Boolean).forEach((value) => {
-    counts.set(value, (counts.get(value) || 0) + 1);
-  });
-
-  const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
-
-  const ordered = [
-    ...orderedLabels.filter((label) => counts.has(label)),
-    ...[...counts.keys()]
-      .filter((label) => !orderedLabels.includes(label))
-      .sort((a, b) => (counts.get(b) || 0) - (counts.get(a) || 0)),
-  ];
-
-  return ordered.map((label, index) => ({
-    label,
-    value: counts.get(label) || 0,
-    percent: percentageOf(counts.get(label) || 0, total),
-    color: palette[index % palette.length] || COLORS.neutral,
-  }));
-};
-
-const normalizeRow = (progressRow) => {
-  const personal = progressRow.personal_background_data || {};
-  const educational = progressRow.educational_background_data || {};
-  const certification = progressRow.certification_achievement_data || {};
-  const employment = progressRow.employment_information_data || {};
-  const jobExperience = progressRow.job_experience_data || {};
-  const skills = progressRow.skills_competencies_data || {};
-  const feedback = progressRow.feedback_university_data || {};
-  const engagement = progressRow.alumni_engagement_data || {};
+  const workEthicsRating = skillRatings.work_ethics_professionalism || 
+                           skillRatings.workEthicsProfessionalism || 
+                           skillRatings.work_ethics ||
+                           skillRatings.workEthics ||
+                           skillRatings['Work Ethics / Professionalism'] || 0;
 
   return {
-    id: progressRow.id,
-    userId: progressRow.user_id,
-    completed: progressRow.completed,
-    percentage: progressRow.percentage || 0,
-    lastUpdated: progressRow.last_updated,
-
-    firstName: safeText(personal.first_name),
-    middleName: safeText(personal.middle_name),
-    lastName: safeText(personal.last_name),
-    email: safeText(personal.email),
-    gender: safeText(personal.gender),
-    birthday: safeText(personal.birthday),
-    civilStatus: safeText(personal.civil_status),
-
-    degreeProgram: safeText(educational.degree_program),
-    yearGraduated: safeText(educational.year_graduated),
-    reasonForCourse: safeText(educational.reason_for_course),
-    postGradPlans: safeText(educational.post_grad_plans),
-    postGradCourse: safeText(educational.post_grad_course),
-    boardExamName: safeText(educational.board_exam_name),
-    boardExamDate: safeText(educational.board_exam_date),
-    boardExamResult: safeText(educational.board_exam_result),
-    licensureReason: safeText(educational.licensure_reason),
-
-    certiportPasser: safeText(certification.certiport_passer),
-    certifications: toArray(certification.certifications),
-    helpedCareer: safeText(certification.helped_career),
-    howHelped: safeText(certification.how_helped),
-
-    employmentStatus: safeText(employment.employment_status),
-    jobPosition: safeText(employment.job_position),
-    companyName: safeText(employment.company_name),
-    monthlyIncome: safeText(employment.monthly_income),
-    reasonForJob: safeText(employment.reason_for_job),
-    typeOfIndustry: safeText(employment.type_of_industry),
-    jobRelatedToDegree: safeText(employment.job_related_to_degree),
-    locationOfEmployment: safeText(employment.location_of_employment),
-
-    firstJobSource: safeText(jobExperience.first_job_source),
-    otherFirstJobSource: safeText(jobExperience.other_first_job_source),
-    timeToFindJob: safeText(jobExperience.time_to_find_job),
-    employmentDuration: safeText(jobExperience.employment_duration),
-    firstJobFactors: toArray(jobExperience.first_job_factors),
-
-    skillRatings: skills.skill_ratings || {},
-    usefulCompetencies: toArray(skills.useful_competencies),
-    skillsToDevelop: safeText(skills.skills_to_develop),
-
-    feedback,
-    satisfaction: safeText(feedback.satisfaction),
-    recommend: safeText(feedback.recommend),
-    suggestions: safeText(feedback.suggestions),
-
-    participateIn: toArray(engagement.participate_in),
-    informedAboutEvents: safeText(engagement.informed_about_events),
+    id: row.id,
+    name: fullName,
+    email: email,
+    batch: batch,
+    program: program,
+    status: employmentStatus,
+    studentNumber: safeText(personal.student_number) || safeText(personal.student_id) || '',
+    gender: safeText(personal.gender) || '',
+    birthday: safeText(personal.birthday) || '',
+    civilStatus: safeText(personal.civil_status) || '',
+    contact: safeText(personal.contact_number) || safeText(personal.phone) || '',
+    streetAddress: safeText(personal.street_address) || safeText(personal.address) || '',
+    city: safeText(personal.city) || '',
+    province: safeText(personal.province) || '',
+    zipCode: safeText(personal.zip_code) || safeText(personal.postal_code) || '',
+    country: safeText(personal.country) || 'Philippines',
+    reasonTakingCourse: safeText(educational.reason_for_course) || '',
+    distinction: safeText(educational.distinction) || '',
+    postGradPlans: safeText(educational.post_grad_plans) || '',
+    postGradCourse: safeText(educational.post_grad_course) || '',
+    programOther: safeText(educational.degree_program_other) || '',
+    boardExamName: safeText(educational.board_exam_name) || '',
+    boardExamDate: safeText(educational.board_exam_date) || '',
+    boardExamResult: safeText(educational.board_exam_result) || '',
+    licensureReason: safeText(educational.licensure_reason) || '',
+    licensureReviewing: safeText(educational.licensure_reviewing) || '',
+    licensurePlans: safeText(educational.licensure_plans) || '',
+    certiportPasser: safeText(certificationData.certiport_passer) || '',
+    certifications: toArray(certificationData.certifications),
+    certificationUseful: safeText(certificationData.helped_career) || '',
+    certificationUsefulness: safeText(certificationData.how_helped) || '',
+    jobRelatedToDegree: safeText(employmentData.job_related_to_degree) || '',
+    employmentType: safeText(employmentData.employment_status) || '',
+    employmentStatusOther: safeText(employmentData.employment_status_other) || '',
+    jobTitle: safeText(employmentData.job_position) || '',
+    company: safeText(employmentData.company_name) || '',
+    industry: safeText(employmentData.type_of_industry) || '',
+    employmentLocation: safeText(employmentData.location_of_employment) || '',
+    salary: safeText(employmentData.monthly_income) || '',
+    jobAcceptReason: safeText(employmentData.reason_for_job) || '',
+    jobAcceptReasonOther: safeText(employmentData.other_reason_for_job) || '',
+    unemployedReason: safeText(employmentData.reasons_unemployed) || '',
+    unemployedReasonOther: safeText(employmentData.other_reason_unemployed) || '',
+    timeToJob: safeText(jobExperience.time_to_find_job) || '',
+    employmentDuration: safeText(jobExperience.employment_duration) || '',
+    employmentDurationOther: safeText(jobExperience.other_employment_duration) || '',
+    howFoundJob: safeText(jobExperience.first_job_source) || '',
+    howFoundJobOther: safeText(jobExperience.other_first_job_source) || '',
+    factorsForJob: toArray(jobExperience.first_job_factors),
+    factorsForJobOther: safeText(jobExperience.other_job_factors) || '',
+    usefulCompetencies: toArray(skillsData.useful_competencies),
+    suggestedSkills: safeText(skillsData.skills_to_develop) || '',
+    commSkillRating: Number(commSkillRating) || 0,
+    itSkillRating: Number(itSkillRating) || 0,
+    leadershipRating: Number(leadershipRating) || 0,
+    criticalRating: Number(criticalRating) || 0,
+    workEthicsRating: Number(workEthicsRating) || 0,
+    satisfaction: safeText(feedback.satisfaction) || '',
+    wouldRecommend: safeText(feedback.recommend) || '',
+    suggestions: safeText(feedback.suggestions) || '',
+    informedAboutEvents: safeText(engagement.informed_about_events) || '',
+    willingToParticipate: toArray(engagement.participate_in),
+    willingToParticipateOther: safeText(engagement.participate_in_other) || '',
   };
 };
 
-const hasUsefulProgressData = (row) =>
-  row.completed === true ||
-  row.percentage > 0 ||
-  row.personal_background_data ||
-  row.educational_background_data ||
-  row.certification_achievement_data ||
-  row.employment_information_data ||
-  row.job_experience_data ||
-  row.skills_competencies_data ||
-  row.feedback_university_data ||
-  row.alumni_engagement_data;
+// ============================ PROCESS ALL SURVEY DATA ============================
+const processSurveyData = (rows, userEmails = {}) => {
+  let totalResponses = 0;
+  let satisfactionSum = 0;
+  let satisfactionCount = 0;
+  
+  const satisfactionScores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const genderDistribution = { Male: 0, Female: 0, Other: 0 };
+  const ageDistribution = { '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
+  const boardExam = { Passed: 0, Failed: 0 };
+  const certification = { 'With Certification': 0, 'No Certification': 0 };
+  const employment = { Employed: 0, Unemployed: 0, 'Self-Employed': 0 };
+  const salary = { '< ₱15k': 0, '₱15k–30k': 0, '₱30k–50k': 0, '> ₱40k': 0 };
+  const timeToJob = { '< 1 month': 0, '1–3 months': 0, '3–6 months': 0, '6 + months': 0 };
+  const skills = new Map();
+  const respondents = [];
 
-const buildBoardExamSeries = (rows) => {
-  const labels = getRollingYears(4);
-  const buckets = new Map(labels.map((year) => [year, { passed: 0, failed: 0, total: 0 }]));
+  rows.forEach(row => {
+    totalResponses++;
+    const respondent = extractRespondentData(row, userEmails[row.user_id]);
+    respondents.push(respondent);
 
-  rows.forEach((row) => {
-    const result = safeText(row.boardExamResult).toLowerCase();
-    if (!result) return;
+    const personal = row.personal_background_data || {};
+    const educational = row.educational_background_data || {};
+    const certificationData = row.certification_achievement_data || {};
+    const employmentData = row.employment_information_data || {};
+    const jobExperience = row.job_experience_data || {};
+    const skillsData = row.skills_competencies_data || {};
+    const feedback = row.feedback_university_data || {};
 
-    const year = extractYear(row.boardExamDate) || row.yearGraduated || extractYear(row.lastUpdated);
-    if (!year || !buckets.has(year)) return;
+    const gender = safeText(personal.gender);
+    if (gender === 'Male') genderDistribution.Male++;
+    else if (gender === 'Female') genderDistribution.Female++;
+    else if (gender) genderDistribution.Other++;
 
-    const bucket = buckets.get(year);
+    const ageBucket = getAgeBucket(personal.birthday);
+    if (ageBucket) ageDistribution[ageBucket]++;
 
-    if (result.includes('pass')) {
-      bucket.passed += 1;
-      bucket.total += 1;
-    } else if (result.includes('fail')) {
-      bucket.failed += 1;
-      bucket.total += 1;
-    }
-  });
-
-  const passed = labels.map((year) => {
-    const bucket = buckets.get(year);
-    if (!bucket.total) return null;
-    return Number(((bucket.passed / bucket.total) * 100).toFixed(2));
-  });
-
-  const failed = labels.map((year) => {
-    const bucket = buckets.get(year);
-    if (!bucket.total) return null;
-    return Number(((bucket.failed / bucket.total) * 100).toFixed(2));
-  });
-
-  return {
-    labels,
-    passed,
-    failed,
-    maxValue: 100,
-  };
-};
-
-const buildCertificationSeries = (rows) => {
-  const labels = getRollingYears(4);
-  const buckets = new Map(labels.map((year) => [year, { certified: 0, uncertified: 0, total: 0 }]));
-
-  rows.forEach((row) => {
-    const year = row.yearGraduated || extractYear(row.lastUpdated);
-    if (!year || !buckets.has(year)) return;
-
-    const bucket = buckets.get(year);
-    const isCertified =
-      row.certiportPasser.toLowerCase() === 'yes' || row.certifications.length > 0;
-
-    if (isCertified) {
-      bucket.certified += 1;
-    } else {
-      bucket.uncertified += 1;
+    const rating = getRatingValue(feedback);
+    if (rating) {
+      satisfactionSum += rating;
+      satisfactionCount++;
+      satisfactionScores[rating]++;
     }
 
-    bucket.total += 1;
-  });
+    const examResult = safeText(educational.board_exam_result);
+    if (examResult.toLowerCase().includes('pass')) boardExam.Passed++;
+    else if (examResult.toLowerCase().includes('fail')) boardExam.Failed++;
 
-  const certified = labels.map((year) => {
-    const bucket = buckets.get(year);
-    if (!bucket.total) return null;
-    return Number(((bucket.certified / bucket.total) * 100).toFixed(2));
-  });
+    const hasCertification = safeText(certificationData.certiport_passer) === 'Yes' || 
+                            (certificationData.certifications && certificationData.certifications.length > 0);
+    if (hasCertification) certification['With Certification']++;
+    else if (certificationData.certiport_passer !== null) certification['No Certification']++;
 
-  const uncertified = labels.map((year) => {
-    const bucket = buckets.get(year);
-    if (!bucket.total) return null;
-    return Number(((bucket.uncertified / bucket.total) * 100).toFixed(2));
-  });
+    const empStatus = safeText(employmentData.employment_status);
+    if (empStatus.toLowerCase().includes('regular') || empStatus.toLowerCase().includes('permanent') || 
+        empStatus.toLowerCase().includes('contract') || empStatus.toLowerCase().includes('probationary')) {
+      employment.Employed++;
+    } else if (empStatus.toLowerCase().includes('self')) {
+      employment['Self-Employed']++;
+    } else if (empStatus.toLowerCase().includes('unemployed')) {
+      employment.Unemployed++;
+    } else if (empStatus && (employmentData.job_position || employmentData.company_name)) {
+      employment.Employed++;
+    }
 
-  return {
-    labels,
-    certified,
-    uncertified,
-    maxValue: 100,
-  };
-};
+    const monthlyIncome = safeText(employmentData.monthly_income);
+    if (monthlyIncome.includes('Below') || monthlyIncome.includes('<')) salary['< ₱15k']++;
+    else if (monthlyIncome.includes('15,001') || monthlyIncome.includes('15k–30k')) salary['₱15k–30k']++;
+    else if (monthlyIncome.includes('30,001') || monthlyIncome.includes('30k–50k')) salary['₱30k–50k']++;
+    else if (monthlyIncome.includes('Above') || monthlyIncome.includes('>')) salary['> ₱40k']++;
 
-const buildTopSkills = (rows) => {
-  const scores = new Map();
+    const timeToFind = safeText(jobExperience.time_to_find_job);
+    if (timeToFind.includes('Less') || timeToFind.includes('< 1')) timeToJob['< 1 month']++;
+    else if (timeToFind.includes('1–3')) timeToJob['1–3 months']++;
+    else if (timeToFind.includes('3–6')) timeToJob['3–6 months']++;
+    else if (timeToFind.includes('6 +') || timeToFind.includes('6+')) timeToJob['6 + months']++;
 
-  rows.forEach((row) => {
-    row.usefulCompetencies.forEach((skill) => {
-      const label = safeText(skill);
-      if (!label) return;
-      scores.set(label, (scores.get(label) || 0) + 1);
-    });
-
-    Object.entries(row.skillRatings).forEach(([skill, rating]) => {
-      const label = safeText(skill);
-      const numeric = Number(rating);
-      if (!label || Number.isNaN(numeric)) return;
-      scores.set(label, (scores.get(label) || 0) + numeric);
+    const competencies = toArray(skillsData.useful_competencies);
+    competencies.forEach(skill => {
+      const normalized = skill.trim();
+      if (normalized) skills.set(normalized, (skills.get(normalized) || 0) + 1);
     });
   });
 
-  return [...scores.entries()]
+  const avgSatisfaction = satisfactionCount > 0 ? (satisfactionSum / satisfactionCount).toFixed(1) : 0;
+
+  const genderDistributionArray = Object.entries(genderDistribution)
+    .filter(([_, value]) => value > 0)
+    .map(([name, value]) => ({ name, value }));
+
+  const ageDistributionArray = Object.entries(ageDistribution)
+    .filter(([_, value]) => value > 0)
+    .map(([range, count]) => ({ range, count }));
+
+  const satisfactionScoresArray = Object.entries(satisfactionScores)
+    .map(([score, count]) => ({ score, count }));
+
+  const boardExamArray = Object.entries(boardExam)
+    .filter(([_, value]) => value > 0)
+    .map(([category, count]) => ({ category, count }));
+
+  const certificationArray = Object.entries(certification)
+    .filter(([_, value]) => value > 0)
+    .map(([status, count]) => ({ status, count }));
+
+  const employmentArray = Object.entries(employment)
+    .filter(([_, value]) => value > 0)
+    .map(([name, value]) => ({ name, value }));
+
+  const salaryArray = Object.entries(salary)
+    .filter(([_, value]) => value > 0)
+    .map(([range, count]) => ({ range, count }));
+
+  const timeToJobArray = Object.entries(timeToJob)
+    .filter(([_, value]) => value > 0)
+    .map(([label, count]) => ({ label, count }));
+
+  const skillsArray = [...skills.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([label, value], index) => ({
-      label,
-      value,
-      color: [COLORS.green, COLORS.yellow, COLORS.orange, COLORS.pink, COLORS.red][index],
-    }));
+    .slice(0, 8)
+    .map(([skill, count]) => ({ skill, count }));
+
+  return {
+    totalResponses,
+    avgSatisfaction: parseFloat(avgSatisfaction),
+    satisfactionScores: satisfactionScoresArray,
+    genderDistribution: genderDistributionArray,
+    ageDistribution: ageDistributionArray,
+    boardExam: boardExamArray,
+    certification: certificationArray,
+    employment: employmentArray,
+    salary: salaryArray,
+    timeToJob: timeToJobArray,
+    skills: skillsArray,
+    respondents,
+  };
 };
 
-const buildRatingBreakdown = (rows) => {
-  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
-  rows.forEach((row) => {
-    const rating = getRatingValue(row.feedback);
-    if (rating) counts[rating] += 1;
-  });
-
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-
-  return [
-    { key: 5, color: COLORS.green },
-    { key: 4, color: COLORS.lime },
-    { key: 3, color: COLORS.yellow },
-    { key: 2, color: COLORS.orange },
-    { key: 1, color: COLORS.red },
-  ].map(({ key, color }) => ({
-    label: `${key}★`,
-    count: counts[key],
-    percent: percentageOf(counts[key], total),
-    color,
-  }));
-};
-
-const buildSectionResponseEntries = (rows) => {
-  const entries = [];
-
-  rows.forEach((row) => {
-    const respondent =
-      [row.firstName, row.middleName, row.lastName].filter(Boolean).join(' ') ||
-      row.email ||
-      'Anonymous Respondent';
-
-    const submitted = formatDate(row.lastUpdated);
-    const rating = getRatingValue(row.feedback) || 0;
-
-    const personalInfo = [
-      row.gender ? `Gender: ${row.gender}` : '',
-      row.civilStatus ? `Civil status: ${row.civilStatus}` : '',
-      row.email ? `Email: ${row.email}` : '',
-    ].filter(Boolean).join('. ');
-
-    const educationalInfo = [
-      row.degreeProgram ? `Program: ${row.degreeProgram}` : '',
-      row.yearGraduated ? `Graduated: ${row.yearGraduated}` : '',
-      row.reasonForCourse ? `Reason: ${row.reasonForCourse}` : '',
-      row.postGradPlans ? `Post-grad plans: ${row.postGradPlans}` : '',
-    ].filter(Boolean).join('. ');
-
-    const certificationInfo = [
-      row.certiportPasser ? `Certiport passer: ${row.certiportPasser}` : '',
-      row.certifications.length ? `Certifications: ${row.certifications.join(', ')}` : '',
-      row.helpedCareer ? `Helped career: ${row.helpedCareer}` : '',
-      row.howHelped ? `How helped: ${row.howHelped}` : '',
-    ].filter(Boolean).join('. ');
-
-    const employmentInfo = [
-      row.jobPosition ? `Position: ${row.jobPosition}` : '',
-      row.companyName ? `Company: ${row.companyName}` : '',
-      row.employmentStatus ? `Status: ${row.employmentStatus}` : '',
-      row.monthlyIncome ? `Income: ${row.monthlyIncome}` : '',
-      row.reasonForJob ? `Reason: ${row.reasonForJob}` : '',
-    ].filter(Boolean).join('. ');
-
-    const jobSearchInfo = [
-      row.timeToFindJob ? `Time to first job: ${row.timeToFindJob}` : '',
-      row.firstJobSource ? `Source: ${row.firstJobSource}` : '',
-      row.employmentDuration ? `Duration: ${row.employmentDuration}` : '',
-      row.firstJobFactors.length ? `Factors: ${row.firstJobFactors.join(', ')}` : '',
-    ].filter(Boolean).join('. ');
-
-    const skillsInfo = [
-      row.usefulCompetencies.length ? `Useful competencies: ${row.usefulCompetencies.join(', ')}` : '',
-      row.skillsToDevelop ? `Skills to develop: ${row.skillsToDevelop}` : '',
-    ].filter(Boolean).join('. ');
-
-    const feedbackInfo = [
-      row.satisfaction ? `Satisfaction: ${row.satisfaction}` : '',
-      row.recommend ? `Recommend: ${row.recommend}` : '',
-      row.suggestions ? `Suggestions: ${row.suggestions}` : '',
-      row.participateIn.length ? `Engagement: ${row.participateIn.join(', ')}` : '',
-    ].filter(Boolean).join('. ');
-
-    [
-      { section: 'Personal Information', response: personalInfo },
-      { section: 'Educational Information', response: educationalInfo },
-      { section: 'Certification Achievement', response: certificationInfo },
-      { section: 'Employment Information', response: employmentInfo },
-      { section: 'Job Search Experience', response: jobSearchInfo },
-      { section: 'Skills & Competencies', response: skillsInfo },
-      { section: 'Feedback & Engagement', response: feedbackInfo },
-    ].forEach((entry, index) => {
-      if (!entry.response) return;
-
-      entries.push({
-        id: `${row.id}-${index}`,
-        respondent,
-        section: entry.section,
-        rating,
-        submitted,
-        response: entry.response,
-      });
-    });
-  });
-
-  return entries;
-};
-
-const extractFeedbackTexts = (rows) =>
-  rows
-    .map((row) => safeText(row.suggestions))
-    .filter((text) => text && text !== '.' && text !== '/');
-
-const tokenize = (text) =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter((word) => word.length >= 3 && !STOP_WORDS.has(word));
-
-const toTitleCase = (value) =>
-  value
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-
-const extractTopFeedbackPhrase = (texts) => {
-  const unigramCounts = new Map();
-  const phraseCounts = new Map();
-
-  texts.forEach((text) => {
-    const tokens = tokenize(text);
-
-    tokens.forEach((token) => {
-      unigramCounts.set(token, (unigramCounts.get(token) || 0) + 1);
-    });
-
-    for (let i = 0; i < tokens.length - 1; i += 1) {
-      const bigram = `${tokens[i]} ${tokens[i + 1]}`;
-      phraseCounts.set(bigram, (phraseCounts.get(bigram) || 0) + 1);
-    }
-  });
-
-  const topPhraseEntry = [...phraseCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (topPhraseEntry && topPhraseEntry[1] >= 2) return toTitleCase(topPhraseEntry[0]);
-
-  const topWordEntry = [...unigramCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (topWordEntry) return topWordEntry[0].toUpperCase();
-
-  return '';
-};
-
-const Adminresponseanalytics = () => {
-  const [activePage, setActivePage] = useState('overview');
-  const [selectedSection, setSelectedSection] = useState('All Sections');
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
+// ============================ LOADING SCREEN COMPONENT ============================
+const LoadingScreen = ({ message, isError = false }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
-    let mounted = true;
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return (
+    <>
+      <AdminSidebar />
+      <div style={{ 
+        marginLeft: isMobile ? 0 : "229px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        height: "100vh",
+        background: "#E1ECF7",
+        fontFamily: "Lexend, sans-serif",
+        color: isError ? "#ef4444" : "#6A7282",
+        fontSize: "14px"
+      }}>
+        {message}
+      </div>
+    </>
+  );
+};
 
-    const loadProgress = async () => {
+// ============================ MAIN COMPONENT ============================
+const ResponseandAnalytics = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedSection, setSelectedSection] = useState("All Sections");
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [stats, setStats] = useState({
+    totalResponses: 0,
+    avgSatisfaction: 0,
+    satisfactionScores: [],
+    genderDistribution: [],
+    ageDistribution: [],
+    boardExam: [],
+    certification: [],
+    employment: [],
+    salary: [],
+    timeToJob: [],
+    skills: [],
+  });
+  const [respondents, setRespondents] = useState([]);
+
+  // ============================ FETCH DATA FROM SUPABASE ============================
+  useEffect(() => {
+    const fetchSurveyData = async () => {
       setLoading(true);
-      setError('');
+      setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('survey_progress')
-        .select(`
-          id,
-          user_id,
-          completed,
-          percentage,
-          last_updated,
-          personal_background_data,
-          educational_background_data,
-          certification_achievement_data,
-          employment_information_data,
-          job_experience_data,
-          skills_competencies_data,
-          feedback_university_data,
-          alumni_engagement_data
-        `)
-        .order('last_updated', { ascending: false });
+      try {
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, email')
+          .eq('role', 'alumni');
 
-      if (!mounted) return;
+        const userEmails = {};
+        if (usersData) {
+          usersData.forEach(user => {
+            userEmails[user.id] = user.email || '';
+          });
+        }
 
-      if (fetchError) {
-        setError(fetchError.message || 'Failed to load survey analytics.');
-        setRows([]);
+        const { data, error: fetchError } = await supabase
+          .from('survey_progress')
+          .select(`
+            id,
+            user_id,
+            completed,
+            percentage,
+            last_updated,
+            personal_background_data,
+            educational_background_data,
+            certification_achievement_data,
+            employment_information_data,
+            job_experience_data,
+            skills_competencies_data,
+            feedback_university_data,
+            alumni_engagement_data
+          `);
+
+        if (fetchError) throw fetchError;
+
+        if (!data || data.length === 0) {
+          setError('No survey responses found.');
+          setLoading(false);
+          return;
+        }
+
+        const completedSurveys = data.filter(row => row.completed === true);
+        
+        if (completedSurveys.length === 0) {
+          setError('No completed survey responses found.');
+          setLoading(false);
+          return;
+        }
+
+        const processed = processSurveyData(completedSurveys, userEmails);
+        setStats({
+          totalResponses: processed.totalResponses,
+          avgSatisfaction: processed.avgSatisfaction,
+          satisfactionScores: processed.satisfactionScores,
+          genderDistribution: processed.genderDistribution,
+          ageDistribution: processed.ageDistribution,
+          boardExam: processed.boardExam,
+          certification: processed.certification,
+          employment: processed.employment,
+          salary: processed.salary,
+          timeToJob: processed.timeToJob,
+          skills: processed.skills,
+        });
+        setRespondents(processed.respondents);
+
+      } catch (err) {
+        console.error('Error fetching survey data:', err);
+        setError(err.message || 'Failed to load survey data.');
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const normalized = (data || [])
-        .filter(hasUsefulProgressData)
-        .map(normalizeRow);
-
-      setRows(normalized);
-      setLoading(false);
     };
 
-    loadProgress();
-
-    return () => {
-      mounted = false;
-    };
+    fetchSurveyData();
   }, []);
 
-  const allResponseEntries = useMemo(() => buildSectionResponseEntries(rows), [rows]);
+  // ============================ HELPER FUNCTIONS ============================
+  const renderStars = (num) => "★".repeat(num) + "☆".repeat(5 - num);
 
-  const filteredResponses = useMemo(() => {
-    if (selectedSection === 'All Sections') return allResponseEntries;
-    return allResponseEntries.filter((item) => item.section === selectedSection);
-  }, [allResponseEntries, selectedSection]);
+  const isSectionVisible = (sectionName) => {
+    const formatted = selectedSection
+      .toLowerCase()
+      .replace(/[\s&]+/g, '-')
+      .replace(/[^\w-]/g, '');
+    return selectedSection === "All Sections" || formatted === sectionName;
+  };
 
-  const ratingBreakdown = useMemo(() => buildRatingBreakdown(rows), [rows]);
+  // ============================ LOADING AND ERROR STATES WITH SIDEBAR ============================
+  if (loading) {
+    return <LoadingScreen message="Loading survey data..." />;
+  }
 
-  const overviewCards = useMemo(() => {
-    const ratings = rows.map((row) => getRatingValue(row.feedback)).filter(Boolean);
-    const feedbackTexts = extractFeedbackTexts(rows);
-    const topPhrase = extractTopFeedbackPhrase(feedbackTexts);
+  if (error) {
+    return <LoadingScreen message={`Error: ${error}`} isError={true} />;
+  }
 
-    const genderDistribution = countValues(
-      rows.map((row) => row.gender),
-      ['Male', 'Female', 'Prefer not to say'],
-      [COLORS.blue, COLORS.orange, COLORS.red]
-    );
-
-    const ageDistribution = countValues(
-      rows.map((row) => getAgeBucket(row.birthday)),
-      AGE_BUCKETS,
-      [COLORS.blue, COLORS.orange, COLORS.violet, COLORS.green, COLORS.red]
-    );
-
-    const employmentStatus = countValues(
-      rows.map((row) => row.employmentStatus),
-      EMPLOYMENT_ORDER,
-      [COLORS.emerald, COLORS.deepOrange, COLORS.violet, COLORS.blue, COLORS.green, COLORS.orange, COLORS.danger]
-    );
-
-    const salaryRange = countValues(
-      rows.map((row) => row.monthlyIncome),
-      SALARY_ORDER,
-      [COLORS.violet, COLORS.pink, COLORS.cyan, COLORS.orange]
-    );
-
-    const timeToFirstJob = countValues(
-      rows.map((row) => row.timeToFindJob),
-      TIME_TO_JOB_ORDER,
-      [COLORS.green, COLORS.lime, COLORS.yellow, COLORS.orange, COLORS.red, COLORS.red]
-    );
-
-    const topSkills = buildTopSkills(rows);
-    const certificationStatus = buildCertificationSeries(rows);
-    const boardExamPassRate = buildBoardExamSeries(rows);
-
-    return {
-      sentiment: {
-        score: Number(average(ratings).toFixed(1)) || 0,
-        quote: topPhrase || 'NO COMMON FEEDBACK YET',
-        keyword: topPhrase || '',
-      },
-      genderDistribution,
-      ageDistribution,
-      ageDistributionMax: Math.max(...ageDistribution.map((item) => item.value), 1),
-      employmentStatus,
-      salaryRange,
-      salaryRangeMax: Math.max(...salaryRange.map((item) => item.value), 1),
-      topSkills,
-      topSkillsMax: Math.max(...topSkills.map((item) => item.value), 1),
-      certificationStatus,
-      boardExamPassRate,
-      timeToFirstJob,
-      timeToFirstJobMax: Math.max(...timeToFirstJob.map((item) => item.value), 1),
-    };
-  }, [rows]);
-
+  // ============================ RENDER ============================
   return (
-    <Responseanalyticsview
-      activePage={activePage}
-      setActivePage={setActivePage}
-      pageTabs={PAGE_TABS}
-      overviewCards={overviewCards}
-      ratingBreakdown={ratingBreakdown}
-      surveyResponses={filteredResponses}
+    <ResponseAnalyticsView
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
       selectedSection={selectedSection}
       setSelectedSection={setSelectedSection}
-      sectionOptions={SECTION_OPTIONS}
-      loading={loading}
-      error={error}
-      sidebar={<SuperAdSidebar activePage="response-analytics" />}
+      showFilter={showFilter}
+      setShowFilter={setShowFilter}
+      selectedResponse={selectedResponse}
+      setSelectedResponse={setSelectedResponse}
+      stats={stats}
+      respondents={respondents}
+      isSectionVisible={isSectionVisible}
+      renderStars={renderStars}
+      sidebar={<AdminSidebar />}
     />
   );
 };
 
-export default Adminresponseanalytics;
+export default ResponseandAnalytics;

@@ -4,6 +4,7 @@ import { formatDate, roleLabel, statusBadge, isEnabled } from '../../utils/admin
 import StatCard from '../components/StatCard';
 import FilterDropdown from '../components/FilterDropdown';
 import CreateAdminModal from '../components/CreateAdminModal';
+import EditPermissionsModal from '../components/EditPermissionsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import '../styles/AdminAccountManagement.css';
 
@@ -29,12 +30,18 @@ const AdminAccountManagementView = ({
   totalPages,
   startEntry,
   endEntry,
+  // existing handlers
   handleToggleAccess,
   handleCreateAdmin,
   handleCloseCreate,
   handleAdminCreated,
   handleConfirmToggle,
   handleCloseConfirm,
+  // permission-edit handlers
+  editPermUser,
+  handleOpenEditPerm,
+  handleCloseEditPerm,
+  handlePermSaved,
 }) => {
   return (
     <>
@@ -57,45 +64,40 @@ const AdminAccountManagementView = ({
           </div>
 
           {/* Stat Cards */}
-            <div style={{
-            display: 'flex',
-            gap: '20px',
-            marginBottom: '20px',
-            flexWrap: 'wrap',
-            }}>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
             <StatCard
-                title="Admin Accounts"
-                value={String(statsTotal)}
-                subtitle="Total admins"
-                subtitleColor="#155DFC"
-                iconBg="#EFF6FF"
-                iconType="accounts"
+              title="Admin Accounts"
+              value={String(statsTotal)}
+              subtitle="Total admins"
+              subtitleColor="#155DFC"
+              iconBg="#EFF6FF"
+              iconType="accounts"
             />
             <StatCard
-                title="Active Admins"
-                value={String(statsActive)}
-                subtitle="Active admin accounts"
-                subtitleColor="#DAA520"
-                iconBg="rgba(217,202,129,0.35)"
-                iconType="active"
+              title="Active Admins"
+              value={String(statsActive)}
+              subtitle="Active admin accounts"
+              subtitleColor="#DAA520"
+              iconBg="rgba(217,202,129,0.35)"
+              iconType="active"
             />
             <StatCard
-                title="Inactive Admins"
-                value={String(statsInactive)}
-                subtitle="Nothing for now"
-                subtitleColor="#BF0000"
-                iconBg="#FFE2E2"
-                iconType="inactive"
+              title="Inactive Admins"
+              value={String(statsInactive)}
+              subtitle="Nothing for now"
+              subtitleColor="#BF0000"
+              iconBg="#FFE2E2"
+              iconType="inactive"
             />
             <StatCard
-                title="Disabled Access"
-                value={String(statsDisabled)}
-                subtitle="Admin access disabled"
-                subtitleColor="#666666"
-                iconBg="rgba(98,98,98,0.13)"
-                iconType="disabled"
+              title="Disabled Access"
+              value={String(statsDisabled)}
+              subtitle="Admin access disabled"
+              subtitleColor="#666666"
+              iconBg="rgba(98,98,98,0.13)"
+              iconType="disabled"
             />
-            </div>
+          </div>
 
           {/* Search & Filter */}
           <div className="search-filter-card">
@@ -104,22 +106,22 @@ const AdminAccountManagementView = ({
             <div className="search-filter-controls">
               <div className="search-input-wrapper">
                 <span className="search-icon">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.33"/>
                     <path d="M11 11l2.5 2.5" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round"/>
-                    </svg>
+                  </svg>
                 </span>
                 <input
-                    type="search"
-                    name="search-admins"
-                    id="search-admins"
-                    autoComplete="off"
-                    placeholder="Search by name, email, or department..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="search-input"
+                  type="search"
+                  name="search-admins"
+                  id="search-admins"
+                  autoComplete="off"
+                  placeholder="Search by name, email, or department..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="search-input"
                 />
-                </div>
+              </div>
               <div className="filter-dropdown-wrapper">
                 <FilterDropdown
                   value={roleFilter}
@@ -164,14 +166,23 @@ const AdminAccountManagementView = ({
                         <th>Created By</th>
                         <th>Date Created</th>
                         <th className="access-column">Access</th>
+                        <th className="permissions-column">Permissions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {admins.map((admin, index) => {
-                        const badge = statusBadge(admin.account_status);
+                        const badge   = statusBadge(admin.account_status);
                         const enabled = isEnabled(admin);
+
+                        const permCount = admin.module_permissions
+                          ? Object.values(admin.module_permissions).filter(Boolean).length
+                          : 0;
+
                         return (
-                          <tr key={admin.id} className={index < admins.length - 1 ? 'table-row-border' : ''}>
+                          <tr
+                            key={admin.id}
+                            className={index < admins.length - 1 ? 'table-row-border' : ''}
+                          >
                             <td className="full-name-cell">
                               {[admin.first_name, admin.last_name].filter(Boolean).join(' ') || '—'}
                             </td>
@@ -191,12 +202,40 @@ const AdminAccountManagementView = ({
                             <td>{admin.last_login ? formatDate(admin.last_login) : '—'}</td>
                             <td>System</td>
                             <td>{formatDate(admin.created_at)}</td>
+
+                            {/* Access toggle */}
                             <td className="access-cell">
                               <button
                                 onClick={() => handleConfirmToggle(admin, enabled)}
                                 className={`access-toggle-btn ${enabled ? 'enabled' : 'disabled'}`}
                               >
                                 {enabled ? 'Enabled' : 'Disabled'}
+                              </button>
+                            </td>
+
+                            {/* Edit Permissions */}
+                            <td className="permissions-cell">
+                              <button
+                                type="button"
+                                className="edit-perms-btn"
+                                onClick={(e) => {
+                                  // Prevent any ancestor click handlers (e.g. row
+                                  // selection, table click delegation) from firing
+                                  // and interfering with the modal open state.
+                                  e.stopPropagation();
+                                  handleOpenEditPerm(admin);
+                                }}
+                                title="Edit module permissions"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                  <rect x="2" y="6" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                                  <path d="M4.5 6V4.5a2.5 2.5 0 0 1 5 0V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                                </svg>
+                                <span>
+                                  {admin.role === 'superadmin'
+                                    ? 'All'
+                                    : `${permCount} module${permCount !== 1 ? 's' : ''}`}
+                                </span>
                               </button>
                             </td>
                           </tr>
@@ -251,6 +290,7 @@ const AdminAccountManagementView = ({
         </main>
       </div>
 
+      {/* Create modal */}
       {showCreate && (
         <CreateAdminModal
           onClose={handleCloseCreate}
@@ -258,6 +298,17 @@ const AdminAccountManagementView = ({
         />
       )}
 
+      {/* Edit Permissions modal — rendered outside the layout div so it is
+          never clipped by overflow:hidden on .table-card or .table-wrapper */}
+      {editPermUser && (
+        <EditPermissionsModal
+          admin={editPermUser}
+          onClose={handleCloseEditPerm}
+          onSaved={handlePermSaved}
+        />
+      )}
+
+      {/* Confirm access-toggle modal */}
       {confirmUser && (
         <ConfirmModal
           user={confirmUser.user}

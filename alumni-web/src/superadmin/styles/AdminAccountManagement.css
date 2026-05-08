@@ -442,3 +442,52 @@
     padding: 12px 16px;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PERMISSIONS COLUMN ADDITIONS
+   Append these rules to the bottom of your existing
+   src/superadmin/styles/AdminAccountManagement.css
+   All new selectors are scoped to .permissions-* and .edit-perms-* so
+   they cannot collide with any existing rule.
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* Table column header */
+.permissions-column {
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+/* Table cell */
+.permissions-cell {
+  white-space: nowrap;
+}
+
+/* Edit permissions trigger button */
+.edit-perms-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  background: #F8FAFC;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.edit-perms-btn:hover {
+  border-color: #155DFC;
+  background: #EFF6FF;
+  color: #155DFC;
+}
+
+.edit-perms-btn svg {
+  flex-shrink: 0;
+  transition: color 0.15s;
+}

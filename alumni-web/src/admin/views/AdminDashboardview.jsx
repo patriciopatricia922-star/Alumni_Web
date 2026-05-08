@@ -1,102 +1,72 @@
 // ============================================================================
-// THIS IS THE UI.
-// ============================================================================
-// Purpose: Renders all visual components for the admin dashboard using
-//          friend's exact design with proper font styling and grid layouts.
+// AdminDashboardView — UI Layer
 // ============================================================================
 
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, BarChart, Bar, ResponsiveContainer } from "recharts";
-import { IoMdSchool } from "react-icons/io";
+import {
+  LineChart, Line,
+  BarChart, Bar,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { IoMdSchool }   from "react-icons/io";
 import { BiSolidSchool } from "react-icons/bi";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AdminDashboard.css";
 
-// ============================================================================
-// COLOR PALETTE - Used for pie chart segments
-// ============================================================================
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 // ============================================================================
-// RADIAL GAUGE CHART - Displays progress toward target as a circular gauge
+// RADIAL GAUGE
 // ============================================================================
-function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = false, size = 80 }) {
+function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = false, size = 80, valueLabel }) {
+  const r  = (size / 2) - 7;
+  const cx = size / 2;
+  const cy = size / 2;
+
   if (isCount || target === 0) {
-    const r = (size / 2) - 7;
-    const cx = size / 2;
-    const cy = size / 2;
+    const circumference   = 2 * Math.PI * r;
+    const clampedProgress = Math.min(Math.max(progress, 0), 100);
+    const progressOffset  = circumference * (1 - clampedProgress / 100);
+    const progressColor   = "#00BC7D";
+
     return (
-      <svg width={size} height={size} style={{ flexShrink: 0 }}>
+      <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-        <text x={cx} y={cy + 5} textAnchor="middle" fontSize={11}
-          fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill="#94A3B8">N/A</text>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
+          strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
+        <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+          fontSize={clampedProgress >= 100 ? 10 : 12}
+          fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
+          {valueLabel || `${clampedProgress}%`}
+        </text>
+        <text x={cx} y={cy + 10} textAnchor="middle" dominantBaseline="middle"
+          fontSize={8} fontFamily="Lexend, Arimo, Arial" fontWeight={600} fill="#94A3B8"
+          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
+          No Goal
+        </text>
       </svg>
     );
   }
 
-  const r = (size / 2) - 7;
-  const cx = size / 2;
-  const cy = size / 2;
-  const circumference = 2 * Math.PI * r;
-
+  const circumference   = 2 * Math.PI * r;
   const clampedProgress = Math.min(progress, 100);
-  const clampedTarget   = Math.min(target, 100);
-
-  const progressOffset = circumference * (1 - clampedProgress / 100);
-  const targetOffset   = circumference * (1 - clampedTarget   / 100);
-
-  const isGood = targetDir === "below"
-    ? progress <= target
-    : progress >= target;
-
-  const progressColor = isGood ? "#00BC7D" : "#F59E0B";
-  const targetColor   = "#324D87";
+  const progressOffset  = circumference * (1 - clampedProgress / 100);
+  const isGood          = targetDir === "below" ? progress <= target : progress >= target;
+  const progressColor   = isGood ? "#00BC7D" : "#F59E0B";
 
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
-      {/* Track */}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-      {/* Target arc */}
-      {target > 0 && (
-        <circle
-          cx={cx} cy={cy} r={r} fill="none"
-          stroke={targetColor} strokeWidth={4}
-          strokeOpacity={0.18}
-          strokeDasharray={circumference}
-          strokeDashoffset={targetOffset}
-          strokeLinecap="round"
-        />
-      )}
-      {/* Progress arc */}
-      <circle
-        cx={cx} cy={cy} r={r} fill="none"
-        stroke={progressColor} strokeWidth={7}
-        strokeDasharray={circumference}
-        strokeDashoffset={progressOffset}
-        strokeLinecap="round"
-      />
-      {/* Target tick mark */}
-      {target > 0 && (() => {
-        const drawAngle = (clampedTarget / 100) * 2 * Math.PI;
-        const inner = r - 5;
-        const outer = r + 3;
-        const x1 = cx + inner * Math.cos(drawAngle);
-        const y1 = cy + inner * Math.sin(drawAngle);
-        const x2 = cx + outer * Math.cos(drawAngle);
-        const y2 = cy + outer * Math.sin(drawAngle);
-        return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={targetColor} strokeWidth={2.5} strokeLinecap="round" />;
-      })()}
-      {/* Center label */}
-      <text
-        x={cx} y={cy + 1}
-        textAnchor="middle"
-        dominantBaseline="middle"
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
+        strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
         fontSize={clampedProgress >= 100 ? 10 : 12}
-        fontFamily="Lexend, Arimo, Arial"
-        fontWeight={700}
-        fill={progressColor}
-        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}
-      >
+        fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
+        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
         {clampedProgress}%
       </text>
     </svg>
@@ -104,7 +74,7 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
 }
 
 // ============================================================================
-// KPI PROGRESS CARD - With radial gauge (for Institutional KPIs)
+// KPI PROGRESS CARD
 // ============================================================================
 function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount }) {
   const trendColor = trend.dir === "up"
@@ -112,18 +82,20 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
     : trend.dir === "down"
     ? (targetDir === "below" ? "#00A63E" : "#ef4444")
     : "#90A1B9";
-
   const trendArrow = trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "";
 
   const resolvedTargetLabel =
     !targetLabel || targetLabel === 'N/A' || /^Goal:\s*[—-]/.test(targetLabel)
-      ? 'N/A'
+      ? 'Not Provided'
       : targetLabel;
+
+  const isNotMet = target > 0 && (
+    targetDir === "below" ? progress > target : progress < target
+  );
 
   return (
     <div className="kpi-progress-card">
       <div className="kpi-progress-category">{category}</div>
-
       <div className="kpi-progress-content">
         <div className="kpi-progress-info">
           <div className="kpi-progress-label">{label}</div>
@@ -135,8 +107,15 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
               </div>
             )}
           </div>
+          {isNotMet && (
+            <div
+              className="kpi-alert-text"
+              onClick={() => window.dispatchEvent(new CustomEvent('openKpiModal', { detail: { label } }))}
+            >
+              ⚠ Goal not met — click for suggestions
+            </div>
+          )}
         </div>
-
         <div className="kpi-progress-gauge">
           <RadialGauge
             progress={progress}
@@ -144,6 +123,7 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
             targetDir={targetDir}
             isCount={isCount}
             size={76}
+            valueLabel={value}
           />
         </div>
       </div>
@@ -152,7 +132,7 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
 }
 
 // ============================================================================
-// KPI STAT CARD ICONS
+// STAT CARD ICONS
 // ============================================================================
 const statCardIcons = {
   'Registered Alumni': {
@@ -177,12 +157,14 @@ const statCardIcons = {
       </svg>
     ),
   },
-  'Active Programs': {
-    bg: '#F5F3FF',
+  'Employment Rate': {
+    bg: '#FFF7ED',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        <line x1="12" y1="12" x2="12" y2="16"/>
+        <line x1="10" y1="14" x2="14" y2="14"/>
       </svg>
     ),
   },
@@ -197,7 +179,7 @@ const statCardIcons = {
 };
 
 // ============================================================================
-// KPI STAT CARD - For Alumni Tracer (4 cards in a row)
+// KPI STAT CARD
 // ============================================================================
 function KpiStatCard({ label, value, sub }) {
   const iconData = statCardIcons[label];
@@ -228,7 +210,7 @@ function EmptyChart({ height = 280 }) {
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="1.5">
         <line x1="18" y1="20" x2="18" y2="10"/>
         <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
       </svg>
       <span>No data available yet</span>
     </div>
@@ -236,7 +218,7 @@ function EmptyChart({ height = 280 }) {
 }
 
 // ============================================================================
-// CHART CARD COMPONENT
+// CHART CARD
 // ============================================================================
 function ChartCard({ title, subtitle, children }) {
   return (
@@ -245,58 +227,29 @@ function ChartCard({ title, subtitle, children }) {
         <div className="chart-card-title">{title}</div>
         {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
       </div>
-      <div className="chart-container">
-        {children}
-      </div>
+      <div className="chart-container">{children}</div>
     </div>
   );
 }
 
 // ============================================================================
 // NAVIGABLE CHART CARD
-// Wraps ChartCard with full-card keyboard + pointer navigation.
-//
-// Design decisions:
-//   • role="button" + tabIndex={0} — makes the card a focusable, announced
-//     interactive element without the semantics of an <a> tag (no href needed).
-//   • onKeyDown Enter/Space — standard keyboard activation pattern for role=button.
-//   • onClick on the outer wrapper uses a mousedown timestamp guard to
-//     distinguish real user clicks from Recharts' synthetic bubbled events.
-//     Recharts fires its own onClick on SVG elements; those propagate up but
-//     happen within the same JS task so they share the same timestamp. We
-//     capture the timestamp on the wrapper's onMouseDown and only navigate
-//     if the click timestamp matches, ensuring a single navigation per gesture.
-//   • The Recharts container sits inside a div with pointer-events: auto so
-//     tooltips and segment hover still work normally — we never suppress those.
-//   • cursor: pointer on the wrapper gives a clear affordance; the chart area
-//     inherits it but Recharts overrides with its own cursor on active segments,
-//     which is correct and expected behavior.
+// Clicking navigates to the analytics page with a focus hint in route state.
+// Long mouse-hold (drag) intentionally suppressed to avoid mis-navigation.
 // ============================================================================
 function NavigableChartCard({ title, subtitle, to, children }) {
   const navigate = useNavigate();
-
-  // Track the timestamp of the most recent mousedown on the card wrapper.
-  // Used to verify the click originated here and not from a bubbled Recharts event.
   const mouseDownTimeRef = { current: null };
 
-  const handleMouseDown = () => {
-    mouseDownTimeRef.current = Date.now();
-  };
-
-  const handleClick = (e) => {
-    // If the click timestamp doesn't match the recorded mousedown, it's a
-    // bubbled synthetic event from Recharts — ignore it.
+  const handleMouseDown = () => { mouseDownTimeRef.current = Date.now(); };
+  const handleClick     = () => {
     if (mouseDownTimeRef.current === null) return;
-    if (Date.now() - mouseDownTimeRef.current > 300) return; // stale — ignore
+    if (Date.now() - mouseDownTimeRef.current > 300) return;
     mouseDownTimeRef.current = null;
     navigate(to);
   };
-
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault(); // prevent page scroll on Space
-      navigate(to);
-    }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(to); }
   };
 
   return (
@@ -312,19 +265,9 @@ function NavigableChartCard({ title, subtitle, to, children }) {
       <div className="chart-card-header">
         <div className="chart-card-title">
           {title}
-          {/* Small external-link indicator so the affordance is visible */}
-          <svg
-            className="chart-card-nav-icon"
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
+          <svg className="chart-card-nav-icon" width="13" height="13" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
             <polyline points="15 3 21 3 21 9" />
             <line x1="10" y1="14" x2="21" y2="3" />
@@ -332,9 +275,7 @@ function NavigableChartCard({ title, subtitle, to, children }) {
         </div>
         {subtitle && <div className="chart-card-subtitle">{subtitle}</div>}
       </div>
-      <div className="chart-container">
-        {children}
-      </div>
+      <div className="chart-container">{children}</div>
     </div>
   );
 }
@@ -342,17 +283,10 @@ function NavigableChartCard({ title, subtitle, to, children }) {
 // ============================================================================
 // CUSTOM BAR CHART
 // ============================================================================
-function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 }) {
-  if (!data || data.length === 0) {
-    return (
-      <ChartCard title={title} subtitle={subtitle}>
-        <EmptyChart height={height} />
-      </ChartCard>
-    );
-  }
-
-  return (
-    <ChartCard title={title} subtitle={subtitle}>
+function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280, navigateTo }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
@@ -363,56 +297,40 @@ function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280 
           <Bar dataKey={dataKey} fill="#3B82F6" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </ChartCard>
-  );
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
 // ============================================================================
 // CUSTOM PIE CHART
-// Accepts an optional `navigateTo` prop. When provided, the card becomes a
-// navigable element via NavigableChartCard; otherwise it falls back to the
-// plain ChartCard — no other behaviour changes.
 // ============================================================================
 function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
   const filteredData = data?.filter(d => d.value > 0) || [];
 
-  const CardWrapper = navigateTo
-    ? (props) => <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo} {...props} />
-    : (props) => <ChartCard title={title} subtitle={subtitle} {...props} />;
-
-  if (!filteredData || filteredData.length === 0) {
-    return (
-      <CardWrapper>
-        <EmptyChart height={height} />
-      </CardWrapper>
-    );
-  }
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
+  const renderLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
     const RADIAN = Math.PI / 180;
     const radius = outerRadius * 1.15;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     return (
-      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
+      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'}
+        dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
         {`${name}: ${(percent * 100).toFixed(0)}%`}
       </text>
     );
   };
 
-  return (
-    <CardWrapper>
+  const content = filteredData.length === 0
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
-          <Pie
-            data={filteredData}
-            cx="50%" cy="50%"
-            labelLine={true}
-            label={renderCustomizedLabel}
-            outerRadius={80}
-            dataKey="value"
-          >
-            {filteredData.map((entry, index) => (
+          <Pie data={filteredData} cx="50%" cy="50%" labelLine label={renderLabel}
+            outerRadius={80} dataKey="value">
+            {filteredData.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -420,35 +338,88 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
           <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
         </PieChart>
       </ResponsiveContainer>
-    </CardWrapper>
-  );
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
 // ============================================================================
-// CUSTOM LINE CHART
+// CAREER ALIGNMENT PREDICTION CHART (Grouped Bar) — Navigable
+// Props: data — array of { program, predicted, actual }
 // ============================================================================
-function CustomLineChart({ data, dataKey, xKey, title, subtitle, height = 280 }) {
-  if (!data || data.length === 0) {
-    return (
-      <ChartCard title={title} subtitle={subtitle}>
-        <EmptyChart height={height} />
-      </ChartCard>
-    );
-  }
-
-  return (
-    <ChartCard title={title} subtitle={subtitle}>
+function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-          <YAxis tick={{ fontSize: 11 }} domain={[0, 100]} />
-          <Tooltip />
-          <Legend wrapperStyle={{ fontSize: '12px' }} />
-          <Line type="monotone" dataKey={dataKey} stroke="#3B82F6" strokeWidth={2} dot={{ r: 4 }} />
-        </LineChart>
+          <XAxis dataKey="program" tick={{ fontSize: 11, fontFamily: 'Lexend, Arimo, Arial' }} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`}
+            label={{ value: 'Alignment Rate (%)', angle: -90, position: 'insideLeft', offset: -5,
+              style: { fontSize: 11, fill: '#6A7282', fontFamily: 'Lexend, Arimo, Arial' } }} />
+          <Tooltip formatter={(value, name) => [`${value}%`, name === 'predicted' ? 'Predicted' : 'Actual']} />
+          <Legend wrapperStyle={{ fontSize: '12px' }}
+            formatter={(value) => value === 'predicted' ? 'Predicted Rate' : 'Actual Rate'} />
+          <Bar dataKey="predicted" name="predicted" fill="#324D87" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="actual"    name="actual"    fill="#00BC7D" radius={[6, 6, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
-    </ChartCard>
+    );
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
+}
+
+// ============================================================================
+// KPI SUGGESTIONS — used by the alert modal
+// ============================================================================
+const getKpiSuggestions = (label) => {
+  const map = {
+    "Absorption from Internship":               ["Strengthen industry partnerships", "Improve internship-to-hire programs"],
+    "Employed Within 2 Yrs of Graduation":      ["Enhance career placement services", "Conduct job readiness workshops"],
+    "Employed in Field / Related Field":        ["Align curriculum with industry needs", "Increase internship relevance"],
+    "Employed Outside Field of Specialization": ["Review program alignment", "Provide career guidance earlier"],
+    "Engaged in Entrepreneurship":             ["Offer startup incubation programs", "Promote entrepreneurship training"],
+    "Occupying Supervisory Positions":          ["Provide leadership training", "Encourage career progression planning"],
+    "Pursued Graduate Studies (within 1 yr)":   ["Promote postgraduate opportunities", "Offer scholarships"],
+    "Pursued Graduate Studies at NU":           ["Strengthen internal graduate programs", "Offer alumni incentives"],
+    "In Positions in Professional Organizations": ["Encourage professional membership", "Host networking events"],
+  };
+  return map[label] || ["No suggestions available"];
+};
+
+// ============================================================================
+// KPI ALERT MODAL
+// ============================================================================
+function KpiAlertModal({ label, onClose }) {
+  return (
+    <div className="kpi-modal-overlay">
+      <div className="kpi-modal">
+        <div className="kpi-modal-header">
+          <h2>{label}</h2>
+          <button className="kpi-modal-close-icon" onClick={onClose}>✕</button>
+        </div>
+        <div className="kpi-modal-status">⚠ Below Target Performance</div>
+        <p className="kpi-modal-desc">
+          This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:
+        </p>
+        <div className="kpi-modal-suggestions">
+          {getKpiSuggestions(label).map((s, i) => (
+            <div key={i} className="kpi-suggestion-item">
+              <div className="suggestion-icon">💡</div>
+              <div className="suggestion-text">{s}</div>
+            </div>
+          ))}
+        </div>
+        <div className="kpi-modal-footer">
+          <button className="kpi-modal-close" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -463,51 +434,52 @@ const AdminDashboardView = ({
   employmentAlignmentData,
   employmentStatusData,
   inDemandSkillsData,
-  employmentForecastData,
+  careerAlignmentData,
   loadingCharts,
 }) => {
+  const [activeKpiModal, setActiveKpiModal] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => setActiveKpiModal(e.detail.label);
+    window.addEventListener('openKpiModal', handler);
+    return () => window.removeEventListener('openKpiModal', handler);
+  }, []);
+
   return (
     <div className="dashboard-layout">
       <AdminSidebar />
 
       <main className="dashboard-main">
 
-        {/* ============================ HEADER ============================ */}
+        {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="dashboard-header">
           <h1>Dashboard Overview</h1>
           <p>Welcome Bark! Here's what's happening with your alumni.</p>
         </div>
 
-        {/* ============================ INSTITUTIONAL KPIs SECTION ============================ */}
+        {/* ── Institutional KPIs ─────────────────────────────────────────── */}
         <div className="dashboard-section">
           <div className="section-header">
             <BiSolidSchool className="section-icon" />
             <div className="section-title">Institutional KPI</div>
           </div>
 
-          {/* TABS */}
           <div className="kpi-tabs">
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "employment" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("employment")}
-            >
-              EMPLOYMENT
-            </button>
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "career" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("career")}
-            >
-              CAREER PROGRESS
-            </button>
-            <button
-              className={`kpi-tab-btn${activeKpiTab === "education" ? " active" : ""}`}
-              onClick={() => setActiveKpiTab("education")}
-            >
-              EDUCATION
-            </button>
+            {[
+              { id: "employment", label: "EMPLOYMENT" },
+              { id: "career",     label: "CAREER PROGRESS" },
+              { id: "education",  label: "EDUCATION" },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                className={`kpi-tab-btn${activeKpiTab === id ? " active" : ""}`}
+                onClick={() => setActiveKpiTab(id)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          {/* KPI GRID - 3 columns */}
           <div className="kpi-grid">
             {kpiData[activeKpiTab].map(kpi => (
               <KpiProgressCard key={kpi.id} {...kpi} />
@@ -515,13 +487,12 @@ const AdminDashboardView = ({
           </div>
         </div>
 
-        {/* ============================ ALUMNI TRACER SECTION ============================ */}
+        {/* ── Alumni Tracer ───────────────────────────────────────────────── */}
         <div className="dashboard-section">
           <div className="section-header">
             <IoMdSchool className="section-icon" />
             <div className="section-title">Alumni Tracer</div>
           </div>
-          {/* Alumni Tracer Grid - 4 columns */}
           <div className="alumni-tracer-grid">
             {kpis2.map((k) => (
               <KpiStatCard key={k.label} {...k} />
@@ -529,21 +500,17 @@ const AdminDashboardView = ({
           </div>
         </div>
 
-        {/* ============================ CHARTS SECTION ============================ */}
+        {/* ── Degree Alignment + Employment Status ───────────────────────── */}
         <div className="charts-row">
           <CustomBarChart
             data={employmentAlignmentData}
             dataKey="alignment"
             nameKey="name"
-            title="Employment Alignment Rate"
-            subtitle="Percentage of employed alumni per program"
+            title="Degree Alignment Rate"
+            subtitle="Percentage of alumni aligned with their degree per program"
             height={280}
+            navigateTo="/admin/response-and-analytics"
           />
-          {/*
-            Employment Status Distribution — navigates to the full analytics
-            page on click. The `navigateTo` prop opts this chart into the
-            NavigableChartCard wrapper; all other charts remain plain cards.
-          */}
           <CustomPieChart
             data={employmentStatusData}
             title="Employment Status Distribution"
@@ -553,6 +520,18 @@ const AdminDashboardView = ({
           />
         </div>
 
+        {/* ── Career Alignment Prediction (grouped bar, navigable) ────────── */}
+        <div className="full-width-chart">
+          <CareerAlignmentChart
+            data={careerAlignmentData}
+            title="Career Alignment Prediction"
+            subtitle="Predicted vs. actual career alignment rate by program"
+            height={300}
+            navigateTo="/admin/response-and-analytics"
+          />
+        </div>
+
+        {/* ── In-Demand Skills ─────────────────────────────────────────────── */}
         <div className="full-width-chart">
           <CustomBarChart
             data={inDemandSkillsData}
@@ -564,16 +543,10 @@ const AdminDashboardView = ({
           />
         </div>
 
-        <div className="full-width-chart">
-          <CustomLineChart
-            data={employmentForecastData}
-            dataKey="rate"
-            xKey="year"
-            title="Employment Probability Forecast"
-            subtitle="Predicted employment outcomes over time"
-            height={280}
-          />
-        </div>
+        {/* ── KPI Alert Modal ──────────────────────────────────────────────── */}
+        {activeKpiModal && (
+          <KpiAlertModal label={activeKpiModal} onClose={() => setActiveKpiModal(null)} />
+        )}
 
       </main>
     </div>
