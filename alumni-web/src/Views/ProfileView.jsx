@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import { PASSWORD_RULES } from '../pages/Profile';
 import personHeaderIcon from '../assets/inverted_person_icn.svg';
@@ -461,6 +461,41 @@ const CountrySelector = memo(({ value, onChange, placeholder }) => {
   );
 });
 
+const Toast = memo(({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (onClose) onClose();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  if (!message) return null;
+
+  return (
+    <div className={`prof-toast prof-toast--${type || 'success'}`}>
+      <div className="prof-toast-content">
+        {type === 'success' && (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M20 6L9 17L4 12" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+        {type === 'error' && (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#EF4444" strokeWidth="1.5"/>
+            <path d="M12 8v4M12 16h.01" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        )}
+        {type === 'warning' && (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 8v4M12 16h.01M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="#F59E0B" strokeWidth="1.5"/>
+          </svg>
+        )}
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+});
+
 const NotificationBell = memo(({
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -563,14 +598,20 @@ const NotificationBell = memo(({
 const PersonalInformationModal = memo(({
   isMobile, piForm, setPiField, piFieldErrors,
   piLoading, piSaving, piSaveSuccess, piSaveError,
-  onPISave, onClose,
+  onPISave, onClose, onSetToast,
 }) => {
   const row = isMobile ? 'prof-pi-row prof-pi-row--col' : 'prof-pi-row';
 
   const handleContactNumberChange = (e) => {
     let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 15) value = value.slice(0, 15);
+    if (value.length > 12) value = value.slice(0, 12);
     setPiField('contactNumber')(value);
+  };
+
+  const handleStudentNumberChange = (e) => {
+    let value = e.target.value;
+    if (value.length > 12) value = value.slice(0, 12);
+    setPiField('studentNumber')(value);
   };
 
   const handleCountryCodeChange = (code) => {
@@ -580,6 +621,47 @@ const PersonalInformationModal = memo(({
   const handleCountryChange = (country) => {
     setPiField('country')(country);
   };
+
+  const getContactNumberError = () => {
+    const digits = piForm.contactNumber?.replace(/\D/g, '') || '';
+    if (digits.length > 0 && (digits.length < 10 || digits.length > 12)) {
+      return 'Contact number must be 10-12 digits';
+    }
+    return piFieldErrors.contactNumber;
+  };
+
+  const getStudentNumberError = () => {
+    const val = piForm.studentNumber || '';
+    if (val.length > 12) {
+      return 'Student number must not exceed 12 characters';
+    }
+    if (val.length > 0 && val.length < 5) {
+      return 'Student number should be at least 5 characters';
+    }
+    return piFieldErrors.studentNumber;
+  };
+
+  const contactNumberError = getContactNumberError();
+  const studentNumberError = getStudentNumberError();
+
+  const handleSaveWithToast = async () => {
+    await onPISave();
+  };
+
+  useEffect(() => {
+    if (piSaveSuccess && onSetToast) {
+      onSetToast({ show: true, message: 'Profile updated successfully!', type: 'success' });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    }
+  }, [piSaveSuccess, onSetToast, onClose]);
+
+  useEffect(() => {
+    if (piSaveError && onSetToast) {
+      onSetToast({ show: true, message: piSaveError, type: 'error' });
+    }
+  }, [piSaveError, onSetToast]);
 
   return (
     <div className="prof-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -609,10 +691,11 @@ const PersonalInformationModal = memo(({
             </div>
           ) : (
             <div className="prof-pi-form">
-              <h3 className="prof-pi-section-title">Personal Details</h3>
-
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Last Name</label>
+                <label className="prof-pi-label">
+                  Last Name <span className="eb-req">*</span>
+                  {piFieldErrors.lastName && <span className="prof-pi-error-text">Required</span>}
+                </label>
                 <input
                   className={`prof-pi-input${piFieldErrors.lastName ? ' prof-pi-input--error' : ''}`}
                   value={piForm.lastName}
@@ -620,12 +703,14 @@ const PersonalInformationModal = memo(({
                   placeholder="e.g. Dela Cruz"
                   autoComplete="family-name"
                 />
-                {piFieldErrors.lastName && <span className="prof-pi-error-text">{piFieldErrors.lastName}</span>}
               </div>
 
               <div className={row}>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">First Name</label>
+                  <label className="prof-pi-label">
+                    First Name <span className="eb-req">*</span>
+                    {piFieldErrors.firstName && <span className="prof-pi-error-text">Required</span>}
+                  </label>
                   <input
                     className={`prof-pi-input${piFieldErrors.firstName ? ' prof-pi-input--error' : ''}`}
                     value={piForm.firstName}
@@ -633,10 +718,9 @@ const PersonalInformationModal = memo(({
                     placeholder="e.g. Juan"
                     autoComplete="given-name"
                   />
-                  {piFieldErrors.firstName && <span className="prof-pi-error-text">{piFieldErrors.firstName}</span>}
                 </div>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">Middle Name</label>
+                  <label className="prof-pi-label">Middle Name <span style={{ fontWeight: 400, color: '#9CA3AF' }}>(Optional)</span></label>
                   <input
                     className="prof-pi-input"
                     value={piForm.middleName}
@@ -648,7 +732,10 @@ const PersonalInformationModal = memo(({
               </div>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Gender</label>
+                <label className="prof-pi-label">
+                  Gender <span className="eb-req">*</span>
+                  {piFieldErrors.gender && <span className="prof-pi-error-text">Required</span>}
+                </label>
                 <div className="prof-radio-group">
                   {['Male', 'Female', 'Prefer not to say'].map(option => (
                     <label key={option} className="prof-radio-option">
@@ -666,7 +753,10 @@ const PersonalInformationModal = memo(({
               </div>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Birthday</label>
+                <label className="prof-pi-label">
+                  Birthday <span className="eb-req">*</span>
+                  {piFieldErrors.birthday && <span className="prof-pi-error-text">Required</span>}
+                </label>
                 <input
                   className="prof-pi-input"
                   type="date"
@@ -677,7 +767,10 @@ const PersonalInformationModal = memo(({
               </div>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Civil Status</label>
+                <label className="prof-pi-label">
+                  Civil Status <span className="eb-req">*</span>
+                  {piFieldErrors.civilStatus && <span className="prof-pi-error-text">Required</span>}
+                </label>
                 <div className="prof-radio-group">
                   {['Single', 'Married', 'Other'].map(option => (
                     <label key={option} className="prof-radio-option">
@@ -695,7 +788,10 @@ const PersonalInformationModal = memo(({
               </div>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Street Address</label>
+                <label className="prof-pi-label">
+                  Street Address <span className="eb-req">*</span>
+                  {piFieldErrors.street && <span className="prof-pi-error-text">Required</span>}
+                </label>
                 <input
                   className="prof-pi-input"
                   value={piForm.street}
@@ -707,7 +803,10 @@ const PersonalInformationModal = memo(({
 
               <div className={row}>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">City</label>
+                  <label className="prof-pi-label">
+                    City <span className="eb-req">*</span>
+                    {piFieldErrors.city && <span className="prof-pi-error-text">Required</span>}
+                  </label>
                   <input
                     className="prof-pi-input"
                     value={piForm.city}
@@ -717,7 +816,10 @@ const PersonalInformationModal = memo(({
                   />
                 </div>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">Province</label>
+                  <label className="prof-pi-label">
+                    Province <span className="eb-req">*</span>
+                    {piFieldErrors.province && <span className="prof-pi-error-text">Required</span>}
+                  </label>
                   <input
                     className="prof-pi-input"
                     value={piForm.province}
@@ -730,7 +832,10 @@ const PersonalInformationModal = memo(({
 
               <div className={row}>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">Zip Code</label>
+                  <label className="prof-pi-label">
+                    Zip Code <span className="eb-req">*</span>
+                    {piFieldErrors.zipCode && <span className="prof-pi-error-text">{piFieldErrors.zipCode}</span>}
+                  </label>
                   <input
                     className={`prof-pi-input${piFieldErrors.zipCode ? ' prof-pi-input--error' : ''}`}
                     value={piForm.zipCode}
@@ -740,10 +845,12 @@ const PersonalInformationModal = memo(({
                     type="tel"
                     autoComplete="postal-code"
                   />
-                  {piFieldErrors.zipCode && <span className="prof-pi-error-text">{piFieldErrors.zipCode}</span>}
                 </div>
                 <div className="prof-pi-field">
-                  <label className="prof-pi-label">Country</label>
+                  <label className="prof-pi-label">
+                    Country <span className="eb-req">*</span>
+                    {piFieldErrors.country && <span className="prof-pi-error-text">Required</span>}
+                  </label>
                   <CountrySelector
                     value={piForm.country}
                     onChange={handleCountryChange}
@@ -763,12 +870,15 @@ const PersonalInformationModal = memo(({
                   type="email"
                   disabled
                   autoComplete="email"
+                  style={{ opacity: 0.7, cursor: 'not-allowed' }}
                 />
                 <p className="prof-pi-hint">Email is managed by your authentication provider.</p>
               </div>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Contact Number</label>
+                <label className="prof-pi-label">
+                  Contact Number <span className="eb-req">*</span>
+                </label>
                 <div className="prof-contact-row">
                   <div className="prof-country-code-select">
                     <CountryCodeSelector
@@ -778,7 +888,7 @@ const PersonalInformationModal = memo(({
                   </div>
                   <div className="prof-phone-number-input">
                     <input
-                      className={`prof-pi-input${piFieldErrors.contactNumber ? ' prof-pi-input--error' : ''}`}
+                      className={`prof-pi-input${contactNumberError ? ' prof-pi-input--error' : ''}`}
                       value={piForm.contactNumber}
                       onChange={handleContactNumberChange}
                       placeholder="e.g. 9123456789"
@@ -788,21 +898,26 @@ const PersonalInformationModal = memo(({
                     />
                   </div>
                 </div>
-                {piFieldErrors.contactNumber && <span className="prof-pi-error-text">{piFieldErrors.contactNumber}</span>}
-                <p className="prof-pi-hint">Enter a valid mobile number without the country code.</p>
+                {contactNumberError && <span className="prof-pi-error-text">{contactNumberError}</span>}
+                <p className="prof-pi-hint">Enter a valid 10-12 digit mobile number without the country code.</p>
               </div>
 
               <h3 className="prof-pi-section-title">Academic Information</h3>
 
               <div className="prof-pi-field">
-                <label className="prof-pi-label">Student Number</label>
+                <label className="prof-pi-label">
+                  Student Number <span className="eb-req">*</span>
+                </label>
                 <input
-                  className="prof-pi-input"
+                  className={`prof-pi-input${studentNumberError ? ' prof-pi-input--error' : ''}`}
                   value={piForm.studentNumber}
-                  onChange={setPiField('studentNumber')}
+                  onChange={handleStudentNumberChange}
                   placeholder="e.g. 2021-118341"
                   autoComplete="off"
+                  maxLength={12}
                 />
+                {studentNumberError && <span className="prof-pi-error-text">{studentNumberError}</span>}
+                <p className="prof-pi-hint">Maximum of 12 characters allowed.</p>
               </div>
 
               <div className="prof-pi-field">
@@ -810,51 +925,37 @@ const PersonalInformationModal = memo(({
                 <input
                   className="prof-pi-input"
                   value={piForm.academicProgram}
-                  onChange={setPiField('academicProgram')}
+                  onChange={() => {}}
                   placeholder="e.g. BSIT-MWA"
                   autoComplete="off"
+                  disabled
+                  style={{ opacity: 0.7, cursor: 'not-allowed', backgroundColor: '#F3F4F6' }}
                 />
+                <p className="prof-pi-hint">This information is synced from your alumni record and cannot be edited.</p>
               </div>
 
               <div className="prof-pi-field">
                 <label className="prof-pi-label">Year Graduated</label>
                 <input
-                  className={`prof-pi-input${piFieldErrors.yearGraduated ? ' prof-pi-input--error' : ''}`}
+                  className="prof-pi-input"
                   value={piForm.yearGraduated}
-                  onChange={setPiField('yearGraduated')}
+                  onChange={() => {}}
                   placeholder="e.g. 2025"
                   type="tel"
                   maxLength={4}
                   autoComplete="off"
+                  disabled
+                  style={{ opacity: 0.7, cursor: 'not-allowed', backgroundColor: '#F3F4F6' }}
                 />
-                {piFieldErrors.yearGraduated && <span className="prof-pi-error-text">{piFieldErrors.yearGraduated}</span>}
+                <p className="prof-pi-hint">This information is synced from your alumni record and cannot be edited.</p>
               </div>
-
-              {piSaveError && (
-                <div className="prof-pi-banner prof-pi-banner--error">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="#EF4444" strokeWidth="1.5"/>
-                    <path d="M12 8v4M12 16h.01" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  <p>{piSaveError}</p>
-                </div>
-              )}
-              {piSaveSuccess && (
-                <div className="prof-pi-banner prof-pi-banner--success">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M20 6L9 17L4 12" stroke="#16A34A" strokeWidth="2"
-                      strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <p>Changes saved successfully!</p>
-                </div>
-              )}
             </div>
           )}
         </div>
 
         <div className="prof-pi-modal-footer">
           <button className="prof-pi-cancel-btn" onClick={onClose}>Cancel</button>
-          <button className="prof-pi-save-btn" onClick={onPISave} disabled={piSaving || piLoading}>
+          <button className="prof-pi-save-btn" onClick={handleSaveWithToast} disabled={piSaving || piLoading}>
             {piSaving ? (
               <><span className="prof-spinner"/>Saving…</>
             ) : (
@@ -900,87 +1001,85 @@ const NewPasswordField = memo(({ value, onChange }) => {
 
 const ChangePasswordModal = memo(({
   cpCurrent, setCpCurrent, cpNew, setCpNew, cpConfirm, setCpConfirm,
-  cpLoading, cpError, cpSuccess, onCPSave, onClose,
-}) => (
-  <div className="prof-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-    <div className="prof-cp-modal" role="dialog" aria-label="Change Password" aria-modal="true">
+  cpLoading, cpError, cpSuccess, onCPSave, onClose, onSetToast,
+}) => {
+  useEffect(() => {
+    if (cpSuccess && onSetToast) {
+      onSetToast({ show: true, message: 'Password updated successfully!', type: 'success' });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    }
+  }, [cpSuccess, onSetToast, onClose]);
 
-      <div className="prof-cp-modal-header">
-        <div className="prof-cp-modal-header-text">
-          <h2>Change Password</h2>
-          <p>Enter your current and new password for your account.</p>
-        </div>
-        <button className="prof-modal-close-btn" onClick={onClose} aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </button>
-      </div>
+  useEffect(() => {
+    if (cpError && onSetToast) {
+      onSetToast({ show: true, message: cpError, type: 'error' });
+    }
+  }, [cpError, onSetToast]);
 
-      <div className="prof-cp-modal-body">
-        <PasswordInput
-          label="Current password *"
-          value={cpCurrent}
-          onChange={e => setCpCurrent(e.target.value)}
-          placeholder="···········"
-        />
+  return (
+    <div className="prof-modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="prof-cp-modal" role="dialog" aria-label="Change Password" aria-modal="true">
 
-        <div className="prof-cp-field">
-          <label className="prof-cp-label">New password *</label>
-          <NewPasswordField value={cpNew} onChange={e => setCpNew(e.target.value)}/>
-          <PasswordRules value={cpNew}/>
-        </div>
-
-        <PasswordInput
-          label="Confirm new password *"
-          value={cpConfirm}
-          onChange={e => setCpConfirm(e.target.value)}
-          placeholder="···········"
-        />
-
-        <p className="prof-cp-hint">
-          At least 8 characters, one uppercase, one number, and one special character (e.g. !@#$%^&*).
-        </p>
-
-        {cpError && (
-          <div className="prof-cp-banner prof-cp-banner--error">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="#EF4444" strokeWidth="1.5"/>
-              <path d="M12 8v4M12 16h.01" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <p>{cpError}</p>
+        <div className="prof-cp-modal-header">
+          <div className="prof-cp-modal-header-text">
+            <h2>Change Password</h2>
+            <p>Enter your current and new password for your account.</p>
           </div>
-        )}
-        {cpSuccess && (
-          <div className="prof-cp-banner prof-cp-banner--success">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M20 6L9 17L4 12" stroke="#16A34A" strokeWidth="2"
-                strokeLinecap="round" strokeLinejoin="round"/>
+          <button className="prof-modal-close-btn" onClick={onClose} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            <p>Password updated successfully!</p>
-          </div>
-        )}
-      </div>
+          </button>
+        </div>
 
-      <div className="prof-cp-modal-footer">
-        <button className="prof-cp-cancel-btn" onClick={onClose}>Cancel</button>
-        <button className="prof-cp-save-btn" onClick={onCPSave} disabled={cpLoading}>
-          {cpLoading ? (
-            <><span className="prof-spinner"/>Saving…</>
-          ) : (
-            <>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="11" width="18" height="11" rx="2" stroke="#FFFFFF" strokeWidth="1.5"/>
-                <path d="M7 11V7a5 5 0 0110 0v4" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              Save Password
-            </>
-          )}
-        </button>
+        <div className="prof-cp-modal-body">
+          <PasswordInput
+            label="Current password *"
+            value={cpCurrent}
+            onChange={e => setCpCurrent(e.target.value)}
+            placeholder="···········"
+          />
+
+          <div className="prof-cp-field">
+            <label className="prof-cp-label">New password *</label>
+            <NewPasswordField value={cpNew} onChange={e => setCpNew(e.target.value)}/>
+            <PasswordRules value={cpNew}/>
+          </div>
+
+          <PasswordInput
+            label="Confirm new password *"
+            value={cpConfirm}
+            onChange={e => setCpConfirm(e.target.value)}
+            placeholder="···········"
+          />
+
+          <p className="prof-cp-hint">
+            At least 8 characters, one uppercase, one number, and one special character (e.g. !@#$%^&*).
+          </p>
+        </div>
+
+        <div className="prof-cp-modal-footer">
+          <button className="prof-cp-cancel-btn" onClick={onClose}>Cancel</button>
+          <button className="prof-cp-save-btn" onClick={onCPSave} disabled={cpLoading}>
+            {cpLoading ? (
+              <><span className="prof-spinner"/>Saving…</>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="#FFFFFF" strokeWidth="1.5"/>
+                  <path d="M7 11V7a5 5 0 0110 0v4" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Save Password
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-));
+  );
+});
 
 const InfoRow = memo(({ icon, value, placeholder }) => (
   <div className="prof-info-row">
@@ -1004,6 +1103,8 @@ const ProfileView = ({
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead, groupByDate, formatTime,
   setShowPIModal, setShowCPModal,
+  toast = { show: false, message: '', type: 'success' },
+  setToast,
 }) => {
   const fullName = user
     ? `${user.first_name || user.firstName || ''} ${user.last_name || user.lastName || ''}`.trim()
@@ -1034,6 +1135,12 @@ const ProfileView = ({
   const strengthColor        = getStrengthColor(strength);
   const strengthLabel        = getStrengthLabel(strength);
   const lastChangedFormatted = lastPasswordChange ? formatDate(lastPasswordChange) : null;
+
+  const handleSetToast = useCallback((newToast) => {
+    if (setToast) {
+      setToast(newToast);
+    }
+  }, [setToast]);
 
   return (
     <div className="prof-root">
@@ -1276,6 +1383,7 @@ const ProfileView = ({
           piSaveError={piSaveError}
           onPISave={onPISave}
           onClose={onClosePIModal}
+          onSetToast={handleSetToast}
         />
       )}
 
@@ -1286,7 +1394,12 @@ const ProfileView = ({
           cpConfirm={cpConfirm} setCpConfirm={setCpConfirm}
           cpLoading={cpLoading} cpError={cpError} cpSuccess={cpSuccess}
           onCPSave={onCPSave}   onClose={onCloseCPModal}
+          onSetToast={handleSetToast}
         />
+      )}
+
+      {toast && toast.show && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast && setToast({ show: false, message: '', type: 'success' })} />
       )}
     </div>
   );

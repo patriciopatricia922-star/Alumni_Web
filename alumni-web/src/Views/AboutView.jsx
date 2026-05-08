@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/About.css';           // ← standalone stylesheet (no more inline CSS string)
+import '../styles/About.css';          
 import Sidebar    from '../components/Sidebar';
 import AlumnAILogo from '../assets/alumnai_logo_new.svg';
 import TargetIcon  from '../assets/target_icn.png';
@@ -11,7 +11,7 @@ import RightArrow  from '../assets/right_arrow.svg';
 import Missionicon from '../assets/mission_icn.svg';
 
 /* ─────────────────────────────────────────────────────────────
-   STATIC CONTENT  (migrated from the former separate-page routes)
+   STATIC CONTENT (migrated from the former separate-page routes)
 ───────────────────────────────────────────────────────────── */
 const MISSION_TEXT =
 `Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism, National University is committed to providing relevant, innovative, and accessible quality education and other development programs.
@@ -72,13 +72,11 @@ const PRIVACY_SECTIONS = [
 ];
 
 /* ─────────────────────────────────────────────────────────────
-   SHARED MODAL SHELL
+   SHARED MODAL SHELL (Dashboard-aligned)
 ───────────────────────────────────────────────────────────── */
 const Modal = ({ onClose, iconClass, icon, iconAlt, title, subtitle, children }) => (
   <div className="ab-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="ab-modal" role="dialog" aria-modal="true">
-
-      {/* ── Header ─────────────────────────────── */}
       <div className="ab-modal-hdr">
         <div className={`ab-modal-hdr-icon ${iconClass}`}>
           <img src={icon} alt={iconAlt} />
@@ -93,8 +91,6 @@ const Modal = ({ onClose, iconClass, icon, iconAlt, title, subtitle, children })
           </svg>
         </button>
       </div>
-
-      {/* ── Body (scrolls) ─────────────────────── */}
       <div className="ab-modal-body">
         {children}
       </div>
@@ -152,16 +148,13 @@ const VisionModal = ({ onClose }) => (
 
 /* ─────────────────────────────────────────────────────────────
    CONTACT SUPPORT MODAL
-   Content source: ContactSupport.jsx (former standalone route)
 ───────────────────────────────────────────────────────────── */
 const ContactModal = ({ onClose }) => (
   <Modal onClose={onClose} iconClass="blue" icon={MessageIcon}
     iconAlt="Contact Support" title="Contact Support" subtitle="We're here to help">
     <div className="ab-modal-inner">
-
       <p className="ab-contact-subtitle">Your Ways to Reach Us:</p>
 
-      {/* Email */}
       <div className="ab-contact-row">
         <div className="ab-contact-row-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -178,7 +171,6 @@ const ContactModal = ({ onClose }) => (
         </div>
       </div>
 
-      {/* Phone */}
       <div className="ab-contact-row">
         <div className="ab-contact-row-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -193,7 +185,6 @@ const ContactModal = ({ onClose }) => (
         </div>
       </div>
 
-      {/* Office Address */}
       <div className="ab-contact-row">
         <div className="ab-contact-row-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -209,15 +200,12 @@ const ContactModal = ({ onClose }) => (
           </p>
         </div>
       </div>
-
     </div>
   </Modal>
 );
 
 /* ─────────────────────────────────────────────────────────────
    TERMS OF SERVICE MODAL
-   Content source: TermsOfServiceAbout.jsx (former standalone route)
-   Body is scrollable via .ab-modal-body overflow-y:auto
 ───────────────────────────────────────────────────────────── */
 const TosModal = ({ onClose }) => (
   <Modal onClose={onClose} iconClass="yellow" icon={PaperIcon}
@@ -236,8 +224,6 @@ const TosModal = ({ onClose }) => (
 
 /* ─────────────────────────────────────────────────────────────
    PRIVACY POLICY MODAL
-   Content source: PrivacyPolicyAbout.jsx (former standalone route)
-   Body is scrollable via .ab-modal-body overflow-y:auto
 ───────────────────────────────────────────────────────────── */
 const PrivacyModal = ({ onClose }) => (
   <Modal onClose={onClose} iconClass="red" icon={ProtectIcon}
@@ -255,39 +241,31 @@ const PrivacyModal = ({ onClose }) => (
 );
 
 /* ─────────────────────────────────────────────────────────────
-   NOTIFICATION ROW
+   NOTIFICATION ITEM (Dashboard-aligned)
 ───────────────────────────────────────────────────────────── */
 const NItem = ({ n, markOneRead, formatTime }) => (
   <div
     onClick={() => markOneRead(n.id)}
-    style={{
-      display:'flex', alignItems:'flex-start', gap:'12px',
-      padding:'10px 18px',
-      background: n.read ? 'transparent' : 'rgba(43,114,251,.07)',
-      cursor:'pointer', transition:'background .12s',
-      borderLeft: n.read ? '3px solid transparent' : '3px solid #2B72FB',
-    }}
-    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
-    onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(43,114,251,.07)'}
+    className={`ab-notif-item ${!n.read ? 'unread' : ''}`}
   >
-    <div style={{width:38,height:38,borderRadius:'50%',background:'rgba(43,114,251,.15)',border:'1px solid rgba(43,114,251,.2)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:2}}>
+    <div className="ab-notif-icon">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-          stroke="#2B72FB" strokeWidth="1.67" strokeLinecap="round"/>
+          stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/>
       </svg>
     </div>
-    <div style={{flex:1,minWidth:0}}>
-      <p style={{fontFamily:'Montserrat',fontWeight:n.read?400:700,fontSize:13,color:'#fff',margin:'0 0 2px',lineHeight:1.4}}>{n.title}</p>
-      <p style={{fontFamily:'Montserrat',fontSize:12,color:'rgba(255,255,255,.45)',margin:'0 0 4px',lineHeight:1.4,display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{n.body}</p>
-      <span style={{fontFamily:'Montserrat',fontSize:11,color:'rgba(255,255,255,.25)'}}>{formatTime(n.time)}</span>
+    <div className="ab-notif-content">
+      <p className="ab-notif-title">{n.title}</p>
+      <p className="ab-notif-body">{n.body}</p>
+      <span className="ab-notif-time">{formatTime(n.time)}</span>
     </div>
-    {!n.read && <div style={{width:8,height:8,borderRadius:'50%',background:'#2B72FB',flexShrink:0,marginTop:6}}/>}
+    {!n.read && <div className="ab-notif-dot" />}
   </div>
 );
 
 /* ═══════════════════════════════════════════════════════════
-   MAIN VIEW
-═══════════════════════════════════════════════════════════ */
+   MAIN VIEW (Dashboard-aligned layout)
+════════════════════════════════════════════════════════════ */
 const AboutView = ({
   isMobile, isTablet,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
@@ -306,7 +284,7 @@ const AboutView = ({
 
         <div className="ab-main">
 
-          {/* ── Bell ─────────────────────────────── */}
+          {/* Dashboard-aligned Bell Icon */}
           <div ref={bellRef} className="ab-bell">
             <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -322,25 +300,21 @@ const AboutView = ({
 
             {showDropdown && (
               <div className="ab-ndrop">
-                <div style={{padding:'16px 18px 12px',borderBottom:'1px solid rgba(255,255,255,.07)',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
-                  <span style={{fontFamily:'Montserrat',fontWeight:700,fontSize:16,color:'#fff'}}>Notifications</span>
+                <div className="ab-ndrop-header">
+                  <span>Notifications</span>
                   {unreadCount > 0 && (
-                    <button onClick={markAllRead} style={{background:'none',border:'none',fontFamily:'Montserrat',fontSize:12,color:'#2B72FB',cursor:'pointer',padding:0}}>
+                    <button onClick={markAllRead} className="ab-mark-all">
                       Mark all read
                     </button>
                   )}
                 </div>
-                <div style={{display:'flex',padding:'10px 18px 0',gap:4,flexShrink:0}}>
-                  {['all','unread'].map(t => (
-                    <button key={t} onClick={() => setNotifTab(t)} style={{
-                      height:32, padding:'0 16px',
-                      background: notifTab===t ? '#2B72FB' : 'transparent',
-                      border: notifTab===t ? 'none' : '1px solid rgba(255,255,255,.12)',
-                      borderRadius:20, cursor:'pointer',
-                      fontFamily:'Montserrat', fontSize:13,
-                      fontWeight: notifTab===t ? 700 : 400,
-                      color:'#fff', transition:'all .15s', textTransform:'capitalize',
-                    }}>
+                <div className="ab-ndrop-tabs">
+                  {['all', 'unread'].map(t => (
+                    <button 
+                      key={t} 
+                      onClick={() => setNotifTab(t)}
+                      className={`ab-tab-btn ${notifTab === t ? 'active' : ''}`}
+                    >
                       {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                     </button>
                   ))}
@@ -349,33 +323,29 @@ const AboutView = ({
                   {(() => {
                     const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
                     if (!list.length) return (
-                      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 20px',gap:10}}>
+                      <div className="ab-notif-empty">
                         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
                           <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                            stroke="rgba(255,255,255,.2)" strokeWidth="1.5" strokeLinecap="round"/>
+                            stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
                         </svg>
-                        <p style={{fontFamily:'Montserrat',fontSize:13,color:'rgba(255,255,255,.3)',margin:0}}>
-                          {notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
-                        </p>
+                        <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
                       </div>
                     );
                     return Object.entries(groupByDate(list)).map(([label, items]) => {
                       if (!items.length) return null;
                       return (
                         <div key={label}>
-                          <p style={{fontFamily:'Montserrat',fontWeight:700,fontSize:11,color:'rgba(255,255,255,.35)',textTransform:'uppercase',letterSpacing:'.8px',margin:'10px 18px 4px'}}>{label}</p>
+                          <p className="ab-notif-group-label">{label}</p>
                           {items.map(n => <NItem key={n.id} n={n} markOneRead={markOneRead} formatTime={formatTime}/>)}
                         </div>
                       );
                     });
                   })()}
                 </div>
-                <div style={{padding:'10px 18px',borderTop:'1px solid rgba(255,255,255,.07)',flexShrink:0}}>
+                <div className="ab-ndrop-footer">
                   <button
                     onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                    style={{width:'100%',height:36,background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:10,fontFamily:'Montserrat',fontSize:13,color:'rgba(255,255,255,.7)',cursor:'pointer'}}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,.1)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,.05)'}
+                    className="ab-see-all"
                   >
                     See all notifications
                   </button>
@@ -384,28 +354,26 @@ const AboutView = ({
             )}
           </div>
 
-          {/* ── Back ─────────────────────────────── */}
+          {/* Back Button - Dashboard style */}
           <button className="ab-back" onClick={() => navigate('/dashboard')}>
             <svg width="16" height="16" viewBox="0 0 17 17" fill="none">
               <path d="M13 8.5H2M2 8.5L7 3.5M2 7.5L7 13.5"
                 stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Back</span>
           </button>
 
-          {/* ── Page heading ─────────────────────── */}
+          {/* Page Header - Dashboard style */}
           <div className="ab-hdr">
             <h1 className="ab-title">About</h1>
             <p className="ab-sub">Support and assistance for your alumni needs.</p>
           </div>
 
-          {/* ── HERO CARD ────────────────────────── */}
+          {/* Hero Card - Dashboard card styling */}
           <div className="ab-hero">
             <div className="ab-circ ab-c1"/>
             <div className="ab-circ ab-c2"/>
             <div className="ab-circ ab-c3"/>
 
-            {/* Logo — scale(1.4) applied via CSS */}
             <div className="ab-logo-row">
               <img src={AlumnAILogo} alt="AlumnAI"/>
             </div>
@@ -417,7 +385,7 @@ const AboutView = ({
               alumni network.
             </p>
 
-            {/* Mission / Vision cards */}
+            {/* Mission/Vision Cards - Dashboard for-you-card style */}
             <div className="ab-mv">
               <button className="ab-mv-card" onClick={() => openModal('mission')}>
                 <div className="ab-mv-icon"><img src={TargetIcon} alt="Mission"/></div>
@@ -425,7 +393,6 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Mission</p>
                   <p className="ab-mv-slbl">Our core purpose</p>
                 </div>
-                <div className="ab-mv-div"/>
                 <img src={RightArrow} alt="" className="ab-mv-arrow"/>
               </button>
 
@@ -435,40 +402,46 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Vision</p>
                   <p className="ab-mv-slbl">What we aim to achieve</p>
                 </div>
-                <div className="ab-mv-div"/>
                 <img src={RightArrow} alt="" className="ab-mv-arrow"/>
               </button>
             </div>
           </div>
 
-          {/* ── SUPPORT & LEGAL ──────────────────── */}
+          {/* Support Section - Dashboard for-you-section style */}
           <div className="ab-support">
             <h2 className="ab-s-title">Support &amp; Legal</h2>
+            <p className="ab-s-subtitle">Resources and information to assist you.</p>
+            
             <div className="ab-s-grid">
               <button className="ab-tile blue" onClick={() => openModal('contact')}>
                 <div className="ab-tile-icon blue"><img src={MessageIcon} alt=""/></div>
-                <p className="ab-tile-name">Contact Support</p>
-                <p className="ab-tile-sub">Get help from our team</p>
+                <div className="ab-tile-text">
+                  <p className="ab-tile-name">Contact Support</p>
+                  <p className="ab-tile-sub">Get help from our team</p>
+                </div>
               </button>
 
               <button className="ab-tile yellow" onClick={() => openModal('tos')}>
                 <div className="ab-tile-icon yellow"><img src={PaperIcon} alt=""/></div>
-                <p className="ab-tile-name">Terms of Service</p>
-                <p className="ab-tile-sub">Read our guidelines</p>
+                <div className="ab-tile-text">
+                  <p className="ab-tile-name">Terms of Service</p>
+                  <p className="ab-tile-sub">Read our guidelines</p>
+                </div>
               </button>
 
               <button className="ab-tile red" onClick={() => openModal('privacy')}>
                 <div className="ab-tile-icon red"><img src={ProtectIcon} alt=""/></div>
-                <p className="ab-tile-name">Privacy Policy</p>
-                <p className="ab-tile-sub">Your data protection</p>
+                <div className="ab-tile-text">
+                  <p className="ab-tile-name">Privacy Policy</p>
+                  <p className="ab-tile-sub">Your data protection</p>
+                </div>
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* ── MODALS ────────────────────────────────────────────────── */}
+      {/* Modals */}
       {activeModal === 'mission' && <MissionModal  onClose={closeModal}/>}
       {activeModal === 'vision'  && <VisionModal   onClose={closeModal}/>}
       {activeModal === 'contact' && <ContactModal  onClose={closeModal}/>}

@@ -121,10 +121,11 @@ const SidebarView = ({
           alt="AlumnAI"
           style={{
             marginRight: '20px',
-            marginTop: '3px',
-            width: isTablet ? '179px' : '198px',
+            marginTop: '-30px',
+            width: isTablet ? '169px' : '242px',
             height: 'auto',
             objectFit: 'contain',
+            marginBottom: '-30px',
           }}
         />
       </div>
@@ -139,7 +140,7 @@ const SidebarView = ({
       }} />
 
       {/* MENU section */}
-      <div style={{ marginTop: '.5vw', padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ marginTop: '1.9vw', padding: '16px 11px 0', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         <p style={{
           fontFamily: 'Montserrat', fontWeight: 600, fontSize: '10px',
           lineHeight: '15px', letterSpacing: '0.5px', textTransform: 'uppercase',
