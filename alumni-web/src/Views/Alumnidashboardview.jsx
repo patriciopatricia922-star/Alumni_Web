@@ -1,9 +1,9 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
-import NewArrow from '../assets/new_arrow.svg';
 import '../styles/AlumniDashboard.css';
 
 // ============================ FOR YOU CARD COMPONENT ============================
+// Arrow icon removed per revision spec.
 const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
   <div
     className="for-you-card"
@@ -27,8 +27,6 @@ const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
       <p className="card-title">{item.title}</p>
       <p className="card-description">{item.description}</p>
     </div>
-
-    <img src={NewArrow} alt="Arrow" className="chevron-icon" />
   </div>
 );
 
@@ -169,12 +167,11 @@ const AlumniDashboardView = ({
         className="dashboard-content"
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
-        {/* ── Page Header ── */}
+        {/* ── Page Header — now includes welcome subtitle ── */}
         <div className="dashboard-header">
           <div className="dashboard-header-text">
-            <p className="dashboard-subtitle">
-              Welcome Bark! Let's see what's new in your alumni network.
-            </p>
+            <h1>Welcome Bark!</h1> 
+               <p>Let's see what's new in your alumni network.</p>
           </div>
 
           <div ref={bellRef} className={`notification-bell ${isMobile ? 'mobile' : ''}`}>

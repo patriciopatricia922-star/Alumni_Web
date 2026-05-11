@@ -1,10 +1,13 @@
 // ============================================================================
-// SurveyMgmtView — UI Layer
+// SurveyMgmtView.jsx — UI Layer
 // ============================================================================
-// Merged: retains stable `q-{q.id}` branch keys and all-sections branch view
-// from the original, while adopting multi-select branch dropdowns, the
-// section-filtered branch view, pill-shaped branch button, and publish
-// confirmation modal from the new version.
+// Merged: retains stable `q-{q.id}` branch keys, multi-select branch
+// dropdowns, cross-section destination labels ("Section → Question"), and
+// the "Hold Ctrl/Cmd" hint from your version. Friend's positional
+// `${sIdx}-${qIdx}` keys and single-select dropdowns are NOT used — they
+// break silently when questions are reordered or deleted.
+// All editor-mode UI, header, sidebar, toasts, and modals are identical
+// between both versions and are preserved as-is.
 // ============================================================================
 
 import AdminSidebar from "../components/AdminSidebar";
@@ -13,32 +16,51 @@ import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2, FiCheck } from "react-icons/fi"
 import { BiGitBranch } from "react-icons/bi";
 
 export default function SurveyMgmtView({
+  // ============================ CORE DATA ============================
   survey,
   setSurvey,
   configId,
   setConfigId,
+
+  // ============================ SECTION NAVIGATION ============================
   activeSection,
   setActiveSection,
+
+  // ============================ UI MODES ============================
   branchMode,
   setBranchMode,
   editingQ,
   setEditingQ,
+
+  // ============================ EDIT TRACKING ============================
   dirtyQ,
   editSnapshotRef,
+
+  // ============================ PUBLICATION STATE ============================
   saving,
   status,
+
+  // ============================ BRANCHING DATA ============================
   branches,
   setBranches,
   highlightQ,
   branchTargetQ,
   setBranchTargetQ,
+
+  // ============================ TOAST NOTIFICATIONS ============================
   toasts,
   addToast,
+
+  // ============================ CONFIRMATION MODAL ============================
   confirmState,
   setConfirmState,
   askConfirm,
+
+  // ============================ DATA CONSTANTS ============================
   TYPE_LABELS,
   DEFAULT_SURVEY,
+
+  // ============================ QUESTION HANDLERS ============================
   updateQuestion,
   deleteQuestion,
   duplicateQuestion,
@@ -46,17 +68,27 @@ export default function SurveyMgmtView({
   openEdit,
   closeEdit,
   saveEdit,
+
+  // ============================ SECTION HANDLERS ============================
   addSection,
   deleteSection,
+
+  // ============================ OPTION HANDLERS ============================
   addOption,
   updateOption,
   deleteOption,
+
+  // ============================ PUBLISH HANDLER ============================
   handlePublish,
+
+  // ============================ DERIVED DATA ============================
   currentSection,
-  allQuestions,
+  allQuestions,    // Flattened list of ALL questions across ALL sections
 }) {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  // Format long section titles with line breaks for sidebar display
   const formatSectionTitle = (title) => {
     if (title && title.length > 25) {
       const words = title.split(" ");
@@ -68,12 +100,13 @@ export default function SurveyMgmtView({
     return title;
   };
 
-  // Resolve which section index the branch panel should display.
+  // Resolve which section the branch panel should display.
   // branchTargetQ format: "q-{sectionIdx}-{questionIdx}"
   const targetSectionIdx = branchTargetQ
     ? parseInt(branchTargetQ.split("-")[1], 10)
     : activeSection;
 
+  // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
     return (
       <div style={{
@@ -179,7 +212,11 @@ export default function SurveyMgmtView({
                   </div>
                   <button
                     onClick={e => { e.stopPropagation(); deleteSection(index); }}
-                    style={{ border: "none", background: "transparent", cursor: "pointer", color: "#ef4444", padding: "0.1rem", display: "flex", alignItems: "center", opacity: 0.6, flexShrink: 0 }}
+                    style={{
+                      border: "none", background: "transparent", cursor: "pointer",
+                      color: "#ef4444", padding: "0.1rem", display: "flex",
+                      alignItems: "center", opacity: 0.6, flexShrink: 0,
+                    }}
                     title="Delete section"
                   >
                     <FiTrash2 size={13} />
@@ -196,7 +233,10 @@ export default function SurveyMgmtView({
               /* ── Branch Mode ────────────────────────────────────────── */
               <div className="branch-page">
                 <div className="branch-header">
-                  <button className="branch-back" onClick={() => { setBranchMode(false); setBranchTargetQ(null); }}>
+                  <button
+                    className="branch-back"
+                    onClick={() => { setBranchMode(false); setBranchTargetQ(null); }}
+                  >
                     <FiArrowLeft />
                   </button>
                   <h2>Branching Options</h2>
@@ -210,13 +250,16 @@ export default function SurveyMgmtView({
                       if (section.questions.length === 0) return null;
                       return (
                         <div key={targetSectionIdx} style={{ marginBottom: "1.5rem" }}>
-                          <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#4f46e5", marginBottom: "0.5rem" }}>
+                          <div style={{
+                            fontSize: "0.9rem", fontWeight: 600,
+                            color: "#4f46e5", marginBottom: "0.5rem",
+                          }}>
                             {section.title}
                           </div>
 
                           {section.questions.map((q, qIdx) => {
-                            // Use stable q.id in branch keys so deleting / reordering
-                            // questions never silently orphans existing branch rules.
+                            // Stable key uses q.id — safe against reorder and delete.
+                            // DOM id uses positional indices for scroll targeting only.
                             const key   = `q-${q.id}`;
                             const domId = `q-${targetSectionIdx}-${qIdx}`;
 
@@ -231,18 +274,20 @@ export default function SurveyMgmtView({
                                   transition: "all 0.3s ease",
                                 }}
                               >
-                                <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#111827", marginBottom: "0.75rem" }}>
+                                <div style={{
+                                  fontSize: "0.82rem", fontWeight: 600,
+                                  color: "#111827", marginBottom: "0.75rem",
+                                }}>
                                   {q.label}
                                 </div>
 
                                 {q.type === "multiple" ? (
-                                  // Per-option branch targets (multi-select)
+                                  // Per-option multi-select branch targets
                                   (q.options || []).map((opt, oIdx) => {
-                                    // Key uses stable q.id; oIdx within the options list
-                                    // is safe because deleteOption() re-indexes it.
-                                    const optKey = `q-${q.id}-opt${oIdx}`;
+                                    // Key uses stable q.id; deleteOption() re-indexes oIdx
+                                    const optKey     = `q-${q.id}-opt${oIdx}`;
                                     const currentVal = branches[optKey];
-                                    const selectValue = Array.isArray(currentVal)
+                                    const selectVal  = Array.isArray(currentVal)
                                       ? currentVal
                                       : currentVal ? [currentVal] : ["next"];
 
@@ -254,18 +299,26 @@ export default function SurveyMgmtView({
                                         flexWrap: "wrap",
                                       }}>
                                         <input type="radio" disabled />
-                                        <span style={{ flex: 1, fontSize: "0.75rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px" }}>
+                                        <span style={{
+                                          flex: 1, fontSize: "0.75rem",
+                                          overflow: "hidden", textOverflow: "ellipsis",
+                                          whiteSpace: "nowrap", maxWidth: "180px",
+                                        }}>
                                           {opt}
                                         </span>
                                         <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                         <select
                                           multiple
-                                          value={selectValue}
+                                          value={selectVal}
                                           onChange={e => {
                                             const vals = Array.from(e.target.selectedOptions, o => o.value);
                                             setBranches(prev => ({ ...prev, [optKey]: vals }));
                                           }}
-                                          style={{ padding: "0.3rem 0.5rem", borderRadius: "0.4rem", border: "1px solid #d1d5db", fontSize: "0.78rem", width: "160px", maxWidth: "160px", height: "70px" }}
+                                          style={{
+                                            padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                            border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                            width: "160px", maxWidth: "160px", height: "70px",
+                                          }}
                                         >
                                           <option value="next">Next question</option>
                                           {allQuestions.map((dest, j) => (
@@ -282,11 +335,11 @@ export default function SurveyMgmtView({
                                     );
                                   })
                                 ) : (
-                                  // Single branch target for non-multiple questions (multi-select)
+                                  // Single multi-select branch target for non-multiple questions
                                   <div style={{
                                     display: "flex", alignItems: "center", gap: "0.75rem",
-                                    padding: "0.45rem 0.6rem", borderRadius: "0.4rem", background: "#f9fafb",
-                                    flexWrap: "wrap",
+                                    padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
+                                    background: "#f9fafb", flexWrap: "wrap",
                                   }}>
                                     <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                     <select
@@ -299,7 +352,11 @@ export default function SurveyMgmtView({
                                         const vals = Array.from(e.target.selectedOptions, o => o.value);
                                         setBranches(prev => ({ ...prev, [key]: vals }));
                                       }}
-                                      style={{ padding: "0.3rem 0.5rem", borderRadius: "0.4rem", border: "1px solid #d1d5db", fontSize: "0.78rem", width: "160px", maxWidth: "160px", height: "70px" }}
+                                      style={{
+                                        padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                        border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                        width: "160px", maxWidth: "160px", height: "70px",
+                                      }}
                                     >
                                       <option value="next">Next question</option>
                                       {allQuestions.map((dest, j) => (
@@ -321,9 +378,12 @@ export default function SurveyMgmtView({
                       );
                     })}
 
-                  {allQuestions.filter(q => q.type === "multiple").length === 0 && (
-                    <div style={{ fontSize: "0.85rem", color: "#6b7280", textAlign: "center", padding: "2rem 0" }}>
-                      No multiple choice questions found.
+                  {survey.sections[targetSectionIdx]?.questions.length === 0 && (
+                    <div style={{
+                      fontSize: "0.85rem", color: "#6b7280",
+                      textAlign: "center", padding: "2rem 0",
+                    }}>
+                      No questions in this section yet.
                     </div>
                   )}
                 </div>
@@ -352,7 +412,12 @@ export default function SurveyMgmtView({
                           <input
                             value={q.label}
                             onChange={e => updateQuestion(activeSection, qIdx, { label: e.target.value })}
-                            style={{ width: "100%", border: "none", borderBottom: "2px solid #6366f1", outline: "none", fontFamily: "Lexend", fontSize: "1rem", fontWeight: 600, background: "transparent", color: "#4f46e5" }}
+                            style={{
+                              width: "100%", border: "none",
+                              borderBottom: "2px solid #6366f1", outline: "none",
+                              fontFamily: "Lexend", fontSize: "1rem",
+                              fontWeight: 600, background: "transparent", color: "#4f46e5",
+                            }}
                           />
                         ) : (
                           <h2>{q.label}</h2>
@@ -360,7 +425,11 @@ export default function SurveyMgmtView({
                         <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.4rem", alignItems: "center" }}>
                           <button
                             onClick={() => isEditing ? closeEdit() : openEdit(activeSection, qIdx)}
-                            style={{ border: "none", background: "#f3f4f6", padding: "0.3rem", borderRadius: "0.3rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{
+                              border: "none", background: "#f3f4f6", padding: "0.3rem",
+                              borderRadius: "0.3rem", cursor: "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
                           >
                             <FiEdit2 size={14} />
                           </button>
@@ -371,7 +440,11 @@ export default function SurveyMgmtView({
                           )}
                           <button
                             onClick={() => deleteQuestion(activeSection, qIdx, q.label)}
-                            style={{ border: "none", background: "#fee2e2", padding: "0.3rem", borderRadius: "0.3rem", cursor: "pointer", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center" }}
+                            style={{
+                              border: "none", background: "#fee2e2", padding: "0.3rem",
+                              borderRadius: "0.3rem", cursor: "pointer", color: "#ef4444",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
                           >
                             <FiTrash2 size={14} />
                           </button>
@@ -390,7 +463,12 @@ export default function SurveyMgmtView({
                           <input
                             value={q.label}
                             onChange={e => updateQuestion(activeSection, qIdx, { label: e.target.value })}
-                            style={{ flex: 1, border: "none", borderBottom: "2px solid #3b82f6", outline: "none", fontFamily: "Lexend", fontSize: "0.85rem", fontWeight: 500, background: "transparent", padding: "0.2rem 0" }}
+                            style={{
+                              flex: 1, border: "none",
+                              borderBottom: "2px solid #3b82f6", outline: "none",
+                              fontFamily: "Lexend", fontSize: "0.85rem",
+                              fontWeight: 500, background: "transparent", padding: "0.2rem 0",
+                            }}
                           />
                         ) : (
                           <span>
@@ -437,7 +515,10 @@ export default function SurveyMgmtView({
 
                       {/* Required toggle */}
                       {isEditing && (
-                        <label style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", marginTop: "0.5rem", marginBottom: "0.5rem", color: "#6b7280" }}>
+                        <label style={{
+                          display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                          fontSize: "0.75rem", marginTop: "0.5rem", marginBottom: "0.5rem", color: "#6b7280",
+                        }}>
                           <input
                             type="checkbox"
                             checked={!!q.required}
@@ -561,7 +642,12 @@ export default function SurveyMgmtView({
                 {/* Add Question */}
                 <button
                   onClick={() => addQuestion(activeSection)}
-                  style={{ width: "100%", height: "36px", background: "#fff", border: "1px dashed #d1d5db", borderRadius: "0.6rem", fontSize: "0.8rem", color: "#6b7280", cursor: "pointer", marginTop: "0.5rem", fontFamily: "Lexend" }}
+                  style={{
+                    width: "100%", height: "36px", background: "#fff",
+                    border: "1px dashed #d1d5db", borderRadius: "0.6rem",
+                    fontSize: "0.8rem", color: "#6b7280", cursor: "pointer",
+                    marginTop: "0.5rem", fontFamily: "Lexend",
+                  }}
                 >
                   + Add Question
                 </button>

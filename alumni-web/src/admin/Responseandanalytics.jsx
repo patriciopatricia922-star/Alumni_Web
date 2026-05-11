@@ -1,6 +1,4 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
-// ============================================================================
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Response & Analytics.
 // ============================================================================
@@ -9,6 +7,35 @@ import React, { useState, useEffect } from 'react';
 import AdminSidebar from "./components/AdminSidebar";
 import ResponseAnalyticsView from './views/ResponseAnalyticsView';
 import { supabase } from '../lib/supabase';
+import { useLocation } from "react-router-dom";
+
+// ============================ EMPLOYMENT STATUS MAPPING ============================
+// FIX: Aligned with Admin Dashboard — exact-match mapping replaces substring logic.
+// This is the single source of truth for status categorization.
+// ============================================================================
+const STATUS_MAPPING = {
+  'Regular / Permanent':   'Employed',
+  'Probationary':          'Employed',
+  'Regular':               'Employed',
+  'Permanent':             'Employed',
+  'Full-time':             'Employed',
+  'Part-time':             'Employed',
+  'Regular/Full-time':     'Employed',
+  'Part-time/Full-time':   'Employed',
+  'Unemployed':            'Unemployed',
+  'Not employed':          'Unemployed',
+  'Looking for work':      'Unemployed',
+  'Unemployed, but looking for work':     'Unemployed',
+  'Unemployed, but not looking for work': 'Unemployed',
+  'Self-employed':         'Self-Employed',
+  'Self-Employed':         'Self-Employed',
+  'Business owner':        'Self-Employed',
+  'Freelance':             'Freelance',
+  'Student':               'Student',
+  'Studying':              'Student',
+  'Contractual':           'Contractual',
+  'Contract based':        'Contractual',
+};
 
 // ============================ HELPER FUNCTIONS ============================
 const safeText = (value) => (typeof value === 'string' ? value.trim() : (value || ''));
@@ -62,6 +89,57 @@ const extractYear = (value) => {
   return !isNaN(date.getTime()) ? String(date.getFullYear()) : null;
 };
 
+// ============================ EMPLOYMENT STATUS NORMALIZATION ============================
+// FIX: Centralized status resolver aligned with Dashboard logic.
+// Applies exact-match mapping first, then falls back to substring heuristics,
+// then checks for company_name / job_position as evidence of employment.
+// ============================================================================
+const resolveEmploymentStatus = (empData) => {
+  if (!empData) return 'Not specified';
+
+  const rawStatus = empData.employment_status
+    || empData.current_employment_status
+    || empData.employmentStatus
+    || '';
+
+  // 1. Exact match via STATUS_MAPPING (aligns with Dashboard)
+  if (rawStatus && STATUS_MAPPING[rawStatus]) {
+    return STATUS_MAPPING[rawStatus];
+  }
+
+  const statusLower = rawStatus.toLowerCase();
+
+  // 2. Fallback: substring matching (aligns with Dashboard fallback logic)
+  if (statusLower.includes('regular') || statusLower.includes('permanent')) {
+    return 'Employed';
+  }
+  if (statusLower.includes('self')) {
+    return 'Self-Employed';
+  }
+  if (statusLower.includes('student') || statusLower.includes('studying')) {
+    return 'Student';
+  }
+  if (statusLower.includes('contract')) {
+    return 'Contractual';
+  }
+  if (statusLower.includes('freelance')) {
+    return 'Freelance';
+  }
+  if (statusLower.includes('unemployed') || statusLower.includes('not employed') || statusLower.includes('looking for work')) {
+    return 'Unemployed';
+  }
+  if (statusLower.includes('full-time') || statusLower.includes('part-time')) {
+    return 'Employed';
+  }
+
+  // 3. Evidence-based fallback: has job_position or company_name (aligns with Dashboard)
+  if (empData.job_position || empData.company_name) {
+    return 'Employed';
+  }
+
+  return rawStatus || 'Not specified';
+};
+
 // ============================ SINGLE RESPONSE EXTRACTION ============================
 const extractRespondentData = (row, userEmail = '') => {
   const personal = row.personal_background_data || {};
@@ -81,7 +159,9 @@ const extractRespondentData = (row, userEmail = '') => {
   const email = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
   const batch = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
   const program = safeText(educational.degree_program) || 'Not specified';
-  const employmentStatus = safeText(employmentData.employment_status) || 'Not specified';
+  
+  // FIX: Use centralized resolver for consistent status assignment
+  const employmentStatus = resolveEmploymentStatus(employmentData);
 
   const skillRatings = skillsData.skill_ratings || {};
   
@@ -192,7 +272,10 @@ const processSurveyData = (rows, userEmails = {}) => {
   const ageDistribution = { '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
   const boardExam = { Passed: 0, Failed: 0 };
   const certification = { 'With Certification': 0, 'No Certification': 0 };
-  const employment = { Employed: 0, Unemployed: 0, 'Self-Employed': 0 };
+  
+  // FIX: Employment distribution now tracks all 5 categories matching Dashboard
+  const employment = { 'Employed': 0, 'Unemployed': 0, 'Self-Employed': 0, 'Student': 0, 'Contractual': 0, 'Freelance': 0 };
+  
   const salary = { '< ₱15k': 0, '₱15k–30k': 0, '₱30k–50k': 0, '> ₱40k': 0 };
   const timeToJob = { '< 1 month': 0, '1–3 months': 0, '3–6 months': 0, '6 + months': 0 };
   const skills = new Map();
@@ -235,16 +318,14 @@ const processSurveyData = (rows, userEmails = {}) => {
     if (hasCertification) certification['With Certification']++;
     else if (certificationData.certiport_passer !== null) certification['No Certification']++;
 
-    const empStatus = safeText(employmentData.employment_status);
-    if (empStatus.toLowerCase().includes('regular') || empStatus.toLowerCase().includes('permanent') || 
-        empStatus.toLowerCase().includes('contract') || empStatus.toLowerCase().includes('probationary')) {
-      employment.Employed++;
-    } else if (empStatus.toLowerCase().includes('self')) {
-      employment['Self-Employed']++;
-    } else if (empStatus.toLowerCase().includes('unemployed')) {
-      employment.Unemployed++;
-    } else if (empStatus && (employmentData.job_position || employmentData.company_name)) {
-      employment.Employed++;
+    // FIX: Employment status aggregation now uses the centralized resolver
+    // matching the Dashboard's exact STATUS_MAPPING + fallback logic.
+    const resolvedStatus = resolveEmploymentStatus(employmentData);
+    if (employment.hasOwnProperty(resolvedStatus)) {
+      employment[resolvedStatus]++;
+    } else if (resolvedStatus && resolvedStatus !== 'Not specified') {
+      // Catch-all for any unmapped but valid statuses
+      employment['Employed']++;
     }
 
     const monthlyIncome = safeText(employmentData.monthly_income);
@@ -287,6 +368,8 @@ const processSurveyData = (rows, userEmails = {}) => {
     .filter(([_, value]) => value > 0)
     .map(([status, count]) => ({ status, count }));
 
+  // FIX: Employment array now includes all 5+ categories, filtering zero-count entries
+  // to match Dashboard behavior exactly.
   const employmentArray = Object.entries(employment)
     .filter(([_, value]) => value > 0)
     .map(([name, value]) => ({ name, value }));
@@ -353,6 +436,9 @@ const LoadingScreen = ({ message, isError = false }) => {
 
 // ============================ MAIN COMPONENT ============================
 const ResponseAnalytics = () => {
+  const location = useLocation();
+  const focus = location.state?.focus;
+
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedSection, setSelectedSection] = useState("All Sections");
   const [showFilter, setShowFilter] = useState(false);
@@ -373,6 +459,15 @@ const ResponseAnalytics = () => {
     skills: [],
   });
   const [respondents, setRespondents] = useState([]);
+
+  useEffect(() => {
+    if (focus === "employment_status") {
+      setActiveTab("overview");
+    }
+    if (focus === "degree_alignment") {
+      setActiveTab("analytics");
+    }
+  }, [focus]);
 
   // ============================ FETCH DATA FROM SUPABASE ============================
   useEffect(() => {

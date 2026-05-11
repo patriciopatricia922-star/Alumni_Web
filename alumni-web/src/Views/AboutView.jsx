@@ -7,7 +7,7 @@ import MagnifyIcon from '../assets/magnifying_icn.png';
 import MessageIcon from '../assets/message_icn.svg';
 import PaperIcon   from '../assets/paper_icn.svg';
 import ProtectIcon from '../assets/protect_icn.svg';
-import RightArrow  from '../assets/right_arrow.svg';
+// import RightArrow  from '../assets/right_arrow.svg';
 import Missionicon from '../assets/mission_icn.svg';
 
 /* ─────────────────────────────────────────────────────────────
@@ -37,7 +37,7 @@ const TOS_SECTIONS = [
   { title: '2. Purpose of the Platform',
     body:  'AlumnAI is designed to support alumni engagement, data collection, and analytics for institutional use, including surveys, announcements, job opportunities, events, and alumni services.' },
   { title: '3. User Responsibilities',
-    body:  'Provide accurate and truthful information.\nUse the platform only for lawful and appropriate purposes.\nKeep your login credentials secure and confidential.\nRefrain from activities that may disrupt or harm the platform.' },
+    body:  '• Provide accurate and truthful information.\n• Use the platform only for lawful and appropriate purposes.\n• Keep your login credentials secure and confidential.\n• Refrain from activities that may disrupt or harm the platform.' },
   { title: '4. Data Use and Accuracy',
     body:  'The institution may use aggregated data for analytics, reporting, and institutional improvement. AlumnAI is not responsible for inaccuracies resulting from incorrect information provided by users.' },
   { title: '5. Availability and Updates',
@@ -45,12 +45,12 @@ const TOS_SECTIONS = [
   { title: '6. Limitation of Liability',
     body:  'AlumnAI is provided "as is". The institution is not liable for any damages arising from the use or inability to use the platform, including data loss, unauthorized access, or technical issues.' },
   { title: '7. Changes to the Terms',
-    body:  'We may update these Terms of Service from time to time. Continued use of the platform means you accept the updated terms.' },
+    body:  'We reserve the right to modify these Terms of Service at any time. We will notify users of any material changes via platform notification. Continued use of the platform after changes constitutes acceptance of the new terms.' },
 ];
 
 const PRIVACY_SECTIONS = [
   { title: '1. Information We Collect',
-    body:  'We may collect the following types of information:\n• Personal Information: Name, Contact Details, Demographic info.\n• Educational Data: Program, Year Graduated, Academic Records (when applicable).\n• Employment Information: Job Details, Career Progress, and Related Survey Responses.\n• Usage Data: Device Information, Logs, and Interactions with the Platform.' },
+    body:  'We may collect the following types of information:\n• Personal Information: Name, Contact Details, Demographic info.\n• Educational Data: Program, Year Graduated, Academic Records (when applicable).\n• Employment Information: Job Details, Career Progress, and Related Survey Responses.\n• Usage Data: Device Information, Logs, and Interactions with the platform.' },
   { title: '2. How We Use Your Information',
     body:  'Information collected through AlumnAI may be used to:\n• Maintain and improve alumni records.\n• Analyze graduate outcomes and employment trends.\n• Provide personalized alumni services, opportunities, and notifications.\n• Enhance the overall alumni engagement experience.' },
   { title: '3. Data Sharing',
@@ -66,9 +66,7 @@ const PRIVACY_SECTIONS = [
   { title: '8. Third-Party Links',
     body:  'AlumnAI may contain links to third-party sites. We are not responsible for the privacy practices of external platforms.' },
   { title: '9. Updates to the Policy',
-    body:  'We may revise this Privacy Policy from time to time. Continued use of AlumnAI means you agree to the updated policy.' },
-  { title: '10. Contact Us',
-    body:  "For questions or requests regarding your data or privacy:\nEmail: nudaao@nu-dasma.edu.ph\nPhone: 09399151561 (Smart) / 09661381357 (Globe)\nLocation: Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114" },
+    body:  'We reserve the right to modify these Privacy Policy at any time. We will notify users of any material changes via platform notification. Continued use of the platform after changes constitutes acceptance of the new policy.' },
 ];
 
 /* ─────────────────────────────────────────────────────────────
@@ -86,7 +84,7 @@ const Modal = ({ onClose, iconClass, icon, iconAlt, title, subtitle, children })
           {subtitle && <p className="ab-modal-hdr-sub">{subtitle}</p>}
         </div>
         <button className="ab-modal-close" onClick={onClose} aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <svg width="25" height="25" viewBox="0 0 18 18" fill="none">
             <path d="M14 4L4 14M4 4L14 14" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </button>
@@ -180,7 +178,7 @@ const ContactModal = ({ onClose }) => (
         </div>
         <div>
           <p className="ab-contact-row-label">Phone</p>
-          <p className="ab-contact-row-value">0939-915-1561 (Smart) / 0966-138-1357 (Globe)</p>
+          <p className="ab-contact-row-value">(+63) 949-918-8036</p>
           <p className="ab-contact-row-hint">{'Monday–Friday, 8:30 AM – 5:30 PM\nSaturday, 8:30 AM – 12:30 PM'}</p>
         </div>
       </div>
@@ -356,10 +354,11 @@ const AboutView = ({
 
           {/* Back Button - Dashboard style */}
           <button className="ab-back" onClick={() => navigate('/dashboard')}>
-            <svg width="16" height="16" viewBox="0 0 17 17" fill="none">
-              <path d="M13 8.5H2M2 8.5L7 3.5M2 7.5L7 13.5"
+            <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
+              <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
                 stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            <span>Back</span>
           </button>
 
           {/* Page Header - Dashboard style */}
@@ -393,7 +392,7 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Mission</p>
                   <p className="ab-mv-slbl">Our core purpose</p>
                 </div>
-                <img src={RightArrow} alt="" className="ab-mv-arrow"/>
+                {/* <img src={RightArrow} alt="" className="ab-mv-arrow"/> */}
               </button>
 
               <button className="ab-mv-card" onClick={() => openModal('vision')}>
@@ -402,7 +401,7 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Vision</p>
                   <p className="ab-mv-slbl">What we aim to achieve</p>
                 </div>
-                <img src={RightArrow} alt="" className="ab-mv-arrow"/>
+                {/* <img src={RightArrow} alt="" className="ab-mv-arrow"/> */}
               </button>
             </div>
           </div>
@@ -410,7 +409,7 @@ const AboutView = ({
           {/* Support Section - Dashboard for-you-section style */}
           <div className="ab-support">
             <h2 className="ab-s-title">Support &amp; Legal</h2>
-            <p className="ab-s-subtitle">Resources and information to assist you.</p>
+            {/* <p className="ab-s-subtitle">Resources and information to assist you.</p> */}
             
             <div className="ab-s-grid">
               <button className="ab-tile blue" onClick={() => openModal('contact')}>

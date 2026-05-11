@@ -1,10 +1,11 @@
 // ============================================================================
-// AdminDashboard — Logic Controller
+// AdminDashboard — Logic Controller // mine (merged)
 // ============================================================================
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import AdminDashboardView from "./views/AdminDashboardView";
+import { buildAllKpiInsights } from "../services/kpiInsightsService";
 
 // ============================================================================
 // SATISFACTION SCORE MAPPING
@@ -67,12 +68,45 @@ const UNEMPLOYED_STATUSES = new Set([
 ]);
 
 // ============================================================================
+// NU BRANCH KEYWORDS
+// All known National University branches — used to detect if an alumni
+// pursued graduate studies at any NU campus.
+// ============================================================================
+const NU_BRANCH_KEYWORDS = [
+  'nu manila',
+  'nu nazareth',
+  'nu fairview',
+  'nu laguna',
+  'nu baliwag',
+  'nu dasmarinas',
+  'nu dasmariñas',
+  'nu lipa',
+  'nu east ortigas',
+  'nu bacolod',
+  'nu cebu',
+  'nu moa',
+  'nu clark',
+  'nu las piñas',
+  'nu las pinas',
+  'national university',
+];
+
+// ============================================================================
 // isInternshipSource — normalised substring check
 // ============================================================================
 const isInternshipSource = (rawValue) => {
   const src = (rawValue || '').toLowerCase().trim();
   if (!src) return false;
   return ['internship', 'ojt', 'on-the-job', 'practicum'].some(kw => src.includes(kw));
+};
+
+// ============================================================================
+// isNuBranch — checks if a post-grad institution string matches any NU campus
+// ============================================================================
+const isNuBranch = (rawValue) => {
+  const val = (rawValue || '').toLowerCase().trim();
+  if (!val) return false;
+  return NU_BRANCH_KEYWORDS.some(kw => val.includes(kw));
 };
 
 // ============================================================================
@@ -172,38 +206,16 @@ const institutionalKpis = {
 
 // ============================================================================
 // Prediction year constants — mirror train_model.py BASE_YEAR / END_YEAR.
-//
-// BASE_YEAR rows carry the observed current_rate  → used as "actual"  in chart.
-// END_YEAR  rows carry the final predicted_rate   → used as "predicted" in chart.
 // ============================================================================
 const PREDICTION_BASE_YEAR = 2025;
 const PREDICTION_END_YEAR  = 2030;
 
 // ============================================================================
 // buildCareerAlignmentData
-//
-// Accepts the raw rows from the `predictions` table and returns the array
-// shape the CareerAlignmentChart already expects:
-//   [{ program, predicted, actual, respondents }, …]
-//
-//   • "actual"      = current_rate  from the BASE_YEAR row per program.
-//                     Falls back to predicted_rate of that same row when
-//                     current_rate is null/undefined (handles legacy data).
-//   • "predicted"   = predicted_rate from the END_YEAR row per program.
-//   • "respondents" = number of prediction rows for the program, used by the
-//                     chart tooltip to surface data-sparsity context (e.g.
-//                     a program with n=1 survey respondent will show
-//                     actual=100% which looks misleading without this label).
-//                     NOTE: this equals the number of year-rows stored (1–6),
-//                     NOT the raw survey headcount. For the raw headcount the
-//                     chart would need a separate survey_progress query; this
-//                     field is a lightweight proxy that at least lets the UI
-//                     flag single-data-point programs.
 // ============================================================================
 const buildCareerAlignmentData = (predictions) => {
   if (!predictions || predictions.length === 0) return [];
 
-  // Group by program — each program will have one row per predicted year.
   const byProgram = {};
   predictions.forEach((row) => {
     if (!byProgram[row.program]) byProgram[row.program] = [];
@@ -213,17 +225,12 @@ const buildCareerAlignmentData = (predictions) => {
   return Object.entries(byProgram).map(([program, rows]) => {
     const sorted = [...rows].sort((a, b) => Number(a.year) - Number(b.year));
 
-    // Earliest row → actual (observed baseline)
     const baseRow = sorted[0];
     const actual  = Math.round(baseRow.current_rate ?? baseRow.predicted_rate ?? 0);
 
-    // Latest row → predicted (end-of-horizon forecast)
     const endRow    = sorted[sorted.length - 1];
     const predicted = Math.round(endRow.predicted_rate ?? 0);
 
-    // Row count per program — lightweight sparsity proxy for tooltip display.
-    // A program present in all 6 year-rows (2025–2030) has respondents = 6.
-    // A program with only 1 row was likely added mid-cycle or has sparse data.
     const respondents = sorted.length;
 
     return { program, predicted, actual, respondents };
@@ -257,6 +264,9 @@ const AdminDashboard = () => {
   const [inDemandSkillsData,      setInDemandSkillsData]      = useState([]);
   const [careerAlignmentData,     setCareerAlignmentData]     = useState([]);
   const [loadingCharts,           setLoadingCharts]           = useState(true);
+
+  // ── Dynamic KPI insights (employment / feedback / engagement) ─────────────
+  const [kpiInsights, setKpiInsights] = useState(null);
 
   // ==========================================================================
   // KPI DATA FETCHING
@@ -310,7 +320,7 @@ const AdminDashboard = () => {
           setSurveySubText(thisM > 0 ? `+${thisM} completed this month` : 'No completions yet');
         } else {
           const diff = thisM - lastM;
-          setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} vs last month`);
+          setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
         }
       } else {
         console.error('Survey completion error:', surveyErr.message);
@@ -346,11 +356,12 @@ const AdminDashboard = () => {
         }
       } catch (e) { console.error('Alumni satisfaction error:', e); }
 
-      // ── 5. All 9 Institutional KPIs ───────────────────────────────────────
+      // ── 5. All 9 Institutional KPIs + dynamic insights ────────────────────
+      // Now also fetches skills_competencies_data for KPI 9 (Leadership).
       const { data: allRows, error: allErr } = await supabase
         .from('survey_progress')
         .select(
-          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data'
+          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data, feedback_university_data, skills_competencies_data'
         );
 
       if (allErr) {
@@ -358,15 +369,23 @@ const AdminDashboard = () => {
         return;
       }
 
-      const parsed = (allRows ?? []).map(row => ({
-        emp: safeParse(row.employment_information_data),
-        edu: safeParse(row.educational_background_data),
-        eng: safeParse(row.alumni_engagement_data),
-        job: safeParse(row.job_experience_data),
+      const surveyRows = allRows ?? [];
+
+      // ── Build dynamic insights from raw rows ─────────────────────────────
+      const insights = buildAllKpiInsights(surveyRows);
+      setKpiInsights(insights);
+
+      // Parse all JSONB columns including the newly added skills column.
+      const parsed = surveyRows.map(row => ({
+        emp:    safeParse(row.employment_information_data),
+        edu:    safeParse(row.educational_background_data),
+        eng:    safeParse(row.alumni_engagement_data),
+        job:    safeParse(row.job_experience_data),
+        skills: safeParse(row.skills_competencies_data),
       }));
 
       // Helper: is this respondent currently employed?
-      const isEmployed = (emp) => {
+      const isEmployedHelper = (emp) => {
         if (!emp) return false;
         const status = emp.employment_status || emp.employmentStatus || emp.current_employment_status || '';
         if (!status) return !!(emp.job_position || emp.company_name);
@@ -375,7 +394,7 @@ const AdminDashboard = () => {
 
       const withEmpData  = parsed.filter(r => r.emp !== null);
       const withEduData  = parsed.filter(r => r.edu !== null);
-      const employedRows = withEmpData.filter(r => isEmployed(r.emp));
+      const employedRows = withEmpData.filter(r => isEmployedHelper(r.emp));
       const withJobData  = parsed.filter(r => r.job !== null);
 
       if (process.env.NODE_ENV === 'development') {
@@ -400,7 +419,7 @@ const AdminDashboard = () => {
         ? Math.round((internshipCount / withJobData.length) * 100) : 0;
 
       // KPI 2: Employed Within 2 Years of Graduation
-      const empWithinTwoYears = withEmpData.filter(r => isEmployed(r.emp)).length;
+      const empWithinTwoYears = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       const empTwoYearsPct    = withEmpData.length > 0
         ? Math.round((empWithinTwoYears / withEmpData.length) * 100) : 0;
 
@@ -450,33 +469,65 @@ const AdminDashboard = () => {
       // ── Education tab KPIs ────────────────────────────────────────────────
 
       // KPI 7: Pursued Graduate Studies (within 1 yr)
+      // Source: educational_background_data.post_grad_plans === "Yes"
       const gradStudiesCount = withEduData.filter(r => {
-        const val = r.edu.plans_postgraduate
+        const plans = r.edu.post_grad_plans
+          || r.edu.postGradPlans
+          || r.edu.plans_postgraduate
           || r.edu.do_you_have_plans_postgrad
           || r.edu.plansPostgraduate
           || r.edu.post_graduate_plans
           || '';
-        return val === 'Yes' || val === true;
+        return plans === 'Yes' || plans === true;
       }).length;
       const gradStudiesPct = withEduData.length > 0
         ? Math.round((gradStudiesCount / withEduData.length) * 100) : 0;
 
-      // KPI 8: Pursued Graduate Studies at NU (pending NU-specific field)
-      const nuGradStudiesPct = 0;
+      // KPI 8: Pursued Graduate Studies at NU
+      // Source: educational_background_data.post_grad_course — check if the
+      // institution name matches any known NU branch keyword.
+      // Only count respondents who also have post_grad_plans === "Yes".
+      const nuGradStudiesCount = withEduData.filter(r => {
+        const plans = r.edu.post_grad_plans
+          || r.edu.postGradPlans
+          || r.edu.plans_postgraduate
+          || r.edu.do_you_have_plans_postgrad
+          || r.edu.plansPostgraduate
+          || r.edu.post_graduate_plans
+          || '';
+        if (plans !== 'Yes' && plans !== true) return false;
 
-      // KPI 9: In Positions in Professional Organizations (count)
-      const withEngData = parsed.filter(r => r.eng !== null);
-      const profOrgCount = withEngData.filter(r => {
-        const participates = r.eng.willing_to_participate
-          || r.eng.willingness_to_participate
-          || r.eng.willing_participate
-          || [];
-        const arr = Array.isArray(participates) ? participates : [participates];
-        return arr.some(opt => opt && opt !== 'Not at all' && opt !== 'Other');
+        // post_grad_course may hold the institution name or the school field
+        const institution = r.edu.post_grad_course
+          || r.edu.postGradCourse
+          || r.edu.post_grad_school
+          || r.edu.postGradSchool
+          || r.edu.graduate_school
+          || r.edu.school
+          || '';
+        return isNuBranch(institution);
+      }).length;
+      const nuGradStudiesPct = withEduData.length > 0
+        ? Math.round((nuGradStudiesCount / withEduData.length) * 100) : 0;
+
+      // KPI 9: In Positions in Professional Organizations (Leadership)
+      // Source: skills_competencies_data.skill_ratings["Leadership Skills"]
+      // Count alumni who have a Leadership Skills rating > 0 (i.e. they rated it).
+      // A rating of 4 or 5 indicates strong leadership involvement.
+      const withSkillsData = parsed.filter(r => r.skills !== null);
+      const leadershipCount = withSkillsData.filter(r => {
+        const ratings = r.skills.skill_ratings || r.skills.skillRatings || {};
+        const leadershipRating =
+          ratings['Leadership Skills'] ??
+          ratings['leadership_skills']  ??
+          ratings['Leadership']         ??
+          null;
+        // Count as "in leadership position" if rating is 4 or 5 (top-tier)
+        return leadershipRating !== null && Number(leadershipRating) >= 4;
       }).length;
 
       // ── Employment Rate stat card ─────────────────────────────────────────
-      const employedStatCount = withEmpData.filter(r => isEmployed(r.emp)).length;
+      const employedStatCount = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       if (withEmpData.length > 0) {
         const empRatePct = Math.round((employedStatCount / withEmpData.length) * 100);
         setEmploymentRate(`${empRatePct}%`);
@@ -517,11 +568,28 @@ const AdminDashboard = () => {
         education: institutionalKpis.education.map(kpi => {
           switch (kpi.id) {
             case 'grad_studies':
-              return { ...kpi, value: `${gradStudiesPct}%`, progress: gradStudiesPct };
+              return {
+                ...kpi,
+                value: `${gradStudiesPct}%`,
+                progress: gradStudiesPct,
+                targetLabel: `Goal: 100% (${gradStudiesCount} of ${withEduData.length})`,
+              };
             case 'nu_grad_studies':
-              return { ...kpi, value: `${nuGradStudiesPct}%`, progress: nuGradStudiesPct };
+              return {
+                ...kpi,
+                value: `${nuGradStudiesPct}%`,
+                progress: nuGradStudiesPct,
+                targetLabel: `Goal: 100% (${nuGradStudiesCount} of ${withEduData.length})`,
+              };
             case 'prof_org':
-              return { ...kpi, value: String(profOrgCount), progress: 0, targetLabel: 'N/A' };
+              return {
+                ...kpi,
+                value: String(leadershipCount),
+                progress: withSkillsData.length > 0
+                  ? Math.round((leadershipCount / withSkillsData.length) * 100)
+                  : 0,
+                targetLabel: `${leadershipCount} alumni`,
+              };
             default:
               return kpi;
           }
@@ -541,14 +609,13 @@ const AdminDashboard = () => {
 
       try {
         // ── 1. Predictions — Employment Alignment ─────────────────────────
-        //    Also used below for Career Alignment, so we fetch once and reuse.
         const { data: predictions, error: predError } = await supabase
           .from('predictions')
           .select('*')
           .order('year', { ascending: true });
 
         if (!predError && predictions && predictions.length > 0) {
-          // ── 1a. Employment Alignment (top-N programs by latest predicted rate)
+          // ── 1a. Employment Alignment
           const programs   = [...new Set(predictions.map(p => p.program))];
           const latestYear = Math.max(...predictions.map(p => p.year));
 
@@ -560,18 +627,7 @@ const AdminDashboard = () => {
           setEmploymentAlignmentData(alignmentByProgram.slice(0, 6));
 
           // ── 1b. Career Alignment Prediction
-          //
-          //    • actual      = current_rate of the BASE_YEAR row (observed baseline)
-          //    • predicted   = predicted_rate of the END_YEAR row (model forecast)
-          //    • respondents = year-row count per program, surfaced in tooltip as
-          //                    a sparsity indicator (programs with very few survey
-          //                    respondents may show extreme actual values like 100%
-          //                    or 0% — the respondents field lets the chart tooltip
-          //                    flag these as low-confidence data points).
-          //
-          //    All canonical programs from train_model.py / main.py that have
-          //    predictions stored will appear automatically — no hard-coded list.
-          setCareerAlignmentData(buildCareerAlignmentData(predictions));
+          setCareerAlignmentData(buildCareerAlignmentData(predictions).slice(0, 10));
         } else if (predError) {
           console.error('Predictions fetch error:', predError.message);
         }
@@ -715,6 +771,7 @@ const AdminDashboard = () => {
       inDemandSkillsData={inDemandSkillsData}
       careerAlignmentData={careerAlignmentData}
       loadingCharts={loadingCharts}
+      kpiInsights={kpiInsights}
     />
   );
 };

@@ -107,7 +107,10 @@
   transition: background var(--ab-tr-fast);
 }
 
-.ab-bell-btn:hover { background: rgba(43,114,251,.25); }
+.ab-bell-btn:hover { 
+  background: rgba(43,114,251,.25);
+  border-color: rgba(43,114, 251, 0.5);
+ }
 
 .ab-badge {
   position: absolute;
@@ -235,7 +238,6 @@
 
 .ab-notif-item:hover {
   background: rgba(0, 0, 0, 0.03);
-  transform: translateX(2px);
 }
 
 /* Notification Icon */
@@ -255,7 +257,6 @@
 
 .ab-notif-item:hover .ab-notif-icon {
   background: rgba(0, 62, 166, 0.15);
-  transform: scale(1.05);
 }
 
 /* Notification Content */
@@ -304,10 +305,9 @@
   background: #003EA6;
   flex-shrink: 0;
   margin-top: 6px;
-  animation: pulse 2s ease infinite;
 }
 
-@keyframes pulse {
+/* @keyframes pulse {
   0%, 100% {
     opacity: 1;
     transform: scale(1);
@@ -316,7 +316,7 @@
     opacity: 0.6;
     transform: scale(1.2);
   }
-}
+} */
 
 /* Notification Group Label */
 .ab-notif-group-label {
@@ -489,21 +489,29 @@
 /* ============================================
    BACK BUTTON  (mirrors Dashboard back button sizing)
    ============================================ */
+/* ── Back button — matches .prof-back exactly ── */
 .ab-back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: none; border: none;
-  cursor: pointer; padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0px;
+  width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  width: fit-content;
+  margin-top: clamp(2px, 0.4vh, 6px);
+  transition: opacity 0.15s ease;
 }
 
+.ab-back:hover { opacity: 0.7; }
+
 .ab-back span {
-  font-weight: 400;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
   font-size: clamp(13px, 0.9vw, 15px);
-  color: var(--ab-text-dark);
+  color: #002263;
 }
 
 /* ============================================
@@ -512,25 +520,33 @@
 .ab-hdr {
   flex-shrink: 0;
   margin-bottom: clamp(10px, 1.4vh, 16px);
-  /* Reserve right space for the bell, same calculation as Dashboard */
   padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
 }
 
 .ab-title {
   font-weight: 700;
   /* Matches .prof-page-title / .for-you-heading range */
-  font-size: clamp(28px, 3.2vw, 40px);
+  font-size: clamp(28px, 3.2vw, 29px);
   line-height: 1.2;
   letter-spacing: -1px;
   color: var(--ab-text-dark-alt);
   margin-bottom: 3px;
+  margin-left: 65px
+}
+.ab-s-subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: clamp(11px, 0.9vw, 15px);
+  color: var(--ab-text-gray);
+  margin-bottom: clamp(8px, 1.2vh, 14px);
 }
 
 .ab-sub {
   font-weight: 400;
   font-size: clamp(11px, 0.9vw, 15px);
-  line-height: 1.5;
+  line-height: 2;
   color: var(--ab-text-gray);
+  margin-left: 65px;
 }
 
 /* ============================================
@@ -549,6 +565,9 @@
   margin-bottom: clamp(12px, 1.6vh, 20px);
   display: flex;
   flex-direction: column;
+  width: 85%;
+  margin: 0 60px clamp(12px, 1.6vh, 20px) 60px;
+  margin-top: 7px;
   gap: clamp(10px, 1.4vh, 16px);
 }
 
@@ -701,16 +720,19 @@
   box-shadow: var(--ab-shadow-card);
   border-radius: var(--ab-radius-lg);
   padding: clamp(14px, 1.8vh, 24px) clamp(14px, 2.2vw, 32px);
-  flex: 1 1 0;
+  flex: none;
+  height: -90%;
+  width: 85%;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  margin: 60px;
+  margin-top: clamp(12px, 1.7vh, 20px);
 }
 
 .ab-s-title {
   font-weight: 700;
-  /* Mirrors .for-you-heading */
-  font-size: clamp(14px, 1.6vw, 22px);
+  font-size: clamp(14px, 1.9vw, 19px);
   line-height: 1.33;
   color: var(--ab-text-dark-alt);
   flex-shrink: 0;
@@ -721,7 +743,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: clamp(8px, 1.1vw, 16px);
-  flex: 1 1 0;
+  flex: none;
   min-height: 0;
   align-items: stretch;
 }
@@ -738,7 +760,10 @@
   align-items: center;
   justify-content: center;
   gap: clamp(6px, 0.8vh, 10px);
-  padding: clamp(10px, 1.4vh, 20px) clamp(8px, 1vw, 16px);
+  padding: clamp(10px, 1.0vh, 20px) clamp(8px, 1vw, 16px);
+  height: clamp(100px, 28vh, 150px);
+  width: 95%;
+  margin-left: 6px; 
 }
 
 .ab-tile:hover {
@@ -771,11 +796,13 @@
 
 .ab-tile-name {
   font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
   /* Mirrors .card-title lower end */
   font-size: clamp(12px, 1.1vw, 17px);
   line-height: 1.3;
   color: #2d467c;
   text-align: center;
+  padding: 8px;
 }
 
 .ab-tile-sub {
@@ -808,7 +835,7 @@
   width: 100%;
   max-width: min(660px, 95vw);
   max-height: min(680px, 90vh);
-  min-height: 300px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -851,11 +878,13 @@
   font-size: clamp(15px, 1.5vw, 22px);
   color: var(--ab-text-white);
   line-height: 1.3;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .ab-modal-hdr-sub {
   font-size: clamp(11px, 0.9vw, 14px);
   color: rgba(255,255,255,.75);
+  font-family: 'Montserrat', sans-serif;
   margin-top: 2px;
 }
 
@@ -865,6 +894,7 @@
   right: clamp(12px, 1.4vw, 20px);
   width: 34px; height: 34px;
   border-radius: 50%;
+  margin-top: 10px;
   background: none; border: none;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -910,6 +940,7 @@
   font-size: clamp(12px, 0.95vw, 14px);
   line-height: 1.7; color: #1a2a4a;
   white-space: pre-line;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .ab-mission-body {
@@ -917,18 +948,21 @@
   font-size: clamp(12px, 0.98vw, 15px);
   line-height: 1.75; color: #1a2a4a;
   white-space: pre-line;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .ab-vision-body {
   font-weight: 400;
   font-size: clamp(14px, 1.3vw, 18px);
   line-height: 1.7; color: #1a2a4a;
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* Contact rows */
 .ab-contact-subtitle {
   font-weight: 700;
   font-size: clamp(13px, 1.1vw, 16px);
+  font-family: 'Montserrat', sans-serif;
   color: #003ea6;
   margin-bottom: clamp(6px, 1vh, 10px);
 }
@@ -954,18 +988,21 @@
 .ab-contact-row-label {
   font-weight: 600;
   font-size: clamp(13px, 1vw, 15px);
+  font-family: 'Montserrat', sans-serif;
   color: #002263; margin-bottom: 3px;
 }
 
 .ab-contact-row-value {
   font-weight: 400;
   font-size: clamp(12px, 0.92vw, 14px);
+  font-family: 'Montserrat', sans-serif;
   color: #364153; line-height: 1.55;
   word-break: break-word; white-space: pre-line;
 }
 
 .ab-contact-row-hint {
   font-size: clamp(10px, 0.8vw, 12px);
+  font-family: 'Montserrat', sans-serif;
   color: #6a7282; margin-top: 2px; white-space: pre-line;
 }
 
@@ -1006,6 +1043,19 @@
 
   .ab-hdr {
     padding-right: calc(clamp(44px, 4vw, 52px) + clamp(12px, 1.5vw, 20px));
+  }
+
+   .ab-support {
+    height: clamp(200px, 26vh, 260px);
+  }
+
+  .ab-s-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ab-tile {
+    width: 100%;
+    margin-left: 0;
   }
 }
 
@@ -1050,8 +1100,8 @@
     grid-template-columns: 1fr;
   }
 
-  .ab-support {
-    min-height: 0;
+    .ab-support {
+    height: auto;
     flex: none;
   }
 
@@ -1061,6 +1111,9 @@
   }
 
   .ab-tile {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
     flex-direction: row;
     justify-content: flex-start;
     gap: 12px;
@@ -1084,6 +1137,16 @@
   .ab-mv-icon {
     width:  40px;
     height: 40px;
+  }
+
+   .ab-s-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ab-tile {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
   }
 }
 

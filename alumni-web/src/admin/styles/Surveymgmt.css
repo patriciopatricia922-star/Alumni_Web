@@ -1,39 +1,43 @@
 /* ============================================================================
-   Surveymgmt.css
+   THIS IS FOR INLINE STYLES.
    ============================================================================
-   Merged stylesheet: retains all original rules, adds .sm-confirm-confirm
-   (blue confirm button for the Publish dialog) and .sm-confirm-title from
-   the new version. Duplicate rules resolved; the old values are kept where
-   the sheets differed on non-functional properties.
+   Purpose: Contains all CSS styles for the Survey Management component.
+            Includes layout, animations, component styling, and responsive
+            breakpoints.
    ============================================================================ */
 
+/* ============================ GLOBAL IMPORTS ============================ */
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;700&display=swap');
 
-/* ============================ BASE ============================ */
+/* ============================ BASE BODY STYLES ============================ */
 html, body, #root {
   background-color: #E1ECF7;
   margin: 0;
   padding: 0;
 }
 
-body { background-color: #E1ECF7; }
+body { 
+  background-color: #E1ECF7; 
+}
 
-/* ============================ PAGE CONTAINER ============================ */
+/* ============================ MAIN PAGE CONTAINER ============================ */
 .survey-page {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
   font-family: "Lexend", sans-serif;
   margin-left: 229px;
-  background-color: #E1ECF7;
+  background-color: #E1ECF7;  /* FIXED: Added background color */
   min-height: 100vh;
 }
 
+/* Responsive: Hide margin on mobile screens */
 @media (max-width: 900px) {
   .survey-page { margin-left: 0; }
 }
 
-/* ============================ HEADER ============================ */
+/* ============================ HEADER STYLES ============================ */
+/* Sticky header that stays at top while scrolling */
 .survey-header {
   position: sticky;
   top: 0;
@@ -45,6 +49,7 @@ body { background-color: #E1ECF7; }
   padding: 37px 2rem 0.5rem;
 }
 
+/* Pseudo-element for header background extension */
 .survey-header::before {
   content: "";
   position: absolute;
@@ -55,13 +60,30 @@ body { background-color: #E1ECF7; }
   background: #E1ECF7;
 }
 
-.survey-header-left { display: flex; flex-direction: column; }
+/* Header left side - title and description container */
+.survey-header-left { 
+  display: flex; 
+  flex-direction: column; 
+}
 
-.survey-header h1 { font-size: 1.75rem; color: #324D87; margin: 0; }
+.survey-header h1 { 
+  font-size: 1.75rem; 
+  color: #324D87; 
+  margin: 0; 
+}
 
-.survey-desc { font-size: 0.875rem; color: #6b7280; margin: 0; }
+.survey-desc { 
+  font-size: 0.875rem; 
+  color: #6b7280; 
+  margin: 0; 
+}
 
-.survey-header-actions { display: flex; gap: 0.75rem; align-items: center; }
+/* Header right side - action buttons container */
+.survey-header-actions { 
+  display: flex; 
+  gap: 0.75rem; 
+  align-items: center; 
+}
 
 /* ============================ PUBLISH BUTTON ============================ */
 .publish-btn {
@@ -77,24 +99,25 @@ body { background-color: #E1ECF7; }
   transition: background 0.2s ease;
 }
 
-.publish-btn:hover    { background: #3d8fd6; }
+.publish-btn:hover { background: #3d8fd6; }
 .publish-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ============================ MAIN LAYOUT ============================ */
+/* ============================ MAIN LAYOUT GRID ============================ */
 .survey-main {
   display: grid;
   grid-template-columns: 18rem 1fr;
   gap: 1.25rem;
   padding: 0 2rem;
   align-items: start;
-  background: transparent;
+  background: transparent;  /* FIXED: Ensure transparent background */
 }
 
+/* Responsive: Stack vertically on smaller screens */
 @media (max-width: 860px) {
   .survey-main { grid-template-columns: 1fr; }
 }
 
-/* ============================ SECTION SIDEBAR ============================ */
+/* ============================ LEFT SIDEBAR - SECTIONS ============================ */
 .survey-sections {
   border-radius: 0.75rem;
   padding: 1rem;
@@ -104,9 +127,10 @@ body { background-color: #E1ECF7; }
   position: sticky;
   top: 7.5rem;
   height: max-content;
-  background: transparent;
+  background: transparent;  /* FIXED: Ensure transparent background */
 }
 
+/* Add Section button */
 .add-section-btn {
   background: #e5e7eb;
   border: none;
@@ -121,8 +145,14 @@ body { background-color: #E1ECF7; }
 
 .add-section-btn:hover { background: #d1d5db; }
 
-.sections-list { display: flex; flex-direction: column; gap: 0.5rem; }
+/* Sections list container */
+.sections-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.5rem; 
+}
 
+/* Individual section item */
 .section-item {
   display: flex;
   align-items: center;
@@ -139,6 +169,7 @@ body { background-color: #E1ECF7; }
 
 .section-item:hover { background: #f9fafb; }
 
+/* Section number circle badge */
 .section-number {
   width: 1.2rem;
   height: 1.2rem;
@@ -152,8 +183,16 @@ body { background-color: #E1ECF7; }
   flex-shrink: 0;
 }
 
-.section-item.active                { border: 0.0625rem solid #3b82f6; background: #eff6ff; }
-.section-item.active .section-number { background: #3b82f6; color: white; }
+/* Active section styling */
+.section-item.active { 
+  border: 0.0625rem solid #3b82f6; 
+  background: #eff6ff; 
+}
+
+.section-item.active .section-number { 
+  background: #3b82f6; 
+  color: white; 
+}
 
 /* ============================ SECTION HEADER CARD ============================ */
 .section-card {
@@ -165,14 +204,32 @@ body { background-color: #E1ECF7; }
   margin-bottom: 1rem;
 }
 
-.section-top { display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem; }
+.section-top { 
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 0.75rem; 
+  color: #6b7280; 
+  margin-bottom: 0.5rem; 
+}
 
-.section-card h2 { margin: 0.2rem 0; font-size: 1.1rem; color: #0f172a; }
+.section-card h2 { 
+  margin: 0.2rem 0; 
+  font-size: 1.1rem; 
+  color: #0f172a; 
+}
 
-.section-sub { font-size: 0.8rem; color: #6b7280; margin: 0; }
+.section-sub { 
+  font-size: 0.8rem; 
+  color: #6b7280; 
+  margin: 0; 
+}
 
 /* ============================ BUILDER CONTAINER ============================ */
-.survey-builder { margin-bottom: 3rem; min-width: 0; background: transparent; }
+.survey-builder { 
+  margin-bottom: 3rem; 
+  min-width: 0; 
+  background: transparent;  /* FIXED: Ensure transparent background */
+}
 
 /* ============================ QUESTION CARD ============================ */
 .question-card {
@@ -185,9 +242,15 @@ body { background-color: #E1ECF7; }
   transition: box-shadow 0.2s ease;
 }
 
-.question-card:hover         { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.question-card.editing        { border: 0.0625rem solid #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+.question-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
+/* Editing mode styling - blue border and glow */
+.question-card.editing { 
+  border: 0.0625rem solid #3b82f6; 
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12); 
+}
+
+/* Question header row */
 .question-header {
   display: flex;
   justify-content: space-between;
@@ -198,9 +261,21 @@ body { background-color: #E1ECF7; }
   gap: 1rem;
 }
 
-.required-asterisk  { color: #ef4444; margin-left: 0.1rem; }
-.question-actions   { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+/* Required field asterisk */
+.required-asterisk { 
+  color: #ef4444; 
+  margin-left: 0.1rem; 
+}
 
+/* Question action buttons container */
+.question-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.4rem; 
+  flex-shrink: 0; 
+}
+
+/* Question type badge */
 .question-type {
   font-size: 0.75rem;
   padding: 0.2rem 0.4rem;
@@ -210,6 +285,7 @@ body { background-color: #E1ECF7; }
   font-family: "Lexend", sans-serif;
 }
 
+/* Input field styling for preview mode */
 .question-input {
   width: 100%;
   max-width: 22rem;
@@ -220,11 +296,24 @@ body { background-color: #E1ECF7; }
   font-size: 0.875rem;
 }
 
-.radio-group          { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem; }
-.radio-group label    { display: flex; align-items: center; gap: 0.5rem; }
+/* Radio group for multiple choice options */
+.radio-group { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0.5rem; 
+  font-size: 0.8rem; 
+}
 
-/* ============================ SAVE / CANCEL ============================ */
+.radio-group label { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem; 
+}
+
+/* ============================ SAVE BUTTON STYLES ============================ */
 .q-save-btn {
+  margin-top: 0;
+  padding: 0.3rem 0.65rem;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -241,9 +330,10 @@ body { background-color: #E1ECF7; }
   transition: background 0.15s, opacity 0.15s;
 }
 
-.q-save-btn:hover    { background: #16a34a; }
+.q-save-btn:hover { background: #16a34a; }
 .q-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+/* Save/Cancel row container */
 .q-save-row {
   display: flex;
   align-items: center;
@@ -253,6 +343,7 @@ body { background-color: #E1ECF7; }
   border-top: 1px solid #f1f5f9;
 }
 
+/* Cancel button */
 .q-cancel-btn {
   background: none;
   margin-top: 0.75rem;
@@ -268,9 +359,14 @@ body { background-color: #E1ECF7; }
 
 .q-cancel-btn:hover { background: #f9fafb; }
 
-/* ============================ BRANCHING UI ============================ */
-.branch-container { display: flex; justify-content: flex-end; margin-top: 0.5rem; }
+/* ============================ BRANCHING UI STYLES ============================ */
+.branch-container { 
+  display: flex; 
+  justify-content: flex-end; 
+  margin-top: 0.5rem; 
+}
 
+/* Branch button - opens branching configuration */
 .branch-btn {
   margin-top: 0.5rem;
   border: none;
@@ -289,28 +385,73 @@ body { background-color: #E1ECF7; }
 
 .branch-btn:hover { background: #e9d5ff; }
 
-.rating-group { display: flex; gap: 8px; font-size: 24px; color: #d1d5db; }
-.star         { cursor: pointer; transition: color 0.2s ease; }
-.star:hover   { color: #f5b301; }
+/* Rating stars group */
+.rating-group { 
+  display: flex; 
+  gap: 8px; 
+  font-size: 24px; 
+  color: #d1d5db; 
+}
 
-.inner-section-card             { margin-top: 0.8rem; margin-bottom: 0.6rem; border-left: 4px solid #6366f1; background: white; }
-.inner-section-card h2          { font-size: 1rem; margin: 0; color: #4f46e5; }
+.star { 
+  cursor: pointer; 
+  transition: color 0.2s ease;
+}
 
-/* ============================ BRANCH PAGE ============================ */
-.branch-page  { display: flex; flex-direction: column; gap: 1.2rem; }
-.branch-header { display: flex; align-items: center; gap: 0.25rem; }
-.branch-header h2 { margin: 0; font-size: 1.25rem; color: #0f172a; }
+.star:hover { color: #f5b301; }
 
+/* Inner section card for title-type questions */
+.inner-section-card {
+  margin-top: 0.8rem;
+  margin-bottom: 0.6rem;
+  border-left: 4px solid #6366f1;
+  background: white;
+}
+
+.inner-section-card h2 { 
+  font-size: 1rem; 
+  margin: 0; 
+  color: #4f46e5; 
+}
+
+/* ============================ BRANCH PAGE STYLES ============================ */
+.branch-page { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.2rem; 
+}
+
+.branch-header { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.25rem; 
+}
+
+.branch-header h2 { 
+  margin: 0; 
+  font-size: 1.25rem; 
+  color: #0f172a; 
+}
+
+/* Back button from branching mode to editor */
 .branch-back {
-  display: flex; align-items: center; gap: 0.4rem;
-  background: none; border: none; font-size: 0.9rem; cursor: pointer;
-  font-family: "Lexend", sans-serif; color: #374151;
-  padding: 0.5rem; border-radius: 0.4rem;
+  display: flex; 
+  align-items: center; 
+  gap: 0.4rem;
+  background: none; 
+  border: none; 
+  font-size: 0.9rem; 
+  cursor: pointer;
+  font-family: "Lexend", sans-serif; 
+  color: #374151; 
+  padding: 0.5rem; 
+  border-radius: 0.4rem;
   transition: background 0.2s ease;
 }
 
 .branch-back:hover { background: #f3f4f6; }
 
+/* Branch card container */
 .branch-card {
   background: white;
   border-radius: 0.75rem;
@@ -322,20 +463,38 @@ body { background-color: #E1ECF7; }
   overflow-x: auto;
 }
 
-.branch-row            { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0; border-bottom: 0.06rem solid #e5e7eb; gap: 1rem; }
+/* Branch row for each question/option */
+.branch-row {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 0.7rem 0; 
+  border-bottom: 0.06rem solid #e5e7eb; 
+  gap: 1rem;
+}
+
 .branch-row:last-child { border-bottom: none; }
-.branch-question       { font-size: 0.85rem; max-width: 60%; color: #374151; }
-.branch-answer         { font-size: 0.8rem; color: #6b7280; }
+
+.branch-question { 
+  font-size: 0.85rem; 
+  max-width: 60%; 
+  color: #374151; 
+}
+
+.branch-answer { 
+  font-size: 0.8rem; 
+  color: #6b7280; 
+}
 
 .branch-select select {
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.4rem;
+  padding: 0.35rem 0.5rem; 
+  border-radius: 0.4rem; 
   border: 0.06rem solid #d1d5db;
-  font-size: 0.8rem;
+  font-size: 0.8rem; 
   font-family: "Lexend", sans-serif;
 }
 
-/* ============================ TOAST ============================ */
+/* ============================ TOAST NOTIFICATION STYLES ============================ */
 .sm-toast {
   display: inline-flex;
   align-items: center;
@@ -351,29 +510,52 @@ body { background-color: #E1ECF7; }
   min-width: 200px;
 }
 
-.sm-toast-icon    { font-size: 1rem; }
+.sm-toast-icon { font-size: 1rem; }
+
+/* Toast type color variants */
 .sm-toast-success { background: #22c55e; }
 .sm-toast-edit    { background: #3b82f6; }
 .sm-toast-copy    { background: #8b5cf6; }
 .sm-toast-delete  { background: #ef4444; }
 
-@keyframes smSlideIn  { from { opacity: 0; transform: translateX(60px) scale(0.92); } to { opacity: 1; transform: translateX(0) scale(1); } }
-@keyframes smSlideOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(60px) scale(0.92); } }
+/* Toast animation keyframes */
+@keyframes smSlideIn {
+  from { opacity: 0; transform: translateX(60px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0)   scale(1); }
+}
 
-.sm-toast-enter { animation: smSlideIn  0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.sm-toast-exit  { animation: smSlideOut 0.3s ease forwards; }
+@keyframes smSlideOut {
+  from { opacity: 1; transform: translateX(0)   scale(1); }
+  to   { opacity: 0; transform: translateX(60px) scale(0.92); }
+}
 
-/* ============================ CONFIRM MODAL ============================ */
+.sm-toast-enter {
+  animation: smSlideIn 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.sm-toast-exit {
+  animation: smSlideOut 0.3s ease forwards;
+}
+
+/* ============================ CONFIRM DELETE MODAL STYLES ============================ */
+/* Modal overlay - dark semi-transparent background */
 .sm-confirm-overlay {
-  position: fixed; inset: 0;
+  position: fixed; 
+  inset: 0;
   background: rgba(0,0,0,0.35);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
   z-index: 9000;
   animation: smFadeIn 0.18s ease;
 }
 
-@keyframes smFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes smFadeIn {
+  from { opacity: 0; } 
+  to { opacity: 1; }
+}
 
+/* Modal card */
 .sm-confirm-card {
   background: white;
   border-radius: 1rem;
@@ -387,54 +569,76 @@ body { background-color: #E1ECF7; }
   animation: smPopIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
 }
 
-@keyframes smPopIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
-
-/* Title — shared by both delete and publish dialogs */
-.sm-confirm-title {
-  margin: 0;
-  font-family: "Lexend", sans-serif;
-  font-size: 1.1rem;
-  color: #111827;
+@keyframes smPopIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .sm-confirm-message {
-  margin: 0;
-  font-family: "Lexend", sans-serif;
+  margin: 0; 
+  font-family: "Lexend",sans-serif; 
   font-size: 0.8rem;
-  color: #6b7280;
-  text-align: center;
+  color: #6b7280; 
+  text-align: center; 
   line-height: 1.5;
 }
 
-.sm-confirm-actions { display: flex; gap: 0.75rem; margin-top: 0.5rem; }
+/* Modal action buttons container */
+.sm-confirm-actions { 
+  display: flex; 
+  gap: 0.75rem; 
+  margin-top: 0.5rem; 
+}
 
+/* Cancel button */
 .sm-confirm-cancel {
-  padding: 0.45rem 1.1rem; border-radius: 0.4rem;
-  border: 1px solid #d1d5db; background: white; color: #374151;
-  font-family: "Lexend", sans-serif; font-size: 0.8rem; cursor: pointer;
+  padding: 0.45rem 1.1rem; 
+  border-radius: 0.4rem;
+  border: 1px solid #d1d5db; 
+  background: white; 
+  color: #374151;
+  font-family: "Lexend",sans-serif; 
+  font-size: 0.8rem; 
+  cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .sm-confirm-cancel:hover { background: #f9fafb; }
 
-/* Red button — delete confirmations */
+/* Delete confirmation button */
 .sm-confirm-delete {
-  padding: 0.45rem 1.1rem; border-radius: 0.4rem;
-  border: none; background: #ef4444; color: white;
-  font-family: "Lexend", sans-serif; font-size: 0.8rem;
-  cursor: pointer; font-weight: 600;
+  padding: 0.45rem 1.1rem; 
+  border-radius: 0.4rem;
+  border: none; 
+  background: #ef4444; 
+  color: white;
+  font-family: "Lexend",sans-serif; 
+  font-size: 0.8rem; 
+  cursor: pointer; 
+  font-weight: 600;
   transition: background 0.2s ease;
 }
 
 .sm-confirm-delete:hover { background: #dc2626; }
 
-/* Blue button — publish confirmation */
 .sm-confirm-confirm {
-  padding: 0.45rem 1.1rem; border-radius: 0.4rem;
-  border: none; background: #4FA3F7; color: white;
-  font-family: "Lexend", sans-serif; font-size: 0.8rem;
-  cursor: pointer; font-weight: 600;
+  padding: 0.45rem 1.1rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: #4FA3F7;
+  color: white;
+  font-family: "Lexend", sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
   transition: background 0.2s ease;
 }
 
-.sm-confirm-confirm:hover { background: #3d8fd6; }
+.sm-confirm-confirm:hover {
+  background: #3d8fd6;
+}
+/* ============================ BUILDER CONTAINER ============================ */
+.survey-builder { 
+  margin-bottom: 3rem; 
+  min-width: 0; 
+}

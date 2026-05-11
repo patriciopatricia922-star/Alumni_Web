@@ -1,9 +1,9 @@
 // ============================================================================
-// AdminDashboardView — UI Layer
+// AdminDashboardView — UI Layer mine (merged)
 // ============================================================================
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   LineChart, Line,
   BarChart, Bar,
@@ -11,8 +11,14 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from "recharts";
-import { IoMdSchool }   from "react-icons/io";
+import { IoMdSchool }    from "react-icons/io";
 import { BiSolidSchool } from "react-icons/bi";
+import {
+  MdLightbulb,
+  MdBarChart,
+  MdWarningAmber,
+  MdClose,
+} from "react-icons/md";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AdminDashboard.css";
 
@@ -54,19 +60,52 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
 
   const circumference   = 2 * Math.PI * r;
   const clampedProgress = Math.min(progress, 100);
-  const progressOffset  = circumference * (1 - clampedProgress / 100);
-  const isGood          = targetDir === "below" ? progress <= target : progress >= target;
+  const clampedTarget   = Math.min(target, 100);
+  const progressOffset  = circumference * (1 - clampedProgress / 100) + 0.5;
+  const targetOffset    = circumference * (1 - clampedTarget   / 100) + 0.5;
+  // For "below" KPIs (e.g. Employed Outside Field), lower is better.
+  // A target of 100 is a sentinel meaning "no real ceiling set" — in that case
+  // we can't declare "good" just because progress ≤ 100 (always true).
+  // Instead: show green only when progress is 0 (perfect), amber for anything > 0.
+  // When a real threshold IS set (target < 100), use the normal ≤ comparison.
+  const isGood = targetDir === "below"
+    ? (target < 100 ? progress <= target : progress === 0)
+    : progress >= target;
   const progressColor   = isGood ? "#00BC7D" : "#F59E0B";
+  const targetColor     = "#324D87";
 
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
-        strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
-      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
+      {target > 0 && (
+        <circle
+          cx={cx} cy={cy} r={r} fill="none"
+          stroke={targetColor} strokeWidth={4}
+          strokeOpacity={0.18}
+          strokeDasharray={circumference}
+          strokeDashoffset={targetOffset}
+          strokeLinecap="butt"
+          style={{ shapeRendering: "geometricPrecision" }}
+        />
+      )}
+      <circle
+        cx={cx} cy={cy} r={r} fill="none"
+        stroke={progressColor} strokeWidth={7}
+        strokeDasharray={circumference}
+        strokeDashoffset={progressOffset}
+        strokeLinecap="butt"
+        style={{ shapeRendering: "geometricPrecision" }}
+      />
+      <text
+        x={cx} y={cy + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
         fontSize={clampedProgress >= 100 ? 10 : 12}
-        fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
-        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
+        fontFamily="Lexend, Arimo, Arial"
+        fontWeight={700}
+        fill={progressColor}
+        style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}
+      >
         {clampedProgress}%
       </text>
     </svg>
@@ -89,13 +128,18 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
       ? 'Not Provided'
       : targetLabel;
 
+  // Mirror the isGood logic in RadialGauge exactly so the warning fires
+  // whenever the gauge would show amber.
   const isNotMet = target > 0 && (
-    targetDir === "below" ? progress > target : progress < target
+    targetDir === "below"
+      ? (target < 100 ? progress > target : progress > 0)
+      : progress < target
   );
 
   return (
     <div className="kpi-progress-card">
       <div className="kpi-progress-category">{category}</div>
+
       <div className="kpi-progress-content">
         <div className="kpi-progress-info">
           <div className="kpi-progress-label">{label}</div>
@@ -112,10 +156,12 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
               className="kpi-alert-text"
               onClick={() => window.dispatchEvent(new CustomEvent('openKpiModal', { detail: { label } }))}
             >
-              ⚠ Goal not met — click for suggestions
+              <MdWarningAmber size={13} />
+              Goal not met — click for suggestions
             </div>
           )}
         </div>
+
         <div className="kpi-progress-gauge">
           <RadialGauge
             progress={progress}
@@ -132,7 +178,7 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
 }
 
 // ============================================================================
-// STAT CARD ICONS
+// KPI STAT CARD ICONS
 // ============================================================================
 const statCardIcons = {
   'Registered Alumni': {
@@ -234,8 +280,6 @@ function ChartCard({ title, subtitle, children }) {
 
 // ============================================================================
 // NAVIGABLE CHART CARD
-// Clicking navigates to the analytics page with a focus hint in route state.
-// Long mouse-hold (drag) intentionally suppressed to avoid mis-navigation.
 // ============================================================================
 function NavigableChartCard({ title, subtitle, to, children }) {
   const navigate = useNavigate();
@@ -310,7 +354,7 @@ function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280,
 function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
   const filteredData = data?.filter(d => d.value > 0) || [];
 
-  const renderLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
     const RADIAN = Math.PI / 180;
     const radius = outerRadius * 1.15;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -328,9 +372,15 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
     : (
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
-          <Pie data={filteredData} cx="50%" cy="50%" labelLine label={renderLabel}
-            outerRadius={80} dataKey="value">
-            {filteredData.map((_, index) => (
+          <Pie
+            data={filteredData}
+            cx="50%" cy="50%"
+            labelLine={true}
+            label={renderCustomizedLabel}
+            outerRadius={80}
+            dataKey="value"
+          >
+            {filteredData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -346,8 +396,7 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
 }
 
 // ============================================================================
-// CAREER ALIGNMENT PREDICTION CHART (Grouped Bar) — Navigable
-// Props: data — array of { program, predicted, actual }
+// CAREER ALIGNMENT PREDICTION CHART (Grouped Bar)
 // ============================================================================
 function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo }) {
   const content = (!data || data.length === 0)
@@ -356,13 +405,29 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="program" tick={{ fontSize: 11, fontFamily: 'Lexend, Arimo, Arial' }} />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`}
-            label={{ value: 'Alignment Rate (%)', angle: -90, position: 'insideLeft', offset: -5,
-              style: { fontSize: 11, fill: '#6A7282', fontFamily: 'Lexend, Arimo, Arial' } }} />
-          <Tooltip formatter={(value, name) => [`${value}%`, name === 'predicted' ? 'Predicted' : 'Actual']} />
-          <Legend wrapperStyle={{ fontSize: '12px' }}
-            formatter={(value) => value === 'predicted' ? 'Predicted Rate' : 'Actual Rate'} />
+          <XAxis
+            dataKey="program"
+            tick={{ fontSize: 11, fontFamily: 'Lexend, Arimo, Arial' }}
+          />
+          <YAxis
+            domain={[0, 100]}
+            tick={{ fontSize: 11 }}
+            tickFormatter={(v) => `${v}%`}
+            label={{
+              value: 'Alignment Rate (%)',
+              angle: -90,
+              position: 'insideLeft',
+              offset: -5,
+              style: { fontSize: 11, fill: '#6A7282', fontFamily: 'Lexend, Arimo, Arial' },
+            }}
+          />
+          <Tooltip
+            formatter={(value, name) => [`${value}%`, name === 'predicted' ? 'Predicted' : 'Actual']}
+          />
+          <Legend
+            wrapperStyle={{ fontSize: '12px' }}
+            formatter={(value) => value === 'predicted' ? 'Predicted Rate' : 'Actual Rate'}
+          />
           <Bar dataKey="predicted" name="predicted" fill="#324D87" radius={[6, 6, 0, 0]} />
           <Bar dataKey="actual"    name="actual"    fill="#00BC7D" radius={[6, 6, 0, 0]} />
         </BarChart>
@@ -375,48 +440,179 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
 }
 
 // ============================================================================
-// KPI SUGGESTIONS — used by the alert modal
+// KPI INSIGHTS RESOLVER
+// Maps a KPI card label to the correct key in the kpiInsights object so the
+// modal pulls data from the right insight category.
+//
+// Keys returned must match the keys in buildAllKpiInsights:
+//   employment | feedback | engagement | education
 // ============================================================================
-const getKpiSuggestions = (label) => {
+
+const resolveInsightsCategory = (label) => {
+  const employmentLabels = [
+    "Absorption from Internship",
+    "Employed Within 2 Yrs of Graduation",
+    "Employed in Field / Related Field",
+    "Employed Outside Field of Specialization",
+    "Engaged in Entrepreneurship",
+    "Occupying Supervisory Positions",
+  ];
+
+  // These three KPIs are served by buildEducationInsights, which reads from
+  // educational_background_data (grad studies) and skills_competencies_data
+  // (leadership / professional org proxy).
+  const educationLabels = [
+    "Pursued Graduate Studies (within 1 yr)",
+    "Pursued Graduate Studies at NU",
+    "In Positions in Professional Organizations",
+  ];
+
+  if (employmentLabels.includes(label)) return 'employment';
+  if (educationLabels.includes(label))  return 'education';  // was incorrectly 'engagement'
+  return 'feedback';
+};
+
+const staticFallbackSuggestions = (label) => {
   const map = {
-    "Absorption from Internship":               ["Strengthen industry partnerships", "Improve internship-to-hire programs"],
-    "Employed Within 2 Yrs of Graduation":      ["Enhance career placement services", "Conduct job readiness workshops"],
-    "Employed in Field / Related Field":        ["Align curriculum with industry needs", "Increase internship relevance"],
-    "Employed Outside Field of Specialization": ["Review program alignment", "Provide career guidance earlier"],
-    "Engaged in Entrepreneurship":             ["Offer startup incubation programs", "Promote entrepreneurship training"],
-    "Occupying Supervisory Positions":          ["Provide leadership training", "Encourage career progression planning"],
-    "Pursued Graduate Studies (within 1 yr)":   ["Promote postgraduate opportunities", "Offer scholarships"],
-    "Pursued Graduate Studies at NU":           ["Strengthen internal graduate programs", "Offer alumni incentives"],
-    "In Positions in Professional Organizations": ["Encourage professional membership", "Host networking events"],
+    "Absorption from Internship": [
+      "Strengthen industry partnerships for internship-to-hire conversion.",
+      "Improve internship quality monitoring and employer relationships.",
+    ],
+    "Employed Within 2 Yrs of Graduation": [
+      "Enhance career placement services and job fair frequency.",
+      "Conduct job readiness workshops before graduation.",
+    ],
+    "Employed in Field / Related Field": [
+      "Align curriculum with current industry requirements.",
+      "Increase internship relevance to degree programs.",
+    ],
+    "Employed Outside Field of Specialization": [
+      "Review program-industry alignment each academic year.",
+      "Provide career guidance and mentoring from Year 1.",
+    ],
+    "Engaged in Entrepreneurship": [
+      "Offer startup incubation and entrepreneurship training programs.",
+      "Promote access to seed funding and mentorship networks.",
+    ],
+    "Occupying Supervisory Positions": [
+      "Provide leadership development training for senior alumni.",
+      "Encourage career progression planning through alumni mentoring.",
+    ],
+    "Pursued Graduate Studies (within 1 yr)": [
+      "Promote postgraduate opportunities through alumni advisors.",
+      "Offer merit-based scholarships and research assistantships.",
+    ],
+    "Pursued Graduate Studies at NU": [
+      "Strengthen internal graduate programs and alumni loyalty incentives.",
+      "Offer exclusive alumni discounts and flexible graduate schedules.",
+    ],
+    "In Positions in Professional Organizations": [
+      "Encourage alumni to join and lead professional associations.",
+      "Host networking events connecting alumni to professional bodies.",
+    ],
   };
-  return map[label] || ["No suggestions available"];
+  return map[label] || ["Review current data to generate recommendations."];
 };
 
 // ============================================================================
 // KPI ALERT MODAL
 // ============================================================================
-function KpiAlertModal({ label, onClose }) {
+function KpiAlertModal({ label, onClose, kpiInsights }) {
+  const category    = resolveInsightsCategory(label);
+  const data        = kpiInsights?.[category];
+  const suggestions = data ? data.recommendations : staticFallbackSuggestions(label);
+  const insightLines = data?.insights || [];
+  const summary      = data?.summary  || null;
+
+  // Close on Escape key
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent background scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   return (
-    <div className="kpi-modal-overlay">
+    <div
+      className="kpi-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kpi-modal-title"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="kpi-modal">
+
+        {/* ── HEADER ── */}
         <div className="kpi-modal-header">
-          <h2>{label}</h2>
-          <button className="kpi-modal-close-icon" onClick={onClose}>✕</button>
+          <h2 id="kpi-modal-title">{label}</h2>
+          <button
+            className="kpi-modal-close-icon"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            <MdClose size={16} />
+          </button>
         </div>
-        <div className="kpi-modal-status">⚠ Below Target Performance</div>
+
+        {/* ── STATUS BADGE ── */}
+        <div className="kpi-modal-status">
+          <MdWarningAmber size={14} />
+          Below Target Performance
+        </div>
+
+        {/* ── DESCRIPTION ── */}
         <p className="kpi-modal-desc">
-          This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:
+          {summary
+            ? summary
+            : "This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:"}
         </p>
+
+        {/* ── DYNAMIC INSIGHTS ── */}
+        {insightLines.length > 0 && (
+          <>
+            <div className="kpi-modal-section-label">
+              <MdBarChart size={14} />
+              Data Insights
+            </div>
+            <div className="kpi-modal-suggestions">
+              {insightLines.map((line, i) => (
+                <div key={`insight-${i}`} className="kpi-suggestion-item">
+                  <div className="suggestion-icon suggestion-icon--insight">
+                    <MdBarChart size={14} />
+                  </div>
+                  <div className="suggestion-text">{line}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* ── RECOMMENDATIONS ── */}
+        <div className="kpi-modal-section-label">
+          <MdLightbulb size={14} />
+          Recommendations
+        </div>
         <div className="kpi-modal-suggestions">
-          {getKpiSuggestions(label).map((s, i) => (
-            <div key={i} className="kpi-suggestion-item">
-              <div className="suggestion-icon">💡</div>
+          {suggestions.map((s, i) => (
+            <div key={`rec-${i}`} className="kpi-suggestion-item">
+              <div className="suggestion-icon suggestion-icon--rec">
+                <MdLightbulb size={14} />
+              </div>
               <div className="suggestion-text">{s}</div>
             </div>
           ))}
         </div>
+
+        {/* ── FOOTER ── */}
         <div className="kpi-modal-footer">
-          <button className="kpi-modal-close" onClick={onClose}>Close</button>
+          <button className="kpi-modal-close" onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -436,7 +632,12 @@ const AdminDashboardView = ({
   inDemandSkillsData,
   careerAlignmentData,
   loadingCharts,
+  kpiInsights,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const focus = location.state?.focus;
+
   const [activeKpiModal, setActiveKpiModal] = useState(null);
 
   useEffect(() => {
@@ -453,7 +654,7 @@ const AdminDashboardView = ({
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="dashboard-header">
-          <h1>Dashboard Overview</h1>
+          <h1>Dashboard</h1>
           <p>Welcome Bark! Here's what's happening with your alumni.</p>
         </div>
 
@@ -507,7 +708,7 @@ const AdminDashboardView = ({
             dataKey="alignment"
             nameKey="name"
             title="Degree Alignment Rate"
-            subtitle="Percentage of alumni aligned with their degree per program"
+            subtitle="Percentage of alumni employed in their degree field per program"
             height={280}
             navigateTo="/admin/response-and-analytics"
           />
@@ -520,7 +721,7 @@ const AdminDashboardView = ({
           />
         </div>
 
-        {/* ── Career Alignment Prediction (grouped bar, navigable) ────────── */}
+        {/* ── Career Alignment Prediction (full width, navigable) ─────────── */}
         <div className="full-width-chart">
           <CareerAlignmentChart
             data={careerAlignmentData}
@@ -531,7 +732,7 @@ const AdminDashboardView = ({
           />
         </div>
 
-        {/* ── In-Demand Skills ─────────────────────────────────────────────── */}
+        {/* ── In-Demand Skills (full width) ─────────────────────────────── */}
         <div className="full-width-chart">
           <CustomBarChart
             data={inDemandSkillsData}
@@ -543,9 +744,13 @@ const AdminDashboardView = ({
           />
         </div>
 
-        {/* ── KPI Alert Modal ──────────────────────────────────────────────── */}
+        {/* ── KPI Alert Modal ── */}
         {activeKpiModal && (
-          <KpiAlertModal label={activeKpiModal} onClose={() => setActiveKpiModal(null)} />
+          <KpiAlertModal
+            label={activeKpiModal}
+            onClose={() => setActiveKpiModal(null)}
+            kpiInsights={kpiInsights}
+          />
         )}
 
       </main>

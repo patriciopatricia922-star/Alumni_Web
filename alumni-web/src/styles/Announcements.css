@@ -9,7 +9,6 @@
   --ann-sidebar-bg:        #00226D;
   --ann-banner-bg:         linear-gradient(180deg, #2B72FB 0%, #1E2555 100%);
 
-  /* Card */
   --ann-card-bg:           #FFFFFF;
   --ann-card-border:       #E5E7EB;
   --ann-card-shadow:       0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06);
@@ -17,39 +16,33 @@
                            0px 2px 8px rgba(0, 0, 0, 0.08);
   --ann-card-border-hover: #2B72FB;
 
-  /* Typography */
   --ann-title-color:       #003EA6;
   --ann-body-color:        #4A5565;
   --ann-meta-color:        #8A94A6;
   --ann-timestamp-color:   rgba(74, 85, 101, 0.65);
   --ann-clock-stroke:      rgba(74, 85, 101, 0.45);
 
-  /* Accents */
   --ann-accent:            #003EA6;
   --ann-accent-btn:        #003EA6;
   --ann-badge-bg:          #2B72FB;
 
-  /* Page */
   --ann-page-title:        #324D87;
   --ann-page-subtitle:     #545454;
   --ann-back-color:        #003EA6;
 
-  /* Icon box */
   --ann-icon-box-bg:       linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
   --ann-icon-box-shadow:   0px 4px 10px rgba(43, 114, 251, 0.35);
 
-  /* Notification dot */
+  /* Aligned to Dashboard .bell-badge treatment */
   --ann-notif-dot-outer:   rgba(255, 0, 0, 0.35);
-  --ann-notif-dot-inner:   #FF3B30;
+  --ann-notif-dot-inner:   #E53935;
 
-  /* Footer / filter */
   --ann-footer-border:     #F0F2F5;
   --ann-filter-bg:         #FFFFFF;
   --ann-filter-border:     #E5E7EB;
   --ann-filter-text:       #003EA6;
   --ann-chevron:           #8A94A6;
 
-  /* Modal */
   --ann-modal-overlay:     rgba(15, 23, 42, 0.6);
   --ann-modal-blur:        12px;
   --ann-modal-bg:          #FFFFFF;
@@ -102,7 +95,7 @@
   border: 1px solid var(--ann-filter-border) !important;
 }
 
-.ann-filter-display span {
+.ann-filter-display > span {
   color: var(--ann-filter-text) !important;
 }
 
@@ -114,32 +107,30 @@
 }
 
 /* ── Announcement Card ─────────────────────────────────────── */
-/*
-   New layout (matches reference image):
-   ┌─────────────────────────────────────────────────────────┐
-   │  [icon]   Title                         2 hours ago 🕐  │
-   │           Description text... See more                  │
-   └─────────────────────────────────────────────────────────┘
-*/
 .ann-card {
   background: var(--ann-card-bg);
   border: 1px solid var(--ann-card-border);
+  border-left: 3px solid transparent;
   box-shadow: var(--ann-card-shadow);
   border-radius: 16px;
   overflow: visible;
   cursor: pointer;
-  transition: transform 0.22s ease,
-              box-shadow 0.22s ease,
-              border-color 0.22s ease;
+  transition: background 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .ann-card:hover {
+  background: rgba(0, 0, 0, 0.015);
   border-color: var(--ann-card-border-hover);
   box-shadow: var(--ann-card-shadow-hover);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
-/* Body: icon + content side by side */
+.ann-card--expanded {
+  border-left-color: #003EA6;
+  background: rgba(0, 62, 166, 0.03);
+  box-shadow: var(--ann-card-shadow-hover);
+}
+
 .ann-card__body {
   display: flex;
   align-items: flex-start;
@@ -147,56 +138,128 @@
   gap: 16px;
 }
 
-/* Icon box */
+/* ── Card icon box ─────────────────────────────────────────── */
 .ann-card__icon-box {
-  background: var(--ann-icon-box-bg);
-  box-shadow: var(--ann-icon-box-shadow);
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: rgba(0, 62, 166, 0.08);
+  border: 1px solid rgba(0, 62, 166, 0.15);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+
+  /* Aligned to Dashboard: relative container for the notif badge */
   position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-top: 2px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .ann-card:hover .ann-card__icon-box {
-  transform: scale(1.04);
-  box-shadow: 0px 8px 20px rgba(43, 114, 251, 0.45);
+  transform: scale(1.05);
+  box-shadow: 0px 4px 12px rgba(0, 62, 166, 0.2);
 }
 
-/* Notification dot — outer ring */
+/* ── Notification ring — aligned to Dashboard .bell-badge ─── */
+/*
+   Dashboard reference:
+     position: absolute; top: -7px; right: -7px;
+     min-width: 20px; height: 20px;
+     background: #E53935; border-radius: 10px;
+     border: 2px solid #DAE5F1;
+     box-shadow: 0px 4px 12px rgba(0,0,0,0.35);  (inherited from .bell-button)
+
+   Announcements icon-box is 40px (vs 44–52px bell-button), so we scale
+   the offset inward by 2px to keep the badge optically anchored the same way.
+*/
 .ann-card__notif-ring {
+  /* Position — mirrored from Dashboard badge offsets */
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  background: var(--ann-notif-dot-outer);
-  border-radius: 50%;
+  top: -7px;
+  right: -7px;
+
+  /* Size — matches Dashboard .bell-badge */
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+
+  /* Visual — matches Dashboard .bell-badge */
+  background: #E53935;
+  border-radius: 10px;
+  border: 2px solid #DAE5F1;   /* matches page-bg border treatment in Dashboard */
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.35);
+
+  /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
+
+  /* Layering */
+  z-index: 2;
 }
 
-/* Notification dot — inner */
+/* ── Notification dot — inner count text, aligned to Dashboard .bell-badge span */
 .ann-card__notif-dot {
-  width: 11px;
-  height: 11px;
-  background: var(--ann-notif-dot-inner);
-  border-radius: 50%;
+  /* Kept visible (Dashboard badge always shows its span) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Typography — matches Dashboard badge span */
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+
+  /* Remove the legacy filled-circle look; the ring itself is the badge */
+  width: auto;
+  height: auto;
+  background: transparent;
+  border-radius: 0;
 }
 
-/* Content area (right of icon) */
+/* ── Responsive: tablet / mobile — scale badge with icon-box ── */
+@media (max-width: 768px) {
+  /* Icon-box shrinks to 36px on mobile, nudge badge offsets slightly */
+  .ann-card__notif-ring {
+    top: -6px;
+    right: -6px;
+    min-width: 13px;
+    height: 13px;
+  }
+
+  .ann-card__notif-dot {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 479px) {
+  /* Smallest breakpoint — keep badge visible and tight */
+  .ann-card__notif-ring {
+    top: -5px;
+    right: -5px;
+    min-width: 12px;
+    height: 12px;
+  }
+
+  .ann-card__notif-dot {
+    font-size: 8px;
+  }
+}
+
+/* ── Card content ──────────────────────────────────────────── */
 .ann-card__content {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
-/* Top row: title + timestamp on same line */
 .ann-card__top-row {
   display: flex;
   align-items: flex-start;
@@ -204,64 +267,62 @@
   gap: 12px;
 }
 
-/* Title */
 .ann-card__title {
   font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
   font-weight: 700;
-  font-size: 15.5px;
-  line-height: 1.35;
-  letter-spacing: -0.2px;
-  color: var(--ann-title-color);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #0A0A0A;
   margin: 0;
   flex: 1;
   min-width: 0;
 }
 
-/* Timestamp — top right, inline with title */
 .ann-card__timestamp {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-shrink: 0;
-  padding-top: 2px;
+  padding-top: 1px;
 }
 
 .ann-card__timestamp span {
   font-family: 'Arimo', Arial, sans-serif;
   font-size: 11px;
   letter-spacing: 0.1px;
-  color: var(--ann-timestamp-color);
+  color: rgba(0, 0, 0, 0.35);
   white-space: nowrap;
 }
 
-/* Description paragraph with inline See more */
 .ann-card__preview {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arimo, sans-serif;
   font-weight: 400;
   font-size: 13.5px;
   line-height: 1.65;
-  color: var(--ann-body-color);
-  margin: 0;
+  color: #4A5565;
+  margin: 0 0 4px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Inline "See more" text link */
 .ann-card__see-more-inline {
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Arimo', Arial, sans-serif;
-  font-size: 13.5px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 12px;
   font-weight: 700;
   color: #2B72FB;
   cursor: pointer;
-  text-decoration: none;
-  transition: color 0.15s, text-decoration 0.15s;
   display: inline;
   line-height: inherit;
+  transition: color 0.15s;
 }
 
 .ann-card__see-more-inline:hover {
-  color: var(--ann-title-color);
+  color: #003EA6;
   text-decoration: underline;
 }
 
@@ -320,7 +381,6 @@
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
-/* Modal header bar */
 .ann-modal__header {
   display: flex;
   justify-content: space-between;
@@ -386,7 +446,6 @@
   line-height: 1.6;
 }
 
-/* Close button */
 .ann-modal__close {
   width: 36px;
   height: 36px;
@@ -410,14 +469,12 @@
   color: var(--ann-modal-title);
 }
 
-/* Divider */
 .ann-modal__divider {
   height: 1px;
   background: var(--ann-modal-divider);
   margin: 20px 28px 0;
 }
 
-/* Body / full content area */
 .ann-modal__body {
   padding: 20px 28px 0;
   flex: 1;
@@ -437,7 +494,6 @@
 .ann-modal__body .announcement-full-content a  { color: var(--ann-accent); }
 .ann-modal__body .announcement-full-content strong { color: var(--ann-modal-title); font-weight: 700; }
 
-/* Footer row */
 .ann-modal__footer {
   padding: 20px 28px 28px;
   display: flex;
@@ -464,7 +520,6 @@
   border-color: #CBD5E1;
 }
 
-/* Scroll-lock helper */
 body.ann-modal-open {
   overflow: hidden;
 }
@@ -472,41 +527,26 @@ body.ann-modal-open {
 /* ── Responsive tweaks ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .ann-card__body {
-    padding: 14px 14px 14px;
-    gap: 12px;
+    padding: 12px 14px;
+    gap: 10px;
   }
 
   .ann-card__title {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
 
   .ann-card__preview {
-    font-size: 12.5px;
+    font-size: 12px;
   }
 
   .ann-card__see-more-inline {
-    font-size: 12.5px;
+    font-size: 12px;
   }
 
-  /* Modal mobile */
-  .ann-modal__header {
-    padding: 20px 20px 0;
-  }
-
-  .ann-modal__title {
-    font-size: 18px;
-  }
-
-  .ann-modal__divider {
-    margin: 16px 20px 0;
-  }
-
-  .ann-modal__body {
-    padding: 16px 20px 0;
-  }
-
-  .ann-modal__footer {
-    padding: 16px 20px 20px;
+  .ann-card__icon-box {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
   }
 }
 
@@ -529,8 +569,8 @@ body.ann-modal-open {
 }
 
 .ann-card__full-content .announcement-full-content {
-  font-family: 'Arimo', Arial, sans-serif;
-  font-size: 13.5px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 12px;
   line-height: 1.75;
   color: var(--ann-body-color);
 }

@@ -37,16 +37,20 @@ const formatDate = (isoDate) => {
 };
 
 const EyeIcon = memo(({ visible }) => (
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
     {visible ? (
       <>
-        <path d="M1 9C1 9 4 3 9 3C14 3 17 9 17 9C17 9 14 15 9 15C4 15 1 9 1 9Z"
-          stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="9" cy="9" r="2.5" stroke="#6B7280" strokeWidth="1.5"/>
+        <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z"
+          stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="12" cy="12" r="3" stroke="#9CA3AF" strokeWidth="1.8"/>
       </>
     ) : (
-      <path d="M1 1L17 17M7.5 7.6C7.19 7.92 7 8.34 7 8.8C7 9.8 7.9 10.6 9 10.6C9.5 10.6 9.95 10.42 10.3 10.12M5.2 5.28C3.27 6.45 2 8 2 8C2 8 5 14 9 14C10.5 14 11.86 13.44 12.98 12.65M3 3C3 3 4.5 3 6 3C8.5 3 10 3 12 3C14 3 16 5 16 5"
-        stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <>
+        <path d="M17.94 17.94A10.07 10.07 0 0112 20C5 20 2 12 2 12A17.6 17.6 0 016.06 6.06M9.9 4.24A9.12 9.12 0 0112 4C19 4 22 12 22 12A17.57 17.57 0 0118.8 16.8"
+          stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10.73 10.73A3 3 0 0013.27 13.27M3 3L21 21"
+          stroke="#9CA3AF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      </>
     )}
   </svg>
 ));
@@ -55,7 +59,7 @@ const PasswordInput = memo(({ label, value, onChange, placeholder }) => {
   const [show, setShow] = useState(false);
   return (
     <div className="prof-cp-field">
-      {label && <label className="prof-cp-label">{label}</label>}
+      {label && <label className="prof-cp-label">{label.replace(' *', '')} <span className="eb-req">*</span></label>}
       <div className="prof-cp-input-wrap">
         <input
           type={show ? 'text' : 'password'}
@@ -668,12 +672,27 @@ const PersonalInformationModal = memo(({
       <div className="prof-pi-modal" role="dialog" aria-label="Personal Information" aria-modal="true">
 
         <div className="prof-pi-modal-header">
-          <div className="prof-pi-modal-header-text">
-            <h2>Update Personal Information</h2>
-            <p>Keep your profile information current and accurate.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '48px', height: '48px',
+              background: '#155DFC',
+              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.4), 0px 4px 8px rgba(0, 0, 0, 0.25)'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="7" r="4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="prof-pi-modal-header-text">
+              <h2>Update Personal Information</h2>
+              <p>Keep your profile information current and accurate.</p>
+            </div>
           </div>
           <button className="prof-modal-close-btn" onClick={onClose} aria-label="Close">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
               <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
@@ -1023,9 +1042,24 @@ const ChangePasswordModal = memo(({
       <div className="prof-cp-modal" role="dialog" aria-label="Change Password" aria-modal="true">
 
         <div className="prof-cp-modal-header">
-          <div className="prof-cp-modal-header-text">
-            <h2>Change Password</h2>
-            <p>Enter your current and new password for your account.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{
+              width: '48px', height: '48px',
+              background: 'linear-gradient(135deg, #FB2C36 0%, #E7000B 100%)',
+              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.4), 0px 4px 8px rgba(0, 0, 0, 0.25)'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="11" width="18" height="11" rx="2" stroke="#FFFFFF" strokeWidth="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div className="prof-cp-modal-header-text">
+              <h2>Change Password</h2>
+              <p>Enter your current and new password for your account.</p>
+            </div>
           </div>
           <button className="prof-modal-close-btn" onClick={onClose} aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -1035,29 +1069,32 @@ const ChangePasswordModal = memo(({
         </div>
 
         <div className="prof-cp-modal-body">
-          <PasswordInput
-            label="Current password *"
-            value={cpCurrent}
-            onChange={e => setCpCurrent(e.target.value)}
-            placeholder="···········"
-          />
+          <div className="prof-cp-form">
+            <PasswordInput
+              label="Current password *"
+              value={cpCurrent}
+              onChange={e => setCpCurrent(e.target.value)}
+              placeholder="···········"
+            />
 
-          <div className="prof-cp-field">
-            <label className="prof-cp-label">New password *</label>
-            <NewPasswordField value={cpNew} onChange={e => setCpNew(e.target.value)}/>
-            <PasswordRules value={cpNew}/>
+            <div className="prof-cp-field">
+              <label className="prof-cp-label">New password <span className="eb-req">*</span></label>
+              <NewPasswordField value={cpNew} onChange={e => setCpNew(e.target.value)}/>
+              <PasswordRules value={cpNew}/>
+              <p className="prof-cp-hint">The password must be at least 8 characters long and include at least one uppercase letter, one number, and one special character (e.g., !@#$%^&*).</p>
+            </div>
+
+            <PasswordInput
+              label="Confirm new password *"
+              value={cpConfirm}
+              onChange={e => setCpConfirm(e.target.value)}
+              placeholder="···········"
+            />
+
+            <p className="prof-cp-hint">
+              At least 8 characters, one uppercase, one number, and one special character (e.g. !@#$%^&*).
+            </p>
           </div>
-
-          <PasswordInput
-            label="Confirm new password *"
-            value={cpConfirm}
-            onChange={e => setCpConfirm(e.target.value)}
-            placeholder="···········"
-          />
-
-          <p className="prof-cp-hint">
-            At least 8 characters, one uppercase, one number, and one special character (e.g. !@#$%^&*).
-          </p>
         </div>
 
         <div className="prof-cp-modal-footer">
@@ -1185,7 +1222,14 @@ const ProfileView = ({
           <div className="prof-top-row">
             <div className="prof-hero-card">
               <div className="prof-hero-left">
-                <h2 className="prof-hero-name">{fullName || 'Loading…'}</h2>
+                <h2 className="prof-hero-name">
+                  {fullName ? (
+                    <>
+                      {fullName.split(' ')[0]}<br />
+                      {fullName.split(' ').slice(1).join(' ')}
+                    </>
+                  ) : 'Loading…'}
+                </h2>
                 {program   && <p className="prof-hero-program">{program}</p>}
                 {batchYear && <p className="prof-hero-batch">Class {batchYear}</p>}
               </div>

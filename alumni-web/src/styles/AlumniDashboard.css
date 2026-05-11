@@ -14,7 +14,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  padding: clamp(28px, 4vh, 52px) clamp(24px, 3.2vw, 56px) clamp(12px, 1.8vh, 29px) clamp(40px, 8.2vw, 97.1px);
+  padding: clamp(20px, 3vh, 40px) clamp(36px, 7.8vw, 84px) clamp(12px, 1.8vh, 29px) clamp(36px, 7.8vw, 84px);
   box-sizing: border-box;
   position: relative;
   min-width: 0;
@@ -24,7 +24,7 @@
 .dashboard-header {
   flex-shrink: 0;
   margin-bottom: clamp(12px, 1.6vh, 20px);
-  margin-top: clamp(6px, 1vh, 14px);
+  margin-top: clamp(14px, 2.2vh, 24px);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -41,12 +41,13 @@
   min-width: 0;
 }
 
+/* Welcome Back text now lives in the header */
 .dashboard-subtitle {
   font-family: 'Montserrat', Arial, sans-serif;
-  font-weight: 400;
-  font-size: clamp(11px, 0.9vw, 16px);
+  font-weight: 600;
+  font-size: clamp(12px, 1.05vw, 17px);
   line-height: 1.5;
-  color: #545454;
+  color: #324D87;
   margin: 0;
 }
 
@@ -347,6 +348,7 @@
   display: flex;
   align-items: flex-start;
   box-sizing: border-box;
+  height: 28vh;
 }
 
 .hello-deco-circle {
@@ -356,14 +358,13 @@
   pointer-events: none;
 }
 .hello-deco-circle--tr {
-  width: 200px; height: 200px;
-  left: 290px; top: -33px;
+  width: 220px; height: 220px;
+  left: auto; right: -60px; top: -70px;
 }
 .hello-deco-circle--bl {
-  width: 150px; height: 150px;
-  left: 17px;  top: 175px;
+  width: 180px; height: 180px;
+  left: -50px; top: auto; bottom: -60px;
 }
-
 .hello-card-inner {
   position: relative;
   z-index: 1;
@@ -374,18 +375,23 @@
   width: 100%;
 }
 
+/* Reduced ~2–3 size levels: was clamp(20px, 3.9vw, 48px) */
 .hello-text {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(20px, 3.9vw, 48px);
+  font-size: clamp(20px, 3.0vw, 48px);
   line-height: 1.25;
   letter-spacing: -0.6px;
   color: #FFFFFF;
   margin: 0;
+  margin-top: 7px;
 }
 
-.hello-name { color: #FFFFFF; }
+.hello-name { 
+  color: #FFFFFF; 
+}
 
+/* Reduced ~2 size levels: was clamp(11px, 1.05vw, 16px) */
 .hello-notification-text {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
@@ -396,7 +402,7 @@
 }
 
 .hello-notif-highlight {
-  color: #FFED97;
+  color: #FFEC8E;
   font-weight: 700;
 }
 
@@ -417,6 +423,7 @@
   justify-content: space-between;
   gap: clamp(8px, 1.6vw, 20px);
   box-sizing: border-box;
+  height: 28vh;
 }
 
 .survey-blur {
@@ -436,8 +443,15 @@
   border-radius: 50%;
   pointer-events: none;
 }
-.survey-deco-circle--tl { width: 200px; height: 200px; top: -86px;  left: 21px;  }
-.survey-deco-circle--br { width: 150px; height: 150px; top: 184px;  left: 172px; }
+.survey-deco-circle--tl {
+  width: 220px; height: 220px;
+  top: -120px; left: -10px;
+}
+.survey-deco-circle--br {
+  width: 180px; height: 180px;
+  top: auto; bottom: -140px;
+  left: auto; right: 130px;
+}
 
 .survey-card-content {
   position: relative;
@@ -450,21 +464,23 @@
   height: 100%;
 }
 
+/* Reduced ~2–3 size levels: was clamp(10px, 1.15vw, 18px) */
 .survey-label {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(10px, 1.15vw, 18px);
+  font-size: clamp(10px, 1.05vw, 19px);
   line-height: 1;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.4px;
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
   text-transform: uppercase;
 }
 
+/* Reduced ~2–3 size levels: was clamp(15px, 2.85vw, 35px) */
 .survey-message {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(15px, 2.85vw, 35px);
+  font-size: clamp(15px, 2.14vw, 35px);
   line-height: 1.29;
   letter-spacing: -0.6px;
   color: #FFFFFF;
@@ -498,8 +514,8 @@
 /* ============================ PROGRESS CIRCLE ============================ */
 .progress-circle {
   position: relative;
-  width:  clamp(70px, 15.97vh, 154px);
-  height: clamp(70px, 15.97vh, 154px);
+  width:  clamp(50px, 20.10vh, 150px);
+  height: clamp(50px, 20.10vh, 150px);
   flex-shrink: 0;
 }
 
@@ -513,13 +529,14 @@
   transition: stroke-dashoffset 0.6s ease;
 }
 
+/* Reduced ~2–3 size levels: was clamp(16px, 3.84vh, 37px) */
 .progress-percentage {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Rubik', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(16px, 3.84vh, 37px);
+  font-size: clamp(20px, 4.20vh, 370px);
   line-height: 1;
   letter-spacing: -0.35px;
   color: #FFFFFF;
@@ -541,7 +558,7 @@
   line-height: 1.2;
   letter-spacing: -0.6px;
   color: #324D87;
-  margin: 0 0 2px 0;
+  margin: 25px 0 3px 0;
   flex-shrink: 0;
 }
 
@@ -553,6 +570,7 @@
   color: #545454;
   margin: 0 0 clamp(8px, 1.2vh, 16px) 0;
   flex-shrink: 0;
+  margin-bottom: clamp(8px, 3.2vh, 25px);
 }
 
 .for-you-grid {
@@ -560,7 +578,7 @@
   grid-template-columns: 1fr 1fr;
   grid-template-rows: repeat(2, auto);
   column-gap: clamp(16px, 3.2vw, 44px);
-  row-gap: clamp(6px, 0.9vh, 12px);
+  row-gap: clamp(19px, 1.9vh, 29px);
   flex: 1;
   min-height: 0;
   width: 100%;
@@ -576,13 +594,13 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 14px clamp(10px, 1.2vw, 18px);
+  padding: 16px clamp(10px, 1.2vw, 18px);
   gap: clamp(8px, 1vw, 14px);
   box-sizing: border-box;
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
   overflow: hidden;
   position: relative;
-  height: 9rem;
+  height: clamp(90px, 15.9vh, 130px);
 }
 
 .for-you-card:hover {
@@ -592,17 +610,20 @@
 }
 
 .for-you-icon-box {
-  width: 80px;
-  height: 80px;
-  min-width: 80px;
+  /* Scaled down to match compact card height */
+  width: clamp(52px, 6vh, 68px);
+  height: clamp(52px, 6vh, 68px);
+  min-width: clamp(52px, 6vh, 68px);
   background: linear-gradient(180deg, rgba(30, 37, 85, 0.8) 0%, rgba(15, 19, 56, 0.8) 100%);
   box-shadow: 0px 10px 15px rgba(97, 95, 255, 0.5), 0px 4px 6px rgba(43, 114, 251, 0.15);
-  border-radius: 14px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   flex-shrink: 0;
+  transform: scale(1.4);
+  margin-left: 10px;
 }
 
 .for-you-icon {
@@ -610,21 +631,23 @@
   height: 92%;
   object-fit: contain;
   filter: drop-shadow(0px 4px 4px #2B72FB);
+  transform: scale(1.1);
 }
 
 .for-you-icon.discount-icon {
   width: 155%;
   height: 155%;
   transform: rotate(10deg);
-  margin-left: 1.5vw;
+  margin-left: 0.5vw;
+  transform: scale(1.1);
 }
 
 .notification-dot {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 18px;
-  height: 18px;
+  top: -6px;
+  right: -6px;
+  width: 14px;
+  height: 14px;
   background: #E53935;
   border-radius: 50%;
   border: 2px solid #003EA6;
@@ -639,32 +662,21 @@
 .card-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(13px, 1.4vw, 22px);
+  font-size: clamp(12px, 1.9vw, 18px);
   line-height: 1.25;
   color: #FFED97;
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
+  margin-left: 20px;
 }
 
 .card-description {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(10px, 0.9vw, 16px);
-  line-height: 1.5;
+  font-size: clamp(9px, 0.75vw, 13px);
+  line-height: 1.4;
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
-}
-
-.chevron-icon {
-  flex-shrink: 0;
-  margin-left: auto;
-  width: clamp(18px, 1.8vw, 28px);
-  height: clamp(18px, 1.8vw, 28px);
-  opacity: 0.85;
-  transition: transform 0.2s ease;
-}
-
-.for-you-card:hover .chevron-icon {
-  transform: translateX(3px);
+  margin-left: 20px;
 }
 
 /* ============================ MOBILE BOTTOM NAV ============================ */
@@ -684,7 +696,7 @@
 
 @media (min-width: 2560px) {
   .dashboard-content {
-    padding: 64px 72px 36px;
+    padding: 80px 72px 36px;
   }
   .notification-bell {
     top: 64px;
@@ -697,10 +709,10 @@
 
 @media (max-width: 1100px) {
   .dashboard-content {
-    padding: clamp(22px, 3.2vh, 38px) clamp(14px, 2.2vw, 24px) clamp(12px, 1.8vh, 20px) clamp(20px, 2.8vw, 36px);
+    padding: clamp(32px, 4.4vh, 52px) clamp(14px, 2.2vw, 24px) clamp(12px, 1.8vh, 20px) clamp(20px, 2.8vw, 36px);
   }
   .notification-bell {
-    top: clamp(22px, 3.2vh, 38px);
+    top: clamp(32px, 4.4vh, 52px);
     right: clamp(14px, 2.2vw, 24px);
   }
   .dashboard-header {
@@ -715,7 +727,7 @@
 @media (max-width: 767px) {
   .dashboard-content {
     margin-left: 0 !important;
-    padding: clamp(20px, 3vh, 32px) clamp(12px, 4vw, 18px) 80px !important;
+    padding: clamp(30px, 4.2vh, 44px) clamp(12px, 4vw, 18px) 80px !important;
   }
   .notification-bell {
     top: clamp(20px, 3vh, 32px);

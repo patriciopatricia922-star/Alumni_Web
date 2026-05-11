@@ -1,10 +1,9 @@
 /* ============================================================================
-   AdminDashboard.css
+   THIS IS FOR INLINE STYLES.
    ============================================================================
-   Merged stylesheet: retains NavigableChartCard styles from the original
-   implementation and adds KPI alert and modal styles from the new version.
-   All duplicate rules have been resolved; the original values are kept where
-   the two sheets differed on non-functional properties.
+   Purpose: Contains all CSS styles for the Admin Dashboard component.
+            Uses Lexend font for headers and proper grid layouts matching
+            friend's original design.
    ============================================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
@@ -20,10 +19,11 @@
 .dashboard-main {
   margin-left: 229px;
   flex: 1;
-  padding: 37px 32px 60px;
+  padding: 16px 32px 60px;
   min-height: 100vh;
 }
 
+/* Responsive */
 @media (max-width: 1024px) {
   .dashboard-main {
     margin-left: 200px;
@@ -40,10 +40,10 @@
 
 /* ============================ HEADER ============================ */
 .dashboard-header {
+  margin-bottom: 24px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin-bottom: 24px;
 }
 
 .dashboard-header h1 {
@@ -120,7 +120,7 @@
   box-shadow: 0 1px 4px rgba(50,77,135,0.13);
 }
 
-/* ============================ KPI GRID (3 columns) ============================ */
+/* ============================ KPI GRID (3 columns for Institutional KPIs) ============================ */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -136,19 +136,32 @@
   margin-bottom: 24px;
 }
 
+/* Responsive grid adjustments */
 @media (max-width: 1200px) {
-  .kpi-grid           { grid-template-columns: repeat(3, 1fr); }
-  .alumni-tracer-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 900px) {
-  .kpi-grid           { grid-template-columns: repeat(2, 1fr); }
-  .alumni-tracer-grid { grid-template-columns: repeat(2, 1fr); }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
-  .kpi-grid           { grid-template-columns: 1fr; }
-  .alumni-tracer-grid { grid-template-columns: 1fr; }
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  .alumni-tracer-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================ KPI PROGRESS CARD ============================ */
@@ -214,19 +227,6 @@
   flex-shrink: 0;
 }
 
-/* ============================ KPI ALERT TEXT ============================ */
-.kpi-alert-text {
-  margin-top: 6px;
-  font-size: 11px;
-  color: #EF4444;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.kpi-alert-text:hover {
-  text-decoration: underline;
-}
-
 /* ============================ KPI STAT CARD ============================ */
 .kpi-stat-card {
   background: #FFFFFF;
@@ -241,7 +241,9 @@
   align-items: flex-start;
 }
 
-.kpi-stat-info { flex: 1; }
+.kpi-stat-info {
+  flex: 1;
+}
 
 .kpi-stat-label {
   font-family: 'Lexend', 'Arimo', Arial;
@@ -286,8 +288,9 @@
 }
 
 .chart-card-header {
-  padding: 20px 24px 16px;
+  padding: 20px 24px 0;
   border-bottom: 0.889px solid #E2E8F0;
+  padding-bottom: 16px;
 }
 
 .chart-card-title {
@@ -295,9 +298,6 @@
   font-weight: 700;
   font-size: 18px;
   color: #101828;
-  display: flex;
-  align-items: center;
-  gap: 0;
 }
 
 .chart-card-subtitle {
@@ -312,45 +312,6 @@
   padding: 16px 20px 20px;
   height: auto;
   min-height: 320px;
-}
-
-/* ============================ NAVIGABLE CHART CARD ============================ */
-.chart-card--navigable {
-  cursor: pointer;
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
-  pointer-events: auto;
-}
-
-.chart-card--navigable:hover {
-  box-shadow: 0 6px 24px 0 rgba(50, 77, 135, 0.13);
-  transform: translateY(-2px);
-}
-
-.chart-card--navigable:focus-visible {
-  outline: 2.5px solid #3B82F6;
-  outline-offset: 3px;
-  border-radius: 10px;
-}
-
-.chart-card--navigable:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px 0 rgba(50, 77, 135, 0.10);
-}
-
-.chart-card-nav-icon {
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 6px;
-  color: #94A3B8;
-  position: relative;
-  top: -1px;
-  transition: color 0.15s ease;
-  flex-shrink: 0;
-}
-
-.chart-card--navigable:hover .chart-card-nav-icon,
-.chart-card--navigable:focus-visible .chart-card-nav-icon {
-  color: #3B82F6;
 }
 
 /* ============================ CHART ROWS ============================ */
@@ -408,7 +369,27 @@
   color: #475569 !important;
 }
 
-/* ============================ KPI ALERT MODAL ============================ */
+/* KPI ALERT TEXT */
+.kpi-alert-text {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #EF4444;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.kpi-alert-text:hover {
+  color: #DC2626;
+  text-decoration: underline;
+}
+
+/* ============================ KPI MODAL ============================ */
+
+/* Overlay — fixed to viewport, always fully visible */
 .kpi-modal-overlay {
   position: fixed;
   inset: 0;
@@ -417,108 +398,285 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 16px;                  /* keeps modal away from screen edges */
+  box-sizing: border-box;
+  overflow-y: auto;               /* allows scrolling on very small screens */
 }
 
+/* Modal container — max-height + overflow-y prevent clipping */
 .kpi-modal {
-  width: 420px;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px); /* never taller than the viewport */
   background: #ffffff;
   border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
   font-family: 'Lexend', sans-serif;
   animation: kpiModalFadeIn 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;               /* scroll internally when content is tall */
+  box-sizing: border-box;
 }
 
 @keyframes kpiModalFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
+/* ── HEADER ── */
 .kpi-modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .kpi-modal-header h2 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: #1E293B;
+  line-height: 1.35;
   margin: 0;
+  word-break: break-word;       /* prevents long KPI names from overflowing */
 }
 
 .kpi-modal-close-icon {
-  background: transparent;
+  background: #F1F5F9;
   border: none;
-  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  font-size: 14px;
   cursor: pointer;
   color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
 }
 
+.kpi-modal-close-icon:hover {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+/* ── STATUS BADGE ── */
 .kpi-modal-status {
-  margin-top: 10px;
-  display: inline-block;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #FEF3C7;
   color: #92400E;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
   border-radius: 999px;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
 }
 
+/* ── DESCRIPTION ── */
 .kpi-modal-desc {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 13px;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.65;
+  word-break: break-word;
+  flex-shrink: 0;
 }
 
+/* ── SECTION LABEL (Insights / Recommendations) ── */
+.kpi-modal-section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #94A3B8;
+  flex-shrink: 0;
+}
+
+/* ── SUGGESTIONS LIST ── */
 .kpi-modal-suggestions {
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
+/* Individual card */
 .kpi-suggestion-item {
   display: flex;
   gap: 10px;
   background: #F8FAFC;
-  padding: 10px;
+  border: 1px solid #E8EFF7;
+  padding: 11px 13px;
   border-radius: 10px;
   align-items: flex-start;
+  transition: background 0.12s;
 }
 
-.suggestion-icon { font-size: 16px; }
+.kpi-suggestion-item:hover {
+  background: #EFF6FF;
+}
 
+/* Icon column — fixed width so text always aligns */
+.suggestion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.suggestion-icon--insight {
+  background: #EFF6FF;
+  color: #3B82F6;
+}
+
+.suggestion-icon--rec {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+/* Text */
 .suggestion-text {
   font-size: 13px;
   color: #334155;
+  line-height: 1.6;
+  word-break: break-word;
+  flex: 1;
 }
 
+/* ── FOOTER ── */
 .kpi-modal-footer {
-  margin-top: 18px;
-  text-align: right;
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .kpi-modal-close {
   background: #324D87;
-  color: white;
+  color: #fff;
   border: none;
-  padding: 8px 14px;
+  padding: 9px 20px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
   font-family: 'Lexend', sans-serif;
+  transition: background 0.15s;
+}
+
+.kpi-modal-close:hover {
+  background: #253a6a;
+}
+
+/* ── RESPONSIVE — TABLET (≤ 768px) ── */
+@media (max-width: 768px) {
+  .kpi-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;       /* sheet-style from bottom on tablet */
+  }
+
+  .kpi-modal {
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 18px 18px 12px 12px;
+    padding: 20px 18px;
+  }
+
+  .kpi-modal-header h2 {
+    font-size: 15px;
+  }
+
+  .kpi-modal-desc {
+    font-size: 12.5px;
+  }
+
+  .suggestion-text {
+    font-size: 12.5px;
+  }
+}
+
+/* ── RESPONSIVE — MOBILE (≤ 480px) ── */
+@media (max-width: 480px) {
+  .kpi-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .kpi-modal {
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    padding: 18px 16px 24px;
+  }
+
+  .kpi-modal-header h2 {
+    font-size: 14px;
+  }
+
+  .kpi-modal-status {
+    font-size: 11px;
+  }
+
+  .kpi-modal-desc {
+    font-size: 12px;
+    margin-top: 10px;
+  }
+
+  .kpi-suggestion-item {
+    padding: 10px 11px;
+  }
+
+  .suggestion-text {
+    font-size: 12px;
+  }
+
+  .kpi-modal-close {
+    width: 100%;
+    text-align: center;
+    padding: 11px;
+  }
+
+  .kpi-modal-footer {
+    justify-content: stretch;
+  }
 }
 
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
-  .charts-row { flex-direction: column; }
-  .chart-card { width: 100%; }
+  .charts-row {
+    flex-direction: column;
+  }
+  
+  .chart-card {
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
-  .chart-card-header { padding: 16px 20px 0; }
-  .chart-container   { padding: 12px 16px 16px; min-height: 280px; }
+  .chart-card-header {
+    padding: 16px 20px 0;
+  }
+  
+  .chart-container {
+    padding: 12px 16px 16px;
+    min-height: 280px;
+  }
 }

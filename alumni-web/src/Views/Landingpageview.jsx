@@ -18,6 +18,21 @@ const stripHtml = (html) => {
   return tmp.textContent || tmp.innerText || '';
 };
 
+// ── Fallbacks (per-type, matches Discounts feature palette) ──────────────────
+const FALLBACKS = {
+  events:    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80',
+  jobs:      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
+  discounts: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+};
+
+// ── Resolve image URL from raw Supabase row ───────────────────────────────────
+// Mirrors the pattern in Discounts.jsx:
+//   image: discount.image_url || fallback
+// Each table uses image_url as the canonical column name.
+const resolveImage = (item, type) =>
+  item.image_url || item.image || item.cover_image || item.banner_url || FALLBACKS[type] || null;
+
+// ── Content Card ──────────────────────────────────────────────────────────────
 const ContentCard = ({ item, type }) => {
   const getTypeColor = () => {
     switch (type) {
@@ -28,9 +43,24 @@ const ContentCard = ({ item, type }) => {
     }
   };
 
+  const imageUrl = resolveImage(item, type);
+
   return (
     <div className="lp-content-card">
       <div className="lp-card-image">
+        <img
+          src={imageUrl}
+          alt={item.title || type}
+          loading="lazy"
+          onError={(e) => {
+            // Prevent infinite error loop; degrade to per-type fallback
+            const fallback = FALLBACKS[type];
+            if (e.currentTarget.src !== fallback) {
+              e.currentTarget.src = fallback;
+            }
+          }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
         <div className="lp-card-category" style={{ background: getTypeColor() }}>
           {type === 'events'    && 'Event'}
           {type === 'jobs'      && 'Job'}

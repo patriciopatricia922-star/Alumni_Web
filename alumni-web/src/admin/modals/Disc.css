@@ -1,0 +1,82 @@
+/* css ng modals */
+
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
+.cm-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center; z-index: 1100;
+  }
+  .cm-modal {
+    background: #fff; border-radius: 14px; width: 520px;
+    max-height: 90vh; overflow-y: auto; padding: 28px 30px;
+    position: relative; animation: cmFade 0.2s ease;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2); font-family: 'Arimo', Arial, sans-serif;
+  }
+  @keyframes cmFade {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cm-modal-close {
+    position: absolute; top: 14px; right: 14px; border: none; background: #F1F5F9;
+    border-radius: 50%; width: 30px; height: 30px; font-size: 16px; cursor: pointer;
+    color: #475569; display: flex; align-items: center; justify-content: center;
+  }
+  .cm-modal-title { font-family: 'Lexend', sans-serif; font-size: 18px; font-weight: 700; color: #0F172B; margin: 0 0 4px; }
+  .cm-modal-subtitle { font-size: 13px; color: #94A3B8; margin: 0 0 22px; }
+  .cm-modal-fields { display: flex; flex-direction: column; gap: 16px; }
+  .cm-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+  .cm-field { display: flex; flex-direction: column; gap: 5px; }
+  .cm-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cm-label { font-size: 13px; font-weight: 600; color: #1E293B; font-family: 'Arimo', sans-serif; }
+  .cm-label-required { color: #EF4444; margin-left: 2px; }
+  .cm-input {
+    width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 8px;
+    font-size: 13px; font-family: 'Arimo', sans-serif; color: #1E293B;
+    background: #F8FAFC; outline: none; box-sizing: border-box;
+  }
+  .cm-input:focus { border-color: #94A3B8; background: #fff; }
+  .cm-select {
+    width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 8px;
+    font-size: 13px; font-family: 'Arimo', sans-serif; color: #1E293B;
+    background: #F8FAFC; outline: none; appearance: none; cursor: pointer; box-sizing: border-box;
+  }
+  .cm-select:focus { border-color: #94A3B8; background: #fff; }
+  .cm-btn-cancel {
+    padding: 9px 20px; border: 1px solid #E2E8F0; background: #fff;
+    border-radius: 8px; font-size: 13px; font-family: 'Arimo', sans-serif; color: #475569; cursor: pointer;
+  }
+  .cm-btn-cancel:hover { background: #F1F5F9; }
+  .cm-btn-submit {
+    padding: 9px 20px; border: none; background: #1E293B; color: #fff;
+    border-radius: 8px; font-size: 13px; font-family: 'Arimo', sans-serif; font-weight: 600; cursor: pointer;
+  }
+  .cm-btn-submit:hover { background: #0F172A; }
+  .cm-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  .cm-rich-editor { border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; overflow: hidden; }
+  .cm-rich-toolbar { display: flex; gap: 2px; padding: 6px 8px; border-bottom: 1px solid #E2E8F0; background: #fff; }
+  .cm-toolbar-btn {
+    width: 28px; height: 28px; border: none; background: transparent;
+    border-radius: 4px; cursor: pointer; color: #475569; display: flex; align-items: center; justify-content: center;
+  }
+  .cm-toolbar-btn:hover { background: #F1F5F9; }
+  .cm-rich-content { padding: 9px 12px; font-size: 13px; font-family: 'Arimo', sans-serif; color: #1E293B; min-height: 80px; outline: none; }
+  .cm-rich-content:empty:before { content: attr(data-placeholder); color: #94A3B8; pointer-events: none; }
+  .cm-image-upload-container { display: flex; flex-direction: column; gap: 8px; }
+  .cm-image-preview { position: relative; width: 100%; height: 140px; border-radius: 8px; overflow: hidden; border: 1px solid #E2E8F0; }
+  .cm-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .cm-remove-image-btn {
+    position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.5);
+    border: none; border-radius: 4px; padding: 4px; cursor: pointer; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cm-image-upload-area {
+    border: 1.5px dashed #CBD5E1; border-radius: 8px; padding: 16px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; font-size: 13px; color: #475569; font-family: 'Arimo', sans-serif;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cm-image-upload-area:hover { border-color: #3B82F6; background: #F8FAFF; color: #3B82F6; }
+  .cm-field-hint { font-size: 11px; color: #94A3B8; margin: 2px 0 0; }
+  @media (max-width: 900px) {
+    .cm-modal { width: 95%; }
+    .cm-field-grid { grid-template-columns: 1fr; }
+  }

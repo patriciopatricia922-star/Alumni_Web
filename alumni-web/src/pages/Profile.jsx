@@ -177,15 +177,11 @@ const Profile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Fetch user and survey data ─────────────────────────────────────────────
+    // ── Fetch user and survey data ─────────────────────────────────────────────
   const fetchUserAndSurvey = useCallback(async () => {
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
       if (authError || !authUser) return;
-
-      const pwChangedAt  = authUser.user_metadata?.password_changed_at || null;
-      const lastChanged  = authUser.last_sign_in_at || authUser.updated_at || null;
-      setLastPasswordChange(pwChangedAt || lastChanged);
 
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -193,6 +189,12 @@ const Profile = () => {
         .eq('id', authUser.id)
         .maybeSingle();
       if (userError) { console.error('Supabase error:', userError.message); return; }
+
+      const pwChangedAt =
+        userData?.password_changed_at                 
+        ?? authUser.user_metadata?.password_changed_at 
+        ?? null;                                      
+      setLastPasswordChange(pwChangedAt);
 
       const { data: surveyProgress, error: surveyError } = await supabase
         .from('survey_progress')
@@ -447,13 +449,22 @@ const Profile = () => {
       });
       if (signInError) throw new Error('Current password is incorrect.');
 
+      const passwordChangedAt = new Date().toISOString();
+
       const { error: updateError } = await supabase.auth.updateUser({
         password: cpNew,
-        data: { password_changed_at: new Date().toISOString() },
+        data: { password_changed_at: passwordChangedAt },
       });
       if (updateError) throw updateError;
 
-      setLastPasswordChange(new Date().toISOString());
+      await supabase
+        .from('users')
+        .update({ password_changed_at: passwordChangedAt })
+        .eq('id', authUser.id);
+
+      setLastPasswordChange(passwordChangedAt);
+
+      // setLastPasswordChange(new Date().toISOString());
       setCpLoading(false);
       setCpSuccess(true);
       setCpCurrent('');

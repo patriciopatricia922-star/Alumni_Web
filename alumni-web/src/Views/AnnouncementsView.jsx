@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar';
 import megaphoneIcon from '../assets/megaphone_ic.svg';
 import calenderIcon from '../assets/calendar_ic.svg';
 import documentIcon from '../assets/document_ic.svg';
+import clockIcon from '../assets/clock_icn.svg';
 import { getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { truncateHtml, createMarkup } from '../utils/textHelpers';
 import '../styles/Announcements.css';
@@ -15,10 +16,7 @@ const getIcon = (category) => CATEGORY_ICONS[category] || documentIcon;
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const ClockIcon = () => (
-  <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-    <circle cx="7" cy="7" r="6" className="ann-clock-circle" strokeWidth="1.17"/>
-    <path d="M7 4V7.5L9.5 9" className="ann-clock-hand" strokeWidth="1.17" strokeLinecap="round"/>
-  </svg>
+   <img src={clockIcon} alt="" aria-hidden="true" width="12" height="12" style={{ display: 'block', flexShrink: 0 }} />
 );
 
 // ── Announcement Card ─────────────────────────────────────────────────────────
@@ -37,8 +35,10 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             src={getIcon(announcement.category)}
             alt={announcement.category}
             style={{
-              width: '60%', height: '60%', objectFit: 'contain',
-              filter: 'drop-shadow(0px 2px 4px rgba(43,114,251,0.45))',
+             width: '55%',
+  height: '55%',
+  objectFit: 'contain',
+  filter: 'drop-shadow(0px 2px 4px rgba(0, 62, 166, 0.45))',
             }}
           />
           <div className="ann-card__notif-ring">
@@ -157,7 +157,7 @@ const NotificationBell = ({
             boxSizing:   'border-box',
           }}>
             <span style={{
-              fontFamily: 'Arimo, Arial, sans-serif',
+              fontFamily: 'Montserrat, Arial, sans-serif',
               fontSize:   '10px',
               fontWeight: 700,
               color:      '#FFFFFF',
@@ -198,7 +198,7 @@ const NotificationBell = ({
             flexShrink:   0,
           }}>
             <span style={{
-              fontFamily: 'Montserrat, Arimo, Arial, sans-serif',
+              fontFamily: 'Montserrat, Montserrat, Arial, sans-serif',
               fontWeight: 700,
               fontSize:   '16px',
               color:      '#003EA6',
@@ -211,7 +211,7 @@ const NotificationBell = ({
                 style={{
                   background:  'none',
                   border:      'none',
-                  fontFamily:  'Arimo, Arial, sans-serif',
+                  fontFamily:  'Montserrat, Arial, sans-serif',
                   fontSize:    '12px',
                   color:       '#2B72FB',
                   cursor:      'pointer',
@@ -242,7 +242,7 @@ const NotificationBell = ({
                   border:      notifTab === t ? 'none' : '1px solid #D1D5DC',
                   borderRadius:'20px',
                   cursor:      'pointer',
-                  fontFamily:  'Arimo, Arial, sans-serif',
+                  fontFamily:  'Montserrat, Arial, sans-serif',
                   fontSize:    '12px',
                   fontWeight:  notifTab === t ? 700 : 400,
                   color:       notifTab === t ? '#FFFFFF' : '#4A5565',
@@ -276,7 +276,7 @@ const NotificationBell = ({
                     />
                   </svg>
                   <p style={{
-                    fontFamily: 'Arimo, Arial, sans-serif',
+                    fontFamily: 'Montserrat, Arial, sans-serif',
                     fontSize:   '13px',
                     color:      'rgba(0,0,0,0.3)',
                     margin:     0,
@@ -291,7 +291,7 @@ const NotificationBell = ({
                 return (
                   <div key={label}>
                     <p style={{
-                      fontFamily:    'Arimo, Arial, sans-serif',
+                      fontFamily:    'Montserrat, Arial, sans-serif',
                       fontWeight:    700,
                       fontSize:      '10px',
                       color:         'rgba(0,0,0,0.35)',
@@ -342,7 +342,7 @@ const NotificationBell = ({
 
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{
-                            fontFamily: 'Arimo, Arial, sans-serif',
+                            fontFamily: 'Montserrat, Arial, sans-serif',
                             fontWeight: n.read ? 400 : 700,
                             fontSize:   '13px',
                             color:      '#0A0A0A',
@@ -352,7 +352,7 @@ const NotificationBell = ({
                             {n.title}
                           </p>
                           <p style={{
-                            fontFamily:          'Arimo, Arial, sans-serif',
+                            fontFamily:          'Montserrat, Arial, sans-serif',
                             fontSize:            '12px',
                             color:               '#4A5565',
                             margin:              '0 0 4px 0',
@@ -365,7 +365,7 @@ const NotificationBell = ({
                             {n.body}
                           </p>
                           <span style={{
-                            fontFamily: 'Arimo, Arial, sans-serif',
+                            fontFamily: 'Montserrat, Arial, sans-serif',
                             fontSize:   '11px',
                             color:      'rgba(0,0,0,0.35)',
                           }}>
@@ -405,7 +405,7 @@ const NotificationBell = ({
                 background:   '#F9FAFB',
                 border:       '1px solid #D1D5DC',
                 borderRadius: '10px',
-                fontFamily:   'Arimo, Arial, sans-serif',
+                fontFamily:   'Montserrat, Arial, sans-serif',
                 fontSize:     '13px',
                 color:        '#4A5565',
                 cursor:       'pointer',
@@ -531,7 +531,7 @@ const AnnouncementsView = ({
           <p
             className="ann-subheading"
             style={{
-              fontFamily: 'Arimo, Arial',
+              fontFamily: 'Montserrat, Arial',
               fontWeight: 400,
               fontSize:   isMobile ? '13px' : '16px',
               lineHeight: '22px',
@@ -592,7 +592,7 @@ const AnnouncementsView = ({
 
             <div style={{ flex: 1, position: 'relative' }}>
               <h2 style={{
-                fontFamily:    'Montserrat, Arimo, Arial',
+                fontFamily:    'Montserrat, Montserrat, Arial',
                 fontWeight:    700,
                 fontSize:      isTablet ? '20px' : '25px',
                 lineHeight:    '1.3',
@@ -603,7 +603,7 @@ const AnnouncementsView = ({
                 Alumni Tracer Survey
               </h2>
               <p style={{
-                fontFamily: 'Arimo, Arial',
+                fontFamily: 'Montserrat, Arial',
                 fontWeight: 400,
                 fontSize:   '13px',
                 lineHeight: '22px',
@@ -615,7 +615,7 @@ const AnnouncementsView = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ClockIcon />
-                  <span style={{ fontFamily: 'Arimo, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+                  <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
                     2 hours ago
                   </span>
                 </div>
@@ -629,7 +629,7 @@ const AnnouncementsView = ({
                     border:       'none',
                     background:   'rgba(0,40,255,0.85)',
                     boxShadow:    '0px 2px 2px rgba(255,255,255,0.25)',
-                    fontFamily:   'Arimo, Arial',
+                    fontFamily:   'Montserrat, Arial',
                     fontWeight:   700,
                     fontSize:     '13px',
                     color:        '#FFFFFF',
@@ -643,7 +643,7 @@ const AnnouncementsView = ({
                   onMouseEnter={e => { if (surveyRoute) e.currentTarget.style.opacity = '0.85'; }}
                   onMouseLeave={e => { if (surveyRoute) e.currentTarget.style.opacity = '1'; }}
                 >
-                  Continue
+                  Proceed
                 </button>
               </div>
             </div>
@@ -675,7 +675,7 @@ const AnnouncementsView = ({
               }}
             >
               <span style={{
-                fontFamily:    'Arimo, Arial',
+                fontFamily:    'Montserrat, Arial',
                 fontWeight:    400,
                 fontSize:      '14px',
                 lineHeight:    '20px',
@@ -698,7 +698,7 @@ const AnnouncementsView = ({
                 padding:        '0 5px',
                 flexShrink:     0,
               }}>
-                <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '12px', color: '#FFFFFF' }}>
+                <span style={{ fontFamily: 'Montserrat, Arial', fontWeight: 700, fontSize: '12px', color: '#FFFFFF' }}>
                   {filtered.length}
                 </span>
               </div>
@@ -727,7 +727,7 @@ const AnnouncementsView = ({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
               </svg>
-              <span style={{ fontFamily: 'Arimo, Arial', fontWeight: 700, fontSize: '13px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>
+              <span style={{ fontFamily: 'Montserrat, Arial', fontWeight: 700, fontSize: '13px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>
                 FILTER
               </span>
             </button>
@@ -765,7 +765,7 @@ const AnnouncementsView = ({
                     onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <span style={{
-                      fontFamily: 'Arimo, Arial',
+                      fontFamily: 'Montserrat, Arial',
                       fontSize:   '14px',
                       color:      activeCategory === cat ? 'var(--ann-title-color)' : 'var(--ann-body-color)',
                       fontWeight: activeCategory === cat ? 700 : 400,
@@ -778,7 +778,7 @@ const AnnouncementsView = ({
                       padding:      '1px 7px',
                     }}>
                       <span style={{
-                        fontFamily: 'Arimo, Arial',
+                        fontFamily: 'Montserrat, Arial',
                         fontWeight: 700,
                         fontSize:   '11px',
                         color:      activeCategory === cat ? '#FFFFFF' : 'var(--ann-title-color)',
@@ -796,7 +796,7 @@ const AnnouncementsView = ({
         {/* ── Cards list ── */}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-            <span style={{ fontFamily: 'Arimo, Arial', fontSize: '14px', color: 'var(--ann-body-color)' }}>
+            <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '14px', color: 'var(--ann-body-color)' }}>
               Loading announcements…
             </span>
           </div>

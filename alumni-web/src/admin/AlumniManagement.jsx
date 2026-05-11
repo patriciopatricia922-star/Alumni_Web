@@ -1,5 +1,5 @@
 // ============================================================================
-// AlumniManagement.jsx — Logic
+// AlumniManagement.jsx
 // ============================================================================
 // Handles all business logic, Supabase API calls, data processing,
 // filtering (including sort-by-name), pagination, state management,
@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AlumniManagementView from "./views/AlumniManagementView";
 
+// Preserved from your version
 const PER_PAGE = 12;
 
 function AlumniManagement() {

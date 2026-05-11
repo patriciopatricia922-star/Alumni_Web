@@ -1,5 +1,5 @@
 // ============================================================================
-// SurveyManagement — Logic Controller
+// SurveyManagement.jsx — Logic Controller
 // ============================================================================
 // Merged: retains all original bug fixes (uid, branch persistence, branch
 // cleanup on delete) while adopting the new UI additions (askConfirm title
@@ -84,8 +84,8 @@ const DEFAULT_SURVEY = {
     },
     {
       id: 5,
-      title: "Job Experience",
-      description: "Your job hunting experience",
+      title: "Work Experience",
+      description: "Your work hunting experience",
       questions: [
         { id: 1, type: "multiple", label: "How long did it take you to find your first job after graduation?", required: true, options: ["Less than a month", "1–3 months", "4–6 months", "7–12 months", "More than a year", "Not applicable"] },
         { id: 2, type: "multiple", label: "How long have you been employed in your current job?", required: true, options: ["Less than a month", "1–6 months", "7–11 months", "1 year or less than 2 years", "2 years or less than 3 years", "3 years or less than 4 years", "Other"] },
@@ -195,8 +195,8 @@ export default function SurveyManagement() {
   const [dirtyQ, setDirtyQ] = useState(false);
 
   // ── Publication ───────────────────────────────────────────────────────────
-  const [saving,  setSaving]  = useState(false);
-  const [status,  setStatus]  = useState("");
+  const [saving,   setSaving]   = useState(false);
+  const [status,   setStatus]   = useState("");
   const [branches, setBranches] = useState({});
 
   // ── Notifications ─────────────────────────────────────────────────────────
@@ -474,6 +474,9 @@ export default function SurveyManagement() {
 
   // ==========================================================================
   // DERIVED DATA
+  // allQuestions spans ALL sections so the branch destination dropdown can
+  // offer every question in the survey as a valid jump target — not just the
+  // ones in the currently visible section.
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
   const allQuestions = survey?.sections.flatMap((s, si) =>

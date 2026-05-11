@@ -81,6 +81,13 @@ const AlumniDashboard = () => {
     jobs:          false,
   });
 
+  // ============================ DYNAMIC COUNTS FOR FOR-YOU CARDS ============================
+  const [cardCounts, setCardCounts] = useState({
+    events:    0,
+    discounts: 0,
+    jobs:      0,
+  });
+
   // ============================ RESPONSIVE BREAKPOINTS ============================
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
@@ -180,6 +187,7 @@ const AlumniDashboard = () => {
   // ============================ FETCH CARD BADGES (EVENTS / DISCOUNTS / JOBS) ============================
   // Badge is shown when: active items exist AND stored watermark < current count.
   // This means the badge automatically reappears when an admin adds new content.
+  // Also stores live counts for dynamic card descriptions.
   useEffect(() => {
     const fetchBadges = async () => {
       const [eventsRes, discountsRes, jobsRes] = await Promise.all([
@@ -191,6 +199,13 @@ const AlumniDashboard = () => {
       const eventsCount    = eventsRes.count    || 0;
       const discountsCount = discountsRes.count || 0;
       const jobsCount      = jobsRes.count      || 0;
+
+      // Store live counts for card descriptions
+      setCardCounts({
+        events:    eventsCount,
+        discounts: discountsCount,
+        jobs:      jobsCount,
+      });
 
       setCardBadges(prev => ({
         ...prev,
@@ -326,11 +341,48 @@ const AlumniDashboard = () => {
   // ============================ FOR YOU ITEMS ============================
   // `category` is the dismissBadge key; must match a STORAGE_KEYS entry and
   // the Supabase table name for events / discounts / jobs.
+  // Descriptions now use live counts fetched from Supabase.
   const forYouItems = [
-    { icon: announcementIcon, title: 'Announcements', description: 'Check latest news',    path: '/announcements', category: 'announcements', showDot: cardBadges.announcements },
-    { icon: eventsIcon,       title: 'Events',        description: '5 upcoming events',    path: '/events',        category: 'events',        showDot: cardBadges.events        },
-    { icon: discountIcon,     title: 'Discounts',     description: '8 offers available',   path: '/discounts',     category: 'discounts',     showDot: cardBadges.discounts     },
-    { icon: jobsIcon,         title: 'Jobs',          description: '3 listings available', path: '/jobs',          category: 'jobs',          showDot: cardBadges.jobs          },
+    {
+      icon: announcementIcon,
+      title: 'Announcements',
+      description: unreadCount > 0
+        ? `${unreadCount} unread announcement${unreadCount !== 1 ? 's' : ''}`
+        : 'Check latest news',
+      path: '/announcements',
+      category: 'announcements',
+      showDot: cardBadges.announcements,
+    },
+    {
+      icon: eventsIcon,
+      title: 'Events',
+      description: cardCounts.events > 0
+        ? `${cardCounts.events} upcoming event${cardCounts.events !== 1 ? 's' : ''}`
+        : 'No upcoming events',
+      path: '/events',
+      category: 'events',
+      showDot: cardBadges.events,
+    },
+    {
+      icon: discountIcon,
+      title: 'Discounts',
+      description: cardCounts.discounts > 0
+        ? `${cardCounts.discounts} offer${cardCounts.discounts !== 1 ? 's' : ''} available`
+        : 'No offers available',
+      path: '/discounts',
+      category: 'discounts',
+      showDot: cardBadges.discounts,
+    },
+    {
+      icon: jobsIcon,
+      title: 'Jobs',
+      description: cardCounts.jobs > 0
+        ? `${cardCounts.jobs} listing${cardCounts.jobs !== 1 ? 's' : ''} available`
+        : 'No listings available',
+      path: '/jobs',
+      category: 'jobs',
+      showDot: cardBadges.jobs,
+    },
   ];
 
   // ============================ SURVEY NAVIGATION (DPA-GATED) ============================

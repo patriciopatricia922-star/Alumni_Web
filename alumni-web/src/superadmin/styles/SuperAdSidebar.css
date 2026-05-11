@@ -8,9 +8,10 @@
   left: 0;
   right: 0;
   height: 68px;
-  background: #001947;
+  background: #00226D;
   box-shadow: 0px -4px 24px rgba(0, 0, 0, 0.35);
   border-radius: 20px 20px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -28,6 +29,10 @@
   height: 100%;
   text-decoration: none;
   position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .superadmin-mobile-active-indicator {
@@ -37,7 +42,7 @@
   transform: translateX(-50%);
   width: 28px;
   height: 3px;
-  background: #D9CA81;
+  background: #FFEC8E;
   border-radius: 0 0 4px 4px;
 }
 
@@ -46,6 +51,7 @@
   height: 21px;
 }
 
+/* Figma: active icon uses warm gold filter matching the accent colour */
 .superadmin-mobile-icon-active {
   filter: brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%);
 }
@@ -55,7 +61,7 @@
 }
 
 .superadmin-mobile-label {
-  font-family: 'Arimo', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 10px;
   max-width: 60px;
   text-align: center;
@@ -64,8 +70,15 @@
   white-space: nowrap;
 }
 
-.superadmin-mobile-label-active { font-weight: 700; color: #D9CA81; }
-.superadmin-mobile-label-inactive { font-weight: 400; color: rgba(255, 255, 255, 0.45); }
+.superadmin-mobile-label-active {
+  font-weight: 700;
+  color: #FFEC8E;
+}
+
+.superadmin-mobile-label-inactive {
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+}
 
 .superadmin-mobile-logout-btn {
   display: flex;
@@ -88,7 +101,7 @@
   z-index: 101;
   width: 40px;
   height: 40px;
-  background: #001947;
+  background: #00226D;
   border: none;
   border-radius: 10px;
   display: flex;
@@ -100,53 +113,84 @@
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   Desktop/Tablet Sidebar (768px and above)
+   Desktop / Tablet Sidebar (768px and above)
    ──────────────────────────────────────────────────────────────────────────── */
 .superadmin-sidebar {
   position: fixed;
   left: 0;
   top: 0;
   height: 100vh;
-  background: #001947;
-  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.25);
-  border-radius: 0px 20px 20px 0px;
+  background: #00226D;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.5);
+  /* Figma: 40px radius matches the reference rounded edge */
+  border-radius: 0px 40px 40px 0px;
   display: flex;
   flex-direction: column;
   z-index: 100;
+  box-sizing: border-box;
   transition: transform 0.25s ease;
+  overflow: hidden;
 }
 
 .superadmin-sidebar-hidden {
   transform: translateX(-100%);
 }
 
+/* ── Logo ─────────────────────────────────────────────────────────────────── */
 .superadmin-sidebar-logo-container {
   display: flex;
   justify-content: center;
-  padding: 28px 0 24px;
+  /* Figma: logo sits higher, generous top breathing room */
+  padding: 28px 0 20px;
 }
 
 .superadmin-sidebar-logo {
-  margin-left: 15px;
-  width: 159px;
+  margin-right: 20px;
+  /* Negative margins let the logo visually overlap the container padding
+     so it renders at the correct Figma position without extra whitespace */
+  margin-top: -30px;
+  width: 242px;
   height: auto;
   object-fit: contain;
+  margin-bottom: -30px;
 }
 
-.superadmin-sidebar-logo-tablet { width: 139px; }
+.superadmin-sidebar-logo-tablet {
+  width: 169px;
+}
 
+/* ── Divider ──────────────────────────────────────────────────────────────── */
 .superadmin-sidebar-divider {
-  width: 100%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 20px 4px;
+  flex-shrink: 0;
+  /* Pulls divider up so the gap between it and the MENU heading matches Figma */
+  margin-bottom: -9px;
 }
 
+/* ── Menu section ─────────────────────────────────────────────────────────── */
 .superadmin-sidebar-menu-section {
-  padding: 20px 9px 0;
+  /* vw-based top margin keeps proportional gap at different viewport widths */
+  margin-top: 1.9vw;
+  padding: 16px 11px 0;
   display: flex;
   flex-direction: column;
+  /* Figma: items sit close together; 2px gap is correct */
   gap: 2px;
+  /* flex:1 lets this section grow to fill available space between the
+     divider and the footer; min-height:0 allows it to shrink below its
+     natural content height so it never overflows into the user pill */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.superadmin-sidebar-menu-section::-webkit-scrollbar {
+  display: none;
 }
 
 .superadmin-sidebar-menu-heading {
@@ -154,67 +198,130 @@
   font-weight: 600;
   font-size: 10px;
   line-height: 15px;
-  letter-spacing: 0.5px;
+  /* Figma: MENU label is dimmed, not full-white */
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.45);
   padding: 0 14px;
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
 }
 
+/* ── Individual nav item ──────────────────────────────────────────────────── */
 .superadmin-sidebar-menu-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 13px;
-  margin: 0 6px;
+  /* Figma: icon and label are vertically centred on single-line items;
+     flex-start handles two-line items so the icon aligns to the first line */
+  align-items: flex-start;
+  gap: 0;
+  /* Left-indent 16px → icon 19px → 14px gap → label.
+     Padding-right 12px keeps text away from the rounded edge. */
+  padding: 9px 12px 9px 16px;
+  margin: 0 8px;
   background: transparent;
-  border-radius: 14px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  /* Full width minus the 8px margin on each side */
+  width: calc(100% - 16px);
+  text-align: left;
   text-decoration: none;
-  transition: background 0.2s;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
 }
 
 .superadmin-sidebar-menu-item-active {
-  background: rgba(217, 202, 129, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
+.superadmin-sidebar-menu-item:hover:not(.superadmin-sidebar-menu-item-active) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Icon ─────────────────────────────────────────────────────────────────── */
+/* Figma: icons are ~19px — noticeably larger than the previous 13.2px */
 .superadmin-sidebar-icon {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   flex-shrink: 0;
+  /* Nudge 1px so the icon's optical centre aligns with the first text line */
+  margin-top: 1px;
 }
 
+/* Figma: active icon is rendered in the same warm gold as the accent colour */
 .superadmin-sidebar-icon-active {
-  filter: brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%);
+  filter: brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%)
+          hue-rotate(6deg) brightness(100%) contrast(90%);
 }
 
+/* Figma: inactive icons are white at ~75% opacity — readable but clearly passive */
 .superadmin-sidebar-icon-inactive {
-  filter: brightness(0) invert(1) opacity(0.85);
+  filter: brightness(0) invert(1) opacity(0.75);
 }
 
+/* ── Label ────────────────────────────────────────────────────────────────── */
 .superadmin-sidebar-label {
-  font-family: 'Arimo', sans-serif;
-  font-size: 15px;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.325px;
-  color: #FFFFFF;
-  white-space: nowrap;
+  font-family: 'Montserrat', sans-serif;
+  /* Figma: 13–14px range; 13.5 splits the difference cleanly */
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 19px;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.88);
+  /* Gap between icon and label text */
+  margin-left: 14px;
+  white-space: normal;
+  word-break: normal;
+  flex: 1;
 }
 
-.superadmin-sidebar-label-tablet { font-size: 14px; }
-.superadmin-sidebar-label-active { font-weight: 700; color: #D9CA81; }
+.superadmin-sidebar-label-tablet {
+  font-size: 13px;
+}
 
-/* Footer & User Card */
+/* Figma: active label is full-white and bold */
+.superadmin-sidebar-label-active {
+  font-weight: 700;
+  color: #FFEC8E;
+}
+
+/* ── Two-line label ───────────────────────────────────────────────────────── */
+/* line1: primary word(s) — same weight/size as the label */
+.superadmin-sidebar-label .label-line1 {
+  display: block;
+  font-weight: inherit;
+  line-height: 19px;
+}
+
+/* line2: secondary word — Figma shows it slightly smaller and dimmer,
+   acting as a visual sub-label beneath the primary word */
+.superadmin-sidebar-label .label-line2 {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.2px;
+}
+
+/* Active state: line2 tinted gold at reduced opacity */
+.superadmin-sidebar-label-active .label-line2 {
+  color: rgba(255, 236, 142, 0.7);
+}
+
+/* ── Footer / User card ───────────────────────────────────────────────────── */
 .superadmin-sidebar-footer {
   margin-top: auto;
   padding: 0 8px 24px;
+  /* Prevent the footer from being compressed or overlapped when the
+     menu section grows; it always reserves its own fixed height */
+  flex-shrink: 0;
 }
 
 .superadmin-sidebar-user-card {
   display: flex;
   align-items: center;
-  padding: 0 10px 0 12px;
-  gap: 10px;
+  padding: 0 12px;
+  gap: 12px;
   height: 56px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 30px;
@@ -253,13 +360,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
 }
 
 .superadmin-sidebar-user-role {
   font-family: 'Arial', sans-serif;
   font-size: 11px;
   line-height: 15px;
-  color: #D1D5DC;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: capitalize;
+  font-weight: 400;
 }
 
 .superadmin-sidebar-logout-btn {
@@ -272,12 +382,13 @@
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 6px;
-  padding: 0;
+  border-radius: 4px;
+  padding: 6px 6px 0;
+  box-sizing: border-box;
   transition: background 0.15s;
 }
 
-/* Mobile backdrop */
+/* ── Backdrop (mobile) ────────────────────────────────────────────────────── */
 .superadmin-sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -288,76 +399,91 @@
 
 @keyframes superadminFadeIn {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
    Responsive Breakpoints
    ──────────────────────────────────────────────────────────────────────────── */
-/* Tablet (768px - 1024px) */
+
+/* Tablet (768px – 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
+  .superadmin-sidebar {
+    border-radius: 0px 30px 30px 0px;
+  }
+
   .superadmin-sidebar-menu-section {
-    padding: 20px 8px 0;
+    padding: 16px 8px 0;
     gap: 2px;
   }
-  
+
   .superadmin-sidebar-menu-item {
-    gap: 10px;
-    padding: 9px 12px;
+    padding: 9px 10px 9px 14px;
+    margin: 0 6px;
   }
-  
+
+  .superadmin-sidebar-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .superadmin-sidebar-label {
+    font-size: 13px;
+    margin-left: 12px;
+  }
+
   .superadmin-sidebar-user-card {
     padding: 0 10px;
     gap: 10px;
     height: 52px;
   }
-  
+
   .superadmin-sidebar-avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
-  
+
   .superadmin-sidebar-initials {
-    font-size: 13px;
-  }
-  
-  .superadmin-sidebar-user-name {
     font-size: 12px;
-    line-height: 18px;
   }
-  
+
+  .superadmin-sidebar-user-name {
+    font-size: 11.5px;
+    line-height: 16px;
+  }
+
   .superadmin-sidebar-user-role {
     font-size: 10px;
     line-height: 14px;
   }
-  
+
   .superadmin-sidebar-logout-btn {
     width: 26px;
     height: 26px;
   }
 }
 
-/* Mobile (below 768px) - for sidebar version when open */
+/* Mobile (below 768px) — sidebar drawer when open */
 @media (max-width: 767px) {
   .superadmin-sidebar {
     width: 229px !important;
     border-radius: 0px 20px 20px 0px;
   }
-  
-  .superadmin-sidebar-menu-section {
-    padding: 20px 10px 0;
-  }
-  
-  .superadmin-sidebar-menu-item {
-    padding: 10px 14px;
-    margin: 0 6px;
-  }
-  
-  .superadmin-sidebar-logo-container {
-    padding: 28px 0 24px;
-  }
-  
+
   .superadmin-sidebar-logo {
     width: 100px;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+  }
+
+  .superadmin-sidebar-menu-section {
+    margin-top: 0;
+    padding: 16px 10px 0;
+  }
+
+  .superadmin-sidebar-menu-item {
+    padding: 10px 12px 10px 14px;
+    margin: 0 6px;
   }
 }

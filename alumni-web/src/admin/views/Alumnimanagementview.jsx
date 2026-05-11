@@ -1,5 +1,5 @@
 // ============================================================================
-// AlumniManagementView.jsx — UI
+// AlumniManagementView.jsx
 // ============================================================================
 // Renders all visual components for alumni management including:
 //   - Alumni table with search and pagination
@@ -15,6 +15,35 @@ import { MdEmail, MdWork, MdAssignment, MdAccountCircle } from "react-icons/md";
 import { FiFilter, FiDownload, FiSearch, FiX, FiUpload } from "react-icons/fi";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AlumniManagement.css";
+
+// ============================================================================
+// SVG ICONS - Used for metric cards (preserved from your version)
+// ============================================================================
+const IconUsers = ({ color = "#155DFC" }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M2 20c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="9" cy="8" r="4" stroke={color} strokeWidth="2"/>
+    <path d="M19 14c1.657 0 3 1.343 3 3" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="17" cy="7" r="3" stroke={color} strokeWidth="2"/>
+  </svg>
+);
+
+const IconSurveyDone = ({ color = "#00A63E" }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <rect x="4" y="2" width="14" height="20" rx="2" stroke={color} strokeWidth="2"/>
+    <path d="M8 7h6M8 11h6M8 15h4" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <path d="M14 16l1.5 1.5L18 14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const IconSurveyPending = ({ color = "#DF7171" }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <rect x="4" y="2" width="14" height="20" rx="2" stroke={color} strokeWidth="2"/>
+    <path d="M8 7h6M8 11h6M8 15h4" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <path d="M15 14v3" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="15" cy="18.5" r="0.75" fill={color}/>
+  </svg>
+);
 
 // ============================================================================
 // BADGE COMPONENTS
@@ -87,6 +116,7 @@ const FilterModal = ({
   ];
   const surveyOptions = ["Completed", "Pending"];
 
+  // Adopted friend's functional state update pattern — safer for batched updates
   const handleChange = (key, value) =>
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
 
@@ -200,6 +230,12 @@ const FilterModal = ({
 // ============================================================================
 // UPLOAD CSV MODAL
 // ============================================================================
+// Upload logic upgraded to use auth.admin.createUser (from friend's version)
+// so that the auth.users FK constraint is satisfied before inserting the
+// public profile row. On auth creation failure the row is skipped; on insert
+// failure the orphaned auth user is deleted (rolled back).
+// All UI structure, styling, and column hints are preserved from your version.
+// ============================================================================
 function UploadCSVModal({ onClose, onSuccess }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState([]);
@@ -263,7 +299,7 @@ function UploadCSVModal({ onClose, onSuccess }) {
 
   const normalizeKey = (k) => k.toLowerCase().replace(/[\s_-]+/g, "_");
 
-  // mapRow no longer sets `id` — the auth.admin.createUser call owns that.
+  // `id` is intentionally omitted — auth.admin.createUser owns the UUID.
   const mapRow = (row) => {
     const n = {};
     Object.entries(row).forEach(([k, v]) => { n[normalizeKey(k)] = v; });
@@ -313,14 +349,12 @@ function UploadCSVModal({ onClose, onSuccess }) {
           mapped.batch_year = null;
         }
 
-        // ── FIX: create the auth.users record first so that the FK
-        //         constraint "users_id_fkey" is satisfied, then insert
-        //         the public profile row using the UUID Supabase returns.
+        // Create the auth.users record first so the FK constraint is satisfied,
+        // then insert the public profile row using the UUID Supabase returns.
         const { data: authData, error: authError } =
           await supabaseAdmin.auth.admin.createUser({
             email: mapped.email,
-            // Generate a secure random password — the alumni can reset it
-            // via "Forgot password" when they first log in.
+            // Random password — alumni reset via "Forgot password" on first login.
             password: crypto.randomUUID(),
             email_confirm: true,
           });
@@ -337,7 +371,7 @@ function UploadCSVModal({ onClose, onSuccess }) {
           .insert([{ id: authId, ...mapped }]);
 
         if (insertError) {
-          // Roll back the auth user so we don't leave orphaned auth records.
+          // Roll back the auth user to avoid orphaned auth records.
           await supabaseAdmin.auth.admin.deleteUser(authId);
           errors.push({ email: mapped.email, message: insertError.message });
         } else {
@@ -838,17 +872,25 @@ function AlumniProfileModal({ alumni, onClose }) {
 // ============================================================================
 // MAIN VIEW COMPONENT
 // ============================================================================
+// Layout preserved from your version.
+// Export button kept inside the toolbar (your placement) with your styling.
+// ============================================================================
 function AlumniManagementView({
+  alumni,
   stats,
   search,
   page,
+  isMobile,
   selectedAlumni,
+  completedPct,
+  pendingPct,
   filtered,
   totalPages,
   paginated,
   startEntry,
   endEntry,
   setSearch,
+  setPage,
   setSelectedAlumni,
   updateStatus,
   showFilter,
@@ -881,12 +923,7 @@ function AlumniManagementView({
         </div>
       </div>
 
-      <div className="am-export-row">
-        <button className="am-export-btn" onClick={onExport}>
-          <FiDownload size={14} /> Export
-        </button>
-      </div>
-
+      {/* Main Table Card */}
       <div className="am-table-card">
         <div className="am-toolbar">
           <div className="am-search-wrap">
@@ -908,6 +945,14 @@ function AlumniManagementView({
             >
               <FiFilter size={14} /> Filter
               {hasActiveFilters && <span className="filter-badge" />}
+            </button>
+            {/* Export button kept in toolbar per your layout */}
+            <button
+              className="am-tb-btn"
+              onClick={onExport}
+              style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
+            >
+              <FiDownload size={14} /> Export
             </button>
           </div>
         </div>
@@ -971,6 +1016,7 @@ function AlumniManagementView({
           </table>
         </div>
 
+        {/* Footer / Pagination */}
         <div className="am-footer">
           <span className="am-footer-text">
             Showing {startEntry} to {endEntry} of {filtered.length} entries
@@ -1018,6 +1064,7 @@ function AlumniManagementView({
         </div>
       </div>
 
+      {/* Filter Modal */}
       {showFilter && (
         <FilterModal
           filters={filters}
@@ -1029,6 +1076,7 @@ function AlumniManagementView({
         />
       )}
 
+      {/* Upload CSV Modal */}
       {showUploadModal && (
         <UploadCSVModal
           onClose={onCloseUploadModal}
@@ -1036,6 +1084,7 @@ function AlumniManagementView({
         />
       )}
 
+      {/* Profile Modal */}
       {selectedAlumni && (
         <AlumniProfileModal alumni={selectedAlumni} onClose={onCloseModal} />
       )}

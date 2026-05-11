@@ -3,13 +3,13 @@ import Sidebar from '../components/Sidebar';
 import {
   FaCalendarAlt,
   FaStar,
-  FaArrowLeft,
   FaFilter,
-  FaBell,
   FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
 import { truncateHtml, stripHtml } from '../utils/textHelpers';
+import '../styles/Events.css';
+
 
 // ── Design tokens (mirrors Announcements.css) ──────────────────────────────
 const T = {
@@ -124,48 +124,52 @@ const EventCard = ({ event, isMobile }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background:   T.cardBg,
+        background:   expanded ? 'rgba(0,62,166,0.03)' : T.cardBg,
         border:       `1px solid ${hovered || expanded ? T.cardBorderHover : T.cardBorder}`,
+        borderLeft:   expanded ? '3px solid #003EA6' : '3px solid transparent',
         boxShadow:    hovered || expanded ? T.cardShadowHover : T.cardShadow,
         borderRadius: '16px',
         overflow:     'visible',
         cursor:       'pointer',
-        transform:    hovered ? 'translateY(-2px)' : 'translateY(0)',
-        transition:   'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
+        transform:    hovered ? 'translateY(-1px)' : 'translateY(0)',
+        transition:   'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.12s ease',
       }}
     >
-      {/* ── Card body ── */}
+      {/* Card body */}
       <div style={{
         display:    'flex',
         alignItems: 'flex-start',
-        padding:    isMobile ? '14px' : '18px 20px',
-        gap:        '16px',
+        padding:    isMobile ? '12px 14px' : '14px 18px',
+        gap:        '12px',
       }}>
+
         {/* Icon box */}
         <div style={{
-          width:          48,
-          height:         48,
-          minWidth:       48,
-          background:     T.iconBoxBg,
-          boxShadow:      hovered ? T.iconBoxShadowHover : T.iconBoxShadow,
-          borderRadius:   '14px',
+          width:          40,
+          height:         40,
+          minWidth:       40,
+          background:     'rgba(0,62,166,0.08)',
+          border:         '1px solid rgba(0,62,166,0.15)',
+          borderRadius:   '50%',
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
           flexShrink:     0,
-          transform:      hovered ? 'scale(1.04)' : 'scale(1)',
-          transition:     'transform 0.3s ease, box-shadow 0.3s ease',
+          marginTop:      '2px',
+          transition:     'transform 0.2s ease, box-shadow 0.2s ease',
+          transform:      hovered ? 'scale(1.05)' : 'scale(1)',
+          boxShadow:      hovered ? '0px 4px 12px rgba(0,62,166,0.2)' : 'none',
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="4" width="18" height="18" rx="3" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" />
-            <path d="M3 9H21" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" />
-            <path d="M8 2V5M16 2V5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
-            <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="rgba(255,255,255,0.9)" />
-            <rect x="11" y="13" width="2.5" height="2.5" rx="0.5" fill="rgba(255,255,255,0.9)" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="3" stroke="#003EA6" strokeWidth="1.6" />
+            <path d="M3 9H21" stroke="#003EA6" strokeWidth="1.6" />
+            <path d="M8 2V5M16 2V5" stroke="#003EA6" strokeWidth="1.6" strokeLinecap="round" />
+            <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="#003EA6" />
+            <rect x="11" y="13" width="2.5" height="2.5" rx="0.5" fill="#003EA6" />
           </svg>
         </div>
 
-        {/* Content */}
+        {/* Content column */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
 
           {/* Top row: badge + timestamp */}
@@ -174,9 +178,9 @@ const EventCard = ({ event, isMobile }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, paddingTop: '2px' }}>
               <ClockSVG />
               <span style={{
-                fontFamily: "'Arimo', Arial, sans-serif",
+                fontFamily: "'Montserrat', Arial, sans-serif",
                 fontSize:   '11px',
-                color:      T.timestampColor,
+                color:      'rgba(0,0,0,0.35)',
                 whiteSpace: 'nowrap',
               }}>
                 {relativeTime(event.created_at || event.event_date)}
@@ -188,10 +192,10 @@ const EventCard = ({ event, isMobile }) => {
           <p style={{
             fontFamily:    "'Montserrat', Arial, sans-serif",
             fontWeight:    700,
-            fontSize:      isMobile ? '14px' : '15.5px',
-            lineHeight:    '1.35',
-            letterSpacing: '-0.2px',
-            color:         T.titleColor,
+            fontSize:      '13px',
+            lineHeight:    '1.4',
+            letterSpacing: '0px',
+            color:         '#0A0A0A',
             margin:        0,
           }}>
             {event.name || event.title}
@@ -199,12 +203,12 @@ const EventCard = ({ event, isMobile }) => {
 
           {/* Description with inline See more */}
           <p style={{
-            fontFamily: "'Arimo', Arial, sans-serif",
+            fontFamily: "'Montserrat', Arial, sans-serif",
             fontWeight: 400,
-            fontSize:   isMobile ? '12.5px' : '13.5px',
-            lineHeight: '1.65',
-            color:      T.bodyColor,
-            margin:     0,
+            fontSize:   '12px',
+            lineHeight: '1.4',
+            color:      '#4A5565',
+            margin:     '0 0 4px 0',
           }}>
             {expanded
               ? previewText
@@ -218,10 +222,10 @@ const EventCard = ({ event, isMobile }) => {
                   background:  'none',
                   border:      'none',
                   padding:     0,
-                  fontFamily:  "'Arimo', Arial, sans-serif",
-                  fontSize:    isMobile ? '12.5px' : '13.5px',
+                  fontFamily:  "'Montserrat', Arial, sans-serif",
+                  fontSize:    '12px',
                   fontWeight:  700,
-                  color:       T.accent,
+                  color:       '#2B72FB',
                   cursor:      'pointer',
                   display:     'inline',
                   lineHeight:  'inherit',
@@ -289,10 +293,10 @@ const EventCard = ({ event, isMobile }) => {
                   background:  'none',
                   border:      'none',
                   padding:     0,
-                  fontFamily:  "'Arimo', Arial, sans-serif",
-                  fontSize:    isMobile ? '12.5px' : '13.5px',
+                  fontFamily:  "'Montserrat', Arial, sans-serif",
+                  fontSize:    '12px',
                   fontWeight:  700,
-                  color:       T.accent,
+                  color:       '#2B72FB',
                   cursor:      'pointer',
                   display:     'inline-flex',
                   alignItems:  'center',
@@ -305,9 +309,10 @@ const EventCard = ({ event, isMobile }) => {
               </button>
             </div>
           )}
-        </div>
-      </div>
-    </div>
+
+        </div>  
+      </div>    
+    </div>      
   );
 };
 
@@ -328,11 +333,8 @@ const EventsView = ({
       display:    'flex',
       minHeight:  '100vh',
       background: T.pageBg,
-      fontFamily: "'Montserrat', Arial, sans-serif",
     }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
-      `}</style>
+      {/* Font import */}
 
       <Sidebar />
 
@@ -353,11 +355,13 @@ const EventsView = ({
           zIndex:   200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{
-            width:          isMobile ? '44px' : '58px',
-            height:         isMobile ? '44px' : '58px',
-            background:     showDropdown ? 'rgba(43,114,251,0.5)' : 'rgba(0,62,166,0.7)',
-            border:         showDropdown ? '1.24px solid rgba(43,114,251,0.5)' : '1.24px solid rgba(255,255,255,0.9)',
-            boxShadow:      '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)',
+            width:          isMobile ? '44px' : '52px',
+            height:         isMobile ? '44px' : '52px',
+            background:     showDropdown ? 'rgba(43,114,251,0.25)' : '#003EA6',
+            border:         showDropdown
+              ? '1px solid rgba(43,114,251,0.5)'
+              : '1px solid rgba(255,255,255,0.15)',
+            boxShadow:      '0px 4px 12px rgba(0,0,0,0.35)',
             borderRadius:   '14px',
             cursor:         'pointer',
             display:        'flex',
@@ -366,33 +370,40 @@ const EventsView = ({
             position:       'relative',
             transition:     'all 0.15s',
           }}>
-            <FaBell size={22} color="#FFFFFF" />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
+                stroke="#FFFFFF"
+                strokeWidth="1.67"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {unreadCount > 0 && (
               <div style={{
                 position:       'absolute',
-                top:            '-5px',
-                right:          '-5px',
-                width:          '24px',
-                height:         '24px',
-                background:     'rgba(255,0,0,0.35)',
-                borderRadius:   '50%',
+                top:            '-7px',
+                right:          '-7px',
+                minWidth:       '20px',
+                height:         '20px',
+                background:     '#E53935',
+                borderRadius:   '10px',
+                border:         '2px solid #DAE5F1',
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
+                padding:        '0 4px',
+                boxSizing:      'border-box',
               }}>
-                <div style={{
-                  width:          '17px',
-                  height:         '17px',
-                  background:     '#FF3B30',
-                  borderRadius:   '50%',
-                  display:        'flex',
-                  alignItems:     'center',
-                  justifyContent: 'center',
+                <span style={{
+                  fontFamily: 'Montserrat, Arial, sans-serif',
+                  fontSize:   '10px',
+                  fontWeight: 700,
+                  color:      '#FFFFFF',
+                  lineHeight: 1,
                 }}>
-                  <span style={{ fontFamily: 'Arimo', fontSize: '9px', color: '#FFFFFF' }}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                </div>
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               </div>
             )}
           </button>
@@ -400,109 +411,257 @@ const EventsView = ({
           {/* Notification dropdown */}
           {showDropdown && (
             <div style={{
-              position:       'absolute',
-              top:            isMobile ? '52px' : '70px',
-              right:          0,
-              width:          isMobile ? '90vw' : '380px',
-              maxHeight:      '520px',
-              background:     T.cardBg,
-              border:         `1px solid ${T.cardBorder}`,
-              borderRadius:   '16px',
-              boxShadow:      '0 20px 60px rgba(0,0,0,0.12)',
-              display:        'flex',
-              flexDirection:  'column',
-              overflow:       'hidden',
-              zIndex:         300,
+              position:      'absolute',
+              top:           `calc(${isMobile ? '44px' : '52px'} + 10px)`,
+              right:         0,
+              width:         isMobile ? '92vw' : '380px',
+              maxHeight:     '520px',
+              background:    '#FFFFFF',
+              border:        '1px solid #E5E7EB',
+              borderRadius:  '16px',
+              boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
+              display:       'flex',
+              flexDirection: 'column',
+              overflow:      'hidden',
+              zIndex:        300,
             }}>
-              <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${T.footerBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Montserrat', Arial", fontWeight: 700, fontSize: '16px', color: T.titleColor }}>Notifications</span>
-                {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: T.accent, cursor: 'pointer', padding: 0 }}>Mark all read</button>}
-              </div>
-              <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
-                {['all', 'unread'].map(t => (
-                  <button key={t} onClick={() => setNotifTab(t)} style={{
-                    height:        '32px',
-                    padding:       '0 16px',
-                    background:    notifTab === t ? T.accent : 'transparent',
-                    border:        notifTab === t ? 'none' : `1px solid ${T.cardBorder}`,
-                    borderRadius:  '20px',
-                    cursor:        'pointer',
-                    fontFamily:    'Arimo',
-                    fontSize:      '13px',
-                    fontWeight:    notifTab === t ? 700 : 400,
-                    color:         notifTab === t ? '#FFFFFF' : T.bodyColor,
-                    transition:    'all 0.15s',
-                    textTransform: 'capitalize',
+              {/* Header */}
+              <div style={{
+                padding:        '16px 18px 12px',
+                borderBottom:   '1px solid #F0F2F5',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'space-between',
+                flexShrink:     0,
+              }}>
+                <span style={{
+                  fontFamily: 'Montserrat, Arial, sans-serif',
+                  fontWeight: 700,
+                  fontSize:   '16px',
+                  color:      '#003EA6',
+                }}>
+                  Notifications
+                </span>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} style={{
+                    background:  'none',
+                    border:      'none',
+                    fontFamily:  'Montserrat, Arial, sans-serif',
+                    fontSize:    '12px',
+                    fontWeight:  600,
+                    color:       '#2B72FB',
+                    cursor:      'pointer',
+                    padding:     0,
                   }}>
-                    {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                    Mark all read
                   </button>
-                ))}
+                )}
               </div>
-              <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
-                {(() => {
-                  const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
-                  if (!list.length) return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke={T.metaColor} strokeWidth="1.5" strokeLinecap="round"/></svg>
-                      <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: T.metaColor, margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-                    </div>
-                  );
-                  return Object.entries(groupByDate(list)).map(([label, items]) => {
-                    if (!items.length) return null;
-                    return (
-                      <div key={label}>
-                        <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: T.metaColor, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
-                        {items.map(n => (
-                          <div key={n.id} onClick={() => markOneRead(n.id)}
-                            style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(43,114,251,0.04)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : `3px solid ${T.accent}` }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                            onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(43,114,251,0.04)'}
-                          >
-                            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(43,114,251,0.08)', border: `1px solid rgba(43,114,251,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke={T.accent} strokeWidth="1.67" strokeLinecap="round"/></svg>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: T.titleColor, margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: T.bodyColor, margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                              <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: T.metaColor }}>{formatTime(n.time)}</span>
-                            </div>
-                            {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: T.accent, flexShrink: 0, marginTop: '6px' }} />}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-              <div style={{ padding: '10px 18px', borderTop: `1px solid ${T.footerBorder}`, flexShrink: 0 }}>
-                <button
-                  onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                  style={{ width: '100%', height: '36px', background: '#F5F7FA', border: `1px solid ${T.cardBorder}`, borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: T.bodyColor, cursor: 'pointer' }}
-                  onMouseEnter={e => e.currentTarget.style.background = T.cardBorder}
-                  onMouseLeave={e => e.currentTarget.style.background = '#F5F7FA'}
+
+    {/* Tabs */}
+    <div style={{ display: 'flex', padding: '10px 18px 0', gap: '6px', flexShrink: 0 }}>
+      {['all', 'unread'].map(t => (
+        <button key={t} onClick={() => setNotifTab(t)} style={{
+          height:       '30px',
+          padding:      '0 14px',
+          background:   notifTab === t ? '#003EA6' : 'transparent',
+          border:       notifTab === t ? 'none' : '1px solid #D1D5DC',
+          borderRadius: '20px',
+          cursor:       'pointer',
+          fontFamily:   'Montserrat, Arial, sans-serif',
+          fontSize:     '12px',
+          fontWeight:   notifTab === t ? 700 : 400,
+          color:        notifTab === t ? '#FFFFFF' : '#4A5565',
+          transition:   'all 0.15s',
+        }}>
+          {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+        </button>
+      ))}
+    </div>
+
+    {/* Body */}
+    <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
+      {(() => {
+        const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+        if (!list.length) return (
+          <div style={{
+            display:        'flex',
+            flexDirection:  'column',
+            alignItems:     'center',
+            justifyContent: 'center',
+            padding:        '40px 20px',
+            gap:            '10px',
+          }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                stroke="rgba(0,0,0,0.2)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+            <p style={{
+              fontFamily: 'Montserrat, Arial, sans-serif',
+              fontSize:   '13px',
+              color:      'rgba(0,0,0,0.3)',
+              margin:     0,
+            }}>
+              {notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+            </p>
+          </div>
+        );
+        return Object.entries(groupByDate(list)).map(([label, items]) => {
+          if (!items.length) return null;
+          return (
+            <div key={label}>
+              <p style={{
+                fontFamily:    'Montserrat, Arial, sans-serif',
+                fontWeight:    700,
+                fontSize:      '10px',
+                color:         'rgba(0,0,0,0.35)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+                margin:        '10px 18px 4px',
+              }}>
+                {label}
+              </p>
+              {items.map(n => (
+                <div
+                  key={n.id}
+                  onClick={() => markOneRead(n.id)}
+                  style={{
+                    display:    'flex',
+                    alignItems: 'flex-start',
+                    gap:        '12px',
+                    padding:    '10px 18px',
+                    background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)',
+                    cursor:     'pointer',
+                    transition: 'background 0.12s',
+                    borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                  onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
                 >
-                  See all notifications
-                </button>
-              </div>
+                  <div style={{
+                    width:          '36px',
+                    height:         '36px',
+                    borderRadius:   '50%',
+                    background:     'rgba(0,62,166,0.08)',
+                    border:         '1px solid rgba(0,62,166,0.15)',
+                    display:        'flex',
+                    alignItems:     'center',
+                    justifyContent: 'center',
+                    flexShrink:     0,
+                    marginTop:      '2px',
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                        stroke="#003EA6"
+                        strokeWidth="1.67"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontFamily: 'Montserrat, Arial, sans-serif',
+                      fontWeight: n.read ? 400 : 700,
+                      fontSize:   '13px',
+                      color:      '#0A0A0A',
+                      margin:     '0 0 2px 0',
+                      lineHeight: '1.4',
+                    }}>
+                      {n.title}
+                    </p>
+                    <p style={{
+                      fontFamily:      'Montserrat, Arial, sans-serif',
+                      fontSize:        '12px',
+                      color:           '#4A5565',
+                      margin:          '0 0 4px 0',
+                      lineHeight:      '1.4',
+                      display:         '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow:        'hidden',
+                    }}>
+                      {n.body}
+                    </p>
+                    <span style={{
+                      fontFamily: 'Montserrat, Arial, sans-serif',
+                      fontSize:   '11px',
+                      color:      'rgba(0,0,0,0.35)',
+                    }}>
+                      {formatTime(n.time)}
+                    </span>
+                  </div>
+                  {!n.read && (
+                    <div style={{
+                      width:        '8px',
+                      height:       '8px',
+                      borderRadius: '50%',
+                      background:   '#003EA6',
+                      flexShrink:   0,
+                      marginTop:    '6px',
+                    }} />
+                  )}
+                </div>
+              ))}
             </div>
-          )}
-        </div>
+          );
+        });
+      })()}
+    </div>
+
+    {/* Footer */}
+    <div style={{ padding: '10px 18px', borderTop: '1px solid #F0F2F5', flexShrink: 0 }}>
+      <button
+        onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
+        style={{
+          width:        '100%',
+          height:       '36px',
+          background:   '#F9FAFB',
+          border:       '1px solid #D1D5DC',
+          borderRadius: '10px',
+          fontFamily:   'Montserrat, Arial, sans-serif',
+          fontSize:     '13px',
+          color:        '#4A5565',
+          cursor:       'pointer',
+          transition:   'background 0.15s',
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
+        onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
+      >
+        See all notifications
+      </button>
+    </div>
+  </div>
+)}
+      </div>
 
         {/* ── Back Button ── */}
         <button onClick={() => navigate('/dashboard')} style={{
           display:      'flex',
           alignItems:   'center',
-          gap:          '8px',
+          gap:          '6px',
           background:   'none',
           border:       'none',
           cursor:       'pointer',
           padding:      0,
           marginBottom: isMobile ? '16px' : '24px',
         }}>
-          <FaArrowLeft size={14} color={T.backColor} />
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+            <path
+              d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
+              stroke={T.backColor}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           <span style={{
             fontFamily: "'Montserrat', Arial, sans-serif",
-            fontWeight: 700,
+            fontWeight: 400,
             fontSize:   '15px',
             color:      T.backColor,
           }}>
@@ -551,7 +710,16 @@ const EventsView = ({
               minWidth:     isMobile ? 0 : '211px',
               flex:         isMobile ? 1 : 'none',
             }}>
-              <span style={{ fontFamily: "'Montserrat', Arial", fontSize: '13px', fontWeight: 600, color: T.filterText, flex: 1 }}>
+              <span style={{
+                fontFamily:   "'Montserrat', Arial",
+                fontSize:     '14px',
+                fontWeight:   400,
+                color:        T.filterText,
+                flex:         1,
+                whiteSpace:   'nowrap',
+                overflow:     'hidden',
+                textOverflow: 'ellipsis',
+              }}>
                 {activeCategory}
               </span>
               <div style={{ background: T.badgeBg, borderRadius: '8px', minWidth: '22.63px', height: '19.98px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>

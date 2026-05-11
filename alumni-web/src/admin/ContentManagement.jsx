@@ -1,8 +1,9 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
-// ============================================================================
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Content Management.
+//
+// INTEGRATION: Added Disclosure Page tab, disclosure fetch/upsert, and
+//              related modal handlers from friend's implementation.
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -12,12 +13,14 @@ import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 
 // ============================ CONSTANTS ============================
+// INTEGRATION: Added disclosurepage tab from friend's implementation.
 const TABS = [
   { id: "events", label: "Events" },
   { id: "announcements", label: "Announcements" },
   { id: "jobs", label: "Jobs" },
   { id: "discounts", label: "Discounts" },
   { id: "landingpage", label: "Landing Page" },
+  { id: "disclosurepage", label: "User Notification/Disclosure" },
 ];
 
 // ============================ MAIN COMPONENT ============================
@@ -39,6 +42,11 @@ function ContentManagement() {
   const [jobs, setJobs] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [landingSections, setLandingSections] = useState([]);
+
+  // INTEGRATION: Disclosure state from friend's implementation.
+  const [disclosure, setDisclosure] = useState(null);
+  const [disclosureModalOpen, setDisclosureModalOpen] = useState(false);
+  const [disclosureInitialEditing, setDisclosureInitialEditing] = useState(null);
 
   // ============================ HELPER FUNCTIONS ============================
   const showToastMessage = (message, type = "success") => {
@@ -94,6 +102,17 @@ function ContentManagement() {
     return data || [];
   };
 
+  // INTEGRATION: Fetch disclosure data from Supabase.
+  // Uses maybeSingle() so it doesn't error when the row doesn't exist yet.
+  const fetchDisclosure = async () => {
+    const { data, error } = await supabase
+      .from('disclosures')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    if (!error && data) setDisclosure(data);
+  };
+
   const fetchAllContent = async () => {
     setLoading(true);
     await Promise.all([
@@ -102,6 +121,7 @@ function ContentManagement() {
       fetchJobs(),
       fetchDiscounts(),
       fetchLandingSections(),
+      fetchDisclosure(), // INTEGRATION: Added
     ]);
     setLoading(false);
   };
@@ -198,9 +218,12 @@ function ContentManagement() {
     setModalOpen(true);
   };
 
+  // INTEGRATION: openEdit now switches to the correct tab when editing
+  // from archive or cross-tab context (friend's improvement).
   const openEdit = (item, type) => {
     setModalMode("edit");
     setEditingItem(item);
+    if (type) setActiveTab(type);
     setEditingSection(null);
     setModalOpen(true);
   };
@@ -216,6 +239,45 @@ function ContentManagement() {
     setModalOpen(false);
     setEditingItem(null);
     setEditingSection(null);
+  };
+
+  // INTEGRATION: Disclosure modal handlers from friend's implementation.
+  const openDisclosureModal = (which = null) => {
+    setDisclosureInitialEditing(which);
+    setDisclosureModalOpen(true);
+  };
+
+  const closeDisclosureModal = () => {
+    setDisclosureModalOpen(false);
+    setDisclosureInitialEditing(null);
+  };
+
+  // INTEGRATION: Handle disclosure upsert (Terms of Service & Privacy Policy).
+  const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
+    try {
+      const { error } = await supabase
+        .from('disclosures')
+        .upsert({ id: 1, tos_content, pp_content }, { onConflict: 'id' });
+
+      if (error) {
+        showToastMessage(`Failed to save: ${error.message}`, 'error');
+        return;
+      }
+
+      await logAction({
+        action: 'Update',
+        module: 'Disclosure',
+        description: 'Updated Terms of Service and Privacy Policy',
+        recordId: 1,
+        status: 'Success',
+      });
+
+      await fetchDisclosure();
+      closeDisclosureModal();
+      showToastMessage('Disclosure content saved successfully!', 'success');
+    } catch (err) {
+      showToastMessage('Failed to save disclosure: ' + err.message, 'error');
+    }
   };
 
   // ============================ CREATE HANDLERS ============================
@@ -871,7 +933,7 @@ function ContentManagement() {
     }
   };
 
-  // ============================ ARCHIVE & RESTORE HANDLERS (WITH archived_at & restored_at) ============================
+  // ============================ ARCHIVE & RESTORE HANDLERS ============================
   
   const handleArchive = async (type, id) => {
     console.log('[ARCHIVE] Type:', type, 'ID:', id);
@@ -1063,6 +1125,13 @@ function ContentManagement() {
       archivedItems={getArchivedItems()}
       landingSections={activeLandingSections}
       announcements={activeAnnouncements}
+      // INTEGRATION: Disclosure props
+      disclosure={disclosure}
+      disclosureModalOpen={disclosureModalOpen}
+      disclosureInitialEditing={disclosureInitialEditing}
+      onOpenDisclosureModal={openDisclosureModal}
+      onCloseDisclosureModal={closeDisclosureModal}
+      onDisclosureUpdate={handleDisclosureUpdate}
       onOpenCreate={openCreate}
       onOpenEdit={openEdit}
       onOpenEditSection={openEditSection}
