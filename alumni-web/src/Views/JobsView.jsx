@@ -68,14 +68,28 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
       className={`job-card ${hovered || expanded ? 'hovered' : ''}`}
     >
       <div className={`job-card-body ${isMobile ? 'mobile' : ''}`}>
-        {/* Icon box */}
-        <div className={`job-icon-box ${hovered ? 'hovered' : ''}`}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="7" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
-            <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round"/>
-            <path d="M2 12h20" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
-          </svg>
-        </div>
+        {/* Icon box / company image */}
+        {job.image ? (
+          <div className={`job-icon-box ${hovered ? 'hovered' : ''} job-icon-box--img`}>
+            <img
+              src={job.image}
+              alt={job.company || job.title}
+              className="job-card-img"
+              onError={e => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement.classList.add('job-icon-box--fallback');
+              }}
+            />
+          </div>
+        ) : (
+          <div className={`job-icon-box ${hovered ? 'hovered' : ''}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="7" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round"/>
+              <path d="M2 12h20" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
+            </svg>
+          </div>
+        )}
 
         {/* Content */}
         <div className="job-content">
@@ -324,39 +338,144 @@ const JobsView = ({
         </div>
 
         {/* ── Filter Bar ── */}
-        <div className={`filter-bar ${isMobile ? 'mobile' : ''}`}>
-          <div ref={filterRef} className="filter-container">
-            <div className={`filter-display ${isMobile ? 'mobile' : ''}`}>
-              <span className="filter-active-category">
+        <div style={{
+          display:        'flex',
+          justifyContent: 'flex-end',
+          alignItems:     'center',
+          marginBottom:   isMobile ? '16px' : '28px',
+          gap:            '12px',
+        }}>
+          <div
+            ref={filterRef}
+            style={{
+              display:  'flex',
+              alignItems: 'center',
+              gap:      '12px',
+              position: 'relative',
+            }}
+          >
+            {/* Active category display pill */}
+            <div style={{
+              height:      '37px',
+              display:     'flex',
+              alignItems:  'center',
+              padding:     '0 12px',
+              gap:         '8px',
+              background:  '#FFFFFF',
+              border:      '1px solid #E5E7EB',
+              borderRadius:'10px',
+              filter:      'drop-shadow(0px 2px 2px rgba(0,0,0,0.1))',
+              minWidth:    isMobile ? 0 : '211px',
+              flex:        isMobile ? 1 : 'none',
+            }}>
+              <span style={{
+                fontFamily:   'Montserrat, Arial, sans-serif',
+                fontSize:     '13px',
+                fontWeight:   600,
+                color:        '#003EA6',
+                flex:         1,
+                whiteSpace:   'nowrap',
+                overflow:     'hidden',
+                textOverflow: 'ellipsis',
+              }}>
                 {activeCategory}
               </span>
-              <div className="filter-count-badge">
-                <span className="filter-count-text">
+              <div style={{
+                background:     '#2B72FB',
+                borderRadius:   '8px',
+                minWidth:       '22.63px',
+                height:         '19.98px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 5px',
+                flexShrink:     0,
+              }}>
+                <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '12px', color: '#FFFFFF' }}>
                   {filtered.length}
                 </span>
               </div>
             </div>
+
+            {/* Filter button */}
             <button
               onClick={() => setShowFilter(f => !f)}
-              className="filter-button"
+              style={{
+                height:         '37px',
+                padding:        '0 18px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            '8px',
+                background:     '#003EA6',
+                border:         '1px solid rgba(255,255,255,0.1)',
+                borderRadius:   '8px',
+                cursor:         'pointer',
+                flexShrink:     0,
+                filter:         'drop-shadow(0px 2px 2px rgba(0,0,0,0.15))',
+                transition:     'opacity 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               <FaFilter size={12} color="#FFFFFF" />
-              <span className="filter-button-text">FILTER</span>
+              <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '12px', color: '#FFFFFF', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+                FILTER
+              </span>
             </button>
 
+            {/* Dropdown — anchored to filter-container via position:relative above */}
             {showFilter && (
-              <div className="filter-dropdown">
+              <div style={{
+                position:     'absolute',
+                top:          'calc(100% + 8px)',
+                left:         0,
+                background:   '#FFFFFF',
+                border:       '1px solid #E5E7EB',
+                borderRadius: '12px',
+                overflow:     'hidden',
+                zIndex:       300,
+                minWidth:     '220px',
+                boxShadow:    '0px 10px 30px rgba(0,0,0,0.12)',
+              }}>
                 {categories.map((cat, i) => (
                   <button
                     key={cat}
                     onClick={() => { setActiveCategory(cat); setShowFilter(false); }}
-                    className={`filter-option ${activeCategory === cat ? 'active' : ''}`}
+                    style={{
+                      width:          '100%',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'space-between',
+                      padding:        '12px 16px',
+                      background:     activeCategory === cat ? 'rgba(43,114,251,0.08)' : 'transparent',
+                      border:         'none',
+                      borderTop:      i > 0 ? '1px solid #F0F2F5' : 'none',
+                      cursor:         'pointer',
+                      transition:     'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(0,62,166,0.05)'; }}
+                    onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <span className={`filter-option-text ${activeCategory === cat ? 'active' : ''}`}>
+                    <span style={{
+                      fontFamily: 'Montserrat, Arial, sans-serif',
+                      fontSize:   '13px',
+                      color:      activeCategory === cat ? '#003EA6' : '#4A5565',
+                      fontWeight: activeCategory === cat ? 700 : 400,
+                    }}>
                       {cat}
                     </span>
-                    <div className={`filter-option-count ${activeCategory === cat ? 'active' : ''}`}>
-                      <span className="filter-option-count-text">
+                    <div style={{
+                      background:   activeCategory === cat ? '#2B72FB' : 'rgba(43,114,251,0.12)',
+                      borderRadius: '6px',
+                      padding:      '1px 7px',
+                    }}>
+                      <span style={{
+                        fontFamily: 'Montserrat, Arial, sans-serif',
+                        fontWeight: 700,
+                        fontSize:   '11px',
+                        color:      activeCategory === cat ? '#FFFFFF' : '#2B72FB',
+                      }}>
                         {categoryCounts[cat]}
                       </span>
                     </div>

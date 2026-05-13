@@ -2,8 +2,23 @@
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Content Management.
 //
-// INTEGRATION: Added Disclosure Page tab, disclosure fetch/upsert, and
-//              related modal handlers from friend's implementation.
+// INTEGRATION LOG
+// ─────────────────────────────────────────────────────────────────────────────
+// [landing-cms]   updated_at stamped on every mutating Supabase call
+//                 handleToggleActive — show/hide landing sections without archive
+// [disclosure]    disclosurepage tab, disclosure state, fetchDisclosure,
+//                 handleDisclosureUpdate — full Supabase upsert with:
+//                   · stripHtml validation (rejects empty rich-text markup)
+//                   · updated_at explicit stamp
+//                   · upsert(onConflict:'id') singleton pattern
+//                   · logAction audit trail
+//                   · fetchDisclosure refresh on success
+//                 openDisclosureModal / closeDisclosureModal
+//                 disclosureInitialEditing: 'tos' | 'pp' | null
+// [friend]        openEdit switches activeTab so archive-edit always lands on
+//                 the correct modal; archive/restore refactored to DRY META map
+// [fix]           handleRestore — removed restored_at (column does not exist in
+//                 schema); update payload now only sets is_active + updated_at
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -13,13 +28,12 @@ import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 
 // ============================ CONSTANTS ============================
-// INTEGRATION: Added disclosurepage tab from friend's implementation.
 const TABS = [
-  { id: "events", label: "Events" },
-  { id: "announcements", label: "Announcements" },
-  { id: "jobs", label: "Jobs" },
-  { id: "discounts", label: "Discounts" },
-  { id: "landingpage", label: "Landing Page" },
+  { id: "events",         label: "Events" },
+  { id: "announcements",  label: "Announcements" },
+  { id: "jobs",           label: "Jobs" },
+  { id: "discounts",      label: "Discounts" },
+  { id: "landingpage",    label: "Landing Page" },
   { id: "disclosurepage", label: "User Notification/Disclosure" },
 ];
 
@@ -43,17 +57,28 @@ function ContentManagement() {
   const [discounts, setDiscounts] = useState([]);
   const [landingSections, setLandingSections] = useState([]);
 
-  // INTEGRATION: Disclosure state from friend's implementation.
+  // Disclosure — mirrors the single-row `disclosures` table (id = 1).
+  // null means the row doesn't exist yet (first-run state).
+  // DisclosureModal falls back to DEFAULT_TOS / DEFAULT_PP when null.
   const [disclosure, setDisclosure] = useState(null);
   const [disclosureModalOpen, setDisclosureModalOpen] = useState(false);
+  // 'tos' | 'pp' | null — controls which document the modal opens to
   const [disclosureInitialEditing, setDisclosureInitialEditing] = useState(null);
 
   // ============================ HELPER FUNCTIONS ============================
   const showToastMessage = (message, type = "success") => {
     setToast({ show: true, message, type });
-    setTimeout(() => {
-      setToast({ show: false, message: "", type: "" });
-    }, 3000);
+    setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Strips all HTML markup and returns trimmed plain text.
+  // Prevents `<p><br></p>` and similar empty-looking rich-text from
+  // passing non-empty validation in handleDisclosureUpdate.
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return (tmp.textContent || tmp.innerText || '').trim();
   };
 
   // ============================ SUPABASE FETCH FUNCTIONS ============================
@@ -102,15 +127,22 @@ function ContentManagement() {
     return data || [];
   };
 
-  // INTEGRATION: Fetch disclosure data from Supabase.
-  // Uses maybeSingle() so it doesn't error when the row doesn't exist yet.
+  // maybeSingle() returns null (not an error) when no row exists yet.
+  // A missing row is a normal first-run state — we never surface it as
+  // an error toast. The UI degrades gracefully to DEFAULT_TOS / DEFAULT_PP.
   const fetchDisclosure = async () => {
     const { data, error } = await supabase
       .from('disclosures')
       .select('*')
       .eq('id', 1)
       .maybeSingle();
-    if (!error && data) setDisclosure(data);
+    if (error) {
+      // Log only — not actionable for the admin.
+      console.warn('[DISCLOSURE] fetch warning:', error.message);
+      return;
+    }
+    if (data) setDisclosure(data);
+    // Row absent → disclosure stays null, modal uses defaults.
   };
 
   const fetchAllContent = async () => {
@@ -121,7 +153,7 @@ function ContentManagement() {
       fetchJobs(),
       fetchDiscounts(),
       fetchLandingSections(),
-      fetchDisclosure(), // INTEGRATION: Added
+      fetchDisclosure(),
     ]);
     setLoading(false);
   };
@@ -130,84 +162,48 @@ function ContentManagement() {
     fetchAllContent();
   }, []);
 
-  // ============================ ARCHIVE ITEMS ============================
-  const getArchivedItems = () => {
-    const archived = [];
-    
-    events.filter(e => e.is_active === false).forEach(e => {
-      archived.push({
-        id: e.id,
-        type: 'Event',
-        title: e.title,
-        dateLabel: `Archived: ${e.archived_at ? new Date(e.archived_at).toLocaleDateString() : 'Unknown date'}`,
-        description: e.description?.substring(0, 100) + (e.description?.length > 100 ? '...' : ''),
-        createdBy: 'Admin',
-      });
-    });
-    
-    announcements.filter(a => a.is_active === false).forEach(a => {
-      archived.push({
-        id: a.id,
-        type: 'Announcement',
-        title: a.title,
-        dateLabel: `Archived: ${a.archived_at ? new Date(a.archived_at).toLocaleDateString() : 'Unknown date'}`,
-        description: a.content?.substring(0, 100) + (a.content?.length > 100 ? '...' : ''),
-        createdBy: 'Admin',
-      });
-    });
-    
-    jobs.filter(j => j.is_active === false).forEach(j => {
-      archived.push({
-        id: j.id,
-        type: 'Job',
-        title: j.title,
-        dateLabel: `Archived: ${j.archived_at ? new Date(j.archived_at).toLocaleDateString() : 'Unknown date'}`,
-        description: j.description?.substring(0, 100) + (j.description?.length > 100 ? '...' : ''),
-        createdBy: 'Admin',
-      });
-    });
-    
-    discounts.filter(d => d.is_active === false).forEach(d => {
-      archived.push({
-        id: d.id,
-        type: 'Discount',
-        title: d.title,
-        dateLabel: `Archived: ${d.archived_at ? new Date(d.archived_at).toLocaleDateString() : 'Unknown date'}`,
-        description: d.description?.substring(0, 100) + (d.description?.length > 100 ? '...' : ''),
-        createdBy: 'Admin',
-      });
-    });
-    
-    landingSections.filter(l => l.is_active === false).forEach(l => {
-      archived.push({
-        id: l.id,
-        type: 'Landing Section',
-        title: l.title,
-        dateLabel: `Archived: ${l.archived_at ? new Date(l.archived_at).toLocaleDateString() : 'Unknown date'}`,
-        description: l.description?.substring(0, 100) + (l.description?.length > 100 ? '...' : ''),
-        createdBy: 'Admin',
-      });
-    });
-    
-    return archived;
-  };
-
-  // ============================ ACTIVE ITEMS ============================
-  const activeEvents = events.filter(e => e.is_active !== false);
-  const activeAnnouncements = announcements.filter(a => a.is_active !== false);
-  const activeJobs = jobs.filter(j => j.is_active !== false);
-  const activeDiscounts = discounts.filter(d => d.is_active !== false);
+  // ============================ DERIVED STATE ============================
+  const activeEvents          = events.filter(e => e.is_active !== false);
+  const activeAnnouncements   = announcements.filter(a => a.is_active !== false);
+  const activeJobs            = jobs.filter(j => j.is_active !== false);
+  const activeDiscounts       = discounts.filter(d => d.is_active !== false);
   const activeLandingSections = landingSections.filter(l => l.is_active !== false);
 
   const getActiveItems = () => {
     switch (activeTab) {
-      case 'events': return activeEvents;
+      case 'events':        return activeEvents;
       case 'announcements': return activeAnnouncements;
-      case 'jobs': return activeJobs;
-      case 'discounts': return activeDiscounts;
-      case 'landingpage': return activeLandingSections;
-      default: return [];
+      case 'jobs':          return activeJobs;
+      case 'discounts':     return activeDiscounts;
+      case 'landingpage':   return activeLandingSections;
+      default:              return [];
     }
+  };
+
+  // ============================ ARCHIVED ITEMS ============================
+  const getArchivedItems = () => {
+    const archived = [];
+
+    // DRY helper — pushes archived rows from any collection into the result.
+    const push = (items, type, descField) =>
+      items
+        .filter(i => i.is_active === false)
+        .forEach(i => archived.push({
+          id:          i.id,
+          type,
+          title:       i.title,
+          dateLabel:   `Archived: ${i.archived_at ? new Date(i.archived_at).toLocaleDateString() : 'Unknown date'}`,
+          description: (i[descField]?.substring(0, 100) ?? '') + (i[descField]?.length > 100 ? '...' : ''),
+          createdBy:   'Admin',
+        }));
+
+    push(events,          'Event',           'description');
+    push(announcements,   'Announcement',    'content');
+    push(jobs,            'Job',             'description');
+    push(discounts,       'Discount',        'description');
+    push(landingSections, 'Landing Section', 'description');
+
+    return archived;
   };
 
   // ============================ MODAL HANDLERS ============================
@@ -218,8 +214,8 @@ function ContentManagement() {
     setModalOpen(true);
   };
 
-  // INTEGRATION: openEdit now switches to the correct tab when editing
-  // from archive or cross-tab context (friend's improvement).
+  // Switches to the correct tab so the right modal always mounts.
+  // Needed when editing from the archive panel or any cross-tab context.
   const openEdit = (item, type) => {
     setModalMode("edit");
     setEditingItem(item);
@@ -241,7 +237,9 @@ function ContentManagement() {
     setEditingSection(null);
   };
 
-  // INTEGRATION: Disclosure modal handlers from friend's implementation.
+  // ── Disclosure modal ──────────────────────────────────────────────────────
+  // which: 'tos' | 'pp' — controls which document the modal opens to.
+  // Passing null is safe but DisclosureModal returns null early in that case.
   const openDisclosureModal = (which = null) => {
     setDisclosureInitialEditing(which);
     setDisclosureModalOpen(true);
@@ -252,847 +250,527 @@ function ContentManagement() {
     setDisclosureInitialEditing(null);
   };
 
-  // INTEGRATION: Handle disclosure upsert (Terms of Service & Privacy Policy).
-  const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
-    try {
-      const { error } = await supabase
-        .from('disclosures')
-        .upsert({ id: 1, tos_content, pp_content }, { onConflict: 'id' });
-
-      if (error) {
-        showToastMessage(`Failed to save: ${error.message}`, 'error');
-        return;
-      }
-
-      await logAction({
-        action: 'Update',
-        module: 'Disclosure',
-        description: 'Updated Terms of Service and Privacy Policy',
-        recordId: 1,
-        status: 'Success',
-      });
-
-      await fetchDisclosure();
-      closeDisclosureModal();
-      showToastMessage('Disclosure content saved successfully!', 'success');
-    } catch (err) {
-      showToastMessage('Failed to save disclosure: ' + err.message, 'error');
-    }
-  };
-
   // ============================ CREATE HANDLERS ============================
-  
+
   const handleCreateEvent = async (formData) => {
     console.log('[CREATE] Event formData received:', formData);
-    
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[CREATE] Auth error:', userError);
-        showToastMessage('Authentication error. Please log in again.', 'error');
-        return;
-      }
-      
-      if (!formData.title?.trim()) {
-        showToastMessage('Event title is required', 'error');
-        return;
-      }
-      if (!formData.date) {
-        showToastMessage('Event date is required', 'error');
-        return;
-      }
-      
-      let eventDate;
-      if (formData.startTime) {
-        eventDate = new Date(`${formData.date}T${formData.startTime}`);
-      } else {
-        eventDate = new Date(formData.date);
-      }
-      
-      if (isNaN(eventDate.getTime())) {
-        showToastMessage('Invalid date format', 'error');
-        return;
-      }
-      
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      if (!formData.title?.trim()) { showToastMessage('Event title is required', 'error'); return; }
+      if (!formData.date)          { showToastMessage('Event date is required', 'error'); return; }
+
+      const eventDate = formData.startTime
+        ? new Date(`${formData.date}T${formData.startTime}`)
+        : new Date(formData.date);
+
+      if (isNaN(eventDate.getTime())) { showToastMessage('Invalid date format', 'error'); return; }
+
       const newEvent = {
-        title: formData.title.trim(),
+        title:       formData.title.trim(),
         description: formData.description || '',
-        event_date: eventDate.toISOString(),
-        location: formData.location?.trim() || '',
-        category: formData.category || 'Upcoming Events',
-        image_url: formData.image_url || null,
-        created_by: user?.id,
-        is_active: true,
+        event_date:  eventDate.toISOString(),
+        location:    formData.location?.trim() || '',
+        category:    formData.category || 'Upcoming Events',
+        image_url:   formData.image_url || null,
+        created_by:  user?.id,
+        is_active:   true,
       };
-      
-      console.log('[CREATE] Inserting event:', newEvent);
-      
-      const { data, error } = await supabase
-        .from('events')
-        .insert([newEvent])
-        .select();
-      
-      if (error) {
-        console.error('[CREATE] Supabase error:', error);
-        showToastMessage(`Failed to create: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Success! Response:', data);
-      
-      await logAction({
-        action: 'Create',
-        module: 'Events',
-        description: `Created event: ${formData.title}`,
-        recordId: data[0]?.id,
-        status: 'Success'
-      });
-      
+
+      const { data, error } = await supabase.from('events').insert([newEvent]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Events', description: `Created event: ${formData.title}`, recordId: data[0]?.id, status: 'Success' });
       await fetchEvents();
       closeModal();
       showToastMessage('Event created successfully!', 'success');
-      
     } catch (error) {
-      console.error('[CREATE] Unexpected error:', error);
       showToastMessage('Failed to create event: ' + error.message, 'error');
     }
   };
 
   const handleCreateAnnouncement = async (formData) => {
     console.log('[CREATE] Announcement formData received:', formData);
-    
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[CREATE] Auth error:', userError);
-        showToastMessage('Authentication error. Please log in again.', 'error');
-        return;
-      }
-      
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      const title = formData.title?.trim();
+      if (!title) { showToastMessage('Announcement title is required', 'error'); return; }
+
       let category = 'Activities';
-      if (formData.priority === 'High') category = 'News';
+      if (formData.priority === 'High')        category = 'News';
       else if (formData.priority === 'Medium') category = 'Updates';
-      
+
       const newAnnouncement = {
-        title: formData.title?.trim(),
-        content: formData.content || '',
-        author_id: user?.id,
-        category: category,
+        title,
+        content:      formData.content || '',
+        author_id:    user?.id,
+        category,
         published_at: new Date().toISOString(),
-        is_active: true,
+        is_active:    true,
       };
-      
-      if (!newAnnouncement.title) {
-        showToastMessage('Announcement title is required', 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Inserting announcement:', newAnnouncement);
-      
-      const { data, error } = await supabase
-        .from('announcements')
-        .insert([newAnnouncement])
-        .select();
-      
-      if (error) {
-        console.error('[CREATE] Supabase error:', error);
-        showToastMessage(`Failed to create: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Success! Response:', data);
-      
-      await logAction({
-        action: 'Create',
-        module: 'Announcements',
-        description: `Created announcement: ${formData.title}`,
-        recordId: data[0]?.id,
-        status: 'Success'
-      });
-      
+
+      const { data, error } = await supabase.from('announcements').insert([newAnnouncement]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Announcements', description: `Created announcement: ${title}`, recordId: data[0]?.id, status: 'Success' });
       await fetchAnnouncements();
       closeModal();
       showToastMessage('Announcement created successfully!', 'success');
-      
     } catch (error) {
-      console.error('[CREATE] Unexpected error:', error);
       showToastMessage('Failed to create announcement: ' + error.message, 'error');
     }
   };
 
   const handleCreateJob = async (formData) => {
     console.log('[CREATE] Job formData received:', formData);
-    
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[CREATE] Auth error:', userError);
-        showToastMessage('Authentication error. Please log in again.', 'error');
-        return;
-      }
-      
-      if (!formData.title?.trim()) {
-        showToastMessage('Job title is required', 'error');
-        return;
-      }
-      if (!formData.company?.trim()) {
-        showToastMessage('Company name is required', 'error');
-        return;
-      }
-      
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      if (!formData.title?.trim())   { showToastMessage('Job title is required', 'error'); return; }
+      if (!formData.company?.trim()) { showToastMessage('Company name is required', 'error'); return; }
+
       let tags = [];
-      if (formData.tags) {
-        if (Array.isArray(formData.tags)) {
-          tags = formData.tags;
-        } else if (typeof formData.tags === 'string') {
-          tags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
-        }
-      }
-      
+      if (Array.isArray(formData.tags)) tags = formData.tags;
+      else if (typeof formData.tags === 'string') tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+
       const newJob = {
-        title: formData.title.trim(),
-        company: formData.company.trim(),
+        title:       formData.title.trim(),
+        company:     formData.company.trim(),
         description: formData.description || '',
-        location: formData.location?.trim() || 'Remote',
-        category: formData.category || 'Full-time',
-        tags: tags,
-        image_url: formData.image_url || null,
-        posted_by: user?.id,
-        posted_at: new Date().toISOString(),
-        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-        is_active: true,
+        location:    formData.location?.trim() || 'Remote',
+        category:    formData.category || 'Full-time',
+        tags,
+        image_url:   formData.image_url || null,
+        posted_by:   user?.id,
+        posted_at:   new Date().toISOString(),
+        expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        is_active:   true,
       };
-      
-      console.log('[CREATE] Inserting job:', newJob);
-      
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert([newJob])
-        .select();
-      
-      if (error) {
-        console.error('[CREATE] Supabase error:', error);
-        showToastMessage(`Failed to create: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Success! Response:', data);
-      
-      await logAction({
-        action: 'Create',
-        module: 'Jobs',
-        description: `Created job: ${formData.title} at ${formData.company}`,
-        recordId: data[0]?.id,
-        status: 'Success'
-      });
-      
+
+      const { data, error } = await supabase.from('jobs').insert([newJob]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Jobs', description: `Created job: ${formData.title} at ${formData.company}`, recordId: data[0]?.id, status: 'Success' });
       await fetchJobs();
       closeModal();
       showToastMessage('Job created successfully!', 'success');
-      
     } catch (error) {
-      console.error('[CREATE] Unexpected error:', error);
       showToastMessage('Failed to create job: ' + error.message, 'error');
     }
   };
 
   const handleCreateDiscount = async (formData) => {
     console.log('[CREATE] Discount formData received:', formData);
-    
     try {
-      if (!formData.title?.trim()) {
-        showToastMessage('Discount title is required', 'error');
-        return;
-      }
-      if (!formData.company?.trim()) {
-        showToastMessage('Company name is required', 'error');
-        return;
-      }
-      
+      if (!formData.title?.trim())   { showToastMessage('Discount title is required', 'error'); return; }
+      if (!formData.company?.trim()) { showToastMessage('Company name is required', 'error'); return; }
+
       const newDiscount = {
-        title: formData.title.trim(),
-        description: formData.description || '',
-        company: formData.company.trim(),
+        title:         formData.title.trim(),
+        description:   formData.description || '',
+        company:       formData.company.trim(),
         discount_code: formData.discountCode?.trim() || null,
-        image_url: formData.image_url || null,
-        created_at: new Date().toISOString(),
-        valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
-        is_active: true,
+        image_url:     formData.image_url || null,
+        created_at:    new Date().toISOString(),
+        valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        is_active:     true,
       };
-      
-      console.log('[CREATE] Inserting discount:', newDiscount);
-      
-      const { data, error } = await supabase
-        .from('discounts')
-        .insert([newDiscount])
-        .select();
-      
-      if (error) {
-        console.error('[CREATE] Supabase error:', error);
-        showToastMessage(`Failed to create: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Success! Response:', data);
-      
-      await logAction({
-        action: 'Create',
-        module: 'Discounts',
-        description: `Created discount: ${formData.title} from ${formData.company}`,
-        recordId: data[0]?.id,
-        status: 'Success'
-      });
-      
+
+      const { data, error } = await supabase.from('discounts').insert([newDiscount]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Discounts', description: `Created discount: ${formData.title} from ${formData.company}`, recordId: data[0]?.id, status: 'Success' });
       await fetchDiscounts();
       closeModal();
       showToastMessage('Discount created successfully!', 'success');
-      
     } catch (error) {
-      console.error('[CREATE] Unexpected error:', error);
       showToastMessage('Failed to create discount: ' + error.message, 'error');
     }
   };
 
   const handleCreateLandingSection = async (formData) => {
     console.log('[CREATE] Landing Section formData received:', formData);
-    
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) {
-        console.error('[CREATE] Auth error:', userError);
-        showToastMessage('Authentication error. Please log in again.', 'error');
-        return;
-      }
-      
-      if (!formData.title?.trim()) {
-        showToastMessage('Section title is required', 'error');
-        return;
-      }
-      if (!formData.section_type) {
-        showToastMessage('Section type is required', 'error');
-        return;
-      }
-      
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      if (!formData.title?.trim())  { showToastMessage('Section title is required', 'error'); return; }
+      if (!formData.section_type)   { showToastMessage('Section type is required', 'error'); return; }
+
       const newSection = {
-        title: formData.title.trim(),
-        description: formData.description || '',
+        title:        formData.title.trim(),
+        description:  formData.description || '',
         section_type: formData.section_type,
-        content: formData.content || '',
-        image_url: formData.image_url || null,
-        order_index: landingSections.length,
-        created_at: new Date().toISOString(),
-        is_active: true,
-        created_by: user?.id,
+        content:      formData.content || '',
+        image_url:    formData.image_url || null,
+        order_index:  landingSections.length,
+        created_at:   new Date().toISOString(),
+        updated_at:   new Date().toISOString(),
+        is_active:    true,
+        created_by:   user?.id,
       };
-      
-      console.log('[CREATE] Inserting landing section:', newSection);
-      
-      const { data, error } = await supabase
-        .from('landing_sections')
-        .insert([newSection])
-        .select();
-      
-      if (error) {
-        console.error('[CREATE] Supabase error:', error);
-        showToastMessage(`Failed to create: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[CREATE] Success! Response:', data);
-      
-      await logAction({
-        action: 'Create',
-        module: 'Landing Page',
-        description: `Created landing section: ${formData.title}`,
-        recordId: data[0]?.id,
-        status: 'Success'
-      });
-      
+
+      const { data, error } = await supabase.from('landing_sections').insert([newSection]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Landing Page', description: `Created landing section: ${formData.title}`, recordId: data[0]?.id, status: 'Success' });
       await fetchLandingSections();
       closeModal();
       showToastMessage('Landing section created successfully!', 'success');
-      
     } catch (error) {
-      console.error('[CREATE] Unexpected error:', error);
       showToastMessage('Failed to create landing section: ' + error.message, 'error');
     }
   };
 
   // ============================ UPDATE HANDLERS ============================
-  
+
   const handleUpdateEvent = async (id, formData) => {
     console.log('[UPDATE] Event - ID:', id, 'formData:', formData);
-    
     try {
-      if (!id) {
-        console.error('[UPDATE] No ID provided');
-        showToastMessage('Cannot update: Missing record ID', 'error');
-        return;
-      }
-      
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
       let eventDate;
-      if (formData.startTime) {
-        eventDate = new Date(`${formData.date}T${formData.startTime}`);
-      } else if (formData.date) {
-        eventDate = new Date(formData.date);
-      }
-      
+      if (formData.startTime)  eventDate = new Date(`${formData.date}T${formData.startTime}`);
+      else if (formData.date)  eventDate = new Date(formData.date);
+
       const updates = {
-        title: formData.title?.trim(),
+        title:       formData.title?.trim(),
         description: formData.description || '',
-        location: formData.location?.trim() || '',
-        category: formData.category || 'Upcoming Events',
-        image_url: formData.image_url || null,
+        location:    formData.location?.trim() || '',
+        category:    formData.category || 'Upcoming Events',
+        image_url:   formData.image_url || null,
+        updated_at:  new Date().toISOString(),
       };
-      
-      if (eventDate && !isNaN(eventDate.getTime())) {
-        updates.event_date = eventDate.toISOString();
-      }
-      
-      if (!updates.title) {
-        showToastMessage('Event title is required', 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Applying updates:', updates);
-      
-      const { error } = await supabase
-        .from('events')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('[UPDATE] Supabase error:', error);
-        showToastMessage(`Failed to update: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: 'Events',
-        description: `Updated event: ${formData.title}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (eventDate && !isNaN(eventDate.getTime())) updates.event_date = eventDate.toISOString();
+      if (!updates.title) { showToastMessage('Event title is required', 'error'); return; }
+
+      const { error } = await supabase.from('events').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Events', description: `Updated event: ${formData.title}`, recordId: id, status: 'Success' });
       await fetchEvents();
       closeModal();
       showToastMessage('Event updated successfully!', 'success');
-      
     } catch (error) {
-      console.error('[UPDATE] Unexpected error:', error);
       showToastMessage('Failed to update event: ' + error.message, 'error');
     }
   };
 
   const handleUpdateAnnouncement = async (id, formData) => {
     console.log('[UPDATE] Announcement - ID:', id, 'formData:', formData);
-    
     try {
-      if (!id) {
-        console.error('[UPDATE] No ID provided');
-        showToastMessage('Cannot update: Missing record ID', 'error');
-        return;
-      }
-      
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
       const updates = {
-        title: formData.title?.trim(),
-        content: formData.content || '',
+        title:      formData.title?.trim(),
+        content:    formData.content || '',
+        updated_at: new Date().toISOString(),
       };
-      
-      if (!updates.title) {
-        showToastMessage('Announcement title is required', 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Applying updates:', updates);
-      
-      const { error } = await supabase
-        .from('announcements')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('[UPDATE] Supabase error:', error);
-        showToastMessage(`Failed to update: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: 'Announcements',
-        description: `Updated announcement: ${formData.title}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (!updates.title) { showToastMessage('Announcement title is required', 'error'); return; }
+
+      const { error } = await supabase.from('announcements').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Announcements', description: `Updated announcement: ${formData.title}`, recordId: id, status: 'Success' });
       await fetchAnnouncements();
       closeModal();
       showToastMessage('Announcement updated successfully!', 'success');
-      
     } catch (error) {
-      console.error('[UPDATE] Unexpected error:', error);
       showToastMessage('Failed to update announcement: ' + error.message, 'error');
     }
   };
 
   const handleUpdateJob = async (id, formData) => {
     console.log('[UPDATE] Job - ID:', id, 'formData:', formData);
-    
     try {
-      if (!id) {
-        console.error('[UPDATE] No ID provided');
-        showToastMessage('Cannot update: Missing record ID', 'error');
-        return;
-      }
-      
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
       let tags = [];
-      if (formData.tags) {
-        if (Array.isArray(formData.tags)) {
-          tags = formData.tags;
-        } else if (typeof formData.tags === 'string') {
-          tags = formData.tags.split(',').map(t => t.trim()).filter(t => t);
-        }
-      }
-      
+      if (Array.isArray(formData.tags)) tags = formData.tags;
+      else if (typeof formData.tags === 'string') tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
+
       const updates = {
-        title: formData.title?.trim(),
-        company: formData.company?.trim(),
+        title:       formData.title?.trim(),
+        company:     formData.company?.trim(),
         description: formData.description || '',
-        location: formData.location?.trim() || 'Remote',
-        category: formData.category || 'Full-time',
-        tags: tags,
-        image_url: formData.image_url || null,
-        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        location:    formData.location?.trim() || 'Remote',
+        category:    formData.category || 'Full-time',
+        tags,
+        image_url:   formData.image_url || null,
+        expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        updated_at:  new Date().toISOString(),
       };
-      
-      if (!updates.title) {
-        showToastMessage('Job title is required', 'error');
-        return;
-      }
-      if (!updates.company) {
-        showToastMessage('Company name is required', 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Applying updates:', updates);
-      
-      const { error } = await supabase
-        .from('jobs')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('[UPDATE] Supabase error:', error);
-        showToastMessage(`Failed to update: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: 'Jobs',
-        description: `Updated job: ${formData.title}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (!updates.title)   { showToastMessage('Job title is required', 'error'); return; }
+      if (!updates.company) { showToastMessage('Company name is required', 'error'); return; }
+
+      const { error } = await supabase.from('jobs').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Jobs', description: `Updated job: ${formData.title}`, recordId: id, status: 'Success' });
       await fetchJobs();
       closeModal();
       showToastMessage('Job updated successfully!', 'success');
-      
     } catch (error) {
-      console.error('[UPDATE] Unexpected error:', error);
       showToastMessage('Failed to update job: ' + error.message, 'error');
     }
   };
 
   const handleUpdateDiscount = async (id, formData) => {
     console.log('[UPDATE] Discount - ID:', id, 'formData:', formData);
-    
     try {
-      if (!id) {
-        console.error('[UPDATE] No ID provided');
-        showToastMessage('Cannot update: Missing record ID', 'error');
-        return;
-      }
-      
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
       const updates = {
-        title: formData.title?.trim(),
-        description: formData.description || '',
-        company: formData.company?.trim(),
+        title:         formData.title?.trim(),
+        description:   formData.description || '',
+        company:       formData.company?.trim(),
         discount_code: formData.discountCode?.trim() || null,
-        image_url: formData.image_url || null,
-        valid_until: formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        image_url:     formData.image_url || null,
+        valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        updated_at:    new Date().toISOString(),
       };
-      
-      if (!updates.title) {
-        showToastMessage('Discount title is required', 'error');
-        return;
-      }
-      if (!updates.company) {
-        showToastMessage('Company name is required', 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Applying updates:', updates);
-      
-      const { error } = await supabase
-        .from('discounts')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('[UPDATE] Supabase error:', error);
-        showToastMessage(`Failed to update: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: 'Discounts',
-        description: `Updated discount: ${formData.title}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (!updates.title)   { showToastMessage('Discount title is required', 'error'); return; }
+      if (!updates.company) { showToastMessage('Company name is required', 'error'); return; }
+
+      const { error } = await supabase.from('discounts').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Discounts', description: `Updated discount: ${formData.title}`, recordId: id, status: 'Success' });
       await fetchDiscounts();
       closeModal();
       showToastMessage('Discount updated successfully!', 'success');
-      
     } catch (error) {
-      console.error('[UPDATE] Unexpected error:', error);
       showToastMessage('Failed to update discount: ' + error.message, 'error');
     }
   };
 
   const handleUpdateLandingSection = async (id, formData) => {
     console.log('[UPDATE] Landing Section - ID:', id, 'formData:', formData);
-    
     try {
-      if (!id) {
-        console.error('[UPDATE] No ID provided');
-        showToastMessage('Cannot update: Missing record ID', 'error');
-        return;
-      }
-      
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
       const updates = {
-        title: formData.title?.trim(),
-        description: formData.description || '',
+        title:        formData.title?.trim(),
+        description:  formData.description || '',
         section_type: formData.section_type,
-        content: formData.content || '',
-        image_url: formData.image_url || null,
+        content:      formData.content || '',
+        image_url:    formData.image_url || null,
+        updated_at:   new Date().toISOString(),
       };
-      
-      if (!updates.title) {
-        showToastMessage('Section title is required', 'error');
-        return;
-      }
-      if (!updates.section_type) {
-        showToastMessage('Section type is required', 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Applying updates:', updates);
-      
-      const { error } = await supabase
-        .from('landing_sections')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) {
-        console.error('[UPDATE] Supabase error:', error);
-        showToastMessage(`Failed to update: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[UPDATE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: 'Landing Page',
-        description: `Updated landing section: ${formData.title}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (!updates.title)        { showToastMessage('Section title is required', 'error'); return; }
+      if (!updates.section_type) { showToastMessage('Section type is required', 'error'); return; }
+
+      const { error } = await supabase.from('landing_sections').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Landing Page', description: `Updated landing section: ${formData.title}`, recordId: id, status: 'Success' });
       await fetchLandingSections();
       closeModal();
       showToastMessage('Landing section updated successfully!', 'success');
-      
     } catch (error) {
-      console.error('[UPDATE] Unexpected error:', error);
       showToastMessage('Failed to update landing section: ' + error.message, 'error');
     }
   };
 
-  // ============================ ARCHIVE & RESTORE HANDLERS ============================
-  
-  const handleArchive = async (type, id) => {
-    console.log('[ARCHIVE] Type:', type, 'ID:', id);
-    
+  // ============================ DISCLOSURE UPDATE (UPSERT) ============================
+  // Architectural pattern:
+  //   1. Validate  — stripHtml rejects blank rich-text markup
+  //   2. Upsert    — always writes both columns so no column is left stale
+  //   3. Stamp     — updated_at set explicitly (no DB trigger dependency)
+  //   4. Log       — logAction for audit trail
+  //   5. Refresh   — fetchDisclosure keeps local state in sync with DB
+  //   6. Close     — closeDisclosureModal called on success only
+  //
+  // Singleton pattern: disclosures table has exactly one row (id = 1).
+  // upsert with onConflict:'id' creates it on first save, updates thereafter.
+  const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
+    console.log('[DISCLOSURE] Upserting disclosure row id=1');
+
+    if (!stripHtml(tos_content)) {
+      showToastMessage('Terms of Service content cannot be empty.', 'error');
+      return;
+    }
+    if (!stripHtml(pp_content)) {
+      showToastMessage('Privacy Policy content cannot be empty.', 'error');
+      return;
+    }
+
     try {
-      if (!id) {
-        console.error('[ARCHIVE] No ID provided');
-        showToastMessage('Cannot archive: Missing record ID', 'error');
+      const now = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('disclosures')
+        .upsert(
+          { id: 1, tos_content, pp_content, updated_at: now },
+          { onConflict: 'id' }
+        );
+
+      if (error) {
+        console.error('[DISCLOSURE] Supabase error:', error);
+        showToastMessage(`Failed to save: ${error.message}`, 'error');
         return;
       }
-      
-      let table;
-      let moduleName;
-      let itemTitle = '';
-      
-      switch (type) {
-        case 'events':
-          table = 'events';
-          moduleName = 'Events';
-          const eventItem = events.find(e => e.id === id);
-          itemTitle = eventItem?.title || id;
-          break;
-        case 'announcements':
-          table = 'announcements';
-          moduleName = 'Announcements';
-          const announcementItem = announcements.find(a => a.id === id);
-          itemTitle = announcementItem?.title || id;
-          break;
-        case 'jobs':
-          table = 'jobs';
-          moduleName = 'Jobs';
-          const jobItem = jobs.find(j => j.id === id);
-          itemTitle = jobItem?.title || id;
-          break;
-        case 'discounts':
-          table = 'discounts';
-          moduleName = 'Discounts';
-          const discountItem = discounts.find(d => d.id === id);
-          itemTitle = discountItem?.title || id;
-          break;
-        case 'landingpage':
-          table = 'landing_sections';
-          moduleName = 'Landing Page';
-          const landingItem = landingSections.find(l => l.id === id);
-          itemTitle = landingItem?.title || id;
-          break;
-        default:
-          console.error('[ARCHIVE] Unknown type:', type);
-          showToastMessage('Unknown content type', 'error');
-          return;
-      }
-      
-      console.log('[ARCHIVE] Setting is_active to false on table:', table, 'for ID:', id);
-      
+
+      console.log('[DISCLOSURE] Upsert success');
+
+      await logAction({
+        action:      'Update',
+        module:      'Disclosure',
+        description: 'Updated Terms of Service and Privacy Policy',
+        recordId:    1,
+        status:      'Success',
+      });
+
+      await fetchDisclosure();
+      closeDisclosureModal();
+      showToastMessage('Disclosure content saved successfully!', 'success');
+
+    } catch (err) {
+      console.error('[DISCLOSURE] Unexpected error:', err);
+      showToastMessage('Failed to save disclosure: ' + err.message, 'error');
+    }
+  };
+
+  // ============================ TOGGLE ACTIVE (SHOW / HIDE) ============================
+  // Distinct from archive: flips is_active without touching archived_at.
+  // Used by the Show/Hide button on LandingSectionCard so admins can
+  // temporarily hide a section from the public page without archiving it.
+  // The real-time subscription on LandingPage.js picks up the change
+  // automatically so the public view updates without a page reload.
+  const handleToggleActive = async (type, id, currentState) => {
+    console.log('[TOGGLE] Type:', type, 'ID:', id, 'currentState:', currentState);
+
+    const tableMap  = {
+      events:        'events',
+      announcements: 'announcements',
+      jobs:          'jobs',
+      discounts:     'discounts',
+      landingpage:   'landing_sections',
+    };
+    const moduleMap = {
+      events:        'Events',
+      announcements: 'Announcements',
+      jobs:          'Jobs',
+      discounts:     'Discounts',
+      landingpage:   'Landing Page',
+    };
+
+    const table = tableMap[type];
+    if (!table) { showToastMessage('Unknown content type', 'error'); return; }
+
+    try {
       const { error } = await supabase
         .from(table)
-        .update({ 
-          is_active: false,
-          archived_at: new Date().toISOString()
+        .update({ is_active: !currentState, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) { showToastMessage(`Failed to update visibility: ${error.message}`, 'error'); return; }
+
+      await logAction({
+        action:      'Update',
+        module:      moduleMap[type],
+        description: `Set ${type} id ${id} visibility to ${!currentState ? 'visible' : 'hidden'}`,
+        recordId:    id,
+        status:      'Success',
+      });
+
+      await fetchAllContent();
+      showToastMessage(
+        !currentState
+          ? 'Section is now visible on the landing page.'
+          : 'Section hidden from the landing page.',
+        'success'
+      );
+    } catch (error) {
+      showToastMessage('Failed to update visibility: ' + error.message, 'error');
+    }
+  };
+
+  // ============================ ARCHIVE & RESTORE ============================
+
+  const handleArchive = async (type, id) => {
+    console.log('[ARCHIVE] Type:', type, 'ID:', id);
+    try {
+      if (!id) { showToastMessage('Cannot archive: Missing record ID', 'error'); return; }
+
+      // DRY map — single source of truth for table + module + data list
+      const META = {
+        events:        { table: 'events',           module: 'Events',        data: events },
+        announcements: { table: 'announcements',    module: 'Announcements', data: announcements },
+        jobs:          { table: 'jobs',             module: 'Jobs',          data: jobs },
+        discounts:     { table: 'discounts',        module: 'Discounts',     data: discounts },
+        landingpage:   { table: 'landing_sections', module: 'Landing Page',  data: landingSections },
+      };
+
+      const entry = META[type];
+      if (!entry) { showToastMessage('Unknown content type', 'error'); return; }
+
+      const { table, module: moduleName, data: list } = entry;
+      const itemTitle = list.find(i => i.id === id)?.title || String(id);
+
+      const { error } = await supabase
+        .from(table)
+        .update({
+          is_active:   false,
+          archived_at: new Date().toISOString(),
+          updated_at:  new Date().toISOString(),
         })
         .eq('id', id);
-      
-      if (error) {
-        console.error('[ARCHIVE] Supabase error:', error);
-        showToastMessage(`Failed to archive: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[ARCHIVE] Success! Archived:', itemTitle);
-      
-      await logAction({
-        action: 'Archive',
-        module: moduleName,
-        description: `Archived ${type.slice(0, -1)}: ${itemTitle}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (error) { showToastMessage(`Failed to archive: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Archive', module: moduleName, description: `Archived ${type.slice(0, -1)}: ${itemTitle}`, recordId: id, status: 'Success' });
       await fetchAllContent();
       showToastMessage('Item archived successfully!', 'success');
-      
     } catch (error) {
-      console.error('[ARCHIVE] Unexpected error:', error);
       showToastMessage('Failed to archive item: ' + error.message, 'error');
     }
   };
 
+  // FIX: removed restored_at from the update payload — that column does not
+  // exist in the schema. The restore is tracked via logAction + updated_at.
   const handleRestore = async (type, id) => {
     console.log('[RESTORE] Type:', type, 'ID:', id);
-    
     try {
-      if (!id) {
-        console.error('[RESTORE] No ID provided');
-        showToastMessage('Cannot restore: Missing record ID', 'error');
-        return;
-      }
-      
-      let table;
-      let moduleName;
-      
-      switch (type) {
-        case 'Event':
-          table = 'events';
-          moduleName = 'Event';
-          break;
-        case 'Announcement':
-          table = 'announcements';
-          moduleName = 'Announcement';
-          break;
-        case 'Job':
-          table = 'jobs';
-          moduleName = 'Job';
-          break;
-        case 'Discount':
-          table = 'discounts';
-          moduleName = 'Discount';
-          break;
-        case 'Landing Section':
-          table = 'landing_sections';
-          moduleName = 'Landing Section';
-          break;
-        default:
-          console.error('[RESTORE] Unknown type:', type);
-          showToastMessage('Unknown content type', 'error');
-          return;
-      }
-      
-      console.log('[RESTORE] Setting is_active to true on table:', table, 'for ID:', id);
-      
+      if (!id) { showToastMessage('Cannot restore: Missing record ID', 'error'); return; }
+
+      const META = {
+        'Event':           { table: 'events',           module: 'Event' },
+        'Announcement':    { table: 'announcements',    module: 'Announcement' },
+        'Job':             { table: 'jobs',             module: 'Job' },
+        'Discount':        { table: 'discounts',        module: 'Discount' },
+        'Landing Section': { table: 'landing_sections', module: 'Landing Section' },
+      };
+
+      const entry = META[type];
+      if (!entry) { showToastMessage('Unknown content type', 'error'); return; }
+
+      const { table, module: moduleName } = entry;
+
       const { error } = await supabase
         .from(table)
-        .update({ 
-          is_active: true,
-          restored_at: new Date().toISOString()
+        .update({
+          is_active:  true,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', id);
-      
-      if (error) {
-        console.error('[RESTORE] Supabase error:', error);
-        showToastMessage(`Failed to restore: ${error.message}`, 'error');
-        return;
-      }
-      
-      console.log('[RESTORE] Success!');
-      
-      await logAction({
-        action: 'Update',
-        module: moduleName,
-        description: `Restored ${type.toLowerCase()}: ${id}`,
-        recordId: id,
-        status: 'Success'
-      });
-      
+
+      if (error) { showToastMessage(`Failed to restore: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: moduleName, description: `Restored ${type.toLowerCase()}: ${id}`, recordId: id, status: 'Success' });
       await fetchAllContent();
       setShowArchive(false);
       showToastMessage('Item restored successfully!', 'success');
-      
     } catch (error) {
-      console.error('[RESTORE] Unexpected error:', error);
       showToastMessage('Failed to restore item: ' + error.message, 'error');
     }
   };
@@ -1102,9 +780,7 @@ function ContentManagement() {
     setConfirmAction({ label, description, confirmText, confirmColor, onConfirm });
   };
 
-  const closeConfirm = () => {
-    setConfirmAction(null);
-  };
+  const closeConfirm = () => setConfirmAction(null);
 
   // ============================ RENDER ============================
   return (
@@ -1125,13 +801,14 @@ function ContentManagement() {
       archivedItems={getArchivedItems()}
       landingSections={activeLandingSections}
       announcements={activeAnnouncements}
-      // INTEGRATION: Disclosure props
+      // ── Disclosure ────────────────────────────────────────────────────────
       disclosure={disclosure}
       disclosureModalOpen={disclosureModalOpen}
       disclosureInitialEditing={disclosureInitialEditing}
       onOpenDisclosureModal={openDisclosureModal}
       onCloseDisclosureModal={closeDisclosureModal}
       onDisclosureUpdate={handleDisclosureUpdate}
+      // ── CRUD ──────────────────────────────────────────────────────────────
       onOpenCreate={openCreate}
       onOpenEdit={openEdit}
       onOpenEditSection={openEditSection}
@@ -1149,6 +826,7 @@ function ContentManagement() {
       onUpdateLandingSection={handleUpdateLandingSection}
       onArchive={handleArchive}
       onRestore={handleRestore}
+      onToggleActive={handleToggleActive}
       onShowConfirm={showConfirm}
       sidebar={<AdminSidebar />}
     />

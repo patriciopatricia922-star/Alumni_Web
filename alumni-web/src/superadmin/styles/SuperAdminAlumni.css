@@ -15,7 +15,8 @@ body { margin: 0; background: #E5ECF7F2; }
    MAIN PAGE LAYOUT
    ============================================ */
 .am-page {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden; 
   background: rgba(225,236,247,0.95);
   margin-left: 229px;
   padding: 37px 32px 60px;
@@ -56,33 +57,8 @@ body { margin: 0; background: #E5ECF7F2; }
   color: #6A7282;
 }
 
-/* ============================================
-   EXPORT BUTTON ROW
-   ============================================ */
-.am-export-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
-.am-export-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: #001947;
-  border: none;
-  border-radius: 8px;
-  font-family: 'Arimo', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #FFFFFF;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
 .am-export-btn:hover {
-  background: #002570;
+  background: #3d8fd6;
 }
 
 .am-export-btn svg {
@@ -144,6 +120,7 @@ body { margin: 0; background: #E5ECF7F2; }
 
 .am-search-wrap input::placeholder {
   color: rgba(15,23,43,.5);
+  opacity: 1;
 }
 
 .am-toolbar-btns {
@@ -196,6 +173,8 @@ body { margin: 0; background: #E5ECF7F2; }
 .am-table-wrap {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
 }
 
 .am-table {
@@ -207,6 +186,9 @@ body { margin: 0; background: #E5ECF7F2; }
 .am-table thead tr {
   background: #F8FAFC;
   border-bottom: 1px solid #E2E8F0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .am-table th {

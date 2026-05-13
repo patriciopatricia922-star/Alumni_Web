@@ -1,3 +1,12 @@
+// modals/PrivacyPolicyModal.jsx
+// ============================================================================
+// Change log
+// [disclosure-sync]  Added `updatedAt` prop.
+//                    formatUpdatedAt() renders a human-readable date when the
+//                    admin has saved a disclosure row, otherwise falls back to
+//                    the original static string so nothing breaks on first run.
+// ============================================================================
+
 import React from 'react';
 
 /* ─────────────────────────────────────────────────────────────
@@ -40,11 +49,29 @@ const PRIVACY_SECTIONS = [
     title: '9. Updates to the Policy',
     body: 'We may revise this Privacy Policy from time to time. Continued use of AlumnAI means you agree to the updated policy.',
   },
-  {
-    title: '10. Contact Us',
-    body: "For questions or requests regarding your data or privacy:\nEmail: nudaao@nu-dasma.edu.ph\nPhone: 09399151561 (Smart) / 09661381357 (Globe)\nLocation: Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114",
-  },
 ];
+
+/* ─────────────────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────────────────── */
+
+// Formats an ISO timestamp into "Month DD, YYYY".
+// Falls back to the original static date string when no timestamp is present
+// (first-run state before the admin has saved the disclosure row).
+const FALLBACK_DATE = 'February 28, 2026';
+
+const formatUpdatedAt = (iso) => {
+  if (!iso) return FALLBACK_DATE;
+  try {
+    return new Date(iso).toLocaleDateString('en-US', {
+      year:  'numeric',
+      month: 'long',
+      day:   'numeric',
+    });
+  } catch {
+    return FALLBACK_DATE;
+  }
+};
 
 /* ─────────────────────────────────────────────────────────────
    SHARED MODAL SHELL  (mirrors About.jsx's <Modal> component)
@@ -82,8 +109,15 @@ const ModalShell = ({ onClose, iconClass, iconSvg, title, subtitle, children }) 
 
 /* ─────────────────────────────────────────────────────────────
    PRIVACY POLICY MODAL
+
+   Props
+   ─────
+   onClose    () => void   — closes the modal
+   updatedAt  string|null  — ISO timestamp from disclosures.updated_at
+                             (pass disclosure?.updated_at from the parent).
+                             When null/undefined the fallback date is shown.
 ───────────────────────────────────────────────────────────── */
-const PrivacyPolicyModal = ({ onClose }) => (
+const PrivacyPolicyModal = ({ onClose, updatedAt }) => (
   <ModalShell
     onClose={onClose}
     iconClass="red"
@@ -96,7 +130,7 @@ const PrivacyPolicyModal = ({ onClose }) => (
       </svg>
     }
     title="Privacy Policy"
-    subtitle="Last Updated: February 28, 2026"
+    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
   >
     <div className="ab-modal-inner">
       {PRIVACY_SECTIONS.map((sec, i) => (

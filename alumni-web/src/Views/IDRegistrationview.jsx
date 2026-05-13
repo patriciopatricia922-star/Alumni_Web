@@ -1,3 +1,25 @@
+// views/IDRegistrationView.jsx
+// ============================================================================
+// Change log
+// [disclosure-sync]  Added `disclosure` prop.
+//                    TermsModal and PrivacyPolicyModal now receive
+//                    updatedAt={disclosure?.updated_at} so both modals show
+//                    the correct Last Updated date from the disclosures table
+//                    rather than a hardcoded string.
+//
+//                    The parent controller (IDRegistration.jsx or wherever
+//                    this view is rendered) must fetch the disclosure row and
+//                    pass it down:
+//
+//                      import useDisclosure from '../hooks/useDisclosure';
+//                      const { disclosure } = useDisclosure();
+//                      <IDRegistrationView disclosure={disclosure} … />
+//
+//                    The prop is optional — when absent both modals fall back
+//                    to their built-in static date, so nothing breaks during
+//                    the transition.
+// ============================================================================
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CameraIcon from '../assets/camera_icn.svg';
@@ -17,6 +39,8 @@ const IDRegistrationView = ({
   isModal = false,
   onClose,          // ← dedicated close/dismiss handler for modal context
   onSwitchToLogin,  // ← only used for the "Log in" footer link
+  // [disclosure-sync] ISO timestamp source for Terms / Privacy "Last Updated"
+  disclosure,
 }) => {
   const [legalModal, setLegalModal] = useState(null); // 'terms' | 'privacy' | null
 
@@ -29,7 +53,7 @@ const IDRegistrationView = ({
       */}
       <div
         className={`aid-page-root${isModal ? ' aid-page-root--modal' : ''}`}
-        style={{ fontFamily: 'Arimo, Arial, sans-serif' }}
+        style={{ fontFamily: 'Montserrat, Arial, sans-serif' }}
       >
 
         {/* Back link — full-page route only */}
@@ -39,7 +63,7 @@ const IDRegistrationView = ({
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
+              <span style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '14px', color: '#FFFFFF' }}>Back</span>
             </Link>
           </div>
         )}
@@ -68,8 +92,8 @@ const IDRegistrationView = ({
                 </svg>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <h3 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 5px' }}>Scan Alumni ID</h3>
-                <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: '18px' }}>
+                <h3 style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 5px' }}>Scan Alumni ID</h3>
+                <p style={{ fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: '18px' }}>
                   Choose how you'd like to provide your ID for verification
                 </p>
               </div>
@@ -85,8 +109,8 @@ const IDRegistrationView = ({
                   </svg>
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Upload from Device</p>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>JPG, PNG, or other image formats</p>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Upload from Device</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>JPG, PNG, or other image formats</p>
                 </div>
               </button>
               {/* Use camera */}
@@ -99,13 +123,13 @@ const IDRegistrationView = ({
                   </svg>
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Use Camera</p>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>ID will be captured automatically when stable</p>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Use Camera</p>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>ID will be captured automatically when stable</p>
                 </div>
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', marginTop: '4px' }}
+                style={{ background: 'none', border: 'none', fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', marginTop: '4px' }}
               >
                 Cancel
               </button>
@@ -125,7 +149,7 @@ const IDRegistrationView = ({
               background: 'rgba(0,0,0,0.55)', borderRadius: '20px', padding: '0 20px',
               backdropFilter: 'blur(4px)',
             }}>
-              <p style={{ fontFamily: 'Arimo', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', margin: 0, textAlign: 'center' }}>{camGuide}</p>
+              <p style={{ fontFamily: 'Montserrat', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', margin: 0, textAlign: 'center' }}>{camGuide}</p>
             </div>
             <div style={{ position: 'relative', width: '90%', maxWidth: '680px' }}>
               <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: '16px', display: 'block' }} />
@@ -155,7 +179,7 @@ const IDRegistrationView = ({
             </div>
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-              <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+              <p style={{ fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
                 ID will be captured automatically when stable
               </p>
               <button
@@ -164,7 +188,7 @@ const IDRegistrationView = ({
                   height: '44px', padding: '0 28px',
                   background: 'rgba(255,255,255,0.08)',
                   border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '12px', fontFamily: 'Arimo', fontSize: '14px',
+                  borderRadius: '12px', fontFamily: 'Montserrat', fontSize: '14px',
                   color: '#FFFFFF', cursor: 'pointer',
                 }}
               >
@@ -291,7 +315,7 @@ const IDRegistrationView = ({
                     <div className="scan-line" />
                     <div style={{ marginTop: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                       <div className="aid-spinner" />
-                      <p style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Scanning ID...</p>
+                      <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Scanning ID...</p>
                     </div>
                   </div>
                 )}
@@ -368,7 +392,7 @@ const IDRegistrationView = ({
             {status === 'scanning' && (
               <div className="aid-banner aid-banner-info">
                 <div className="aid-spinner aid-spinner-sm" />
-                <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: '#93C5FD', margin: 0 }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: '12px', color: '#93C5FD', margin: 0 }}>
                   Reading your Alumni ID, please wait...
                 </p>
               </div>
@@ -383,10 +407,10 @@ const IDRegistrationView = ({
                   </svg>
                 </div>
                 <div>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 600, fontSize: '12px', color: '#FCA5A5', margin: '0 0 2px' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '12px', color: '#FCA5A5', margin: '0 0 2px' }}>
                     Verification Failed
                   </p>
-                  <p style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(252,165,165,0.7)', margin: 0, lineHeight: '17px' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(252,165,165,0.7)', margin: 0, lineHeight: '17px' }}>
                     {errorMsg}
                   </p>
                 </div>
@@ -402,7 +426,7 @@ const IDRegistrationView = ({
                       <path d="M5 13l4 4L19 7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '12px', color: '#86EFAC', margin: 0 }}>Alumni ID Verified!</p>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '12px', color: '#86EFAC', margin: 0 }}>Alumni ID Verified!</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingLeft: '26px' }}>
                   {extractedData.firstName  && <p className="aid-extracted-row"><span className="aid-extracted-label">First Name: </span>{extractedData.firstName}</p>}
@@ -411,7 +435,7 @@ const IDRegistrationView = ({
                   {extractedData.program    && <p className="aid-extracted-row"><span className="aid-extracted-label">Program: </span>{extractedData.program}</p>}
                   {extractedData.batchYear  && <p className="aid-extracted-row"><span className="aid-extracted-label">Batch Year: </span>{extractedData.batchYear}</p>}
                 </div>
-                <p style={{ fontFamily: 'Arimo', fontSize: '10px', color: 'rgba(255,255,255,0.25)', margin: '6px 0 0 26px' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgba(255,255,255,0.25)', margin: '6px 0 0 26px' }}>
                   This info will be pre-filled in your signup form.
                 </p>
               </div>
@@ -460,9 +484,24 @@ const IDRegistrationView = ({
         </div>
       </div>
 
-      {/* ── Legal modals — above everything ───────────────────────────────── */}
-      {legalModal === 'terms'   && <TermsModal         onClose={() => setLegalModal(null)} />}
-      {legalModal === 'privacy' && <PrivacyPolicyModal  onClose={() => setLegalModal(null)} />}
+      {/*
+        ── Legal modals — above everything ───────────────────────────────────
+        [disclosure-sync] updatedAt is sourced from disclosure?.updated_at.
+        When disclosure is null (first run) both modals fall back to their
+        built-in static date — no visible breakage.
+      */}
+      {legalModal === 'terms'   && (
+        <TermsModal
+          onClose={() => setLegalModal(null)}
+          updatedAt={disclosure?.updated_at}
+        />
+      )}
+      {legalModal === 'privacy' && (
+        <PrivacyPolicyModal
+          onClose={() => setLegalModal(null)}
+          updatedAt={disclosure?.updated_at}
+        />
+      )}
     </>
   );
 };

@@ -83,7 +83,8 @@ const Jobs = () => {
           description: job.description,
           tags: [],
           keywords: getProgramKeywords(alumniProgram),
-          image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=600&q=80',
+          // Use the admin-uploaded image; fall back to null so the card shows the SVG icon instead
+          image: job.image_url || job.image || null,
         }));
         setJobs(formattedJobs);
       }

@@ -779,9 +779,9 @@
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.6;       
   color: #4A5565;
-  margin: 0 0 4px 0;
+  margin: 0 0 4px 0;       
 }
 
 .see-more-btn {
@@ -833,15 +833,16 @@
 .expanded-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-top: 4px;
+  gap: 10px;               /* was 8px */
+  padding-top: 8px;        /* was 4px */
 }
 
 .meta-divider {
   height: 1px;
-  background: var(--footer-border);
-  margin: 4px 0;
+  background: #FAC775;
+  margin: 0 0 4px 0;
 }
+
 
 .see-less-btn {
   background: none;

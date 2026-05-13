@@ -1,14 +1,25 @@
+// views/AboutView.jsx
+// ============================================================================
+// Change log
+// [disclosure-sync]  Imported useDisclosure hook.
+//                    TosModal and PrivacyModal now accept an `updatedAt` prop
+//                    and render "Last Updated: <date>" dynamically from the
+//                    disclosures table rather than a hardcoded string.
+//                    formatUpdatedAt() is shared by both modals and falls back
+//                    to the original static date on first-run (no DB row yet).
+// ============================================================================
+
 import React, { useState } from 'react';
-import '../styles/About.css';          
-import Sidebar    from '../components/Sidebar';
-import AlumnAILogo from '../assets/alumnai_logo_new.svg';
-import TargetIcon  from '../assets/target_icn.png';
-import MagnifyIcon from '../assets/magnifying_icn.png';
-import MessageIcon from '../assets/message_icn.svg';
-import PaperIcon   from '../assets/paper_icn.svg';
-import ProtectIcon from '../assets/protect_icn.svg';
-// import RightArrow  from '../assets/right_arrow.svg';
-import Missionicon from '../assets/mission_icn.svg';
+import '../styles/About.css';
+import Sidebar      from '../components/Sidebar';
+import AlumnAILogo  from '../assets/alumnai_logo_new.svg';
+import TargetIcon   from '../assets/target_icn.png';
+import MagnifyIcon  from '../assets/magnifying_icn.png';
+import MessageIcon  from '../assets/message_icn.svg';
+import PaperIcon    from '../assets/paper_icn.svg';
+import ProtectIcon  from '../assets/protect_icn.svg';
+import Missionicon  from '../assets/mission_icn.svg';
+import useDisclosure from '../hooks/useDisclosure';
 
 /* ─────────────────────────────────────────────────────────────
    STATIC CONTENT (migrated from the former separate-page routes)
@@ -68,6 +79,25 @@ const PRIVACY_SECTIONS = [
   { title: '9. Updates to the Policy',
     body:  'We reserve the right to modify these Privacy Policy at any time. We will notify users of any material changes via platform notification. Continued use of the platform after changes constitutes acceptance of the new policy.' },
 ];
+
+/* ─────────────────────────────────────────────────────────────
+   HELPERS
+   [disclosure-sync] Shared date formatter used by TosModal and PrivacyModal.
+───────────────────────────────────────────────────────────── */
+const FALLBACK_DATE = 'February 28, 2026';
+
+const formatUpdatedAt = (iso) => {
+  if (!iso) return FALLBACK_DATE;
+  try {
+    return new Date(iso).toLocaleDateString('en-US', {
+      year:  'numeric',
+      month: 'long',
+      day:   'numeric',
+    });
+  } catch {
+    return FALLBACK_DATE;
+  }
+};
 
 /* ─────────────────────────────────────────────────────────────
    SHARED MODAL SHELL (Dashboard-aligned)
@@ -204,11 +234,12 @@ const ContactModal = ({ onClose }) => (
 
 /* ─────────────────────────────────────────────────────────────
    TERMS OF SERVICE MODAL
+   [disclosure-sync] Accepts updatedAt prop; subtitle rendered dynamically.
 ───────────────────────────────────────────────────────────── */
-const TosModal = ({ onClose }) => (
+const TosModal = ({ onClose, updatedAt }) => (
   <Modal onClose={onClose} iconClass="yellow" icon={PaperIcon}
     iconAlt="Terms of Service" title="Terms of Service"
-    subtitle="Last Updated: February 28, 2026">
+    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}>
     <div className="ab-modal-inner">
       {TOS_SECTIONS.map((sec, i) => (
         <div key={i}>
@@ -222,11 +253,12 @@ const TosModal = ({ onClose }) => (
 
 /* ─────────────────────────────────────────────────────────────
    PRIVACY POLICY MODAL
+   [disclosure-sync] Accepts updatedAt prop; subtitle rendered dynamically.
 ───────────────────────────────────────────────────────────── */
-const PrivacyModal = ({ onClose }) => (
+const PrivacyModal = ({ onClose, updatedAt }) => (
   <Modal onClose={onClose} iconClass="red" icon={ProtectIcon}
     iconAlt="Privacy Policy" title="Privacy Policy"
-    subtitle="Last Updated: February 28, 2026">
+    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}>
     <div className="ab-modal-inner">
       {PRIVACY_SECTIONS.map((sec, i) => (
         <div key={i}>
@@ -263,6 +295,8 @@ const NItem = ({ n, markOneRead, formatTime }) => (
 
 /* ═══════════════════════════════════════════════════════════
    MAIN VIEW (Dashboard-aligned layout)
+   [disclosure-sync] useDisclosure() fetched here; updatedAt flows to both
+                     TosModal and PrivacyModal via prop.
 ════════════════════════════════════════════════════════════ */
 const AboutView = ({
   isMobile, isTablet,
@@ -274,6 +308,11 @@ const AboutView = ({
   const [activeModal, setActiveModal] = useState(null);
   const openModal  = name => setActiveModal(name);
   const closeModal = ()   => setActiveModal(null);
+
+  // [disclosure-sync] Single fetch shared by TosModal and PrivacyModal.
+  // Real-time subscription inside the hook keeps updatedAt in sync with
+  // any admin edit without a page reload.
+  const { disclosure } = useDisclosure();
 
   return (
     <>
@@ -308,8 +347,8 @@ const AboutView = ({
                 </div>
                 <div className="ab-ndrop-tabs">
                   {['all', 'unread'].map(t => (
-                    <button 
-                      key={t} 
+                    <button
+                      key={t}
                       onClick={() => setNotifTab(t)}
                       className={`ab-tab-btn ${notifTab === t ? 'active' : ''}`}
                     >
@@ -352,8 +391,11 @@ const AboutView = ({
             )}
           </div>
 
-          {/* Back Button - Dashboard style */}
-          <button className="ab-back" onClick={() => navigate('/dashboard')}>
+          {/* ── Back Button — matches Profile page .prof-back exactly ── */}
+          <button
+            className="ab-back"
+            onClick={() => navigate(-1)}
+          >
             <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
               <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
                 stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -392,7 +434,6 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Mission</p>
                   <p className="ab-mv-slbl">Our core purpose</p>
                 </div>
-                {/* <img src={RightArrow} alt="" className="ab-mv-arrow"/> */}
               </button>
 
               <button className="ab-mv-card" onClick={() => openModal('vision')}>
@@ -401,7 +442,6 @@ const AboutView = ({
                   <p className="ab-mv-lbl">Vision</p>
                   <p className="ab-mv-slbl">What we aim to achieve</p>
                 </div>
-                {/* <img src={RightArrow} alt="" className="ab-mv-arrow"/> */}
               </button>
             </div>
           </div>
@@ -409,8 +449,7 @@ const AboutView = ({
           {/* Support Section - Dashboard for-you-section style */}
           <div className="ab-support">
             <h2 className="ab-s-title">Support &amp; Legal</h2>
-            {/* <p className="ab-s-subtitle">Resources and information to assist you.</p> */}
-            
+
             <div className="ab-s-grid">
               <button className="ab-tile blue" onClick={() => openModal('contact')}>
                 <div className="ab-tile-icon blue"><img src={MessageIcon} alt=""/></div>
@@ -441,11 +480,15 @@ const AboutView = ({
       </div>
 
       {/* Modals */}
-      {activeModal === 'mission' && <MissionModal  onClose={closeModal}/>}
-      {activeModal === 'vision'  && <VisionModal   onClose={closeModal}/>}
-      {activeModal === 'contact' && <ContactModal  onClose={closeModal}/>}
-      {activeModal === 'tos'     && <TosModal      onClose={closeModal}/>}
-      {activeModal === 'privacy' && <PrivacyModal  onClose={closeModal}/>}
+      {activeModal === 'mission' && <MissionModal onClose={closeModal}/>}
+      {activeModal === 'vision'  && <VisionModal  onClose={closeModal}/>}
+      {activeModal === 'contact' && <ContactModal onClose={closeModal}/>}
+      {/*
+        [disclosure-sync] updatedAt sourced from disclosure?.updated_at.
+        Falls back to static date when disclosure is null (first run).
+      */}
+      {activeModal === 'tos'     && <TosModal     onClose={closeModal} updatedAt={disclosure?.updated_at}/>}
+      {activeModal === 'privacy' && <PrivacyModal onClose={closeModal} updatedAt={disclosure?.updated_at}/>}
     </>
   );
 };

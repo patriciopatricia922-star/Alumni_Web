@@ -1,42 +1,20 @@
-// ============================================================================
-// THIS IS FOR LOGIC.
-// ============================================================================
-// Purpose: Super Admin wrapper for Content Management.
-//          Reuses all shared business logic, Supabase API calls, data
-//          processing, state management, and event handlers from the Admin
-//          ContentManagement implementation.
-//
-// Key differences from Admin ContentManagement:
-//   - Uses SuperAdSidebar instead of AdminSidebar
-//   - View import path adjusted for SuperAdmin folder structure
-// ============================================================================
-
 import React, { useState, useEffect } from 'react';
 import SuperAdSidebar from "./SuperAdSidebar";
 import ContentManagementView from './Views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 
-// ============================ CONSTANTS ============================
 const TABS = [
-  { id: "events",        label: "Events"       },
-  { id: "announcements", label: "Announcements" },
-  { id: "jobs",          label: "Jobs"          },
-  { id: "discounts",     label: "Discounts"     },
-  { id: "landingpage",   label: "Landing Page"  },
+  { id: "events",          label: "Events"                        },
+  { id: "announcements",   label: "Announcements"                 },
+  { id: "jobs",            label: "Jobs"                          },
+  { id: "discounts",       label: "Discounts"                     },
+  { id: "landingpage",     label: "Landing Page"                  },
+  { id: "disclosurepage",  label: "User Notification/Disclosure"  },
 ];
 
-// ============================ SHARED LOGIC HOOK ============================
-/**
- * useContentManagement
- *
- * Encapsulates every piece of state and every handler that is identical
- * between the Admin and Super-Admin Content Management screens.
- * Both roles consume this hook and only differ in which sidebar they inject.
- */
 function useContentManagement() {
 
-  // ============================ STATE ============================
   const [activeTab,       setActiveTab]       = useState("events");
   const [showArchive,     setShowArchive]      = useState(false);
   const [modalOpen,       setModalOpen]        = useState(false);
@@ -47,20 +25,21 @@ function useContentManagement() {
   const [toast,           setToast]            = useState({ show: false, message: "", type: "success" });
   const [confirmAction,   setConfirmAction]    = useState(null);
 
-  // Data
   const [events,          setEvents]           = useState([]);
   const [announcements,   setAnnouncements]    = useState([]);
   const [jobs,            setJobs]             = useState([]);
   const [discounts,       setDiscounts]        = useState([]);
   const [landingSections, setLandingSections]  = useState([]);
 
-  // ============================ HELPERS ============================
+  const [disclosure,              setDisclosure]              = useState(null);
+  const [disclosureModalOpen,     setDisclosureModalOpen]     = useState(false);
+  const [disclosureInitialEditing, setDisclosureInitialEditing] = useState(null);
+
   const showToastMessage = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
   };
 
-  // ============================ FETCH ============================
   const fetchEvents = async () => {
     const { data, error } = await supabase
       .from('events')
@@ -106,6 +85,15 @@ function useContentManagement() {
     return data || [];
   };
 
+  const fetchDisclosure = async () => {
+    const { data, error } = await supabase
+      .from('disclosures')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+    if (!error && data) setDisclosure(data);
+  };
+
   const fetchAllContent = async () => {
     setLoading(true);
     await Promise.all([
@@ -114,13 +102,13 @@ function useContentManagement() {
       fetchJobs(),
       fetchDiscounts(),
       fetchLandingSections(),
+      fetchDisclosure(),
     ]);
     setLoading(false);
   };
 
   useEffect(() => { fetchAllContent(); }, []);
 
-  // ============================ DERIVED STATE ============================
   const activeEvents          = events         .filter(e => e.is_active !== false);
   const activeAnnouncements   = announcements  .filter(a => a.is_active !== false);
   const activeJobs            = jobs           .filter(j => j.is_active !== false);
@@ -162,7 +150,6 @@ function useContentManagement() {
     return archived;
   };
 
-  // ============================ MODAL HANDLERS ============================
   const openCreate = () => {
     setModalMode("create");
     setEditingItem(null);
@@ -170,9 +157,10 @@ function useContentManagement() {
     setModalOpen(true);
   };
 
-  const openEdit = (item) => {
+  const openEdit = (item, type) => {
     setModalMode("edit");
     setEditingItem(item);
+    if (type) setActiveTab(type);
     setEditingSection(null);
     setModalOpen(true);
   };
@@ -190,7 +178,43 @@ function useContentManagement() {
     setEditingSection(null);
   };
 
-  // ============================ CREATE HANDLERS ============================
+  const openDisclosureModal = (which = null) => {
+    setDisclosureInitialEditing(which);
+    setDisclosureModalOpen(true);
+  };
+
+  const closeDisclosureModal = () => {
+    setDisclosureModalOpen(false);
+    setDisclosureInitialEditing(null);
+  };
+
+  const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
+    try {
+      const { error } = await supabase
+        .from('disclosures')
+        .upsert({ id: 1, tos_content, pp_content }, { onConflict: 'id' });
+
+      if (error) {
+        showToastMessage(`Failed to save: ${error.message}`, 'error');
+        return;
+      }
+
+      await logAction({
+        action: 'Update',
+        module: 'Disclosure',
+        description: 'Updated Terms of Service and Privacy Policy',
+        recordId: 1,
+        status: 'Success',
+      });
+
+      await fetchDisclosure();
+      closeDisclosureModal();
+      showToastMessage('Disclosure content saved successfully!', 'success');
+    } catch (err) {
+      showToastMessage('Failed to save disclosure: ' + err.message, 'error');
+    }
+  };
+
   const handleCreateEvent = async (formData) => {
     console.log('[CREATE] Event formData received:', formData);
     try {
@@ -363,7 +387,6 @@ function useContentManagement() {
     }
   };
 
-  // ============================ UPDATE HANDLERS ============================
   const handleUpdateEvent = async (id, formData) => {
     console.log('[UPDATE] Event - ID:', id, 'formData:', formData);
     try {
@@ -508,13 +531,12 @@ function useContentManagement() {
     }
   };
 
-  // ============================ ARCHIVE / RESTORE ============================
   const TABLE_MAP = {
-    events:        { table: 'events',          module: 'Events'          },
-    announcements: { table: 'announcements',   module: 'Announcements'   },
-    jobs:          { table: 'jobs',            module: 'Jobs'            },
-    discounts:     { table: 'discounts',       module: 'Discounts'       },
-    landingpage:   { table: 'landing_sections', module: 'Landing Page'   },
+    events:        { table: 'events',           module: 'Events'       },
+    announcements: { table: 'announcements',    module: 'Announcements'},
+    jobs:          { table: 'jobs',             module: 'Jobs'         },
+    discounts:     { table: 'discounts',        module: 'Discounts'    },
+    landingpage:   { table: 'landing_sections', module: 'Landing Page' },
   };
 
   const RESTORE_TABLE_MAP = {
@@ -577,15 +599,12 @@ function useContentManagement() {
     }
   };
 
-  // ============================ CONFIRM DIALOG ============================
   const showConfirm = (label, description, confirmText, confirmColor, onConfirm) =>
     setConfirmAction({ label, description, confirmText, confirmColor, onConfirm });
 
   const closeConfirm = () => setConfirmAction(null);
 
-  // ============================ EXPOSED API ============================
   return {
-    // State
     activeTab, setActiveTab,
     showArchive, setShowArchive,
     modalOpen, modalMode,
@@ -593,27 +612,26 @@ function useContentManagement() {
     loading,
     toast,
     confirmAction,
-    // Derived
     activeItems:          getActiveItems(),
     archivedItems:        getArchivedItems(),
     activeLandingSections,
     activeAnnouncements,
-    // Modal
+    disclosure,
+    disclosureModalOpen,
+    disclosureInitialEditing,
     openCreate, openEdit, openEditSection, closeModal,
-    // Confirm
+    openDisclosureModal, closeDisclosureModal, handleDisclosureUpdate,
     showConfirm, closeConfirm,
-    // CRUD
-    handleCreateEvent,        handleUpdateEvent,
-    handleCreateAnnouncement, handleUpdateAnnouncement,
-    handleCreateJob,          handleUpdateJob,
-    handleCreateDiscount,     handleUpdateDiscount,
+    handleCreateEvent,          handleUpdateEvent,
+    handleCreateAnnouncement,   handleUpdateAnnouncement,
+    handleCreateJob,            handleUpdateJob,
+    handleCreateDiscount,       handleUpdateDiscount,
     handleCreateLandingSection, handleUpdateLandingSection,
     handleArchive,
     handleRestore,
   };
 }
 
-// ============================ SUPER ADMIN COMPONENT ============================
 function Superadminengagement() {
   const cm = useContentManagement();
 
@@ -635,6 +653,12 @@ function Superadminengagement() {
       archivedItems={cm.archivedItems}
       landingSections={cm.activeLandingSections}
       announcements={cm.activeAnnouncements}
+      disclosure={cm.disclosure}
+      disclosureModalOpen={cm.disclosureModalOpen}
+      disclosureInitialEditing={cm.disclosureInitialEditing}
+      onOpenDisclosureModal={cm.openDisclosureModal}
+      onCloseDisclosureModal={cm.closeDisclosureModal}
+      onDisclosureUpdate={cm.handleDisclosureUpdate}
       onOpenCreate={cm.openCreate}
       onOpenEdit={cm.openEdit}
       onOpenEditSection={cm.openEditSection}

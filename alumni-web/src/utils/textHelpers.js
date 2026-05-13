@@ -146,6 +146,28 @@ export const normalizeWhitespace = (text) => {
   return text.replace(/\s+/g, ' ').trim();
 };
 
+/**
+ * Converts rich-text HTML to readable plain text preserving paragraph breaks
+ * @param {string} html - HTML from rich text editor
+ * @returns {string} - Plain text with newlines between paragraphs
+ */
+export const htmlToReadableText = (html) => {
+  if (!html) return '';
+  return html
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')  // collapse 3+ newlines to 2
+    .trim();
+};
+
+
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
@@ -160,4 +182,5 @@ export default {
   hasHtmlFormatting,
   textToHtml,
   normalizeWhitespace,
+  htmlToReadableText, 
 };

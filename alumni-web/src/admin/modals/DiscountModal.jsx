@@ -265,8 +265,8 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
           />
         </Field>
 
-        <Field label="Company/Partner" required>
-          <input className="field-input" placeholder="Enter company name" value={form.company} onChange={(e) => s('company', e.target.value)} />
+        <Field label="Location" required>
+          <input className="field-input" placeholder="Enter location" value={form.company} onChange={(e) => s('company', e.target.value)} />
         </Field>
 
         <Field label="Description" required>

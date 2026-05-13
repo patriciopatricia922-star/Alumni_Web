@@ -30,9 +30,10 @@
   margin-left: var(--sidebar-width-desktop);
   padding: 37px 51px 60px;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
   position: relative;
   width: calc(100% - var(--sidebar-width-desktop));
+  min-width: 0;
 }
 
 /* Tablet styles */
@@ -41,6 +42,11 @@
     margin-left: var(--sidebar-width-tablet);
     padding: 37px 28px 48px;
     width: calc(100% - var(--sidebar-width-tablet));
+    overflow-x: clip;
+  }
+
+  .filter-dropdown {
+    right: -28px;
   }
 }
 
@@ -50,7 +56,12 @@
     margin-left: 0;
     padding: 24px 16px 90px;
     width: 100%;
+    overflow-x: clip;
   }
+
+  .filter-dropdown {
+    right: -16px;
+  } 
 }
 
 /* Notification Bell */
@@ -278,7 +289,7 @@
   font-size: 13px;
   color: #0A0A0A;
   margin: 0 0 2px 0;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .notification-item.unread .notification-title {
@@ -290,7 +301,7 @@
   font-size: 12px;
   color: #4A5565;
   margin: 0 0 4px 0;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -382,10 +393,10 @@
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 40px;
-  line-height: 48px;
+  line-height: 1.2;
   letter-spacing: -1px;
   color: #1e3a5f;
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
 }
 
 .discounts-title.mobile {
@@ -400,13 +411,15 @@
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 16px;
-  line-height: 22.5px;
+  line-height: 1.6;
   color: #545454;
   margin: 0;
+  max-width: 680px;
 }
 
 .discounts-subtitle.mobile {
   font-size: 13px;
+  line-height: 1.55;
 }
 
 /* Filter Bar */
@@ -414,8 +427,9 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   gap: 12px;
+  overflow: visible;
 }
 
 .filter-bar.mobile {
@@ -427,6 +441,7 @@
   align-items: center;
   gap: 12px;
   position: relative;
+  overflow: visible;
 }
 
 .filter-display {
@@ -451,7 +466,7 @@
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 14px;
-  line-height: 20px;
+  line-height: 1.4;
   color: #1e3a5f;
   white-space: nowrap;
   overflow: hidden;
@@ -509,21 +524,15 @@
 .filter-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+   right: -51px;
+  left: auto;
   background: #ffffff;
   border: 1px solid rgba(0,62,166,0.15);
   border-radius: 12px;
   overflow: hidden;
   z-index: 300;
   min-width: 220px;
-  box-shadow: 0px 8px 24px rgba(0,0,0,0.12);
-}
-
-@media (max-width: 768px) {
-  .filter-dropdown {
-    right: 0;
-    left: auto;
-  }
+  box-shadow: 0px 10px 30px rgba(0,0,0,0.15);
 }
 
 .filter-option {
@@ -549,6 +558,7 @@
 .filter-option-text {
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-size: 14px;
+  line-height: 1.4;
   color: #4a5565;
   font-weight: 400;
 }
@@ -603,6 +613,7 @@
   color: #6a7282;
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-size: 15px;
+  line-height: 1.5;
 }
 
 /* Discount Card */
@@ -683,20 +694,23 @@
   line-height: 1;
 }
 
+/* Card Body */
 .discount-card-body {
-  padding: 20px 20px 0;
+  padding: 18px 20px 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .discount-card-title-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .discount-card-icon {
-  margin-top: 4px;
+  margin-top: 3px;
   flex-shrink: 0;
 }
 
@@ -704,39 +718,45 @@
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 15px;
-  line-height: 22px;
+  line-height: 1.45;
   color: #1e3a5f;
   margin: 0;
+  word-break: break-word;
 }
 
 .discount-card-description {
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 400;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 1.65;
   color: #4a5565;
-  margin: 0 0 14px 0;
+  margin: 0 0 16px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .discount-card-divider {
   width: 100%;
   height: 1px;
   background: rgba(0,0,0,0.08);
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
+/* Expandable details */
 .discount-card-details {
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .discount-card-details.expanded {
-  max-height: 200px;
+  max-height: 600px;
 }
 
 .discount-card-details-content {
-  padding-bottom: 14px;
+  padding: 14px 0 4px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -749,7 +769,7 @@
 }
 
 .detail-icon {
-  margin-top: 3px;
+  margin-top: 2px;
   flex-shrink: 0;
 }
 
@@ -757,14 +777,18 @@
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 12px;
-  line-height: 18px;
+  line-height: 1.6;
   color: #4a5565;
   margin: 0;
   white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
+/* Toggle button wrapper */
 .discount-card-button-wrapper {
-  padding: 0 20px 20px;
+  padding: 14px 20px 20px;
+  flex-shrink: 0;
 }
 
 .discount-card-toggle-btn {
@@ -778,7 +802,7 @@
   font-size: 13px;
   color: #ffffff;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -791,6 +815,17 @@
   color: #003ea6;
 }
 
-.discount-card-toggle-btn:hover {
+/* Linkified URLs */
+.discount-link {
+  color: #003ea6;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+  transition: color 0.15s, opacity 0.15s;
+}
+
+.discount-link:hover {
+  color: #2b72fb;
   opacity: 0.85;
 }

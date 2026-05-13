@@ -1,15 +1,3 @@
-/* ============================================================================
-   SuperAdminDashboard.css
-   ============================================================================
-   Visual design updated to match AdminDashboard.css patterns:
-     - Identical card, typography, spacing, and colour tokens
-     - NavigableChartCard hover / focus / active rules
-     - KPI alert text + modal (added — were missing from original)
-     - "No Goal" / isCount gauge sub-label support
-   All SuperAdmin-specific class prefixes (super-dashboard-*) are preserved
-   so no changes are needed in SuperAdminDashboardView or the router.
-   ============================================================================ */
-
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Arimo:wght@400;500;600;700&display=swap');
 
 /* ============================ DASHBOARD LAYOUT ============================ */
@@ -204,7 +192,6 @@
   margin-top: 6px;
 }
 
-/* Shows the goal label in the same large-number style as AdminDashboard */
 .kpi-progress-target {
   font-family: 'Lexend', 'Arimo', Arial;
   font-weight: 700;
@@ -224,16 +211,20 @@
 }
 
 /* ============================ KPI ALERT TEXT ============================ */
-/* Added — was missing from original SuperAdmin CSS */
 .kpi-alert-text {
   margin-top: 6px;
   font-size: 11px;
   color: #EF4444;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
 }
 
 .kpi-alert-text:hover {
+  color: #DC2626;
   text-decoration: underline;
 }
 
@@ -419,7 +410,6 @@
 }
 
 /* ============================ KPI ALERT MODAL ============================ */
-/* Added — was missing from original SuperAdmin CSS */
 .kpi-modal-overlay {
   position: fixed;
   inset: 0;
@@ -428,105 +418,258 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .kpi-modal {
-  width: 420px;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
   background: #ffffff;
   border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
   font-family: 'Lexend', sans-serif;
   animation: kpiModalFadeIn 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 @keyframes kpiModalFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
 .kpi-modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .kpi-modal-header h2 {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: #1E293B;
+  line-height: 1.35;
   margin: 0;
+  word-break: break-word;
 }
 
 .kpi-modal-close-icon {
-  background: transparent;
+  background: #F1F5F9;
   border: none;
-  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  font-size: 14px;
   cursor: pointer;
   color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.kpi-modal-close-icon:hover {
+  background: #E2E8F0;
+  color: #1E293B;
 }
 
 .kpi-modal-status {
-  margin-top: 10px;
-  display: inline-block;
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: #FEF3C7;
   color: #92400E;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
   border-radius: 999px;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
 }
 
 .kpi-modal-desc {
-  margin-top: 12px;
+  margin-top: 14px;
   font-size: 13px;
   color: #475569;
-  line-height: 1.5;
+  line-height: 1.65;
+  word-break: break-word;
+  flex-shrink: 0;
+}
+
+.kpi-modal-section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #94A3B8;
+  flex-shrink: 0;
 }
 
 .kpi-modal-suggestions {
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .kpi-suggestion-item {
   display: flex;
   gap: 10px;
   background: #F8FAFC;
-  padding: 10px;
+  border: 1px solid #E8EFF7;
+  padding: 11px 13px;
   border-radius: 10px;
   align-items: flex-start;
+  transition: background 0.12s;
 }
 
-.suggestion-icon { font-size: 16px; }
+.kpi-suggestion-item:hover {
+  background: #EFF6FF;
+}
+
+.suggestion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.suggestion-icon--insight {
+  background: #EFF6FF;
+  color: #3B82F6;
+}
+
+.suggestion-icon--rec {
+  background: #ECFDF5;
+  color: #059669;
+}
 
 .suggestion-text {
   font-size: 13px;
   color: #334155;
+  line-height: 1.6;
+  word-break: break-word;
+  flex: 1;
 }
 
 .kpi-modal-footer {
-  margin-top: 18px;
-  text-align: right;
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .kpi-modal-close {
   background: #324D87;
-  color: white;
+  color: #fff;
   border: none;
-  padding: 8px 14px;
+  padding: 9px 20px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
   font-family: 'Lexend', sans-serif;
+  transition: background 0.15s;
+}
+
+.kpi-modal-close:hover {
+  background: #253a6a;
+}
+
+@media (max-width: 768px) {
+  .kpi-modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .kpi-modal {
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 18px 18px 12px 12px;
+    padding: 20px 18px;
+  }
+
+  .kpi-modal-header h2 {
+    font-size: 15px;
+  }
+
+  .kpi-modal-desc {
+    font-size: 12.5px;
+  }
+
+  .suggestion-text {
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .kpi-modal {
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    padding: 18px 16px 24px;
+  }
+
+  .kpi-modal-header h2 {
+    font-size: 14px;
+  }
+
+  .kpi-modal-status {
+    font-size: 11px;
+  }
+
+  .kpi-modal-desc {
+    font-size: 12px;
+    margin-top: 10px;
+  }
+
+  .kpi-suggestion-item {
+    padding: 10px 11px;
+  }
+
+  .suggestion-text {
+    font-size: 12px;
+  }
+
+  .kpi-modal-close {
+    width: 100%;
+    text-align: center;
+    padding: 11px;
+  }
+
+  .kpi-modal-footer {
+    justify-content: stretch;
+  }
 }
 
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
-  .charts-row     { flex-direction: column; }
-  .chart-card     { width: 100%; }
+  .charts-row { flex-direction: column; }
+  .chart-card { width: 100%; }
 }
 
 @media (max-width: 768px) {

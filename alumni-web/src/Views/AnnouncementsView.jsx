@@ -22,6 +22,7 @@ const ClockIcon = () => (
 // ── Announcement Card ─────────────────────────────────────────────────────────
 const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   const [expanded, setExpanded] = useState(false);
+  const [read, setRead] = useState(false);
   const iconSize = isMobile ? '48px' : isTablet ? '52px' : '56px';
 
   return (
@@ -36,14 +37,16 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             alt={announcement.category}
             style={{
              width: '55%',
-  height: '55%',
-  objectFit: 'contain',
-  filter: 'drop-shadow(0px 2px 4px rgba(0, 62, 166, 0.45))',
+             height: '55%',
+             objectFit: 'contain',
+             filter: 'drop-shadow(0px 2px 4px rgba(0, 62, 166, 0.45))',
             }}
           />
-          <div className="ann-card__notif-ring">
-            <div className="ann-card__notif-dot" />
-          </div>
+          {!read && (
+            <div className="ann-card__notif-ring">
+              <div className="ann-card__notif-dot" />
+            </div>
+          )}
         </div>
 
         <div className="ann-card__content">
@@ -61,7 +64,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
               {' '}
               <button
                 className="ann-card__see-more-inline"
-                onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+                onClick={(e) => { e.stopPropagation(); setExpanded(true); setRead(true); }}
               >
                 See more
               </button>

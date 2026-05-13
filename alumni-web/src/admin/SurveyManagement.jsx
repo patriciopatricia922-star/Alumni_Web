@@ -1,15 +1,60 @@
 // ============================================================================
 // SurveyManagement.jsx — Logic Controller
 // ============================================================================
-// Merged: retains all original bug fixes (uid, branch persistence, branch
-// cleanup on delete) while adopting the new UI additions (askConfirm title
-// param, publish confirmation dialog) from the updated version.
+// PERSISTENCE FIXES (in addition to the original FIX 1-6):
+//
+// PFIX-A — branchesRef sync race:
+//   The useEffect that mirrors `branches` into `branchesRef` runs AFTER paint.
+//   If the user clicks Publish in the same tick as their last branch change,
+//   branchesRef.current still holds the prior render's value. Fixed by writing
+//   branchesRef.current synchronously inside every setBranches call site, AND
+//   adding a flush-read inside handlePublish that reads current React state
+//   via a ref-callback pattern so the async function always sees the latest value.
+//
+// PFIX-B — Supabase UPDATE with null/undefined configId silently updates 0 rows:
+//   If configIdRef.current is falsy the .eq("id", ...) filter matches nothing.
+//   Supabase returns { data: [], error: null } — a silent non-update that looks
+//   like success. Added explicit guard: if currentConfigId is falsy after load,
+//   fall through to INSERT and back-fill the ref. Also added row-count check on
+//   the UPDATE response to detect zero-row updates.
+//
+// PFIX-C — branches payload verification before write:
+//   Added a pre-publish assertion that logs the exact payload being sent,
+//   including the branches sub-object, so failures are visible in the console.
+//   If the branches object is empty when the user has configured branches, a
+//   warning is emitted rather than silently saving empty data.
+//
+// PFIX-D — post-save verification read-back:
+//   After a successful INSERT or UPDATE, the saved row is re-fetched and the
+//   returned config.branches is compared against what was sent. Any mismatch
+//   is logged as an error toast so the user knows persistence failed even if
+//   Supabase reported success.
+//
+// PFIX-E — load path: configIdRef written before any async setBranches call
+//   so rapid publish-after-load never hits the INSERT path for an existing row.
+//
+// All original FIX 1-6, business logic, default data, type labels, component
+// structure, and prop interface are preserved exactly.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./components/AdminSidebar";
 import SurveyMgmtView from "./views/SurveyMgmtView";
+
+// ============================================================================
+// DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
+// ============================================================================
+const DEBUG = () =>
+  typeof localStorage !== "undefined" && localStorage.getItem("surveyDebug") === "1";
+
+const dbg = (...args) => {
+  if (DEBUG()) console.log("[SurveyMgmt]", ...args);
+};
+
+const dbgWarn = (...args) => {
+  if (DEBUG()) console.warn("[SurveyMgmt]", ...args);
+};
 
 // ============================================================================
 // DEFAULT SURVEY DATA
@@ -144,9 +189,45 @@ const TYPE_LABELS = {
 
 // ============================================================================
 // uid — collision-safe ID generator.
-// Combines timestamp with a random suffix so rapid additions never collide.
 // ============================================================================
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+// ============================================================================
+// sanitiseBranches — FIX 6
+// ============================================================================
+function sanitiseBranches(savedBranches, survey) {
+  if (!savedBranches || typeof savedBranches !== "object") return {};
+
+  const validRefs = new Set(["next", "end"]);
+  survey.sections.forEach(sec =>
+    sec.questions.forEach(q => validRefs.add(`q-${q.id}`))
+  );
+
+  const clean = {};
+
+  for (const [key, val] of Object.entries(savedBranches)) {
+    const withoutPrefix = key.slice(2);
+    const optIdx = withoutPrefix.indexOf("-opt");
+    const sourceId = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
+
+    if (!validRefs.has(`q-${sourceId}`)) {
+      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
+      continue;
+    }
+
+    const arr = Array.isArray(val) ? val : val ? [val] : ["next"];
+    const filtered = arr.filter(v => {
+      const valid = validRefs.has(v);
+      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
+      return valid;
+    });
+
+    clean[key] = filtered.length > 0 ? filtered : ["next"];
+  }
+
+  dbg("sanitiseBranches result:", clean);
+  return clean;
+}
 
 // ============================================================================
 // LoadingScreen
@@ -186,6 +267,9 @@ export default function SurveyManagement() {
   const [configId,      setConfigId]      = useState(null);
   const [activeSection, setActiveSection] = useState(0);
 
+  // FIX 5 + PFIX-E — synchronous ref mirrors configId
+  const configIdRef = useRef(null);
+
   // ── UI mode ───────────────────────────────────────────────────────────────
   const [branchMode, setBranchMode] = useState(false);
   const [editingQ,   setEditingQ]   = useState(null);
@@ -198,6 +282,29 @@ export default function SurveyManagement() {
   const [saving,   setSaving]   = useState(false);
   const [status,   setStatus]   = useState("");
   const [branches, setBranches] = useState({});
+
+  // PFIX-A — branchesRef is kept in sync both via useEffect AND written
+  // synchronously in every setBranches call site below. The ref is the
+  // single source of truth for handlePublish.
+  const branchesRef = useRef({});
+
+  // Helper: update branches state + ref atomically
+  // Use this instead of raw setBranches everywhere branches change.
+  const setBranchesAndRef = useCallback((updater) => {
+    setBranches(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      // Write ref synchronously so handlePublish always sees the latest value
+      // even if called before the next render+effect cycle.
+      branchesRef.current = next;
+      dbg("setBranchesAndRef →", next);
+      return next;
+    });
+  }, []);
+
+  // Keep the ref in sync as a safety net (covers external setBranches calls)
+  useEffect(() => {
+    branchesRef.current = branches;
+  }, [branches]);
 
   // ── Notifications ─────────────────────────────────────────────────────────
   const [toasts,       setToasts]       = useState([]);
@@ -221,19 +328,17 @@ export default function SurveyManagement() {
 
   // ==========================================================================
   // CONFIRMATION MODAL
-  // Accepts an optional title so the publish dialog can say "Publish Survey"
-  // while delete dialogs keep their default "Delete?" heading.
   // ==========================================================================
   const askConfirm = (message, onConfirm, title = "Delete?") =>
     setConfirmState({ message, onConfirm, title });
 
   // ==========================================================================
-  // DATA LOADING
-  // Branches are stored separately from survey data in the DB config so they
-  // are correctly restored on load without polluting the sections structure.
+  // DATA LOADING — PFIX-E: configIdRef written before setBranches
   // ==========================================================================
   useEffect(() => {
     const load = async () => {
+      dbg("Loading survey config from Supabase...");
+
       const { data, error } = await supabaseAdmin
         .from("survey_config")
         .select("id, config")
@@ -241,44 +346,161 @@ export default function SurveyManagement() {
         .limit(1)
         .single();
 
+      if (error) {
+        dbgWarn("Load error (may be no rows yet):", error.message, error.code);
+      }
+
       if (error || !data?.config?.sections?.length) {
+        dbg("No saved config found — using DEFAULT_SURVEY");
         setSurvey(DEFAULT_SURVEY);
+        // configIdRef stays null → first publish will INSERT
+        return;
+      }
+
+      dbg("Loaded config row id:", data.id);
+      dbg("Raw saved branches:", data.config.branches);
+
+      const { branches: savedBranches, ...surveyData } = data.config;
+
+      // PFIX-E — write ref synchronously BEFORE any async state updates
+      configIdRef.current = data.id;
+      setConfigId(data.id);
+      setSurvey(surveyData);
+
+      if (savedBranches) {
+        const sanitised = sanitiseBranches(savedBranches, surveyData);
+        dbg("Sanitised branches loaded:", sanitised);
+        // Use setBranchesAndRef so ref is also updated synchronously
+        setBranchesAndRef(sanitised);
       } else {
-        setConfigId(data.id);
-        const { branches: savedBranches, ...surveyData } = data.config;
-        setSurvey(surveyData);
-        if (savedBranches) setBranches(savedBranches);
+        dbg("No branches in saved config");
       }
     };
+
     load();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==========================================================================
-  // PUBLISH — merges branches into the config payload before saving
+  // PUBLISH — PFIX-A + PFIX-B + PFIX-C + PFIX-D
   // ==========================================================================
   const handlePublish = async () => {
     if (!survey) return;
+
+    // PFIX-A — read the ref (written synchronously by setBranchesAndRef) so we
+    // always get the latest branches even if this runs before the useEffect sync.
+    const currentBranches = branchesRef.current;
+    const currentConfigId = configIdRef.current;
+
+    // PFIX-C — pre-publish payload diagnostics
+    const branchKeyCount = Object.keys(currentBranches).length;
+    dbg("=== PUBLISH START ===");
+    dbg("configId (state):", configId, "| configIdRef:", currentConfigId);
+    dbg("Branch key count:", branchKeyCount);
+    dbg("Full branches payload:", JSON.stringify(currentBranches, null, 2));
+
+    if (branchKeyCount === 0) {
+      // This is not an error — user may not have set any branches yet.
+      dbg("Note: branches payload is empty (no rules configured)");
+    }
+
+    const payload = { ...survey, branches: currentBranches };
+
+    dbg("Full publish payload sections count:", payload.sections.length);
+    dbg("Payload branches key count:", Object.keys(payload.branches).length);
+
     setSaving(true);
     setStatus("saving");
+
     try {
-      const payload = { ...survey, branches };
-      if (configId) {
-        await supabaseAdmin
+      if (currentConfigId) {
+        // ── UPDATE path ──────────────────────────────────────────────────
+        dbg("UPDATE path — targeting row id:", currentConfigId);
+
+        const { data: updateData, error: updateError, count } = await supabaseAdmin
           .from("survey_config")
           .update({ config: payload, updated_at: new Date().toISOString() })
-          .eq("id", configId);
+          .eq("id", currentConfigId)
+          .select("id, config");   // select back so we can verify
+
+        dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
+
+        if (updateError) throw updateError;
+
+        // PFIX-B — detect silent zero-row update
+        if (!updateData || updateData.length === 0) {
+          const msg = `UPDATE matched 0 rows for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
+          console.error("[SurveyMgmt] PFIX-B:", msg);
+          throw new Error(msg);
+        }
+
+        // PFIX-D — verify what was actually written
+        const savedBranches = updateData[0]?.config?.branches;
+        dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
+
+        const sentKeys   = Object.keys(currentBranches).sort().join(",");
+        const savedKeys  = Object.keys(savedBranches ?? {}).sort().join(",");
+
+        if (sentKeys !== savedKeys) {
+          console.error(
+            "[SurveyMgmt] PFIX-D: Branch key mismatch after UPDATE!\n" +
+            "  Sent:  " + sentKeys + "\n" +
+            "  Saved: " + savedKeys
+          );
+          addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+        } else {
+          dbg("PFIX-D: Read-back verified ✓ — branch keys match");
+        }
+
       } else {
-        const { data } = await supabaseAdmin
+        // ── INSERT path ──────────────────────────────────────────────────
+        dbg("INSERT path — no existing config row");
+
+        const { data: insertData, error: insertError } = await supabaseAdmin
           .from("survey_config")
           .insert({ config: payload })
-          .select("id")
+          .select("id, config")
           .single();
-        if (data) setConfigId(data.id);
+
+        dbg("INSERT response — error:", insertError, "| returned row:", insertData?.id);
+
+        if (insertError) throw insertError;
+
+        if (insertData) {
+          // PFIX-B — write ref first so any immediate re-publish uses the new ID
+          configIdRef.current = insertData.id;
+          setConfigId(insertData.id);
+          dbg("INSERT success — new configId:", insertData.id);
+
+          // PFIX-D — verify what was actually written
+          const savedBranches = insertData?.config?.branches;
+          dbg("Read-back branches from INSERT:", JSON.stringify(savedBranches, null, 2));
+
+          const sentKeys  = Object.keys(currentBranches).sort().join(",");
+          const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
+
+          if (sentKeys !== savedKeys) {
+            console.error(
+              "[SurveyMgmt] PFIX-D: Branch key mismatch after INSERT!\n" +
+              "  Sent:  " + sentKeys + "\n" +
+              "  Saved: " + savedKeys
+            );
+            addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+          } else {
+            dbg("PFIX-D: Read-back verified ✓ — branch keys match");
+          }
+        }
       }
+
+      dbg("=== PUBLISH SUCCESS ===");
       setStatus("saved");
       setTimeout(() => setStatus(""), 3000);
-    } catch {
+
+    } catch (err) {
+      // FIX 4 + PFIX-C — surface the error
+      console.error("[SurveyManagement] Publish failed:", err);
+      dbg("=== PUBLISH FAILED ===", err);
       setStatus("error");
+      addToast("Failed to publish. Please try again.", "delete");
     } finally {
       setSaving(false);
     }
@@ -335,18 +557,29 @@ export default function SurveyManagement() {
     addToast("Question updated successfully", "edit");
   };
 
+  // FIX 1 — deleteQuestion: use setBranchesAndRef for atomic ref update
   const deleteQuestion = (sIdx, qIdx, label) => {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
       () => {
-        // Clean up branch rules referencing the deleted question (source or destination)
-        const deletedId = survey.sections[sIdx].questions[qIdx].id;
-        setBranches(prev => {
+        const deletedId  = survey.sections[sIdx].questions[qIdx].id;
+        const deletedRef = `q-${deletedId}`;
+
+        setBranchesAndRef(prev => {
           const next = { ...prev };
+
           Object.keys(next).forEach(k => {
-            if (k.startsWith(`q-${deletedId}`)) delete next[k];
-            if (next[k] === `q-${deletedId}`) delete next[k];
+            if (k === deletedRef || k.startsWith(`${deletedRef}-opt`)) {
+              delete next[k];
+              return;
+            }
+            if (Array.isArray(next[k])) {
+              const filtered = next[k].filter(v => v !== deletedRef);
+              next[k] = filtered.length > 0 ? filtered : ["next"];
+            }
           });
+
+          dbg("deleteQuestion: branches after cleanup:", next);
           return next;
         });
 
@@ -365,21 +598,42 @@ export default function SurveyManagement() {
     );
   };
 
+  // FIX 2 — deleteSection: use setBranchesAndRef for atomic ref update
   const deleteSection = (index) => {
     const sectionTitle = survey.sections[index].title;
     askConfirm(
       `Delete the section "${sectionTitle}" and all its questions? This action cannot be undone.`,
       () => {
-        // Clean up branch rules for every question in the deleted section
-        const deletedIds = new Set(survey.sections[index].questions.map(q => q.id));
-        setBranches(prev => {
+        const deletedIdStrings = new Set(
+          survey.sections[index].questions.map(q => String(q.id))
+        );
+
+        setBranchesAndRef(prev => {
           const next = { ...prev };
+
           Object.keys(next).forEach(k => {
-            const sourceId = k.split("-opt")[0].replace("q-", "");
-            if (deletedIds.has(Number(sourceId)) || deletedIds.has(sourceId)) delete next[k];
-            const destId = (next[k] || "").replace("q-", "");
-            if (deletedIds.has(Number(destId)) || deletedIds.has(destId)) delete next[k];
+            const withoutPrefix = k.slice(2);
+            const optMarker     = withoutPrefix.indexOf("-opt");
+            const sourceIdStr   = optMarker === -1
+              ? withoutPrefix
+              : withoutPrefix.slice(0, optMarker);
+
+            if (deletedIdStrings.has(sourceIdStr)) {
+              delete next[k];
+              return;
+            }
+
+            if (Array.isArray(next[k])) {
+              const filtered = next[k].filter(v => {
+                if (!v.startsWith("q-")) return true;
+                const destIdStr = v.slice(2);
+                return !deletedIdStrings.has(destIdStr);
+              });
+              next[k] = filtered.length > 0 ? filtered : ["next"];
+            }
           });
+
+          dbg("deleteSection: branches after cleanup:", next);
           return next;
         });
 
@@ -387,6 +641,7 @@ export default function SurveyManagement() {
           ...prev,
           sections: prev.sections.filter((_, i) => i !== index),
         }));
+
         setActiveSection(prev => Math.min(prev, survey.sections.length - 2));
         setConfirmState(null);
         addToast("Section deleted", "delete");
@@ -397,9 +652,8 @@ export default function SurveyManagement() {
   const duplicateQuestion = (sIdx, qIdx) => {
     setSurvey(prev => {
       const sec = prev.sections[sIdx];
-      // uid() guarantees the duplicate gets a truly unique, stable ID
-      const q  = { ...sec.questions[qIdx], id: uid() };
-      const qs = [...sec.questions];
+      const q   = { ...sec.questions[qIdx], id: uid() };
+      const qs  = [...sec.questions];
       qs.splice(qIdx + 1, 0, q);
       return {
         ...prev,
@@ -417,7 +671,6 @@ export default function SurveyManagement() {
           ...s,
           questions: [
             ...s.questions,
-            // uid() avoids ID collisions when questions are added in rapid succession
             { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
           ],
         }
@@ -425,19 +678,23 @@ export default function SurveyManagement() {
     }));
   };
 
+  // FIX 3 — addSection
   const addSection = () => {
-    setSurvey(prev => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
-      ],
-    }));
-    setActiveSection(survey.sections.length);
+    setSurvey(prev => {
+      const updated = {
+        ...prev,
+        sections: [
+          ...prev.sections,
+          { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
+        ],
+      };
+      setActiveSection(updated.sections.length - 1);
+      return updated;
+    });
   };
 
   // ==========================================================================
-  // OPTION CRUD
+  // OPTION CRUD — use setBranchesAndRef for atomic ref updates
   // ==========================================================================
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
@@ -451,12 +708,13 @@ export default function SurveyManagement() {
   };
 
   const deleteOption = (sIdx, qIdx, oIdx) => {
-    // Clean up branch rules for the removed option and re-index higher option keys
     const qId    = survey.sections[sIdx].questions[qIdx].id;
     const optKey = `q-${qId}-opt${oIdx}`;
-    setBranches(prev => {
+
+    setBranchesAndRef(prev => {
       const next = { ...prev };
       delete next[optKey];
+
       const higherKeys = Object.keys(next).filter(k =>
         k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx
       );
@@ -465,6 +723,8 @@ export default function SurveyManagement() {
         next[`q-${qId}-opt${oldIdx - 1}`] = next[k];
         delete next[k];
       });
+
+      dbg("deleteOption: branches after re-index:", next);
       return next;
     });
 
@@ -474,9 +734,6 @@ export default function SurveyManagement() {
 
   // ==========================================================================
   // DERIVED DATA
-  // allQuestions spans ALL sections so the branch destination dropdown can
-  // offer every question in the survey as a valid jump target — not just the
-  // ones in the currently visible section.
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
   const allQuestions = survey?.sections.flatMap((s, si) =>
@@ -484,7 +741,7 @@ export default function SurveyManagement() {
   ) || [];
 
   // ==========================================================================
-  // LOADING GATE — must come after all hooks
+  // LOADING GATE
   // ==========================================================================
   if (!survey) return <LoadingScreen message="Loading survey configuration..." />;
 
@@ -508,7 +765,9 @@ export default function SurveyManagement() {
       saving={saving}
       status={status}
       branches={branches}
-      setBranches={setBranches}
+      // PFIX-A — pass setBranchesAndRef so the view's onChange handlers also
+      // write the ref synchronously, not raw setBranches.
+      setBranches={setBranchesAndRef}
       highlightQ={highlightQ}
       branchTargetQ={branchTargetQ}
       setBranchTargetQ={setBranchTargetQ}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { truncateHtml } from '../utils/textHelpers';
@@ -31,12 +31,31 @@ const CalendarIcon = () => (
   </svg>
 );
 
+// ── Linkify helper ────────────────────────────────────────────────────────────
+// Converts bare URLs in an HTML string into clickable <a> tags.
+// Skips URLs that are already inside an href attribute.
+const linkifyHtml = (html) => {
+  if (!html) return html;
+  // Matches http(s):// and www. URLs that are NOT already inside href="..."
+  const URL_REGEX = /(?<!href=["'])((https?:\/\/|www\.)[^\s<"')\]]+)/g;
+  return html.replace(URL_REGEX, (url) => {
+    const href = url.startsWith('http') ? url : `https://${url}`;
+    return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="discount-link">${url}</a>`;
+  });
+};
+
 // ── Discount Card ─────────────────────────────────────────────────────────────
 const DiscountCard = ({ item }) => {
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const hasDetails = item.location || item.validUntil;
+
+  // Collapsed description uses truncation; expanded shows the full content.
+  // linkifyHtml runs after so URLs in both states become clickable.
+  const descriptionContent = linkifyHtml(
+    expanded ? item.discount : truncateHtml(item.discount, 80)
+  );
 
   return (
     <div
@@ -82,15 +101,16 @@ const DiscountCard = ({ item }) => {
           </p>
         </div>
 
-        {/* Discount description */}
-        <p className="discount-card-description">
-          {truncateHtml(item.discount, expanded ? 500 : 80)}
-        </p>
+        {/* Discount description — shows truncated or full depending on expanded state */}
+        <p
+          className="discount-card-description"
+          dangerouslySetInnerHTML={{ __html: descriptionContent }}
+        />
 
         {/* Divider */}
         <div className="discount-card-divider" />
 
-        {/* ── Expandable details ── */}
+        {/* ── Expandable details (location + validity) ── */}
         <div className={`discount-card-details ${expanded ? 'expanded' : ''}`}>
           <div className="discount-card-details-content">
             {item.location && (
@@ -142,6 +162,20 @@ const DiscountsView = ({
   groupByDate, formatTime,
   navigate,
 }) => {
+  // const filterBtnRef = useRef(null);
+  // const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
+  // const handleFilterToggle = () => {
+  //   if (!showFilter && filterBtnRef.current) {
+  //     const rect = filterBtnRef.current.getBoundingClientRect();
+  //     setDropdownPos({
+  //       top:   rect.bottom + 8,
+  //       right: window.innerWidth - rect.right,
+  //     });
+  //   }
+  //   setShowFilter(f => !f);
+  // };
+
   return (
     <div className="discounts-view-container">
       <Sidebar />
@@ -149,7 +183,6 @@ const DiscountsView = ({
       <div className={`discounts-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
         {/* ── Notification Bell ─────────────────────────────────────────────── */}
         <div ref={bellRef} className={`notification-bell-wrapper ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
-          {/* Bell button — solid primary blue, matches Profile page */}
           <button
             onClick={() => setShowDropdown(v => !v)}
             className={`notification-bell-btn ${showDropdown ? 'active' : ''}`}
@@ -172,10 +205,8 @@ const DiscountsView = ({
             )}
           </button>
 
-          {/* Notification dropdown — dark panel */}
           {showDropdown && (
             <div className={`notification-dropdown ${isMobile ? 'mobile' : ''}`}>
-              {/* Header */}
               <div className="dropdown-header">
                 <span className="dropdown-title">Notifications</span>
                 {unreadCount > 0 && (
@@ -185,7 +216,6 @@ const DiscountsView = ({
                 )}
               </div>
 
-              {/* Tabs */}
               <div className="dropdown-tabs">
                 {['all', 'unread'].map(t => (
                   <button
@@ -198,7 +228,6 @@ const DiscountsView = ({
                 ))}
               </div>
 
-              {/* Body */}
               <div className="dropdown-body">
                 {(() => {
                   const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
@@ -252,7 +281,6 @@ const DiscountsView = ({
                 })()}
               </div>
 
-              {/* Footer */}
               <div className="dropdown-footer">
                 <button
                   onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
@@ -292,12 +320,10 @@ const DiscountsView = ({
         {/* ── Filter Bar ────────────────────────────────────────────────────── */}
         <div className={`filter-bar ${isMobile ? 'mobile' : ''}`}>
           <div ref={filterRef} className="filter-container">
-            {/* Active filter display pill */}
             <div className={`filter-display ${isMobile ? 'mobile' : ''}`}>
               <span className="filter-active-text">
                 {activeCategory === 'All' ? 'All Discounts' : activeCategory}
               </span>
-              {/* Count badge */}
               <div className="filter-count-badge">
                 <span className="filter-count-text">
                   {categoryCounts[activeCategory]}
@@ -305,7 +331,6 @@ const DiscountsView = ({
               </div>
             </div>
 
-            {/* Filter button */}
             <button
               onClick={() => setShowFilter(f => !f)}
               className="filter-button"
@@ -316,7 +341,6 @@ const DiscountsView = ({
               <span className="filter-button-text">FILTER</span>
             </button>
 
-            {/* Filter dropdown */}
             {showFilter && (
               <div className="filter-dropdown">
                 {categories.map((cat, i) => (

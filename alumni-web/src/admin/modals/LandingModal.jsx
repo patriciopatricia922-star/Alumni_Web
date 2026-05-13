@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { FiX, FiImage, FiTrash2 } from 'react-icons/fi';
-import { supabase } from '../../lib/supabase';
+import React, { useState, useEffect } from "react";
+import { FiX, FiImage, FiTrash2 } from "react-icons/fi";
+import { supabase } from "../../lib/supabase";
 
 // ============================================
 // MODAL COMPONENTS
@@ -33,12 +33,14 @@ const Field = ({ label, required, children, hint }) => (
   </div>
 );
 
-// FIX: Added onSubmit prop so the button actually fires handleSubmit
+// Added onSubmit prop so the button actually fires handleSubmit
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
   <div className="modal-footer">
-    <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+    <button className="btn-cancel" onClick={onCancel}>
+      Cancel
+    </button>
     <button className="btn-create" onClick={onSubmit} disabled={loading}>
-      {loading ? 'Saving...' : createLabel}
+      {loading ? "Saving..." : createLabel}
     </button>
   </div>
 );
@@ -58,21 +60,36 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
 
   React.useEffect(() => {
     if (editorRef.current && value !== editorRef.current.innerHTML) {
-      editorRef.current.innerHTML = value || '';
+      editorRef.current.innerHTML = value || "";
     }
   }, [value]);
 
   return (
     <div className="rich-text-editor">
       <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
-          <span style={{ fontWeight: 'bold' }}>B</span>
+        <button
+          type="button"
+          className="toolbar-btn"
+          onClick={() => execCommand("bold")}
+          title="Bold"
+        >
+          <span style={{ fontWeight: "bold" }}>B</span>
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
-          <span style={{ fontStyle: 'italic' }}>I</span>
+        <button
+          type="button"
+          className="toolbar-btn"
+          onClick={() => execCommand("italic")}
+          title="Italic"
+        >
+          <span style={{ fontStyle: "italic" }}>I</span>
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
-          <span style={{ textDecoration: 'underline' }}>U</span>
+        <button
+          type="button"
+          className="toolbar-btn"
+          onClick={() => execCommand("underline")}
+          title="Underline"
+        >
+          <span style={{ textDecoration: "underline" }}>U</span>
         </button>
       </div>
       <div
@@ -81,7 +98,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
         contentEditable="true"
         onInput={() => onChange(editorRef.current.innerHTML)}
         data-placeholder={placeholder}
-        style={{ minHeight: '100px' }}
+        style={{ minHeight: "100px" }}
       />
     </div>
   );
@@ -90,43 +107,50 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
 // ============================================
 // IMAGE UPLOAD COMPONENT
 // ============================================
-// FIX: Use a unique inputId prop instead of a hardcoded id so multiple
-//      instances on the same page never collide.
+
 const ImageUpload = ({
   onImageUpload,
   currentImage,
-  bucketName = 'landing-images',
-  folder = 'landing',
-  label = 'Upload Image',
-  inputId = 'landing-image-input',
+  bucketName = "landing-images",
+  folder = "landing",
+  label = "Upload Image",
+  inputId = "landing-image-input",
 }) => {
   const [preview, setPreview] = useState(currentImage || null);
   const [uploading, setUploading] = useState(false);
 
+  // Sync preview when currentImage changes (e.g. switching between edit sessions)
+  useEffect(() => {
+    setPreview(currentImage || null);
+  }, [currentImage]);
+
   const uploadToSupabase = async (file) => {
     setUploading(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError) throw userError;
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error("User not authenticated");
 
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${folder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(bucketName)
-        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+        .upload(filePath, file, { cacheControl: "3600", upsert: false });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucketName).getPublicUrl(filePath);
 
       return publicUrl;
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error("Upload error:", error);
       alert(`Upload failed: ${error.message}`);
       return null;
     } finally {
@@ -156,24 +180,33 @@ const ImageUpload = ({
       {preview && (
         <div className="image-preview">
           <img src={preview} alt="Preview" />
-          <button type="button" className="remove-image-btn" onClick={handleRemove}>
+          <button
+            type="button"
+            className="remove-image-btn"
+            onClick={handleRemove}
+          >
             <FiTrash2 size={12} />
           </button>
         </div>
       )}
-      <div className="image-upload-area" onClick={() => document.getElementById(inputId).click()}>
+      <div
+        className="image-upload-area"
+        onClick={() => document.getElementById(inputId).click()}
+      >
         {uploading ? (
           <div className="uploading-spinner" />
         ) : (
           <FiImage size={20} color="#155DFC" />
         )}
-        <span>{uploading ? 'Uploading...' : preview ? 'Change Image' : label}</span>
+        <span>
+          {uploading ? "Uploading..." : preview ? "Change Image" : label}
+        </span>
         <input
           id={inputId}
           type="file"
           accept="image/*"
           onChange={handleImageChange}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           disabled={uploading}
         />
       </div>
@@ -186,44 +219,43 @@ const ImageUpload = ({
 // SECTION TYPES
 // ============================================
 const SECTION_TYPES = [
-  { value: 'hero',       label: 'Hero Section' },
-  { value: 'stats',      label: 'Statistics Section' },
-  { value: 'events',     label: 'Upcoming Events Section' },
-  { value: 'jobs',       label: 'Job Opportunities Section' },
-  { value: 'discounts',  label: 'Alumni Discounts Section' },
-  { value: 'why_join',   label: 'Why Join AlumnAI Section' },
-  { value: 'benefits',   label: 'What You Get as an Alumni Section' },
-  { value: 'footer',     label: 'Footer Contact Information' },
+  { value: "hero", label: "Hero Section" },
+  { value: "stats", label: "Statistics Section" },
+  { value: "events", label: "Upcoming Events Section" },
+  { value: "jobs", label: "Job Opportunities Section" },
+  { value: "discounts", label: "Alumni Discounts Section" },
+  { value: "why_join", label: "Why Join AlumnAI Section" },
+  { value: "benefits", label: "What You Get as an Alumni Section" },
+  { value: "footer", label: "Footer Contact Information" },
 ];
 
-// FIX: Auto-title map used when a section type has no explicit title field,
-//      so handleCreateLandingSection never hits the "title is required" guard.
+
 const DEFAULT_TITLES = {
-  hero:      'Hero Section',
-  stats:     'Statistics Section',
-  events:    'Upcoming Events',
-  jobs:      'Job Opportunities',
-  discounts: 'Alumni Discounts',
-  why_join:  'Why Join AlumnAI',
-  benefits:  'What You Get as an Alumni',
-  footer:    'Footer',
+  hero: "Hero Section",
+  stats: "Statistics Section",
+  events: "Upcoming Events",
+  jobs: "Job Opportunities",
+  discounts: "Alumni Discounts",
+  why_join: "Why Join AlumnAI",
+  benefits: "What You Get as an Alumni",
+  footer: "Footer",
 };
 
 // ============================================
 // HELPER FUNCTIONS FOR SEPARATED CONTENT
 // ============================================
 const parseSeparatedContent = (content, expectedCount = 3) => {
-  if (!content) return Array(expectedCount).fill('');
-  let parts = content.includes('\n---\n')
-    ? content.split('\n---\n')
-    : content.includes('---')
-      ? content.split('---')
+  if (!content) return Array(expectedCount).fill("");
+  let parts = content.includes("\n---\n")
+    ? content.split("\n---\n")
+    : content.includes("---")
+      ? content.split("---")
       : [content];
-  while (parts.length < expectedCount) parts.push('');
+  while (parts.length < expectedCount) parts.push("");
   return parts.map((p) => p.trim());
 };
 
-const joinSeparatedContent = (parts) => parts.join('\n---\n');
+const joinSeparatedContent = (parts) => parts.join("\n---\n");
 
 // ============================================
 // SECTION FORM COMPONENTS
@@ -235,7 +267,7 @@ const HeroForm = ({ form, setForm }) => (
       <input
         className="field-input"
         placeholder="e.g., ALUMNI AFFAIRS"
-        value={form.title || ''}
+        value={form.title || ""}
         onChange={(e) => setForm({ ...form, title: e.target.value })}
       />
     </Field>
@@ -243,7 +275,7 @@ const HeroForm = ({ form, setForm }) => (
       <input
         className="field-input"
         placeholder="e.g., OFFICE OF THE"
-        value={form.description || ''}
+        value={form.description || ""}
         onChange={(e) => setForm({ ...form, description: e.target.value })}
       />
     </Field>
@@ -251,7 +283,7 @@ const HeroForm = ({ form, setForm }) => (
       <input
         className="field-input"
         placeholder="e.g., Explore More"
-        value={form.content || ''}
+        value={form.content || ""}
         onChange={(e) => setForm({ ...form, content: e.target.value })}
       />
     </Field>
@@ -270,55 +302,101 @@ const HeroForm = ({ form, setForm }) => (
 
 const StatsForm = ({ form, setForm }) => {
   const numbers = parseSeparatedContent(form.description, 4);
-  const labels  = parseSeparatedContent(form.content, 4);
+  const labels = parseSeparatedContent(form.content, 4);
 
   const updateNumber = (index, value) => {
-    const n = [...numbers]; n[index] = value;
+    const n = [...numbers];
+    n[index] = value;
     setForm({ ...form, description: joinSeparatedContent(n) });
   };
   const updateLabel = (index, value) => {
-    const l = [...labels]; l[index] = value;
+    const l = [...labels];
+    l[index] = value;
     setForm({ ...form, content: joinSeparatedContent(l) });
   };
 
   return (
     <>
       <div className="field-grid">
-        <Field label="Alumni Count" hint="Auto-generated from registered alumni">
+        <Field
+          label="Alumni Count"
+          hint="Auto-generated from registered alumni"
+        >
           <div className="auto-field">
-            <input className="field-input auto-value" value="Auto-calculated from database" disabled />
+            <input
+              className="field-input auto-value"
+              value="Auto-calculated from database"
+              disabled
+            />
             <span className="auto-badge">Live Data</span>
           </div>
         </Field>
         <Field label="Programs Count" required>
-          <input className="field-input" placeholder="e.g., 44" value={numbers[1] || ''} onChange={(e) => updateNumber(1, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., 44"
+            value={numbers[1] || ""}
+            onChange={(e) => updateNumber(1, e.target.value)}
+          />
         </Field>
       </div>
       <div className="field-grid">
         <Field label="Alumni Label">
-          <input className="field-input" placeholder="e.g., Alumni" value={labels[0] || ''} onChange={(e) => updateLabel(0, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., Alumni"
+            value={labels[0] || ""}
+            onChange={(e) => updateLabel(0, e.target.value)}
+          />
         </Field>
         <Field label="Programs Label">
-          <input className="field-input" placeholder="e.g., Undergraduate and Postgraduate Programmes" value={labels[1] || ''} onChange={(e) => updateLabel(1, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., Undergraduate and Postgraduate Programmes"
+            value={labels[1] || ""}
+            onChange={(e) => updateLabel(1, e.target.value)}
+          />
         </Field>
       </div>
       <div className="field-grid">
-        <Field label="Employment Rate" hint="Auto-generated from completed surveys">
+        <Field
+          label="Employment Rate"
+          hint="Auto-generated from completed surveys"
+        >
           <div className="auto-field">
-            <input className="field-input auto-value" value="Auto-calculated from database" disabled />
+            <input
+              className="field-input auto-value"
+              value="Auto-calculated from database"
+              disabled
+            />
             <span className="auto-badge">Live Data</span>
           </div>
         </Field>
         <Field label="University Ranking" required>
-          <input className="field-input" placeholder="e.g., #1201-1300" value={numbers[3] || ''} onChange={(e) => updateNumber(3, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., #1201-1300"
+            value={numbers[3] || ""}
+            onChange={(e) => updateNumber(3, e.target.value)}
+          />
         </Field>
       </div>
       <div className="field-grid">
         <Field label="Employment Rate Label">
-          <input className="field-input" placeholder="e.g., Employment Rate" value={labels[2] || ''} onChange={(e) => updateLabel(2, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., Employment Rate"
+            value={labels[2] || ""}
+            onChange={(e) => updateLabel(2, e.target.value)}
+          />
         </Field>
         <Field label="Ranking Label">
-          <input className="field-input" placeholder="e.g., Asia University Ranking" value={labels[3] || ''} onChange={(e) => updateLabel(3, e.target.value)} />
+          <input
+            className="field-input"
+            placeholder="e.g., Asia University Ranking"
+            value={labels[3] || ""}
+            onChange={(e) => updateLabel(3, e.target.value)}
+          />
         </Field>
       </div>
     </>
@@ -328,10 +406,21 @@ const StatsForm = ({ form, setForm }) => {
 const EventsForm = ({ form, setForm }) => (
   <>
     <Field label="Section Title" required>
-      <input className="field-input" placeholder="e.g., Upcoming Events" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <input
+        className="field-input"
+        placeholder="e.g., Upcoming Events"
+        value={form.title || ""}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+      />
     </Field>
     <Field label="Description">
-      <textarea className="field-textarea" rows="3" placeholder="Stay updated with upcoming activities and gatherings..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      <textarea
+        className="field-textarea"
+        rows="3"
+        placeholder="Stay updated with upcoming activities and gatherings..."
+        value={form.description || ""}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+      />
     </Field>
   </>
 );
@@ -339,10 +428,21 @@ const EventsForm = ({ form, setForm }) => (
 const JobsForm = ({ form, setForm }) => (
   <>
     <Field label="Section Title" required>
-      <input className="field-input" placeholder="e.g., Job Opportunities" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <input
+        className="field-input"
+        placeholder="e.g., Job Opportunities"
+        value={form.title || ""}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+      />
     </Field>
     <Field label="Description">
-      <textarea className="field-textarea" rows="3" placeholder="Browse through our curated list of job opportunities..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      <textarea
+        className="field-textarea"
+        rows="3"
+        placeholder="Browse through our curated list of job opportunities..."
+        value={form.description || ""}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+      />
     </Field>
   </>
 );
@@ -350,10 +450,21 @@ const JobsForm = ({ form, setForm }) => (
 const DiscountsForm = ({ form, setForm }) => (
   <>
     <Field label="Section Title" required>
-      <input className="field-input" placeholder="e.g., Alumni Discounts" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <input
+        className="field-input"
+        placeholder="e.g., Alumni Discounts"
+        value={form.title || ""}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+      />
     </Field>
     <Field label="Description">
-      <textarea className="field-textarea" rows="3" placeholder="Enjoy exclusive discounts and benefits..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      <textarea
+        className="field-textarea"
+        rows="3"
+        placeholder="Enjoy exclusive discounts and benefits..."
+        value={form.description || ""}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+      />
     </Field>
   </>
 );
@@ -361,13 +472,28 @@ const DiscountsForm = ({ form, setForm }) => (
 const WhyJoinForm = ({ form, setForm }) => (
   <>
     <Field label="Section Title" required>
-      <input className="field-input" placeholder="e.g., Why Join AlumnAI?" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+      <input
+        className="field-input"
+        placeholder="e.g., Why Join AlumnAI?"
+        value={form.title || ""}
+        onChange={(e) => setForm({ ...form, title: e.target.value })}
+      />
     </Field>
     <Field label="Subtitle">
-      <textarea className="field-textarea" rows="3" placeholder="Connecting National University—Dasmariñas alumni..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+      <textarea
+        className="field-textarea"
+        rows="3"
+        placeholder="Connecting National University—Dasmariñas alumni..."
+        value={form.description || ""}
+        onChange={(e) => setForm({ ...form, description: e.target.value })}
+      />
     </Field>
     <Field label="Mission & Vision Content">
-      <RichTextEditor value={form.content || ''} onChange={(content) => setForm({ ...form, content })} placeholder="Enter mission and vision content..." />
+      <RichTextEditor
+        value={form.content || ""}
+        onChange={(content) => setForm({ ...form, content })}
+        placeholder="Enter mission and vision content..."
+      />
     </Field>
   </>
 );
@@ -375,25 +501,55 @@ const WhyJoinForm = ({ form, setForm }) => (
 const BenefitsForm = ({ form, setForm }) => {
   const benefits = parseSeparatedContent(form.content, 3);
   const updateBenefit = (index, value) => {
-    const b = [...benefits]; b[index] = value;
+    const b = [...benefits];
+    b[index] = value;
     setForm({ ...form, content: joinSeparatedContent(b) });
   };
   return (
     <>
       <Field label="Section Title" required>
-        <input className="field-input" placeholder="What You Get as an Alumni" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <input
+          className="field-input"
+          placeholder="What You Get as an Alumni"
+          value={form.title || ""}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+        />
       </Field>
       <Field label="Description">
-        <textarea className="field-textarea" rows="3" placeholder="Membership opens doors to a lifetime of opportunity..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <textarea
+          className="field-textarea"
+          rows="3"
+          placeholder="Membership opens doors to a lifetime of opportunity..."
+          value={form.description || ""}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+        />
       </Field>
       <Field label="Benefit 1 - Title & Description">
-        <textarea className="field-textarea" rows="2" placeholder="Stay Connected: Build lasting relationships..." value={benefits[0] || ''} onChange={(e) => updateBenefit(0, e.target.value)} />
+        <textarea
+          className="field-textarea"
+          rows="2"
+          placeholder="Stay Connected: Build lasting relationships..."
+          value={benefits[0] || ""}
+          onChange={(e) => updateBenefit(0, e.target.value)}
+        />
       </Field>
       <Field label="Benefit 2 - Title & Description">
-        <textarea className="field-textarea" rows="2" placeholder="Give Back: Mentor current students..." value={benefits[1] || ''} onChange={(e) => updateBenefit(1, e.target.value)} />
+        <textarea
+          className="field-textarea"
+          rows="2"
+          placeholder="Give Back: Mentor current students..."
+          value={benefits[1] || ""}
+          onChange={(e) => updateBenefit(1, e.target.value)}
+        />
       </Field>
       <Field label="Benefit 3 - Title & Description">
-        <textarea className="field-textarea" rows="2" placeholder="Grow Together: Access exclusive job listings..." value={benefits[2] || ''} onChange={(e) => updateBenefit(2, e.target.value)} />
+        <textarea
+          className="field-textarea"
+          rows="2"
+          placeholder="Grow Together: Access exclusive job listings..."
+          value={benefits[2] || ""}
+          onChange={(e) => updateBenefit(2, e.target.value)}
+        />
       </Field>
     </>
   );
@@ -402,22 +558,44 @@ const BenefitsForm = ({ form, setForm }) => {
 const FooterForm = ({ form, setForm }) => {
   const fields = parseSeparatedContent(form.description, 4);
   const updateField = (index, value) => {
-    const f = [...fields]; f[index] = value;
+    const f = [...fields];
+    f[index] = value;
     setForm({ ...form, description: joinSeparatedContent(f) });
   };
   return (
     <>
       <Field label="Address" required>
-        <textarea className="field-textarea" rows="2" placeholder="Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114" value={fields[0] || ''} onChange={(e) => updateField(0, e.target.value)} />
+        <textarea
+          className="field-textarea"
+          rows="2"
+          placeholder="Governor's Drive, Sampaloc 1, City of Dasmariñas, Cavite 4114"
+          value={fields[0] || ""}
+          onChange={(e) => updateField(0, e.target.value)}
+        />
       </Field>
       <Field label="Phone Numbers">
-        <input className="field-input" placeholder="09399151561(Smart) / 09661381357(Globe)" value={fields[1] || ''} onChange={(e) => updateField(1, e.target.value)} />
+        <input
+          className="field-input"
+          placeholder="09399151561(Smart) / 09661381357(Globe)"
+          value={fields[1] || ""}
+          onChange={(e) => updateField(1, e.target.value)}
+        />
       </Field>
       <Field label="Email Address">
-        <input className="field-input" placeholder="nudaao@nu-dasma.edu.ph" value={fields[2] || ''} onChange={(e) => updateField(2, e.target.value)} />
+        <input
+          className="field-input"
+          placeholder="nudaao@nu-dasma.edu.ph"
+          value={fields[2] || ""}
+          onChange={(e) => updateField(2, e.target.value)}
+        />
       </Field>
       <Field label="Office Hours">
-        <input className="field-input" placeholder="Monday to Friday (8:30AM - 5:30PM); Saturday (8:30AM - 12:30PM)" value={fields[3] || ''} onChange={(e) => updateField(3, e.target.value)} />
+        <input
+          className="field-input"
+          placeholder="Monday to Friday (8:30AM - 5:30PM); Saturday (8:30AM - 12:30PM)"
+          value={fields[3] || ""}
+          onChange={(e) => updateField(3, e.target.value)}
+        />
       </Field>
     </>
   );
@@ -428,78 +606,118 @@ const FooterForm = ({ form, setForm }) => {
 // ============================================
 const LandingModal = ({ open, onClose, mode, section, onCreate, onUpdate }) => {
   const [form, setForm] = useState({
-    title: '',
-    description: '',
-    section_type: 'hero',
-    content: '',
+    title: "",
+    description: "",
+    section_type: "hero",
+    content: "",
     image_url: null,
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (mode === 'edit' && section) {
+    if (mode === "edit" && section) {
       setForm({
-        title: section.title || '',
-        description: section.description || '',
-        section_type: section.section_type || 'hero',
-        content: section.content || '',
+        title: section.title || "",
+        description: section.description || "",
+        section_type: section.section_type || "hero",
+        content: section.content || "",
         image_url: section.image_url || null,
       });
     } else {
       setForm({
-        title: '',
-        description: '',
-        section_type: 'hero',
-        content: '',
+        title: "",
+        description: "",
+        section_type: "hero",
+        content: "",
         image_url: null,
       });
     }
   }, [mode, section]);
 
   const handleSubmit = async () => {
-    // FIX: For section types whose sub-form does not expose a title field
-    //      (stats, footer), fall back to the default title so the "title
-    //      is required" validation in the logic layer never blocks the save.
+    
     const effectiveTitle =
-      form.title?.trim() || DEFAULT_TITLES[form.section_type] || form.section_type;
+      form.title?.trim() ||
+      DEFAULT_TITLES[form.section_type] ||
+      form.section_type;
 
     const payload = { ...form, title: effectiveTitle };
 
     setLoading(true);
     try {
-      if (mode === 'edit' && section) {
+      if (mode === "edit" && section) {
         await onUpdate(section.id, payload);
       } else {
         await onCreate(payload);
       }
     } catch (error) {
-      console.error('[LandingModal] Submit error:', error);
+      console.error("[LandingModal] Submit error:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSectionTypeChange = (e) => {
+    const newType = e.target.value;
+    if (mode === "edit") {
+      setForm((prev) => ({ ...prev, section_type: newType }));
+    } else {
+      setForm({
+        title: "",
+        description: "",
+        section_type: newType,
+        content: "",
+        image_url: null,
+      });
+    }
+  };
+
   const renderForm = () => {
     switch (form.section_type) {
-      case 'hero':      return <HeroForm form={form} setForm={setForm} />;
-      case 'stats':     return <StatsForm form={form} setForm={setForm} />;
-      case 'events':    return <EventsForm form={form} setForm={setForm} />;
-      case 'jobs':      return <JobsForm form={form} setForm={setForm} />;
-      case 'discounts': return <DiscountsForm form={form} setForm={setForm} />;
-      case 'why_join':  return <WhyJoinForm form={form} setForm={setForm} />;
-      case 'benefits':  return <BenefitsForm form={form} setForm={setForm} />;
-      case 'footer':    return <FooterForm form={form} setForm={setForm} />;
+      case "hero":
+        return <HeroForm form={form} setForm={setForm} />;
+      case "stats":
+        return <StatsForm form={form} setForm={setForm} />;
+      case "events":
+        return <EventsForm form={form} setForm={setForm} />;
+      case "jobs":
+        return <JobsForm form={form} setForm={setForm} />;
+      case "discounts":
+        return <DiscountsForm form={form} setForm={setForm} />;
+      case "why_join":
+        return <WhyJoinForm form={form} setForm={setForm} />;
+      case "benefits":
+        return <BenefitsForm form={form} setForm={setForm} />;
+      case "footer":
+        return <FooterForm form={form} setForm={setForm} />;
       default:
         return (
           <>
             <Field label="Section Title" required>
-              <input className="field-input" placeholder="Enter section title" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <input
+                className="field-input"
+                placeholder="Enter section title"
+                value={form.title || ""}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
             </Field>
             <Field label="Description">
-              <textarea className="field-textarea" rows="3" placeholder="Enter description..." value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <textarea
+                className="field-textarea"
+                rows="3"
+                placeholder="Enter description..."
+                value={form.description || ""}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
             </Field>
             <Field label="Content">
-              <RichTextEditor value={form.content || ''} onChange={(content) => setForm({ ...form, content })} placeholder="Enter content..." />
+              <RichTextEditor
+                value={form.content || ""}
+                onChange={(content) => setForm({ ...form, content })}
+                placeholder="Enter content..."
+              />
             </Field>
           </>
         );
@@ -510,30 +728,34 @@ const LandingModal = ({ open, onClose, mode, section, onCreate, onUpdate }) => {
     <Modal
       open={open}
       onClose={onClose}
-      title={mode === 'edit' ? 'Edit Landing Section' : 'Create Landing Section'}
-      subtitle={mode === 'edit' ? 'Update section details' : 'Create a new section for the landing page'}
+      title={
+        mode === "edit" ? "Edit Landing Section" : "Create Landing Section"
+      }
+      subtitle={
+        mode === "edit"
+          ? "Update section details"
+          : "Create a new section for the landing page"
+      }
     >
       <div className="modal-form">
         <Field label="Section Type" required>
           <select
             className="field-select"
             value={form.section_type}
-            onChange={(e) =>
-              setForm({ title: '', description: '', section_type: e.target.value, content: '', image_url: null })
-            }
+            onChange={handleSectionTypeChange}
           >
             {SECTION_TYPES.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
         </Field>
 
         {renderForm()}
-
-        {/* FIX: onSubmit={handleSubmit} was missing — this was the primary bug */}
         <ModalFooter
           onCancel={onClose}
-          createLabel={mode === 'edit' ? 'Update Section' : 'Create Section'}
+          createLabel={mode === "edit" ? "Update Section" : "Create Section"}
           loading={loading}
           onSubmit={handleSubmit}
         />

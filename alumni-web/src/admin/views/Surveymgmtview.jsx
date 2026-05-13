@@ -294,20 +294,20 @@ export default function SurveyMgmtView({
                                     return (
                                       <div key={oIdx} style={{
                                         display: "flex", alignItems: "center", gap: "0.75rem",
-                                        padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
+                                        padding: "0.6rem 0.75rem", borderRadius: "0.4rem",
                                         marginBottom: "0.3rem", background: "#f9fafb",
-                                        flexWrap: "wrap",
+                                        flexWrap: "nowrap",
                                       }}>
                                         <input type="radio" disabled />
                                         <span style={{
-                                          flex: 1, fontSize: "0.75rem",
+                                          fontSize: "0.75rem", flexShrink: 0,
                                           overflow: "hidden", textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap", maxWidth: "180px",
+                                          whiteSpace: "nowrap", maxWidth: "220px",
                                         }}>
                                           {opt}
                                         </span>
-                                        <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
-                                        <select
+                                         <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
+                                          <select
                                           multiple
                                           value={selectVal}
                                           onChange={e => {
@@ -317,7 +317,7 @@ export default function SurveyMgmtView({
                                           style={{
                                             padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
                                             border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                            width: "160px", maxWidth: "160px", height: "70px",
+                                            flex: 1, minWidth: "200px", maxWidth: "420px", height: "70px",
                                           }}
                                         >
                                           <option value="next">Next question</option>
@@ -337,12 +337,12 @@ export default function SurveyMgmtView({
                                 ) : (
                                   // Single multi-select branch target for non-multiple questions
                                   <div style={{
-                                    display: "flex", alignItems: "center", gap: "0.75rem",
-                                    padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
-                                    background: "#f9fafb", flexWrap: "wrap",
-                                  }}>
-                                    <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
-                                    <select
+                                      display: "flex", alignItems: "center", gap: "0.75rem",
+                                      padding: "0.6rem 0.75rem", borderRadius: "0.4rem",
+                                      background: "#f9fafb", flexWrap: "nowrap",
+                                    }}>
+                                    <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
+                                      <select 
                                       multiple
                                       value={(() => {
                                         const v = branches[key];
@@ -355,7 +355,7 @@ export default function SurveyMgmtView({
                                       style={{
                                         padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
                                         border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                        width: "160px", maxWidth: "160px", height: "70px",
+                                        flex: 1, minWidth: "200px", maxWidth: "520px", height: "70px",
                                       }}
                                     >
                                       <option value="next">Next question</option>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiMenu, FiX } from 'react-icons/fi';
-import sidebarLogo from '../../assets/alumnai_logo_new.svg';
+import sidebarLogo from '../../assets/alumnai_logo_new.png';
 import dashboardIcon from '../../assets/dashboard_icn.svg';
 import contentIcon from '../../assets/content_icn.svg';
 import predictIcon from '../../assets/predict_icn.svg';
@@ -78,7 +78,7 @@ const AdminSidebarView = ({
           {/* Logout */}
           <button onClick={handleLogout} className="admin-mobile-logout-btn">
             <LogoutIcon />
-            <span className="admin-mobile-label-inactive">Logout</span>
+            <span className="admin-mobile-label admin-mobile-label-inactive">Logout</span>
           </button>
         </nav>
 
@@ -126,17 +126,7 @@ const AdminSidebarView = ({
                 key={path}
                 to={path}
                 className={`admin-sidebar-menu-item ${isActive ? 'admin-sidebar-menu-item-active' : ''}`}
-                style={{ marginTop: marginTop || '0px' }}
-                onMouseEnter={e => {
-                  if (!isActive && !e.currentTarget.classList.contains('admin-sidebar-menu-item-active')) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive && !e.currentTarget.classList.contains('admin-sidebar-menu-item-active')) {
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
+                style={marginTop ? { marginTop } : undefined}
               >
                 <img
                   src={iconSrc}
@@ -172,8 +162,6 @@ const AdminSidebarView = ({
               onClick={handleLogout}
               title="Logout"
               className="admin-sidebar-logout-btn"
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <LogoutIcon />
             </button>

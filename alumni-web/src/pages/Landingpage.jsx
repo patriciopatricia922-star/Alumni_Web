@@ -92,11 +92,40 @@ const LandingPage = () => {
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [loadingDiscounts, setLoadingDiscounts] = useState(true);
 
-  useEffect(() => {
-    supabase.from('landing_sections').select('*').eq('is_active', true).order('order_index', { ascending: true })
-      .then(({ data, error }) => { if (!error && data) setLandingSections(data); })
-      .finally(() => setLoadingSections(false));
+  // ── Helper: fetch active landing sections ─────────────────
+  const fetchActiveLandingSections = useCallback(() => {
+    return supabase
+      .from('landing_sections')
+      .select('*')
+      .eq('is_active', true)
+      .order('order_index', { ascending: true })
+      .then(({ data, error }) => {
+        if (!error && data) setLandingSections(data);
+      });
   }, []);
+
+  // ── Landing sections with real-time subscription ──────────
+  // Admin-side changes (create, update, archive, toggle visibility)
+  // are reflected on the landing page without a manual page reload.
+  useEffect(() => {
+    fetchActiveLandingSections().finally(() => setLoadingSections(false));
+
+    const channel = supabase
+      .channel('landing_sections_public_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'landing_sections' },
+        () => {
+          // Re-fetch whenever any row in landing_sections changes
+          fetchActiveLandingSections();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchActiveLandingSections]);
 
   useEffect(() => {
     supabase.from('events').select('*').eq('is_active', true).gte('event_date', new Date().toISOString()).order('event_date', { ascending: true }).limit(3)

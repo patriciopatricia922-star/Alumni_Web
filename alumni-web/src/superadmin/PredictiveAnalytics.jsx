@@ -1,5 +1,5 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
+// THIS IS FOR LOGIC.Super Admin
 // ============================================================================
 // Purpose: Handles all business logic, Supabase API calls, ML service
 //          integration (PyCharm backend), AI insights fetching, data

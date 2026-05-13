@@ -1,3 +1,12 @@
+// modals/TermsModal.jsx
+// ============================================================================
+// Change log
+// [disclosure-sync]  Added `updatedAt` prop.
+//                    formatUpdatedAt() renders a human-readable date when the
+//                    admin has saved a disclosure row, otherwise falls back to
+//                    the original static string so nothing breaks on first run.
+// ============================================================================
+
 import React from 'react';
 
 /* ─────────────────────────────────────────────────────────────
@@ -35,6 +44,28 @@ const TOS_SECTIONS = [
 ];
 
 /* ─────────────────────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────────────────────── */
+
+// Formats an ISO timestamp into "Month DD, YYYY".
+// Falls back to the original static date string when no timestamp is present
+// (first-run state before the admin has saved the disclosure row).
+const FALLBACK_DATE = 'February 28, 2026';
+
+const formatUpdatedAt = (iso) => {
+  if (!iso) return FALLBACK_DATE;
+  try {
+    return new Date(iso).toLocaleDateString('en-US', {
+      year:  'numeric',
+      month: 'long',
+      day:   'numeric',
+    });
+  } catch {
+    return FALLBACK_DATE;
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────
    SHARED MODAL SHELL  (mirrors About.jsx's <Modal> component)
 ───────────────────────────────────────────────────────────── */
 const ModalShell = ({ onClose, iconClass, iconSvg, title, subtitle, children }) => (
@@ -70,8 +101,15 @@ const ModalShell = ({ onClose, iconClass, iconSvg, title, subtitle, children }) 
 
 /* ─────────────────────────────────────────────────────────────
    TERMS OF SERVICE MODAL
+
+   Props
+   ─────
+   onClose    () => void   — closes the modal
+   updatedAt  string|null  — ISO timestamp from disclosures.updated_at
+                             (pass disclosure?.updated_at from the parent).
+                             When null/undefined the fallback date is shown.
 ───────────────────────────────────────────────────────────── */
-const TermsModal = ({ onClose }) => (
+const TermsModal = ({ onClose, updatedAt }) => (
   <ModalShell
     onClose={onClose}
     iconClass="yellow"
@@ -87,7 +125,7 @@ const TermsModal = ({ onClose }) => (
       </svg>
     }
     title="Terms of Service"
-    subtitle="Last Updated: February 28, 2026"
+    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
   >
     <div className="ab-modal-inner">
       {TOS_SECTIONS.map((sec, i) => (

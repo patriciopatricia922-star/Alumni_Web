@@ -1,7 +1,3 @@
-// ============================================================================
-// THIS IS THE UI for Content Management ADMIN
-// ============================================================================
-
 import React, { useEffect, useCallback } from 'react';
 import '../styles/ContentMgmt.css';
 
@@ -10,8 +6,10 @@ import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal          from '../modals/JobModal';
 import DiscountModal     from '../modals/DiscountModal';
 import LandingModal      from '../modals/LandingModal';
+import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
 
-// ── Tab icons ─────────────────────────────────────────────────────────────────
+const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
+
 const TabIcon = ({ type, active }) => {
   const c = active ? '#FFFFFF' : '#475569';
   if (type === 'events') return (
@@ -45,10 +43,18 @@ const TabIcon = ({ type, active }) => {
       <path d="M3 9h18"/><path d="M9 21V9"/>
     </svg>
   );
+  if (type === 'disclosurepage') return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  );
   return null;
 };
 
-// ── Landing section card ──────────────────────────────────────────────────────
 const LandingSectionCard = ({ section, onEdit }) => {
   const strip = (html) => {
     if (!html) return '';
@@ -63,10 +69,18 @@ const LandingSectionCard = ({ section, onEdit }) => {
   };
 
   return (
-    <div className="cm-lp-card" onClick={() => onEdit(section)} style={{ cursor: 'pointer' }}>
+    <div className="cm-lp-card">
       <div className="cm-lp-card-header">
         <h3 className="cm-lp-card-title">{section.title}</h3>
-        <span className="landing-type-badge">{section.section_type?.replace('_', ' ') || 'Section'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="landing-type-badge">{section.section_type?.replace('_', ' ') || 'Section'}</span>
+          <button className="cm-lp-edit-btn" onClick={() => onEdit(section)}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
+            </svg>
+            Edit
+          </button>
+        </div>
       </div>
       <div className="cm-lp-fields">
         {section.description && (
@@ -92,9 +106,58 @@ const LandingSectionCard = ({ section, onEdit }) => {
   );
 };
 
-// ── Content item card ─────────────────────────────────────────────────────────
-// NOTE: Events and announcements no longer show image thumbnails.
-//       Only jobs and discounts retain image display.
+const DisclosureTabContent = ({ disclosure, onEditClick }) => {
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement('DIV');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+  const trunc = (val, max = 220) => {
+    const s = stripHtml(val);
+    return s.length > max ? s.slice(0, max) + '…' : s;
+  };
+
+  const tosText = disclosure?.tos_content || DEFAULT_TOS;
+  const ppText  = disclosure?.pp_content  || DEFAULT_PP;
+
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="cm-disclosure-card">
+          <div className="cm-disclosure-card-header">
+            <h3 className="cm-disclosure-card-title">Terms of Service</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="cm-disclosure-edit-btn" onClick={() => onEditClick('tos')}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
+                </svg>
+                Edit
+              </button>
+            </div>
+          </div>
+          <p className="cm-disclosure-card-preview">{trunc(tosText)}</p>
+        </div>
+
+        <div className="cm-disclosure-card">
+          <div className="cm-disclosure-card-header">
+            <h3 className="cm-disclosure-card-title">Privacy Policy</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button className="cm-disclosure-edit-btn" onClick={() => onEditClick('pp')}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
+                </svg>
+                Edit
+              </button>
+            </div>
+          </div>
+          <p className="cm-disclosure-card-preview">{trunc(ppText)}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   const strip = (html) => {
     if (!html) return '';
@@ -136,8 +199,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
     return null;
   };
 
-  // Only jobs and discounts show image thumbnails on the card
-  const showImage = (type === 'jobs' || type === 'discounts') && item.image_url;
+  const showImage = ['events', 'jobs', 'discounts'].includes(type) && item.image_url;
 
   return (
     <div className="content-item-card">
@@ -156,7 +218,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
             </svg>
             Edit
           </button>
-          <button className="content-archive-btn" onClick={() => onArchive(type, item.id)}>
+          <button className="content-archive-btn" onClick={() => onArchive(type, item.id, item.title)}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="21 8 21 21 3 21 3 8"/>
               <rect x="1" y="3" width="22" height="5"/>
@@ -209,7 +271,6 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   );
 };
 
-// ── Archive panel ─────────────────────────────────────────────────────────────
 const ArchivePanel = ({ archivedItems, onClose, onRestore }) => (
   <>
     <div className="cm-overlay" onClick={onClose} />
@@ -248,7 +309,6 @@ const ArchivePanel = ({ archivedItems, onClose, onRestore }) => (
   </>
 );
 
-// ── Confirm dialog ────────────────────────────────────────────────────────────
 const ConfirmDialog = ({ action, onClose }) => {
   if (!action) return null;
   return (
@@ -271,7 +331,6 @@ const ConfirmDialog = ({ action, onClose }) => {
   );
 };
 
-// ── Toast notification ────────────────────────────────────────────────────────
 const ToastNotification = ({ toast, onClose }) => {
   useEffect(() => {
     if (!toast.show) return;
@@ -287,7 +346,6 @@ const ToastNotification = ({ toast, onClose }) => {
   );
 };
 
-// ── Main view ─────────────────────────────────────────────────────────────────
 const ContentManagementView = ({
   activeTab,
   setActiveTab,
@@ -304,6 +362,13 @@ const ContentManagementView = ({
   activeItems,
   archivedItems,
   landingSections,
+  announcements,
+  disclosure,
+  disclosureModalOpen,
+  disclosureInitialEditing,
+  onOpenDisclosureModal,
+  onCloseDisclosureModal,
+  onDisclosureUpdate,
   onOpenCreate,
   onOpenEdit,
   onOpenEditSection,
@@ -321,19 +386,69 @@ const ContentManagementView = ({
   onUpdateLandingSection,
   onArchive,
   onRestore,
+  onShowConfirm,
   sidebar,
 }) => {
   const handleToastClose = useCallback(() => {}, []);
 
+  const editableLandingSections = (landingSections || []).filter(
+    s => !HIDDEN_SECTION_TYPES.includes(s.section_type)
+  );
+
   const labels = {
     create: { events: 'Add Event', announcements: 'Add Post', jobs: 'Add Job', discounts: 'Add Deal', landingpage: 'Add Section' },
-    desc:   { events: 'Schedule events for your alumni community.', announcements: 'Post updates visible to all alumni.', jobs: 'Share job opportunities with alumni.', discounts: 'Share exclusive deals for alumni.', landingpage: 'Manage content displayed on the landing page.' },
-    empty:  { events: 'No events yet', announcements: 'No announcements yet', jobs: 'No job listings yet', discounts: 'No discounts yet', landingpage: 'No landing page sections' },
-    emptyD: { events: 'Events you create will appear here.', announcements: 'Announcements you post will appear here.', jobs: 'Job postings will appear here once added.', discounts: 'Discount offers will appear here once added.', landingpage: 'Create sections to display on the landing page.' },
+    desc:   { events: 'Schedule events for your alumni community.', announcements: 'Post updates visible to all alumni.', jobs: 'Share job opportunities with alumni.', discounts: 'Share exclusive deals for alumni.' },
+    empty:  { events: 'No events yet', announcements: 'No announcements yet', jobs: 'No job listings yet', discounts: 'No discounts yet', landingpage: 'No landing page sections', disclosurepage: 'No disclosure content yet' },
+    emptyD: { events: 'Events you create will appear here.', announcements: 'Announcements you post will appear here.', jobs: 'Job postings will appear here once added.', discounts: 'Discount offers will appear here once added.', landingpage: 'Create sections to display on the landing page.', disclosurepage: 'Click Edit on either card to update the content.' },
   };
+
+  const boardTitle = {
+    events:          'Event Board',
+    announcements:   'Announcement Board',
+    jobs:            'Job Board',
+    discounts:       'Discount Board',
+    landingpage:     'Landing Page Content',
+    disclosurepage:  'User Notification / Disclosure',
+  }[activeTab] || '';
 
   const renderContent = () => {
     if (loading) return <div className="loading-state">Loading content…</div>;
+
+    if (activeTab === 'disclosurepage') {
+      return (
+        <DisclosureTabContent
+          disclosure={disclosure}
+          onEditClick={onOpenDisclosureModal}
+        />
+      );
+    }
+
+    if (activeTab === 'landingpage') {
+      const createCard = (
+        <div className="cm-create-card" onClick={onOpenCreate}>
+          <div className="cm-create-plus">+</div>
+          <div className="cm-create-label">Add Section</div>
+          <div className="cm-create-desc">Add a new section to the landing page.</div>
+        </div>
+      );
+
+      return (
+        <div className="cm-board">
+          {createCard}
+          {editableLandingSections.length === 0 ? (
+            <div className="empty-state-card">
+              <div className="empty-state-icon">📄</div>
+              <div className="empty-state-title">{labels.empty[activeTab]}</div>
+              <div className="empty-state-desc">{labels.emptyD[activeTab]}</div>
+            </div>
+          ) : (
+            editableLandingSections.map((s) => (
+              <LandingSectionCard key={s.id} section={s} onEdit={onOpenEditSection} />
+            ))
+          )}
+        </div>
+      );
+    }
 
     const createCard = (
       <div className="cm-create-card" onClick={onOpenCreate}>
@@ -342,25 +457,6 @@ const ContentManagementView = ({
         <div className="cm-create-desc">{labels.desc[activeTab] || ''}</div>
       </div>
     );
-
-    if (activeTab === 'landingpage') {
-      return (
-        <div className="cm-board">
-          {createCard}
-          {landingSections.length === 0 ? (
-            <div className="empty-state-card">
-              <div className="empty-state-icon">📄</div>
-              <div className="empty-state-title">{labels.empty[activeTab]}</div>
-              <div className="empty-state-desc">{labels.emptyD[activeTab]}</div>
-            </div>
-          ) : (
-            landingSections.map((s) => (
-              <LandingSectionCard key={s.id} section={s} onEdit={onOpenEditSection} />
-            ))
-          )}
-        </div>
-      );
-    }
 
     return (
       <div className="cm-board">
@@ -378,7 +474,13 @@ const ContentManagementView = ({
               item={item}
               type={activeTab}
               onEdit={onOpenEdit}
-              onArchive={onArchive}
+              onArchive={(type, id, title) => onShowConfirm(
+                'Archive this item?',
+                `"${title}" will be moved to the archive and hidden from users.`,
+                'Archive',
+                '#EF4444',
+                () => onArchive(type, id)
+              )}
             />
           ))
         )}
@@ -397,7 +499,7 @@ const ContentManagementView = ({
         <div className="cm-header">
           <div>
             <h1 className="cm-title">Content Management</h1>
-            <p className="cm-subtitle">Monitor, update, and organize your alumni content efficiently.</p>
+            <p className="cm-subtitle">Manage announcements, jobs, events, discounts, and homepage content.</p>
           </div>
           <button className="cm-archive-btn" onClick={() => setShowArchive(true)}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -423,9 +525,7 @@ const ContentManagementView = ({
             ))}
           </div>
 
-          <div className="cm-board-title">
-            {{ events: 'Event Board', announcements: 'Announcement Board', jobs: 'Job Board', discounts: 'Discount Board', landingpage: 'Landing Page Content' }[activeTab]}
-          </div>
+          <div className="cm-board-title">{boardTitle}</div>
 
           {renderContent()}
         </div>
@@ -456,6 +556,14 @@ const ContentManagementView = ({
           section={editingSection || editingItem}
           onCreate={onCreateLandingSection} onUpdate={onUpdateLandingSection} />
       )}
+
+      <DisclosureModal
+        open={disclosureModalOpen}
+        onClose={onCloseDisclosureModal}
+        disclosure={disclosure}
+        onUpdate={onDisclosureUpdate}
+        initialEditing={disclosureInitialEditing}
+      />
     </>
   );
 };

@@ -574,14 +574,6 @@ body {
   to   { opacity: 1; transform: scale(1); }
 }
 
-.sm-confirm-icon { font-size: 2rem; }
-.sm-confirm-title { 
-  margin: 0; 
-  font-family: "Lexend",sans-serif; 
-  font-size: 1.1rem; 
-  color: #111827; 
-}
-
 .sm-confirm-message {
   margin: 0; 
   font-family: "Lexend",sans-serif; 
@@ -629,6 +621,22 @@ body {
 
 .sm-confirm-delete:hover { background: #dc2626; }
 
+.sm-confirm-confirm {
+  padding: 0.45rem 1.1rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: #4FA3F7;
+  color: white;
+  font-family: "Lexend", sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.sm-confirm-confirm:hover {
+  background: #3d8fd6;
+}
 /* ============================ BUILDER CONTAINER ============================ */
 .survey-builder { 
   margin-bottom: 3rem; 

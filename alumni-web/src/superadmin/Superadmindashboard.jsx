@@ -1,35 +1,8 @@
-// src/pages/SuperAdminDashboard.jsx
-// ============================================================================
-// DATA / GOAL FIXES (matching AdminDashboard as the design reference):
-//
-//   institutionalKpis — all targets set to 100, all targetLabels "Goal: 100%".
-//     • Removed targetDir: "below" from outside_field (was 20).
-//     • Removed mixed numeric goals (85, 70, 20, 15, 10, 30).
-//     • prof_org keeps isCount: true, target: 0 — radial gauge renders "No Goal".
-//
-//   setKpiData — removed targetLabel: 'N/A' overrides on internship_absorption
-//     and entrepreneurship so those KPIs now correctly show "Goal: 100%".
-//     prof_org still overrides targetLabel to 'N/A' because it is a raw count
-//     with no percentage goal (isCount: true path in the gauge).
-//
-// CHART REFACTOR:
-//   • employmentForecastData / CustomLineChart removed — was using the wrong
-//     data source (predictions table avg by year) for what should be a
-//     program-level career alignment view.
-//   • careerAlignmentData added — uses buildCareerAlignmentData (ported from
-//     AdminDashboard) to produce { program, predicted, actual } rows that feed
-//     the CareerAlignmentChart grouped bar in SuperAdminDashboardView.
-//   • All other SuperAdmin-specific logic (routes, imports, role-based
-//     behaviour, state management, data integrations) is preserved exactly.
-// ============================================================================
-
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import SuperAdminDashboardView from "./views/SuperAdminDashboardView";
+import { buildAllKpiInsights } from "../services/kpiInsightsService";
 
-// ============================================================================
-// SATISFACTION SCORE MAPPING
-// ============================================================================
 const SATISFACTION_SCORE = {
   'Very Satisfied':    5,
   'Very satisfied':    5,
@@ -40,9 +13,6 @@ const SATISFACTION_SCORE = {
   'Very dissatisfied': 1,
 };
 
-// ============================================================================
-// EMPLOYMENT STATUS MAPPING
-// ============================================================================
 const STATUS_MAPPING = {
   'Regular / Permanent':                  'Employed',
   'Probationary':                         'Employed',
@@ -67,18 +37,12 @@ const STATUS_MAPPING = {
   'Contract based':                       'Contractual',
 };
 
-// ============================================================================
-// SUPERVISORY KEYWORDS
-// ============================================================================
 const SUPERVISORY_KEYWORDS = [
   'manager', 'supervisor', 'lead', 'leader', 'head',
   'director', 'chief', 'officer', 'coordinator', 'superintendent',
   'foreman', 'overseer', 'team lead', 'senior', 'principal',
 ];
 
-// ============================================================================
-// UNEMPLOYED STATUSES
-// ============================================================================
 const UNEMPLOYED_STATUSES = new Set([
   'Unemployed',
   'Unemployed, but looking for work',
@@ -87,31 +51,43 @@ const UNEMPLOYED_STATUSES = new Set([
   'Looking for work',
 ]);
 
-// ============================================================================
-// isInternshipSource — normalised substring check
-// ============================================================================
+const NU_BRANCH_KEYWORDS = [
+  'nu manila',
+  'nu nazareth',
+  'nu fairview',
+  'nu laguna',
+  'nu baliwag',
+  'nu dasmarinas',
+  'nu dasmariñas',
+  'nu lipa',
+  'nu east ortigas',
+  'nu bacolod',
+  'nu cebu',
+  'nu moa',
+  'nu clark',
+  'nu las piñas',
+  'nu las pinas',
+  'national university',
+];
+
 const isInternshipSource = (rawValue) => {
   const src = (rawValue || '').toLowerCase().trim();
   if (!src) return false;
   return ['internship', 'ojt', 'on-the-job', 'practicum'].some(kw => src.includes(kw));
 };
 
-// ============================================================================
-// safeParse
-// ============================================================================
+const isNuBranch = (rawValue) => {
+  const val = (rawValue || '').toLowerCase().trim();
+  if (!val) return false;
+  return NU_BRANCH_KEYWORDS.some(kw => val.includes(kw));
+};
+
 const safeParse = (value) => {
   if (!value) return null;
   if (typeof value === 'object') return value;
   try { return JSON.parse(value); } catch { return null; }
 };
 
-// ============================================================================
-// INSTITUTIONAL KPIs STRUCTURE — 9 KPIs across 3 tabs
-//
-// FIX: All goals are now 100 / "Goal: 100%" to match AdminDashboard.
-//   Previously SuperAdmin had mixed targets (85, 70, 20, 15, 10, 30).
-//   prof_org retains target: 0 / isCount: true — it is a headcount, not a %.
-// ============================================================================
 const institutionalKpis = {
   employment: [
     {
@@ -146,7 +122,6 @@ const institutionalKpis = {
       label: "Employed Outside Field of Specialization",
       value: "0%", progress: 0, target: 100,
       targetLabel: "Goal: 100%",
-      // FIX: targetDir "below" removed — all goals are now aspirational (above).
       trend: { dir: "none", delta: "" },
     },
     {
@@ -195,27 +170,9 @@ const institutionalKpis = {
   ],
 };
 
-// ============================================================================
-// buildCareerAlignmentData
-//
-// Accepts the raw rows from the `predictions` table and returns the array
-// shape the CareerAlignmentChart expects:
-//   [{ program: string, predicted: number, actual: number }, …]
-//
-// Mirrors the program-level computation in AdminDashboard / AdminPredictiveAnalytics:
-//   • "actual"    = current_rate from the earliest (BASE_YEAR) row per program.
-//                   Falls back to predicted_rate of that same row when
-//                   current_rate is null/undefined (handles legacy data).
-//   • "predicted" = predicted_rate from the latest (END_YEAR) row per program.
-//
-// Pure function — no side effects; can be unit-tested or reused elsewhere.
-// All canonical programs stored in the predictions table appear automatically;
-// no hard-coded program list is required.
-// ============================================================================
 const buildCareerAlignmentData = (predictions) => {
   if (!predictions || predictions.length === 0) return [];
 
-  // Group rows by program — each program has one row per predicted year.
   const byProgram = {};
   predictions.forEach((row) => {
     if (!byProgram[row.program]) byProgram[row.program] = [];
@@ -225,11 +182,9 @@ const buildCareerAlignmentData = (predictions) => {
   return Object.entries(byProgram).map(([program, rows]) => {
     const sorted = [...rows].sort((a, b) => Number(a.year) - Number(b.year));
 
-    // Earliest row → actual (observed baseline)
     const baseRow = sorted[0];
     const actual  = Math.round(baseRow.current_rate ?? baseRow.predicted_rate ?? 0);
 
-    // Latest row → predicted (end-of-horizon forecast)
     const endRow    = sorted[sorted.length - 1];
     const predicted = Math.round(endRow.predicted_rate ?? 0);
 
@@ -237,15 +192,10 @@ const buildCareerAlignmentData = (predictions) => {
   });
 };
 
-// ============================================================================
-// SuperAdminDashboard Component
-// ============================================================================
 const SuperAdminDashboard = () => {
 
-  // ── Tab ──────────────────────────────────────────────────────────────────
   const [activeKpiTab, setActiveKpiTab] = useState("employment");
 
-  // ── Alumni Tracer stat cards ──────────────────────────────────────────────
   const [alumniCount,          setAlumniCount]          = useState('—');
   const [surveyCompletionRate, setSurveyCompletionRate]  = useState('—');
   const [alumniSubText,        setAlumniSubText]         = useState('loading...');
@@ -254,28 +204,22 @@ const SuperAdminDashboard = () => {
   const [activeProgramsSub,    setActiveProgramsSub]     = useState('from survey responses');
   const [alumniSatisfaction,   setAlumniSatisfaction]    = useState('—');
   const [satisfactionSub,      setSatisfactionSub]       = useState('based on feedback');
+  const [employmentRate,       setEmploymentRate]        = useState('—');
+  const [employmentRateSub,    setEmploymentRateSub]     = useState('loading...');
 
-  // ── Institutional KPI grid ────────────────────────────────────────────────
   const [kpiData, setKpiData] = useState(institutionalKpis);
 
-  // ── Chart data ────────────────────────────────────────────────────────────
   const [employmentAlignmentData, setEmploymentAlignmentData] = useState([]);
   const [employmentStatusData,    setEmploymentStatusData]    = useState([]);
   const [inDemandSkillsData,      setInDemandSkillsData]      = useState([]);
-  // REFACTOR: careerAlignmentData replaces employmentForecastData.
-  // Uses buildCareerAlignmentData (same logic as AdminDashboard) so the
-  // SuperAdmin view shows the same program-level predicted-vs-actual grouped
-  // bar chart instead of the incorrect year-averaged line forecast.
   const [careerAlignmentData,     setCareerAlignmentData]     = useState([]);
   const [loadingCharts,           setLoadingCharts]           = useState(true);
 
-  // ==========================================================================
-  // KPI DATA FETCHING
-  // ==========================================================================
+  const [kpiInsights, setKpiInsights] = useState(null);
+
   useEffect(() => {
     const fetchStats = async () => {
 
-      // ── 1. Registered alumni count ────────────────────────────────────────
       const { count: alumniTotal, error: alumniErr } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
@@ -283,7 +227,6 @@ const SuperAdminDashboard = () => {
       if (!alumniErr) setAlumniCount(String(alumniTotal ?? 0));
       else console.error('Alumni count error:', alumniErr.message);
 
-      // ── 2. New alumni this month ──────────────────────────────────────────
       const now              = new Date();
       const startOfMonth     = new Date(now.getFullYear(), now.getMonth(),     1).toISOString();
       const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
@@ -295,7 +238,6 @@ const SuperAdminDashboard = () => {
         .gte('created_at', startOfMonth);
       if (!newErr) setAlumniSubText(`+${newThisMonth ?? 0} new this month`);
 
-      // ── 3. Survey completion rate ─────────────────────────────────────────
       const { count: completed, error: surveyErr } = await supabase
         .from('survey_progress')
         .select('*', { count: 'exact', head: true })
@@ -327,7 +269,6 @@ const SuperAdminDashboard = () => {
         console.error('Survey completion error:', surveyErr.message);
       }
 
-      // ── 4. Active Programs ────────────────────────────────────────────────
       try {
         const { data: eduRows, error: eduErr } = await supabase
           .from('survey_progress')
@@ -353,7 +294,6 @@ const SuperAdminDashboard = () => {
         }
       } catch (e) { console.error('Active programs error:', e); }
 
-      // ── 5. Alumni satisfaction ────────────────────────────────────────────
       try {
         const { data: feedbackRows, error: feedbackErr } = await supabase
           .from('survey_progress')
@@ -383,11 +323,10 @@ const SuperAdminDashboard = () => {
         }
       } catch (e) { console.error('Alumni satisfaction error:', e); }
 
-      // ── 6. All 9 Institutional KPIs ───────────────────────────────────────
       const { data: allRows, error: allErr } = await supabase
         .from('survey_progress')
         .select(
-          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data'
+          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data, feedback_university_data, skills_competencies_data'
         );
 
       if (allErr) {
@@ -395,14 +334,20 @@ const SuperAdminDashboard = () => {
         return;
       }
 
-      const parsed = (allRows ?? []).map(row => ({
-        emp: safeParse(row.employment_information_data),
-        edu: safeParse(row.educational_background_data),
-        eng: safeParse(row.alumni_engagement_data),
-        job: safeParse(row.job_experience_data),
+      const surveyRows = allRows ?? [];
+
+      const insights = buildAllKpiInsights(surveyRows);
+      setKpiInsights(insights);
+
+      const parsed = surveyRows.map(row => ({
+        emp:    safeParse(row.employment_information_data),
+        edu:    safeParse(row.educational_background_data),
+        eng:    safeParse(row.alumni_engagement_data),
+        job:    safeParse(row.job_experience_data),
+        skills: safeParse(row.skills_competencies_data),
       }));
 
-      const isEmployed = (emp) => {
+      const isEmployedHelper = (emp) => {
         if (!emp) return false;
         const status = emp.employment_status || emp.employmentStatus || emp.current_employment_status || '';
         if (!status) return !!(emp.job_position || emp.company_name);
@@ -411,7 +356,7 @@ const SuperAdminDashboard = () => {
 
       const withEmpData  = parsed.filter(r => r.emp !== null);
       const withEduData  = parsed.filter(r => r.edu !== null);
-      const employedRows = withEmpData.filter(r => isEmployed(r.emp));
+      const employedRows = withEmpData.filter(r => isEmployedHelper(r.emp));
       const withJobData  = parsed.filter(r => r.job !== null);
 
       if (process.env.NODE_ENV === 'development') {
@@ -420,27 +365,22 @@ const SuperAdminDashboard = () => {
         console.log('[internship KPI] withJobData count:', withJobData.length);
       }
 
-      // ── Employment tab KPIs ───────────────────────────────────────────────
-
-      // KPI 1: Absorption from Internship
       const internshipCount = withJobData.filter(r => {
         const rawSrc =
-          r.job.first_job_source    ||
-          r.job.how_found_first_job  ||
-          r.job.source_of_first_job  ||
-          r.job.job_source           ||
+          r.job.first_job_source   ||
+          r.job.how_found_first_job ||
+          r.job.source_of_first_job ||
+          r.job.job_source          ||
           '';
         return isInternshipSource(rawSrc);
       }).length;
       const internshipPct = withJobData.length > 0
         ? Math.round((internshipCount / withJobData.length) * 100) : 0;
 
-      // KPI 2: Employed Within 2 Years of Graduation
-      const empWithinTwoYears = withEmpData.filter(r => isEmployed(r.emp)).length;
+      const empWithinTwoYears = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       const empTwoYearsPct    = withEmpData.length > 0
         ? Math.round((empWithinTwoYears / withEmpData.length) * 100) : 0;
 
-      // KPI 3: Employed in Field / Related Field
       const fieldRelatedCount = employedRows.filter(r => {
         const val = r.emp.job_related_to_degree
           || r.emp.is_job_related_to_degree
@@ -451,9 +391,6 @@ const SuperAdminDashboard = () => {
       const fieldRelatedPct = employedRows.length > 0
         ? Math.round((fieldRelatedCount / employedRows.length) * 100) : 0;
 
-      // ── Career tab KPIs ───────────────────────────────────────────────────
-
-      // KPI 4: Employed Outside Field of Specialization
       const outsideFieldCount = employedRows.filter(r => {
         const val = r.emp.job_related_to_degree
           || r.emp.is_job_related_to_degree
@@ -464,7 +401,6 @@ const SuperAdminDashboard = () => {
       const outsideFieldPct = employedRows.length > 0
         ? Math.round((outsideFieldCount / employedRows.length) * 100) : 0;
 
-      // KPI 5: Engaged in Entrepreneurship
       const entrepreneurCount = withEmpData.filter(r => {
         const status = r.emp.employment_status
           || r.emp.current_employment_status
@@ -475,7 +411,6 @@ const SuperAdminDashboard = () => {
       const entrepreneurPct = withEmpData.length > 0
         ? Math.round((entrepreneurCount / withEmpData.length) * 100) : 0;
 
-      // KPI 6: Occupying Supervisory Positions
       const supervisoryCount = employedRows.filter(r => {
         const pos = (r.emp.job_position || r.emp.jobPosition || r.emp.position || '').toLowerCase();
         return SUPERVISORY_KEYWORDS.some(kw => pos.includes(kw));
@@ -483,39 +418,62 @@ const SuperAdminDashboard = () => {
       const supervisoryPct = employedRows.length > 0
         ? Math.round((supervisoryCount / employedRows.length) * 100) : 0;
 
-      // ── Education tab KPIs ────────────────────────────────────────────────
-
-      // KPI 7: Pursued Graduate Studies (within 1 yr)
       const gradStudiesCount = withEduData.filter(r => {
-        const val = r.edu.plans_postgraduate
+        const plans = r.edu.post_grad_plans
+          || r.edu.postGradPlans
+          || r.edu.plans_postgraduate
           || r.edu.do_you_have_plans_postgrad
           || r.edu.plansPostgraduate
           || r.edu.post_graduate_plans
           || '';
-        return val === 'Yes' || val === true;
+        return plans === 'Yes' || plans === true;
       }).length;
       const gradStudiesPct = withEduData.length > 0
         ? Math.round((gradStudiesCount / withEduData.length) * 100) : 0;
 
-      // KPI 8: Pursued Graduate Studies at NU (pending NU-specific field)
-      const nuGradStudiesPct = 0;
+      const nuGradStudiesCount = withEduData.filter(r => {
+        const plans = r.edu.post_grad_plans
+          || r.edu.postGradPlans
+          || r.edu.plans_postgraduate
+          || r.edu.do_you_have_plans_postgrad
+          || r.edu.plansPostgraduate
+          || r.edu.post_graduate_plans
+          || '';
+        if (plans !== 'Yes' && plans !== true) return false;
 
-      // KPI 9: In Positions in Professional Organizations (count)
-      const withEngData  = parsed.filter(r => r.eng !== null);
-      const profOrgCount = withEngData.filter(r => {
-        const participates = r.eng.willing_to_participate
-          || r.eng.willingness_to_participate
-          || r.eng.willing_participate
-          || [];
-        const arr = Array.isArray(participates) ? participates : [participates];
-        return arr.some(opt => opt && opt !== 'Not at all' && opt !== 'Other');
+        const institution = r.edu.post_grad_course
+          || r.edu.postGradCourse
+          || r.edu.post_grad_school
+          || r.edu.postGradSchool
+          || r.edu.graduate_school
+          || r.edu.school
+          || '';
+        return isNuBranch(institution);
+      }).length;
+      const nuGradStudiesPct = withEduData.length > 0
+        ? Math.round((nuGradStudiesCount / withEduData.length) * 100) : 0;
+
+      const withSkillsData = parsed.filter(r => r.skills !== null);
+      const leadershipCount = withSkillsData.filter(r => {
+        const ratings = r.skills.skill_ratings || r.skills.skillRatings || {};
+        const leadershipRating =
+          ratings['Leadership Skills'] ??
+          ratings['leadership_skills']  ??
+          ratings['Leadership']         ??
+          null;
+        return leadershipRating !== null && Number(leadershipRating) >= 4;
       }).length;
 
-      // ── Apply computed KPIs to state ──────────────────────────────────────
-      // FIX: Removed targetLabel: 'N/A' overrides on internship_absorption and
-      // entrepreneurship — those KPIs now correctly display "Goal: 100%".
-      // prof_org still overrides targetLabel to 'N/A' because it is a raw
-      // headcount (isCount: true) with no percentage goal.
+      const employedStatCount = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
+      if (withEmpData.length > 0) {
+        const empRatePct = Math.round((employedStatCount / withEmpData.length) * 100);
+        setEmploymentRate(`${empRatePct}%`);
+        setEmploymentRateSub(`Based on ${withEmpData.length} response${withEmpData.length !== 1 ? 's' : ''}`);
+      } else {
+        setEmploymentRate('N/A');
+        setEmploymentRateSub('No employment data yet');
+      }
+
       setKpiData({
         employment: institutionalKpis.employment.map(kpi => {
           switch (kpi.id) {
@@ -546,11 +504,28 @@ const SuperAdminDashboard = () => {
         education: institutionalKpis.education.map(kpi => {
           switch (kpi.id) {
             case 'grad_studies':
-              return { ...kpi, value: `${gradStudiesPct}%`, progress: gradStudiesPct };
+              return {
+                ...kpi,
+                value: `${gradStudiesPct}%`,
+                progress: gradStudiesPct,
+                targetLabel: `Goal: 100% (${gradStudiesCount} of ${withEduData.length})`,
+              };
             case 'nu_grad_studies':
-              return { ...kpi, value: `${nuGradStudiesPct}%`, progress: nuGradStudiesPct };
+              return {
+                ...kpi,
+                value: `${nuGradStudiesPct}%`,
+                progress: nuGradStudiesPct,
+                targetLabel: `Goal: 100% (${nuGradStudiesCount} of ${withEduData.length})`,
+              };
             case 'prof_org':
-              return { ...kpi, value: String(profOrgCount), progress: 0, targetLabel: 'N/A' };
+              return {
+                ...kpi,
+                value: String(leadershipCount),
+                progress: withSkillsData.length > 0
+                  ? Math.round((leadershipCount / withSkillsData.length) * 100)
+                  : 0,
+                targetLabel: `${leadershipCount} alumni`,
+              };
             default:
               return kpi;
           }
@@ -561,23 +536,17 @@ const SuperAdminDashboard = () => {
     fetchStats();
   }, []);
 
-  // ==========================================================================
-  // CHART DATA FETCHING
-  // ==========================================================================
   useEffect(() => {
     const fetchChartData = async () => {
       setLoadingCharts(true);
 
       try {
-        // ── 1. Predictions — Employment Alignment + Career Alignment ─────────
-        // Fetched once and used for both charts, mirroring AdminDashboard.
         const { data: predictions, error: predError } = await supabase
           .from('predictions')
           .select('*')
           .order('year', { ascending: true });
 
         if (!predError && predictions && predictions.length > 0) {
-          // ── 1a. Degree Alignment Rate bar chart (top-N by latest predicted rate)
           const programs   = [...new Set(predictions.map(p => p.program))];
           const latestYear = Math.max(...predictions.map(p => p.year));
 
@@ -588,21 +557,12 @@ const SuperAdminDashboard = () => {
           }).sort((a, b) => b.alignment - a.alignment);
           setEmploymentAlignmentData(alignmentByProgram.slice(0, 6));
 
-          // ── 1b. Career Alignment Prediction grouped bar chart
-          //
-          // REFACTOR: Replaces the previous year-averaged line forecast
-          // (employmentForecastData) with the same program-level
-          // predicted-vs-actual computation used in AdminDashboard and
-          // AdminPredictiveAnalytics. buildCareerAlignmentData is a pure
-          // helper defined at module scope so the transform is consistent
-          // across both dashboard roles.
           setCareerAlignmentData(buildCareerAlignmentData(predictions));
 
         } else if (predError) {
           console.error('Predictions fetch error:', predError.message);
         }
 
-        // ── 2. Employment Status distribution ─────────────────────────────
         const { data: surveyData } = await supabase
           .from('survey_progress')
           .select('employment_information_data');
@@ -642,7 +602,6 @@ const SuperAdminDashboard = () => {
             .map(([name, value]) => ({ name, value }))
         );
 
-        // ── 3. In-Demand Skills ───────────────────────────────────────────
         const skillCount = {};
 
         const { data: jobsData } = await supabase
@@ -671,7 +630,6 @@ const SuperAdminDashboard = () => {
           });
         });
 
-        // Fallback: derive from survey job_factors
         if (Object.keys(skillCount).length === 0) {
           const { data: surveyEmpData } = await supabase
             .from('survey_progress')
@@ -692,7 +650,6 @@ const SuperAdminDashboard = () => {
           });
         }
 
-        // Final fallback: sample skills for empty-state display
         if (Object.keys(skillCount).length === 0) {
           ['Leadership', 'Communication', 'Problem Solving', 'Teamwork',
            'Project Management', 'Critical Thinking', 'Adaptability', 'Digital Literacy']
@@ -719,10 +676,6 @@ const SuperAdminDashboard = () => {
     fetchChartData();
   }, []);
 
-  // ==========================================================================
-  // ALUMNI TRACER STAT CARDS
-  // Order: Registered Alumni | Survey Response Rate | Active Programs | Alumni Satisfaction
-  // ==========================================================================
   const kpis2 = [
     { label: "Registered Alumni",    value: alumniCount,          sub: alumniSubText      },
     { label: "Survey Response Rate", value: surveyCompletionRate, sub: surveySubText      },
@@ -730,9 +683,6 @@ const SuperAdminDashboard = () => {
     { label: "Alumni Satisfaction",  value: alumniSatisfaction,   sub: satisfactionSub    },
   ];
 
-  // ==========================================================================
-  // RENDER
-  // ==========================================================================
   return (
     <SuperAdminDashboardView
       activeKpiTab={activeKpiTab}
@@ -744,6 +694,7 @@ const SuperAdminDashboard = () => {
       inDemandSkillsData={inDemandSkillsData}
       careerAlignmentData={careerAlignmentData}
       loadingCharts={loadingCharts}
+      kpiInsights={kpiInsights}
     />
   );
 };

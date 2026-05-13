@@ -3,7 +3,7 @@
 //
 // INTEGRATION: Added Disclosure tab content, DisclosureModal, hidden section
 //              type filtering, inline Edit button on landing cards, archive
-//              confirmation flow, and events image support from friend.
+//              confirmation flow, and events image support from friend. NEW
 // ============================================================================
 
 import React, { useEffect, useCallback } from 'react';

@@ -7,7 +7,7 @@ import {
   FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
-import { truncateHtml, stripHtml } from '../utils/textHelpers';
+import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
 import '../styles/Events.css';
 
 
@@ -116,7 +116,7 @@ const EventCard = ({ event, isMobile }) => {
   };
 
   const hasDetails  = event.location || event.event_date;
-  const previewText = stripHtml(event.description || '');
+  const previewText = htmlToReadableText(event.description || '');
   const needsTrunc  = previewText.length > 120;
 
   return (
@@ -196,7 +196,7 @@ const EventCard = ({ event, isMobile }) => {
             lineHeight:    '1.4',
             letterSpacing: '0px',
             color:         '#0A0A0A',
-            margin:        0,
+             margin:     expanded ? '0 0 16px 0' : '0 0 4px 0',
           }}>
             {event.name || event.title}
           </p>
@@ -206,9 +206,11 @@ const EventCard = ({ event, isMobile }) => {
             fontFamily: "'Montserrat', Arial, sans-serif",
             fontWeight: 400,
             fontSize:   '12px',
-            lineHeight: '1.4',
+            lineHeight: expanded ? '1.8' : '1.6',   // ← changed
             color:      '#4A5565',
-            margin:     '0 0 4px 0',
+            margin:     expanded ? '0 0 16px 0' : '0 0 4px 0',  // ← changed
+            whiteSpace: 'pre-wrap',    // ← new
+            wordBreak:  'break-word',  // ← new
           }}>
             {expanded
               ? previewText
@@ -238,7 +240,13 @@ const EventCard = ({ event, isMobile }) => {
 
           {/* Compact meta (always visible) */}
           {!expanded && hasDetails && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', paddingTop: '2px' }}>
+            <div style={{
+              display:       'flex',
+              flexDirection: 'column',
+              gap:           '10px',    // was 8px
+              paddingTop:    '8px',     // was 4px
+            }}>
+              <div style={{ height: '1px', background: '#FAC775', margin: '0 0 4px 0' }} />
               {event.event_date && (
                 <MetaItem
                   icon={<FaCalendarAlt size={11} color={T.metaColor} />}
@@ -265,10 +273,10 @@ const EventCard = ({ event, isMobile }) => {
             <div style={{
               display:       'flex',
               flexDirection: 'column',
-              gap:           '8px',
-              paddingTop:    '4px',
+              gap:           '12px',      // ← was 8px
+              paddingTop:    '12px',      // ← was 4px
             }}>
-              <div style={{ height: '1px', background: T.footerBorder, margin: '4px 0' }} />
+              <div style={{ height: '1px', background: '#FAC775', margin: '0 0 8px 0' }} />
               {event.location && (
                 <MetaItem
                   icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
@@ -301,7 +309,7 @@ const EventCard = ({ event, isMobile }) => {
                   display:     'inline-flex',
                   alignItems:  'center',
                   gap:         '4px',
-                  marginTop:   '4px',
+                  marginTop: '8px', 
                   alignSelf:   'flex-start',
                 }}
               >
