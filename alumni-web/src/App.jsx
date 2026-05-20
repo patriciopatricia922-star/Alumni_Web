@@ -47,6 +47,7 @@ import ResponseAnalytics from './superadmin/Responseandanalytics';
 import PredictiveAnaly from './superadmin/PredictiveAnalytics';
 import SurveyMgmt from './superadmin/SurveyManagement';
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
+import PersonalBackgroundSHS from './surveyshs/PersonalBackgroundSHS';
 
 // Cache for auth state to prevent repeated checks
 let cachedSession = null;
@@ -188,6 +189,11 @@ function App() {
       <Route path="/survey/skills-and-competencies" element={<ProtectedRoute allowedRoles={['alumni']}><SkillsAndCompetencies /></ProtectedRoute>} />
       <Route path="/survey/feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagement /></ProtectedRoute>} />
       <Route path="/survey/complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
+
+      {/* SHS Survey */}
+      <Route path="/surveyshs/shs-personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackgroundSHS /></ProtectedRoute>} />
+
+
 
       <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />

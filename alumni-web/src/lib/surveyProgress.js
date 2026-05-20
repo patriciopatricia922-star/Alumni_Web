@@ -1,8 +1,21 @@
 import { supabase } from './supabase';
+import { classifyDepartment } from './departmentClassifier';
+import { resolveRegistry }    from './surveyRegistry';
 
 // ─── Section Cache ────────────────────────────────────────────────────────────
 let _cachedSections = [];
 let _loadPromise    = null;
+
+// ─── Invalidate section cache on user change ──────────────────────────────────
+// The cache is department-aware, so it must be cleared whenever the active
+// user changes. Without this, switching accounts reuses the previous user's
+// section/route set.
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+    _cachedSections = [];
+    _loadPromise    = null;
+  }
+});
 
 // SECTION_SLUG_MAP: index → slug used in App.jsx routes.
 // Must match App.jsx exactly. Slugs → keys via replacing - with _.
@@ -45,32 +58,76 @@ export const loadSurveySections = async () => {
 
   _loadPromise = (async () => {
     try {
-      const { data, error } = await supabase
+      // ── 1. Identify the authenticated user's program ──────────────────────
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      let departmentType = 'college'; // safe default
+
+      if (authUser?.id) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('program')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        departmentType = classifyDepartment(profile?.program) ?? 'college';
+      }
+
+      // ── 2. Resolve registry entry for this department type ────────────────
+      const registry = resolveRegistry(departmentType);
+
+      // ── 3. Fetch survey config — try matched type, fall back if needed ─────
+      const { data: allConfigs } = await supabase
         .from('survey_config')
         .select('config')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
+        .order('updated_at', { ascending: false });
 
-      if (error || !data?.config?.sections?.length) {
+      const configs = allConfigs ?? [];
+
+      // Find a config row that matches this department type
+      let matchedConfig = configs.find(
+        (row) => registry.configMatcher(row.config)
+      );
+
+      // If no match and a fallback type is defined, try the fallback registry
+      if (!matchedConfig && registry.fallbackType) {
+        const fallbackRegistry = resolveRegistry(registry.fallbackType);
+        matchedConfig = configs.find(
+          (row) => fallbackRegistry.configMatcher(row.config)
+        );
+      }
+
+      // Last resort: use the most recent config row regardless of type
+      if (!matchedConfig) {
+        matchedConfig = configs[0] ?? null;
+      }
+
+      if (!matchedConfig?.config?.sections?.length) {
         console.warn('No survey config found — sections unavailable');
         _loadPromise = null;
         return [];
       }
 
-      _cachedSections = data.config.sections.map((section, index) => {
-        const slug = SECTION_SLUG_MAP[index]
-          ?? section.title.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const key         = slug.replace(/-/g, '_');
-        const percentage  = Math.round(((index + 1) / data.config.sections.length) * 100);
+      // ── 4. Build sections using the resolved slug map ─────────────────────
+      const slugMap = registry.slugMap;
+
+      _cachedSections = matchedConfig.config.sections.map((section, index) => {
+        const slug = slugMap[index]
+          ?? section.title.toLowerCase().trim()
+               .replace(/\s+/g, '-')
+               .replace(/[^a-z0-9-]/g, '');
+        const key        = slug.replace(/-/g, '_');
+        const percentage = Math.round(
+          ((index + 1) / matchedConfig.config.sections.length) * 100
+        );
         return {
           key,
           slug,
           title:        section.title,
-          web_route:    `/survey/${slug}`,
-          mobile_route: `/survey/${slug}`,
+          web_route:    `${registry.routePrefix}/${slug}`,
+          mobile_route: `${registry.routePrefix}/${slug}`,
           percentage,
           index:        index + 1,
+          departmentType,
         };
       });
 
@@ -159,13 +216,12 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
     percentage:           sections[sectionIndex].percentage,
     completed:            isLast,
     last_updated:         new Date().toISOString(),
-    [boolCol]:            true,           // e.g. skills_competencies: true
+    [boolCol]:            true,
   };
 
   // ── Map frontend key → actual DB data column(s) ──
   if (formData) {
     if (sectionKey === 'feedback_and_engagement') {
-      // This section is stored split across two DB columns to match the schema
       updates.feedback_university_data = {
         satisfaction: formData.satisfaction ?? '',
         recommend:    formData.recommend    ?? '',
@@ -176,12 +232,11 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
         participate_in:        formData.participate_in        ?? [],
         other_participate:     formData.other_participate     ?? '',
       };
-      // Mark both DB boolean flags true
       updates.feedback_university = true;
       updates.alumni_engagement   = true;
     } else {
-      const dataCol      = DB_DATA_COL[sectionKey] ?? `${sectionKey}_data`;
-      updates[dataCol]   = formData;
+      const dataCol    = DB_DATA_COL[sectionKey] ?? `${sectionKey}_data`;
+      updates[dataCol] = formData;
     }
   }
 
@@ -198,7 +253,6 @@ export const loadSectionData = async (sectionKey) => {
   if (!progress) return null;
 
   if (sectionKey === 'feedback_and_engagement') {
-    // Merge both DB columns back into one object for the frontend
     return {
       ...(progress.feedback_university_data ?? {}),
       ...(progress.alumni_engagement_data   ?? {}),

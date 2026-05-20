@@ -15,6 +15,10 @@ const getPasswordStrength = (password) => {
   return           { level: 3, label: 'Strong', color: '#34D399' };
 };
 
+/** Normalizes a name part: lowercase, collapse internal spaces, trim. */
+const normalizeName = (str = '') =>
+  str.toLowerCase().replace(/\s+/g, ' ').trim();
+
 /**
  * Modal-aware Signup — identical Supabase logic to Signup.jsx.
  * Instead of navigate('/login'), calls onSwitchToLogin() to close the modal.
@@ -75,6 +79,42 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
   const handleChange = (key, value) => { set(key, value); if (touched[key]) validateField(key, value); };
   const handleBlur   = (key)         => { touch(key); validateField(key, form[key]); };
 
+  // ── Name-level duplicate check ──────────────────────────────────────────────
+  /**
+   * Queries the users table for any existing record whose normalized
+   * first_name + last_name matches the current form values.
+   * Middle name is intentionally excluded — it is optional and unreliable
+   * as a deduplication signal.
+   *
+   * Returns the matched row (truthy) or null (no duplicate).
+   */
+  const checkNameDuplicate = async (firstName, lastName) => {
+    const normFirst = normalizeName(firstName);
+    const normLast  = normalizeName(lastName);
+
+    // Fetch all rows whose first/last name could be a match.
+    // ilike is case-insensitive; the JS normalization handles extra spaces.
+    const { data, error: queryError } = await supabase
+      .from('users')
+      .select('id, first_name, last_name, email')
+      .ilike('first_name', normFirst)
+      .ilike('last_name',  normLast);
+
+    if (queryError) throw queryError;
+    if (!data || data.length === 0) return null;
+
+    // Secondary JS pass: collapse internal whitespace before comparing,
+    // guarding against values stored with inconsistent spacing in the DB.
+    const match = data.find(
+      (row) =>
+        normalizeName(row.first_name) === normFirst &&
+        normalizeName(row.last_name)  === normLast
+    );
+
+    return match || null;
+  };
+  // ───────────────────────────────────────────────────────────────────────────
+
   const handleSignup = async () => {
     setError('');
     const required   = ['firstName', 'lastName', 'email', 'password', 'confirmPassword'];
@@ -92,6 +132,24 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
 
     setLoading(true);
     try {
+      // ── 1. Name-level duplicate check (runs before auth signup) ────────────
+      const nameDuplicate = await checkNameDuplicate(form.firstName, form.lastName);
+      if (nameDuplicate) {
+        setFieldErrors(prev => ({
+          ...prev,
+          firstName: 'A record with this name already exists.',
+          lastName:  'A record with this name already exists.',
+        }));
+        setTouched(prev => ({ ...prev, firstName: true, lastName: true }));
+        // Surface a clear, actionable message without exposing the existing email.
+        return setError(
+          'An account with this name is already registered. ' +
+          'If this is you, please log in instead or contact support.'
+        );
+      }
+      // ───────────────────────────────────────────────────────────────────────
+
+      // ── 2. Supabase auth signup ────────────────────────────────────────────
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -99,6 +157,7 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
       });
       if (signUpError) throw signUpError;
 
+      // ── 3. Insert/upsert user profile row ──────────────────────────────────
       const { error: insertError } = await supabase.from('users').upsert({
         id:          data.user.id,
         email:       form.email,
@@ -121,7 +180,7 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
         }, { onConflict: 'user_id' });
       } catch (_) {}
 
-      // ── Instead of navigate('/login'), switch to login modal ──
+      // ── Switch to login modal on success ───────────────────────────────────
       onSwitchToLogin();
     } catch (err) {
       const msg = err.message || '';

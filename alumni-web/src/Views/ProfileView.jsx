@@ -600,7 +600,7 @@ const NotificationBell = memo(({
 ));
 
 const PersonalInformationModal = memo(({
-  isMobile, piForm, setPiField, piFieldErrors,
+  isMobile, departmentType, piForm, setPiField, piFieldErrors,
   piLoading, piSaving, piSaveSuccess, piSaveError,
   onPISave, onClose, onSetToast,
 }) => {
@@ -750,27 +750,7 @@ const PersonalInformationModal = memo(({
                 </div>
               </div>
 
-              <div className="prof-pi-field">
-                <label className="prof-pi-label">
-                  Gender <span className="eb-req">*</span>
-                  {piFieldErrors.gender && <span className="prof-pi-error-text">Required</span>}
-                </label>
-                <div className="prof-radio-group">
-                  {['Male', 'Female', 'Prefer not to say'].map(option => (
-                    <label key={option} className="prof-radio-option">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value={option}
-                        checked={piForm.gender === option}
-                        onChange={setPiField('gender')}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
+              
               <div className="prof-pi-field">
                 <label className="prof-pi-label">
                   Birthday <span className="eb-req">*</span>
@@ -785,26 +765,28 @@ const PersonalInformationModal = memo(({
                 />
               </div>
 
-              <div className="prof-pi-field">
-                <label className="prof-pi-label">
-                  Civil Status <span className="eb-req">*</span>
-                  {piFieldErrors.civilStatus && <span className="prof-pi-error-text">Required</span>}
-                </label>
-                <div className="prof-radio-group">
-                  {['Single', 'Married', 'Other'].map(option => (
-                    <label key={option} className="prof-radio-option">
-                      <input
-                        type="radio"
-                        name="civilStatus"
-                        value={option}
-                        checked={piForm.civilStatus === option}
-                        onChange={setPiField('civilStatus')}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  ))}
+               {departmentType !== 'shs' && (
+                <div className="prof-pi-field">
+                  <label className="prof-pi-label">
+                    Civil Status <span className="eb-req">*</span>
+                    {piFieldErrors.civilStatus && <span className="prof-pi-error-text">Required</span>}
+                  </label>
+                  <div className="prof-radio-group">
+                    {['Single', 'Married', 'Other'].map(option => (
+                      <label key={option} className="prof-radio-option">
+                        <input
+                          type="radio"
+                          name="civilStatus"
+                          value={option}
+                          checked={piForm.civilStatus === option}
+                          onChange={setPiField('civilStatus')}
+                        />
+                        <span>{option}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="prof-pi-field">
                 <label className="prof-pi-label">
@@ -1129,7 +1111,7 @@ const InfoRow = memo(({ icon, value, placeholder }) => (
 
 const ProfileView = ({
   isMobile, isTablet, navigate,
-  user, avatarUrl, strength, onAvatarUpload,
+   user, departmentType, avatarUrl, strength, onAvatarUpload,
   lastPasswordChange,
   showPIModal, onClosePIModal,
   showCPModal, onCloseCPModal, onOpenCPFromPI,
@@ -1313,7 +1295,9 @@ const ProfileView = ({
                 <InfoRow icon={<img src={idIcon}       alt="Student ID"/>}   value={studentNum}           placeholder="Student number not set"/>
                 <InfoRow icon={<img src={genderIcon}   alt="Gender"/>}       value={gender}               placeholder="Gender not set"/>
                 <InfoRow icon={<img src={birthdayIcon} alt="Birthday"/>}     value={formatDate(birthday)} placeholder="Birthday not set"/>
-                <InfoRow icon={<img src={civilIcon}    alt="Civil Status"/>} value={civilStatus}          placeholder="Civil status not set"/>
+                {departmentType !== 'shs' && (
+                  <InfoRow icon={<img src={civilIcon}    alt="Civil Status"/>} value={civilStatus}          placeholder="Civil status not set"/>
+                )}
                 <InfoRow icon={<img src={locationIcon} alt="Address"/>}      value={address}              placeholder="Address not set"/>
                 <InfoRow icon={<img src={phoneIcon}    alt="Phone"/>}        value={phone}                placeholder="Phone not set"/>
                 <InfoRow icon={<img src={emailIcon}    alt="Email"/>}        value={email}                placeholder="Email not set"/>
@@ -1418,6 +1402,7 @@ const ProfileView = ({
       {showPIModal && (
         <PersonalInformationModal
           isMobile={isMobile}
+          departmentType={departmentType}
           piForm={piForm}
           setPiField={setPiField}
           piFieldErrors={piFieldErrors}

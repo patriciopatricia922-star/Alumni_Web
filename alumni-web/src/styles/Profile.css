@@ -71,7 +71,8 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   margin-left: var(--prof-sidebar-w);
   padding: clamp(12px, 1.8vh, 24px) clamp(40px, 6vw, 97px)
@@ -83,13 +84,13 @@ html, body, #root {
 .prof-main {
   display: grid;
   grid-template-rows:
-    auto                 /* back button */
-    auto                 /* page header */
-    var(--prof-top-h)    /* hero + strength */
-    1fr;                 /* bottom cards fill remaining space */
+    auto
+    auto
+    var(--prof-top-h)
+    auto;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   gap: clamp(4.9px, 1.0vh, 3px);
 }
 
@@ -459,7 +460,7 @@ html, body, #root {
 .prof-hero-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
-  padding: clamp(16px, 2.4vh, 26px) clamp(20px, 2.6vw, 36px);
+  padding: clamp(20px, 2.8vh, 32px) clamp(24px, 2.8vw, 40px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -495,8 +496,8 @@ html, body, #root {
 .prof-hero-left {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: clamp(4px, 0.6vh, 8px);
+  justify-content: center;
+  gap: clamp(2px, 0.4vh, 6px);
   position: relative;
   z-index: 1;
   flex: 1;
@@ -515,35 +516,39 @@ html, body, #root {
 .prof-hero-avatar-wrap {
   position: relative;
   cursor: pointer;
-  width: clamp(49px, 19vh, 90px);
-  height: clamp(49px, 19vh, 90px);
+  width: clamp(54px, 20vh, 96px);
+  height: clamp(54px, 20vh, 96px);
 }
 
 .prof-hero-avatar-img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 4px solid rgba(255, 255, 255, 0.2);
+  border: 3px solid rgba(255, 255, 255, 0.3);
   display: block;
-  box-shadow: 0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
 .prof-hero-avatar-initials {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
-  background: var(--prof-gradient-avatar);
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.18);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
 }
 
 .prof-hero-avatar-initials span {
   font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
-  font-size: clamp(0.875rem, 2.8vh, 1.875rem);
+  font-weight: 800;
+  font-size: clamp(1rem, 2.6vh, 1.75rem);
   color: var(--prof-white);
+  letter-spacing: -0.5px;
 }
 
 .prof-hero-avatar-overlay {
@@ -563,21 +568,30 @@ html, body, #root {
 .prof-hero-name {
   font-family: var(--prof-font-display);
   font-weight: 800;
-  font-size: clamp(16px, 2.4vw, 38px);
-  line-height: 1.2;
-  letter-spacing: -0.5px;
+  font-size: clamp(20px, 2.8vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -0.8px;
   color: var(--prof-white);
-  margin: 0;
+  margin: 0 0 clamp(6px, 0.9vh, 12px) 0;
   word-break: break-word;
 }
 
-.prof-hero-program,
+.prof-hero-program {
+  font-family: var(--prof-font-display);
+  font-weight: 600;
+  font-size: clamp(11px, 1.0vw, 15px);
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  letter-spacing: 0.1px;
+}
+
 .prof-hero-batch {
   font-family: var(--prof-font-display);
   font-weight: 400;
-  font-size: clamp(11px, 1.05vw, 16px);
+  font-size: clamp(10px, 0.9vw, 14px);
   line-height: 1.4;
-  color: var(--prof-white);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
@@ -585,11 +599,11 @@ html, body, #root {
 .prof-strength-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
-  padding: clamp(16px, 2.4vh, 26px) clamp(20px, 2.6vw, 36px);
+  padding: clamp(20px, 2.8vh, 32px) clamp(24px, 2.8vw, 40px);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: clamp(5px, 0.9vh, 10px);
+  justify-content: center;
+  gap: clamp(8px, 1.2vh, 14px);
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
@@ -610,10 +624,10 @@ html, body, #root {
 
 .prof-strength-eyebrow {
   font-family: var(--prof-font-display);
-  font-weight: 800;
-  font-size: clamp(9px, 1.0vw, 14px);
-  letter-spacing: 0.02em;
-  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+  font-size: clamp(9px, 0.85vw, 12px);
+  letter-spacing: 1.2px;
+  color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
   position: relative;
   z-index: 1;
@@ -622,26 +636,23 @@ html, body, #root {
 
 .prof-strength-value-row {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
   position: relative;
   z-index: 1;
-  flex: 1;
-  align-items: center;
+  flex-shrink: 0;
 }
 
 .prof-strength-label {
   font-family: var(--prof-font-display);
   font-weight: 800;
-  font-size: clamp(14px, 1.9vw, 28px);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: clamp(18px, 2.4vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
 }
 
 .prof-strength-bar-track {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.7);
+  height: 7px;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
   overflow: hidden;
   position: relative;
@@ -658,9 +669,10 @@ html, body, #root {
 
 .prof-strength-hint {
   font-family: var(--prof-font-display);
-  font-size: clamp(11px, 1.05vw, 16px);
-  line-height: 1.4;
-  color: var(--prof-white);
+  font-size: clamp(11px, 0.9vw, 14px);
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
   margin: 0;
   position: relative;
   z-index: 1;
@@ -677,8 +689,9 @@ html, body, #root {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(16px, 3.2vw, 44px);
+  overflow: visible;
   min-height: 0;
-  overflow: hidden;
+  max-height: 100%;
   margin-left: var(--prof-content-inset);
   margin-right: var(--prof-content-inset);
 }
@@ -696,7 +709,6 @@ html, body, #root {
   overflow: hidden;
   margin-top: 6px;
   min-height: 0;
-  height: 53.1vh;
   box-sizing: border-box;
   position: relative;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;

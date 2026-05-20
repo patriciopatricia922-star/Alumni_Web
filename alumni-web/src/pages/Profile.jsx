@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ProfileView from '../views/ProfileView';
+import { classifyDepartment } from '../lib/departmentClassifier';
 
 // ── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -144,6 +145,7 @@ const Profile = () => {
 
   // ── User / avatar ─────────────────────────────────────────────────────────
   const [user,               setUser]              = useState(null);
+    const [departmentType,     setDepartmentType]    = useState('college');
   const [surveyData,         setSurveyData]        = useState(null);
   const [avatarUrl,          setAvatarUrl]         = useState(null);
   const [strength,           setStrength]          = useState(0);
@@ -210,6 +212,7 @@ const Profile = () => {
 
       const mergedUser = { ...userData, ...personalBgData };
       setUser(mergedUser);
+      setDepartmentType(classifyDepartment(userData?.program) ?? 'college');
       setStrength(calcStrength(mergedUser, personalBgData));
       if (userData.avatar_url) setAvatarUrl(userData.avatar_url);
     } catch (err) {
@@ -523,6 +526,7 @@ const Profile = () => {
       navigate={navigate}
       // user
       user={user}
+      departmentType={departmentType}
       avatarUrl={avatarUrl}
       strength={strength}
       onAvatarUpload={handleAvatarUpload}
