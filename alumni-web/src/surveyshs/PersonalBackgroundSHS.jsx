@@ -15,9 +15,17 @@
  *   • REQUIRED_FIELDS    → SHS field set (no civil_status, no separate address parts;
  *                          adds track_strand + year_graduated)
  *   • DEFAULT_LABELS     → SHS-appropriate labels
- *   • PROFILE_TO_SURVEY  → maps profile keys to SHS snake_case keys
+ *   • PROFILE_TO_SURVEY  → maps profile keys to SHS snake_case keys;
+ *                          now includes track_strand ← academicProgram/program
+ *                          and year_graduated ← yearGraduated/batch_year
  *   • surveyConfig lookup searches for section id 'shs_personal_background'
  *     OR title 'SHS Personal Background'
+ *
+ * CHANGE LOG:
+ *   • Added normalizeTrackStrand() helper — maps raw program strings (e.g.
+ *     "SHS-STEM", "stem", "SHS HUMSS") to the canonical radio option value
+ *     expected by PersonalBackgroundViewSHS. Applied in Tier A autofill only.
+ *     No College logic is touched.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -31,10 +39,10 @@ import PersonalBackgroundViewSHS from './views/PersonalBackgroundViewSHS';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;   // SHS survey total sections — update as new sections ship
+const TOTAL_SECTIONS  = 5;   
 const CURRENT_SECTION = 1;
 const SECTION_KEY     = 'shs_personal_background';
-const NEXT_ROUTE      = '/surveyshs/section-2';  // update when Section 2 is implemented
+const NEXT_ROUTE      = '/surveyshs/shs-educational-background';
 
 // Fields that must be filled before the user can advance
 const REQUIRED_FIELDS = [
@@ -80,6 +88,51 @@ const INDEX_TO_FIELD = [
   'gender', 'birthday', 'complete_address',
   'contact_number', 'email', 'track_strand', 'year_graduated',
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHS Track/Strand canonical values
+//
+// These must exactly match the radio button option values rendered by
+// PersonalBackgroundViewSHS (and the canonical strings in departmentClassifier).
+// Normalization is applied only in the SHS autofill path — College is untouched.
+// ─────────────────────────────────────────────────────────────────────────────
+const SHS_TRACK_CANONICAL = ['SHS-STEM', 'SHS-ABM', 'SHS-HUMSS'];
+
+/**
+ * Normalize a raw program string to the canonical SHS track/strand value
+ * expected by the radio button group in PersonalBackgroundViewSHS.
+ *
+ * Handles:
+ *   "SHS-STEM"  → "SHS-STEM"   (already canonical — pass through)
+ *   "shs-stem"  → "SHS-STEM"   (lowercase)
+ *   "SHS STEM"  → "SHS-STEM"   (space separator)
+ *   "STEM"      → "SHS-STEM"   (missing prefix)
+ *   "ABM"       → "SHS-ABM"
+ *   "HUMSS"     → "SHS-HUMSS"
+ *   anything else → raw value unchanged (surveyConfig may define custom strands)
+ *
+ * @param {string | null | undefined} raw
+ * @returns {string}
+ */
+const normalizeTrackStrand = (raw) => {
+  if (!raw) return '';
+  const upper = String(raw).trim().toUpperCase().replace(/\s+/g, '-');
+
+  // 1. Direct canonical match (covers already-correct values)
+  const direct = SHS_TRACK_CANONICAL.find((c) => c === upper);
+  if (direct) return direct;
+
+  // 2. Loose suffix match: "STEM" → "SHS-STEM", "ABM" → "SHS-ABM", etc.
+  const suffix = SHS_TRACK_CANONICAL.find((c) => c.endsWith(`-${upper}`));
+  if (suffix) return suffix;
+
+  // 3. Already SHS-prefixed but with non-standard casing — return normalised
+  if (upper.startsWith('SHS-')) return upper;
+
+  // 4. Unknown / custom strand — pass through unchanged so surveyConfig
+  //    dynamic options can still match it
+  return String(raw).trim();
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Form completion percentage
@@ -158,6 +211,11 @@ const PersonalBackgroundSHS = () => {
   // ── Autofill / load control flags ─────────────────────────────────────────
   const [hasLoadedSavedData,    setHasLoadedSavedData]    = useState(false);
   const [hasAttemptedAutofill,  setHasAttemptedAutofill]  = useState(false);
+
+  // Ref that always holds the authoritative academic values (track_strand,
+  // year_graduated) so the savedData merge in Step 1 can re-assert them even
+  // if it runs after Step 2 — identical to College EducationalBackground.
+  const profileAcademicRef = useRef({});
 
   // ── Survey config (dynamic labels / options) ──────────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
@@ -250,7 +308,16 @@ const PersonalBackgroundSHS = () => {
         const savedData = await loadSectionData(SECTION_KEY);
         if (savedData && Object.keys(savedData).length > 0) {
           console.log('[PersonalBackgroundSHS] Loaded saved survey data:', savedData);
-          setForm((f) => ({ ...f, ...savedData }));
+          setForm((f) => {
+            const merged = { ...f, ...savedData };
+            // Re-assert authoritative academic values so a slow DB read can
+            // never silently overwrite track_strand / year_graduated that were
+            // set from the profile — mirrors College EducationalBackground Step 1.
+            Object.entries(profileAcademicRef.current).forEach(([key, val]) => {
+              merged[key] = val;
+            });
+            return merged;
+          });
         }
       } catch (error) {
         console.error('[PersonalBackgroundSHS] Error loading saved data:', error);
@@ -261,24 +328,68 @@ const PersonalBackgroundSHS = () => {
     loadSavedData();
   }, []);
 
-  // ── STEP 2: Field-by-field autofill from profile ───────────────────────────
-  // Never overwrites saved answers — only fills fields that are still empty.
-  // SHS-specific: if complete_address is empty but profile has street/city/province,
-  // those are joined into a single complete_address string as a convenience.
+  // ── STEP 2: Autofill from profile ────────────────────────────────────────
+  //
+  // Two-tier strategy — mirrors College EducationalBackground exactly:
+  //
+  //   Tier A — UNCONDITIONAL overwrite (track_strand, year_graduated):
+  //     These come from the authoritative users table (program, batch_year).
+  //     They are always applied regardless of saved form state, and stored in
+  //     profileAcademicRef so Step 1 can re-assert them after a DB load.
+  //     The guard `!formValue` is intentionally NOT used here — same as the
+  //     College lockedFields pattern.
+  //
+  //     track_strand is passed through normalizeTrackStrand() so that the raw
+  //     program value (e.g. "SHS-STEM") maps to the exact string expected by
+  //     the radio button group in PersonalBackgroundViewSHS.
+  //
+  //   Tier B — CONDITIONAL fill (all other fields):
+  //     Only fills if the form field is currently empty — preserves user edits
+  //     and previously saved answers.
+  //
+  // `profile` is added to the deps array (was missing before) so the effect
+  // fires correctly when the hook resolves after the component mounts.
   useEffect(() => {
-    if (!hasLoadedSavedData)    return;
-    if (profileLoading)          return;
-    if (hasAttemptedAutofill)    return;
+    if (!hasLoadedSavedData) return;
+    if (profileLoading)      return;
+    if (hasAttemptedAutofill) return;
 
-    console.log('[PersonalBackgroundSHS] Running field-by-field autofill...');
+    console.log('[PersonalBackgroundSHS] Running autofill...');
+    console.log('[PersonalBackgroundSHS] Profile:', profile);
 
     if (profile && Object.keys(profile).length > 0) {
-      setForm((currentForm) => {
-        const updated    = { ...currentForm };
-        let   didChange  = false;
 
-        // Direct 1-to-1 mappings
-        const directMap = {
+      // ── Tier A: academic fields — unconditional overwrite ─────────────────
+      // Mirrors extractProfileAcademicFields from College EducationalBackground.
+      const program   = profile.academicProgram ?? profile.program   ?? null;
+      const batchYear = profile.yearGraduated   ?? profile.batch_year ?? null;
+
+      const academicValues = {};
+
+      if (program && String(program).trim()) {
+        // ↓ CHANGE: normalizeTrackStrand maps "SHS-STEM" / "STEM" / "shs-stem"
+        //   to the canonical value the radio button group checks against.
+        //   College autofill is completely unaffected — this helper is only
+        //   called here, inside the SHS-only controller.
+        academicValues.track_strand = normalizeTrackStrand(program);
+      }
+
+      if (batchYear && String(batchYear).trim()) {
+        academicValues.year_graduated = String(batchYear).trim();
+      }
+
+      if (Object.keys(academicValues).length > 0) {
+        // Persist in ref so Step 1 re-assert can use them on race conditions
+        profileAcademicRef.current = academicValues;
+        console.log('[PersonalBackgroundSHS] Unconditionally applying academic values:', academicValues);
+      }
+
+      // ── Tier B: remaining fields — conditional fill (no overwrite) ────────
+      setForm((currentForm) => {
+        const updated   = { ...currentForm, ...academicValues };
+        let   didChange = Object.keys(academicValues).length > 0;
+
+        const conditionalMap = {
           firstName:     'first_name',
           middleName:    'middle_name',
           lastName:      'last_name',
@@ -288,7 +399,7 @@ const PersonalBackgroundSHS = () => {
           birthday:      'birthday',
         };
 
-        Object.entries(directMap).forEach(([profileKey, surveyKey]) => {
+        Object.entries(conditionalMap).forEach(([profileKey, surveyKey]) => {
           const profileValue = profile[profileKey];
           const formValue    = currentForm[surveyKey];
           if (
@@ -302,7 +413,7 @@ const PersonalBackgroundSHS = () => {
           }
         });
 
-        // Derived: complete_address from profile address parts (only if field is empty)
+        // Derived: complete_address from profile address parts (only if empty)
         if (!currentForm.complete_address || String(currentForm.complete_address).trim() === '') {
           const parts = [profile.street, profile.city, profile.province]
             .filter(Boolean)
@@ -311,19 +422,20 @@ const PersonalBackgroundSHS = () => {
           if (parts.length > 0) {
             updated.complete_address = parts.join(', ');
             didChange = true;
-            console.log('[PersonalBackgroundSHS] Autofilled complete_address from profile address parts');
+            console.log('[PersonalBackgroundSHS] Autofilled complete_address from address parts');
           }
         }
 
         return didChange ? updated : currentForm;
       });
+
     } else {
       console.log('[PersonalBackgroundSHS] No profile data available for autofill');
     }
 
     setHasAttemptedAutofill(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileLoading, hasLoadedSavedData, hasAttemptedAutofill]);
+  }, [profileLoading, profile, hasLoadedSavedData, hasAttemptedAutofill]);
 
   // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {

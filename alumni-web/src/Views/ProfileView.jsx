@@ -750,6 +750,27 @@ const PersonalInformationModal = memo(({
                 </div>
               </div>
 
+               <div className="prof-pi-field">
+                <label className="prof-pi-label">
+                  Gender <span className="eb-req">*</span>
+                  {piFieldErrors.gender && <span className="prof-pi-error-text">Required</span>}
+                </label>
+                <div className="prof-radio-group">
+                  {['Male', 'Female', 'Prefer not to say'].map(option => (
+                    <label key={option} className="prof-radio-option">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={option}
+                        checked={piForm.gender === option}
+                        onChange={setPiField('gender')}
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               
               <div className="prof-pi-field">
                 <label className="prof-pi-label">

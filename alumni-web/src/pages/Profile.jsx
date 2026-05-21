@@ -18,12 +18,19 @@ const useWindowWidth = () => {
 };
 
 // ── Profile strength fields (combined from users and personal_background_data) ──
-const REQUIRED_FIELDS = [
+// civil_status is excluded for SHS alumni — they are not asked for it in the
+// SHS survey, so requiring it would permanently cap their profile strength.
+const BASE_REQUIRED_FIELDS = [
   'first_name', 'last_name', 'program',
-  'batch_year', 'gender', 'birthday', 'civil_status',
+  'batch_year', 'gender', 'birthday',
   'street_address', 'city', 'province', 'zip_code', 'country',
   'contact_number', 'student_number',
 ];
+
+const getRequiredFields = (deptType) =>
+  deptType === 'shs'
+    ? BASE_REQUIRED_FIELDS                          // 13 fields — no civil_status
+    : [...BASE_REQUIRED_FIELDS, 'civil_status'];    // 14 fields — college default
 
 const normalizeUserData = (userData = {}, surveyData = {}) => ({
   avatar_url: userData.avatar_url,
@@ -48,14 +55,19 @@ const normalizeUserData = (userData = {}, surveyData = {}) => ({
   student_number: surveyData.student_number,
 });
 
-const calcStrength = (userData, surveyData) => {
+// departmentType is passed through from fetchUserAndSurvey so that SHS alumni
+// are assessed against 13 fields (no civil_status) and college alumni against
+// the full 14. normalizeUserData is unchanged — civil_status may still exist
+// in the data; we just don't penalise SHS users for not having it.
+const calcStrength = (userData, surveyData, deptType = 'college') => {
   if (!userData) return 0;
   const combined = normalizeUserData(userData, surveyData);
-  const filled   = REQUIRED_FIELDS.filter((f) => {
+  const required = getRequiredFields(deptType);
+  const filled   = required.filter((f) => {
     const val = combined[f];
     return val !== null && val !== undefined && String(val).trim() !== '';
   }).length;
-  return Math.round((filled / REQUIRED_FIELDS.length) * 100);
+  return Math.round((filled / required.length) * 100);
 };
 
 // ── Personal Information form config ──────────────────────────────────────
@@ -79,7 +91,7 @@ export const validatePI = (form) => {
   if (form.contactNumber) {
     const digits = form.contactNumber.replace(/\D/g, '');
     if (digits.length < 10 || digits.length > 11)
-      errors.contactNumber = 'Enter a valid 10–11 digit number.';
+      errors.contactNumber = 'Enter a valid 10\u201311 digit number.';
   }
   if (form.yearGraduated && !/^\d{4}$/.test(form.yearGraduated))
     errors.yearGraduated = 'Enter a valid 4-digit year.';
@@ -92,7 +104,7 @@ export const PASSWORD_RULES = [
   { id: 'upper',   label: 'At least one uppercase letter',   test: (v) => /[A-Z]/.test(v) },
   { id: 'lower',   label: 'At least one lowercase letter',   test: (v) => /[a-z]/.test(v) },
   { id: 'number',  label: 'At least one number',             test: (v) => /[0-9]/.test(v) },
-  { id: 'special', label: 'At least one special character',  test: (v) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(v) },
+  { id: 'special', label: 'At least one special character',  test: (v) => /[!@#$%^&*()_+\-=[\]{};\':"\\|,.<>/?]/.test(v) },
 ];
 
 // ── Notification helpers ───────────────────────────────────────────────────
@@ -145,7 +157,7 @@ const Profile = () => {
 
   // ── User / avatar ─────────────────────────────────────────────────────────
   const [user,               setUser]              = useState(null);
-    const [departmentType,     setDepartmentType]    = useState('college');
+  const [departmentType,     setDepartmentType]    = useState('college');
   const [surveyData,         setSurveyData]        = useState(null);
   const [avatarUrl,          setAvatarUrl]         = useState(null);
   const [strength,           setStrength]          = useState(0);
@@ -179,7 +191,7 @@ const Profile = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-    // ── Fetch user and survey data ─────────────────────────────────────────────
+  // ── Fetch user and survey data ─────────────────────────────────────────────
   const fetchUserAndSurvey = useCallback(async () => {
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
@@ -193,9 +205,9 @@ const Profile = () => {
       if (userError) { console.error('Supabase error:', userError.message); return; }
 
       const pwChangedAt =
-        userData?.password_changed_at                 
-        ?? authUser.user_metadata?.password_changed_at 
-        ?? null;                                      
+        userData?.password_changed_at
+        ?? authUser.user_metadata?.password_changed_at
+        ?? null;
       setLastPasswordChange(pwChangedAt);
 
       const { data: surveyProgress, error: surveyError } = await supabase
@@ -211,9 +223,10 @@ const Profile = () => {
       if (!userData) { console.warn('No user record for ID:', authUser.id); return; }
 
       const mergedUser = { ...userData, ...personalBgData };
+      const deptType   = classifyDepartment(userData?.program) ?? 'college';
       setUser(mergedUser);
-      setDepartmentType(classifyDepartment(userData?.program) ?? 'college');
-      setStrength(calcStrength(mergedUser, personalBgData));
+      setDepartmentType(deptType);
+      setStrength(calcStrength(mergedUser, personalBgData, deptType));
       if (userData.avatar_url) setAvatarUrl(userData.avatar_url);
     } catch (err) {
       console.error('fetchUser error:', err);
@@ -328,9 +341,6 @@ const Profile = () => {
   }, []);
 
   // ── PI save ────────────────────────────────────────────────────────────────
-  // FIX: first_name, last_name, middle_name and email are now also written into
-  //      personal_background_data so that PersonalBackground.jsx autofill finds
-  //      them via loadSectionData — even after a Profile modal save.
   const handlePISave = useCallback(async () => {
     setPiSaveError('');
     setPiSaveSuccess(false);
@@ -359,19 +369,14 @@ const Profile = () => {
       }
 
       // ── 2. survey_progress.personal_background_data (JSONB) ─────────────
-      // FIX: include name fields + email so the survey section can load them
-      //      via loadSectionData without relying solely on the hook.
       const personalBgData = {};
 
-      // Name fields — written here so survey autofill picks them up
       if (piForm.firstName  !== '') personalBgData.first_name   = piForm.firstName;
       if (piForm.middleName !== '') personalBgData.middle_name  = piForm.middleName;
       if (piForm.lastName   !== '') personalBgData.last_name    = piForm.lastName;
 
-      // Email — auth-managed, stored here for survey completeness
       if (authUser.email)           personalBgData.email        = authUser.email;
 
-      // Address / contact fields
       if (piForm.gender        !== '') personalBgData.gender         = piForm.gender;
       if (piForm.birthday      !== '') personalBgData.birthday       = piForm.birthday;
       if (piForm.civilStatus   !== '') personalBgData.civil_status   = piForm.civilStatus;
@@ -384,7 +389,6 @@ const Profile = () => {
       if (piForm.studentNumber !== '') personalBgData.student_number = piForm.studentNumber;
 
       if (Object.keys(personalBgData).length > 0) {
-        // Merge with existing data so unedited fields are preserved
         const { data: existingProgress } = await supabase
           .from('survey_progress')
           .select('personal_background_data')
@@ -467,7 +471,6 @@ const Profile = () => {
 
       setLastPasswordChange(passwordChangedAt);
 
-      // setLastPasswordChange(new Date().toISOString());
       setCpLoading(false);
       setCpSuccess(true);
       setCpCurrent('');

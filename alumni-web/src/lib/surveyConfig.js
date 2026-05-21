@@ -1,53 +1,48 @@
 import { supabase } from './supabase';
 
-// ---------------------------------------------------------------------------
-// Module-level cache
-// ---------------------------------------------------------------------------
-let cachedConfig  = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 60_000; // 1 minute
+let cachedConfigs = {};
+const CACHE_DURATION = 60_000;
 
-// ---------------------------------------------------------------------------
-// clearSurveyConfigCache
-// ---------------------------------------------------------------------------
 export const clearSurveyConfigCache = () => {
-  cachedConfig  = null;
-  lastFetchTime = 0;
+  cachedConfigs = {};
 };
 
-// ---------------------------------------------------------------------------
-// loadSurveyConfig
-// ---------------------------------------------------------------------------
-export const loadSurveyConfig = async (forceRefresh = false) => {
+export const loadSurveyConfig = async (forceRefresh = false, departmentType = 'college') => {
   const now = Date.now();
+  const cached = cachedConfigs[departmentType];
 
   if (
     !forceRefresh &&
-    cachedConfig !== null &&
-    now - lastFetchTime < CACHE_DURATION
+    cached?.data !== undefined &&
+    now - cached.fetchTime < CACHE_DURATION
   ) {
-    return cachedConfig;
+    return cached.data;
   }
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('survey_config')
       .select('config')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
+      .order('updated_at', { ascending: false });
+
+    if (departmentType === 'shs') {
+      query = query.eq('config->>survey_type', 'shs');
+    } else {
+      query = query.or('config->>survey_type.is.null,config->>survey_type.eq.college');
+    }
+
+    const { data, error } = await query.limit(1).single();
 
     if (error) {
       console.error('Error loading survey config:', error);
-      return cachedConfig; // return stale copy rather than crashing
+      return cached?.data ?? null;
     }
 
-    cachedConfig  = data?.config ?? null;
-    lastFetchTime = now;
-    return cachedConfig;
+    cachedConfigs[departmentType] = { data: data?.config ?? null, fetchTime: now };
+    return cachedConfigs[departmentType].data;
   } catch (err) {
     console.error('Failed to load survey config:', err);
-    return cachedConfig;
+    return cached?.data ?? null;
   }
 };
 
@@ -58,7 +53,7 @@ export const subscribeToSurveyConfigChanges = (onUpdate) => {
   const channelId = `survey_config_ch_${_channelCounter}`;
 
   const channel = supabase
-    .channel(channelId) 
+    .channel(channelId)
     .on(
       'postgres_changes',
       {
@@ -67,48 +62,38 @@ export const subscribeToSurveyConfigChanges = (onUpdate) => {
         table: 'survey_config',
       },
       (payload) => {
-        // console.log('[Realtime] Raw Payload:', payload);
-        
-        
         clearSurveyConfigCache();
-
-        // Add a tiny delay (200ms) before telling the UI to refresh.
         setTimeout(() => {
-          onUpdate(payload.new.config); 
+          onUpdate(payload.new.config);
         }, 200);
       }
     )
-    .subscribe((status) => {
-      // console.log(`[Realtime] ${channelId} status:`, status);
-    });
+    .subscribe();
 
   return channel;
 };
 
-// ---------------------------------------------------------------------------
-// Convenience helpers (unchanged public API)
-// ---------------------------------------------------------------------------
-export const getSectionQuestions = async (sectionTitle) => {
-  const config = await loadSurveyConfig();
+export const getSectionQuestions = async (sectionTitle, departmentType = 'college') => {
+  const config = await loadSurveyConfig(false, departmentType);
   if (!config?.sections) return null;
   const section = config.sections.find(s => s.title === sectionTitle);
   return section?.questions || null;
 };
 
-export const getQuestionLabel = async (sectionTitle, fieldId, defaultLabel) => {
-  const questions = await getSectionQuestions(sectionTitle);
-  const question  = questions?.find(q => q.id === fieldId);
+export const getQuestionLabel = async (sectionTitle, fieldId, defaultLabel, departmentType = 'college') => {
+  const questions = await getSectionQuestions(sectionTitle, departmentType);
+  const question = questions?.find(q => q.id === fieldId);
   return question?.label || defaultLabel;
 };
 
-export const getQuestionPlaceholder = async (sectionTitle, fieldId, defaultPlaceholder) => {
-  const questions = await getSectionQuestions(sectionTitle);
-  const question  = questions?.find(q => q.id === fieldId);
+export const getQuestionPlaceholder = async (sectionTitle, fieldId, defaultPlaceholder, departmentType = 'college') => {
+  const questions = await getSectionQuestions(sectionTitle, departmentType);
+  const question = questions?.find(q => q.id === fieldId);
   return question?.placeholder || defaultPlaceholder;
 };
 
-export const getQuestionOptions = async (sectionTitle, fieldId) => {
-  const questions = await getSectionQuestions(sectionTitle);
-  const question  = questions?.find(q => q.id === fieldId);
+export const getQuestionOptions = async (sectionTitle, fieldId, departmentType = 'college') => {
+  const questions = await getSectionQuestions(sectionTitle, departmentType);
+  const question = questions?.find(q => q.id === fieldId);
   return question?.options || [];
 };
