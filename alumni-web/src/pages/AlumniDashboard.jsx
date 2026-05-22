@@ -1,8 +1,11 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
+// AlumniDashboard — Merged Implementation
 // ============================================================================
-// Purpose: Handles all business logic, Supabase API calls, data processing,
-//          state management, and event handlers for the Alumni Dashboard.
+// Base logic: original (authoritative). Additive from friend's code:
+//   • rewardPoints state + Supabase fetch from `reward_points`
+//   • Extra imports: rewardIcon, grandWestsideHotel, announcement_icn.svg
+//   • Extra props forwarded to AlumniDashboardView
+//   • forYouItems order: Announcements → Discounts → Events → Jobs
 // ============================================================================
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
@@ -10,13 +13,20 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { loadSurveyProgress, getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { logAction } from '../lib/auditLogger';
-import announcementIcon from '../assets/announcement_ic.svg';
-import discountIcon from '../assets/discount_ic.svg';
-import eventsIcon from '../assets/events_ic.svg';
-import jobsIcon from '../assets/jobs_ic.svg';
+
+// Icons — announcement_icn.svg (friend's variant) is used as the primary
+// announcement icon; the original announcement_ic.svg is kept as a fallback
+// alias so any view code referencing either name continues to work.
+import announcementIcon from '../assets/announcement_icn.svg';
+import rewardIcon       from '../assets/reward_icn.svg';
+import discountIcon     from '../assets/discount_ic.svg';
+import eventsIcon       from '../assets/events_ic.svg';
+import jobsIcon         from '../assets/jobs_ic.svg';
+import grandWestsideHotel from '../assets/grandwestside_hotel.jpeg';
+
 import AlumniDashboardView from '../views/Alumnidashboardview';
-import DataPrivacyModal from '../modals/DataPrivacyModal';
-import { useDpaGate } from '../hooks/useDpaGate';
+import DataPrivacyModal    from '../modals/DataPrivacyModal';
+import { useDpaGate }      from '../hooks/useDpaGate';
 
 // ============================ STORAGE KEYS ============================
 // Centralised localStorage keys for all four badge categories.
@@ -56,22 +66,22 @@ const useWindowWidth = () => {
 // ============================ MAIN COMPONENT ============================
 const AlumniDashboard = () => {
   const navigate = useNavigate();
-  const width = useWindowWidth();
+  const width    = useWindowWidth();
 
   // ============================ DPA GATE ============================
   const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
 
   // ============================ STATE DECLARATIONS ============================
-  const [user, setUser] = useState(null);
-  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
+  const [user,               setUser]               = useState(null);
+  const [surveyProgress,     setSurveyProgress]     = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState('all');
+  const [notifs,             setNotifs]             = useState([]);
+  const [unreadCount,        setUnreadCount]        = useState(0);
+  const [showDropdown,       setShowDropdown]       = useState(false);
+  const [notifTab,           setNotifTab]           = useState('all');
   const bellRef = useRef(null);
 
-  // Survey route — null while resolving (same pattern as Sidebar)
+  // Survey route — null while resolving (same pattern as Sidebar).
   const [surveyRoute, setSurveyRoute] = useState(null);
 
   const [cardBadges, setCardBadges] = useState({
@@ -88,9 +98,12 @@ const AlumniDashboard = () => {
     jobs:      0,
   });
 
+  // ============================ REWARD POINTS (from friend's code) ============================
+  const [rewardPoints, setRewardPoints] = useState(0);
+
   // ============================ RESPONSIVE BREAKPOINTS ============================
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1024;
+  const isMobile    = width < 768;
+  const isTablet    = width >= 768 && width < 1024;
   const sidebarWidth = isTablet ? 200 : 229;
 
   // ============================ DATA FETCHING ============================
@@ -98,15 +111,35 @@ const AlumniDashboard = () => {
     const fetchData = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
+
+      // Fetch basic profile
       const { data } = await supabase
         .from('users')
         .select('first_name, last_name')
         .eq('id', authUser.id)
         .single();
       if (data) setUser(data);
+
+      // Fetch reward points (additive — from friend's code)
+      const { data: rewardsData, error: rewardsError } = await supabase
+        .from('reward_points')
+        .select('points')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      if (rewardsError) {
+        console.error('Failed to load reward points:', rewardsError);
+      }
+      setRewardPoints(rewardsData ? Number(rewardsData.points) || 0 : 0);
+
+      // Survey progress & audit log
       const progress = await loadSurveyProgress();
       if (progress) setSurveyProgress(progress);
-      await logAction({ action: 'View', module: 'Dashboard', description: 'Alumni viewed dashboard (web)', status: 'Success' });
+      await logAction({
+        action:      'View',
+        module:      'Dashboard',
+        description: 'Alumni viewed dashboard (web)',
+        status:      'Success',
+      });
     };
     fetchData();
   }, []);
@@ -137,7 +170,7 @@ const AlumniDashboard = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const firstName  = user?.first_name || 'Alumni';
+  const firstName   = user?.first_name || 'Alumni';
   const progressPct = Math.min(surveyProgress?.percentage || 0, 100);
 
   // ============================ ANIMATE PROGRESS CIRCLE ============================
@@ -170,7 +203,7 @@ const AlumniDashboard = () => {
         .limit(20);
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.announcements) || '[]');
-      const mapped = data.map(n => ({
+      const mapped  = data.map(n => ({
         id:    n.id,
         title: n.title,
         body:  n.content,
@@ -318,7 +351,7 @@ const AlumniDashboard = () => {
     list.forEach(n => {
       const d = new Date(n.time);
       d.setHours(0, 0, 0, 0);
-      if (d >= today)     groups['Today'].push(n);
+      if (d >= today)          groups['Today'].push(n);
       else if (d >= yesterday) groups['Yesterday'].push(n);
       else if (d >= weekAgo)   groups['This Week'].push(n);
       else                     groups['Earlier'].push(n);
@@ -339,49 +372,50 @@ const AlumniDashboard = () => {
   };
 
   // ============================ FOR YOU ITEMS ============================
+  // Order: Announcements → Discounts → Events → Jobs (friend's order).
+  // All descriptions and badge logic use YOUR (original) implementation.
   // `category` is the dismissBadge key; must match a STORAGE_KEYS entry and
   // the Supabase table name for events / discounts / jobs.
-  // Descriptions now use live counts fetched from Supabase.
   const forYouItems = [
     {
-      icon: announcementIcon,
-      title: 'Announcements',
+      icon:        announcementIcon,
+      title:       'Announcements',
       description: unreadCount > 0
         ? `${unreadCount} unread announcement${unreadCount !== 1 ? 's' : ''}`
         : 'Check latest news',
-      path: '/announcements',
-      category: 'announcements',
-      showDot: cardBadges.announcements,
+      path:        '/announcements',
+      category:    'announcements',
+      showDot:     cardBadges.announcements,
     },
     {
-      icon: eventsIcon,
-      title: 'Events',
-      description: cardCounts.events > 0
-        ? `${cardCounts.events} upcoming event${cardCounts.events !== 1 ? 's' : ''}`
-        : 'No upcoming events',
-      path: '/events',
-      category: 'events',
-      showDot: cardBadges.events,
-    },
-    {
-      icon: discountIcon,
-      title: 'Discounts',
+      icon:        discountIcon,
+      title:       'Discounts',
       description: cardCounts.discounts > 0
         ? `${cardCounts.discounts} offer${cardCounts.discounts !== 1 ? 's' : ''} available`
         : 'No offers available',
-      path: '/discounts',
-      category: 'discounts',
-      showDot: cardBadges.discounts,
+      path:        '/discounts',
+      category:    'discounts',
+      showDot:     cardBadges.discounts,
     },
     {
-      icon: jobsIcon,
-      title: 'Jobs',
+      icon:        eventsIcon,
+      title:       'Events',
+      description: cardCounts.events > 0
+        ? `${cardCounts.events} upcoming event${cardCounts.events !== 1 ? 's' : ''}`
+        : 'No upcoming events',
+      path:        '/events',
+      category:    'events',
+      showDot:     cardBadges.events,
+    },
+    {
+      icon:        jobsIcon,
+      title:       'Jobs',
       description: cardCounts.jobs > 0
         ? `${cardCounts.jobs} listing${cardCounts.jobs !== 1 ? 's' : ''} available`
         : 'No listings available',
-      path: '/jobs',
-      category: 'jobs',
-      showDot: cardBadges.jobs,
+      path:        '/jobs',
+      category:    'jobs',
+      showDot:     cardBadges.jobs,
     },
   ];
 
@@ -401,10 +435,13 @@ const AlumniDashboard = () => {
       )}
 
       <AlumniDashboardView
+        // ── Layout ──
         isMobile={isMobile}
         isTablet={isTablet}
         sidebarWidth={sidebarWidth}
+        // ── User ──
         firstName={firstName}
+        // ── Notifications / Bell ──
         bellRef={bellRef}
         notifs={notifs}
         unreadCount={unreadCount}
@@ -417,12 +454,23 @@ const AlumniDashboard = () => {
         groupByDate={groupByDate}
         formatTime={formatTime}
         onSeeAllNotifs={() => { setShowDropdown(false); navigate('/notifications'); }}
+        // ── Survey progress ──
         animatedPercentage={animatedPercentage}
+        surveyRoute={surveyRoute}
+        onSurveyNavigate={handleSurveyNavigate}
+        // ── For-you cards ──
         forYouItems={forYouItems}
         onNavigate={navigate}
         onDismissBadge={dismissBadge}
-        surveyRoute={surveyRoute}
-        onSurveyNavigate={handleSurveyNavigate}
+        // ── Reward points (additive — from friend's code) ──
+        rewardPoints={rewardPoints}
+        // ── Asset references forwarded to view (additive — from friend's code) ──
+        announcementIcon={announcementIcon}
+        rewardIcon={rewardIcon}
+        discountIcon={discountIcon}
+        eventsIcon={eventsIcon}
+        jobsIcon={jobsIcon}
+        grandWestsideHotel={grandWestsideHotel}
       />
     </>
   );

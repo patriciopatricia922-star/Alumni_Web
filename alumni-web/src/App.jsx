@@ -21,6 +21,7 @@ import EmploymentInformation from './survey/Employmentinformation';
 import JobExperience from './survey/Jobexperience';
 import SkillsAndCompetencies from './survey/Skillsandcompetencies';
 import SurveyComplete from './survey/SurveyComplete';
+import RewardStore from './pages/Rewardstore';
 import Discounts from './pages/Discounts';
 import Events from './pages/Events';
 import Jobs from './pages/Jobs';
@@ -176,6 +177,7 @@ function App() {
       <Route path="/announcements" element={<ProtectedRoute allowedRoles={['alumni']}><Announcements /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute allowedRoles={['alumni']}><Profile /></ProtectedRoute>} />
       <Route path="/about" element={<ProtectedRoute allowedRoles={['alumni']}><About /></ProtectedRoute>} />
+      <Route path="/rewards" element={<ProtectedRoute allowedRoles={['alumni']}><RewardStore /></ProtectedRoute>} />
       <Route path="/discounts" element={<ProtectedRoute allowedRoles={['alumni']}><Discounts /></ProtectedRoute>} />
       <Route path="/events" element={<ProtectedRoute allowedRoles={['alumni']}><Events /></ProtectedRoute>} />
       <Route path="/jobs" element={<ProtectedRoute allowedRoles={['alumni']}><Jobs /></ProtectedRoute>} />
