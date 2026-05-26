@@ -438,3 +438,27 @@
     margin-left: 0;
   }
 }
+
+/* ── Survey claimed hint (shown after reward is awarded) ── */
+.rewards-survey-claimed-hint {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+  text-align: right;
+}
+
+/* ── Survey button: loading/disabled state ── */
+.rewards-survey-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Mobile: claimed hint left-aligned to match other left-aligned items ── */
+@media (max-width: 767px) {
+  .rewards-survey-claimed-hint {
+    text-align: left;
+  }
+}

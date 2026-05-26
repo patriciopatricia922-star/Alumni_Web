@@ -49,6 +49,8 @@ import PredictiveAnaly from './superadmin/PredictiveAnalytics';
 import SurveyMgmt from './superadmin/SurveyManagement';
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
 import PersonalBackgroundSHS from './surveyshs/PersonalBackgroundSHS';
+import EducationalBackgroundSHS from './surveyshs/EducationalBackgroundSHS';
+import EmploymentInformationSHS from './surveyshs/EmploymentInformationSHS';
 
 // Cache for auth state to prevent repeated checks
 let cachedSession = null;
@@ -161,6 +163,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <Routes>
+      {/* Main Authentication Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/register" element={<AlumniIDRegistration />} />
       <Route path="/terms" element={<TermsOfService />} />
@@ -172,6 +175,7 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
+      {/* Main Routes */}
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['alumni']}><AlumniDashboard /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['alumni']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/announcements" element={<ProtectedRoute allowedRoles={['alumni']}><Announcements /></ProtectedRoute>} />
@@ -183,6 +187,7 @@ function App() {
       <Route path="/jobs" element={<ProtectedRoute allowedRoles={['alumni']}><Jobs /></ProtectedRoute>} />
       <Route path="/update-tracer" element={<ProtectedRoute allowedRoles={['alumni']}><UpdateTracer /></ProtectedRoute>} />
 
+      {/* College Survey */}
       <Route path="/survey/personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackground /></ProtectedRoute>} />
       <Route path="/survey/educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackground /></ProtectedRoute>} />
       <Route path="/survey/certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />
@@ -194,22 +199,25 @@ function App() {
 
       {/* SHS Survey */}
       <Route path="/surveyshs/shs-personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackgroundSHS /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackground /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-employment-information" element={<ProtectedRoute allowedRoles={['alumni']}><EmploymentInformation /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackgroundSHS /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-employment-information" element={<ProtectedRoute allowedRoles={['alumni']}><EmploymentInformationSHS /></ProtectedRoute>} />
+      
+      {/* Dummy Routes Placeholder */}
+      {/*<Route path="/surveyshs/shs-certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />
       <Route path="/surveyshs/shs-job-experience" element={<ProtectedRoute allowedRoles={['alumni']}><JobExperience /></ProtectedRoute>} />
       <Route path="/surveyshs/shs-skills-and-competencies" element={<ProtectedRoute allowedRoles={['alumni']}><SkillsAndCompetencies /></ProtectedRoute>} />
       <Route path="/surveyshs/shs-feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagement /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} /> */}
 
-
+        {/* Administrator Routes */}
       <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
       <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
       <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
       <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
       <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement /></ProtectedRoute>} />
-
+        
+        {/* Super Administrator Routes */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><AuditLogs /></ProtectedRoute>} />
       <Route path="/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement /></ProtectedRoute>} />

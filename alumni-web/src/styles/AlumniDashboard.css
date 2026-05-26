@@ -8,17 +8,11 @@
   background: #DAE5F1;
 }
 
-/*
- * Merged: friend adds overflow-y scroll + -webkit-overflow-scrolling for
- * mobile momentum scrolling; your code used overflow: hidden (desktop-first).
- * Both are preserved — hidden on the outer shell, auto scroll on the content.
- */
 .dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: clamp(20px, 3vh, 40px) clamp(36px, 7.8vw, 84px) clamp(12px, 1.8vh, 29px) clamp(36px, 7.8vw, 84px);
@@ -63,6 +57,23 @@
   top: clamp(28px, 4vh, 52px);
   right: clamp(24px, 3.2vw, 56px);
   z-index: 200;
+}
+
+@media (max-width: 767px) {
+  .notification-bell {
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
+  }
+  .dashboard-header {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .notification-bell {
+    top: clamp(14px, 2.2vh, 24px);
+    right: clamp(14px, 2.2vw, 24px);
+  }
 }
 
 .bell-button {
@@ -310,7 +321,7 @@
 
 .see-all-btn:hover { background: #F0F4FB; }
 
-/* ============================ REWARD BANNER (friend's code — new section) ============================ */
+/* ============================ REWARD BANNER ============================ */
 .reward-banner {
   position: relative;
   overflow: hidden;
@@ -434,17 +445,31 @@
   transform: translateY(0);
 }
 
+@media (max-width: 767px) {
+  .reward-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .redeem-button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 18px;
+  }
+
+  .reward-banner-points {
+    font-size: 28px;
+  }
+}
+
 /* ============================ TOP BANNER ROW ============================ */
-/*
- * Merged: your code used gap clamp(16px,3.2vw,44px); friend used clamp(8px,1.6vw,20px).
- * Your wider gap is preserved as the desktop default; friend's tighter gap
- * applies at ≤1100px via the existing breakpoint.
- */
 .top-banner-row {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  gap: clamp(16px, 3.2vw, 44px);
+  gap: clamp(8px, 1.6vw, 20px);
   height: clamp(140px, 25.8vh, 249px);
   flex-shrink: 0;
   margin-bottom: clamp(20px, 3.2vh, 36px);
@@ -453,9 +478,6 @@
 
 /* ────────────────────────────────────────────────────────────────
    HELLO CARD
-   Merged: your code used height 28vh; friend used 25vh.
-   Friend's deco circle positions are slightly more offset — kept as they
-   avoid clipping on smaller viewports.
 ──────────────────────────────────────────────────────────────── */
 .hello-card {
   position: relative;
@@ -469,7 +491,7 @@
   display: flex;
   align-items: flex-start;
   box-sizing: border-box;
-  height: 28vh;
+  height: 25vh;
 }
 
 .hello-deco-circle {
@@ -478,17 +500,14 @@
   border-radius: 50%;
   pointer-events: none;
 }
-
 .hello-deco-circle--tr {
   width: 220px; height: 220px;
   left: auto; right: -50px; top: -120px;
 }
-
 .hello-deco-circle--bl {
   width: 220px; height: 220px;
   left: -50px; top: auto; bottom: -135px;
 }
-
 .hello-card-inner {
   position: relative;
   z-index: 1;
@@ -499,29 +518,25 @@
   width: 100%;
 }
 
-/*
- * Merged: your code used font-weight 800; friend used 750.
- * Your weight is preserved for stronger visual hierarchy.
- */
 .hello-text {
   font-family: 'Montserrat', Arial, sans-serif;
-  font-weight: 800;
-  font-size: clamp(20px, 3.0vw, 48px);
+  font-weight: 750;
+  font-size: clamp(20px, 3.0vw, 40px);
   line-height: 1.25;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.3px;
   color: #FFFFFF;
   margin: 0;
-  margin-top: 7px;
+  margin-top: 6px;
 }
 
-.hello-name {
-  color: #FFFFFF;
+.hello-name { 
+  color: #FFFFFF; 
 }
 
 .hello-notification-text {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(11px, 1.05vw, 16px);
+  font-size: clamp(11px, 1.05vw, 14.5px);
   line-height: 1.4;
   color: #FFFFFF;
   margin: 0;
@@ -534,9 +549,6 @@
 
 /* ────────────────────────────────────────────────────────────────
    SURVEY PROGRESS CARD
-   Merged: your code used font-weight 800 on label/message; friend used 700/750.
-   Your deco circle positions (--tl top:-120px, --br right:130px) are kept
-   as they match the hello-card visual rhythm.
 ──────────────────────────────────────────────────────────────── */
 .survey-card {
   position: relative;
@@ -552,7 +564,7 @@
   justify-content: space-between;
   gap: clamp(8px, 1.6vw, 20px);
   box-sizing: border-box;
-  height: 28vh;
+  height: 25vh;
 }
 
 .survey-blur {
@@ -572,16 +584,14 @@
   border-radius: 50%;
   pointer-events: none;
 }
-
 .survey-deco-circle--tl {
   width: 220px; height: 220px;
-  top: -120px; left: -10px;
+  top: -150px; left: -2px;
 }
-
 .survey-deco-circle--br {
   width: 180px; height: 180px;
-  top: auto; bottom: -140px;
-  left: auto; right: 130px;
+  top: auto; bottom: -130px;
+  left: auto; right: 180px;
 }
 
 .survey-card-content {
@@ -597,10 +607,10 @@
 
 .survey-label {
   font-family: 'Montserrat', Arial, sans-serif;
-  font-weight: 800;
-  font-size: clamp(10px, 1.05vw, 19px);
+  font-weight: 700;
+  font-size: clamp(10px, 1.05vw, 14.5px);
   line-height: 1;
-  letter-spacing: -0.4px;
+  letter-spacing: 0.1px;
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
   text-transform: uppercase;
@@ -608,10 +618,10 @@
 
 .survey-message {
   font-family: 'Montserrat', Arial, sans-serif;
-  font-weight: 800;
-  font-size: clamp(15px, 2.14vw, 35px);
+  font-weight: 750;
+  font-size: clamp(15px, 2.14vw, 30px);
   line-height: 1.29;
-  letter-spacing: -0.6px;
+  letter-spacing: 0.1px;
   color: #FFFFFF;
   margin: 0;
   flex: 1;
@@ -619,12 +629,6 @@
   align-items: center;
 }
 
-/*
- * Merged: your border-radius was 14px (pill-ish square); friend used 25px (rounder).
- * Friend's rounder pill is kept — matches the redeem-button aesthetic.
- * Button text color: your code used rgba(0,40,255,0.85); friend used #324D87.
- * Friend's value is kept for better contrast legibility.
- */
 .continue-button {
   display: inline-flex;
   align-items: center;
@@ -656,41 +660,28 @@
 
 .progress-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
 .progress-bg  { fill: none; stroke: rgba(255, 255, 255, 0.25); stroke-linecap: round; }
-
-/*
- * Merged: your drop-shadow used 0px 0px 8px; friend used 2px 0px 5px.
- * Your omnidirectional glow is kept — more visible across all orientations.
- */
 .progress-fill {
   fill: none;
   stroke: #EFC600;
   stroke-linecap: round;
-  filter: drop-shadow(0px 0px 8px rgba(239,198,0,0.5));
+  filter: drop-shadow(2px 0px 5px rgba(239,198,0,0.5));
   transition: stroke-dashoffset 0.6s ease;
 }
 
-/*
- * Merged: your font-weight was 700 (Rubik); friend used 710 (Montserrat).
- * Rubik 700 is kept — it was intentional for the numeric display.
- */
 .progress-percentage {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-family: 'Rubik', Arial, sans-serif;
-  font-weight: 700;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: 710;
   font-size: clamp(20px, 4.20vh, 370px);
   line-height: 1;
-  letter-spacing: -0.35px;
+  letter-spacing: -0.40px;
   color: #FFFFFF;
   white-space: nowrap;
 }
 
 /* ============================ FOR YOU SECTION ============================ */
-/*
- * Merged: your min-height was 0; friend used -0.1px (subpixel fix for
- * certain Webkit engines). Friend's value is kept as it's a superset fix.
- */
 .for-you-section {
   flex: 1;
   min-height: -0.1px;
@@ -698,45 +689,36 @@
   flex-direction: column;
 }
 
-/*
- * Merged: your font-size was clamp(17px,1.8vw,25px); friend used
- * clamp(19px,2.0vw,22px). Your range is wider — kept for scalability.
- * Your top margin (25px) is kept; friend's was 12px.
- */
 .for-you-heading {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 800;
-  font-size: clamp(17px, 1.8vw, 25px);
+  font-size: clamp(19px, 2.0vw, 22px);
   line-height: 1.2;
   letter-spacing: -0.6px;
   color: #324D87;
-  margin: 25px 0 3px 0;
+  margin: 12px 0 3px 0;
   flex-shrink: 0;
 }
 
 .for-you-subtitle {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: clamp(11px, 1.2vw, 14.1px);
-  line-height: 1.5;
+  font-size: clamp(12px, 1.2vw, 13px);
+  line-height: 1.9;
   color: #545454;
   margin: 0 0 clamp(8px, 1.2vh, 16px) 0;
   flex-shrink: 0;
-  margin-bottom: clamp(10px, 3.2vh, 25px);
+  margin-bottom: clamp(10px, 3.2vh, 24px);
 }
 
-/*
- * Merged: your code used 2-column layout; friend used 4-column.
- * Friend's 4-column desktop grid is used as the base (it collapses to 2 at
- * ≤1200px via the breakpoint below, which matches your 2-column intent).
- */
 .for-you-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   column-gap: clamp(16px, 2.6vw, 24px);
-  row-gap: clamp(19px, 2.4vh, 30px);
+  row-gap: clamp(20px, 2.4vh, 30px);
   flex: 1;
   min-height: 0;
+  height: 70%;
   width: 100%;
   align-content: start;
 }
@@ -747,21 +729,20 @@
   }
 }
 
+@media (max-width: 767px) {
+  .for-you-grid {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: clamp(8px, 1.5vw, 12px);
+    row-gap: clamp(10px, 1.5vh, 16px);
+  }
+}
+
 /* ============================ FOR YOU CARD ============================ */
-/*
- * Merged: your card used a dark blue horizontal layout; friend used a white
- * vertical card layout. Both are preserved:
- *   - Base .for-you-card uses friend's white vertical style (more modern,
- *     works with the 4-col grid).
- *   - .for-you-card--dark modifier restores your dark horizontal style for
- *     any context that still needs it.
- * Per-category color variants from friend's code are fully preserved.
- */
 .for-you-card {
   background: #FFFFFF;
   border-radius: 16px;
   cursor: pointer;
-  padding: 18px;
+  padding: 18px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -770,38 +751,8 @@
   box-shadow: 1px 7px 15px rgba(0, 0, 0, 0.25);
   min-height: 145px;
   justify-content: flex-start;
-  box-sizing: border-box;
 }
 
-.for-you-card:hover {
-  background: #F4F6FA;
-  border-color: rgba(43, 114, 251, 0.2);
-  box-shadow: 0px 4px 16px rgba(43, 114, 251, 0.12);
-  transform: translateY(-2px);
-}
-
-/* Dark horizontal variant — your original card style */
-.for-you-card--dark {
-  background: #003EA6;
-  border: 0.889px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
-  flex-direction: row;
-  align-items: center;
-  padding: 16px clamp(10px, 1.2vw, 18px);
-  gap: clamp(8px, 1vw, 14px);
-  height: clamp(90px, 15.9vh, 130px);
-  min-height: unset;
-  justify-content: flex-start;
-}
-
-.for-you-card--dark:hover {
-  background: #003EA6;
-  border-color: rgba(43, 114, 251, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0px 0px 20px rgba(43, 114, 251, 0.25), 0px 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-/* Card content wrapper used in friend's vertical layout */
 .for-you-card-content {
   display: flex;
   flex-direction: column;
@@ -811,25 +762,13 @@
   position: relative;
 }
 
-/* Notification dot (your code) */
-.notification-dot {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 14px;
-  height: 14px;
-  background: #E53935;
-  border-radius: 50%;
-  border: 2px solid #003EA6;
-  z-index: 2;
+.for-you-card:hover {
+  background: #F4F6FA;
+  border-color: rgba(43, 114, 251, 0.2);
+  box-shadow: 0px 4px 16px rgba(43, 114, 251, 0.12);
+  transform: translateY(-2px);
 }
 
-/* ============================ FOR YOU ICON BOX ============================ */
-/*
- * Merged: your icon box used a dark gradient with heavy shadow and scale(1.4)
- * transform; friend used lighter per-category gradients at a fixed 64px size.
- * Base uses friend's cleaner approach; dark-card variant restores your style.
- */
 .for-you-icon-box {
   width: 64px;
   height: 64px;
@@ -849,18 +788,6 @@
   box-shadow: 0px 8px 16px rgba(43, 114, 251, 0.15);
 }
 
-/* Icon box inside the dark horizontal card (your original style) */
-.for-you-card--dark .for-you-icon-box {
-  width: clamp(52px, 6vh, 68px);
-  height: clamp(52px, 6vh, 68px);
-  min-width: clamp(52px, 6vh, 68px);
-  background: linear-gradient(180deg, rgba(30, 37, 85, 0.8) 0%, rgba(15, 19, 56, 0.8) 100%);
-  box-shadow: 0px 10px 15px rgba(97, 95, 255, 0.5), 0px 4px 6px rgba(43, 114, 251, 0.15);
-  transform: scale(1.4);
-  margin-left: 10px;
-}
-
-/* Per-category icon box tints (friend's code) */
 .for-you-card.for-you-announcements .for-you-icon-box {
   background: linear-gradient(180deg, #fcc7cb 0%, #ffb7ba 80%);
 }
@@ -877,7 +804,6 @@
   background: linear-gradient(180deg, #bdffde 0%, #acffcf 100%);
 }
 
-/* ============================ FOR YOU ICONS ============================ */
 .for-you-icon {
   width: 100%;
   height: 100%;
@@ -885,24 +811,10 @@
   filter: drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.38));
 }
 
-/* Inside dark card: restore your scale behavior */
-.for-you-card--dark .for-you-icon {
-  filter: drop-shadow(0px 4px 4px #2B72FB);
-  transform: scale(1.1);
-}
-
 .for-you-icon.discount-icon {
   width: 80%;
   height: 80%;
   transform: rotate(0.1deg);
-}
-
-/* Inside dark card: your original discount-icon sizing */
-.for-you-card--dark .for-you-icon.discount-icon {
-  width: 155%;
-  height: 155%;
-  transform: scale(1.1);
-  margin-left: 0.5vw;
 }
 
 .for-you-card.for-you-jobs .for-you-icon {
@@ -914,14 +826,6 @@
   transform: translateX(2px);
 }
 
-/* ============================ FOR YOU TEXT ============================ */
-/* Shared wrapper used in both layouts */
-.for-you-text {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Vertical card text styles (friend's code) */
 .for-you-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
@@ -942,7 +846,16 @@
   line-height: 0.5;
 }
 
-/* Dark horizontal card text styles (your code) */
+.for-you-text {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .card-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
@@ -950,17 +863,18 @@
   line-height: 1.25;
   color: #FFED97;
   margin: 0 0 6px 0;
-  margin-left: 20px;
+  text-align: center;
 }
 
+/* ── FIX: Was rgba(255,255,255,0.9) — near-invisible on white card bg ── */
 .card-description {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: clamp(9px, 0.75vw, 13px);
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.9);
+  color: #5A6A8A;
   margin: 0;
-  margin-left: 20px;
+  text-align: center;
 }
 
 /* ============================ MOBILE BOTTOM NAV ============================ */
@@ -1004,7 +918,6 @@
     padding-right: calc(clamp(44px, 4vw, 52px) + clamp(12px, 1.5vw, 20px));
   }
   .top-banner-row {
-    gap: clamp(8px, 1.6vw, 20px);
     margin-bottom: clamp(10px, 1.4vh, 16px);
   }
 }
@@ -1035,32 +948,6 @@
   .notification-dropdown.mobile {
     width: 92vw;
     right: 0;
-  }
-  .reward-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 16px;
-  }
-  .redeem-button {
-    width: 100%;
-    justify-content: center;
-    padding: 10px 18px;
-  }
-  .reward-banner-points {
-    font-size: 28px;
-  }
-  .for-you-grid {
-    grid-template-columns: repeat(2, 1fr);
-    column-gap: clamp(8px, 1.5vw, 12px);
-    row-gap: clamp(10px, 1.5vh, 16px);
-  }
-  .notification-bell {
-    top: clamp(12px, 2vh, 18px);
-    right: clamp(12px, 4vw, 18px);
-  }
-  .dashboard-header {
-    padding-right: 0;
   }
 }
 

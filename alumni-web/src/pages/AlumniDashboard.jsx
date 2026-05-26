@@ -27,6 +27,7 @@ import grandWestsideHotel from '../assets/grandwestside_hotel.jpeg';
 import AlumniDashboardView from '../views/Alumnidashboardview';
 import DataPrivacyModal    from '../modals/DataPrivacyModal';
 import { useDpaGate }      from '../hooks/useDpaGate';
+import { subscribeToRewardPoints } from '../lib/rewardPoints';
 
 // ============================ STORAGE KEYS ============================
 // Centralised localStorage keys for all four badge categories.
@@ -121,15 +122,18 @@ const AlumniDashboard = () => {
       if (data) setUser(data);
 
       // Fetch reward points (additive — from friend's code)
-      const { data: rewardsData, error: rewardsError } = await supabase
-        .from('reward_points')
-        .select('points')
-        .eq('user_id', authUser.id)
-        .maybeSingle();
-      if (rewardsError) {
-        console.error('Failed to load reward points:', rewardsError);
+      const { data: rewardData, error: rewardError } = await supabase
+        .from('users')
+        .select('reward_points')
+        .eq('id', authUser.id)
+        .single();
+
+      if (rewardError) {
+        console.error('[AlumniDashboard] reward_points fetch failed:', rewardError);
+      } else {
+        console.log('[AlumniDashboard] reward_points fetched:', rewardData?.reward_points);
+        setRewardPoints(rewardData?.reward_points ?? 0);
       }
-      setRewardPoints(rewardsData ? Number(rewardsData.points) || 0 : 0);
 
       // Survey progress & audit log
       const progress = await loadSurveyProgress();
@@ -258,6 +262,22 @@ const AlumniDashboard = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // ============================ REAL-TIME REWARD SYNC (Dashboard) ============================
+  const rewardChannelRef = useRef(null);
+    useEffect(() => {
+      subscribeToRewardPoints((newPoints) => {
+        console.log('[AlumniDashboard] realtime reward update:', newPoints);
+        setRewardPoints(newPoints);
+      }).then(channel => {
+        rewardChannelRef.current = channel;
+      });
+
+      return () => {
+        rewardChannelRef.current?.unsubscribe();
+        rewardChannelRef.current = null;
+      };
+    }, []);
 
   // ============================ NOTIFICATION HANDLERS ============================
 

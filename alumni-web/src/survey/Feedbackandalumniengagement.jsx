@@ -8,7 +8,7 @@ import FeedbackAndAlumniEngagementView from '../Views/FeedbackAndAlumniEngagemen
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 7;
-const SECTION_KEY = 'feedback_and_engagement';
+const SECTION_KEY     = 'feedback_and_engagement';
 
 const DEFAULT_SATISFACTION_OPTIONS = [
   'Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied',
@@ -24,12 +24,12 @@ const DEFAULT_PARTICIPATE_OPTIONS = [
 ];
 
 const DEFAULT_LABELS = {
-  satisfaction:           'How satisfied are you with the education you received from NU Dasmariñas?',
-  recommend:              'Would you recommend NU Dasmariñas to others?',
-  suggestions:            'Do you have any suggestions or feedback for the university?',
+  satisfaction:          'How satisfied are you with the education you received from NU Dasmariñas?',
+  recommend:             'Would you recommend NU Dasmariñas to others?',
+  suggestions:           'Do you have any suggestions or feedback for the university?',
   informed_about_events: 'Are you informed about alumni events and activities?',
-  participate_in:         'Which alumni activities would you be willing to participate in? (Select all that apply)',
-  other_participate:      'Please specify other activities',
+  participate_in:        'Which alumni activities would you be willing to participate in? (Select all that apply)',
+  other_participate:     'Please specify other activities',
 };
 
 const DEFAULT_PLACEHOLDERS = {
@@ -45,8 +45,8 @@ const INDEX_TO_FIELD = [
 const computeFormPct = (form) => {
   const required = ['satisfaction', 'recommend', 'suggestions', 'informed_about_events', 'participate_in'];
   if (form.participate_in.includes('Other')) required.push('other_participate');
-  const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-  const filled = required.filter(k => {
+  const SECTION_BASE   = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
+  const filled         = required.filter(k => {
     const v = form[k];
     if (Array.isArray(v)) return v.length > 0;
     return v && String(v).trim() !== '';
@@ -72,12 +72,12 @@ const FeedbackAndAlumniEngagement = () => {
   const [saveToast, setSaveToast] = useState(false);
 
   const [form, setForm] = useState({
-    satisfaction:           '',
-    recommend:              '',
-    suggestions:            '',
+    satisfaction:          '',
+    recommend:             '',
+    suggestions:           '',
     informed_about_events: '',
-    participate_in:         [],
-    other_participate:      '',
+    participate_in:        [],
+    other_participate:     '',
   });
 
   const [notifs,       setNotifs]       = useState([]);
@@ -85,6 +85,7 @@ const FeedbackAndAlumniEngagement = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
+  // ── Survey config ─────────────────────────────────────────────────────────
   const applyConfig = (config) => {
     if (!config?.sections) return;
     const feedbackSection = config.sections.find(
@@ -102,14 +103,14 @@ const FeedbackAndAlumniEngagement = () => {
       labels[fieldKey] = q.label;
       if (q.placeholder) placeholders[fieldKey] = q.placeholder;
 
-      if (fieldKey === 'satisfaction'           && q.options) setSatisfactionOptions(q.options);
-      if (fieldKey === 'recommend'              && q.options) setYesNoOptions(q.options);
+      if (fieldKey === 'satisfaction'          && q.options) setSatisfactionOptions(q.options);
+      if (fieldKey === 'recommend'             && q.options) setYesNoOptions(q.options);
       if (fieldKey === 'informed_about_events' && q.options) setYesNoOptions(q.options);
-      if (fieldKey === 'participate_in'         && q.options) setParticipateOptions(q.options);
+      if (fieldKey === 'participate_in'        && q.options) setParticipateOptions(q.options);
     });
 
-    setQuestionLabels(prev => ({...prev, ...labels}));
-    setQuestionPlaceholders(prev => ({...prev, ...placeholders}));
+    setQuestionLabels(prev => ({ ...prev, ...labels }));
+    setQuestionPlaceholders(prev => ({ ...prev, ...placeholders }));
   };
 
   useEffect(() => {
@@ -128,7 +129,6 @@ const FeedbackAndAlumniEngagement = () => {
     loadDynamicContent();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      // console.log("[Realtime] Feedback Section updating...");
       const freshConfig = await loadSurveyConfig(true);
       if (!cancelled && freshConfig) {
         applyConfig(freshConfig);
@@ -142,25 +142,26 @@ const FeedbackAndAlumniEngagement = () => {
     };
   }, []);
 
+  // ── Load saved section data ───────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       const saved = await loadSectionData(SECTION_KEY);
       if (saved) {
         setForm(f => ({
           ...f,
-          satisfaction:           saved.satisfaction           ?? f.satisfaction,
-          recommend:              saved.recommend              ?? f.recommend,
-          suggestions:            saved.suggestions            ?? f.suggestions,
+          satisfaction:          saved.satisfaction          ?? f.satisfaction,
+          recommend:             saved.recommend             ?? f.recommend,
+          suggestions:           saved.suggestions           ?? f.suggestions,
           informed_about_events: saved.informed_about_events ?? f.informed_about_events,
-          participate_in:         saved.participate_in         ?? f.participate_in,
-          other_participate:      saved.other_participate      ?? f.other_participate,
+          participate_in:        saved.participate_in        ?? f.participate_in,
+          other_participate:     saved.other_participate     ?? f.other_participate,
         }));
       }
     };
     load();
   }, []);
 
-  // Notifications (UNTOUCHED)
+  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -172,8 +173,11 @@ const FeedbackAndAlumniEngagement = () => {
       if (error || !data) return;
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
       const mapped  = data.map(n => ({
-        id: n.id, title: n.title, body: n.content,
-        time: n.published_at, read: readIds.includes(n.id),
+        id:   n.id,
+        title: n.title,
+        body:  n.content,
+        time:  n.published_at,
+        read:  readIds.includes(n.id),
       }));
       setNotifs(mapped);
       setUnreadCount(mapped.filter(n => !n.read).length);
@@ -232,6 +236,7 @@ const FeedbackAndAlumniEngagement = () => {
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   };
 
+  // ── Form helpers ──────────────────────────────────────────────────────────
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   const toggleParticipate = (value) => setForm(prev => ({
@@ -254,23 +259,25 @@ const FeedbackAndAlumniEngagement = () => {
   };
 
   const buildPayload = () => ({
-    satisfaction:           form.satisfaction,
-    recommend:              form.recommend,
-    suggestions:            form.suggestions,
+    satisfaction:          form.satisfaction,
+    recommend:             form.recommend,
+    suggestions:           form.suggestions,
     informed_about_events: form.informed_about_events,
-    participate_in:         form.participate_in,
-    other_participate:      form.other_participate,
+    participate_in:        form.participate_in,
+    other_participate:     form.other_participate,
   });
 
   const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId]       || fieldId;
   const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || DEFAULT_PLACEHOLDERS[fieldId] || '';
 
+  // ── Save (draft) ──────────────────────────────────────────────────────────
   const handleSave = async () => {
     await saveSectionProgress(SECTION_KEY, buildPayload());
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };
 
+  // ── Submit (final) ────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     const e = validate();
     if (e.size > 0) {
@@ -279,8 +286,12 @@ const FeedbackAndAlumniEngagement = () => {
       return;
     }
     setErrors(new Set());
+
     try {
+      // saveSectionProgress upserts and awaits before returning,
+      // so the DB write is committed before navigate() fires.
       await saveSectionProgress(SECTION_KEY, buildPayload());
+
       const { data: { user } } = await supabase.auth.getUser();
       await logAction({
         action:      'Create',
@@ -289,9 +300,19 @@ const FeedbackAndAlumniEngagement = () => {
         recordId:    user?.id ?? null,
         status:      'Success',
       });
-      navigate('/survey/complete');
+
+      // Read the intent flag from sessionStorage.
+      // Set by RewardStore.handleCompleteSurvey on entry.
+      // Survives section-to-section navigation unlike a URL param.
+      // Cleared immediately so re-submissions don't re-trigger.
+      const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
+      sessionStorage.removeItem('survey_claim_reward');
+
+      console.log('[FeedbackAndAlumniEngagement] handleSubmit: claimReward =', claimReward);
+
+      navigate(claimReward ? '/rewards?survey_completed=1' : '/survey/complete');
     } catch (err) {
-      console.error('Submit error:', err);
+      console.error('[FeedbackAndAlumniEngagement] handleSubmit error:', err);
       await logAction({
         action:      'Create',
         module:      'Survey',

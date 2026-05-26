@@ -1,0 +1,689 @@
+/*
+ * EmploymentInformationSHS.css
+ * Location: src/surveyshs/views/EmploymentInformationSHS.css
+ *
+ * Styles for the SHS Employment Information section.
+ * Prefix: ei-shs-  (avoids collision with college module's ei- classes)
+ * Color tokens mirror the entire SHS module:
+ *   --shs-navy:      #002263
+ *   --shs-blue:      #003EA6
+ *   --shs-gold:      #EFC600
+ *   --shs-bg:        #DAE5F1
+ *   --shs-card:      #FFFFFF
+ *   --shs-text:      #0A0A0A
+ *   --shs-muted:     #4A5565
+ *   --shs-label:     #003EA6
+ *   --shs-border:    #D1D5DC
+ *   --shs-input-bg:  #F9FAFB
+ *   --shs-error:     #F87171
+ *   --shs-success:   #15803d
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+.ei-shs-root *,
+.ei-shs-root *::before,
+.ei-shs-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Layout shell ───────────────────────────────────────────────────────── */
+.ei-shs-root {
+  display: flex;
+  min-height: 100vh;
+  background: #DAE5F1;
+  font-family: 'Arimo', Arial, sans-serif;
+}
+
+.ei-shs-content {
+  flex: 1;
+  min-width: 0;
+  margin-left: 229px;
+}
+
+/* ── Sticky header ──────────────────────────────────────────────────────── */
+.ei-shs-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #DAE5F1;
+  padding-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Top bar (back · badge · bell) ─────────────────────────────────────── */
+.ei-shs-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 51px 0;
+}
+
+.ei-shs-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #002263;
+  flex-shrink: 0;
+}
+
+.ei-shs-badge {
+  background: #003EA6;
+  border: 1.24px solid rgba(99, 102, 241, 0.3);
+  border-radius: 999px;
+  padding: 7px 20px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+/* ── Bell icon ──────────────────────────────────────────────────────────── */
+.ei-shs-bell {
+  width: 48px;
+  height: 48px;
+  background: #003EA6;
+  border: 1.24px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.ei-shs-bell.active {
+  background: #002263;
+  border-color: rgba(0, 34, 99, 0.5);
+}
+
+.ei-shs-bell-dot {
+  position: absolute;
+  top: -4.41px;
+  right: -4.41px;
+  width: 28.81px;
+  height: 28.81px;
+  background: rgba(255, 0, 0, 0.7);
+  opacity: 0.42;
+  border-radius: 50%;
+}
+
+.ei-shs-bell-count {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  min-width: 20px;
+  height: 20px;
+  background: rgba(255, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 400;
+}
+
+/* ── Page title / subtitle ──────────────────────────────────────────────── */
+.ei-shs-title {
+  text-align: center;
+  padding: 14px 51px 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.4;
+  letter-spacing: -0.7px;
+  color: #2D467C;
+}
+
+.ei-shs-subtitle {
+  text-align: center;
+  padding: 4px 51px 0;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  color: #4A5565;
+}
+
+/* ── Progress bar ───────────────────────────────────────────────────────── */
+.ei-shs-progress {
+  margin: 12px 51px 0;
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 18px 30px 16px;
+}
+
+.ei-shs-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E3A5F;
+}
+
+.ei-shs-progress-pct {
+  color: #003EA6;
+  font-weight: 700;
+}
+
+.ei-shs-progress-track {
+  width: 100%;
+  height: 12px;
+  background: #E5E7EB;
+  border-radius: 9999px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.ei-shs-progress-fill {
+  height: 100%;
+  background: #EFC600;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.ei-shs-progress-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4A5565;
+}
+
+/* ── Body / card ────────────────────────────────────────────────────────── */
+.ei-shs-body {
+  padding: 24px 51px 60px;
+}
+
+.ei-shs-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 40px 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Card heading ───────────────────────────────────────────────────────── */
+.ei-shs-section-title {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+  color: #003EA6;
+  text-align: center;
+}
+
+.ei-shs-section-sub {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  color: #003EA6;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* ── Fields wrapper ─────────────────────────────────────────────────────── */
+.ei-shs-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Individual field ───────────────────────────────────────────────────── */
+.ei-shs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.ei-shs-label {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 21px;
+  color: #003EA6;
+}
+
+.ei-shs-req {
+  color: #F87171;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.ei-shs-field-error {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  color: #F87171;
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+/* ── Text inputs ────────────────────────────────────────────────────────── */
+.ei-shs-input {
+  width: 100%;
+  height: 47px;
+  background: #F9FAFB;
+  border: 0.8px solid #D1D5DC;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #0A0A0A;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ei-shs-input::placeholder {
+  color: rgba(10, 10, 10, 0.3);
+}
+
+.ei-shs-input:focus {
+  border-color: #003EA6;
+}
+
+.ei-shs-input.error {
+  border-color: #F87171;
+}
+
+/* ── Radio groups ───────────────────────────────────────────────────────── */
+.ei-shs-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.ei-shs-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4A5565;
+  line-height: 1.4;
+  padding: 2px 0;
+}
+
+.ei-shs-radio-label input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #003EA6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Other text field (appears beneath a radio when "Other" selected) ───── */
+.ei-shs-other-input {
+  margin-top: 8px;
+}
+
+/* ── Branch container (employed sub-fields) ─────────────────────────────── */
+.ei-shs-branch {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  padding-top: 24px;
+}
+
+/* ── Footer (prev · save · next) ───────────────────────────────────────── */
+.ei-shs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.ei-shs-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ei-shs-save-toast {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #15803d;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.ei-shs-btn-prev,
+.ei-shs-btn-next {
+  width: 120px;
+  height: 48px;
+  background: #003EA6;
+  border: none;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #FFFFFF;
+  transition: background 0.15s;
+}
+
+.ei-shs-btn-prev:hover,
+.ei-shs-btn-next:hover {
+  background: #002a80;
+}
+
+.ei-shs-btn-save {
+  width: 100px;
+  height: 48px;
+  background: #FFFFFF;
+  border: 0.8px solid rgba(0, 34, 99, 0.6);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #002263;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ei-shs-btn-save:hover {
+  background: #f0f4fb;
+  border-color: #002263;
+}
+
+/* ── Notification dropdown ──────────────────────────────────────────────── */
+.ei-shs-notif-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 380px;
+  max-height: 520px;
+  background: #FFFFFF;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 300;
+}
+
+.ei-shs-notif-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.ei-shs-notif-title {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #003EA6;
+}
+
+.ei-shs-notif-mark-all {
+  background: none;
+  border: none;
+  font-family: 'Arimo', sans-serif;
+  font-size: 12px;
+  color: #003EA6;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ei-shs-notif-tabs {
+  display: flex;
+  padding: 10px 18px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ei-shs-notif-tab {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  transition: all 0.15s;
+  text-transform: capitalize;
+}
+
+.ei-shs-notif-tab.active {
+  background: #003EA6;
+  border: none;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.ei-shs-notif-tab.inactive {
+  background: transparent;
+  border: 1px solid #D1D5DC;
+  color: #4A5565;
+  font-weight: 400;
+}
+
+.ei-shs-notif-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.ei-shs-notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+}
+
+.ei-shs-notif-empty-text {
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.3);
+  margin: 0;
+}
+
+.ei-shs-notif-group-label {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 10px 18px 4px;
+}
+
+.ei-shs-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.ei-shs-notif-item.unread {
+  background: rgba(0, 62, 166, 0.05);
+  border-left: 3px solid #003EA6;
+}
+
+.ei-shs-notif-item.read {
+  background: transparent;
+  border-left: 3px solid transparent;
+}
+
+.ei-shs-notif-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 62, 166, 0.08);
+  border: 1px solid rgba(0, 62, 166, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ei-shs-notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ei-shs-notif-item-title {
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: #0A0A0A;
+  margin: 0 0 2px 0;
+  line-height: 1.4;
+}
+
+.ei-shs-notif-item-title.unread {
+  font-weight: 700;
+}
+
+.ei-shs-notif-item-title.read {
+  font-weight: 400;
+}
+
+.ei-shs-notif-item-body {
+  font-family: 'Arimo', sans-serif;
+  font-size: 12px;
+  color: #4A5565;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ei-shs-notif-time {
+  font-family: 'Arimo', sans-serif;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.ei-shs-notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #003EA6;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.ei-shs-notif-footer {
+  padding: 10px 18px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  flex-shrink: 0;
+}
+
+.ei-shs-notif-see-all {
+  width: 100%;
+  height: 36px;
+  background: #F9FAFB;
+  border: 1px solid #D1D5DC;
+  border-radius: 10px;
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: #4A5565;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ei-shs-notif-see-all:hover {
+  background: #F0F4FB;
+}
+
+/* ── Responsive — 1100px ────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .ei-shs-topbar   { padding: 24px 32px 0; }
+  .ei-shs-title    { padding: 14px 32px 0; font-size: 26px; }
+  .ei-shs-subtitle { padding: 4px 32px 0; }
+  .ei-shs-progress { margin: 12px 32px 0; }
+  .ei-shs-body     { padding: 20px 32px 60px; }
+  .ei-shs-card     { padding: 32px 32px 28px; }
+}
+
+/* ── Responsive — 900px ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ei-shs-topbar    { padding: 20px 24px 0; }
+  .ei-shs-title     { padding: 12px 24px 0; font-size: 24px; }
+  .ei-shs-subtitle  { padding: 4px 24px 0; }
+  .ei-shs-progress  { margin: 10px 24px 0; }
+  .ei-shs-body      { padding: 18px 24px 60px; }
+  .ei-shs-card      { padding: 28px 24px 24px; gap: 28px; }
+  .ei-shs-fields    { gap: 28px; }
+  .ei-shs-branch    { gap: 28px; }
+}
+
+/* ── Responsive — 767px (mobile) ────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ei-shs-content   { margin-left: 0; }
+  .ei-shs-topbar    { padding: 20px 16px 0; }
+  .ei-shs-badge     { padding: 6px 12px; font-size: 10px; }
+  .ei-shs-bell      { display: none; }
+  .ei-shs-title     { padding: 12px 16px 0; font-size: 20px; }
+  .ei-shs-subtitle  { padding: 4px 16px 0; font-size: 14px; }
+  .ei-shs-progress  { margin: 10px 16px 0; padding: 14px 16px; }
+  .ei-shs-progress-row   { font-size: 13px; }
+  .ei-shs-progress-label { font-size: 13px; }
+  .ei-shs-body      { padding: 16px 16px 80px; }
+  .ei-shs-card      { padding: 20px 16px 20px; gap: 24px; }
+  .ei-shs-fields    { gap: 24px; }
+  .ei-shs-branch    { gap: 24px; }
+  .ei-shs-section-title { font-size: 17px; }
+  .ei-shs-btn-prev  { width: 100px; height: 44px; font-size: 14px; }
+  .ei-shs-btn-save  { width: 80px;  height: 44px; font-size: 14px; }
+  .ei-shs-btn-next  { width: 100px; height: 44px; font-size: 14px; }
+  .ei-shs-notif-dropdown { width: 320px; }
+}
+
+/* ── Responsive — 390px ─────────────────────────────────────────────────── */
+@media (max-width: 390px) {
+  .ei-shs-title     { font-size: 17px; }
+  .ei-shs-input     { font-size: 13px; }
+  .ei-shs-btn-prev,
+  .ei-shs-btn-next  { width: 90px; font-size: 13px; }
+  .ei-shs-btn-save  { width: 70px; font-size: 13px; }
+}
+
+/* ── Reduced-motion safety ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ei-shs-progress-fill { transition: none; }
+  .ei-shs-btn-prev,
+  .ei-shs-btn-save,
+  .ei-shs-btn-next { transition: none; }
+}

@@ -1,27 +1,3 @@
-/**
- * EducationalBackgroundViewSHS.jsx — Rendering Layer
- * Location: src/surveyshs/views/EducationalBackgroundViewSHS.jsx
- *
- * Pure presentation component — zero business logic.
- * All state, handlers, and branch-visibility flags are injected via props
- * from EducationalBackgroundSHS.jsx.
- *
- * Branch map (driven by props, never by internal state):
- *
- *   status
- *   ├── Currently Studying / Graduated
- *   │   └── pursued_nu_branch  [Yes/No]
- *   │       ├── YES → nu_branch + reason_nu + education_level (Other→text)
- *   │       │         + course_program + year_level
- *   │       └── NO  → pursued_other_school [Yes/No]
- *   │           ├── YES → reason_not_nu + school_name
- *   │           │         + education_level (Other→text) + course_program + year_level
- *   │           └── NO  → (no further questions)
- *   ├── Stopped
- *   │   └── stopped_reason (Other→textarea)
- *   └── Working → (no follow-up)
- */
-
 import React from 'react';
 import Sidebar from '../../components/Sidebar';
 import '../styles/EducationalBackgroundSHS.css';
@@ -45,12 +21,6 @@ const NotifBellIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
       stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/>
-  </svg>
-);
-
-const ChevronDown = () => (
-  <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-    <path d="M1 1L6 7L11 1" stroke="#00226D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -81,16 +51,17 @@ const YEAR_LEVELS = [
   'Not Applicable',
 ];
 
+// Matches spec exactly — note "Others" (plural) consistent with controller validation
 const STOPPED_REASONS = [
-  'Financial constraints',
-  'Employment opportunity',
-  'Family responsibility',
-  'Lack of interest',
+  'Financial Constraints',
+  'Employment Opportunity',
+  'Family Responsibility',
+  'Lack of Interest',
   'Not Applicable',
-  'Other',
+  'Others',
 ];
 
-/* ── Notification dropdown — identical UX to College / SHS Section 1 ─────── */
+/* ── Notification dropdown ───────────────────────────────────────────────── */
 const NotificationDropdown = ({
   notifs, unreadCount, notifTab, setNotifTab,
   markAllRead, markOneRead, groupByDate, formatTime,
@@ -190,14 +161,12 @@ const RadioGroup = ({ name, options, value, onChange }) => (
 );
 
 /* ── Shared "further studies details" block ──────────────────────────────── */
-// Used in both the NU-branch YES path and the other-school YES path.
-// The only difference is which fields are shown/labelled, handled by props.
 const FurtherStudiesDetails = ({
   form, set, errors,
-  showNuBranch,         // bool  — show NU branch selector
-  showSchoolName,       // bool  — show free-text school name
-  showReasonNu,         // bool  — show "why NU" textarea
-  showReasonNotNu,      // bool  — show "why not NU" textarea
+  showNuBranch,
+  showSchoolName,
+  showReasonNu,
+  showReasonNotNu,
 }) => (
   <>
     {/* ── NU Branch selector ──────────────────────────────────────────── */}
@@ -283,7 +252,6 @@ const FurtherStudiesDetails = ({
         value={form.education_level}
         onChange={(v) => set('education_level', v)}
       />
-      {/* "Other" free-text expands inline under the radio group */}
       {form.education_level === 'Other' && (
         <input
           className="shs-eb-input"
@@ -371,18 +339,11 @@ const EducationalBackgroundViewSHS = ({
   /* ── Branch visibility flags ─────────────────────────────────────────── */
   const isStudyingOrGraduated = form.status === 'Currently Studying' || form.status === 'Graduated';
   const isStopped             = form.status === 'Stopped';
+  // 'Working' intentionally renders no sub-questions — navigate goes straight to Employment
 
-  // Level-1 branch: Did you pursue further studies at any NU branch?
-  const showPursuedNuQuestion = isStudyingOrGraduated;
-  const pursuedNU             = form.pursued_nu_branch === 'Yes';
-  const didNotPursueNU        = form.pursued_nu_branch === 'No';
-
-  // Level-2 branch (only visible when pursuedNU === false):
-  // Did you pursue further studies at any other school?
-  const showPursuedOtherQuestion = didNotPursueNU;
-  const pursuedOtherSchool       = form.pursued_other_school === 'Yes';
-  // Both NO: no further questions shown at all
-  const bothNo = didNotPursueNU && form.pursued_other_school === 'No';
+  const pursuedNU          = form.pursued_nu_branch === 'Yes';
+  const didNotPursueNU     = form.pursued_nu_branch === 'No';
+  const pursuedOtherSchool = form.pursued_other_school === 'Yes';
 
   return (
     <div className="shs-eb-root">
@@ -395,7 +356,7 @@ const EducationalBackgroundViewSHS = ({
 
             <button
               className="shs-eb-back-btn"
-              onClick={() => navigate('/surveyshs/personal-background')}
+              onClick={() => navigate('/surveyshs/shs-personal-background')}
             >
               <BackArrow /> Back
             </button>
@@ -464,7 +425,7 @@ const EducationalBackgroundViewSHS = ({
 
             <div className="shs-eb-fields">
 
-              {/* ── Q9: Status ──────────────────────────────────────────── */}
+              {/* ── Q: Status ───────────────────────────────────────────── */}
               <div className="shs-eb-field">
                 <label className="shs-eb-label">
                   Status <span className="shs-eb-req">*</span>
@@ -517,7 +478,7 @@ const EducationalBackgroundViewSHS = ({
                   )}
 
                   {/* ── NO → Did you pursue further studies at any other school? */}
-                  {showPursuedOtherQuestion && (
+                  {didNotPursueNU && (
                     <>
                       <div className="shs-eb-field">
                         <label className="shs-eb-label-sub">
@@ -550,8 +511,7 @@ const EducationalBackgroundViewSHS = ({
                         </div>
                       )}
 
-                      {/* ── Both NO → nothing rendered (dead end) ─────────── */}
-                      {/* bothNo is intentionally a no-op — no UI shown */}
+                      {/* Both NO → no further questions (valid dead end) */}
                     </>
                   )}
 
@@ -575,11 +535,12 @@ const EducationalBackgroundViewSHS = ({
                       value={form.stopped_reason}
                       onChange={(v) => set('stopped_reason', v)}
                     />
-                    {/* "Other" free-text expands inline */}
-                    {form.stopped_reason === 'Other' && (
+
+                    {/* "Others" free-text expands inline */}
+                    {form.stopped_reason === 'Others' && (
                       <>
-                        <textarea
-                          className="shs-eb-textarea"
+                        <input
+                          className="shs-eb-input"
                           style={{ marginTop: '8px' }}
                           placeholder="Please specify…"
                           value={form.stopped_reason_other}
@@ -598,8 +559,8 @@ const EducationalBackgroundViewSHS = ({
                 </div>
               )}
 
-              {/* ══ BRANCH: Working → no follow-up ══════════════════════ */}
-              {/* Intentionally empty — no fields needed for Working status */}
+              {/* ══ BRANCH: Working ══════════════════════════════════════ */}
+              {/* No sub-questions for Working — Next navigates to EmploymentInformationSHS */}
 
             </div>{/* end .shs-eb-fields */}
 
@@ -607,7 +568,7 @@ const EducationalBackgroundViewSHS = ({
             <div className="shs-eb-footer">
               <button
                 className="shs-eb-btn-prev"
-                onClick={() => navigate('/surveyshs/personal-background')}
+                onClick={() => navigate('/surveyshs/shs-personal-background')}
               >
                 Previous
               </button>
