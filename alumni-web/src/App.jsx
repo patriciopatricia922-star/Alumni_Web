@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
+import { AlumniTypeProvider } from './admin/contexts/AlumniTypeContext';
 import LandingPage from './pages/Landingpage';
 import AlumniIDRegistration from './pages/AlumniIDRegistration';
 import TermsOfService from './pages/TermsOfService';
@@ -48,9 +49,12 @@ import ResponseAnalytics from './superadmin/Responseandanalytics';
 import PredictiveAnaly from './superadmin/PredictiveAnalytics';
 import SurveyMgmt from './superadmin/SurveyManagement';
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
-import PersonalBackgroundSHS from './surveyshs/PersonalBackgroundSHS';
-import EducationalBackgroundSHS from './surveyshs/EducationalBackgroundSHS';
-import EmploymentInformationSHS from './surveyshs/EmploymentInformationSHS';
+import PersonalBackgroundSHS from './surveyshs/sections/PersonalBackgroundSHS';
+import EducationalBackgroundSHS from './surveyshs/sections/EducationalbackgroundSHS';
+import EmploymentInformationSHS from './surveyshs/sections/EmploymentInformationSHS';
+import FeedbackAndAlumniEngagementSHS from './surveyshs/sections/FeedbackAndEngagementSHS';
+import JobExperienceSHS from './surveyshs/sections/JobExperienceSHS';
+import SkillsAndCompetenciesSHS from './surveyshs/sections/SkillsAndCompetenciesSHS';
 
 // Cache for auth state to prevent repeated checks
 let cachedSession = null;
@@ -58,21 +62,19 @@ let cachedUserRole = null;
 let authCheckPromise = null;
 
 const getAuthState = async () => {
-  // Return cached values if they exist
   if (cachedSession !== null && cachedUserRole !== null) {
     return { session: cachedSession, userRole: cachedUserRole };
   }
-  
-  // Prevent multiple simultaneous checks
+
   if (authCheckPromise) {
     return authCheckPromise;
   }
-  
+
   authCheckPromise = (async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       cachedSession = session;
-      
+
       if (session?.user?.id) {
         const { data: userData } = await supabase
           .from('users')
@@ -83,7 +85,7 @@ const getAuthState = async () => {
       } else {
         cachedUserRole = null;
       }
-      
+
       return { session: cachedSession, userRole: cachedUserRole };
     } catch (error) {
       console.error('Auth check error:', error);
@@ -92,24 +94,21 @@ const getAuthState = async () => {
       authCheckPromise = null;
     }
   })();
-  
+
   return authCheckPromise;
 };
 
-// Clear auth cache on logout/expiry
 const clearAuthCache = () => {
   cachedSession = null;
   cachedUserRole = null;
   authCheckPromise = null;
 };
 
-// Listen for auth changes to clear cache
 supabase.auth.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
     clearAuthCache();
   } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
     cachedSession = session;
-    // Clear role cache to force refresh
     cachedUserRole = null;
   }
 });
@@ -121,35 +120,34 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     const check = async () => {
-      // Don't re-check if we're already authenticated and path hasn't changed significantly
       if (status === 'allowed' && prevPath === location.pathname) {
         return;
       }
-      
+
       const { session, userRole } = await getAuthState();
-      
+
       if (!isMounted) return;
-      
-      if (!session) { 
-        setStatus('denied'); 
-        return; 
+
+      if (!session) {
+        setStatus('denied');
+        return;
       }
 
       if (allowedRoles && allowedRoles.length > 0) {
-        if (!userRole || !allowedRoles.includes(userRole)) { 
-          setStatus('denied'); 
-          return; 
+        if (!userRole || !allowedRoles.includes(userRole)) {
+          setStatus('denied');
+          return;
         }
       }
-      
+
       setStatus('allowed');
       setPrevPath(location.pathname);
     };
-    
+
     check();
-    
+
     return () => {
       isMounted = false;
     };
@@ -201,23 +199,25 @@ function App() {
       <Route path="/surveyshs/shs-personal-background" element={<ProtectedRoute allowedRoles={['alumni']}><PersonalBackgroundSHS /></ProtectedRoute>} />
       <Route path="/surveyshs/shs-educational-background" element={<ProtectedRoute allowedRoles={['alumni']}><EducationalBackgroundSHS /></ProtectedRoute>} />
       <Route path="/surveyshs/shs-employment-information" element={<ProtectedRoute allowedRoles={['alumni']}><EmploymentInformationSHS /></ProtectedRoute>} />
-      
-      {/* Dummy Routes Placeholder */}
-      {/*<Route path="/surveyshs/shs-certification-achievement" element={<ProtectedRoute allowedRoles={['alumni']}><CertificationAchievement /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-job-experience" element={<ProtectedRoute allowedRoles={['alumni']}><JobExperience /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-skills-and-competencies" element={<ProtectedRoute allowedRoles={['alumni']}><SkillsAndCompetencies /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagement /></ProtectedRoute>} />
-      <Route path="/surveyshs/shs-complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} /> */}
+      <Route path="/surveyshs/shs-job-experience" element={<ProtectedRoute allowedRoles={['alumni']}><JobExperienceSHS /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-skills-and-competencies" element={<ProtectedRoute allowedRoles={['alumni']}><SkillsAndCompetenciesSHS /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-feedback-and-engagement" element={<ProtectedRoute allowedRoles={['alumni']}><FeedbackAndAlumniEngagementSHS /></ProtectedRoute>} />
+      <Route path="/surveyshs/shs-complete" element={<ProtectedRoute allowedRoles={['alumni']}><SurveyComplete /></ProtectedRoute>} />
 
-        {/* Administrator Routes */}
-      <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-      <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
-      <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
-      <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
-      <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
-      <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement /></ProtectedRoute>} />
-        
-        {/* Super Administrator Routes */}
+      {/* Administrator Routes — wrapped in AlumniTypeProvider so every admin
+          page can call useAlumniType() without a missing-Provider crash.
+          React Router renders AlumniTypeProvider as the layout, then injects
+          the matched child route through the <Outlet /> inside it. */}
+      <Route element={<AlumniTypeProvider />}>
+        <Route path="/admin/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/alumni-management" element={<ProtectedRoute allowedRoles={['admin']}><AlumniManagement /></ProtectedRoute>} />
+        <Route path="/admin/survey-management" element={<ProtectedRoute allowedRoles={['admin']}><SurveyManagement /></ProtectedRoute>} />
+        <Route path="/admin/response-and-analytics" element={<ProtectedRoute allowedRoles={['admin']}><ResponseAndAnalytics /></ProtectedRoute>} />
+        <Route path="/admin/predictive-analytics" element={<ProtectedRoute allowedRoles={['admin']}><PredictiveAnalytics /></ProtectedRoute>} />
+        <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement /></ProtectedRoute>} />
+      </Route>
+
+      {/* Super Administrator Routes */}
       <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
       <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><AuditLogs /></ProtectedRoute>} />
       <Route path="/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement /></ProtectedRoute>} />

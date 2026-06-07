@@ -1,0 +1,262 @@
+/* ============================================================================
+   ResponseAnalyticsSkeleton.css
+   All selectors are prefixed ra-skel-* — zero collision with ResponseAnalytics.css
+   ============================================================================ */
+
+/* ── Shimmer keyframe ────────────────────────────────────────────────────── */
+/*
+ * Gradient moves across a 600px track. Colour stops are calibrated to be
+ * visible on the white .ra-content card background and on the light-blue
+ * page background (#E1ECF7) so bones read correctly in both contexts.
+ *   base:      #E4EDF6  — slightly darker than the page bg
+ *   highlight: #F2F7FC  — soft white pulse
+ */
+@keyframes raSkelShimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+/* ── Bone atom ───────────────────────────────────────────────────────────── */
+.ra-skel-bone {
+  background: linear-gradient(
+    90deg,
+    #dce7f3 0%,
+    #eaf3fb 35%,
+    #f3f8fd 50%,
+    #eaf3fb 65%,
+    #dce7f3 100%
+  );
+  background-size: 600px 100%;
+  animation: raSkelShimmer 1.6s ease-in-out infinite;
+  display: block;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+/*
+ * Added alongside .ra-page. Disables pointer events so skeleton cards
+ * aren't accidentally interactive while loading.
+ */
+.ra-skel-page {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Tab skeleton ────────────────────────────────────────────────────────── */
+/* Sits inside the real .ra-tab so it inherits all padding / border-radius */
+.ra-skel-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Prevent the tab from collapsing to zero height */
+  min-height: 36px;
+  cursor: default;
+}
+
+/* ── Chart card overrides ────────────────────────────────────────────────── */
+/*
+ * .ra-skel-chart-inner sits alongside the real .ra-chart-inner class so it
+ * inherits padding, border, and border-radius. We only override / add what
+ * the skeleton needs on top of those inherited styles.
+ */
+.ra-skel-chart-inner {
+  /* Prevent hover / focus states from showing */
+  pointer-events: none;
+}
+
+/* Title row: mirrors the real .ra-chart-title spacing */
+.ra-skel-chart-title-row {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  padding-left: 8px;
+  border-bottom: 2px solid #E5E7EB;
+}
+
+/* Chart body area */
+.ra-skel-chart-body {
+  width: 100%;
+  position: relative;
+  /* Flex column so axes and bars stack naturally */
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+/* X-axis line */
+.ra-skel-chart-axis-x {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #D1DCE8;
+}
+
+/* Y-axis line */
+.ra-skel-chart-axis-y {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: #D1DCE8;
+}
+
+/* Bar group — flex row of bars aligned to bottom */
+.ra-skel-bars {
+  position: absolute;
+  bottom: 1px; /* sit on the x-axis */
+  left: 12px;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6%;
+}
+
+/* Individual bar bone */
+.ra-skel-bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(
+    90deg,
+    #dce7f3 0%,
+    #eaf3fb 35%,
+    #f3f8fd 50%,
+    #eaf3fb 65%,
+    #dce7f3 100%
+  );
+  background-size: 600px 100%;
+  animation: raSkelShimmer 1.6s ease-in-out infinite;
+  /* Stagger delay set inline per bar via animationDelay in JSX */
+}
+
+/* ── Pie chart placeholder ───────────────────────────────────────────────── */
+/*
+ * A ring shape (border trick) that reads as a pie chart skeleton.
+ * Sized to fit naturally in the 190px chart body.
+ */
+.ra-skel-pie {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 26px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(
+      90deg,
+      #dce7f3 0%,
+      #eaf3fb 35%,
+      #f3f8fd 50%,
+      #eaf3fb 65%,
+      #dce7f3 100%
+    ) border-box;
+  background-size: 600px 100%;
+  animation: raSkelShimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Table skeletons ─────────────────────────────────────────────────────── */
+
+/* Avatar circle — matches the real .ra-avatar (26px) */
+.ra-skel-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    #dce7f3 0%,
+    #eaf3fb 50%,
+    #dce7f3 100%
+  );
+  background-size: 600px 100%;
+  animation: raSkelShimmer 1.6s ease-in-out infinite;
+}
+
+/* Table row — inherits real tr border/padding */
+.ra-skel-tr td {
+  vertical-align: middle;
+  padding: 10px 8px;
+}
+
+/* ── Stagger delays ──────────────────────────────────────────────────────── */
+/*
+ * Each chart card gets a progressively later start so the shimmer
+ * cascades top-to-bottom rather than all cards pulsing in lockstep.
+ * nth-child on .ra-chart-row and .ra-chart-single children.
+ */
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(2) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(2) .ra-skel-bar,
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(2) .ra-skel-pie {
+  animation-delay: 0.1s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(2) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(2) .ra-skel-bar {
+  animation-delay: 0.12s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(3) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(3) .ra-skel-bar {
+  animation-delay: 0.2s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(4) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(4) .ra-skel-bar,
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(4) .ra-skel-pie {
+  animation-delay: 0.28s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(5) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(5) .ra-skel-bar {
+  animation-delay: 0.34s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(6) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-single:nth-child(6) .ra-skel-bar {
+  animation-delay: 0.42s;
+}
+
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(7) .ra-skel-bone,
+.ra-skel-page .ra-charts-container > .ra-chart-row:nth-child(7) .ra-skel-bar {
+  animation-delay: 0.5s;
+}
+
+/* Table row stagger — each of the 10 skeleton rows starts slightly later */
+.ra-skel-page .ra-table tbody tr:nth-child(2)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(2)  .ra-skel-avatar { animation-delay: 0.05s; }
+.ra-skel-page .ra-table tbody tr:nth-child(3)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(3)  .ra-skel-avatar { animation-delay: 0.10s; }
+.ra-skel-page .ra-table tbody tr:nth-child(4)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(4)  .ra-skel-avatar { animation-delay: 0.15s; }
+.ra-skel-page .ra-table tbody tr:nth-child(5)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(5)  .ra-skel-avatar { animation-delay: 0.20s; }
+.ra-skel-page .ra-table tbody tr:nth-child(6)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(6)  .ra-skel-avatar { animation-delay: 0.25s; }
+.ra-skel-page .ra-table tbody tr:nth-child(7)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(7)  .ra-skel-avatar { animation-delay: 0.30s; }
+.ra-skel-page .ra-table tbody tr:nth-child(8)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(8)  .ra-skel-avatar { animation-delay: 0.35s; }
+.ra-skel-page .ra-table tbody tr:nth-child(9)  .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(9)  .ra-skel-avatar { animation-delay: 0.40s; }
+.ra-skel-page .ra-table tbody tr:nth-child(10) .ra-skel-bone, .ra-skel-page .ra-table tbody tr:nth-child(10) .ra-skel-avatar { animation-delay: 0.45s; }
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+/*
+ * Respects prefers-reduced-motion: replaces the sliding shimmer with a
+ * static low-opacity fill so the skeleton is still visible without moving.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .ra-skel-bone,
+  .ra-skel-bar,
+  .ra-skel-pie,
+  .ra-skel-avatar {
+    animation: none;
+    background: #dce7f3;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+/*
+ * On narrow viewports the real .ra-chart-row collapses to a single column.
+ * The skeleton inherits that behaviour automatically because it reuses the
+ * real .ra-chart-row class. No extra rules needed here.
+ */
+@media (max-width: 900px) {
+  .ra-skel-page .ra-header .ra-skel-bone:first-child {
+    width: 200px !important;
+  }
+}

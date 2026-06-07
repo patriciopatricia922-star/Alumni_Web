@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.
+   AlumniManagement.css — mine (merged)
    ============================================================================
    Purpose: Contains all CSS styles for the Alumni Management component.
             Includes layout, table styling, badges, modals, filters,
@@ -325,6 +325,7 @@ body { margin: 0; background: #E5ECF7F2; }
   color: #BF0000;
 }
 
+/* justify-content inherited from shared base above — not repeated per-variant */
 .account-badge.active {
   background: rgba(142, 201, 47, 0.28);
   color: #4C4C4C;
@@ -794,6 +795,7 @@ body { margin: 0; background: #E5ECF7F2; }
   word-break: break-all;
 }
 
+/* justify-content inherited from inline-flex base — not repeated */
 .apm-badge {
   display: inline-flex;
   align-items: center;

@@ -1,5 +1,5 @@
 // ============================================================================
-// AdminDashboardView — UI Layer mine (merged)
+// AdminDashboardView — UI Layer
 // ============================================================================
 
 import { useState, useEffect } from "react";
@@ -63,16 +63,17 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
   const clampedTarget   = Math.min(target, 100);
   const progressOffset  = circumference * (1 - clampedProgress / 100) + 0.5;
   const targetOffset    = circumference * (1 - clampedTarget   / 100) + 0.5;
+
   // For "below" KPIs (e.g. Employed Outside Field), lower is better.
-  // A target of 100 is a sentinel meaning "no real ceiling set" — in that case
-  // we can't declare "good" just because progress ≤ 100 (always true).
-  // Instead: show green only when progress is 0 (perfect), amber for anything > 0.
-  // When a real threshold IS set (target < 100), use the normal ≤ comparison.
+  // target===100 is a sentinel meaning "no real ceiling set" — progress===0
+  // is the only perfect state. When a real threshold IS set (target < 100),
+  // use the normal ≤ comparison.
   const isGood = targetDir === "below"
     ? (target < 100 ? progress <= target : progress === 0)
     : progress >= target;
-  const progressColor   = isGood ? "#00BC7D" : "#F59E0B";
-  const targetColor     = "#324D87";
+
+  const progressColor = isGood ? "#00BC7D" : "#F59E0B";
+  const targetColor   = "#324D87";
 
   return (
     <svg width={size} height={size} style={{ flexShrink: 0, transform: "rotate(-90deg)" }}>
@@ -128,8 +129,8 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
       ? 'Not Provided'
       : targetLabel;
 
-  // Mirror the isGood logic in RadialGauge exactly so the warning fires
-  // whenever the gauge would show amber.
+  // Mirrors the isGood logic in RadialGauge exactly so the warning fires
+  // whenever the gauge would show amber — including the target===100 sentinel.
   const isNotMet = target > 0 && (
     targetDir === "below"
       ? (target < 100 ? progress > target : progress > 0)
@@ -219,6 +220,16 @@ const statCardIcons = {
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    ),
+  },
+  // Added from friend's version — used by the SHS stat card row
+  'Retention Rate': {
+    bg: '#F0FDF4',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
       </svg>
     ),
   },
@@ -441,13 +452,10 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
 
 // ============================================================================
 // KPI INSIGHTS RESOLVER
-// Maps a KPI card label to the correct key in the kpiInsights object so the
-// modal pulls data from the right insight category.
-//
-// Keys returned must match the keys in buildAllKpiInsights:
+// Maps a KPI label to the correct key in the kpiInsights object.
+// Keys must match those returned by buildAllKpiInsights:
 //   employment | feedback | engagement | education
 // ============================================================================
-
 const resolveInsightsCategory = (label) => {
   const employmentLabels = [
     "Absorption from Internship",
@@ -457,10 +465,6 @@ const resolveInsightsCategory = (label) => {
     "Engaged in Entrepreneurship",
     "Occupying Supervisory Positions",
   ];
-
-  // These three KPIs are served by buildEducationInsights, which reads from
-  // educational_background_data (grad studies) and skills_competencies_data
-  // (leadership / professional org proxy).
   const educationLabels = [
     "Pursued Graduate Studies (within 1 yr)",
     "Pursued Graduate Studies at NU",
@@ -468,10 +472,14 @@ const resolveInsightsCategory = (label) => {
   ];
 
   if (employmentLabels.includes(label)) return 'employment';
-  if (educationLabels.includes(label))  return 'education';  // was incorrectly 'engagement'
+  if (educationLabels.includes(label))  return 'education';
   return 'feedback';
 };
 
+// ============================================================================
+// STATIC FALLBACK SUGGESTIONS
+// Includes your original college KPI suggestions plus SHS entries from friend.
+// ============================================================================
 const staticFallbackSuggestions = (label) => {
   const map = {
     "Absorption from Internship": [
@@ -510,6 +518,15 @@ const staticFallbackSuggestions = (label) => {
       "Encourage alumni to join and lead professional associations.",
       "Host networking events connecting alumni to professional bodies.",
     ],
+    // SHS KPI suggestions — added from friend's version
+    "SHS Alumni Who Pursued Undergraduate Degree": [
+      "Strengthen SHS-to-college transition programs.",
+      "Provide early college counseling for Grade 12 students.",
+    ],
+    "SHS Alumni Who Pursued Undergraduate at NU": [
+      "Offer SHS-to-NU enrollment incentives.",
+      "Highlight NU undergraduate programs to current SHS students.",
+    ],
   };
   return map[label] || ["Review current data to generate recommendations."];
 };
@@ -518,20 +535,20 @@ const staticFallbackSuggestions = (label) => {
 // KPI ALERT MODAL
 // ============================================================================
 function KpiAlertModal({ label, onClose, kpiInsights }) {
-  const category    = resolveInsightsCategory(label);
-  const data        = kpiInsights?.[category];
-  const suggestions = data ? data.recommendations : staticFallbackSuggestions(label);
+  const category     = resolveInsightsCategory(label);
+  const data         = kpiInsights?.[category];
+  const suggestions  = data ? data.recommendations : staticFallbackSuggestions(label);
   const insightLines = data?.insights || [];
   const summary      = data?.summary  || null;
 
-  // Close on Escape key
+  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  // Prevent background scroll while modal is open
+  // Prevent background scroll while open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -550,11 +567,7 @@ function KpiAlertModal({ label, onClose, kpiInsights }) {
         {/* ── HEADER ── */}
         <div className="kpi-modal-header">
           <h2 id="kpi-modal-title">{label}</h2>
-          <button
-            className="kpi-modal-close-icon"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
+          <button className="kpi-modal-close-icon" onClick={onClose} aria-label="Close modal">
             <MdClose size={16} />
           </button>
         </div>
@@ -610,9 +623,7 @@ function KpiAlertModal({ label, onClose, kpiInsights }) {
 
         {/* ── FOOTER ── */}
         <div className="kpi-modal-footer">
-          <button className="kpi-modal-close" onClick={onClose}>
-            Close
-          </button>
+          <button className="kpi-modal-close" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
@@ -633,6 +644,7 @@ const AdminDashboardView = ({
   careerAlignmentData,
   loadingCharts,
   kpiInsights,
+  alumniType,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -645,6 +657,16 @@ const AdminDashboardView = ({
     window.addEventListener('openKpiModal', handler);
     return () => window.removeEventListener('openKpiModal', handler);
   }, []);
+
+  // SHS stat cards — placeholder values until SHS backend data is connected.
+  // Defined here rather than at module level so it stays co-located with the
+  // view that renders it, matching the pattern friend established.
+  const shsStatCards = [
+    { label: 'Registered Alumni',    value: '—', sub: 'SHS graduates on record'  },
+    { label: 'Survey Response Rate', value: '—', sub: 'SHS survey responses'      },
+    { label: 'Retention Rate',       value: '—', sub: 'Continued studies at NU'   },
+    { label: 'Alumni Satisfaction',  value: '—', sub: 'Based on SHS responses'    },
+  ];
 
   return (
     <div className="dashboard-layout">
@@ -665,11 +687,13 @@ const AdminDashboardView = ({
             <div className="section-title">Institutional KPI</div>
           </div>
 
+          {/* SENIOR HIGH tab added from friend's version */}
           <div className="kpi-tabs">
             {[
-              { id: "employment", label: "EMPLOYMENT" },
-              { id: "career",     label: "CAREER PROGRESS" },
-              { id: "education",  label: "EDUCATION" },
+              { id: "employment",  label: "EMPLOYMENT"     },
+              { id: "career",      label: "CAREER PROGRESS" },
+              { id: "education",   label: "EDUCATION"       },
+              { id: "seniorrhigh", label: "SENIOR HIGH"     },
             ].map(({ id, label }) => (
               <button
                 key={id}
@@ -688,63 +712,108 @@ const AdminDashboardView = ({
           </div>
         </div>
 
-        {/* ── Alumni Tracer ───────────────────────────────────────────────── */}
-        <div className="dashboard-section">
-          <div className="section-header">
-            <IoMdSchool className="section-icon" />
-            <div className="section-title">Alumni Tracer</div>
-          </div>
-          <div className="alumni-tracer-grid">
-            {kpis2.map((k) => (
-              <KpiStatCard key={k.label} {...k} />
-            ))}
-          </div>
-        </div>
+        {/* ── Conditional: College vs SHS content ────────────────────────── */}
+        {alumniType === 'shs' ? (
 
-        {/* ── Degree Alignment + Employment Status ───────────────────────── */}
-        <div className="charts-row">
-          <CustomBarChart
-            data={employmentAlignmentData}
-            dataKey="alignment"
-            nameKey="name"
-            title="Degree Alignment Rate"
-            subtitle="Percentage of alumni employed in their degree field per program"
-            height={280}
-            navigateTo="/admin/response-and-analytics"
-          />
-          <CustomPieChart
-            data={employmentStatusData}
-            title="Employment Status Distribution"
-            subtitle="Breakdown of alumni by employment type"
-            height={280}
-            navigateTo="/admin/response-and-analytics"
-          />
-        </div>
+          /* ── SHS SECTION ── */
+          <>
+            <div className="dashboard-section">
+              <div className="section-header">
+                <IoMdSchool className="section-icon" />
+                <div className="section-title">SHS Alumni</div>
+              </div>
+              <div className="alumni-tracer-grid">
+                {shsStatCards.map((k) => (
+                  <KpiStatCard key={k.label} {...k} />
+                ))}
+              </div>
+            </div>
 
-        {/* ── Career Alignment Prediction (full width, navigable) ─────────── */}
-        <div className="full-width-chart">
-          <CareerAlignmentChart
-            data={careerAlignmentData}
-            title="Career Alignment Prediction"
-            subtitle="Predicted vs. actual career alignment rate by program"
-            height={300}
-            navigateTo="/admin/response-and-analytics"
-          />
-        </div>
+            <div className="charts-row">
+              <ChartCard
+                title="Post-Graduation Path"
+                subtitle="Where SHS alumni went after graduation"
+              >
+                <EmptyChart height={280} />
+              </ChartCard>
+            </div>
 
-        {/* ── In-Demand Skills (full width) ─────────────────────────────── */}
-        <div className="full-width-chart">
-          <CustomBarChart
-            data={inDemandSkillsData}
-            dataKey="count"
-            nameKey="name"
-            title="Most In-Demand Skills"
-            subtitle="Top skills required by employers"
-            height={300}
-          />
-        </div>
+            <div className="full-width-chart">
+              <ChartCard
+                title="Continued Studies: NU vs Other Schools"
+                subtitle="% of SHS alumni who pursued undergrad at NU vs elsewhere"
+              >
+                <EmptyChart height={300} />
+              </ChartCard>
+            </div>
+          </>
 
-        {/* ── KPI Alert Modal ── */}
+        ) : (
+
+          /* ── COLLEGE SECTION ── */
+          <>
+            <div className="dashboard-section">
+              <div className="section-header">
+                <IoMdSchool className="section-icon" />
+                {/* Renamed from "Alumni Tracer" to "College Alumni" to distinguish
+                    from the SHS section now that both exist side by side */}
+                <div className="section-title">College Alumni</div>
+              </div>
+              <div className="alumni-tracer-grid">
+                {kpis2.map((k) => (
+                  <KpiStatCard key={k.label} {...k} />
+                ))}
+              </div>
+            </div>
+
+            {/* Charts use NavigableChartCard via the navigateTo prop — preserves
+                your mouse-down timer, keyboard nav, and aria attributes instead
+                of the raw onClick wrapper divs in friend's version */}
+            <div className="charts-row">
+              <CustomBarChart
+                data={employmentAlignmentData}
+                dataKey="alignment"
+                nameKey="name"
+                title="Degree Alignment Rate"
+                subtitle="Percentage of alumni employed in their degree field per program"
+                height={280}
+                navigateTo="/admin/response-and-analytics"
+              />
+              <CustomPieChart
+                data={employmentStatusData}
+                title="Employment Status Distribution"
+                subtitle="Breakdown of alumni by employment type"
+                height={280}
+                navigateTo="/admin/response-and-analytics"
+              />
+            </div>
+
+            <div className="full-width-chart">
+              <CareerAlignmentChart
+                data={careerAlignmentData}
+                title="Career Alignment Prediction"
+                subtitle="Predicted vs. actual career alignment rate by program"
+                height={300}
+                navigateTo="/admin/response-and-analytics"
+              />
+            </div>
+
+            {/* In-Demand Skills — present in your version, dropped by friend */}
+            <div className="full-width-chart">
+              <CustomBarChart
+                data={inDemandSkillsData}
+                dataKey="count"
+                nameKey="name"
+                title="Most In-Demand Skills"
+                subtitle="Top skills required by employers"
+                height={300}
+              />
+            </div>
+          </>
+
+        )}
+
+        {/* ── KPI Alert Modal ─────────────────────────────────────────────── */}
         {activeKpiModal && (
           <KpiAlertModal
             label={activeKpiModal}

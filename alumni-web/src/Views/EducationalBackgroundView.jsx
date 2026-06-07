@@ -54,22 +54,13 @@ const STYLES = `
   .eb-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .eb-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
 
-  /* ── Locked field styles ─────────────────────────────────────────────────── */
-  /*
-   * We do NOT use HTML disabled on the <select> because browsers apply an
-   * OS-level colour tint that makes the text hard to read and cannot be
-   * reliably overridden across all browsers + OS combinations.
-   *
-   * Instead we use a visually-styled read-only element plus pointer-events:none
-   * and tabIndex=-1 to achieve the same effect without the browser quirks.
-   */
   .eb-locked-display {
     width: 100%;
     height: 47px;
     background: #F0F4FB;
     border: 0.8px solid #B8C8E8;
     border-radius: 10px;
-    padding: 0 40px 0 16px;       /* right padding leaves room for lock icon */
+    padding: 0 40px 0 16px;
     font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
     font-size: 14px;
     color: #2D467C;
@@ -103,7 +94,6 @@ const STYLES = `
 const onFocus = e => { if (!e.target.readOnly && !e.target.disabled) e.target.style.borderColor = '#003EA6'; };
 const onBlur  = e => { if (!e.target.readOnly && !e.target.disabled) e.target.style.borderColor = '#D1D5DC'; };
 
-// ── Lock icon ─────────────────────────────────────────────────────────────────
 const LockIcon = () => (
   <svg width="11" height="11" viewBox="0 0 12 14" fill="none" aria-hidden="true">
     <rect x="1" y="6" width="10" height="7" rx="1.5" stroke="#6B7E9F" strokeWidth="1.2"/>
@@ -111,7 +101,6 @@ const LockIcon = () => (
   </svg>
 );
 
-// ── Hint shown beneath a locked field ─────────────────────────────────────────
 const LockedHint = () => (
   <span className="eb-lock-hint" role="note">
     <LockIcon />
@@ -119,9 +108,6 @@ const LockedHint = () => (
   </span>
 );
 
-// ── Locked field display ───────────────────────────────────────────────────────
-// Replaces the <select> entirely with a styled <div> so there is zero chance
-// of any browser interaction (no click, no keyboard, no focus).
 const LockedField = ({ value }) => (
   <div className="eb-select-wrap">
     <div
@@ -132,7 +118,6 @@ const LockedField = ({ value }) => (
     >
       {value || '—'}
     </div>
-    {/* Lock icon in place of the chevron arrow */}
     <span style={{
       position: 'absolute', right: 14, top: '50%',
       transform: 'translateY(-50%)', pointerEvents: 'none',
@@ -140,6 +125,15 @@ const LockedField = ({ value }) => (
       <LockIcon />
     </span>
   </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SelectArrow — reusable chevron for <select> wrappers
+// ─────────────────────────────────────────────────────────────────────────────
+const SelectArrow = () => (
+  <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
+    <path d="M1 1L6 7L11 1" stroke="#00226D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
 );
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -158,10 +152,24 @@ const EducationalBackgroundView = ({
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
   navigate,
+  // ── BRANCHING PROPS ────────────────────────────────────────────────────────
+  // shouldShowField(fieldKey) → boolean
+  //   Returns false when an Admin branching rule hides this field given the
+  //   current form values. Returns true while config is loading (safe default).
+  // branchingReady → boolean
+  //   True once the branching config has been fetched. Not required by the
+  //   view directly, but forwarded so parent can delay navigation if needed.
+  shouldShowField = () => true,   // safe fallback if prop is omitted
+  branchingReady  = true,
 }) => {
+  // ── Local display conditionals (hardcoded business logic) ─────────────────
+  // These control nested sub-question visibility based on current form values.
+  // They are INDEPENDENT of Admin branching rules — both must be satisfied for
+  // a field to render. A field is shown only when:
+  //   (a) the local conditional allows it, AND
+  //   (b) shouldShowField() allows it (Admin branching rule)
   const showPostGradCourse    = form.post_grad_plans === 'Yes';
   const showLicensureBranch   = form.licensure_reviewing === 'Yes';
-  // ── NEW: show the "No" branch when the user selects "No" ─────────────────
   const showLicensureNoBranch = form.licensure_reviewing === 'No';
   const showBoardExam         = showLicensureBranch &&
     (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken');
@@ -202,7 +210,6 @@ const EducationalBackgroundView = ({
                   )}
                 </button>
 
-                {/* ── Notification dropdown ── */}
                 {showDropdown && (
                   <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: '#FFFFFF', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
                     <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
@@ -292,42 +299,41 @@ const EducationalBackgroundView = ({
               <div className="eb-fields">
 
                 {/* ── Degree Program ─────────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('degree_program')}
-                    {/* No asterisk for locked fields — they are always valid */}
-                    {!isLocked('degree_program') && <span className="eb-req">*</span>}
-                    {errors.has('degree_program') && <span className="eb-field-error">Required</span>}
-                  </label>
+                {shouldShowField('degree_program') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('degree_program')}
+                      {!isLocked('degree_program') && <span className="eb-req">*</span>}
+                      {errors.has('degree_program') && <span className="eb-field-error">Required</span>}
+                    </label>
 
-                  {isLocked('degree_program') ? (
-                    <>
-                      <LockedField value={form.degree_program} />
-                      <LockedHint />
-                    </>
-                  ) : (
-                    <div className="eb-select-wrap">
-                      <select
-                        className="eb-input eb-select"
-                        value={form.degree_program}
-                        onChange={e => set('degree_program', e.target.value)}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      >
-                        <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                        {degreeOptions.map(o => (
-                          <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
-                        ))}
-                      </select>
-                      <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1L6 7L11 1" stroke="#00226D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                  )}
-                </div>
+                    {isLocked('degree_program') ? (
+                      <>
+                        <LockedField value={form.degree_program} />
+                        <LockedHint />
+                      </>
+                    ) : (
+                      <div className="eb-select-wrap">
+                        <select
+                          className="eb-input eb-select"
+                          value={form.degree_program}
+                          onChange={e => set('degree_program', e.target.value)}
+                          onFocus={onFocus}
+                          onBlur={onBlur}
+                        >
+                          <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
+                          {degreeOptions.map(o => (
+                            <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
+                          ))}
+                        </select>
+                        <SelectArrow />
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* ── Other Degree (conditional) ─────────────────────────── */}
-                {form.degree_program === 'Other' && (
+                {/* ── Other Degree (conditional on local logic + branching) ─ */}
+                {form.degree_program === 'Other' && shouldShowField('other_degree') && (
                   <div className="eb-field">
                     <label className="eb-label">
                       {getLabel('other_degree')} <span className="eb-req">*</span>
@@ -345,103 +351,108 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Reason for course ──────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('reason_for_course')} <span className="eb-req">*</span>
-                    {errors.has('reason_for_course') && <span className="eb-field-error">Required</span>}
-                  </label>
-                  <textarea
-                    className="eb-textarea"
-                    placeholder={getPlaceholder('reason_for_course')}
-                    value={form.reason_for_course}
-                    onChange={e => set('reason_for_course', e.target.value)}
-                    onFocus={onFocus}
-                    onBlur={onBlur}
-                  />
-                </div>
+                {shouldShowField('reason_for_course') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('reason_for_course')} <span className="eb-req">*</span>
+                      {errors.has('reason_for_course') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <textarea
+                      className="eb-textarea"
+                      placeholder={getPlaceholder('reason_for_course')}
+                      value={form.reason_for_course}
+                      onChange={e => set('reason_for_course', e.target.value)}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
+                )}
 
                 {/* ── Year Graduated ─────────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('year_graduated')}
-                    {!isLocked('year_graduated') && <span className="eb-req">*</span>}
-                    {errors.has('year_graduated') && <span className="eb-field-error">Required</span>}
-                  </label>
+                {shouldShowField('year_graduated') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('year_graduated')}
+                      {!isLocked('year_graduated') && <span className="eb-req">*</span>}
+                      {errors.has('year_graduated') && <span className="eb-field-error">Required</span>}
+                    </label>
 
-                  {isLocked('year_graduated') ? (
-                    <>
-                      <LockedField value={form.year_graduated} />
-                      <LockedHint />
-                    </>
-                  ) : (
+                    {isLocked('year_graduated') ? (
+                      <>
+                        <LockedField value={form.year_graduated} />
+                        <LockedHint />
+                      </>
+                    ) : (
+                      <div className="eb-select-wrap">
+                        <select
+                          className="eb-input eb-select"
+                          value={form.year_graduated}
+                          onChange={e => set('year_graduated', e.target.value)}
+                          onFocus={onFocus}
+                          onBlur={onBlur}
+                        >
+                          <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
+                          {yearOptions.map(y => (
+                            <option key={y} value={y} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{y}</option>
+                          ))}
+                        </select>
+                        <SelectArrow />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── Distinction ────────────────────────────────────────── */}
+                {shouldShowField('distinction') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('distinction')} <span className="eb-req">*</span>
+                      {errors.has('distinction') && <span className="eb-field-error">Required</span>}
+                    </label>
                     <div className="eb-select-wrap">
                       <select
                         className="eb-input eb-select"
-                        value={form.year_graduated}
-                        onChange={e => set('year_graduated', e.target.value)}
+                        value={form.distinction}
+                        onChange={e => set('distinction', e.target.value)}
                         onFocus={onFocus}
                         onBlur={onBlur}
                       >
                         <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                        {yearOptions.map(y => (
-                          <option key={y} value={y} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{y}</option>
+                        {distinctionOptions.map(o => (
+                          <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
                         ))}
                       </select>
-                      <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                        <path d="M1 1L6 7L11 1" stroke="#00226D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <SelectArrow />
                     </div>
-                  )}
-                </div>
-
-                {/* ── Distinction ────────────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('distinction')} <span className="eb-req">*</span>
-                    {errors.has('distinction') && <span className="eb-field-error">Required</span>}
-                  </label>
-                  <div className="eb-select-wrap">
-                    <select
-                      className="eb-input eb-select"
-                      value={form.distinction}
-                      onChange={e => set('distinction', e.target.value)}
-                      onFocus={onFocus}
-                      onBlur={onBlur}
-                    >
-                      <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                      {distinctionOptions.map(o => (
-                        <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
-                      ))}
-                    </select>
-                    <svg className="eb-select-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none">
-                      <path d="M1 1L6 7L11 1" stroke="#00226D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
                   </div>
-                </div>
+                )}
 
                 {/* ── Post-grad plans ────────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('post_grad_plans')} <span className="eb-req">*</span>
-                    {errors.has('post_grad_plans') && <span className="eb-field-error">Required</span>}
-                  </label>
-                  <div className="eb-radio-group">
-                    {['Yes', 'No'].map(opt => (
-                      <label key={opt} className="eb-radio-label">
-                        <input
-                          type="radio"
-                          name="post_grad_plans"
-                          value={opt}
-                          checked={form.post_grad_plans === opt}
-                          onChange={() => set('post_grad_plans', opt)}
-                        />
-                        {opt}
-                      </label>
-                    ))}
+                {shouldShowField('post_grad_plans') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('post_grad_plans')} <span className="eb-req">*</span>
+                      {errors.has('post_grad_plans') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <div className="eb-radio-group">
+                      {['Yes', 'No'].map(opt => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="post_grad_plans"
+                            value={opt}
+                            checked={form.post_grad_plans === opt}
+                            onChange={() => set('post_grad_plans', opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {showPostGradCourse && (
+                {/* ── Post-grad course (local + branching gate) ──────────── */}
+                {showPostGradCourse && shouldShowField('post_grad_course') && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel('post_grad_course')} <span className="eb-req">*</span>
@@ -459,172 +470,178 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Licensure reviewing ────────────────────────────────── */}
-                <div className="eb-field">
-                  <label className="eb-label">
-                    {getLabel('licensure_reviewing')} <span className="eb-req">*</span>
-                    {errors.has('licensure_reviewing') && <span className="eb-field-error">Required</span>}
-                  </label>
-                  <div className="eb-radio-group">
-                    {licensureOptions.map(opt => (
-                      <label key={opt} className="eb-radio-label">
-                        <input
-                          type="radio"
-                          name="licensure_reviewing"
-                          value={opt}
-                          checked={form.licensure_reviewing === opt}
-                          onChange={() => setLicensureReviewing(opt)}
-                        />
-                        {opt}
-                      </label>
-                    ))}
+                {shouldShowField('licensure_reviewing') && (
+                  <div className="eb-field">
+                    <label className="eb-label">
+                      {getLabel('licensure_reviewing')} <span className="eb-req">*</span>
+                      {errors.has('licensure_reviewing') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <div className="eb-radio-group">
+                      {licensureOptions.map(opt => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="licensure_reviewing"
+                            value={opt}
+                            checked={form.licensure_reviewing === opt}
+                            onChange={() => setLicensureReviewing(opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* ── "Yes" branch ───────────────────────────────────────── */}
-                {showLicensureBranch && (
-                  <>
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('licensure_plans')} <span className="eb-req">*</span>
-                        {errors.has('licensure_plans') && <span className="eb-field-error">Required</span>}
-                      </label>
-                      <div className="eb-radio-group">
-                        {licensurePlansOptions.map(opt => (
-                          <label key={opt} className="eb-radio-label">
-                            <input
-                              type="radio"
-                              name="licensure_plans"
-                              value={opt}
-                              checked={form.licensure_plans === opt}
-                              onChange={() => setLicensurePlans(opt)}
-                            />
-                            {opt}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('licensure_reason')} <span className="eb-req">*</span>
-                        {errors.has('licensure_reason') && <span className="eb-field-error">Required</span>}
-                      </label>
-                      <textarea
-                        className="eb-textarea"
-                        placeholder={getPlaceholder('licensure_reason')}
-                        value={form.licensure_reason}
-                        onChange={e => set('licensure_reason', e.target.value)}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      />
-                    </div>
-                  </>
                 )}
 
-                {/* ── Board exam fields (nested inside "Yes" branch) ─────── */}
-                {showBoardExam && (
-                  <>
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('board_exam_name')} <span className="eb-req">*</span>
-                        {errors.has('board_exam_name') && <span className="eb-field-error">Required</span>}
-                      </label>
-                      <input
-                        className="eb-input"
-                        placeholder={getPlaceholder('board_exam_name')}
-                        value={form.board_exam_name}
-                        onChange={e => set('board_exam_name', e.target.value)}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      />
+                {/* ── "Yes" branch — licensure plans ─────────────────────── */}
+                {showLicensureBranch && shouldShowField('licensure_plans') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('licensure_plans')} <span className="eb-req">*</span>
+                      {errors.has('licensure_plans') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <div className="eb-radio-group">
+                      {licensurePlansOptions.map(opt => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="licensure_plans"
+                            value={opt}
+                            checked={form.licensure_plans === opt}
+                            onChange={() => setLicensurePlans(opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
                     </div>
-
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('board_exam_date')} <span className="eb-req">*</span>
-                        {errors.has('board_exam_date') && <span className="eb-field-error">Required</span>}
-                      </label>
-                      <input
-                        type="date"
-                        className="eb-input"
-                        value={form.board_exam_date}
-                        onChange={e => set('board_exam_date', e.target.value)}
-                        style={{ colorScheme: 'light' }}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      />
-                    </div>
-
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('board_exam_result')} <span className="eb-req">*</span>
-                        {errors.has('board_exam_result') && <span className="eb-field-error">Required</span>}
-                      </label>
-                      <div className="eb-radio-group">
-                        {boardResultOptions.map(opt => (
-                          <label key={opt} className="eb-radio-label">
-                            <input
-                              type="radio"
-                              name="board_exam_result"
-                              value={opt}
-                              checked={form.board_exam_result === opt}
-                              onChange={() => set('board_exam_result', opt)}
-                            />
-                            {opt}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 )}
 
-                {/* ── "No" branch ────────────────────────────────────────── */}
-                {showLicensureNoBranch && (
-                  <>
-                    {/* Field 1 — future plans radio */}
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        Do you have any plans on taking the Licensure Examination?
-                        <span className="eb-req">*</span>
-                        {errors.has('licensure_no_plans') && (
-                          <span className="eb-field-error">Required</span>
-                        )}
-                      </label>
-                      <div className="eb-radio-group">
-                        {['Yes', 'No', 'Maybe', 'Not at all'].map(opt => (
-                          <label key={opt} className="eb-radio-label">
-                            <input
-                              type="radio"
-                              name="licensure_no_plans"
-                              value={opt}
-                              checked={form.licensure_no_plans === opt}
-                              onChange={() => setLicensureNoPlans(opt)}
-                            />
-                            {opt}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                {/* ── "Yes" branch — licensure reason ────────────────────── */}
+                {showLicensureBranch && shouldShowField('licensure_reason') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('licensure_reason')} <span className="eb-req">*</span>
+                      {errors.has('licensure_reason') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <textarea
+                      className="eb-textarea"
+                      placeholder={getPlaceholder('licensure_reason')}
+                      value={form.licensure_reason}
+                      onChange={e => set('licensure_reason', e.target.value)}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
+                )}
 
-                    {/* Field 2 — reason textarea */}
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel('licensure_reason')}
-                        <span className="eb-req">*</span>
-                        {errors.has('licensure_no_reason') && (
-                          <span className="eb-field-error">Required</span>
-                        )}
-                      </label>
-                      <textarea
-                        className="eb-textarea"
-                        placeholder={getPlaceholder('licensure_reason')}
-                        value={form.licensure_no_reason}
-                        onChange={e => set('licensure_no_reason', e.target.value)}
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      />
+                {/* ── Board exam name ────────────────────────────────────── */}
+                {showBoardExam && shouldShowField('board_exam_name') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('board_exam_name')} <span className="eb-req">*</span>
+                      {errors.has('board_exam_name') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <input
+                      className="eb-input"
+                      placeholder={getPlaceholder('board_exam_name')}
+                      value={form.board_exam_name}
+                      onChange={e => set('board_exam_name', e.target.value)}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
+                )}
+
+                {/* ── Board exam date ────────────────────────────────────── */}
+                {showBoardExam && shouldShowField('board_exam_date') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('board_exam_date')} <span className="eb-req">*</span>
+                      {errors.has('board_exam_date') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <input
+                      type="date"
+                      className="eb-input"
+                      value={form.board_exam_date}
+                      onChange={e => set('board_exam_date', e.target.value)}
+                      style={{ colorScheme: 'light' }}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
+                )}
+
+                {/* ── Board exam result ──────────────────────────────────── */}
+                {showBoardExam && shouldShowField('board_exam_result') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('board_exam_result')} <span className="eb-req">*</span>
+                      {errors.has('board_exam_result') && <span className="eb-field-error">Required</span>}
+                    </label>
+                    <div className="eb-radio-group">
+                      {boardResultOptions.map(opt => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="board_exam_result"
+                            value={opt}
+                            checked={form.board_exam_result === opt}
+                            onChange={() => set('board_exam_result', opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
                     </div>
-                  </>
+                  </div>
+                )}
+
+                {/* ── "No" branch — future licensure plans ───────────────── */}
+                {showLicensureNoBranch && shouldShowField('licensure_no_plans') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      Do you have any plans on taking the Licensure Examination?
+                      <span className="eb-req">*</span>
+                      {errors.has('licensure_no_plans') && (
+                        <span className="eb-field-error">Required</span>
+                      )}
+                    </label>
+                    <div className="eb-radio-group">
+                      {['Yes', 'No', 'Maybe', 'Not at all'].map(opt => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="licensure_no_plans"
+                            value={opt}
+                            checked={form.licensure_no_plans === opt}
+                            onChange={() => setLicensureNoPlans(opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── "No" branch — licensure no reason ─────────────────── */}
+                {showLicensureNoBranch && shouldShowField('licensure_no_reason') && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel('licensure_reason')}
+                      <span className="eb-req">*</span>
+                      {errors.has('licensure_no_reason') && (
+                        <span className="eb-field-error">Required</span>
+                      )}
+                    </label>
+                    <textarea
+                      className="eb-textarea"
+                      placeholder={getPlaceholder('licensure_reason')}
+                      value={form.licensure_no_reason}
+                      onChange={e => set('licensure_no_reason', e.target.value)}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
                 )}
 
               </div>{/* /eb-fields */}

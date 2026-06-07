@@ -1,105 +1,100 @@
 /**
- * EducationalBackgroundSHS.jsx — Logic Layer
- * Location: src/surveyshs/EducationalBackgroundSHS.jsx
+ * JobExperienceSHS.jsx — Logic Layer
+ * Location: src/surveyshs/JobExperienceSHS.jsx
  *
- * Architecture mirrors College EducationalBackground.jsx exactly:
- *   • surveyConfig realtime subscription for dynamic labels / options
- *   • Two-step load: saved DB data first, then profile autofill
- *   • Branch-aware validation — only validates fields currently visible
- *   • State resets cascade down the tree when a parent answer changes,
- *     preventing stale values from persisting in hidden branches
- *   • Notification handling identical to all other SHS / College sections
+ * Architecture is identical to all preceding SHS logic layers:
+ *   • surveyConfig realtime subscription wired and ready
+ *   • Two-step load: saved DB data first, then config hydration
+ *   • Branch-aware validation — radio "Other" sub-fields + checkbox array
+ *   • State resets cascade when a parent radio changes
+ *   • Notification handling identical to all SHS sections
  *
- * SHS-specific branching (all driven by form.status):
+ * Form fields (Q17–Q19, Work Experience sub-section):
+ *   time_to_find_job      Radio   — no sub-field
+ *   how_found_job         Radio   — other_how_found_job text when 'Other'
+ *   factors_first_job     Array   — checkboxes
+ *                                   other_factors text when 'Other' checked
  *
- *   'Currently Studying' | 'Graduated'
- *     → pursued_nu_branch (Yes/No)
- *         YES → nu_branch, reason_nu, education_level (+other), course_program, year_level
- *         NO  → pursued_other_school (Yes/No)
- *                 YES → reason_not_nu, school_name, education_level (+other), course_program, year_level
- *                 NO  → (no further fields — dead end)
- *   'Stopped'
- *     → stopped_reason (+other textarea)
- *   'Working'
- *     → (no follow-up)
+ * Navigation:
+ *   PREV → /surveyshs/shs-employment-information
+ *   NEXT → /surveyshs/shs-skills-and-competencies
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
-import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
-import EducationalBackgroundViewSHS from './views/EducationalBackgroundViewSHS';
+import { supabase } from '../../lib/supabase';
+import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
+import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
+import JobExperienceViewSHS from '../views/JobExperienceViewSHS';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
 const TOTAL_SECTIONS  = 5;
-const CURRENT_SECTION = 2;
-const SECTION_KEY     = 'shs_educational_background';
-const PREV_ROUTE                = '/surveyshs/shs-personal-background';
-const NEXT_ROUTE_DEFAULT        = '/surveyshs/section-3';                // Currently Studying / Graduated
-const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';   // Working → Employment
-const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';  // Stopped  → skip Employment
- 
+const CURRENT_SECTION = 4;
+const SECTION_KEY     = 'shs_job_experience';
+const PREV_ROUTE      = '/surveyshs/shs-employment-information';
+const NEXT_ROUTE      = '/surveyshs/shs-skills-and-competencies';
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Resolve the correct next route based on the current status selection.
-// Centralised here so navigation logic is never duplicated per-component.
+// Static option lists
 // ─────────────────────────────────────────────────────────────────────────────
-const resolveNextRoute = (status) => {
-  if (status === 'Working') return NEXT_ROUTE_WORKING;
-  if (status === 'Stopped') return NEXT_ROUTE_STOPPED;
-  return NEXT_ROUTE_DEFAULT; // 'Currently Studying' | 'Graduated'
+export const TIME_TO_FIND_JOB_OPTIONS = [
+  'Less than a month',
+  '1-3 months',
+  '4-6 months',
+  '7-12 months',
+  'More than a year',
+  'Not Applicable',
+];
+
+export const HOW_FOUND_JOB_OPTIONS = [
+  'Job/Career Fair',
+  'Internship Absorption',
+  'Online',
+  'Recommendation',
+  'Walk-in Applications',
+  'Not Applicable',
+  'Other',
+];
+
+export const FACTORS_FIRST_JOB_OPTIONS = [
+  'Academic performance',
+  'Internship/On-the-Job Training/Immersion',
+  'Personal connections',
+  'Skills/Competencies acquired in school',
+  'Certifications',
+  'Not Applicable',
+  'Other',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty form shape
+// ─────────────────────────────────────────────────────────────────────────────
+const EMPTY_FORM = {
+  time_to_find_job:    '',
+  how_found_job:       '',
+  other_how_found_job: '',
+  factors_first_job:   [], // checkbox array
+  other_factors:       '',
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Required fields per branch path
-// Validation is computed dynamically from the current form state.
+// Required fields — computed dynamically from current form state
 // ─────────────────────────────────────────────────────────────────────────────
 const getRequiredFields = (form) => {
-  const required = new Set(['status']);
- 
-  const isStudyingOrGraduated =
-    form.status === 'Currently Studying' || form.status === 'Graduated';
- 
-  if (isStudyingOrGraduated) {
-    required.add('pursued_nu_branch');
- 
-    if (form.pursued_nu_branch === 'Yes') {
-      // NU branch path
-      required.add('nu_branch');
-      required.add('reason_nu');
-      required.add('education_level');
-      if (form.education_level === 'Other') required.add('education_level_other');
-      required.add('course_program');
-      required.add('year_level');
- 
-    } else if (form.pursued_nu_branch === 'No') {
-      required.add('pursued_other_school');
- 
-      if (form.pursued_other_school === 'Yes') {
-        // Other school path
-        required.add('reason_not_nu');
-        required.add('school_name');
-        required.add('education_level');
-        if (form.education_level === 'Other') required.add('education_level_other');
-        required.add('course_program');
-        required.add('year_level');
-      }
-      // Both NO → no additional required fields (dead end is valid)
-    }
-  }
- 
-  if (form.status === 'Stopped') {
-    required.add('stopped_reason');
-    if (form.stopped_reason === 'Others') required.add('stopped_reason_other');
-  }
- 
-  // 'Working' → only 'status' is required (already in the set)
- 
+  const required = new Set([
+    'time_to_find_job',
+    'how_found_job',
+    'factors_first_job',
+  ]);
+
+  if (form.how_found_job === 'Other')             required.add('other_how_found_job');
+  if (form.factors_first_job.includes('Other'))   required.add('other_factors');
+
   return required;
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Form completion percentage
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,23 +102,27 @@ const computeFormPct = (form) => {
   const required = getRequiredFields(form);
   const base     = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const cap      = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-  const filled   = [...required].filter(
-    (k) => form[k] && String(form[k]).trim() !== ''
-  ).length;
-  const contrib  = (filled / required.size) * (1 / TOTAL_SECTIONS) * 100;
+
+  const filled = [...required].filter((k) => {
+    const v = form[k];
+    if (Array.isArray(v)) return v.length > 0;
+    return v && String(v).trim() !== '';
+  }).length;
+
+  const contrib = (filled / required.size) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(
     parseFloat((base + contrib).toFixed(2)),
     parseFloat(cap.toFixed(2))
   );
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers (identical to all other sections)
+// Notification helpers — identical to all SHS sections
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
- 
+
 const groupByDate = (list) => {
   const now       = new Date();
   const today     = new Date(now); today.setHours(0, 0, 0, 0);
@@ -139,7 +138,7 @@ const groupByDate = (list) => {
   });
   return groups;
 };
- 
+
 const formatTime = (iso) => {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -149,58 +148,32 @@ const formatTime = (iso) => {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
- 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty form shape
-// ─────────────────────────────────────────────────────────────────────────────
-const EMPTY_FORM = {
-  // Root question
-  status: '',
- 
-  // Studying / Graduated branch
-  pursued_nu_branch:    '',   // Yes | No
-  pursued_other_school: '',   // Yes | No (only when pursued_nu_branch === 'No')
- 
-  // Shared further-studies detail fields (used by both YES paths)
-  nu_branch:             '',
-  reason_nu:             '',
-  reason_not_nu:         '',
-  school_name:           '',
-  education_level:       '',
-  education_level_other: '',
-  course_program:        '',
-  year_level:            '',
- 
-  // Stopped branch
-  stopped_reason:       '',
-  stopped_reason_other: '',
-};
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Controller
 // ─────────────────────────────────────────────────────────────────────────────
-const EducationalBackgroundSHS = () => {
+const JobExperienceSHS = () => {
   const navigate = useNavigate();
- 
+
   // ── Config ────────────────────────────────────────────────────────────────
   const [loadingConfig, setLoadingConfig] = useState(true);
- 
+
   // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
- 
+
   // ── Form state ────────────────────────────────────────────────────────────
-  const [form,     setForm]     = useState(EMPTY_FORM);
-  const [errors,   setErrors]   = useState(new Set());
-  const [saveToast,setSaveToast]= useState(false);
+  const [form,      setForm]      = useState(EMPTY_FORM);
+  const [errors,    setErrors]    = useState(new Set());
+  const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
- 
+
   // ── Notifications ─────────────────────────────────────────────────────────
-  const bellRef                        = useRef(null);
-  const [notifs,      setNotifs]       = useState([]);
-  const [unreadCount, setUnreadCount]  = useState(0);
-  const [showDropdown,setShowDropdown] = useState(false);
-  const [notifTab,    setNotifTab]     = useState('all');
- 
+  const bellRef                         = useRef(null);
+  const [notifs,       setNotifs]       = useState([]);
+  const [unreadCount,  setUnreadCount]  = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab,     setNotifTab]     = useState('all');
+
   // ── surveyConfig loading + realtime subscription ──────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -213,32 +186,42 @@ const EducationalBackgroundSHS = () => {
       }
     };
     init();
- 
+
     const channel = subscribeToSurveyConfigChanges(async () => {
       await loadSurveyConfig(true);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
- 
-  // ── STEP 1: Load saved data ────────────────────────────────────────────────
+
+  // ── STEP 1: Load saved data ───────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
         const saved = await loadSectionData(SECTION_KEY);
         if (saved && Object.keys(saved).length > 0) {
-          console.log('[EducationalBackgroundSHS] Loaded saved data:', saved);
-          setForm((f) => ({ ...f, ...saved }));
+          console.log('[JobExperienceSHS] Loaded saved data:', saved);
+          setForm((f) => ({
+            ...f,
+            time_to_find_job:    saved.time_to_find_job    ?? f.time_to_find_job,
+            how_found_job:       saved.how_found_job       ?? f.how_found_job,
+            other_how_found_job: saved.other_how_found_job ?? f.other_how_found_job,
+            // Guard: always restore as array even if DB stored differently
+            factors_first_job:   Array.isArray(saved.factors_first_job)
+                                   ? saved.factors_first_job
+                                   : f.factors_first_job,
+            other_factors:       saved.other_factors       ?? f.other_factors,
+          }));
         }
       } catch (err) {
-        console.error('[EducationalBackgroundSHS] Error loading saved data:', err);
+        console.error('[JobExperienceSHS] Error loading saved data:', err);
       } finally {
         setHasLoadedSavedData(true);
       }
     };
     load();
   }, []);
- 
-  // ── Notifications ─────────────────────────────────────────────────────────
+
+  // ── Notifications fetch ───────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -257,7 +240,7 @@ const EducationalBackgroundSHS = () => {
         setUnreadCount(mapped.filter((n) => !n.read).length);
       });
   }, []);
- 
+
   useEffect(() => {
     const h = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -266,21 +249,21 @@ const EducationalBackgroundSHS = () => {
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
- 
+
   const markAllRead = useCallback(() => {
     saveReadIds(notifs.map((n) => n.id));
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   }, [notifs]);
- 
+
   const markOneRead = useCallback((id) => {
     const ids = getReadIds();
     if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
- 
-  // ── Generic field setter ───────────────────────────────────────────────────
+
+  // ── Generic scalar field setter ───────────────────────────────────────────
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -290,86 +273,73 @@ const EducationalBackgroundSHS = () => {
       return next;
     });
   }, []);
- 
-  // ── Status setter — resets the entire branch tree below it ────────────────
-  const setStatus = useCallback((val) => {
-    setForm({
-      ...EMPTY_FORM,
-      status: val,
-    });
-    setErrors(new Set());
-  }, []);
- 
-  // ── pursued_nu_branch setter — resets level-2 and detail fields ───────────
-  const setPursuedNuBranch = useCallback((val) => {
+
+  // ── Q18 radio setter — cascade-resets the "Other" sub-field ──────────────
+  // Same pattern as setStoppedReason in EducationalBackgroundSHS.
+  const setHowFoundJob = useCallback((val) => {
     setForm((f) => ({
       ...f,
-      pursued_nu_branch:     val,
-      pursued_other_school:  '',
-      nu_branch:             '',
-      reason_nu:             '',
-      reason_not_nu:         '',
-      school_name:           '',
-      education_level:       '',
-      education_level_other: '',
-      course_program:        '',
-      year_level:            '',
+      how_found_job:       val,
+      other_how_found_job: '',
     }));
     setErrors((prev) => {
       const next = new Set(prev);
-      ['pursued_nu_branch', 'pursued_other_school',
-       'nu_branch', 'reason_nu', 'reason_not_nu', 'school_name',
-       'education_level', 'education_level_other',
-       'course_program', 'year_level'].forEach((k) => next.delete(k));
+      next.delete('how_found_job');
+      next.delete('other_how_found_job');
       return next;
     });
   }, []);
- 
-  // ── pursued_other_school setter — resets detail fields only ───────────────
-  const setPursuedOtherSchool = useCallback((val) => {
-    setForm((f) => ({
-      ...f,
-      pursued_other_school:  val,
-      reason_not_nu:         '',
-      school_name:           '',
-      education_level:       '',
-      education_level_other: '',
-      course_program:        '',
-      year_level:            '',
-    }));
+
+  // ── Q19 checkbox toggle — cascade-resets "Other" sub-field on uncheck ─────
+  // Same pattern as toggleParticipate in FeedbackAndEngagementSHS.
+  const toggleFactors = useCallback((value) => {
+    setForm((f) => {
+      const already = f.factors_first_job.includes(value);
+      const updated = already
+        ? f.factors_first_job.filter((v) => v !== value)
+        : [...f.factors_first_job, value];
+
+      return {
+        ...f,
+        factors_first_job: updated,
+        other_factors: (value === 'Other' && already) ? '' : f.other_factors,
+      };
+    });
     setErrors((prev) => {
       const next = new Set(prev);
-      ['pursued_other_school', 'reason_not_nu', 'school_name',
-       'education_level', 'education_level_other',
-       'course_program', 'year_level'].forEach((k) => next.delete(k));
+      next.delete('factors_first_job');
+      if (value === 'Other') next.delete('other_factors');
       return next;
     });
   }, []);
- 
-  // ── Validation ─────────────────────────────────────────────────────────────
+
+  // ── Validation ────────────────────────────────────────────────────────────
   const validate = () => {
     const required = getRequiredFields(form);
     const errs     = new Set();
     required.forEach((k) => {
-      if (!form[k] || !String(form[k]).trim()) errs.add(k);
+      const v = form[k];
+      if (Array.isArray(v)) {
+        if (v.length === 0) errs.add(k);
+      } else {
+        if (!v || !String(v).trim()) errs.add(k);
+      }
     });
     return errs;
   };
- 
-  // ── Save draft ─────────────────────────────────────────────────────────────
+
+  // ── Save draft ────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
       setSaveToast(true);
       setTimeout(() => setSaveToast(false), 2500);
     } catch (err) {
-      console.error('[EducationalBackgroundSHS] Error saving:', err);
+      console.error('[JobExperienceSHS] Error saving draft:', err);
     }
   };
- 
-  // ── Next (validate → save → navigate) ─────────────────────────────────────
-  // Navigation destination is resolved from the user's status selection so
-  // the branching logic stays in one place and is never duplicated.
+
+  // ── Next (validate → save → navigate) ────────────────────────────────────
   const handleNext = () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -378,17 +348,16 @@ const EducationalBackgroundSHS = () => {
       return;
     }
     setErrors(new Set());
-    const nextRoute = resolveNextRoute(form.status);
     saveSectionProgress(SECTION_KEY, form)
-      .then(() => navigate(nextRoute))
+      .then(() => navigate(NEXT_ROUTE))
       .catch((err) =>
-        console.error('[EducationalBackgroundSHS] Error saving before navigation:', err)
+        console.error('[JobExperienceSHS] Error saving before navigation:', err)
       );
   };
- 
+
   const formPct = computeFormPct(form);
- 
-  // ── Loading gate ───────────────────────────────────────────────────────────
+
+  // ── Loading gate ──────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -399,18 +368,21 @@ const EducationalBackgroundSHS = () => {
       </div>
     );
   }
- 
+
   return (
-    <EducationalBackgroundViewSHS
+    <JobExperienceViewSHS
       /* form */
       form={form}
       set={set}
-      setStatus={setStatus}
-      setPursuedNuBranch={setPursuedNuBranch}
-      setPursuedOtherSchool={setPursuedOtherSchool}
+      setHowFoundJob={setHowFoundJob}
+      toggleFactors={toggleFactors}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
+      /* static options */
+      timeToFindJobOptions={TIME_TO_FIND_JOB_OPTIONS}
+      howFoundJobOptions={HOW_FOUND_JOB_OPTIONS}
+      factorsFirstJobOptions={FACTORS_FIRST_JOB_OPTIONS}
       /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
@@ -432,8 +404,9 @@ const EducationalBackgroundSHS = () => {
       formatTime={formatTime}
       /* routing */
       navigate={navigate}
+      prevRoute={PREV_ROUTE}
     />
   );
 };
- 
-export default EducationalBackgroundSHS;
+
+export default JobExperienceSHS;

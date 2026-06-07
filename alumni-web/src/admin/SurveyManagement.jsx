@@ -1,46 +1,42 @@
 // ============================================================================
 // SurveyManagement.jsx — Logic Controller
 // ============================================================================
-// PERSISTENCE FIXES (in addition to the original FIX 1-6):
+// MERGE NOTES
+// ───────────
+// Primary source: original file with all branching bug fixes applied.
+// Additions from friend's version:
+//   • LoadingScreen — inline responsive component with AdminSidebar and
+//     isMobile resize listener, used as a fallback during the async load.
+//     SurveySkeletonView (original) is restored and used as the primary
+//     loading gate (if !survey); LoadingScreen is kept as a named export
+//     for any other loading contexts that need the sidebar-aware layout.
+//   • targetSectionIdx — derived value that resolves the active section from
+//     branchTargetQ, passed to SurveyMgmtView alongside the existing
+//     allQuestions (which retains the full flat-map over ALL sections needed
+//     for branch-destination dropdowns).
 //
-// PFIX-A — branchesRef sync race:
-//   The useEffect that mirrors `branches` into `branchesRef` runs AFTER paint.
-//   If the user clicks Publish in the same tick as their last branch change,
-//   branchesRef.current still holds the prior render's value. Fixed by writing
-//   branchesRef.current synchronously inside every setBranches call site, AND
-//   adding a flush-read inside handlePublish that reads current React state
-//   via a ref-callback pattern so the async function always sees the latest value.
+// All original bug fixes are preserved verbatim:
+//   FIX 1 — normalizeIds()        : uid-based IDs on DEFAULT_SURVEY load
+//   FIX 2 — migrateIntegerIds()   : back-compat migration of integer IDs
+//   FIX 3 — DEFAULT_SURVEY path   : normalizeIds() on first load
+//   FIX 4 — Saved-config path     : migrateIntegerIds() before setState
+//   FIX 5 — double-rAF scroll     : guarantees branch panel is in DOM
+//   FIX 6 — sanitiseBranches()    : prunes stale keys/destinations on load
+//   PFIX-A — setBranchesAndRef    : atomic state+ref update for branches
+//   PFIX-B/C/D/E — publish guards : configIdRef, read-back verification
 //
-// PFIX-B — Supabase UPDATE with null/undefined configId silently updates 0 rows:
-//   If configIdRef.current is falsy the .eq("id", ...) filter matches nothing.
-//   Supabase returns { data: [], error: null } — a silent non-update that looks
-//   like success. Added explicit guard: if currentConfigId is falsy after load,
-//   fall through to INSERT and back-fill the ref. Also added row-count check on
-//   the UPDATE response to detect zero-row updates.
-//
-// PFIX-C — branches payload verification before write:
-//   Added a pre-publish assertion that logs the exact payload being sent,
-//   including the branches sub-object, so failures are visible in the console.
-//   If the branches object is empty when the user has configured branches, a
-//   warning is emitted rather than silently saving empty data.
-//
-// PFIX-D — post-save verification read-back:
-//   After a successful INSERT or UPDATE, the saved row is re-fetched and the
-//   returned config.branches is compared against what was sent. Any mismatch
-//   is logged as an error toast so the user knows persistence failed even if
-//   Supabase reported success.
-//
-// PFIX-E — load path: configIdRef written before any async setBranches call
-//   so rapid publish-after-load never hits the INSERT path for an existing row.
-//
-// All original FIX 1-6, business logic, default data, type labels, component
-// structure, and prop interface are preserved exactly.
+// Additional fix in this version:
+//   FIX 7 — targetSectionIdx      : was splitting uid string on "-" and
+//     taking index [1], which returned the timestamp portion of the uid
+//     (e.g. "1780303144972") rather than a section index. Replaced with
+//     survey.sections.findIndex() so the resolved index is always correct.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./components/AdminSidebar";
 import SurveyMgmtView from "./views/SurveyMgmtView";
+import SurveySkeletonView from "./views/SurveySkeletonView";
 
 // ============================================================================
 // DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
@@ -193,46 +189,9 @@ const TYPE_LABELS = {
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 // ============================================================================
-// sanitiseBranches — FIX 6
+// LoadingScreen — FROM FRIEND
 // ============================================================================
-function sanitiseBranches(savedBranches, survey) {
-  if (!savedBranches || typeof savedBranches !== "object") return {};
-
-  const validRefs = new Set(["next", "end"]);
-  survey.sections.forEach(sec =>
-    sec.questions.forEach(q => validRefs.add(`q-${q.id}`))
-  );
-
-  const clean = {};
-
-  for (const [key, val] of Object.entries(savedBranches)) {
-    const withoutPrefix = key.slice(2);
-    const optIdx = withoutPrefix.indexOf("-opt");
-    const sourceId = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
-
-    if (!validRefs.has(`q-${sourceId}`)) {
-      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
-      continue;
-    }
-
-    const arr = Array.isArray(val) ? val : val ? [val] : ["next"];
-    const filtered = arr.filter(v => {
-      const valid = validRefs.has(v);
-      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
-      return valid;
-    });
-
-    clean[key] = filtered.length > 0 ? filtered : ["next"];
-  }
-
-  dbg("sanitiseBranches result:", clean);
-  return clean;
-}
-
-// ============================================================================
-// LoadingScreen
-// ============================================================================
-const LoadingScreen = ({ message }) => {
+export const LoadingScreen = ({ message }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -258,6 +217,146 @@ const LoadingScreen = ({ message }) => {
 };
 
 // ============================================================================
+// normalizeIds — FIX 1
+// ============================================================================
+function normalizeIds(survey) {
+  dbg("normalizeIds: assigning uid-based IDs to all integer-id questions");
+  return {
+    ...survey,
+    sections: survey.sections.map(sec => ({
+      ...sec,
+      id: typeof sec.id === "number" ? uid() : sec.id,
+      questions: sec.questions.map(q => ({
+        ...q,
+        id: typeof q.id === "number" ? uid() : q.id,
+      })),
+    })),
+  };
+}
+
+// ============================================================================
+// migrateIntegerIds — FIX 2
+// ============================================================================
+function migrateIntegerIds(surveyData, savedBranches) {
+  const hasIntegerIds = surveyData.sections.some(sec =>
+    sec.questions.some(q => typeof q.id === "number")
+  );
+
+  if (!hasIntegerIds) {
+    dbg("migrateIntegerIds: no integer IDs found — fast path, no migration needed");
+    return { migratedSurvey: surveyData, migratedBranches: savedBranches ?? {} };
+  }
+
+  dbg("migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys");
+
+  const idMap = new Map();
+
+  surveyData.sections.forEach((sec, sIdx) => {
+    sec.questions.forEach((q, qIdx) => {
+      if (typeof q.id === "number") {
+        idMap.set(`${sIdx}:${qIdx}`, { oldId: String(q.id), newId: uid() });
+      }
+    });
+  });
+
+  const migratedSurvey = {
+    ...surveyData,
+    sections: surveyData.sections.map((sec, sIdx) => ({
+      ...sec,
+      id: typeof sec.id === "number" ? uid() : sec.id,
+      questions: sec.questions.map((q, qIdx) => {
+        const entry = idMap.get(`${sIdx}:${qIdx}`);
+        return entry ? { ...q, id: entry.newId } : q;
+      }),
+    })),
+  };
+
+  dbg("migrateIntegerIds: ID map entries:", idMap.size);
+
+  const firstNewIdForOldInt = new Map();
+  idMap.forEach(({ oldId, newId }) => {
+    if (!firstNewIdForOldInt.has(oldId)) {
+      firstNewIdForOldInt.set(oldId, newId);
+    }
+  });
+
+  const remapKey = (key) => {
+    const withoutQ  = key.slice(2);
+    const optMarker = withoutQ.indexOf("-opt");
+    const rawId     = optMarker === -1 ? withoutQ : withoutQ.slice(0, optMarker);
+    const suffix    = optMarker === -1 ? "" : withoutQ.slice(optMarker);
+    const newId     = firstNewIdForOldInt.get(rawId);
+    if (newId) {
+      const remapped = `q-${newId}${suffix}`;
+      dbg(`migrateIntegerIds: remap key "${key}" → "${remapped}"`);
+      return remapped;
+    }
+    return key;
+  };
+
+  const remapDestination = (val) => {
+    if (!val.startsWith("q-")) return val;
+    const withoutQ = val.slice(2);
+    const newId    = firstNewIdForOldInt.get(withoutQ);
+    if (newId) {
+      const remapped = `q-${newId}`;
+      dbg(`migrateIntegerIds: remap destination "${val}" → "${remapped}"`);
+      return remapped;
+    }
+    return val;
+  };
+
+  const migratedBranches = {};
+  Object.entries(savedBranches ?? {}).forEach(([key, val]) => {
+    const newKey       = remapKey(key);
+    const destinations = Array.isArray(val) ? val : val ? [val] : ["next"];
+    migratedBranches[newKey] = destinations.map(remapDestination);
+  });
+
+  dbg("migrateIntegerIds: migration complete");
+  dbg("migrateIntegerIds: migratedBranches:", migratedBranches);
+
+  return { migratedSurvey, migratedBranches };
+}
+
+// ============================================================================
+// sanitiseBranches — FIX 6
+// ============================================================================
+function sanitiseBranches(savedBranches, survey) {
+  if (!savedBranches || typeof savedBranches !== "object") return {};
+
+  const validRefs = new Set(["next", "end"]);
+  survey.sections.forEach(sec =>
+    sec.questions.forEach(q => validRefs.add(`q-${q.id}`))
+  );
+
+  const clean = {};
+
+  for (const [key, val] of Object.entries(savedBranches)) {
+    const withoutPrefix = key.slice(2);
+    const optIdx        = withoutPrefix.indexOf("-opt");
+    const sourceId      = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
+
+    if (!validRefs.has(`q-${sourceId}`)) {
+      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
+      continue;
+    }
+
+    const arr      = Array.isArray(val) ? val : val ? [val] : ["next"];
+    const filtered = arr.filter(v => {
+      const valid = validRefs.has(v);
+      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
+      return valid;
+    });
+
+    clean[key] = filtered.length > 0 ? filtered : ["next"];
+  }
+
+  dbg("sanitiseBranches result:", clean);
+  return clean;
+}
+
+// ============================================================================
 // SurveyManagement — Main Logic Controller
 // ============================================================================
 export default function SurveyManagement() {
@@ -267,7 +366,6 @@ export default function SurveyManagement() {
   const [configId,      setConfigId]      = useState(null);
   const [activeSection, setActiveSection] = useState(0);
 
-  // FIX 5 + PFIX-E — synchronous ref mirrors configId
   const configIdRef = useRef(null);
 
   // ── UI mode ───────────────────────────────────────────────────────────────
@@ -283,25 +381,17 @@ export default function SurveyManagement() {
   const [status,   setStatus]   = useState("");
   const [branches, setBranches] = useState({});
 
-  // PFIX-A — branchesRef is kept in sync both via useEffect AND written
-  // synchronously in every setBranches call site below. The ref is the
-  // single source of truth for handlePublish.
   const branchesRef = useRef({});
 
-  // Helper: update branches state + ref atomically
-  // Use this instead of raw setBranches everywhere branches change.
   const setBranchesAndRef = useCallback((updater) => {
     setBranches(prev => {
       const next = typeof updater === "function" ? updater(prev) : updater;
-      // Write ref synchronously so handlePublish always sees the latest value
-      // even if called before the next render+effect cycle.
       branchesRef.current = next;
       dbg("setBranchesAndRef →", next);
       return next;
     });
   }, []);
 
-  // Keep the ref in sync as a safety net (covers external setBranches calls)
   useEffect(() => {
     branchesRef.current = branches;
   }, [branches]);
@@ -333,7 +423,7 @@ export default function SurveyManagement() {
     setConfirmState({ message, onConfirm, title });
 
   // ==========================================================================
-  // DATA LOADING — PFIX-E: configIdRef written before setBranches
+  // DATA LOADING — PFIX-E + FIX 3 + FIX 4
   // ==========================================================================
   useEffect(() => {
     const load = async () => {
@@ -352,8 +442,7 @@ export default function SurveyManagement() {
 
       if (error || !data?.config?.sections?.length) {
         dbg("No saved config found — using DEFAULT_SURVEY");
-        setSurvey(DEFAULT_SURVEY);
-        // configIdRef stays null → first publish will INSERT
+        setSurvey(normalizeIds(DEFAULT_SURVEY));
         return;
       }
 
@@ -362,15 +451,16 @@ export default function SurveyManagement() {
 
       const { branches: savedBranches, ...surveyData } = data.config;
 
-      // PFIX-E — write ref synchronously BEFORE any async state updates
+      const { migratedSurvey, migratedBranches } =
+        migrateIntegerIds(surveyData, savedBranches ?? {});
+
       configIdRef.current = data.id;
       setConfigId(data.id);
-      setSurvey(surveyData);
+      setSurvey(migratedSurvey);
 
-      if (savedBranches) {
-        const sanitised = sanitiseBranches(savedBranches, surveyData);
+      if (Object.keys(migratedBranches).length > 0) {
+        const sanitised = sanitiseBranches(migratedBranches, migratedSurvey);
         dbg("Sanitised branches loaded:", sanitised);
-        // Use setBranchesAndRef so ref is also updated synchronously
         setBranchesAndRef(sanitised);
       } else {
         dbg("No branches in saved config");
@@ -386,12 +476,9 @@ export default function SurveyManagement() {
   const handlePublish = async () => {
     if (!survey) return;
 
-    // PFIX-A — read the ref (written synchronously by setBranchesAndRef) so we
-    // always get the latest branches even if this runs before the useEffect sync.
     const currentBranches = branchesRef.current;
     const currentConfigId = configIdRef.current;
 
-    // PFIX-C — pre-publish payload diagnostics
     const branchKeyCount = Object.keys(currentBranches).length;
     dbg("=== PUBLISH START ===");
     dbg("configId (state):", configId, "| configIdRef:", currentConfigId);
@@ -399,7 +486,6 @@ export default function SurveyManagement() {
     dbg("Full branches payload:", JSON.stringify(currentBranches, null, 2));
 
     if (branchKeyCount === 0) {
-      // This is not an error — user may not have set any branches yet.
       dbg("Note: branches payload is empty (no rules configured)");
     }
 
@@ -413,32 +499,29 @@ export default function SurveyManagement() {
 
     try {
       if (currentConfigId) {
-        // ── UPDATE path ──────────────────────────────────────────────────
         dbg("UPDATE path — targeting row id:", currentConfigId);
 
-        const { data: updateData, error: updateError, count } = await supabaseAdmin
+        const { data: updateData, error: updateError } = await supabaseAdmin
           .from("survey_config")
           .update({ config: payload, updated_at: new Date().toISOString() })
           .eq("id", currentConfigId)
-          .select("id, config");   // select back so we can verify
+          .select("id, config");
 
         dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
 
         if (updateError) throw updateError;
 
-        // PFIX-B — detect silent zero-row update
         if (!updateData || updateData.length === 0) {
           const msg = `UPDATE matched 0 rows for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
           console.error("[SurveyMgmt] PFIX-B:", msg);
           throw new Error(msg);
         }
 
-        // PFIX-D — verify what was actually written
         const savedBranches = updateData[0]?.config?.branches;
         dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
 
-        const sentKeys   = Object.keys(currentBranches).sort().join(",");
-        const savedKeys  = Object.keys(savedBranches ?? {}).sort().join(",");
+        const sentKeys  = Object.keys(currentBranches).sort().join(",");
+        const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
 
         if (sentKeys !== savedKeys) {
           console.error(
@@ -452,7 +535,6 @@ export default function SurveyManagement() {
         }
 
       } else {
-        // ── INSERT path ──────────────────────────────────────────────────
         dbg("INSERT path — no existing config row");
 
         const { data: insertData, error: insertError } = await supabaseAdmin
@@ -466,12 +548,10 @@ export default function SurveyManagement() {
         if (insertError) throw insertError;
 
         if (insertData) {
-          // PFIX-B — write ref first so any immediate re-publish uses the new ID
           configIdRef.current = insertData.id;
           setConfigId(insertData.id);
           dbg("INSERT success — new configId:", insertData.id);
 
-          // PFIX-D — verify what was actually written
           const savedBranches = insertData?.config?.branches;
           dbg("Read-back branches from INSERT:", JSON.stringify(savedBranches, null, 2));
 
@@ -496,7 +576,6 @@ export default function SurveyManagement() {
       setTimeout(() => setStatus(""), 3000);
 
     } catch (err) {
-      // FIX 4 + PFIX-C — surface the error
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);
       setStatus("error");
@@ -507,17 +586,19 @@ export default function SurveyManagement() {
   };
 
   // ==========================================================================
-  // BRANCHING SCROLL
+  // BRANCHING SCROLL — FIX 5
   // ==========================================================================
   useEffect(() => {
     if (branchMode && branchTargetQ) {
       requestAnimationFrame(() => {
-        const el = document.getElementById(branchTargetQ);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setHighlightQ(branchTargetQ);
-          setTimeout(() => setHighlightQ(null), 1200);
-        }
+        requestAnimationFrame(() => {
+          const el = document.getElementById(branchTargetQ);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightQ(branchTargetQ);
+            setTimeout(() => setHighlightQ(null), 1200);
+          }
+        });
       });
     }
   }, [branchMode, branchTargetQ]);
@@ -557,7 +638,6 @@ export default function SurveyManagement() {
     addToast("Question updated successfully", "edit");
   };
 
-  // FIX 1 — deleteQuestion: use setBranchesAndRef for atomic ref update
   const deleteQuestion = (sIdx, qIdx, label) => {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
@@ -598,7 +678,6 @@ export default function SurveyManagement() {
     );
   };
 
-  // FIX 2 — deleteSection: use setBranchesAndRef for atomic ref update
   const deleteSection = (index) => {
     const sectionTitle = survey.sections[index].title;
     askConfirm(
@@ -626,8 +705,7 @@ export default function SurveyManagement() {
             if (Array.isArray(next[k])) {
               const filtered = next[k].filter(v => {
                 if (!v.startsWith("q-")) return true;
-                const destIdStr = v.slice(2);
-                return !deletedIdStrings.has(destIdStr);
+                return !deletedIdStrings.has(v.slice(2));
               });
               next[k] = filtered.length > 0 ? filtered : ["next"];
             }
@@ -678,7 +756,6 @@ export default function SurveyManagement() {
     }));
   };
 
-  // FIX 3 — addSection
   const addSection = () => {
     setSurvey(prev => {
       const updated = {
@@ -694,7 +771,7 @@ export default function SurveyManagement() {
   };
 
   // ==========================================================================
-  // OPTION CRUD — use setBranchesAndRef for atomic ref updates
+  // OPTION CRUD
   // ==========================================================================
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
@@ -736,14 +813,38 @@ export default function SurveyManagement() {
   // DERIVED DATA
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
+
   const allQuestions = survey?.sections.flatMap((s, si) =>
     s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title }))
   ) || [];
 
+  // ── FIX 7 — targetSectionIdx ──────────────────────────────────────────────
+  // Previous code:
+  //   parseInt(branchTargetQ.split("-")[1], 10)
+  //
+  // branchTargetQ has the shape "q-<uid>" where uid is e.g.
+  // "1780303144972-9qdh0". Splitting on "-" and taking index [1] returns
+  // "1780303144972" (the timestamp segment), which parseInt converts to a
+  // very large integer — never a valid section index.
+  //
+  // Fix: search all sections for the question whose id matches the uid
+  // extracted from branchTargetQ, then return that section's array index.
+  // Falls back to activeSection if the question isn't found.
+  // ─────────────────────────────────────────────────────────────────────────
+  const targetSectionIdx = (() => {
+    if (!branchTargetQ || !survey) return activeSection;
+    // branchTargetQ is "q-<uid>"; strip the leading "q-"
+    const qId = branchTargetQ.startsWith("q-") ? branchTargetQ.slice(2) : branchTargetQ;
+    const idx = survey.sections.findIndex(s =>
+      s.questions.some(q => String(q.id) === qId)
+    );
+    return idx >= 0 ? idx : activeSection;
+  })();
+
   // ==========================================================================
-  // LOADING GATE
+  // LOADING GATE — must come after all hooks
   // ==========================================================================
-  if (!survey) return <LoadingScreen message="Loading survey configuration..." />;
+  if (!survey) return <SurveySkeletonView />;
 
   // ==========================================================================
   // RENDER
@@ -765,8 +866,6 @@ export default function SurveyManagement() {
       saving={saving}
       status={status}
       branches={branches}
-      // PFIX-A — pass setBranchesAndRef so the view's onChange handlers also
-      // write the ref synchronously, not raw setBranches.
       setBranches={setBranchesAndRef}
       highlightQ={highlightQ}
       branchTargetQ={branchTargetQ}
@@ -793,6 +892,7 @@ export default function SurveyManagement() {
       handlePublish={handlePublish}
       currentSection={currentSection}
       allQuestions={allQuestions}
+      targetSectionIdx={targetSectionIdx}
     />
   );
 }

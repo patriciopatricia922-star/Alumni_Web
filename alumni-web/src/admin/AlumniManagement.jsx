@@ -1,5 +1,5 @@
 // ============================================================================
-// AlumniManagement.jsx
+// AlumniManagement.jsx — Logic Controller // mine (merged)
 // ============================================================================
 // Handles all business logic, Supabase API calls, data processing,
 // filtering (including sort-by-name), pagination, state management,
@@ -9,11 +9,15 @@
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AlumniManagementView from "./views/AlumniManagementView";
+import { useAlumniType } from "./contexts/AlumniTypeContext"; // [friend] alumni type context
 
 // Preserved from your version
 const PER_PAGE = 12;
 
 function AlumniManagement() {
+  // [friend] Alumni type context — drives tab/view filtering in the view layer
+  const { alumniType } = useAlumniType();
+
   // ── State ────────────────────────────────────────────────────────────────
   const [alumni, setAlumni] = useState([]);
   const [search, setSearch] = useState("");
@@ -337,6 +341,7 @@ function AlumniManagement() {
       onNextPage={handleNextPage}
       onGoToPage={handleGoToPage}
       onCloseModal={handleCloseModal}
+      alumniType={alumniType} // [friend] passed to view for tab/type-aware rendering
     />
   );
 }

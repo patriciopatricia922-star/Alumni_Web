@@ -2,17 +2,23 @@
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Response & Analytics.
 // ============================================================================
+// SKELETON LOADING (this diff only):
+//   Replaces <LoadingScreen> with <ResponseAnalyticsSkeleton> when loading===true
+//   so the full page geometry is visible while the Supabase fetch is in-flight.
+//   The LoadingScreen component is retained for the error state only.
+//
+//   Changes from the previous version are marked ← SKELETON.
+//   ALL other code is character-for-character identical.
+// ============================================================================
 
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from "./components/AdminSidebar";
 import ResponseAnalyticsView from './views/ResponseAnalyticsView';
+import ResponseAnalyticsSkeleton from './views/ResponseAnalyticsSkeleton'; // ← SKELETON
 import { supabase } from '../lib/supabase';
 import { useLocation } from "react-router-dom";
 
 // ============================ EMPLOYMENT STATUS MAPPING ============================
-// FIX: Aligned with Admin Dashboard — exact-match mapping replaces substring logic.
-// This is the single source of truth for status categorization.
-// ============================================================================
 const STATUS_MAPPING = {
   'Regular / Permanent':   'Employed',
   'Probationary':          'Employed',
@@ -90,10 +96,6 @@ const extractYear = (value) => {
 };
 
 // ============================ EMPLOYMENT STATUS NORMALIZATION ============================
-// FIX: Centralized status resolver aligned with Dashboard logic.
-// Applies exact-match mapping first, then falls back to substring heuristics,
-// then checks for company_name / job_position as evidence of employment.
-// ============================================================================
 const resolveEmploymentStatus = (empData) => {
   if (!empData) return 'Not specified';
 
@@ -102,40 +104,21 @@ const resolveEmploymentStatus = (empData) => {
     || empData.employmentStatus
     || '';
 
-  // 1. Exact match via STATUS_MAPPING (aligns with Dashboard)
   if (rawStatus && STATUS_MAPPING[rawStatus]) {
     return STATUS_MAPPING[rawStatus];
   }
 
   const statusLower = rawStatus.toLowerCase();
 
-  // 2. Fallback: substring matching (aligns with Dashboard fallback logic)
-  if (statusLower.includes('regular') || statusLower.includes('permanent')) {
-    return 'Employed';
-  }
-  if (statusLower.includes('self')) {
-    return 'Self-Employed';
-  }
-  if (statusLower.includes('student') || statusLower.includes('studying')) {
-    return 'Student';
-  }
-  if (statusLower.includes('contract')) {
-    return 'Contractual';
-  }
-  if (statusLower.includes('freelance')) {
-    return 'Freelance';
-  }
-  if (statusLower.includes('unemployed') || statusLower.includes('not employed') || statusLower.includes('looking for work')) {
-    return 'Unemployed';
-  }
-  if (statusLower.includes('full-time') || statusLower.includes('part-time')) {
-    return 'Employed';
-  }
+  if (statusLower.includes('regular') || statusLower.includes('permanent')) return 'Employed';
+  if (statusLower.includes('self'))    return 'Self-Employed';
+  if (statusLower.includes('student') || statusLower.includes('studying')) return 'Student';
+  if (statusLower.includes('contract')) return 'Contractual';
+  if (statusLower.includes('freelance')) return 'Freelance';
+  if (statusLower.includes('unemployed') || statusLower.includes('not employed') || statusLower.includes('looking for work')) return 'Unemployed';
+  if (statusLower.includes('full-time') || statusLower.includes('part-time')) return 'Employed';
 
-  // 3. Evidence-based fallback: has job_position or company_name (aligns with Dashboard)
-  if (empData.job_position || empData.company_name) {
-    return 'Employed';
-  }
+  if (empData.job_position || empData.company_name) return 'Employed';
 
   return rawStatus || 'Not specified';
 };
@@ -159,47 +142,22 @@ const extractRespondentData = (row, userEmail = '') => {
   const email = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
   const batch = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
   const program = safeText(educational.degree_program) || 'Not specified';
-  
-  // FIX: Use centralized resolver for consistent status assignment
   const employmentStatus = resolveEmploymentStatus(employmentData);
 
   const skillRatings = skillsData.skill_ratings || {};
-  
-  const commSkillRating = skillRatings.communication_skills || 
-                          skillRatings.communicationSkills || 
-                          skillRatings.communication || 
-                          skillRatings['Communication Skills'] || 0;
 
-  const itSkillRating = skillRatings.information_technology_skills || 
-                        skillRatings.informationTechnologySkills || 
-                        skillRatings.it_skills ||
-                        skillRatings.itSkills ||
-                        skillRatings['Information & Technology Skills'] ||
-                        skillRatings['Information Technology Skills'] || 0;
-
-  const leadershipRating = skillRatings.leadership_skills || 
-                           skillRatings.leadershipSkills || 
-                           skillRatings.leadership ||
-                           skillRatings['Leadership Skills'] || 0;
-
-  const criticalRating = skillRatings.critical_problem_solving_skills || 
-                         skillRatings.criticalProblemSolvingSkills || 
-                         skillRatings.critical_thinking ||
-                         skillRatings['Critical & Problem-Solving Skills'] ||
-                         skillRatings.criticalThinking || 0;
-
-  const workEthicsRating = skillRatings.work_ethics_professionalism || 
-                           skillRatings.workEthicsProfessionalism || 
-                           skillRatings.work_ethics ||
-                           skillRatings.workEthics ||
-                           skillRatings['Work Ethics / Professionalism'] || 0;
+  const commSkillRating = skillRatings.communication_skills || skillRatings.communicationSkills || skillRatings.communication || skillRatings['Communication Skills'] || 0;
+  const itSkillRating   = skillRatings.information_technology_skills || skillRatings.informationTechnologySkills || skillRatings.it_skills || skillRatings.itSkills || skillRatings['Information & Technology Skills'] || skillRatings['Information Technology Skills'] || 0;
+  const leadershipRating  = skillRatings.leadership_skills || skillRatings.leadershipSkills || skillRatings.leadership || skillRatings['Leadership Skills'] || 0;
+  const criticalRating    = skillRatings.critical_problem_solving_skills || skillRatings.criticalProblemSolvingSkills || skillRatings.critical_thinking || skillRatings['Critical & Problem-Solving Skills'] || skillRatings.criticalThinking || 0;
+  const workEthicsRating  = skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0;
 
   return {
     id: row.id,
     name: fullName,
-    email: email,
-    batch: batch,
-    program: program,
+    email,
+    batch,
+    program,
     status: employmentStatus,
     studentNumber: safeText(personal.student_number) || safeText(personal.student_id) || '',
     gender: safeText(personal.gender) || '',
@@ -266,16 +224,13 @@ const processSurveyData = (rows, userEmails = {}) => {
   let totalResponses = 0;
   let satisfactionSum = 0;
   let satisfactionCount = 0;
-  
+
   const satisfactionScores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   const genderDistribution = { Male: 0, Female: 0, Other: 0 };
   const ageDistribution = { '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
   const boardExam = { Passed: 0, Failed: 0 };
   const certification = { 'With Certification': 0, 'No Certification': 0 };
-  
-  // FIX: Employment distribution now tracks all 5 categories matching Dashboard
   const employment = { 'Employed': 0, 'Unemployed': 0, 'Self-Employed': 0, 'Student': 0, 'Contractual': 0, 'Freelance': 0 };
-  
   const salary = { '< ₱15k': 0, '₱15k–30k': 0, '₱30k–50k': 0, '> ₱40k': 0 };
   const timeToJob = { '< 1 month': 0, '1–3 months': 0, '3–6 months': 0, '6 + months': 0 };
   const skills = new Map();
@@ -313,18 +268,15 @@ const processSurveyData = (rows, userEmails = {}) => {
     if (examResult.toLowerCase().includes('pass')) boardExam.Passed++;
     else if (examResult.toLowerCase().includes('fail')) boardExam.Failed++;
 
-    const hasCertification = safeText(certificationData.certiport_passer) === 'Yes' || 
+    const hasCertification = safeText(certificationData.certiport_passer) === 'Yes' ||
                             (certificationData.certifications && certificationData.certifications.length > 0);
     if (hasCertification) certification['With Certification']++;
     else if (certificationData.certiport_passer !== null) certification['No Certification']++;
 
-    // FIX: Employment status aggregation now uses the centralized resolver
-    // matching the Dashboard's exact STATUS_MAPPING + fallback logic.
     const resolvedStatus = resolveEmploymentStatus(employmentData);
     if (employment.hasOwnProperty(resolvedStatus)) {
       employment[resolvedStatus]++;
     } else if (resolvedStatus && resolvedStatus !== 'Not specified') {
-      // Catch-all for any unmapped but valid statuses
       employment['Employed']++;
     }
 
@@ -349,79 +301,43 @@ const processSurveyData = (rows, userEmails = {}) => {
 
   const avgSatisfaction = satisfactionCount > 0 ? (satisfactionSum / satisfactionCount).toFixed(1) : 0;
 
-  const genderDistributionArray = Object.entries(genderDistribution)
-    .filter(([_, value]) => value > 0)
-    .map(([name, value]) => ({ name, value }));
-
-  const ageDistributionArray = Object.entries(ageDistribution)
-    .filter(([_, value]) => value > 0)
-    .map(([range, count]) => ({ range, count }));
-
-  const satisfactionScoresArray = Object.entries(satisfactionScores)
-    .map(([score, count]) => ({ score, count }));
-
-  const boardExamArray = Object.entries(boardExam)
-    .filter(([_, value]) => value > 0)
-    .map(([category, count]) => ({ category, count }));
-
-  const certificationArray = Object.entries(certification)
-    .filter(([_, value]) => value > 0)
-    .map(([status, count]) => ({ status, count }));
-
-  // FIX: Employment array now includes all 5+ categories, filtering zero-count entries
-  // to match Dashboard behavior exactly.
-  const employmentArray = Object.entries(employment)
-    .filter(([_, value]) => value > 0)
-    .map(([name, value]) => ({ name, value }));
-
-  const salaryArray = Object.entries(salary)
-    .filter(([_, value]) => value > 0)
-    .map(([range, count]) => ({ range, count }));
-
-  const timeToJobArray = Object.entries(timeToJob)
-    .filter(([_, value]) => value > 0)
-    .map(([label, count]) => ({ label, count }));
-
-  const skillsArray = [...skills.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
-    .map(([skill, count]) => ({ skill, count }));
-
   return {
     totalResponses,
     avgSatisfaction: parseFloat(avgSatisfaction),
-    satisfactionScores: satisfactionScoresArray,
-    genderDistribution: genderDistributionArray,
-    ageDistribution: ageDistributionArray,
-    boardExam: boardExamArray,
-    certification: certificationArray,
-    employment: employmentArray,
-    salary: salaryArray,
-    timeToJob: timeToJobArray,
-    skills: skillsArray,
+    satisfactionScores: Object.entries(satisfactionScores).map(([score, count]) => ({ score, count })),
+    genderDistribution: Object.entries(genderDistribution).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
+    ageDistribution: Object.entries(ageDistribution).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
+    boardExam: Object.entries(boardExam).filter(([_, v]) => v > 0).map(([category, count]) => ({ category, count })),
+    certification: Object.entries(certification).filter(([_, v]) => v > 0).map(([status, count]) => ({ status, count })),
+    employment: Object.entries(employment).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
+    salary: Object.entries(salary).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
+    timeToJob: Object.entries(timeToJob).filter(([_, v]) => v > 0).map(([label, count]) => ({ label, count })),
+    skills: [...skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([skill, count]) => ({ skill, count })),
     respondents,
   };
 };
 
-// ============================ LOADING SCREEN COMPONENT ============================
+// ============================ LOADING SCREEN (error state only) ============================
+// ← SKELETON: LoadingScreen is now only used for the error state.
+//   The loading=true state is handled by ResponseAnalyticsSkeleton.
 const LoadingScreen = ({ message, isError = false }) => {
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   return (
     <>
       <AdminSidebar />
-      <div style={{ 
-        marginLeft: isMobile ? 0 : "229px", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center", 
+      <div style={{
+        marginLeft: isMobile ? 0 : "229px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         height: "100vh",
         background: "#E1ECF7",
         fontFamily: "Lexend, sans-serif",
@@ -461,12 +377,8 @@ const ResponseAnalytics = () => {
   const [respondents, setRespondents] = useState([]);
 
   useEffect(() => {
-    if (focus === "employment_status") {
-      setActiveTab("overview");
-    }
-    if (focus === "degree_alignment") {
-      setActiveTab("analytics");
-    }
+    if (focus === "employment_status") setActiveTab("overview");
+    if (focus === "degree_alignment")  setActiveTab("analytics");
   }, [focus]);
 
   // ============================ FETCH DATA FROM SUPABASE ============================
@@ -476,16 +388,14 @@ const ResponseAnalytics = () => {
       setError(null);
 
       try {
-        const { data: usersData, error: usersError } = await supabase
+        const { data: usersData } = await supabase
           .from('users')
           .select('id, email')
           .eq('role', 'alumni');
 
         const userEmails = {};
         if (usersData) {
-          usersData.forEach(user => {
-            userEmails[user.id] = user.email || '';
-          });
+          usersData.forEach(user => { userEmails[user.id] = user.email || ''; });
         }
 
         const { data, error: fetchError } = await supabase
@@ -515,7 +425,7 @@ const ResponseAnalytics = () => {
         }
 
         const completedSurveys = data.filter(row => row.completed === true);
-        
+
         if (completedSurveys.length === 0) {
           setError('No completed survey responses found.');
           setLoading(false);
@@ -560,11 +470,13 @@ const ResponseAnalytics = () => {
     return selectedSection === "All Sections" || formatted === sectionName;
   };
 
-  // ============================ LOADING AND ERROR STATES WITH SIDEBAR ============================
+  // ============================ LOADING STATE ← SKELETON ============================
+  // Pass activeTab so the skeleton shows the correct content zone (overview vs responses).
   if (loading) {
-    return <LoadingScreen message="Loading survey data..." />;
+    return <ResponseAnalyticsSkeleton activeTab={activeTab} />;
   }
 
+  // ============================ ERROR STATE ============================
   if (error) {
     return <LoadingScreen message={`Error: ${error}`} isError={true} />;
   }

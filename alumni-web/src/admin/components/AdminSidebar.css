@@ -29,6 +29,10 @@
   height: 100%;
   text-decoration: none;
   position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .admin-mobile-active-indicator {
@@ -47,8 +51,9 @@
   height: 21px;
 }
 
+/* Figma: active icon uses warm gold filter matching the accent colour */
 .admin-mobile-icon-active {
-  filter: brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%) hue-rotate(6deg) brightness(100%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%);
 }
 
 .admin-mobile-icon-inactive {
@@ -108,7 +113,7 @@
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
-   Desktop/Tablet Sidebar (768px and above)
+   Desktop / Tablet Sidebar (768px and above)
    ──────────────────────────────────────────────────────────────────────────── */
 .admin-sidebar {
   position: fixed;
@@ -118,6 +123,7 @@
   background: #00226D;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.5);
+  /* Figma: 40px radius matches the reference rounded edge */
   border-radius: 0px 40px 40px 0px;
   display: flex;
   flex-direction: column;
@@ -127,19 +133,22 @@
   overflow: hidden;
 }
 
-.admin-sidebar-mobile {
+.admin-sidebar-hidden {
   transform: translateX(-100%);
 }
 
-/* Logo */
+/* ── Logo ─────────────────────────────────────────────────────────────────── */
 .admin-sidebar-logo-container {
   display: flex;
   justify-content: center;
+  /* Figma: logo sits higher, generous top breathing room */
   padding: 28px 0 20px;
 }
 
 .admin-sidebar-logo {
   margin-right: 20px;
+  /* Negative margins let the logo visually overlap the container padding
+     so it renders at the correct Figma position without extra whitespace */
   margin-top: -30px;
   width: 242px;
   height: auto;
@@ -151,22 +160,71 @@
   width: 169px;
 }
 
-/* Divider */
+/* ── Divider ──────────────────────────────────────────────────────────────── */
 .admin-sidebar-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.15);
-  margin: 0 20px;
+  margin: 0 20px 4px;
   flex-shrink: 0;
+  /* Pulls divider up so the gap between it and the switcher/MENU heading matches Figma */
   margin-bottom: -9px;
 }
 
-/* Menu Section */
+/* ── Alumni Type Switcher ─────────────────────────────────────────────────── */
+.alumni-type-switcher {
+  display: flex;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.switcher-pill {
+  flex: 1;
+  padding: 6px 0;
+  border: none;
+  border-radius: 999px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  letter-spacing: 0.3px;
+}
+
+.switcher-pill.active {
+  background: #D9CA81;
+  color: #00072D;
+  font-weight: 700;
+}
+
+.switcher-pill:not(.active):hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Mobile: floats just above the bottom nav */
+.alumni-type-switcher-mobile {
+  position: fixed;
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  z-index: 201;
+}
+
+/* ── Menu section ─────────────────────────────────────────────────────────── */
 .admin-sidebar-menu-section {
+  /* vw-based top margin keeps proportional gap at different viewport widths */
   margin-top: 1.9vw;
   padding: 16px 11px 0;
   display: flex;
   flex-direction: column;
+  /* Figma: items sit close together; 2px gap is correct */
   gap: 2px;
+  /* flex:1 lets this section grow to fill available space between the
+     switcher and the footer; min-height:0 allows it to shrink below its
+     natural content height so it never overflows into the user pill */
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -183,6 +241,7 @@
   font-weight: 600;
   font-size: 10px;
   line-height: 15px;
+  /* Figma: MENU label is dimmed, not full-white */
   letter-spacing: 1px;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.45);
@@ -190,16 +249,25 @@
   margin: 0 0 12px 0;
 }
 
+/* ── Individual nav item ──────────────────────────────────────────────────── */
 .admin-sidebar-menu-item {
   display: flex;
+  /* Figma: icon and label are vertically centred on single-line items;
+     flex-start handles two-line items so the icon aligns to the first line */
   align-items: flex-start;
   gap: 0;
+  /* Left-indent 16px → icon 19px → 14px gap → label.
+     Padding-right 12px keeps text away from the rounded edge. */
   padding: 9px 12px 9px 16px;
   margin: 0 8px;
   background: transparent;
   border-radius: 12px;
-  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  /* Full width minus the 8px margin on each side */
   width: calc(100% - 16px);
+  text-align: left;
+  text-decoration: none;
   box-sizing: border-box;
   transition: background 0.15s ease;
 }
@@ -212,28 +280,37 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+/* ── Icon ─────────────────────────────────────────────────────────────────── */
+/* Figma: icons are ~19px — noticeably larger than the previous 13.2px */
 .admin-sidebar-icon {
   width: 19px;
   height: 19px;
   flex-shrink: 0;
+  /* Nudge 1px so the icon's optical centre aligns with the first text line */
   margin-top: 1px;
 }
 
+/* Figma: active icon is rendered in the same warm gold as the accent colour */
 .admin-sidebar-icon-active {
-  filter: brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%) hue-rotate(6deg) brightness(100%) contrast(90%);
+  filter: brightness(0) saturate(100%) invert(88%) sepia(40%) saturate(400%)
+          hue-rotate(6deg) brightness(100%) contrast(90%);
 }
 
+/* Figma: inactive icons are white at ~75% opacity — readable but clearly passive */
 .admin-sidebar-icon-inactive {
   filter: brightness(0) invert(1) opacity(0.75);
 }
 
+/* ── Label ────────────────────────────────────────────────────────────────── */
 .admin-sidebar-label {
   font-family: 'Montserrat', sans-serif;
+  /* Figma: 13–14px range; 13.5 splits the difference cleanly */
   font-size: 13.5px;
   font-weight: 500;
   line-height: 19px;
   letter-spacing: 0.2px;
   color: rgba(255, 255, 255, 0.88);
+  /* Gap between icon and label text */
   margin-left: 14px;
   white-space: normal;
   word-break: normal;
@@ -244,15 +321,42 @@
   font-size: 13px;
 }
 
+/* Figma: active label is full-white and bold */
 .admin-sidebar-label-active {
   font-weight: 700;
   color: #FFEC8E;
 }
 
-/* Footer User Card */
+/* ── Two-line label ───────────────────────────────────────────────────────── */
+/* line1: primary word(s) — same weight/size as the label */
+.admin-sidebar-label .label-line1 {
+  display: block;
+  font-weight: inherit;
+  line-height: 19px;
+}
+
+/* line2: secondary word — Figma shows it slightly smaller and dimmer,
+   acting as a visual sub-label beneath the primary word */
+.admin-sidebar-label .label-line2 {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.2px;
+}
+
+/* Active state: line2 tinted gold at reduced opacity */
+.admin-sidebar-label-active .label-line2 {
+  color: rgba(255, 236, 142, 0.7);
+}
+
+/* ── Footer / User card ───────────────────────────────────────────────────── */
 .admin-sidebar-footer {
   margin-top: auto;
   padding: 0 8px 24px;
+  /* Prevent the footer from being compressed or overlapped when the
+     menu section grows; it always reserves its own fixed height */
   flex-shrink: 0;
 }
 
@@ -295,20 +399,20 @@
   font-family: 'Arial', sans-serif;
   font-size: 12px;
   line-height: 18px;
-  font-weight: 600;
   color: #FFFFFF;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
 }
 
 .admin-sidebar-user-role {
   font-family: 'Arial', sans-serif;
   font-size: 11px;
   line-height: 15px;
-  font-weight: 400;
   color: rgba(255, 255, 255, 0.5);
   text-transform: capitalize;
+  font-weight: 400;
 }
 
 .admin-sidebar-logout-btn {
@@ -327,7 +431,7 @@
   transition: background 0.15s;
 }
 
-/* Backdrop */
+/* ── Backdrop (mobile) ────────────────────────────────────────────────────── */
 .admin-sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -336,7 +440,6 @@
   animation: adminFadeIn 0.2s ease;
 }
 
-/* Animations */
 @keyframes adminFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -345,7 +448,8 @@
 /* ────────────────────────────────────────────────────────────────────────────
    Responsive Breakpoints
    ──────────────────────────────────────────────────────────────────────────── */
-/* Tablet (768px - 1024px) */
+
+/* Tablet (768px – 1024px) */
 @media (min-width: 768px) and (max-width: 1024px) {
   .admin-sidebar {
     border-radius: 0px 30px 30px 0px;
@@ -402,7 +506,91 @@
   }
 }
 
-/* Mobile (below 768px) - for sidebar version when open */
+/* ────────────────────────────────────────────────────────────────────────────
+   Skeleton loaders — cold-load state (isLoadingUser = true)
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/*
+ * The shimmer animation runs on a gradient that moves left-to-right.
+ * Colour stops are calibrated against the sidebar background (#00226D) so
+ * the highlight reads as "loading" without clashing or looking out of place.
+ */
+@keyframes adminSkeletonShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.admin-sidebar-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+}
+
+.admin-sidebar-skeleton-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 12px 9px 16px;
+  margin: 0 8px;
+  border-radius: 12px;
+}
+
+/* Shared shimmer base — applied to every skeleton piece */
+.admin-sidebar-skeleton-icon,
+.admin-sidebar-skeleton-label,
+.admin-sidebar-skeleton-avatar,
+.admin-sidebar-skeleton-name,
+.admin-sidebar-skeleton-role {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: adminSkeletonShimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-skeleton-icon {
+  width: 19px;
+  height: 19px;
+  border-radius: 4px;
+}
+
+.admin-sidebar-skeleton-label {
+  height: 12px;
+  /* Width is set inline per-item to vary lengths naturally */
+}
+
+/* User card skeleton pieces */
+.admin-sidebar-skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.admin-sidebar-skeleton-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-sidebar-skeleton-name {
+  height: 11px;
+  width: 72%;
+}
+
+.admin-sidebar-skeleton-role {
+  height: 9px;
+  width: 48%;
+}
+
+/* Mobile (below 768px) — sidebar drawer when open */
 @media (max-width: 767px) {
   .admin-sidebar {
     width: 229px !important;

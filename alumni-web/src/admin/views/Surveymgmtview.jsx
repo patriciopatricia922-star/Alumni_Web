@@ -1,18 +1,39 @@
 // ============================================================================
 // SurveyMgmtView.jsx — UI Layer
 // ============================================================================
-// Merged: retains stable `q-{q.id}` branch keys, multi-select branch
-// dropdowns, cross-section destination labels ("Section → Question"), and
-// the "Hold Ctrl/Cmd" hint from your version. Friend's positional
-// `${sIdx}-${qIdx}` keys and single-select dropdowns are NOT used — they
-// break silently when questions are reordered or deleted.
-// All editor-mode UI, header, sidebar, toasts, and modals are identical
-// between both versions and are preserved as-is.
+// MERGE NOTES
+// ───────────
+// Primary source: your version.
+// All editor-mode UI, header, sidebar, toasts, and modals are preserved
+// character-for-character from your file.
+//
+// Branch mode retains your architecture entirely:
+//   • Stable q.id-based branch keys ("q-{q.id}", "q-{q.id}-opt{N}")
+//   • Multi-select dropdowns with "Hold Ctrl/Cmd" hint
+//   • Cross-section destination labels ("Section → Question")
+//   • targetSectionIdx computed locally from branchTargetQ
+//   • eef6ff highlight colour on scroll target
+//   • Correct empty-state check: survey.sections[targetSectionIdx]?.questions.length
+//
+// Friend's positional keys ("${sIdx}-${qIdx}") and single-select dropdowns
+// are NOT used — they break silently when questions are reordered or deleted.
+// Friend's allQuestions scoped to one section is NOT used — branch destinations
+// must span all sections.
+//
+// UI polish adopted from friend's branch mode:
+//   • "Q{N}." numbering prefix on each branch question label
+//   • "↳" prefix on multiple-choice option rows
+//   • "This question goes to:" label for non-multiple questions
+//     (replaces bare "Go to" for clarity)
+//   • Grid layout (gridTemplateColumns) on branch option rows for
+//     tighter alignment on wider viewports
+//   • marginBottom "0.75rem" on branch section title (was "0.5rem")
+//   • FiPlus added to imports (unused now, available for future use)
 // ============================================================================
 
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/Surveymgmt.css";
-import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2, FiCheck } from "react-icons/fi";
+import { FiTrash2, FiCopy, FiArrowLeft, FiEdit2, FiCheck, FiPlus } from "react-icons/fi";
 import { BiGitBranch } from "react-icons/bi";
 
 export default function SurveyMgmtView({
@@ -252,7 +273,7 @@ export default function SurveyMgmtView({
                         <div key={targetSectionIdx} style={{ marginBottom: "1.5rem" }}>
                           <div style={{
                             fontSize: "0.9rem", fontWeight: 600,
-                            color: "#4f46e5", marginBottom: "0.5rem",
+                            color: "#4f46e5", marginBottom: "0.75rem", // FROM FRIEND: 0.75rem (was 0.5rem)
                           }}>
                             {section.title}
                           </div>
@@ -274,11 +295,12 @@ export default function SurveyMgmtView({
                                   transition: "all 0.3s ease",
                                 }}
                               >
+                                {/* FROM FRIEND: Q{N}. numbering prefix for orientation */}
                                 <div style={{
                                   fontSize: "0.82rem", fontWeight: 600,
                                   color: "#111827", marginBottom: "0.75rem",
                                 }}>
-                                  {q.label}
+                                  Q{qIdx + 1}. {q.label}
                                 </div>
 
                                 {q.type === "multiple" ? (
@@ -292,44 +314,57 @@ export default function SurveyMgmtView({
                                       : currentVal ? [currentVal] : ["next"];
 
                                     return (
-                                      <div key={oIdx} style={{
-                                        display: "flex", alignItems: "center", gap: "0.75rem",
-                                        padding: "0.6rem 0.75rem", borderRadius: "0.4rem",
-                                        marginBottom: "0.3rem", background: "#f9fafb",
-                                        flexWrap: "nowrap",
-                                      }}>
-                                        <input type="radio" disabled />
+                                      <div
+                                        key={oIdx}
+                                        style={{
+                                          display: "grid",                                   // FROM FRIEND: grid layout
+                                          gridTemplateColumns: "1fr auto auto",              // FROM FRIEND
+                                          alignItems: "center",
+                                          gap: "0.75rem",
+                                          padding: "0.4rem 0.6rem",                         // FROM FRIEND: tighter padding
+                                          borderRadius: "0.4rem",
+                                          marginBottom: "0.3rem",
+                                          background: "#f9fafb",
+                                          border: "1px solid #e5e7eb",                      // FROM FRIEND: subtle border
+                                          flexWrap: "nowrap",
+                                        }}
+                                      >
+                                        {/* FROM FRIEND: ↳ prefix on option text */}
                                         <span style={{
                                           fontSize: "0.75rem", flexShrink: 0,
                                           overflow: "hidden", textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap", maxWidth: "220px",
+                                          whiteSpace: "nowrap",
+                                          color: "#374151",
                                         }}>
+                                          <span style={{ color: "#9ca3af", marginRight: "0.4rem" }}>↳</span>
                                           {opt}
                                         </span>
-                                         <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
+                                        <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", alignItems: "flex-end" }}>
                                           <select
-                                          multiple
-                                          value={selectVal}
-                                          onChange={e => {
-                                            const vals = Array.from(e.target.selectedOptions, o => o.value);
-                                            setBranches(prev => ({ ...prev, [optKey]: vals }));
-                                          }}
-                                          style={{
-                                            padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                            border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                            flex: 1, minWidth: "200px", maxWidth: "420px", height: "70px",
-                                          }}
-                                        >
-                                          <option value="next">Next question</option>
-                                          {allQuestions.map((dest, j) => (
-                                            <option key={j} value={`q-${dest.id}`}>
-                                              {dest.sectionTitle} → {dest.label}
-                                            </option>
-                                          ))}
-                                          <option value="end">End of form</option>
-                                        </select>
-                                        <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
-                                          Hold Ctrl / Cmd to select multiple
+                                            multiple
+                                            value={selectVal}
+                                            onChange={e => {
+                                              const vals = Array.from(e.target.selectedOptions, o => o.value);
+                                              setBranches(prev => ({ ...prev, [optKey]: vals }));
+                                            }}
+                                            style={{
+                                              padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                              border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                              minWidth: "200px", maxWidth: "420px", height: "70px",
+                                            }}
+                                          >
+                                            <option value="next">Next question</option>
+                                            {allQuestions.map((dest, j) => (
+                                              <option key={j} value={`q-${dest.id}`}>
+                                                {dest.sectionTitle} → {dest.label}
+                                              </option>
+                                            ))}
+                                            <option value="end">End of form</option>
+                                          </select>
+                                          <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
+                                            Hold Ctrl / Cmd to select multiple
+                                          </div>
                                         </div>
                                       </div>
                                     );
@@ -337,37 +372,47 @@ export default function SurveyMgmtView({
                                 ) : (
                                   // Single multi-select branch target for non-multiple questions
                                   <div style={{
-                                      display: "flex", alignItems: "center", gap: "0.75rem",
-                                      padding: "0.6rem 0.75rem", borderRadius: "0.4rem",
-                                      background: "#f9fafb", flexWrap: "nowrap",
-                                    }}>
-                                    <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
-                                      <select 
-                                      multiple
-                                      value={(() => {
-                                        const v = branches[key];
-                                        return Array.isArray(v) ? v : v ? [v] : ["next"];
-                                      })()}
-                                      onChange={e => {
-                                        const vals = Array.from(e.target.selectedOptions, o => o.value);
-                                        setBranches(prev => ({ ...prev, [key]: vals }));
-                                      }}
-                                      style={{
-                                        padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                        border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                        flex: 1, minWidth: "200px", maxWidth: "520px", height: "70px",
-                                      }}
-                                    >
-                                      <option value="next">Next question</option>
-                                      {allQuestions.map((dest, j) => (
-                                        <option key={j} value={`q-${dest.id}`}>
-                                          {dest.sectionTitle} → {dest.label}
-                                        </option>
-                                      ))}
-                                      <option value="end">End of form</option>
-                                    </select>
-                                    <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
-                                      Hold Ctrl / Cmd to select multiple
+                                    display: "grid",                                       // FROM FRIEND: grid layout
+                                    gridTemplateColumns: "1fr auto",                       // FROM FRIEND
+                                    alignItems: "center",
+                                    gap: "0.75rem",
+                                    padding: "0.4rem 0.6rem",                             // FROM FRIEND: tighter padding
+                                    borderRadius: "0.4rem",
+                                    background: "#f9fafb",
+                                    border: "1px solid #e5e7eb",                          // FROM FRIEND: subtle border
+                                  }}>
+                                    {/* FROM FRIEND: "This question goes to:" for clarity */}
+                                    <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>
+                                      This question goes to:
+                                    </span>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem", alignItems: "flex-end" }}>
+                                      <select
+                                        multiple
+                                        value={(() => {
+                                          const v = branches[key];
+                                          return Array.isArray(v) ? v : v ? [v] : ["next"];
+                                        })()}
+                                        onChange={e => {
+                                          const vals = Array.from(e.target.selectedOptions, o => o.value);
+                                          setBranches(prev => ({ ...prev, [key]: vals }));
+                                        }}
+                                        style={{
+                                          padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                          border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                          minWidth: "200px", maxWidth: "520px", height: "70px",
+                                        }}
+                                      >
+                                        <option value="next">Next question</option>
+                                        {allQuestions.map((dest, j) => (
+                                          <option key={j} value={`q-${dest.id}`}>
+                                            {dest.sectionTitle} → {dest.label}
+                                          </option>
+                                        ))}
+                                        <option value="end">End of form</option>
+                                      </select>
+                                      <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
+                                        Hold Ctrl / Cmd to select multiple
+                                      </div>
                                     </div>
                                   </div>
                                 )}
@@ -619,7 +664,7 @@ export default function SurveyMgmtView({
                         </div>
                       )}
 
-                      {/* Branch button — pill-shaped with label */}
+                      {/* Branch button */}
                       {!isEditing && (
                         <div className="branch-container">
                           <button

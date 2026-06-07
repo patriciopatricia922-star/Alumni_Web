@@ -1,5 +1,5 @@
 // ============================================================================
-// AlumniManagementView.jsx
+// AlumniManagementView.jsx — View // mine (merged)
 // ============================================================================
 // Renders all visual components for alumni management including:
 //   - Alumni table with search and pagination
@@ -116,7 +116,7 @@ const FilterModal = ({
   ];
   const surveyOptions = ["Completed", "Pending"];
 
-  // Adopted friend's functional state update pattern — safer for batched updates
+  // Functional state update — safer for batched updates (your version)
   const handleChange = (key, value) =>
     setLocalFilters((prev) => ({ ...prev, [key]: value }));
 
@@ -230,10 +230,10 @@ const FilterModal = ({
 // ============================================================================
 // UPLOAD CSV MODAL
 // ============================================================================
-// Upload logic upgraded to use auth.admin.createUser (from friend's version)
-// so that the auth.users FK constraint is satisfied before inserting the
-// public profile row. On auth creation failure the row is skipped; on insert
-// failure the orphaned auth user is deleted (rolled back).
+// Upload logic uses auth.admin.createUser (your version) so that the
+// auth.users FK constraint is satisfied before inserting the public profile
+// row. On auth creation failure the row is skipped; on insert failure the
+// orphaned auth user is deleted (rolled back).
 // All UI structure, styling, and column hints are preserved from your version.
 // ============================================================================
 function UploadCSVModal({ onClose, onSuccess }) {
@@ -461,6 +461,7 @@ function UploadCSVModal({ onClose, onSuccess }) {
             >
               Expected CSV Columns
             </p>
+            {/* Column hints rendered via .map() loop (your version — DRY) */}
             <p
               style={{
                 margin: 0,
@@ -769,7 +770,11 @@ function UploadCSVModal({ onClose, onSuccess }) {
 // ============================================================================
 // ALUMNI PROFILE MODAL
 // ============================================================================
-function AlumniProfileModal({ alumni, onClose }) {
+// [friend] alumniType prop added — conditionally swaps the Employment Status
+// label when alumniType === 'shs'. The label value "dqpaalam" is a placeholder
+// from friend's code; replace with the final SHS-appropriate label when ready.
+// ============================================================================
+function AlumniProfileModal({ alumni, onClose, alumniType }) {
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
@@ -801,7 +806,8 @@ function AlumniProfileModal({ alumni, onClose }) {
     },
     {
       icon: <MdWork size={18} color="#155DFC" />,
-      label: "Employment Status",
+      // [friend] SHS alumni use a different label — replace placeholder when finalised
+      label: alumniType === "shs" ? "dqpaalam" : "Employment Status",
       value: alumni.employment_status || "—",
       isText: true,
     },
@@ -872,8 +878,8 @@ function AlumniProfileModal({ alumni, onClose }) {
 // ============================================================================
 // MAIN VIEW COMPONENT
 // ============================================================================
-// Layout preserved from your version.
-// Export button kept inside the toolbar (your placement) with your styling.
+// Layout and toolbar placement preserved from your version.
+// [friend] alumniType prop added — drives subtitle text and SHS stub branch.
 // ============================================================================
 function AlumniManagementView({
   alumni,
@@ -911,6 +917,7 @@ function AlumniManagementView({
   onNextPage,
   onGoToPage,
   onCloseModal,
+  alumniType, // [friend] drives SHS subtitle + stub table branch
 }) {
   return (
     <div className="am-page">
@@ -919,150 +926,213 @@ function AlumniManagementView({
       <div className="am-heading-row">
         <div>
           <h1 className="am-title">Alumni Management</h1>
-          <p className="am-subtitle">Monitor and manage alumni data.</p>
+          {/* [friend] SHS-aware subtitle */}
+          <p className="am-subtitle">
+            {alumniType === "shs"
+              ? "Monitor and manage SHS alumni data."
+              : "Monitor and manage alumni data."}
+          </p>
         </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="am-table-card">
-        <div className="am-toolbar">
-          <div className="am-search-wrap">
-            <FiSearch size={18} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search by name, email, or program..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      {/* [friend] SHS stub — same table shell, controls disabled until data is ready */}
+      {alumniType === "shs" ? (
+        <div className="am-table-card">
+          <div className="am-toolbar">
+            <div className="am-search-wrap">
+              <FiSearch size={18} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search by name, email, or program..."
+                disabled
+              />
+            </div>
+            <div className="am-toolbar-btns">
+              <button className="am-tb-btn" disabled>
+                <FiUpload size={14} /> Upload CSV
+              </button>
+              <button className="am-tb-btn" disabled>
+                <FiFilter size={14} /> Filter
+              </button>
+              <button
+                className="am-tb-btn"
+                disabled
+                style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
+              >
+                <FiDownload size={14} /> Export
+              </button>
+            </div>
           </div>
-          <div className="am-toolbar-btns">
-            <button className="am-tb-btn" onClick={onOpenUploadModal}>
-              <FiUpload size={14} /> Upload CSV
-            </button>
-            <button
-              className={`am-tb-btn ${hasActiveFilters ? "active-filter" : ""}`}
-              onClick={onOpenFilter}
-            >
-              <FiFilter size={14} /> Filter
-              {hasActiveFilters && <span className="filter-badge" />}
-            </button>
-            {/* Export button kept in toolbar per your layout */}
-            <button
-              className="am-tb-btn"
-              onClick={onExport}
-              style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
-            >
-              <FiDownload size={14} /> Export
-            </button>
-          </div>
-        </div>
-
-        <div className="am-table-wrap">
-          <table className="am-table">
-            <thead>
-              <tr>
-                <th style={{ textAlign: "center" }}>Name</th>
-                <th className="am-col-batch">Batch</th>
-                <th className="am-col-program">Program</th>
-                <th className="tc">Employment Status</th>
-                <th className="tc am-col-survey">Survey Status</th>
-                <th className="tc am-col-account">Account Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length === 0 ? (
+          <div className="am-table-wrap">
+            <table className="am-table">
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "center" }}>Name</th>
+                  <th className="am-col-batch">Batch</th>
+                  <th className="am-col-program">Program</th>
+                  <th className="tc">Employment Status</th>
+                  <th className="tc am-col-survey">Survey Status</th>
+                  <th className="tc am-col-account">Account Status</th>
+                </tr>
+              </thead>
+              <tbody>
                 <tr className="am-empty">
                   <td colSpan="6">No alumni records found.</td>
                 </tr>
-              ) : (
-                paginated.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="apm-row-clickable"
-                    onClick={() => setSelectedAlumni(a)}
-                  >
-                    <td>
-                      <div className="am-name-cell">
-                        <div className="am-avatar">
-                          {(a.name ?? "?").charAt(0).toUpperCase()}
-                        </div>
-                        <div className="am-name-stack">
-                          <span className="am-name">{a.name}</span>
-                          <span className="am-email">{a.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="am-col-batch">
-                      {a.batch !== "—" ? (
-                        <span className="am-batch">{a.batch}</span>
-                      ) : (
-                        <span style={{ color: "#CBD5E1" }}>—</span>
-                      )}
-                    </td>
-                    <td className="am-col-program">{a.program || "—"}</td>
-                    <td className="tc">
-                      <EmpBadge status={a.employment_status} />
-                    </td>
-                    <td className="tc am-col-survey">
-                      <SurveyBadge status={a.survey_status} />
-                    </td>
-                    <td className="tc am-col-account">
-                      <AccountBadge status={a.account_status} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer / Pagination */}
-        <div className="am-footer">
-          <span className="am-footer-text">
-            Showing {startEntry} to {endEntry} of {filtered.length} entries
-          </span>
-          <div className="am-pages">
-            <button
-              className="am-pg-btn"
-              disabled={page === 1}
-              onClick={onPrevPage}
-            >
-              Prev
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(
-                (p) =>
-                  p === 1 || p === totalPages || Math.abs(p - page) <= 1
-              )
-              .reduce((acc, p, idx, arr) => {
-                if (idx > 0 && p - arr[idx - 1] > 1) {
-                  acc.push(
-                    <span key={`g${p}`} className="pagination-dots">
-                      …
-                    </span>
-                  );
-                }
-                acc.push(
-                  <button
-                    key={p}
-                    className={`am-pg-btn${p === page ? " on" : ""}`}
-                    onClick={() => onGoToPage(p)}
-                  >
-                    {p}
-                  </button>
-                );
-                return acc;
-              }, [])}
-            <button
-              className="am-pg-btn"
-              disabled={page === totalPages}
-              onClick={onNextPage}
-            >
-              Next
-            </button>
+              </tbody>
+            </table>
+          </div>
+          <div className="am-footer">
+            <span className="am-footer-text">Showing 0 to 0 of 0 entries</span>
+            <div className="am-pages">
+              <button className="am-pg-btn" disabled>Prev</button>
+              <button className="am-pg-btn on">1</button>
+              <button className="am-pg-btn" disabled>Next</button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* ── Standard college alumni view (your layout) ── */
+        <div className="am-table-card">
+          <div className="am-toolbar">
+            <div className="am-search-wrap">
+              <FiSearch size={18} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search by name, email, or program..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="am-toolbar-btns">
+              <button className="am-tb-btn" onClick={onOpenUploadModal}>
+                <FiUpload size={14} /> Upload CSV
+              </button>
+              <button
+                className={`am-tb-btn ${hasActiveFilters ? "active-filter" : ""}`}
+                onClick={onOpenFilter}
+              >
+                <FiFilter size={14} /> Filter
+                {hasActiveFilters && <span className="filter-badge" />}
+              </button>
+              {/* Export button kept in toolbar per your layout */}
+              <button
+                className="am-tb-btn"
+                onClick={onExport}
+                style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
+              >
+                <FiDownload size={14} /> Export
+              </button>
+            </div>
+          </div>
+
+          <div className="am-table-wrap">
+            <table className="am-table">
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "center" }}>Name</th>
+                  <th className="am-col-batch">Batch</th>
+                  <th className="am-col-program">Program</th>
+                  <th className="tc">Employment Status</th>
+                  <th className="tc am-col-survey">Survey Status</th>
+                  <th className="tc am-col-account">Account Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr className="am-empty">
+                    <td colSpan="6">No alumni records found.</td>
+                  </tr>
+                ) : (
+                  paginated.map((a) => (
+                    <tr
+                      key={a.id}
+                      className="apm-row-clickable"
+                      onClick={() => setSelectedAlumni(a)}
+                    >
+                      <td>
+                        <div className="am-name-cell">
+                          <div className="am-avatar">
+                            {(a.name ?? "?").charAt(0).toUpperCase()}
+                          </div>
+                          <div className="am-name-stack">
+                            <span className="am-name">{a.name}</span>
+                            <span className="am-email">{a.email}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="am-col-batch">
+                        {a.batch !== "—" ? (
+                          <span className="am-batch">{a.batch}</span>
+                        ) : (
+                          <span style={{ color: "#CBD5E1" }}>—</span>
+                        )}
+                      </td>
+                      <td className="am-col-program">{a.program || "—"}</td>
+                      <td className="tc">
+                        <EmpBadge status={a.employment_status} />
+                      </td>
+                      <td className="tc am-col-survey">
+                        <SurveyBadge status={a.survey_status} />
+                      </td>
+                      <td className="tc am-col-account">
+                        <AccountBadge status={a.account_status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Footer / Pagination */}
+          <div className="am-footer">
+            <span className="am-footer-text">
+              Showing {startEntry} to {endEntry} of {filtered.length} entries
+            </span>
+            <div className="am-pages">
+              <button
+                className="am-pg-btn"
+                disabled={page === 1}
+                onClick={onPrevPage}
+              >
+                Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(
+                  (p) =>
+                    p === 1 || p === totalPages || Math.abs(p - page) <= 1
+                )
+                .reduce((acc, p, idx, arr) => {
+                  if (idx > 0 && p - arr[idx - 1] > 1) {
+                    acc.push(
+                      <span key={`g${p}`} className="pagination-dots">
+                        …
+                      </span>
+                    );
+                  }
+                  acc.push(
+                    <button
+                      key={p}
+                      className={`am-pg-btn${p === page ? " on" : ""}`}
+                      onClick={() => onGoToPage(p)}
+                    >
+                      {p}
+                    </button>
+                  );
+                  return acc;
+                }, [])}
+              <button
+                className="am-pg-btn"
+                disabled={page === totalPages}
+                onClick={onNextPage}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter Modal */}
       {showFilter && (
@@ -1084,9 +1154,13 @@ function AlumniManagementView({
         />
       )}
 
-      {/* Profile Modal */}
+      {/* Profile Modal — alumniType forwarded for label swap */}
       {selectedAlumni && (
-        <AlumniProfileModal alumni={selectedAlumni} onClose={onCloseModal} />
+        <AlumniProfileModal
+          alumni={selectedAlumni}
+          onClose={onCloseModal}
+          alumniType={alumniType}
+        />
       )}
     </div>
   );

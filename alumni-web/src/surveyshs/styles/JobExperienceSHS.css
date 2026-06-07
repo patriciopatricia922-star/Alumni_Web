@@ -1,0 +1,706 @@
+/*
+ * JobExperienceSHS.css
+ * Location: src/surveyshs/views/JobExperienceSHS.css
+ *
+ * Styles for the SHS Job Experience section.
+ * Prefix: je-shs-  (no collision with college je- or other SHS prefixes)
+ *
+ * Design tokens — identical across all SHS sections:
+ *   Navy:      #002263
+ *   Blue:      #003EA6
+ *   Gold:      #EFC600
+ *   BG:        #DAE5F1
+ *   Card:      #FFFFFF
+ *   Text:      #0A0A0A
+ *   Muted:     #4A5565
+ *   Border:    #D1D5DC
+ *   Input BG:  #F9FAFB
+ *   Error:     #F87171
+ *   Success:   #15803d
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+.je-shs-root *,
+.je-shs-root *::before,
+.je-shs-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Layout shell ───────────────────────────────────────────────────────── */
+.je-shs-root {
+  display: flex;
+  min-height: 100vh;
+  background: #DAE5F1;
+  font-family: 'Arimo', Arial, sans-serif;
+}
+
+.je-shs-content {
+  flex: 1;
+  min-width: 0;
+  margin-left: 229px;
+}
+
+/* ── Sticky header ──────────────────────────────────────────────────────── */
+.je-shs-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #DAE5F1;
+  padding-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Top bar ────────────────────────────────────────────────────────────── */
+.je-shs-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 51px 0;
+}
+
+.je-shs-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #002263;
+  flex-shrink: 0;
+}
+
+.je-shs-badge {
+  background: #003EA6;
+  border: 1.24px solid rgba(99, 102, 241, 0.3);
+  border-radius: 999px;
+  padding: 7px 20px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+/* ── Bell ───────────────────────────────────────────────────────────────── */
+.je-shs-bell {
+  width: 48px;
+  height: 48px;
+  background: #003EA6;
+  border: 1.24px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.je-shs-bell.active {
+  background: #002263;
+  border-color: rgba(0, 34, 99, 0.5);
+}
+
+.je-shs-bell-dot {
+  position: absolute;
+  top: -4.41px;
+  right: -4.41px;
+  width: 28.81px;
+  height: 28.81px;
+  background: rgba(255, 0, 0, 0.7);
+  opacity: 0.42;
+  border-radius: 50%;
+}
+
+.je-shs-bell-count {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  min-width: 20px;
+  height: 20px;
+  background: rgba(255, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 400;
+}
+
+/* ── Page title / subtitle ──────────────────────────────────────────────── */
+.je-shs-title {
+  text-align: center;
+  padding: 14px 51px 0;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.4;
+  letter-spacing: -0.7px;
+  color: #2D467C;
+}
+
+.je-shs-subtitle {
+  text-align: center;
+  padding: 4px 51px 0;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  color: #4A5565;
+}
+
+/* ── Progress bar ───────────────────────────────────────────────────────── */
+.je-shs-progress {
+  margin: 12px 51px 0;
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 18px 30px 16px;
+}
+
+.je-shs-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E3A5F;
+}
+
+.je-shs-progress-pct {
+  color: #003EA6;
+  font-weight: 700;
+}
+
+.je-shs-progress-track {
+  width: 100%;
+  height: 12px;
+  background: #E5E7EB;
+  border-radius: 9999px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.je-shs-progress-fill {
+  height: 100%;
+  background: #EFC600;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.je-shs-progress-label {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4A5565;
+}
+
+/* ── Body / card ────────────────────────────────────────────────────────── */
+.je-shs-body {
+  padding: 24px 51px 60px;
+}
+
+.je-shs-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 40px 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Card heading ───────────────────────────────────────────────────────── */
+.je-shs-section-title {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 30px;
+  color: #003EA6;
+  text-align: center;
+}
+
+.je-shs-section-sub {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  color: #003EA6;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* ── Sub-section group label ────────────────────────────────────────────── */
+.je-shs-group-label {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 22px;
+  color: #002263;
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #E5E7EB;
+}
+
+/* ── Fields wrapper ─────────────────────────────────────────────────────── */
+.je-shs-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* ── Individual field ───────────────────────────────────────────────────── */
+.je-shs-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.je-shs-label {
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 21px;
+  color: #003EA6;
+}
+
+.je-shs-req {
+  color: #F87171;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.je-shs-field-error {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 12px;
+  color: #F87171;
+  margin-left: 6px;
+  font-weight: 400;
+}
+
+/* ── Radio groups ───────────────────────────────────────────────────────── */
+.je-shs-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.je-shs-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4A5565;
+  line-height: 1.4;
+  padding: 2px 0;
+}
+
+.je-shs-radio-label input[type='radio'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #003EA6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Checkbox groups ────────────────────────────────────────────────────── */
+.je-shs-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.je-shs-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #4A5565;
+  line-height: 1.4;
+  padding: 2px 0;
+}
+
+.je-shs-checkbox-label input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: #003EA6;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── "Other" sub-input (radio and checkbox variants) ───────────────────── */
+.je-shs-other-input {
+  width: 100%;
+  height: 47px;
+  background: #F9FAFB;
+  border: 0.8px solid #D1D5DC;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 14px;
+  color: #0A0A0A;
+  outline: none;
+  margin-top: 8px;
+  transition: border-color 0.15s;
+}
+
+.je-shs-other-input::placeholder {
+  color: rgba(10, 10, 10, 0.3);
+}
+
+.je-shs-other-input:focus {
+  border-color: #003EA6;
+}
+
+.je-shs-other-input.error {
+  border-color: #F87171;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────── */
+.je-shs-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.je-shs-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.je-shs-save-toast {
+  font-family: 'Arimo', Arial, sans-serif;
+  font-size: 13px;
+  color: #15803d;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+.je-shs-btn-prev,
+.je-shs-btn-next {
+  width: 120px;
+  height: 48px;
+  background: #003EA6;
+  border: none;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #FFFFFF;
+  transition: background 0.15s;
+}
+
+.je-shs-btn-prev:hover,
+.je-shs-btn-next:hover {
+  background: #002a80;
+}
+
+.je-shs-btn-save {
+  width: 100px;
+  height: 48px;
+  background: #FFFFFF;
+  border: 0.8px solid rgba(0, 34, 99, 0.6);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #002263;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.je-shs-btn-save:hover {
+  background: #f0f4fb;
+  border-color: #002263;
+}
+
+/* ── Notification dropdown ──────────────────────────────────────────────── */
+.je-shs-notif-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  width: 380px;
+  max-height: 520px;
+  background: #FFFFFF;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 300;
+}
+
+.je-shs-notif-header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.je-shs-notif-title {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #003EA6;
+}
+
+.je-shs-notif-mark-all {
+  background: none;
+  border: none;
+  font-family: 'Arimo', sans-serif;
+  font-size: 12px;
+  color: #003EA6;
+  cursor: pointer;
+  padding: 0;
+}
+
+.je-shs-notif-tabs {
+  display: flex;
+  padding: 10px 18px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.je-shs-notif-tab {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  transition: all 0.15s;
+  text-transform: capitalize;
+}
+
+.je-shs-notif-tab.active {
+  background: #003EA6;
+  border: none;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.je-shs-notif-tab.inactive {
+  background: transparent;
+  border: 1px solid #D1D5DC;
+  color: #4A5565;
+  font-weight: 400;
+}
+
+.je-shs-notif-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.je-shs-notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+}
+
+.je-shs-notif-empty-text {
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.3);
+  margin: 0;
+}
+
+.je-shs-notif-group-label {
+  font-family: 'Arimo', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 10px 18px 4px;
+}
+
+.je-shs-notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.je-shs-notif-item.unread {
+  background: rgba(0, 62, 166, 0.05);
+  border-left: 3px solid #003EA6;
+}
+
+.je-shs-notif-item.read {
+  background: transparent;
+  border-left: 3px solid transparent;
+}
+
+.je-shs-notif-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 62, 166, 0.08);
+  border: 1px solid rgba(0, 62, 166, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.je-shs-notif-body  { flex: 1; min-width: 0; }
+
+.je-shs-notif-item-title {
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: #0A0A0A;
+  margin: 0 0 2px 0;
+  line-height: 1.4;
+}
+
+.je-shs-notif-item-title.unread { font-weight: 700; }
+.je-shs-notif-item-title.read   { font-weight: 400; }
+
+.je-shs-notif-item-body {
+  font-family: 'Arimo', sans-serif;
+  font-size: 12px;
+  color: #4A5565;
+  margin: 0 0 4px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.je-shs-notif-time {
+  font-family: 'Arimo', sans-serif;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.je-shs-notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #003EA6;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.je-shs-notif-footer {
+  padding: 10px 18px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  flex-shrink: 0;
+}
+
+.je-shs-notif-see-all {
+  width: 100%;
+  height: 36px;
+  background: #F9FAFB;
+  border: 1px solid #D1D5DC;
+  border-radius: 10px;
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  color: #4A5565;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.je-shs-notif-see-all:hover { background: #F0F4FB; }
+
+/* ── Responsive — 1100px ────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .je-shs-topbar    { padding: 24px 32px 0; }
+  .je-shs-title     { padding: 14px 32px 0; font-size: 26px; }
+  .je-shs-subtitle  { padding: 4px 32px 0; }
+  .je-shs-progress  { margin: 12px 32px 0; }
+  .je-shs-body      { padding: 20px 32px 60px; }
+  .je-shs-card      { padding: 32px 32px 28px; }
+}
+
+/* ── Responsive — 900px ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .je-shs-topbar    { padding: 20px 24px 0; }
+  .je-shs-title     { padding: 12px 24px 0; font-size: 24px; }
+  .je-shs-subtitle  { padding: 4px 24px 0; }
+  .je-shs-progress  { margin: 10px 24px 0; }
+  .je-shs-body      { padding: 18px 24px 60px; }
+  .je-shs-card      { padding: 28px 24px 24px; gap: 28px; }
+  .je-shs-questions { gap: 28px; }
+}
+
+/* ── Responsive — 767px (mobile) ────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .je-shs-content   { margin-left: 0; }
+  .je-shs-topbar    { padding: 20px 16px 0; }
+  .je-shs-badge     { padding: 6px 12px; font-size: 10px; }
+  .je-shs-bell      { display: none; }
+  .je-shs-title     { padding: 12px 16px 0; font-size: 20px; }
+  .je-shs-subtitle  { padding: 4px 16px 0; font-size: 14px; }
+  .je-shs-progress  { margin: 10px 16px 0; padding: 14px 16px; }
+  .je-shs-progress-row   { font-size: 13px; }
+  .je-shs-progress-label { font-size: 13px; }
+  .je-shs-body      { padding: 16px 16px 80px; }
+  .je-shs-card      { padding: 20px 16px 20px; gap: 24px; }
+  .je-shs-questions { gap: 24px; }
+  .je-shs-section-title { font-size: 17px; }
+  .je-shs-btn-prev  { width: 100px; height: 44px; font-size: 14px; }
+  .je-shs-btn-save  { width: 80px;  height: 44px; font-size: 14px; }
+  .je-shs-btn-next  { width: 100px; height: 44px; font-size: 14px; }
+  .je-shs-notif-dropdown { width: 320px; }
+}
+
+/* ── Responsive — 390px ─────────────────────────────────────────────────── */
+@media (max-width: 390px) {
+  .je-shs-title          { font-size: 17px; }
+  .je-shs-other-input    { font-size: 13px; }
+  .je-shs-btn-prev,
+  .je-shs-btn-next       { width: 90px; font-size: 13px; }
+  .je-shs-btn-save       { width: 70px; font-size: 13px; }
+}
+
+/* ── Reduced-motion safety ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .je-shs-progress-fill { transition: none; }
+  .je-shs-btn-prev,
+  .je-shs-btn-save,
+  .je-shs-btn-next      { transition: none; }
+  .je-shs-other-input   { transition: none; }
+}

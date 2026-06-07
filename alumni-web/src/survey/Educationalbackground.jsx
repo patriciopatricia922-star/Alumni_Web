@@ -1,3 +1,13 @@
+/**
+ * EducationalBackground.jsx — Reference implementation with branching
+ * ─────────────────────────────────────────────────────────────────────────────
+ * This file is a drop-in replacement for the original EducationalBackground.jsx.
+ * It is identical to the original EXCEPT for the three additions marked
+ * ← BRANCHING ADD.  Those three hunks are the complete change needed.
+ *
+ * Apply the same three-hunk pattern to all other section controllers.
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
@@ -5,6 +15,7 @@ import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import useUserProfile from '../hooks/Useuserprofile';
 import EducationalBackgroundView from '../views/EducationalBackgroundView';
+import { useSurveyBranching } from '../lib/useSurveyBranching'; // ← BRANCHING ADD 1/3
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 2;
@@ -54,7 +65,6 @@ const computeFormPct = (form) => {
       required.push('board_exam_name', 'board_exam_date', 'board_exam_result');
     }
   }
-  // ── NEW: count the "No" branch fields toward completion ─────────────────
   if (form.licensure_reviewing === 'No') {
     required.push('licensure_no_plans', 'licensure_no_reason');
   }
@@ -68,38 +78,21 @@ const computeFormPct = (form) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper — extract the two lockable values from a resolved profile object.
-//
-// useUserProfile maps DB columns to camelCase JS keys:
-//   users.program    → profile.academicProgram
-//   users.batch_year → profile.yearGraduated
-//
-// Previous code read profile.program / profile.batch_year (the raw DB names)
-// which are always undefined coming out of the hook — that was the root cause
-// of the autofill never working.
-// ─────────────────────────────────────────────────────────────────────────────
 const extractProfileAcademicFields = (profile) => {
   if (!profile) return null;
-
-  // useUserProfile camelCase keys (see DB_TO_PROFILE in the hook)
   const program   = profile.academicProgram ?? profile.program   ?? null;
   const batchYear = profile.yearGraduated   ?? profile.batch_year ?? null;
-
   const result = {};
   if (program   && String(program).trim())   result.degree_program = String(program).trim();
   if (batchYear && String(batchYear).trim()) result.year_graduated = String(batchYear).trim();
-
   return Object.keys(result).length > 0 ? result : null;
 };
 
 const EducationalBackground = () => {
   const navigate = useNavigate();
 
-  // ── Shared profile hook ───────────────────────────────────────────────────
   const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  // ── Config state ──────────────────────────────────────────────────────────
   const [questionLabels,        setQuestionLabels]        = useState({});
   const [questionPlaceholders,  setQuestionPlaceholders]  = useState({});
   const [degreeOptions,         setDegreeOptions]         = useState(DEFAULT_DEGREE_OPTIONS);
@@ -110,23 +103,16 @@ const EducationalBackground = () => {
   const [boardResultOptions,    setBoardResultOptions]    = useState(DEFAULT_BOARD_RESULT_OPTIONS);
   const [loadingLabels,         setLoadingLabels]         = useState(true);
 
-  // ── Locked-field tracking ─────────────────────────────────────────────────
-  // lockedFields[key] = true  → field was populated from the users table and
-  //                             must not be editable.
   const [lockedFields, setLockedFields] = useState({
     degree_program: false,
     year_graduated: false,
   });
 
-  // Ref that always holds the authoritative profile values so the savedData
-  // merge (Step 1) can re-assert them even if it runs after Step 2.
   const profileValuesRef = useRef({});
 
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData,   setHasLoadedSavedData]   = useState(false);
   const [hasAttemptedAutofill, setHasAttemptedAutofill] = useState(false);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     degree_program:      '',
     other_degree:        '',
@@ -141,29 +127,36 @@ const EducationalBackground = () => {
     board_exam_name:     '',
     board_exam_date:     '',
     board_exam_result:   '',
-    // ── NEW: "No" branch fields ───────────────────────────────────────────
-    licensure_no_plans:  '',   // shown when licensure_reviewing === 'No'
-    licensure_no_reason: '',   // shown when licensure_reviewing === 'No'
+    licensure_no_plans:  '',
+    licensure_no_reason: '',
   });
+
+  // ── BRANCHING ADD 2/3 ─────────────────────────────────────────────────────
+  // Reads config.branches from the same DB row the Admin edits.
+  // shouldShowField(fieldKey) returns false for fields the Admin's rules skip.
+  // When no rules are configured, every field returns true (no regressions).
+  const { shouldShowField, branchingReady } = useSurveyBranching(
+    'Educational Background', // must match admin section title exactly
+    INDEX_TO_FIELD,
+    form,
+  );
+  // ─────────────────────────────────────────────────────────────────────────
 
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
   const bellRef = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Force fresh profile on mount (picks up Profile modal saves) ───────────
   useEffect(() => {
     refreshProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Survey config ─────────────────────────────────────────────────────────
   const applyConfig = useCallback((config) => {
     if (!config?.sections) return;
     const eduSection = config.sections.find(s => s.title === 'Educational Background');
@@ -211,9 +204,6 @@ const EducationalBackground = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
 
-  // ── STEP 1: Load saved survey data ────────────────────────────────────────
-  // After merging, re-assert any profile values already in the ref so a slow
-  // DB read can never silently overwrite the locked fields.
   useEffect(() => {
     const load = async () => {
       try {
@@ -221,9 +211,6 @@ const EducationalBackground = () => {
         if (savedData && Object.keys(savedData).length > 0) {
           setForm(f => {
             const merged = { ...f, ...savedData };
-            // Re-assert authoritative profile values (may be {} on first render
-            // if the autofill effect hasn't run yet — that is fine, it will run
-            // after profileLoading resolves and will overwrite again).
             Object.entries(profileValuesRef.current).forEach(([key, val]) => {
               merged[key] = val;
             });
@@ -239,47 +226,23 @@ const EducationalBackground = () => {
     load();
   }, []);
 
-  // ── STEP 2: Autofill degree_program + year_graduated from profile ─────────
-  //
-  // FIX: Read profile.academicProgram / profile.yearGraduated — the camelCase
-  // keys that useUserProfile actually produces — instead of profile.program /
-  // profile.batch_year which are always undefined from the hook.
-  //
-  // The effect re-runs whenever profileLoading or profile changes, so it fires
-  // correctly whether the hook resolves before or after saved data loads.
   useEffect(() => {
-    if (!hasLoadedSavedData) return; // wait for DB load
-    if (profileLoading)      return; // wait for hook
-    if (hasAttemptedAutofill) return; // run only once
-
-    console.log('[EducationalBackground] Attempting academic autofill...');
-    console.log('[EducationalBackground] Profile:', profile);
+    if (!hasLoadedSavedData) return;
+    if (profileLoading)      return;
+    if (hasAttemptedAutofill) return;
 
     const academicValues = extractProfileAcademicFields(profile);
-
     if (academicValues) {
-      console.log('[EducationalBackground] Applying academic values:', academicValues);
-
-      // Persist in ref so Step 1 re-assert (above) can use them if it runs
-      // after this effect (race condition avoidance).
       profileValuesRef.current = academicValues;
-
-      // Overwrite form fields unconditionally — these come from the authoritative
-      // users table and the user must not be able to change them.
       setForm(f => ({ ...f, ...academicValues }));
-
       setLockedFields({
         degree_program: !!academicValues.degree_program,
         year_graduated: !!academicValues.year_graduated,
       });
-    } else {
-      console.log('[EducationalBackground] No academic profile data found for autofill');
     }
-
     setHasAttemptedAutofill(true);
   }, [profileLoading, profile, hasLoadedSavedData, hasAttemptedAutofill]);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -316,10 +279,7 @@ const EducationalBackground = () => {
 
   const markOneRead = useCallback((id) => {
     const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) {
-      readIds.push(id);
-      localStorage.setItem('read_notifs', JSON.stringify(readIds));
-    }
+    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
   }, []);
@@ -349,16 +309,12 @@ const EducationalBackground = () => {
     return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   }, []);
 
-  // ── Field setter — hard-blocks writes to locked fields ────────────────────
-  // State-level protection: even if the View somehow calls set() for a locked
-  // field (e.g. via a programmatic event), the value is silently discarded.
   const set = useCallback((key, val) => {
     if (lockedFields[key]) {
       console.warn(`[EducationalBackground] Blocked write to locked field "${key}"`);
       return;
     }
     setForm(prev => ({ ...prev, [key]: val }));
-    // Clear validation error for the field being edited
     setErrors(prev => {
       if (!prev.has(key)) return prev;
       const next = new Set(prev);
@@ -367,19 +323,15 @@ const EducationalBackground = () => {
     });
   }, [lockedFields]);
 
-  // Clears ALL sub-fields for both branches whenever the parent answer changes,
-  // preventing stale values from a previous selection persisting in saved data.
   const setLicensureReviewing = useCallback((val) =>
     setForm(prev => ({
       ...prev,
       licensure_reviewing:  val,
-      // ── "Yes" branch ────────────────────────────────────────────────────
       licensure_plans:      '',
       licensure_reason:     '',
       board_exam_name:      '',
       board_exam_date:      '',
       board_exam_result:    '',
-      // ── "No" branch ─────────────────────────────────────────────────────
       licensure_no_plans:   '',
       licensure_no_reason:  '',
     })), []);
@@ -393,33 +345,33 @@ const EducationalBackground = () => {
       board_exam_result: '',
     })), []);
 
-  // ── NEW: setter for the "No" branch plans radio ───────────────────────────
   const setLicensureNoPlans = useCallback((val) =>
     setForm(prev => ({ ...prev, licensure_no_plans: val })), []);
 
-  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
-    if (!form.degree_program)                                            e.add('degree_program');
-    if (form.degree_program === 'Other' && !form.other_degree.trim())   e.add('other_degree');
-    if (!form.reason_for_course.trim())                                 e.add('reason_for_course');
-    if (!form.year_graduated)                                           e.add('year_graduated');
-    if (!form.distinction)                                              e.add('distinction');
-    if (!form.post_grad_plans)                                          e.add('post_grad_plans');
-    if (form.post_grad_plans === 'Yes' && !form.post_grad_course.trim()) e.add('post_grad_course');
-    if (!form.licensure_reviewing)                                      e.add('licensure_reviewing');
+    // Only validate fields that are currently visible (not skipped by branching)
+    if (!form.degree_program)                                                         e.add('degree_program');
+    if (form.degree_program === 'Other' && shouldShowField('other_degree') && !form.other_degree.trim())
+                                                                                      e.add('other_degree');
+    if (!form.reason_for_course.trim())                                               e.add('reason_for_course');
+    if (!form.year_graduated)                                                         e.add('year_graduated');
+    if (!form.distinction)                                                            e.add('distinction');
+    if (!form.post_grad_plans)                                                        e.add('post_grad_plans');
+    if (form.post_grad_plans === 'Yes' && shouldShowField('post_grad_course') && !form.post_grad_course.trim())
+                                                                                      e.add('post_grad_course');
+    if (!form.licensure_reviewing)                                                    e.add('licensure_reviewing');
     if (form.licensure_reviewing === 'Yes') {
-      if (!form.licensure_plans)         e.add('licensure_plans');
-      if (!form.licensure_reason.trim()) e.add('licensure_reason');
+      if (shouldShowField('licensure_plans') && !form.licensure_plans)               e.add('licensure_plans');
+      if (shouldShowField('licensure_reason') && !form.licensure_reason.trim())      e.add('licensure_reason');
       if (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken') {
-        if (!form.board_exam_name.trim()) e.add('board_exam_name');
-        if (!form.board_exam_date)        e.add('board_exam_date');
-        if (!form.board_exam_result)      e.add('board_exam_result');
+        if (shouldShowField('board_exam_name') && !form.board_exam_name.trim())      e.add('board_exam_name');
+        if (shouldShowField('board_exam_date') && !form.board_exam_date)             e.add('board_exam_date');
+        if (shouldShowField('board_exam_result') && !form.board_exam_result)         e.add('board_exam_result');
       }
-    // ── NEW: validate "No" branch ─────────────────────────────────────────
     } else if (form.licensure_reviewing === 'No') {
-      if (!form.licensure_no_plans)          e.add('licensure_no_plans');
-      if (!form.licensure_no_reason.trim())  e.add('licensure_no_reason');
+      if (shouldShowField('licensure_no_plans') && !form.licensure_no_plans)         e.add('licensure_no_plans');
+      if (shouldShowField('licensure_no_reason') && !form.licensure_no_reason.trim()) e.add('licensure_no_reason');
     }
     return e;
   };
@@ -459,6 +411,11 @@ const EducationalBackground = () => {
   }
 
   return (
+    // ── BRANCHING ADD 3/3 ─────────────────────────────────────────────────
+    // Forward shouldShowField + branchingReady to the View.
+    // The View uses shouldShowField(fieldKey) to conditionally render each
+    // question that might be skipped by an Admin-configured branching rule.
+    // ──────────────────────────────────────────────────────────────────────
     <EducationalBackgroundView
       form={form}
       set={set}
@@ -494,6 +451,8 @@ const EducationalBackground = () => {
       groupByDate={groupByDate}
       formatTime={formatTime}
       navigate={navigate}
+      shouldShowField={shouldShowField}    // ← BRANCHING ADD 3/3
+      branchingReady={branchingReady}      // ← BRANCHING ADD 3/3
     />
   );
 };

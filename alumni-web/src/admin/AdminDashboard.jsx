@@ -1,11 +1,16 @@
 // ============================================================================
-// AdminDashboard — Logic Controller // mine (merged)
+// AdminDashboard — Logic Controller
 // ============================================================================
 
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import AdminDashboardView from "./views/AdminDashboardView";
 import { buildAllKpiInsights } from "../services/kpiInsightsService";
+// ↓ Corrected from friend's "./contexts/..." — must match the single canonical
+//   location used by AdminSidebar and the rest of your project.
+//   Both files now import the same module instance, so the Provider and
+//   consumers share one context object and useContext() resolves correctly.
+import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 // ============================================================================
 // SATISFACTION SCORE MAPPING
@@ -119,7 +124,9 @@ const safeParse = (value) => {
 };
 
 // ============================================================================
-// INSTITUTIONAL KPIs STRUCTURE — 9 KPIs across 3 tabs
+// INSTITUTIONAL KPIs STRUCTURE — 9 KPIs across 3 tabs + SHS tab
+// seniorrhigh tab added from friend's version — KPI values are passed through
+// untouched until SHS-specific survey data and computation logic are ready.
 // ============================================================================
 const institutionalKpis = {
   employment: [
@@ -202,6 +209,26 @@ const institutionalKpis = {
       trend: { dir: "none", delta: "" },
     },
   ],
+  // Added from friend's version. Passed through untouched in setKpiData until
+  // SHS-specific computation logic is implemented.
+  seniorrhigh: [
+    {
+      id: "shs_pursued_undergrad",
+      category: "Senior High",
+      label: "SHS Alumni Who Pursued Undergraduate Degree",
+      value: "0%", progress: 0, target: 100,
+      targetLabel: "Goal: 100%",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "shs_pursued_undergrad_nu",
+      category: "Senior High",
+      label: "SHS Alumni Who Pursued Undergraduate at NU",
+      value: "0%", progress: 0, target: 100,
+      targetLabel: "Goal: 100%",
+      trend: { dir: "none", delta: "" },
+    },
+  ],
 };
 
 // ============================================================================
@@ -241,6 +268,11 @@ const buildCareerAlignmentData = (predictions) => {
 // AdminDashboard Component
 // ============================================================================
 const AdminDashboard = () => {
+
+  // alumniType drives view-level filtering (College vs SHS). The value is set
+  // by the AlumniTypeSwitcher in AdminSidebar and shared via context so this
+  // page re-renders automatically when the user toggles.
+  const { alumniType } = useAlumniType();
 
   // ── Tab ──────────────────────────────────────────────────────────────────
   const [activeKpiTab, setActiveKpiTab] = useState("employment");
@@ -357,7 +389,6 @@ const AdminDashboard = () => {
       } catch (e) { console.error('Alumni satisfaction error:', e); }
 
       // ── 5. All 9 Institutional KPIs + dynamic insights ────────────────────
-      // Now also fetches skills_competencies_data for KPI 9 (Leadership).
       const { data: allRows, error: allErr } = await supabase
         .from('survey_progress')
         .select(
@@ -371,11 +402,10 @@ const AdminDashboard = () => {
 
       const surveyRows = allRows ?? [];
 
-      // ── Build dynamic insights from raw rows ─────────────────────────────
+      // ── Build dynamic insights from raw rows ──────────────────────────────
       const insights = buildAllKpiInsights(surveyRows);
       setKpiInsights(insights);
 
-      // Parse all JSONB columns including the newly added skills column.
       const parsed = surveyRows.map(row => ({
         emp:    safeParse(row.employment_information_data),
         edu:    safeParse(row.educational_background_data),
@@ -469,7 +499,6 @@ const AdminDashboard = () => {
       // ── Education tab KPIs ────────────────────────────────────────────────
 
       // KPI 7: Pursued Graduate Studies (within 1 yr)
-      // Source: educational_background_data.post_grad_plans === "Yes"
       const gradStudiesCount = withEduData.filter(r => {
         const plans = r.edu.post_grad_plans
           || r.edu.postGradPlans
@@ -484,9 +513,6 @@ const AdminDashboard = () => {
         ? Math.round((gradStudiesCount / withEduData.length) * 100) : 0;
 
       // KPI 8: Pursued Graduate Studies at NU
-      // Source: educational_background_data.post_grad_course — check if the
-      // institution name matches any known NU branch keyword.
-      // Only count respondents who also have post_grad_plans === "Yes".
       const nuGradStudiesCount = withEduData.filter(r => {
         const plans = r.edu.post_grad_plans
           || r.edu.postGradPlans
@@ -497,7 +523,6 @@ const AdminDashboard = () => {
           || '';
         if (plans !== 'Yes' && plans !== true) return false;
 
-        // post_grad_course may hold the institution name or the school field
         const institution = r.edu.post_grad_course
           || r.edu.postGradCourse
           || r.edu.post_grad_school
@@ -511,9 +536,6 @@ const AdminDashboard = () => {
         ? Math.round((nuGradStudiesCount / withEduData.length) * 100) : 0;
 
       // KPI 9: In Positions in Professional Organizations (Leadership)
-      // Source: skills_competencies_data.skill_ratings["Leadership Skills"]
-      // Count alumni who have a Leadership Skills rating > 0 (i.e. they rated it).
-      // A rating of 4 or 5 indicates strong leadership involvement.
       const withSkillsData = parsed.filter(r => r.skills !== null);
       const leadershipCount = withSkillsData.filter(r => {
         const ratings = r.skills.skill_ratings || r.skills.skillRatings || {};
@@ -522,7 +544,6 @@ const AdminDashboard = () => {
           ratings['leadership_skills']  ??
           ratings['Leadership']         ??
           null;
-        // Count as "in leadership position" if rating is 4 or 5 (top-tier)
         return leadershipRating !== null && Number(leadershipRating) >= 4;
       }).length;
 
@@ -594,6 +615,10 @@ const AdminDashboard = () => {
               return kpi;
           }
         }),
+
+        // SHS KPI computation is not yet implemented — pass through the
+        // initial structure so the view can render the tab without crashing.
+        seniorrhigh: institutionalKpis.seniorrhigh,
       });
     };
 
@@ -772,6 +797,7 @@ const AdminDashboard = () => {
       careerAlignmentData={careerAlignmentData}
       loadingCharts={loadingCharts}
       kpiInsights={kpiInsights}
+      alumniType={alumniType}
     />
   );
 };

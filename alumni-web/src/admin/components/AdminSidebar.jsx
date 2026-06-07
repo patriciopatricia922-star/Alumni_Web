@@ -1,23 +1,25 @@
 /**
  * AdminSidebar.jsx
- *
- * Changes from original:
- *  - Fetches `module_permissions` alongside existing user fields (one extra
- *    column in the same query — no new request).
- *  - Filters `menuItems` through `filterMenuByPermissions()` before passing
- *    them to the view. The view is untouched.
- *  - Dashboard is always visible (no module gate needed).
- *  - All original logic (displayName, initials, role display, logout,
- *    responsive width, mobile state) is preserved character-for-character.
+ * Purpose: Renders the sidebar navigation for the admin dashboard, including
+ *          user info, menu items, alumni type switcher, and logout functionality.
+ *          Handles responsive behavior and permission-based menu filtering.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { useAlumniType } from '../contexts/AlumniTypeContext';
 import AdminSidebarView from './AdminSidebarview';
-import { MODULES, canAccessModule } from '../../utils/modulePermissions'; // ← NEW
+import { MODULES, canAccessModule } from '../../utils/modulePermissions';
 
-// ─── Responsive width hook (unchanged) ───────────────────────────────────────
+// ─── Module-level user cache ──────────────────────────────────────────────────
+// Survives component remounts within the same JS session (i.e. same tab).
+// Reset to null on logout (see handleLogout).
+// Using a plain object instead of React state so it is never the cause of
+// an extra render cycle.
+let _cachedUser = null;
+
+// ─── Responsive width hook ────────────────────────────────────────────────────
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1440
@@ -30,44 +32,42 @@ const useWindowWidth = () => {
   return width;
 };
 
-// ─── Module key mapping ───────────────────────────────────────────────────────
-// Each menu item that should be gated carries a `module` key.
-// Items WITHOUT a `module` key (e.g. Dashboard) are always rendered.
+// ─── Menu item definitions ────────────────────────────────────────────────────
 const ALL_ADMIN_MENU_ITEMS = [
   {
     path:  '/admin/admin-dashboard',
-    icon:  'TbLayoutDashboardFilled',
+    icon:  'dashboard_icn',
     label: 'Dashboard',
     // no `module` → always visible
   },
   {
     path:   '/admin/alumni-management',
-    icon:   'BsFillPeopleFill',
+    icon:   'alumni_icn',
     label:  'Alumni Management',
     module: MODULES.ALUMNI,
   },
   {
     path:   '/admin/survey-management',
-    icon:   'RiSurveyFill',
+    icon:   'survey_icn',
     label:  'Survey Management',
     module: MODULES.SURVEY,
   },
   {
-    path:      '/admin/response-and-analytics',
-    icon:      'SiGoogleanalytics',
-    label:     'Response & Analytics',
-    module:    MODULES.REPORTS,
+    path:   '/admin/response-and-analytics',
+    icon:   'analytics_icn',
+    label:  'Response & Analytics',
+    module: MODULES.REPORTS,
   },
   {
     path:      '/admin/predictive-analytics',
-    icon:      'RiOrganizationChart',
+    icon:      'predict_icn',
     label:     'Predictive Analytics',
     marginTop: '16px',
     module:    MODULES.REPORTS,
   },
   {
     path:      '/admin/content-mgmt',
-    icon:      'FaBookBookmark',
+    icon:      'content_icn',
     label:     'Content Management',
     marginTop: '16px',
     module:    MODULES.ENGAGEMENT,
@@ -79,14 +79,18 @@ const ALL_ADMIN_MENU_ITEMS = [
  * Returns only the items the user is allowed to see.
  * Items without a `module` key pass through unconditionally.
  *
+ * When `user` is null (fetch not yet resolved AND no cache), returns only
+ * always-visible items. The caller is responsible for showing a loading
+ * skeleton during this window.
+ *
  * @param {object[]} items
  * @param {object|null} user  – must include `role` and `module_permissions`
  * @returns {object[]}
  */
 function filterMenuByPermissions(items, user) {
   return items.filter(item => {
-    if (!item.module) return true;               // always-visible item
-    return canAccessModule(user, item.module);   // permission check
+    if (!item.module) return true;
+    return canAccessModule(user, item.module);
   });
 }
 
@@ -94,40 +98,90 @@ function filterMenuByPermissions(items, user) {
 const AdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser]           = useState(null);
-  const width                     = useWindowWidth();
-  const isMobile                  = width < 768;
-  const isTablet                  = width >= 768 && width < 1024;
+
+  // Pre-seed from cache so the very first render already has the right items
+  // if this component remounts after the initial fetch.
+  const [user, setUser]               = useState(_cachedUser);
+  const [isLoadingUser, setIsLoading] = useState(_cachedUser === null);
+
+  const width    = useWindowWidth();
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu on navigation (unchanged)
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  // Alumni type switcher state — sourced from shared context so other pages
+  // (e.g. Alumni Management, Analytics) can react to the selection.
+  const { alumniType, setAlumniType } = useAlumniType();
 
-  // Fetch user — now also selects module_permissions (one extra column)
+  // Track whether the component is still mounted to avoid setState after
+  // unmount — a common source of "missing content" when navigating quickly.
+  const mountedRef = useRef(true);
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-
-      const { data } = await supabase
-        .from('users')
-        // ↓ Added `module_permissions` — everything else unchanged
-        .select('first_name, last_name, email, role, module_permissions')
-        .eq('id', authUser.id)
-        .single();
-
-      if (data) setUser(data);
-    };
-    fetchUser();
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
 
-  // Logout (unchanged)
+  // Close mobile menu on navigation
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  // ── User fetch with cache short-circuit ────────────────────────────────────
+  useEffect(() => {
+    // If we already have a cached user from a previous mount in this session,
+    // skip the network round-trip entirely — use the cache synchronously.
+    // The permission set cannot change server-side while the user is actively
+    // navigating, so the cached value is always safe to use here.
+    if (_cachedUser !== null) {
+      // State was already seeded in useState initialiser; just clear loading.
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchUser = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser || cancelled) return;
+
+        const { data, error } = await supabase
+          .from('users')
+          .select('first_name, last_name, email, role, module_permissions')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error || !data || cancelled) return;
+
+        // Populate the module-level cache before setting state so that any
+        // sibling remount that fires between now and the next tick also gets
+        // the cached value immediately.
+        _cachedUser = data;
+
+        if (mountedRef.current) {
+          setUser(data);
+          setIsLoading(false);
+        }
+      } catch {
+        // Non-fatal: sidebar degrades gracefully to always-visible items.
+        if (mountedRef.current) setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+
+    // Cleanup: mark the in-flight request as stale if the component unmounts
+    // before it resolves (e.g. user navigates away mid-fetch).
+    return () => { cancelled = true; };
+  }, []); // intentionally empty — fetch once per mount, cache handles the rest
+
+  // ── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
+    // Clear the module-level cache so the next login fetches fresh data.
+    _cachedUser = null;
     await supabase.auth.signOut();
     navigate('/');
   };
 
-  // Display helpers (unchanged)
+  // ── Display helpers ───────────────────────────────────────────────────────
   const getDisplayName = () => {
     if (user?.first_name && user?.last_name) return `${user.first_name} ${user.last_name}`;
     if (user?.first_name) return user.first_name;
@@ -153,10 +207,10 @@ const AdminSidebar = () => {
   const initials    = getInitials();
   const role        = getRoleDisplay();
 
-  // ── Permission-filtered menu ─────────────────────────────────────────────
-  // `user` is null on first render → filterMenuByPermissions returns only
-  // always-visible items (Dashboard) until the fetch resolves. This avoids
-  // a flash of all items before permissions load.
+  // ── Permission-filtered menu ──────────────────────────────────────────────
+  // While loading (cold start, no cache): only always-visible items are shown
+  // and the view renders a skeleton in their place.
+  // Once user resolves: full filtered list, stable across navigations.
   const menuItems = filterMenuByPermissions(ALL_ADMIN_MENU_ITEMS, user);
 
   return (
@@ -170,8 +224,11 @@ const AdminSidebar = () => {
       role={role}
       displayName={displayName}
       initials={initials}
-      menuItems={menuItems}       // ← filtered list; view is unchanged
+      menuItems={menuItems}
+      isLoadingUser={isLoadingUser}
       handleLogout={handleLogout}
+      alumniType={alumniType}
+      setAlumniType={setAlumniType}
     />
   );
 };

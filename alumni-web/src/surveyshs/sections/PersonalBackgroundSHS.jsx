@@ -30,11 +30,11 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
-import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
-import useUserProfile from '../hooks/Useuserprofile';
-import PersonalBackgroundViewSHS from './views/PersonalBackgroundViewSHS';
+import { supabase } from '../../lib/supabase';
+import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
+import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
+import useUserProfile from '../../hooks/Useuserprofile';
+import PersonalBackgroundViewSHS from '../views/PersonalBackgroundViewSHS';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
