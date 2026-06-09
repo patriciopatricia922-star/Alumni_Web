@@ -304,6 +304,10 @@ const EmploymentInformation = () => {
     setTimeout(() => setSaveToast(false), 2500);
   };
 
+  // ─── SKIP LOGIC ──────────────────────────────────────────────────────────────
+  // Unemployed respondents bypass Job Search Form (Work Experience) and
+  // Skills & Competencies, going directly to Feedback & Alumni Engagement.
+  // All other statuses follow the standard sequence.
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -312,15 +316,28 @@ const EmploymentInformation = () => {
       return;
     }
     setErrors(new Set());
-    saveSectionProgress('employment_information', form)
-      .then(() => navigate('/survey/job-experience'));
+
+    const isUnemployed = DEFAULT_UNEMPLOYED_STATUSES.includes(form.employment_status);
+
+    saveSectionProgress('employment_information', form).then(() => {
+      if (isUnemployed) {
+        // Skip: Job Search Form (Work Experience) + Skills & Competencies
+        navigate('/survey/feedback-and-engagement', {
+          state: { fromUnemployedPath: true },
+        });
+      } else {
+        // Standard flow
+        navigate('/survey/job-experience');
+      }
+    });
   };
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
   const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
 
-  const formPct           = computeFormPct(form);
-  const employedStatuses  = DEFAULT_EMPLOYED_STATUSES;
+  const formPct            = computeFormPct(form);
+  const employedStatuses   = DEFAULT_EMPLOYED_STATUSES;
   const unemployedStatuses = DEFAULT_UNEMPLOYED_STATUSES;
 
   if (loadingLabels) {
