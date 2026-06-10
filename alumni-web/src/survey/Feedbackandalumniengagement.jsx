@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';  // ← removed useLocation
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
@@ -9,6 +9,13 @@ import FeedbackAndAlumniEngagementView from '../Views/FeedbackAndAlumniEngagemen
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 7;
 const SECTION_KEY     = 'feedback_and_engagement';
+
+// Must match EmploymentInformation's DEFAULT_UNEMPLOYED_STATUSES exactly.
+// These respondents skip sections 5 & 6, so their "previous" is Employment Information.
+const DEFAULT_UNEMPLOYED_STATUSES = [
+  'Unemployed, but looking for work',
+  'Unemployed, but not looking for work',
+];
 
 const DEFAULT_SATISFACTION_OPTIONS = [
   'Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied',
@@ -80,6 +87,13 @@ const FeedbackAndAlumniEngagement = () => {
     other_participate:     '',
   });
 
+  // Derive previous route from saved employment status — no sessionStorage needed.
+  // Unemployed respondents skipped sections 5 & 6, so go back to Employment Information.
+  // All others (employed, or status not yet loaded) go back to Skills & Competencies.
+  const prevRoute = DEFAULT_UNEMPLOYED_STATUSES.includes(form.employment_status)
+    ? '/survey/employment-information'
+    : '/survey/skills-and-competencies';
+
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -143,20 +157,28 @@ const FeedbackAndAlumniEngagement = () => {
   }, []);
 
   // ── Load saved section data ───────────────────────────────────────────────
+  // Also loads employment_status from the employment_information section so
+  // prevRoute can be derived correctly without relying on navigation state.
   useEffect(() => {
     const load = async () => {
-      const saved = await loadSectionData(SECTION_KEY);
-      if (saved) {
-        setForm(f => ({
-          ...f,
+      const [saved, savedEmployment] = await Promise.all([
+        loadSectionData(SECTION_KEY),
+        loadSectionData('employment_information'),
+      ]);
+      setForm(f => ({
+        ...f,
+        // Feedback fields
+        ...(saved && {
           satisfaction:          saved.satisfaction          ?? f.satisfaction,
           recommend:             saved.recommend             ?? f.recommend,
           suggestions:           saved.suggestions           ?? f.suggestions,
           informed_about_events: saved.informed_about_events ?? f.informed_about_events,
           participate_in:        saved.participate_in        ?? f.participate_in,
           other_participate:     saved.other_participate     ?? f.other_participate,
-        }));
-      }
+        }),
+        // Employment status — used only to compute prevRoute, not rendered
+        employment_status: savedEmployment?.employment_status ?? f.employment_status ?? '',
+      }));
     };
     load();
   }, []);
@@ -288,8 +310,6 @@ const FeedbackAndAlumniEngagement = () => {
     setErrors(new Set());
 
     try {
-      // saveSectionProgress upserts and awaits before returning,
-      // so the DB write is committed before navigate() fires.
       await saveSectionProgress(SECTION_KEY, buildPayload());
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -301,10 +321,6 @@ const FeedbackAndAlumniEngagement = () => {
         status:      'Success',
       });
 
-      // Read the intent flag from sessionStorage.
-      // Set by RewardStore.handleCompleteSurvey on entry.
-      // Survives section-to-section navigation unlike a URL param.
-      // Cleared immediately so re-submissions don't re-trigger.
       const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
       sessionStorage.removeItem('survey_claim_reward');
 
@@ -350,6 +366,7 @@ const FeedbackAndAlumniEngagement = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleSubmit={handleSubmit}
+      prevRoute={prevRoute}
       bellRef={bellRef}
       notifs={notifs}
       unreadCount={unreadCount}

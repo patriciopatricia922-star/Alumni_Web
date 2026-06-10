@@ -79,6 +79,10 @@ const FeedbackAndAlumniEngagementView = ({
   satisfactionOptions, participateOptions, yesNoOptions,
   getLabel, getPlaceholder,
   handleSave, handleSubmit,
+  // ─── prevRoute: computed by the controller based on which path led here.
+  //   - Unemployed path  → '/survey/employment-information'
+  //   - Standard path    → '/survey/skills-and-competencies'
+  prevRoute,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
@@ -87,6 +91,9 @@ const FeedbackAndAlumniEngagementView = ({
   // Safe wrappers — if the controller doesn't pass these as functions, fall back gracefully
   const label       = (key) => typeof getLabel       === 'function' ? getLabel(key)       : (DEFAULT_LABELS[key]       || key);
   const placeholder = (key) => typeof getPlaceholder === 'function' ? getPlaceholder(key) : (DEFAULT_PLACEHOLDERS[key] || '');
+
+  // Resolve the "back" destination — default to skills-and-competencies if prevRoute is not passed
+  const backRoute = prevRoute || '/survey/skills-and-competencies';
 
   return (
     <>
@@ -97,7 +104,8 @@ const FeedbackAndAlumniEngagementView = ({
 
           <div className="fa-header">
             <div className="fa-topbar">
-              <button className="fa-back-btn" onClick={() => navigate('/survey/skills-and-competencies')}>
+              {/* Back button uses the resolved route — respects skip logic */}
+              <button className="fa-back-btn" onClick={() => navigate(backRoute)}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                   <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -306,7 +314,8 @@ const FeedbackAndAlumniEngagementView = ({
               </div>
 
               <div className="fa-footer">
-                <button className="fa-btn-prev" onClick={() => navigate('/survey/skills-and-competencies')}>Previous</button>
+                {/* Previous button — destination driven by prevRoute prop */}
+                <button className="fa-btn-prev" onClick={() => navigate(backRoute)}>Previous</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {saveToast && (
                     <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#15803d' }}>
