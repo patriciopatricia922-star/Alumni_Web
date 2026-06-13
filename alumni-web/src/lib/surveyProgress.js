@@ -30,7 +30,13 @@ const DB_BOOLEAN_COL = {
   job_experience:             'job_experience',
   skills_and_competencies:    'skills_competencies',
   feedback_and_engagement:    'feedback_university',
+
   shs_personal_background:    'shs_personal_background',
+  shs_educational_background: 'shs_educational_background',
+  shs_employment_information: 'shs_employment_information',
+  shs_job_experience:         'shs_job_experience',
+  shs_skills_and_competencies:'shs_skills_and_competencies',
+  shs_feedback_and_engagement:'shs_feedback_and_engagement',
 };
 
 const DB_DATA_COL = {
@@ -41,6 +47,11 @@ const DB_DATA_COL = {
   job_experience:             'job_experience_data',
   skills_and_competencies:    'skills_competencies_data',
   shs_personal_background:    'shs_personal_background_data',
+  shs_educational_background: 'shs_educational_background_data',
+  shs_employment_information: 'shs_employment_information_data',
+  shs_job_experience:         'shs_job_experience_data',
+  shs_skills_and_competencies:'shs_skills_and_competencies_data',
+  shs_feedback_and_engagement:'shs_feedback_and_engagement_data',
 };
 
 export const loadSurveySections = async () => {
@@ -147,6 +158,12 @@ const LEGACY_ROUTE_MAP = {
   '/survey/feedback-and-alumni-engagement': '/survey/feedback-and-engagement',
   '/feedback':                              '/survey/feedback-and-engagement',
   '/engage':                                '/survey/feedback-and-engagement',
+
+  // SHS legacy aliases — corrects any stored/bookmarked wrong-name routes
+  '/surveyshs/feedback-and-alumni-engagement':             '/surveyshs/shs-feedback-and-engagement',
+  '/surveyshs/shs-feedback-and-alumni-engagement':         '/surveyshs/shs-feedback-and-engagement',
+  '/surveyshs/sections/shs-feedback-and-engagement':       '/surveyshs/shs-feedback-and-engagement',
+  '/surveyshs/sections/shs-feedback-and-alumni-engagement':'/surveyshs/shs-feedback-and-engagement',
 };
 
 const normalizeLegacyRoute = async (route) => {
@@ -187,7 +204,11 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
     current_section:      sectionIndex + 1,
     web_current_route:    isLast ? COMPLETE_SENTINEL : nextSection.web_route,
     mobile_current_route: isLast ? COMPLETE_SENTINEL : nextSection.mobile_route,
-    percentage:           sections[sectionIndex].percentage,
+    // FIX: always store 100 when this is the final section, regardless of what
+    // the index-based percentage arithmetic produces. This prevents branching
+    // users (Stopped / Studying paths that skip middle sections) from being
+    // stuck below 100% when the config section count doesn't match the slug map.
+    percentage:           isLast ? 100 : sections[sectionIndex].percentage,
     completed:            isLast,
     last_updated:         new Date().toISOString(),
     [boolCol]:            true,
@@ -259,6 +280,21 @@ export const getResumeRoute = async () => {
   const progress = await loadSurveyProgress();
   if (!progress) return fallback;
 
+  // Self-healing repair: completed flag is true but percentage was stored
+  // below 100 due to the config-section-count mismatch bug. Fix silently
+  // on the next dashboard load so existing stuck rows self-correct without
+  // requiring a manual DB migration or admin intervention.
+  if (progress.completed && progress.percentage < 100) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('survey_progress')
+        .update({ percentage: 100, last_updated: new Date().toISOString() })
+        .eq('user_id', user.id);
+    }
+    return '/update-tracer';
+  }
+
   if (progress.completed || progress.web_current_route === COMPLETE_SENTINEL) {
     return '/update-tracer';
   }
@@ -287,6 +323,18 @@ export const getMobileResumeRoute = async () => {
 
   const progress = await loadSurveyProgress();
   if (!progress) return fallback;
+
+  // Self-healing repair (mirrors getResumeRoute) for mobile path.
+  if (progress.completed && progress.percentage < 100) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('survey_progress')
+        .update({ percentage: 100, last_updated: new Date().toISOString() })
+        .eq('user_id', user.id);
+    }
+    return '/survey-complete';
+  }
 
   if (progress.completed || progress.mobile_current_route === COMPLETE_SENTINEL) {
     return '/survey-complete';

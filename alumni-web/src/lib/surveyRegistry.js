@@ -25,14 +25,23 @@ const COLLEGE_SLUG_MAP = [
   'feedback-and-engagement',
 ];
 
-// SHS slug map — placeholder slugs so routes render during design.
-// Replace / extend once the real SHS survey config is authored.
+// SHS slug map — must have exactly as many entries as the SHS survey_config
+// row has sections, in the same order, so that slugMap[index] never falls
+// through to the title-derived fallback (which causes wrong route names and
+// inflated percentage denominators).
+//
+// The SHS survey has 6 sections total. Sections 3-5 (employment, job-experience,
+// skills) are only visited by users on the "Working" branch; all other users
+// jump from section 2 directly to section 6 (feedback). The slug map must still
+// list all 6 entries so the index arithmetic in loadSurveySections() stays
+// aligned with the config sections array.
 const SHS_SLUG_MAP = [
-  'shs-personal-background',
-  'shs-educational-background',
-  'shs-employment-information',
-  'shs-skills-and-competencies',
-  'shs-feedback-and-engagement',
+  'shs-personal-background',       // section 1  — all users
+  'shs-educational-background',    // section 2  — all users
+  'shs-employment-information',    // section 3  — Working branch only
+  'shs-job-experience',            // section 4  — Working branch only
+  'shs-skills-and-competencies',   // section 5  — Working branch only
+  'shs-feedback-and-engagement',   // section 6  — all users (final)
 ];
 
 /**

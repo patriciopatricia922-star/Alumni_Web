@@ -22,6 +22,10 @@
  *     → stopped_reason (+other textarea)
  *   'Working'
  *     → (no follow-up)
+ *
+ * CHANGE LOG:
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count. Frontend progress bar now aligns with DB percentage values.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -34,51 +38,47 @@ import EducationalBackgroundViewSHS from '../views/EducationalBackgroundViewSHS'
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
 const CURRENT_SECTION = 2;
 const SECTION_KEY     = 'shs_educational_background';
 const PREV_ROUTE                = '/surveyshs/shs-personal-background';
-const NEXT_ROUTE_DEFAULT        = '/surveyshs/shs-section-3';                // Currently Studying / Graduated
-const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';   // Working → Employment
-const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';  // Stopped  → skip Employment
- 
+const NEXT_ROUTE_DEFAULT        = '/surveyshs/shs-feedback-and-engagement';   // Currently Studying / Graduated
+const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';    // Working → Employment
+const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';   // Stopped  → skip Employment
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolve the correct next route based on the current status selection.
-// Centralised here so navigation logic is never duplicated per-component.
 // ─────────────────────────────────────────────────────────────────────────────
 const resolveNextRoute = (status) => {
   if (status === 'Working') return NEXT_ROUTE_WORKING;
   if (status === 'Stopped') return NEXT_ROUTE_STOPPED;
   return NEXT_ROUTE_DEFAULT; // 'Currently Studying' | 'Graduated'
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Required fields per branch path
-// Validation is computed dynamically from the current form state.
 // ─────────────────────────────────────────────────────────────────────────────
 const getRequiredFields = (form) => {
   const required = new Set(['status']);
- 
+
   const isStudyingOrGraduated =
     form.status === 'Currently Studying' || form.status === 'Graduated';
- 
+
   if (isStudyingOrGraduated) {
     required.add('pursued_nu_branch');
- 
+
     if (form.pursued_nu_branch === 'Yes') {
-      // NU branch path
       required.add('nu_branch');
       required.add('reason_nu');
       required.add('education_level');
       if (form.education_level === 'Other') required.add('education_level_other');
       required.add('course_program');
       required.add('year_level');
- 
+
     } else if (form.pursued_nu_branch === 'No') {
       required.add('pursued_other_school');
- 
+
       if (form.pursued_other_school === 'Yes') {
-        // Other school path
         required.add('reason_not_nu');
         required.add('school_name');
         required.add('education_level');
@@ -86,20 +86,17 @@ const getRequiredFields = (form) => {
         required.add('course_program');
         required.add('year_level');
       }
-      // Both NO → no additional required fields (dead end is valid)
     }
   }
- 
+
   if (form.status === 'Stopped') {
     required.add('stopped_reason');
     if (form.stopped_reason === 'Others') required.add('stopped_reason_other');
   }
- 
-  // 'Working' → only 'status' is required (already in the set)
- 
+
   return required;
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Form completion percentage
 // ─────────────────────────────────────────────────────────────────────────────
@@ -116,14 +113,14 @@ const computeFormPct = (form) => {
     parseFloat(cap.toFixed(2))
   );
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers (identical to all other sections)
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
- 
+
 const groupByDate = (list) => {
   const now       = new Date();
   const today     = new Date(now); today.setHours(0, 0, 0, 0);
@@ -139,7 +136,7 @@ const groupByDate = (list) => {
   });
   return groups;
 };
- 
+
 const formatTime = (iso) => {
   if (!iso) return '';
   const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -149,19 +146,14 @@ const formatTime = (iso) => {
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Empty form shape
 // ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  // Root question
   status: '',
- 
-  // Studying / Graduated branch
-  pursued_nu_branch:    '',   // Yes | No
-  pursued_other_school: '',   // Yes | No (only when pursued_nu_branch === 'No')
- 
-  // Shared further-studies detail fields (used by both YES paths)
+  pursued_nu_branch:    '',
+  pursued_other_school: '',
   nu_branch:             '',
   reason_nu:             '',
   reason_not_nu:         '',
@@ -170,38 +162,30 @@ const EMPTY_FORM = {
   education_level_other: '',
   course_program:        '',
   year_level:            '',
- 
-  // Stopped branch
   stopped_reason:       '',
   stopped_reason_other: '',
 };
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Controller
 // ─────────────────────────────────────────────────────────────────────────────
 const EducationalBackgroundSHS = () => {
   const navigate = useNavigate();
- 
-  // ── Config ────────────────────────────────────────────────────────────────
+
   const [loadingConfig, setLoadingConfig] = useState(true);
- 
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
- 
-  // ── Form state ────────────────────────────────────────────────────────────
+
   const [form,     setForm]     = useState(EMPTY_FORM);
   const [errors,   setErrors]   = useState(new Set());
   const [saveToast,setSaveToast]= useState(false);
   const cardRef = useRef(null);
- 
-  // ── Notifications ─────────────────────────────────────────────────────────
+
   const bellRef                        = useRef(null);
   const [notifs,      setNotifs]       = useState([]);
   const [unreadCount, setUnreadCount]  = useState(0);
   const [showDropdown,setShowDropdown] = useState(false);
   const [notifTab,    setNotifTab]     = useState('all');
- 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
+
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -213,14 +197,14 @@ const EducationalBackgroundSHS = () => {
       }
     };
     init();
- 
+
     const channel = subscribeToSurveyConfigChanges(async () => {
       await loadSurveyConfig(true);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
- 
-  // ── STEP 1: Load saved data ────────────────────────────────────────────────
+
+  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -237,8 +221,7 @@ const EducationalBackgroundSHS = () => {
     };
     load();
   }, []);
- 
-  // ── Notifications ─────────────────────────────────────────────────────────
+
   useEffect(() => {
     supabase
       .from('announcements')
@@ -257,7 +240,7 @@ const EducationalBackgroundSHS = () => {
         setUnreadCount(mapped.filter((n) => !n.read).length);
       });
   }, []);
- 
+
   useEffect(() => {
     const h = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -266,21 +249,20 @@ const EducationalBackgroundSHS = () => {
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
- 
+
   const markAllRead = useCallback(() => {
     saveReadIds(notifs.map((n) => n.id));
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   }, [notifs]);
- 
+
   const markOneRead = useCallback((id) => {
     const ids = getReadIds();
     if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
- 
-  // ── Generic field setter ───────────────────────────────────────────────────
+
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -290,17 +272,12 @@ const EducationalBackgroundSHS = () => {
       return next;
     });
   }, []);
- 
-  // ── Status setter — resets the entire branch tree below it ────────────────
+
   const setStatus = useCallback((val) => {
-    setForm({
-      ...EMPTY_FORM,
-      status: val,
-    });
+    setForm({ ...EMPTY_FORM, status: val });
     setErrors(new Set());
   }, []);
- 
-  // ── pursued_nu_branch setter — resets level-2 and detail fields ───────────
+
   const setPursuedNuBranch = useCallback((val) => {
     setForm((f) => ({
       ...f,
@@ -324,8 +301,7 @@ const EducationalBackgroundSHS = () => {
       return next;
     });
   }, []);
- 
-  // ── pursued_other_school setter — resets detail fields only ───────────────
+
   const setPursuedOtherSchool = useCallback((val) => {
     setForm((f) => ({
       ...f,
@@ -345,8 +321,7 @@ const EducationalBackgroundSHS = () => {
       return next;
     });
   }, []);
- 
-  // ── Validation ─────────────────────────────────────────────────────────────
+
   const validate = () => {
     const required = getRequiredFields(form);
     const errs     = new Set();
@@ -355,8 +330,7 @@ const EducationalBackgroundSHS = () => {
     });
     return errs;
   };
- 
-  // ── Save draft ─────────────────────────────────────────────────────────────
+
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -366,10 +340,7 @@ const EducationalBackgroundSHS = () => {
       console.error('[EducationalBackgroundSHS] Error saving:', err);
     }
   };
- 
-  // ── Next (validate → save → navigate) ─────────────────────────────────────
-  // Navigation destination is resolved from the user's status selection so
-  // the branching logic stays in one place and is never duplicated.
+
   const handleNext = () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -385,10 +356,9 @@ const EducationalBackgroundSHS = () => {
         console.error('[EducationalBackgroundSHS] Error saving before navigation:', err)
       );
   };
- 
+
   const formPct = computeFormPct(form);
- 
-  // ── Loading gate ───────────────────────────────────────────────────────────
+
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -399,10 +369,9 @@ const EducationalBackgroundSHS = () => {
       </div>
     );
   }
- 
+
   return (
     <EducationalBackgroundViewSHS
-      /* form */
       form={form}
       set={set}
       setStatus={setStatus}
@@ -411,14 +380,11 @@ const EducationalBackgroundSHS = () => {
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -430,10 +396,9 @@ const EducationalBackgroundSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
     />
   );
 };
- 
+
 export default EducationalBackgroundSHS;

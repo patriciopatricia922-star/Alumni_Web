@@ -11,7 +11,7 @@
  *
  * SHS-specific differences from the College controller:
  *   • SECTION_KEY        → 'shs_personal_background'
- *   • NEXT_ROUTE         → '/surveyshs/section-2'   (placeholder for next SHS section)
+ *   • NEXT_ROUTE         → '/surveyshs/shs-educational-background'
  *   • REQUIRED_FIELDS    → SHS field set (no civil_status, no separate address parts;
  *                          adds track_strand + year_graduated)
  *   • DEFAULT_LABELS     → SHS-appropriate labels
@@ -26,6 +26,9 @@
  *     "SHS-STEM", "stem", "SHS HUMSS") to the canonical radio option value
  *     expected by PersonalBackgroundViewSHS. Applied in Tier A autofill only.
  *     No College logic is touched.
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count (personal, educational, employment, job-experience, skills,
+ *     feedback). Frontend progress bar now aligns with DB percentage values.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -39,7 +42,7 @@ import PersonalBackgroundViewSHS from '../views/PersonalBackgroundViewSHS';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;   
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
 const CURRENT_SECTION = 1;
 const SECTION_KEY     = 'shs_personal_background';
 const NEXT_ROUTE      = '/surveyshs/shs-educational-background';
@@ -91,46 +94,25 @@ const INDEX_TO_FIELD = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHS Track/Strand canonical values
-//
-// These must exactly match the radio button option values rendered by
-// PersonalBackgroundViewSHS (and the canonical strings in departmentClassifier).
-// Normalization is applied only in the SHS autofill path — College is untouched.
 // ─────────────────────────────────────────────────────────────────────────────
 const SHS_TRACK_CANONICAL = ['SHS-STEM', 'SHS-ABM', 'SHS-HUMSS'];
 
 /**
  * Normalize a raw program string to the canonical SHS track/strand value
  * expected by the radio button group in PersonalBackgroundViewSHS.
- *
- * Handles:
- *   "SHS-STEM"  → "SHS-STEM"   (already canonical — pass through)
- *   "shs-stem"  → "SHS-STEM"   (lowercase)
- *   "SHS STEM"  → "SHS-STEM"   (space separator)
- *   "STEM"      → "SHS-STEM"   (missing prefix)
- *   "ABM"       → "SHS-ABM"
- *   "HUMSS"     → "SHS-HUMSS"
- *   anything else → raw value unchanged (surveyConfig may define custom strands)
- *
- * @param {string | null | undefined} raw
- * @returns {string}
  */
 const normalizeTrackStrand = (raw) => {
   if (!raw) return '';
   const upper = String(raw).trim().toUpperCase().replace(/\s+/g, '-');
 
-  // 1. Direct canonical match (covers already-correct values)
   const direct = SHS_TRACK_CANONICAL.find((c) => c === upper);
   if (direct) return direct;
 
-  // 2. Loose suffix match: "STEM" → "SHS-STEM", "ABM" → "SHS-ABM", etc.
   const suffix = SHS_TRACK_CANONICAL.find((c) => c.endsWith(`-${upper}`));
   if (suffix) return suffix;
 
-  // 3. Already SHS-prefixed but with non-standard casing — return normalised
   if (upper.startsWith('SHS-')) return upper;
 
-  // 4. Unknown / custom strand — pass through unchanged so surveyConfig
-  //    dynamic options can still match it
   return String(raw).trim();
 };
 
@@ -149,8 +131,6 @@ const computeFormPct = (form) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile hook key → SHS survey snake_case key mapping
-// Only maps fields that exist in both the users/profile table and this section.
-// SHS-specific fields (track_strand, year_graduated) have no profile equivalent.
 // ─────────────────────────────────────────────────────────────────────────────
 const PROFILE_TO_SURVEY = {
   firstName:     'first_name',
@@ -160,14 +140,13 @@ const PROFILE_TO_SURVEY = {
   contactNumber: 'contact_number',
   gender:        'gender',
   birthday:      'birthday',
-  // complete_address is a combined field — derive from profile parts if available
-  street:        '_street_part',   // handled separately below in autofill
+  street:        '_street_part',
   city:          '_city_part',
   province:      '_province_part',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers (identical to College implementation)
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -205,25 +184,18 @@ const formatTime = (iso) => {
 const PersonalBackgroundSHS = () => {
   const navigate = useNavigate();
 
-  // ── Shared profile hook — autofill source ─────────────────────────────────
   const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  // ── Autofill / load control flags ─────────────────────────────────────────
   const [hasLoadedSavedData,    setHasLoadedSavedData]    = useState(false);
   const [hasAttemptedAutofill,  setHasAttemptedAutofill]  = useState(false);
 
-  // Ref that always holds the authoritative academic values (track_strand,
-  // year_graduated) so the savedData merge in Step 1 can re-assert them even
-  // if it runs after Step 2 — identical to College EducationalBackground.
   const profileAcademicRef = useRef({});
 
-  // ── Survey config (dynamic labels / options) ──────────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingConfig,        setLoadingConfig]        = useState(true);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     last_name:        '',
     first_name:       '',
@@ -241,25 +213,21 @@ const PersonalBackgroundSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef                    = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Force a fresh profile fetch on mount ──────────────────────────────────
   useEffect(() => {
     refreshProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
 
-    // Accept either the SHS-specific section id or a matching title
     const section = config.sections.find(
       (s) =>
         s.id === SECTION_KEY ||
@@ -301,7 +269,7 @@ const PersonalBackgroundSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
 
-  // ── STEP 1: Load saved survey data ────────────────────────────────────────
+  // STEP 1: Load saved survey data
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -310,9 +278,6 @@ const PersonalBackgroundSHS = () => {
           console.log('[PersonalBackgroundSHS] Loaded saved survey data:', savedData);
           setForm((f) => {
             const merged = { ...f, ...savedData };
-            // Re-assert authoritative academic values so a slow DB read can
-            // never silently overwrite track_strand / year_graduated that were
-            // set from the profile — mirrors College EducationalBackground Step 1.
             Object.entries(profileAcademicRef.current).forEach(([key, val]) => {
               merged[key] = val;
             });
@@ -328,27 +293,7 @@ const PersonalBackgroundSHS = () => {
     loadSavedData();
   }, []);
 
-  // ── STEP 2: Autofill from profile ────────────────────────────────────────
-  //
-  // Two-tier strategy — mirrors College EducationalBackground exactly:
-  //
-  //   Tier A — UNCONDITIONAL overwrite (track_strand, year_graduated):
-  //     These come from the authoritative users table (program, batch_year).
-  //     They are always applied regardless of saved form state, and stored in
-  //     profileAcademicRef so Step 1 can re-assert them after a DB load.
-  //     The guard `!formValue` is intentionally NOT used here — same as the
-  //     College lockedFields pattern.
-  //
-  //     track_strand is passed through normalizeTrackStrand() so that the raw
-  //     program value (e.g. "SHS-STEM") maps to the exact string expected by
-  //     the radio button group in PersonalBackgroundViewSHS.
-  //
-  //   Tier B — CONDITIONAL fill (all other fields):
-  //     Only fills if the form field is currently empty — preserves user edits
-  //     and previously saved answers.
-  //
-  // `profile` is added to the deps array (was missing before) so the effect
-  // fires correctly when the hook resolves after the component mounts.
+  // STEP 2: Autofill from profile
   useEffect(() => {
     if (!hasLoadedSavedData) return;
     if (profileLoading)      return;
@@ -359,18 +304,13 @@ const PersonalBackgroundSHS = () => {
 
     if (profile && Object.keys(profile).length > 0) {
 
-      // ── Tier A: academic fields — unconditional overwrite ─────────────────
-      // Mirrors extractProfileAcademicFields from College EducationalBackground.
+      // Tier A: academic fields — unconditional overwrite
       const program   = profile.academicProgram ?? profile.program   ?? null;
       const batchYear = profile.yearGraduated   ?? profile.batch_year ?? null;
 
       const academicValues = {};
 
       if (program && String(program).trim()) {
-        // ↓ CHANGE: normalizeTrackStrand maps "SHS-STEM" / "STEM" / "shs-stem"
-        //   to the canonical value the radio button group checks against.
-        //   College autofill is completely unaffected — this helper is only
-        //   called here, inside the SHS-only controller.
         academicValues.track_strand = normalizeTrackStrand(program);
       }
 
@@ -379,12 +319,11 @@ const PersonalBackgroundSHS = () => {
       }
 
       if (Object.keys(academicValues).length > 0) {
-        // Persist in ref so Step 1 re-assert can use them on race conditions
         profileAcademicRef.current = academicValues;
         console.log('[PersonalBackgroundSHS] Unconditionally applying academic values:', academicValues);
       }
 
-      // ── Tier B: remaining fields — conditional fill (no overwrite) ────────
+      // Tier B: remaining fields — conditional fill (no overwrite)
       setForm((currentForm) => {
         const updated   = { ...currentForm, ...academicValues };
         let   didChange = Object.keys(academicValues).length > 0;
@@ -413,7 +352,6 @@ const PersonalBackgroundSHS = () => {
           }
         });
 
-        // Derived: complete_address from profile address parts (only if empty)
         if (!currentForm.complete_address || String(currentForm.complete_address).trim() === '') {
           const parts = [profile.street, profile.city, profile.province]
             .filter(Boolean)
@@ -437,7 +375,7 @@ const PersonalBackgroundSHS = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileLoading, profile, hasLoadedSavedData, hasAttemptedAutofill]);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+  // Notifications
   useEffect(() => {
     const h = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -482,7 +420,6 @@ const PersonalBackgroundSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Field setters ──────────────────────────────────────────────────────────
   const setField = (key) => (e) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
     if (errors.has(key)) {
@@ -505,7 +442,6 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
-  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
     REQUIRED_FIELDS.forEach((field) => {
@@ -514,7 +450,6 @@ const PersonalBackgroundSHS = () => {
     return e;
   };
 
-  // ── Save draft ─────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -525,7 +460,6 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ─────────────────────────────────────
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -541,7 +475,6 @@ const PersonalBackgroundSHS = () => {
       });
   };
 
-  // ── Label / placeholder helpers ────────────────────────────────────────────
   const getLabel       = useCallback(
     (id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,
     [questionLabels]
@@ -553,7 +486,6 @@ const PersonalBackgroundSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ───────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -567,25 +499,20 @@ const PersonalBackgroundSHS = () => {
 
   return (
     <PersonalBackgroundViewSHS
-      /* form state */
       form={form}
       set={setField}
       setRadio={setRadio}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
-      /* dynamic config */
       getLabel={getLabel}
       getPlaceholder={getPlaceholder}
       questionOptions={questionOptions}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -597,7 +524,6 @@ const PersonalBackgroundSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
     />
   );

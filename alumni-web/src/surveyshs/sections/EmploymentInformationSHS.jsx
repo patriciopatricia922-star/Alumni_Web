@@ -22,6 +22,11 @@
  *
  *   'Other'
  *     → other_employment_status text field only
+ *
+ * CHANGE LOG:
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count. Frontend progress bar now aligns with DB percentage values.
+ *   • PREV_ROUTE corrected: removed spurious /sections/ path segment.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -34,11 +39,11 @@ import EmploymentInformationViewSHS from '../views/EmploymentInformationViewSHS'
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
 const CURRENT_SECTION = 3;
 const SECTION_KEY     = 'shs_employment_information';
 const PREV_ROUTE      = '/surveyshs/shs-educational-background';
-const NEXT_ROUTE      = '/surveyshs/shs-job-experience'; // update when Section 4 ships
+const NEXT_ROUTE      = '/surveyshs/shs-job-experience';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static option lists (SHS-specific)
@@ -90,7 +95,6 @@ export const SHS_MONTHLY_INCOME_OPTIONS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Required fields per branch path
-// Validation is computed dynamically from the current form state.
 // ─────────────────────────────────────────────────────────────────────────────
 const getRequiredFields = (form) => {
   const required = new Set(['employment_status']);
@@ -108,8 +112,6 @@ const getRequiredFields = (form) => {
     required.add('monthly_income');
     required.add('job_related_to_strand');
   }
-
-  // Unemployed statuses → only employment_status required (already in set)
 
   return required;
 };
@@ -132,7 +134,7 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers (identical to all SHS sections)
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -168,11 +170,8 @@ const formatTime = (iso) => {
 // Empty form shape
 // ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  // Root question
   employment_status:       '',
   other_employment_status: '',
-
-  // Employed branch fields
   job_position:            '',
   company_name:            '',
   type_of_industry:        '',
@@ -188,26 +187,20 @@ const EMPTY_FORM = {
 const EmploymentInformationSHS = () => {
   const navigate = useNavigate();
 
-  // ── Config ────────────────────────────────────────────────────────────────
   const [loadingConfig, setLoadingConfig] = useState(true);
-
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form,      setForm]      = useState(EMPTY_FORM);
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                        = useRef(null);
   const [notifs,       setNotifs]      = useState([]);
   const [unreadCount,  setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown]= useState(false);
   const [notifTab,     setNotifTab]    = useState('all');
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -226,7 +219,7 @@ const EmploymentInformationSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // ── STEP 1: Load saved data ───────────────────────────────────────────────
+  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -244,7 +237,6 @@ const EmploymentInformationSHS = () => {
     load();
   }, []);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -286,7 +278,6 @@ const EmploymentInformationSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Generic field setter ──────────────────────────────────────────────────
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -297,18 +288,11 @@ const EmploymentInformationSHS = () => {
     });
   }, []);
 
-  // ── Employment status setter — resets entire branch below it ─────────────
-  // Mirrors setStatus() pattern from EducationalBackgroundSHS: clears all
-  // downstream fields so stale values never leak into saved data or validation.
   const setEmploymentStatus = useCallback((val) => {
-    setForm({
-      ...EMPTY_FORM,
-      employment_status: val,
-    });
+    setForm({ ...EMPTY_FORM, employment_status: val });
     setErrors(new Set());
   }, []);
 
-  // ── type_of_industry setter — resets the "other" sub-field ───────────────
   const setTypeOfIndustry = useCallback((val) => {
     setForm((f) => ({
       ...f,
@@ -323,7 +307,6 @@ const EmploymentInformationSHS = () => {
     });
   }, []);
 
-  // ── Validation ────────────────────────────────────────────────────────────
   const validate = () => {
     const required = getRequiredFields(form);
     const errs     = new Set();
@@ -333,7 +316,6 @@ const EmploymentInformationSHS = () => {
     return errs;
   };
 
-  // ── Save draft ────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -344,7 +326,6 @@ const EmploymentInformationSHS = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ────────────────────────────────────
   const handleNext = () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -362,7 +343,6 @@ const EmploymentInformationSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ──────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -376,7 +356,6 @@ const EmploymentInformationSHS = () => {
 
   return (
     <EmploymentInformationViewSHS
-      /* form */
       form={form}
       set={set}
       setEmploymentStatus={setEmploymentStatus}
@@ -384,21 +363,17 @@ const EmploymentInformationSHS = () => {
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* static options */
       employmentStatuses={SHS_EMPLOYMENT_STATUSES}
       employedStatuses={SHS_EMPLOYED_STATUSES}
       unemployedStatuses={SHS_UNEMPLOYED_STATUSES}
       industryOptions={SHS_INDUSTRY_OPTIONS}
       locationOptions={SHS_LOCATION_OPTIONS}
       monthlyIncomeOptions={SHS_MONTHLY_INCOME_OPTIONS}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -410,7 +385,6 @@ const EmploymentInformationSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
       prevRoute={PREV_ROUTE}
     />

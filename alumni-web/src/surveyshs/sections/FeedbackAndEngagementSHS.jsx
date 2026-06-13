@@ -19,8 +19,8 @@
  *   5. Navigates to /rewards?survey_completed=1 or /surveyshs/shs-complete
  *
  * Reached from:
- *   • EducationalBackgroundSHS  (when status === 'Stopped')
- *   • EmploymentInformationSHS  (all other paths)
+ *   • EducationalBackgroundSHS  (when status === 'Stopped' or 'Currently Studying'/'Graduated')
+ *   • SkillsAndCompetenciesSHS  (when status === 'Working', after completing all Working-path sections)
  *
  * Form fields:
  *   — Feedback for the University —
@@ -32,6 +32,14 @@
  *   informed_about_events   Radio  (Yes / No)
  *   participate_in          Checkbox array
  *   other_participate       Text   (visible when 'Others' is checked)
+ *
+ * CHANGE LOG:
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count. CURRENT_SECTION corrected from 5 → 6 (Feedback is the 6th and
+ *     final section; Skills is section 5). This ensures computeFormPct() caps
+ *     at 100% and that saveSectionProgress stores percentage = 100 for the
+ *     last section via the isLast guard in surveyProgress.js.
+ *   • PREV_ROUTE corrected: removed spurious /sections/ path segment.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -45,10 +53,10 @@ import FeedbackAndEngagementViewSHS from '../views/FeedbackAndEngagementViewSHS'
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;
-const CURRENT_SECTION = 5; // Final section of the SHS survey
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
+const CURRENT_SECTION = 6;   // FIX: was 5 — Feedback is section 6, Skills is section 5
 const SECTION_KEY     = 'shs_feedback_and_engagement';
-const PREV_ROUTE      = '/surveyshs/sections/shs-employment-information';
+const PREV_ROUTE      = '/surveyshs/shs-employment-information'; // FIX: removed spurious /sections/
 
 // Submit destinations — mirrors college section sessionStorage pattern exactly
 const SUBMIT_ROUTE_DEFAULT = '/surveyshs/shs-complete';
@@ -78,20 +86,16 @@ const PARTICIPATE_OPTIONS = [
 // Empty form shape
 // ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
-  // Feedback for the University
   satisfaction:          '',
   recommend:             '',
   suggestions:           '',
-
-  // Alumni Engagement
   informed_about_events: '',
-  participate_in:        [], // array — checkboxes
+  participate_in:        [],
   other_participate:     '',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Form completion percentage
-// participate_in is an array so it needs its own length check.
 // ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const base = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
@@ -116,7 +120,7 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers (identical to all SHS sections)
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -154,27 +158,20 @@ const formatTime = (iso) => {
 const FeedbackAndEngagementSHS = () => {
   const navigate = useNavigate();
 
-  // ── Config ────────────────────────────────────────────────────────────────
   const [loadingConfig, setLoadingConfig] = useState(true);
-
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form,      setForm]      = useState(EMPTY_FORM);
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
-  // Wired and ready for dynamic labels when admin config ships for this section.
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -193,7 +190,7 @@ const FeedbackAndEngagementSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // ── STEP 1: Load saved data ───────────────────────────────────────────────
+  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -206,7 +203,6 @@ const FeedbackAndEngagementSHS = () => {
             recommend:             saved.recommend             ?? f.recommend,
             suggestions:           saved.suggestions           ?? f.suggestions,
             informed_about_events: saved.informed_about_events ?? f.informed_about_events,
-            // Ensure participate_in is always an array even if DB stored it differently
             participate_in:        Array.isArray(saved.participate_in)
                                      ? saved.participate_in
                                      : f.participate_in,
@@ -222,7 +218,6 @@ const FeedbackAndEngagementSHS = () => {
     load();
   }, []);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -264,7 +259,6 @@ const FeedbackAndEngagementSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Generic scalar field setter ───────────────────────────────────────────
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -275,9 +269,6 @@ const FeedbackAndEngagementSHS = () => {
     });
   }, []);
 
-  // ── Checkbox toggle for participate_in array ──────────────────────────────
-  // When "Others" is unchecked, also clear the other_participate text field
-  // so no stale value persists — mirrors cascade-reset pattern in other sections.
   const toggleParticipate = useCallback((value) => {
     setForm((f) => {
       const already = f.participate_in.includes(value);
@@ -288,7 +279,6 @@ const FeedbackAndEngagementSHS = () => {
       return {
         ...f,
         participate_in:    updated,
-        // Clear sub-field when "Others" is being unchecked
         other_participate: (value === 'Others' && already) ? '' : f.other_participate,
       };
     });
@@ -300,20 +290,18 @@ const FeedbackAndEngagementSHS = () => {
     });
   }, []);
 
-  // ── Validation ────────────────────────────────────────────────────────────
   const validate = () => {
     const errs = new Set();
-    if (!form.satisfaction)                                         errs.add('satisfaction');
-    if (!form.recommend)                                            errs.add('recommend');
-    if (!form.suggestions || !form.suggestions.trim())             errs.add('suggestions');
-    if (!form.informed_about_events)                                errs.add('informed_about_events');
-    if (form.participate_in.length === 0)                          errs.add('participate_in');
+    if (!form.satisfaction)                                          errs.add('satisfaction');
+    if (!form.recommend)                                             errs.add('recommend');
+    if (!form.suggestions || !form.suggestions.trim())              errs.add('suggestions');
+    if (!form.informed_about_events)                                 errs.add('informed_about_events');
+    if (form.participate_in.length === 0)                           errs.add('participate_in');
     if (form.participate_in.includes('Others') &&
         (!form.other_participate || !form.other_participate.trim())) errs.add('other_participate');
     return errs;
   };
 
-  // ── Build the payload for DB persistence ─────────────────────────────────
   const buildPayload = () => ({
     satisfaction:          form.satisfaction,
     recommend:             form.recommend,
@@ -323,7 +311,6 @@ const FeedbackAndEngagementSHS = () => {
     other_participate:     form.other_participate,
   });
 
-  // ── Save draft ────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, buildPayload());
@@ -334,9 +321,6 @@ const FeedbackAndEngagementSHS = () => {
     }
   };
 
-  // ── Submit (final) ────────────────────────────────────────────────────────
-  // Follows the exact same pattern as college FeedbackAndAlumniEngagement:
-  //   validate → save → logAction → check sessionStorage flag → navigate
   const handleSubmit = async () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -358,8 +342,6 @@ const FeedbackAndEngagementSHS = () => {
         status:      'Success',
       });
 
-      // Read the reward-claim intent flag set by RewardStore.handleCompleteSurvey.
-      // Cleared immediately so re-submissions don't re-trigger the reward flow.
       const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
       sessionStorage.removeItem('survey_claim_reward');
 
@@ -379,7 +361,6 @@ const FeedbackAndEngagementSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ──────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -393,25 +374,20 @@ const FeedbackAndEngagementSHS = () => {
 
   return (
     <FeedbackAndEngagementViewSHS
-      /* form */
       form={form}
       set={set}
       toggleParticipate={toggleParticipate}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* static options */
       satisfactionOptions={SATISFACTION_OPTIONS}
       yesNoOptions={YES_NO_OPTIONS}
       participateOptions={PARTICIPATE_OPTIONS}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleSubmit={handleSubmit}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -423,7 +399,6 @@ const FeedbackAndEngagementSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
       prevRoute={PREV_ROUTE}
     />

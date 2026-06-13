@@ -18,6 +18,10 @@
  * Navigation:
  *   PREV → /surveyshs/shs-employment-information
  *   NEXT → /surveyshs/shs-skills-and-competencies
+ *
+ * CHANGE LOG:
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count. Frontend progress bar now aligns with DB percentage values.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -30,7 +34,7 @@ import JobExperienceViewSHS from '../views/JobExperienceViewSHS';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
 const CURRENT_SECTION = 4;
 const SECTION_KEY     = 'shs_job_experience';
 const PREV_ROUTE      = '/surveyshs/shs-employment-information';
@@ -75,7 +79,7 @@ const EMPTY_FORM = {
   time_to_find_job:    '',
   how_found_job:       '',
   other_how_found_job: '',
-  factors_first_job:   [], // checkbox array
+  factors_first_job:   [],
   other_factors:       '',
 };
 
@@ -89,8 +93,8 @@ const getRequiredFields = (form) => {
     'factors_first_job',
   ]);
 
-  if (form.how_found_job === 'Other')             required.add('other_how_found_job');
-  if (form.factors_first_job.includes('Other'))   required.add('other_factors');
+  if (form.how_found_job === 'Other')           required.add('other_how_found_job');
+  if (form.factors_first_job.includes('Other')) required.add('other_factors');
 
   return required;
 };
@@ -117,7 +121,7 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers — identical to all SHS sections
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -155,26 +159,20 @@ const formatTime = (iso) => {
 const JobExperienceSHS = () => {
   const navigate = useNavigate();
 
-  // ── Config ────────────────────────────────────────────────────────────────
   const [loadingConfig, setLoadingConfig] = useState(true);
-
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form,      setForm]      = useState(EMPTY_FORM);
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -193,7 +191,7 @@ const JobExperienceSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // ── STEP 1: Load saved data ───────────────────────────────────────────────
+  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -205,7 +203,6 @@ const JobExperienceSHS = () => {
             time_to_find_job:    saved.time_to_find_job    ?? f.time_to_find_job,
             how_found_job:       saved.how_found_job       ?? f.how_found_job,
             other_how_found_job: saved.other_how_found_job ?? f.other_how_found_job,
-            // Guard: always restore as array even if DB stored differently
             factors_first_job:   Array.isArray(saved.factors_first_job)
                                    ? saved.factors_first_job
                                    : f.factors_first_job,
@@ -221,7 +218,6 @@ const JobExperienceSHS = () => {
     load();
   }, []);
 
-  // ── Notifications fetch ───────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -263,7 +259,6 @@ const JobExperienceSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Generic scalar field setter ───────────────────────────────────────────
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -274,8 +269,6 @@ const JobExperienceSHS = () => {
     });
   }, []);
 
-  // ── Q18 radio setter — cascade-resets the "Other" sub-field ──────────────
-  // Same pattern as setStoppedReason in EducationalBackgroundSHS.
   const setHowFoundJob = useCallback((val) => {
     setForm((f) => ({
       ...f,
@@ -290,8 +283,6 @@ const JobExperienceSHS = () => {
     });
   }, []);
 
-  // ── Q19 checkbox toggle — cascade-resets "Other" sub-field on uncheck ─────
-  // Same pattern as toggleParticipate in FeedbackAndEngagementSHS.
   const toggleFactors = useCallback((value) => {
     setForm((f) => {
       const already = f.factors_first_job.includes(value);
@@ -313,7 +304,6 @@ const JobExperienceSHS = () => {
     });
   }, []);
 
-  // ── Validation ────────────────────────────────────────────────────────────
   const validate = () => {
     const required = getRequiredFields(form);
     const errs     = new Set();
@@ -328,7 +318,6 @@ const JobExperienceSHS = () => {
     return errs;
   };
 
-  // ── Save draft ────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -339,7 +328,6 @@ const JobExperienceSHS = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ────────────────────────────────────
   const handleNext = () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -357,7 +345,6 @@ const JobExperienceSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ──────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -371,7 +358,6 @@ const JobExperienceSHS = () => {
 
   return (
     <JobExperienceViewSHS
-      /* form */
       form={form}
       set={set}
       setHowFoundJob={setHowFoundJob}
@@ -379,18 +365,14 @@ const JobExperienceSHS = () => {
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* static options */
       timeToFindJobOptions={TIME_TO_FIND_JOB_OPTIONS}
       howFoundJobOptions={HOW_FOUND_JOB_OPTIONS}
       factorsFirstJobOptions={FACTORS_FIRST_JOB_OPTIONS}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -402,7 +384,6 @@ const JobExperienceSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
       prevRoute={PREV_ROUTE}
     />

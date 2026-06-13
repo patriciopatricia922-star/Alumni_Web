@@ -20,6 +20,11 @@
  * Navigation:
  *   PREV → /surveyshs/shs-job-experience
  *   NEXT → /surveyshs/shs-feedback-and-engagement
+ *
+ * CHANGE LOG:
+ *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
+ *     count. CURRENT_SECTION remains 5 (Skills is section 5 of 6; Feedback
+ *     is section 6). Frontend progress bar now aligns with DB percentage values.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -32,14 +37,14 @@ import SkillsAndCompetenciesViewSHS from '../views/SkillsAndCompetenciesViewSHS'
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 5;
-const CURRENT_SECTION = 5;
+const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
+const CURRENT_SECTION = 5;   // Skills is section 5 of 6; Feedback is section 6
 const SECTION_KEY     = 'shs_skills_and_competencies';
 const PREV_ROUTE      = '/surveyshs/shs-job-experience';
 const NEXT_ROUTE      = '/surveyshs/shs-feedback-and-engagement';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Star rating fields — ordered list drives both the form shape and the view
+// Star rating fields
 // ─────────────────────────────────────────────────────────────────────────────
 export const RATING_FIELDS = [
   { key: 'communication_skills',    label: '20. Communication skills' },
@@ -51,7 +56,6 @@ export const RATING_FIELDS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Empty form shape
-// Star ratings default to 0 (unanswered); stored as integers in DB.
 // ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   communication_skills:    0,
@@ -76,7 +80,6 @@ const getRequiredFields = () => new Set([
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Form completion percentage
-// Star fields are valid when value >= 1; text field uses string check.
 // ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const required = getRequiredFields();
@@ -97,7 +100,7 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers — identical to all SHS sections
+// Notification helpers
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -135,26 +138,20 @@ const formatTime = (iso) => {
 const SkillsAndCompetenciesSHS = () => {
   const navigate = useNavigate();
 
-  // ── Config ────────────────────────────────────────────────────────────────
   const [loadingConfig, setLoadingConfig] = useState(true);
-
-  // ── Load control ──────────────────────────────────────────────────────────
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form,      setForm]      = useState(EMPTY_FORM);
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -173,7 +170,7 @@ const SkillsAndCompetenciesSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // ── STEP 1: Load saved data ───────────────────────────────────────────────
+  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -182,7 +179,6 @@ const SkillsAndCompetenciesSHS = () => {
           console.log('[SkillsAndCompetenciesSHS] Loaded saved data:', saved);
           setForm((f) => ({
             ...f,
-            // Coerce saved star values to integers; fallback to 0 if missing
             communication_skills:    Number(saved.communication_skills)    || f.communication_skills,
             technical_knowledge:     Number(saved.technical_knowledge)     || f.technical_knowledge,
             leadership_skills:       Number(saved.leadership_skills)       || f.leadership_skills,
@@ -200,7 +196,6 @@ const SkillsAndCompetenciesSHS = () => {
     load();
   }, []);
 
-  // ── Notifications fetch ───────────────────────────────────────────────────
   useEffect(() => {
     supabase
       .from('announcements')
@@ -242,8 +237,6 @@ const SkillsAndCompetenciesSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Generic scalar field setter ───────────────────────────────────────────
-  // Handles both star ratings (integers) and text fields (strings).
   const set = useCallback((key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
     setErrors((prev) => {
@@ -254,14 +247,10 @@ const SkillsAndCompetenciesSHS = () => {
     });
   }, []);
 
-  // ── Star rating setter — convenience wrapper around set() ─────────────────
-  // Clicking the already-selected star clears the rating back to 0
-  // so the user can undo an accidental selection.
   const setRating = useCallback((key, value) => {
     set(key, value);
   }, [set]);
 
-  // ── Validation ────────────────────────────────────────────────────────────
   const validate = () => {
     const required = getRequiredFields();
     const errs     = new Set();
@@ -276,7 +265,6 @@ const SkillsAndCompetenciesSHS = () => {
     return errs;
   };
 
-  // ── Save draft ────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -287,7 +275,6 @@ const SkillsAndCompetenciesSHS = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ────────────────────────────────────
   const handleNext = () => {
     const errs = validate();
     if (errs.size > 0) {
@@ -305,7 +292,6 @@ const SkillsAndCompetenciesSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ──────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -319,23 +305,18 @@ const SkillsAndCompetenciesSHS = () => {
 
   return (
     <SkillsAndCompetenciesViewSHS
-      /* form */
       form={form}
       set={set}
       setRating={setRating}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
-      /* static config */
       ratingFields={RATING_FIELDS}
-      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
-      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
-      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -347,7 +328,6 @@ const SkillsAndCompetenciesSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
-      /* routing */
       navigate={navigate}
       prevRoute={PREV_ROUTE}
     />
