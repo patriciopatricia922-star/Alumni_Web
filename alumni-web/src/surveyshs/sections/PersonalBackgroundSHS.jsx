@@ -1,34 +1,61 @@
 /**
- * PersonalBackgroundSHS.jsx — Logic Layer
+ * PersonalBackgroundSHS.jsx — Logic Layer (v2, full persistence fix)
  * Location: src/surveyshs/PersonalBackgroundSHS.jsx
  *
- * Architecture mirrors College PersonalBackground.jsx (v4) exactly:
- *   • Two-step load: saved DB data first, autofill from profile second
- *   • Field-by-field autofill — never overwrites existing saved answers
- *   • surveyConfig realtime subscription for dynamic labels / options
- *   • Notification helpers (groupByDate, formatTime, read-state in localStorage)
- *   • Validation → save draft → navigate pattern
+ * Architecture mirrors College PersonalBackground.jsx (v4) exactly.
  *
- * SHS-specific differences from the College controller:
- *   • SECTION_KEY        → 'shs_personal_background'
- *   • NEXT_ROUTE         → '/surveyshs/shs-educational-background'
- *   • REQUIRED_FIELDS    → SHS field set (no civil_status, no separate address parts;
- *                          adds track_strand + year_graduated)
- *   • DEFAULT_LABELS     → SHS-appropriate labels
- *   • PROFILE_TO_SURVEY  → maps profile keys to SHS snake_case keys;
- *                          now includes track_strand ← academicProgram/program
- *                          and year_graduated ← yearGraduated/batch_year
- *   • surveyConfig lookup searches for section id 'shs_personal_background'
- *     OR title 'SHS Personal Background'
+ * FIXED in v2:
  *
- * CHANGE LOG:
- *   • Added normalizeTrackStrand() helper — maps raw program strings (e.g.
- *     "SHS-STEM", "stem", "SHS HUMSS") to the canonical radio option value
- *     expected by PersonalBackgroundViewSHS. Applied in Tier A autofill only.
- *     No College logic is touched.
- *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
- *     count (personal, educational, employment, job-experience, skills,
- *     feedback). Frontend progress bar now aligns with DB percentage values.
+ *  BUG 1 — year_graduated never autofilled from profile
+ *    The old code read:
+ *      profile.yearGraduated ?? profile.batch_year
+ *    useUserProfile camelCases DB columns, so 'batch_year' → 'batchYear'.
+ *    Neither 'yearGraduated' nor 'batch_year' matched, so the field was
+ *    always null. Fixed lookup order:
+ *      profile.batchYear ?? profile.batch_year ?? profile.yearGraduated
+ *    The three-way fallback covers: standard hook output (batchYear),
+ *    any hook variant that returns raw snake_case (batch_year), and any
+ *    legacy alias (yearGraduated).
+ *
+ *  BUG 2 — track_strand normalisation applied unconditionally
+ *    normalizeTrackStrand() is retained but the lookup now also covers
+ *    the hook's camelCase variant (profile.academicProgram) in addition
+ *    to the raw DB column (profile.program).
+ *    Lookup order:
+ *      profile.program ?? profile.academicProgram
+ *    'program' is the actual DB column name → hook returns it as 'program'
+ *    (no underscore to strip). 'academicProgram' is the fallback alias.
+ *
+ *  BUG 3 — autofill deps array included `profile` (misalignment with College)
+ *    Removed `profile` from the useEffect dependency array. The effect fires
+ *    when profileLoading flips to false, at which point profile is already
+ *    populated — exactly the same pattern as College PersonalBackground.jsx v4.
+ *
+ *  BUG 4 — Tier A overwrote saved answers on every re-render
+ *    Tier A (unconditional overwrite) was designed to handle race conditions
+ *    between Step 1 (DB load) and Step 2 (autofill). However, it unconditionally
+ *    overwrote track_strand and year_graduated even if the user had manually
+ *    changed those radio buttons and saved. Fixed: Tier A now only writes when
+ *    the current form value is empty, exactly matching College Tier B behaviour.
+ *    The profileAcademicRef is retained as a race-condition guard for Step 1
+ *    re-assertion, but Step 2 no longer forcibly overwrites non-empty fields.
+ *
+ *  BUG 5 — TOTAL_SECTIONS was 5, should be 6
+ *    Corrected to 6 so the frontend progress bar aligns with DB percentage.
+ *    (This was already fixed in the previous round; retained here.)
+ *
+ *  NOTES ON RADIO BUTTON VALUE MATCHING:
+ *    normalizeTrackStrand() maps raw DB values (e.g. "SHS-STEM", "STEM",
+ *    "shs-stem") to canonical form. The canonical values MUST match the option
+ *    strings rendered by PersonalBackgroundViewSHS exactly.
+ *    If your surveyConfig defines options as ["STEM","ABM","HUMSS"] (no prefix),
+ *    update SHS_TRACK_CANONICAL and normalizeTrackStrand accordingly, or update
+ *    the surveyConfig options to use the prefixed form ["SHS-STEM","SHS-ABM","SHS-HUMSS"].
+ *
+ *    year_graduated is stored and compared as a STRING. Ensure the radio button
+ *    option values in the view/surveyConfig are also strings (e.g. "2023", not 2023).
+ *    If they are numbers, wrap each option in String() before comparison, or change
+ *    normalizeYearGraduated to return a number.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -42,12 +69,11 @@ import PersonalBackgroundViewSHS from '../views/PersonalBackgroundViewSHS';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
+const TOTAL_SECTIONS  = 6;   // SHS has 6 sections total
 const CURRENT_SECTION = 1;
 const SECTION_KEY     = 'shs_personal_background';
 const NEXT_ROUTE      = '/surveyshs/shs-educational-background';
 
-// Fields that must be filled before the user can advance
 const REQUIRED_FIELDS = [
   'last_name',
   'first_name',
@@ -61,7 +87,7 @@ const REQUIRED_FIELDS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Default labels — overridden by surveyConfig when available
+// Default labels / placeholders — overridden by surveyConfig when available
 // ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_LABELS = {
   last_name:        'Last Name',
@@ -94,25 +120,46 @@ const INDEX_TO_FIELD = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHS Track/Strand canonical values
+//
+// These must exactly match the option value strings rendered by
+// PersonalBackgroundViewSHS (and/or the surveyConfig options for track_strand).
+//
+// ⚠️  IMPORTANT: If your surveyConfig or view uses bare values like
+//     'STEM', 'ABM', 'HUMSS' (without the 'SHS-' prefix), change
+//     SHS_TRACK_CANONICAL to ['STEM', 'ABM', 'HUMSS'] and remove the
+//     suffix-match logic that prepends 'SHS-'.
 // ─────────────────────────────────────────────────────────────────────────────
 const SHS_TRACK_CANONICAL = ['SHS-STEM', 'SHS-ABM', 'SHS-HUMSS'];
 
 /**
- * Normalize a raw program string to the canonical SHS track/strand value
- * expected by the radio button group in PersonalBackgroundViewSHS.
+ * Normalize a raw program/strand string to the canonical value expected
+ * by the radio button group in PersonalBackgroundViewSHS.
+ *
+ * Handles:
+ *   "SHS-STEM"  → "SHS-STEM"   (already canonical)
+ *   "shs-stem"  → "SHS-STEM"   (lowercase)
+ *   "SHS STEM"  → "SHS-STEM"   (space separator)
+ *   "STEM"      → "SHS-STEM"   (missing prefix)
+ *   "ABM"       → "SHS-ABM"
+ *   "HUMSS"     → "SHS-HUMSS"
+ *   unknown     → raw value unchanged (surveyConfig may define custom strands)
  */
 const normalizeTrackStrand = (raw) => {
   if (!raw) return '';
   const upper = String(raw).trim().toUpperCase().replace(/\s+/g, '-');
 
+  // 1. Direct canonical match (covers already-correct values)
   const direct = SHS_TRACK_CANONICAL.find((c) => c === upper);
   if (direct) return direct;
 
+  // 2. Loose suffix match: "STEM" → "SHS-STEM"
   const suffix = SHS_TRACK_CANONICAL.find((c) => c.endsWith(`-${upper}`));
   if (suffix) return suffix;
 
+  // 3. Already SHS-prefixed but non-standard casing
   if (upper.startsWith('SHS-')) return upper;
 
+  // 4. Unknown / custom strand — pass through unchanged
   return String(raw).trim();
 };
 
@@ -130,23 +177,7 @@ const computeFormPct = (form) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Profile hook key → SHS survey snake_case key mapping
-// ─────────────────────────────────────────────────────────────────────────────
-const PROFILE_TO_SURVEY = {
-  firstName:     'first_name',
-  middleName:    'middle_name',
-  lastName:      'last_name',
-  email:         'email',
-  contactNumber: 'contact_number',
-  gender:        'gender',
-  birthday:      'birthday',
-  street:        '_street_part',
-  city:          '_city_part',
-  province:      '_province_part',
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
+// Notification helpers (identical to College implementation)
 // ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
@@ -184,18 +215,26 @@ const formatTime = (iso) => {
 const PersonalBackgroundSHS = () => {
   const navigate = useNavigate();
 
+  // ── Shared profile hook — autofill source ─────────────────────────────────
   const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  const [hasLoadedSavedData,    setHasLoadedSavedData]    = useState(false);
-  const [hasAttemptedAutofill,  setHasAttemptedAutofill]  = useState(false);
+  // ── Autofill / load control flags ─────────────────────────────────────────
+  const [hasLoadedSavedData,   setHasLoadedSavedData]   = useState(false);
+  const [hasAttemptedAutofill, setHasAttemptedAutofill] = useState(false);
 
+  // Ref that holds the academic values resolved from the profile so that
+  // Step 1 (DB load, which may finish after Step 2) can re-assert them if
+  // the race condition fires. Values are only re-asserted when the form
+  // field is still empty (same guard as Tier B).
   const profileAcademicRef = useRef({});
 
+  // ── Survey config (dynamic labels / options) ──────────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingConfig,        setLoadingConfig]        = useState(true);
 
+  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     last_name:        '',
     first_name:       '',
@@ -213,17 +252,22 @@ const PersonalBackgroundSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef                    = useRef(null);
 
+  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
+  // ── Force a fresh profile fetch on mount ──────────────────────────────────
+  // Mirrors College PersonalBackground.jsx v4 — ensures a Profile modal save
+  // is not lost when the user returns to this page.
   useEffect(() => {
     refreshProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── surveyConfig loading + realtime subscription ──────────────────────────
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
@@ -269,7 +313,13 @@ const PersonalBackgroundSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
 
-  // STEP 1: Load saved survey data
+  // ── STEP 1: Load saved survey data ────────────────────────────────────────
+  // Mirrors College STEP 1 exactly. On completion, sets hasLoadedSavedData
+  // which unblocks STEP 2.
+  //
+  // Race-condition guard: if profileAcademicRef already contains values
+  // (STEP 2 ran first), re-assert them — but only into fields that are
+  // still empty so a user's manual edit is never clobbered.
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -278,8 +328,11 @@ const PersonalBackgroundSHS = () => {
           console.log('[PersonalBackgroundSHS] Loaded saved survey data:', savedData);
           setForm((f) => {
             const merged = { ...f, ...savedData };
+            // Re-assert profile-derived academic values only into still-empty fields.
             Object.entries(profileAcademicRef.current).forEach(([key, val]) => {
-              merged[key] = val;
+              if (val && (!merged[key] || String(merged[key]).trim() === '')) {
+                merged[key] = val;
+              }
             });
             return merged;
           });
@@ -293,66 +346,111 @@ const PersonalBackgroundSHS = () => {
     loadSavedData();
   }, []);
 
-  // STEP 2: Autofill from profile
+  // ── STEP 2: Autofill from profile — field-by-field, never overwrites ───────
+  //
+  // Mirrors College PersonalBackground.jsx v4 exactly with two additions:
+  //
+  //   A) track_strand — derived from profile.program (or profile.academicProgram
+  //      as a fallback alias), then normalised via normalizeTrackStrand().
+  //
+  //   B) year_graduated — derived from profile.batchYear (the camelCase form
+  //      that useUserProfile returns for the DB column 'batch_year'), with
+  //      fallback aliases for any hook variant that returns the raw snake_case
+  //      column name or a legacy 'yearGraduated' alias.
+  //
+  //   C) complete_address — derived by concatenating profile address parts,
+  //      only when the combined field is currently empty.
+  //
+  // KEY FIX: `profile` is removed from the dependency array, matching College.
+  // The effect fires when profileLoading flips to false; at that point profile
+  // is already populated inside the hook's closure.
+  //
+  // KEY FIX: ALL fields (including track_strand and year_graduated) now use
+  // the same conditional guard as College Tier B — they are only written when
+  // the current form value is empty. This prevents profile data from clobbering
+  // a value the user deliberately changed and saved.
   useEffect(() => {
-    if (!hasLoadedSavedData) return;
-    if (profileLoading)      return;
-    if (hasAttemptedAutofill) return;
+    if (!hasLoadedSavedData)   return; // wait for DB load
+    if (profileLoading)        return; // wait for hook to resolve
+    if (hasAttemptedAutofill)  return; // run once per page visit
 
     console.log('[PersonalBackgroundSHS] Running autofill...');
     console.log('[PersonalBackgroundSHS] Profile:', profile);
 
     if (profile && Object.keys(profile).length > 0) {
 
-      // Tier A: academic fields — unconditional overwrite
-      const program   = profile.academicProgram ?? profile.program   ?? null;
-      const batchYear = profile.yearGraduated   ?? profile.batch_year ?? null;
+      // ── Resolve academic values from profile ────────────────────────────
+      //
+      // track_strand:
+      //   DB column is typically 'program'.
+      //   useUserProfile returns it as profile.program (no camelCase change needed).
+      //   profile.academicProgram is a fallback for any hook that maps it differently.
+      const rawProgram =
+        profile.program          ??   // standard hook output (DB col: program)
+        profile.academicProgram  ??   // fallback alias
+        null;
+
+      // year_graduated:
+      //   DB column is typically 'batch_year'.
+      //   useUserProfile camelCases it to profile.batchYear.
+      //   Fallbacks cover raw snake_case and any legacy 'yearGraduated' alias.
+      const rawBatchYear =
+        profile.batchYear        ??   // standard hook output (DB col: batch_year)
+        profile.batch_year       ??   // raw snake_case fallback
+        profile.yearGraduated    ??   // legacy alias fallback
+        null;
 
       const academicValues = {};
 
-      if (program && String(program).trim()) {
-        academicValues.track_strand = normalizeTrackStrand(program);
+      if (rawProgram && String(rawProgram).trim()) {
+        academicValues.track_strand = normalizeTrackStrand(rawProgram);
       }
 
-      if (batchYear && String(batchYear).trim()) {
-        academicValues.year_graduated = String(batchYear).trim();
+      if (rawBatchYear && String(rawBatchYear).trim()) {
+        // Store as string — radio button option values must also be strings.
+        // See note at the top of this file if your view uses numeric options.
+        academicValues.year_graduated = String(rawBatchYear).trim();
       }
 
+      // Persist in ref so STEP 1 can re-assert in case of race condition.
       if (Object.keys(academicValues).length > 0) {
         profileAcademicRef.current = academicValues;
-        console.log('[PersonalBackgroundSHS] Unconditionally applying academic values:', academicValues);
+        console.log('[PersonalBackgroundSHS] Resolved academic values:', academicValues);
       }
 
-      // Tier B: remaining fields — conditional fill (no overwrite)
+      // ── Apply all autofill values — conditional guard for every field ────
       setForm((currentForm) => {
-        const updated   = { ...currentForm, ...academicValues };
-        let   didChange = Object.keys(academicValues).length > 0;
+        const updated   = { ...currentForm };
+        let   didChange = false;
 
-        const conditionalMap = {
-          firstName:     'first_name',
-          middleName:    'middle_name',
-          lastName:      'last_name',
-          email:         'email',
-          contactNumber: 'contact_number',
-          gender:        'gender',
-          birthday:      'birthday',
+        // Helper: write value only if target field is currently empty
+        const fillIfEmpty = (surveyKey, value) => {
+          if (
+            value != null &&
+            String(value).trim() !== '' &&
+            (!updated[surveyKey] || String(updated[surveyKey]).trim() === '')
+          ) {
+            updated[surveyKey] = String(value);
+            didChange = true;
+            console.log(`[PersonalBackgroundSHS] Autofilled ${surveyKey}:`, value);
+          }
         };
 
-        Object.entries(conditionalMap).forEach(([profileKey, surveyKey]) => {
-          const profileValue = profile[profileKey];
-          const formValue    = currentForm[surveyKey];
-          if (
-            profileValue &&
-            String(profileValue).trim() !== '' &&
-            (!formValue || String(formValue).trim() === '')
-          ) {
-            updated[surveyKey] = String(profileValue);
-            didChange = true;
-            console.log(`[PersonalBackgroundSHS] Autofilled ${surveyKey} ← profile.${profileKey}`);
-          }
-        });
+        // Academic fields (same conditional guard as all other fields)
+        fillIfEmpty('track_strand',   academicValues.track_strand);
+        fillIfEmpty('year_graduated', academicValues.year_graduated);
 
-        if (!currentForm.complete_address || String(currentForm.complete_address).trim() === '') {
+        // Standard profile fields — identical to College PROFILE_TO_SURVEY mapping
+        fillIfEmpty('first_name',     profile.firstName);
+        fillIfEmpty('middle_name',    profile.middleName);
+        fillIfEmpty('last_name',      profile.lastName);
+        fillIfEmpty('email',          profile.email);
+        fillIfEmpty('contact_number', profile.contactNumber);
+        fillIfEmpty('gender',         profile.gender);
+        fillIfEmpty('birthday',       profile.birthday);
+
+        // Derived: complete_address from address parts (only when empty)
+        if (!updated.complete_address || String(updated.complete_address).trim() === '') {
           const parts = [profile.street, profile.city, profile.province]
             .filter(Boolean)
             .map((p) => String(p).trim())
@@ -373,9 +471,12 @@ const PersonalBackgroundSHS = () => {
 
     setHasAttemptedAutofill(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileLoading, profile, hasLoadedSavedData, hasAttemptedAutofill]);
+  // NOTE: `profile` intentionally omitted from deps — mirrors College v4.
+  // The effect fires when profileLoading flips to false; profile is already
+  // populated at that point inside the hook's closure.
+  }, [profileLoading, hasLoadedSavedData, hasAttemptedAutofill]);
 
-  // Notifications
+  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     const h = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -420,6 +521,7 @@ const PersonalBackgroundSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
+  // ── Field setters ──────────────────────────────────────────────────────────
   const setField = (key) => (e) => {
     setForm((f) => ({ ...f, [key]: e.target.value }));
     if (errors.has(key)) {
@@ -442,6 +544,7 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
     REQUIRED_FIELDS.forEach((field) => {
@@ -450,6 +553,7 @@ const PersonalBackgroundSHS = () => {
     return e;
   };
 
+  // ── Save draft ─────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -460,6 +564,7 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
+  // ── Next (validate → save → navigate) ─────────────────────────────────────
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -475,6 +580,7 @@ const PersonalBackgroundSHS = () => {
       });
   };
 
+  // ── Label / placeholder helpers ────────────────────────────────────────────
   const getLabel       = useCallback(
     (id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,
     [questionLabels]
@@ -486,6 +592,7 @@ const PersonalBackgroundSHS = () => {
 
   const formPct = computeFormPct(form);
 
+  // ── Loading gate ───────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -499,20 +606,25 @@ const PersonalBackgroundSHS = () => {
 
   return (
     <PersonalBackgroundViewSHS
+      /* form state */
       form={form}
       set={setField}
       setRadio={setRadio}
       errors={errors}
       saveToast={saveToast}
       cardRef={cardRef}
+      /* progress */
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}
+      /* actions */
       handleSave={handleSave}
       handleNext={handleNext}
+      /* dynamic config */
       getLabel={getLabel}
       getPlaceholder={getPlaceholder}
       questionOptions={questionOptions}
+      /* notifications */
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
@@ -524,6 +636,7 @@ const PersonalBackgroundSHS = () => {
       markOneRead={markOneRead}
       groupByDate={groupByDate}
       formatTime={formatTime}
+      /* routing */
       navigate={navigate}
     />
   );
