@@ -232,6 +232,20 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
   const nextSection = isLast ? null : sections[sectionIndex + 1];
   const boolCol = DB_BOOLEAN_COL[sectionKey] ?? sectionKey;
 
+  // ── Load existing progress to check if completed_at is already set ────────
+  // We only want to stamp completed_at once — the first time the survey is
+  // completed. The maybeSingle() call is lightweight and avoids overwriting
+  // the original completion timestamp on any future re-saves or re-submissions.
+  let existingCompletedAt = null;
+  if (isLast) {
+    const { data: existingProgress } = await supabase
+      .from('survey_progress')
+      .select('completed_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    existingCompletedAt = existingProgress?.completed_at ?? null;
+  }
+
   const updates = {
     user_id:              user.id,
     current_section:      sectionIndex + 1,
@@ -243,6 +257,15 @@ export const saveSectionProgress = async (sectionKey, formData = null) => {
     completed:            isLast,
     last_updated:         new Date().toISOString(),
     [boolCol]:            true,
+
+    // ── Part 6: stamp completed_at on first completion only ─────────────────
+    // Only written when isLast=true AND no completed_at exists yet.
+    // Prevents the upsert from overwriting the original completion timestamp
+    // if the user somehow re-submits the final section in a future session.
+    ...(isLast && !existingCompletedAt
+      ? { completed_at: new Date().toISOString() }
+      : {}
+    ),
   };
 
   if (formData) {
@@ -338,15 +361,25 @@ const _repairStuckProgress = async (progress, user, isMobile) => {
     shsFeedback: progress.shs_feedback_and_engagement,
   });
 
+  // ── Also backfill completed_at if missing during repair ───────────────────
+  // Users who were stuck before Part 6 was deployed will have no completed_at.
+  // We use last_updated as the best available approximation of when they
+  // actually finished, so the email reminder interval is calculated correctly.
+  const repairUpdates = {
+    percentage:           100,
+    completed:            true,
+    web_current_route:    COMPLETE_SENTINEL,
+    mobile_current_route: COMPLETE_SENTINEL,
+    last_updated:         new Date().toISOString(),
+    ...(!progress.completed_at
+      ? { completed_at: progress.last_updated ?? new Date().toISOString() }
+      : {}
+    ),
+  };
+
   await supabase
     .from('survey_progress')
-    .update({
-      percentage:           100,
-      completed:            true,
-      web_current_route:    COMPLETE_SENTINEL,
-      mobile_current_route: COMPLETE_SENTINEL,
-      last_updated:         new Date().toISOString(),
-    })
+    .update(repairUpdates)
     .eq('user_id', user.id);
 
   return isMobile ? '/survey-complete' : '/update-tracer';

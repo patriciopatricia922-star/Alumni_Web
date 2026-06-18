@@ -16,6 +16,7 @@ import { useDpaGate }   from '../hooks/useDpaGate';
 import DataPrivacyModal from '../modals/DataPrivacyModal';
 import rewardIcon       from '../assets/reward_icn.svg';
 import RewardStoreView  from '../views/RewardStoreView';
+import PointsToast      from '../modals/PointsToast';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -53,6 +54,18 @@ const RewardStore = () => {
   const [surveyRoute,          setSurveyRoute]          = useState(null);
   const [surveyAlreadyClaimed, setSurveyAlreadyClaimed] = useState(false);
   const [isClaiming,           setIsClaiming]           = useState(false);
+
+  // Toast state — replaces the browser alert()
+  const [toast, setToast] = useState({
+    visible:    false,
+    points:     0,
+    newBalance: 0,
+    label:      '',
+  });
+
+  const dismissToast = useCallback(() => {
+    setToast(t => ({ ...t, visible: false }));
+  }, []);
 
   // ── Fetch reward profile ──────────────────────────────────────────────────
   useEffect(() => {
@@ -184,7 +197,13 @@ const RewardStore = () => {
 
         if (result.awarded) {
           setSurveyAlreadyClaimed(true);
-          alert(`🎉 You earned ${SURVEY_REWARD_POINTS} points for completing the survey!`);
+          // Show the polished toast instead of a browser alert
+          setToast({
+            visible:    true,
+            points:     SURVEY_REWARD_POINTS,
+            newBalance: result.points,
+            label:      'Survey completed',
+          });
         } else if (result.reason === 'survey_incomplete') {
           console.warn('[RewardStore] RPC returned survey_incomplete — verifying via direct fetch');
           const profile = await fetchRewardProfile();
@@ -246,6 +265,15 @@ const RewardStore = () => {
           onDecline={handleDecline}
         />
       )}
+
+      <PointsToast
+        visible={toast.visible}
+        points={toast.points}
+        newBalance={toast.newBalance}
+        label={toast.label}
+        onDismiss={dismissToast}
+      />
+
       <RewardStoreView
         sidebarWidth={sidebarWidth}
         isMobile={isMobile}
