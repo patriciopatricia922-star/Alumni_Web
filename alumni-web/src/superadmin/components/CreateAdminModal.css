@@ -1,11 +1,12 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    CreateAdminModal.css
-   All original rules are preserved exactly.
-   Module Permissions additions are in the clearly marked section at the bottom.
+   Updated: password field and related styles removed (admins are now
+   invited via email rather than assigned a password at creation).
+   Module Permissions section preserved unchanged.
 ───────────────────────────────────────────────────────────────────────────── */
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   ORIGINAL STYLES — DO NOT MODIFY
+   BASE MODAL STYLES
 ══════════════════════════════════════════════════════════════════════════════ */
 
 .create-admin-modal {
@@ -207,112 +208,10 @@
   font-family: 'Arimo', sans-serif;
 }
 
-/* Password Input Wrapper */
-.password-input-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.password-input-wrapper input {
-  width: 100%;
-  height: 38px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 0 40px 0 12px;
-  font-family: 'Arimo', sans-serif;
-  font-size: 14px;
-  color: #0A0A0A;
-  outline: none;
-  background: #F8FAFC;
-  transition: all 0.2s;
-}
-
-.password-input-wrapper input:focus {
-  border-color: #155DFC;
-  box-shadow: 0 0 0 2px rgba(21, 93, 252, 0.1);
-  background: #FFFFFF;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #62748E;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-
-.password-toggle:hover {
-  color: #155DFC;
-}
-
-/* Password Strength Indicator */
-.password-strength-container {
-  margin-top: 8px;
-}
-
-.password-strength-bar {
-  height: 4px;
-  background: #E2E8F0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.password-strength-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.password-strength-text {
-  font-size: 11px;
-  font-family: 'Arimo', sans-serif;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.password-strength-requirements {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-  font-size: 10px;
-  font-family: 'Arimo', sans-serif;
-}
-
-.password-strength-requirements span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #F1F5F9;
-  transition: all 0.2s;
-}
-
-.password-strength-requirements span.valid {
-  background: #DCFCE7;
-  color: #008236;
-}
-
-.password-strength-requirements span.invalid {
-  background: #FFE2E2;
-  color: #BF0000;
-}
-
-
 /* ══════════════════════════════════════════════════════════════════════════════
-   MODULE PERMISSIONS — NEW STYLES
+   MODULE PERMISSIONS
    All selectors are scoped to .module-* to guarantee zero collision with
-   existing rules.
+   other rules.
 ══════════════════════════════════════════════════════════════════════════════ */
 
 /* Container — override generic .form-field gap for this section */
@@ -500,12 +399,5 @@
 
   .module-checkbox-item:last-child {
     border-bottom: none;
-  }
-}
-
-/* ── Wider modal to comfortably fit the grid ── */
-@media (min-width: 540px) {
-  .create-admin-modal {
-    width: 520px;
   }
 }

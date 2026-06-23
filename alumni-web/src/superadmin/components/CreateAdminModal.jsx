@@ -1,24 +1,29 @@
 /**
  * CreateAdminModal.jsx
  *
- * Extends the existing Create Admin modal to include Module Permissions selection.
+ * Updated per PM direction: Super Admins do not set passwords for new
+ * employees. The password field and password-strength UI have been removed.
+ * New admins are now invited via Supabase's invite-by-email flow — they
+ * receive an email with a link to set their own password on first login.
  *
- * What changed vs. the original:
- *  - Added `module_permissions` field to form state (object, all false by default)
- *  - Added Module Permissions section in the UI (checkbox grid, mirrors Figma)
- *  - `module_permissions` is persisted to the `users` table on creation
- *  - All existing role logic, validation, and Supabase calls are UNCHANGED
+ * What changed vs. the previous version:
+ *  - Removed `password` from form state
+ *  - Removed password input, show/hide toggle, and strength meter UI
+ *  - Removed password validation (length / strength checks)
+ *  - Swapped `supabaseAdmin.auth.admin.createUser({ password, ... })`
+ *    for `supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: ... })`
+ *  - Removed unused FaEye / FaEyeSlash import
  *
  * What did NOT change:
  *  - Role selection (admin / superadmin)
  *  - Email domain validation
- *  - Password strength logic
+ *  - Module Permissions section (grid, Select All, summary text)
  *  - Audit logging
  *  - onCreated / onClose callbacks
+ *  - DB insert shape into `users` table
  */
 
 import React, { useState } from 'react';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { supabaseAdmin } from '../../lib/supabaseadmin';
 import { logAction } from '../../lib/auditLogger';
 import {
@@ -31,12 +36,11 @@ import './CreateAdminModal.css';
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const CreateAdminModal = ({ onClose, onCreated }) => {
-  // ── Form state (role fields unchanged) ──────────────────────────────────────
+  // ── Form state (password removed — admins no longer set passwords) ─────────
   const [form, setForm] = useState({
     first_name: '',
     last_name:  '',
     email:      '',
-    password:   '',
     role:       'admin',
   });
 
@@ -44,47 +48,14 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
   // Tracks which module keys are checked. Stored as a Set for O(1) toggle.
   const [selectedModules, setSelectedModules] = useState(new Set());
 
-  // ── UI state (unchanged) ─────────────────────────────────────────────────────
-  const [loading,          setLoading]          = useState(false);
-  const [error,            setError]            = useState('');
-  const [showPassword,     setShowPassword]     = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState({ score: 0, text: '', color: '' });
+  // ── UI state ──────────────────────────────────────────────────────────────────
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
-  // ── Helpers (unchanged) ──────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────────
   const validateEmail = (email) => email.endsWith('@nu-dasma.edu.ph');
-
-  const checkPasswordStrength = (password) => {
-    if (!password) { setPasswordStrength({ score: 0, text: '', color: '' }); return; }
-
-    let score = 0;
-    if (password.length >= 8)          score += 1;
-    else if (password.length >= 6)     score += 0.5;
-    if (/[a-z]/.test(password))        score += 0.5;
-    if (/[A-Z]/.test(password))        score += 0.5;
-    if (/[0-9]/.test(password))        score += 0.5;
-    if (/[^a-zA-Z0-9]/.test(password)) score += 0.5;
-
-    let strengthLevel, strengthText, strengthColor;
-    if      (score < 1.5) { strengthLevel = 1; strengthText = 'Weak';   strengthColor = '#EF4444'; }
-    else if (score < 2.5) { strengthLevel = 2; strengthText = 'Fair';   strengthColor = '#F59E0B'; }
-    else if (score < 3.5) { strengthLevel = 3; strengthText = 'Good';   strengthColor = '#10B981'; }
-    else                  { strengthLevel = 4; strengthText = 'Strong'; strengthColor = '#00A63E'; }
-
-    setPasswordStrength({
-      score:      strengthLevel,
-      text:       strengthText,
-      color:      strengthColor,
-      percentage: (score / 4) * 100,
-    });
-  };
-
-  const handlePasswordChange = (e) => {
-    const v = e.target.value;
-    set('password', v);
-    checkPasswordStrength(v);
-  };
 
   // ── Module toggle ────────────────────────────────────────────────────────────
   const toggleModule = (key) => {
@@ -107,25 +78,17 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
     }
   };
 
-  // ── Create handler (role logic preserved; module_permissions added) ──────────
+  // ── Create handler ───────────────────────────────────────────────────────────
   const handleCreate = async () => {
     setError('');
 
-    // ── Validation (unchanged) ──────────────────────────────────────────────
-    if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim() || !form.password.trim()) {
+    // ── Validation ────────────────────────────────────────────────────────────
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.email.trim()) {
       setError('All fields are required.');
       return;
     }
     if (!validateEmail(form.email)) {
       setError('Admin accounts must use @nu-dasma.edu.ph email address.');
-      return;
-    }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-    if (passwordStrength.score < 2) {
-      setError('Password is too weak. Please choose a stronger password.');
       return;
     }
 
@@ -137,23 +100,25 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
 
     setLoading(true);
     try {
-      // ── Auth user creation (unchanged) ──────────────────────────────────
-      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
-        email:         form.email,
-        password:      form.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: form.first_name,
-          last_name:  form.last_name,
-          role:       form.role,
-        },
-      });
-      if (authErr) throw authErr;
+      // ── Invite the new admin by email (no password set here) ────────────
+      // Supabase sends an email with a secure link; the recipient sets their
+      // own password on first login.
+      const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        form.email,
+        {
+          data: {
+            first_name: form.first_name,
+            last_name:  form.last_name,
+            role:       form.role,
+          },
+        }
+      );
+      if (inviteErr) throw inviteErr;
 
-      const uid = authData?.user?.id;
-      if (!uid) throw new Error('User creation failed.');
+      const uid = inviteData?.user?.id;
+      if (!uid) throw new Error('Admin invite failed.');
 
-      // ── DB insert — now includes module_permissions ──────────────────────
+      // ── DB insert — includes module_permissions ──────────────────────────
       const { error: insertErr } = await supabaseAdmin.from('users').insert({
         id:                 uid,
         email:              form.email,
@@ -161,20 +126,20 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
         last_name:          form.last_name,
         role:               form.role,
         account_status:     'active',
-        module_permissions, // ← NEW column
+        module_permissions,
       });
 
       if (insertErr) {
-        // Roll back auth user if DB insert fails (unchanged behaviour)
+        // Roll back the invited auth user if DB insert fails
         await supabaseAdmin.auth.admin.deleteUser(uid);
         throw insertErr;
       }
 
-      // ── Audit log (unchanged) ────────────────────────────────────────────
+      // ── Audit log ─────────────────────────────────────────────────────────
       await logAction({
         action:      'Create',
         module:      'User Management',
-        description: `Created new ${form.role} account for ${form.email}`,
+        description: `Invited new ${form.role} account for ${form.email}`,
         recordId:    uid,
       });
 
@@ -193,7 +158,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="create-admin-modal" onClick={(e) => e.stopPropagation()}>
 
-        {/* ── Header (unchanged) ───────────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────────────────── */}
         <div className="modal-header">
           <div>
             <h2>Create New Admin</h2>
@@ -206,12 +171,12 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
           </button>
         </div>
 
-        {/* ── Error banner (unchanged) ──────────────────────────────────── */}
+        {/* ── Error banner ─────────────────────────────────────────────── */}
         {error && <div className="modal-error">{error}</div>}
 
         <div className="modal-form">
 
-          {/* ── Name row (unchanged) ─────────────────────────────────────── */}
+          {/* ── Name row ─────────────────────────────────────────────────── */}
           <div className="form-row">
             <div className="form-field">
               <label htmlFor="admin-first-name">
@@ -243,7 +208,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
             </div>
           </div>
 
-          {/* ── Email (unchanged) ─────────────────────────────────────────── */}
+          {/* ── Email ─────────────────────────────────────────────────────── */}
           <div className="form-field">
             <label htmlFor="admin-email">
               Email <span className="required">*</span>
@@ -257,61 +222,12 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
               onChange={e => set('email', e.target.value)}
               placeholder="admin@nu-dasma.edu.ph"
             />
-            <span className="email-hint">Must end with @nu-dasma.edu.ph</span>
+            <span className="email-hint">
+              Must end with @nu-dasma.edu.ph — an invite link will be sent to this address.
+            </span>
           </div>
 
-          {/* ── Password (unchanged) ──────────────────────────────────────── */}
-          <div className="form-field">
-            <label htmlFor="admin-password">
-              Password <span className="required">*</span>
-            </label>
-            <div className="password-input-wrapper">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="admin-password"
-                id="admin-password"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={handlePasswordChange}
-                placeholder="Minimum 6 characters"
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(s => !s)}
-                tabIndex="-1"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-              </button>
-            </div>
-
-            {form.password && (
-              <div className="password-strength-container">
-                <div className="password-strength-bar">
-                  <div
-                    className="password-strength-fill"
-                    style={{
-                      width:      `${passwordStrength.percentage}%`,
-                      background: passwordStrength.color,
-                      transition: 'width 0.3s ease',
-                    }}
-                  />
-                </div>
-                <div className="password-strength-text" style={{ color: passwordStrength.color }}>
-                  Password Strength: {passwordStrength.text}
-                </div>
-                <div className="password-strength-requirements">
-                  <span className={form.password.length >= 6  ? 'valid' : 'invalid'}>• At least 6 characters</span>
-                  <span className={/[A-Z]/.test(form.password) ? 'valid' : 'invalid'}>• Uppercase letter</span>
-                  <span className={/[0-9]/.test(form.password) ? 'valid' : 'invalid'}>• Number</span>
-                  <span className={/[^a-zA-Z0-9]/.test(form.password) ? 'valid' : 'invalid'}>• Special character</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Role (unchanged) ──────────────────────────────────────────── */}
+          {/* ── Role ──────────────────────────────────────────────────────── */}
           <div className="form-field">
             <label htmlFor="admin-role">
               Role <span className="required">*</span>
@@ -327,7 +243,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
             </select>
           </div>
 
-          {/* ══ NEW — Module Permissions ════════════════════════════════════ */}
+          {/* ── Module Permissions ═══════════════════════════════════════════ */}
           <div className="form-field module-permissions-field">
             <div className="module-permissions-header">
               <label className="module-permissions-label">
@@ -402,7 +318,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
 
         </div>{/* /.modal-form */}
 
-        {/* ── Footer (unchanged) ────────────────────────────────────────── */}
+        {/* ── Footer ────────────────────────────────────────────────────── */}
         <div className="modal-footer">
           <button className="btn-cancel" onClick={onClose}>
             Cancel
@@ -412,7 +328,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
             onClick={handleCreate}
             disabled={loading}
           >
-            {loading ? 'Creating…' : 'Create Admin'}
+            {loading ? 'Sending invite…' : 'Create Admin Account'}
           </button>
         </div>
 
