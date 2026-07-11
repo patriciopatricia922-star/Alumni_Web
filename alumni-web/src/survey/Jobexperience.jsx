@@ -4,6 +4,8 @@ import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import JobExperienceView from '../Views/JobExperienceView';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 5;
@@ -270,15 +272,19 @@ const JobExperience = () => {
 
   const formPct = computeFormPct(form);
 
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+  navigate,
+  '/survey/employment-information',
+  handleSave,
+  'Job Experience',
+);
+
   if (loadingLabels) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff' }}>
-        <div style={{ color: '#002263' }}>Loading...</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={9} />;
   }
 
   return (
+    <>
     <JobExperienceView
       form={form}
       set={set}
@@ -310,6 +316,8 @@ const JobExperience = () => {
       formatTime={formatTime}
       navigate={navigate}
     />
+    <BackGuardModal />
+    </>
   );
 };
 

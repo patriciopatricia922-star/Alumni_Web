@@ -1,30 +1,12 @@
 /**
  * SkillsAndCompetenciesSHS.jsx — Logic Layer
- * Location: src/surveyshs/sections/SkillsAndCompetenciesSHS.jsx
+ * Location: src/surveyshs/SkillsAndCompetenciesSHS.jsx
  *
- * Architecture is identical to all preceding SHS logic layers:
- *   • surveyConfig realtime subscription wired and ready
- *   • Two-step load: saved DB data first, then config hydration
- *   • Flat validation — all six fields are always required (no branching)
- *   • Star ratings stored as integers 1–5 (0 = unanswered)
- *   • Notification handling identical to all SHS sections
- *
- * Form fields (Q20–Q25, Skills and Competencies sub-section):
- *   communication_skills       Integer  1–5 star rating
- *   technical_knowledge        Integer  1–5 star rating
- *   leadership_skills          Integer  1–5 star rating
- *   critical_thinking          Integer  1–5 star rating
- *   work_ethics                Integer  1–5 star rating
- *   other_skills_suggestion    String   free-text
- *
- * Navigation:
- *   PREV → /surveyshs/shs-job-experience
- *   NEXT → /surveyshs/shs-feedback-and-engagement
- *
- * CHANGE LOG:
- *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
- *     count. CURRENT_SECTION remains 5 (Skills is section 5 of 6; Feedback
- *     is section 6). Frontend progress bar now aligns with DB percentage values.
+ * FIX: Before navigating to Feedback, store this route as
+ * shs_feedback_prev_route in sessionStorage so FeedbackAndEngagementSHS
+ * can read the correct back-button destination. This is the only change
+ * from the original. Working-path users always pass through here last
+ * before Feedback, so this write is authoritative for the Working path.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -34,29 +16,21 @@ import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import SkillsAndCompetenciesViewSHS from '../views/SkillsAndCompetenciesViewSHS';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Survey constants
-// ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
-const CURRENT_SECTION = 5;   // Skills is section 5 of 6; Feedback is section 6
+const TOTAL_SECTIONS  = 6;
+const CURRENT_SECTION = 5;
 const SECTION_KEY     = 'shs_skills_and_competencies';
 const PREV_ROUTE      = '/surveyshs/shs-job-experience';
 const NEXT_ROUTE      = '/surveyshs/shs-feedback-and-engagement';
+const THIS_ROUTE      = '/surveyshs/shs-skills-and-competencies';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Star rating fields
-// ─────────────────────────────────────────────────────────────────────────────
 export const RATING_FIELDS = [
-  { key: 'communication_skills',    label: '20. Communication skills' },
-  { key: 'technical_knowledge',     label: '21. Technical knowledge in your field' },
-  { key: 'leadership_skills',       label: '22. Leadership skills' },
-  { key: 'critical_thinking',       label: '23. Critical thinking & problem-solving' },
-  { key: 'work_ethics',             label: '24. Work ethics / professionalism' },
+  { key: 'communication_skills', label: '20. Communication skills' },
+  { key: 'technical_knowledge',  label: '21. Technical knowledge in your field' },
+  { key: 'leadership_skills',    label: '22. Leadership skills' },
+  { key: 'critical_thinking',    label: '23. Critical thinking & problem-solving' },
+  { key: 'work_ethics',          label: '24. Work ethics / professionalism' },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty form shape
-// ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   communication_skills:    0,
   technical_knowledge:     0,
@@ -66,9 +40,6 @@ const EMPTY_FORM = {
   other_skills_suggestion: '',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Required fields — all six are always required (no branching in this section)
-// ─────────────────────────────────────────────────────────────────────────────
 const getRequiredFields = () => new Set([
   'communication_skills',
   'technical_knowledge',
@@ -78,20 +49,15 @@ const getRequiredFields = () => new Set([
   'other_skills_suggestion',
 ]);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form completion percentage
-// ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const required = getRequiredFields();
   const base     = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const cap      = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
-
-  const filled = [...required].filter((k) => {
+  const filled   = [...required].filter((k) => {
     const v = form[k];
     if (typeof v === 'number') return v >= 1;
     return v && String(v).trim() !== '';
   }).length;
-
   const contrib = (filled / required.size) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(
     parseFloat((base + contrib).toFixed(2)),
@@ -99,9 +65,6 @@ const computeFormPct = (form) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
@@ -132,9 +95,6 @@ const formatTime = (iso) => {
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Controller
-// ─────────────────────────────────────────────────────────────────────────────
 const SkillsAndCompetenciesSHS = () => {
   const navigate = useNavigate();
 
@@ -163,14 +123,12 @@ const SkillsAndCompetenciesSHS = () => {
       }
     };
     init();
-
     const channel = subscribeToSurveyConfigChanges(async () => {
       await loadSurveyConfig(true);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -283,6 +241,14 @@ const SkillsAndCompetenciesSHS = () => {
       return;
     }
     setErrors(new Set());
+
+    // ── FIX: Working-path users reach Feedback from here, so this write
+    // overwrites the Educational Background write and gives Feedback the
+    // correct back-button destination for the Working path.
+    try {
+      sessionStorage.setItem('shs_feedback_prev_route', THIS_ROUTE);
+    } catch (_) {}
+
     saveSectionProgress(SECTION_KEY, form)
       .then(() => navigate(NEXT_ROUTE))
       .catch((err) =>

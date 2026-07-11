@@ -451,6 +451,33 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
 }
 
 // ============================================================================
+// SHS CONTINUED STUDIES CHART
+// Renders NU vs Other Institution vs Did Not Continue as a bar chart.
+// Placed in full-width-chart to mirror the original placeholder layout.
+// ============================================================================
+function ShsContinuedStudiesChart({ data, title, subtitle, height = 300 }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+          <Tooltip formatter={(value) => `${value} alumni`} />
+          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+
+  return <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
+}
+
+// ============================================================================
 // KPI INSIGHTS RESOLVER
 // Maps a KPI label to the correct key in the kpiInsights object.
 // Keys must match those returned by buildAllKpiInsights:
@@ -638,6 +665,7 @@ const AdminDashboardView = ({
   setActiveKpiTab,
   kpiData,
   kpis2,
+  shsKpis,
   employmentAlignmentData,
   employmentStatusData,
   inDemandSkillsData,
@@ -645,6 +673,8 @@ const AdminDashboardView = ({
   loadingCharts,
   kpiInsights,
   alumniType,
+  shsPostGradPathData,
+  shsContinuedStudiesData,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -657,16 +687,6 @@ const AdminDashboardView = ({
     window.addEventListener('openKpiModal', handler);
     return () => window.removeEventListener('openKpiModal', handler);
   }, []);
-
-  // SHS stat cards — placeholder values until SHS backend data is connected.
-  // Defined here rather than at module level so it stays co-located with the
-  // view that renders it, matching the pattern friend established.
-  const shsStatCards = [
-    { label: 'Registered Alumni',    value: '—', sub: 'SHS graduates on record'  },
-    { label: 'Survey Response Rate', value: '—', sub: 'SHS survey responses'      },
-    { label: 'Retention Rate',       value: '—', sub: 'Continued studies at NU'   },
-    { label: 'Alumni Satisfaction',  value: '—', sub: 'Based on SHS responses'    },
-  ];
 
   return (
     <div className="dashboard-layout">
@@ -723,28 +743,28 @@ const AdminDashboardView = ({
                 <div className="section-title">SHS Alumni</div>
               </div>
               <div className="alumni-tracer-grid">
-                {shsStatCards.map((k) => (
+                {shsKpis.map((k) => (
                   <KpiStatCard key={k.label} {...k} />
                 ))}
               </div>
             </div>
 
             <div className="charts-row">
-              <ChartCard
+              <CustomPieChart
+                data={shsPostGradPathData}
                 title="Post-Graduation Path"
                 subtitle="Where SHS alumni went after graduation"
-              >
-                <EmptyChart height={280} />
-              </ChartCard>
+                height={280}
+              />
             </div>
 
             <div className="full-width-chart">
-              <ChartCard
+              <ShsContinuedStudiesChart
+                data={shsContinuedStudiesData}
                 title="Continued Studies: NU vs Other Schools"
                 subtitle="% of SHS alumni who pursued undergrad at NU vs elsewhere"
-              >
-                <EmptyChart height={300} />
-              </ChartCard>
+                height={300}
+              />
             </div>
           </>
 

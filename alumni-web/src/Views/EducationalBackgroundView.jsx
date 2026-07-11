@@ -8,7 +8,7 @@ const STYLES = `
 
   .eb-root { display: flex; min-height: 100vh; background: #DAE5F1; font-family: 'Arimo', Arial, sans-serif; }
   .eb-content { flex: 1; min-width: 0; margin-left: 229px; }
-  .eb-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .eb-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; }
   .eb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
   .eb-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
   .eb-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
@@ -147,6 +147,7 @@ const EducationalBackgroundView = ({
   licensureOptions, licensurePlansOptions, boardResultOptions,
   getLabel, getPlaceholder,
   handleSave, handleNext,
+  onBack,
   lockedFields = {},
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
@@ -186,13 +187,13 @@ const EducationalBackgroundView = ({
           {/* ── Header ── */}
           <div className="eb-header">
             <div className="eb-topbar">
-              <button className="eb-back-btn" onClick={() => navigate('/survey/personal-background')}>
+              <button className="eb-back-btn" onClick={onBack}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                   <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Back
               </button>
-              <div className="eb-badge">ALUMNI STATUS</div>
+              
               <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
                 <button
                   className={`eb-bell${showDropdown ? ' active' : ''}`}
@@ -656,7 +657,6 @@ const EducationalBackgroundView = ({
                       Progress saved
                     </span>
                   )}
-                  <button className="eb-btn-save" onClick={handleSave}>Save</button>
                   <button className="eb-btn-next" onClick={handleNext}>Next</button>
                 </div>
               </div>

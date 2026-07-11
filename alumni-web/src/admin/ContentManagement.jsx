@@ -2,7 +2,7 @@
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Content Management.
 //
-// INTEGRATION LOG
+// INTEGRATION LOG - Mine
 // ─────────────────────────────────────────────────────────────────────────────
 // [landing-cms]   updated_at stamped on every mutating Supabase call
 //                 handleToggleActive — show/hide landing sections without archive
@@ -19,6 +19,10 @@
 //                 the correct modal; archive/restore refactored to DRY META map
 // [fix]           handleRestore — removed restored_at (column does not exist in
 //                 schema); update payload now only sets is_active + updated_at
+// [friend-merge]  alumniType context + SHS_TABS — SHS alumni see a tab list
+//                 without the Jobs tab; alumniType prop forwarded to view
+//                 rewards tab — full CRUD (fetchRewards, handleCreateReward,
+//                 handleUpdateReward) + archive/restore META entries
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -26,6 +30,7 @@ import AdminSidebar from "./components/AdminSidebar";
 import ContentManagementView from './views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
+import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 // ============================ CONSTANTS ============================
 const TABS = [
@@ -33,12 +38,24 @@ const TABS = [
   { id: "announcements",  label: "Announcements" },
   { id: "jobs",           label: "Jobs" },
   { id: "discounts",      label: "Discounts" },
+  { id: "rewards",        label: "Rewards" },
+  { id: "landingpage",    label: "Landing Page" },
+  { id: "disclosurepage", label: "User Notification/Disclosure" },
+];
+
+const SHS_TABS = [
+  { id: "events",         label: "Events" },
+  { id: "announcements",  label: "Announcements" },
+  { id: "discounts",      label: "Discounts" },
+  { id: "rewards",        label: "Rewards" },
   { id: "landingpage",    label: "Landing Page" },
   { id: "disclosurepage", label: "User Notification/Disclosure" },
 ];
 
 // ============================ MAIN COMPONENT ============================
 function ContentManagement() {
+  const { alumniType } = useAlumniType();
+
   // ============================ STATE DECLARATIONS ============================
   const [activeTab, setActiveTab] = useState("events");
   const [showArchive, setShowArchive] = useState(false);
@@ -55,6 +72,7 @@ function ContentManagement() {
   const [announcements, setAnnouncements] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [discounts, setDiscounts] = useState([]);
+  const [rewards, setRewards] = useState([]);
   const [landingSections, setLandingSections] = useState([]);
 
   // Disclosure — mirrors the single-row `disclosures` table (id = 1).
@@ -118,6 +136,15 @@ function ContentManagement() {
     return data || [];
   };
 
+  const fetchRewards = async () => {
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .order('points_required', { ascending: true });
+    if (!error) setRewards(data || []);
+    return data || [];
+  };
+
   const fetchLandingSections = async () => {
     const { data, error } = await supabase
       .from('landing_sections')
@@ -152,6 +179,7 @@ function ContentManagement() {
       fetchAnnouncements(),
       fetchJobs(),
       fetchDiscounts(),
+      fetchRewards(),
       fetchLandingSections(),
       fetchDisclosure(),
     ]);
@@ -167,6 +195,7 @@ function ContentManagement() {
   const activeAnnouncements   = announcements.filter(a => a.is_active !== false);
   const activeJobs            = jobs.filter(j => j.is_active !== false);
   const activeDiscounts       = discounts.filter(d => d.is_active !== false);
+  const activeRewards         = rewards.filter(r => r.is_active !== false);
   const activeLandingSections = landingSections.filter(l => l.is_active !== false);
 
   const getActiveItems = () => {
@@ -175,6 +204,7 @@ function ContentManagement() {
       case 'announcements': return activeAnnouncements;
       case 'jobs':          return activeJobs;
       case 'discounts':     return activeDiscounts;
+      case 'rewards':       return activeRewards;
       case 'landingpage':   return activeLandingSections;
       default:              return [];
     }
@@ -201,6 +231,7 @@ function ContentManagement() {
     push(announcements,   'Announcement',    'content');
     push(jobs,            'Job',             'description');
     push(discounts,       'Discount',        'description');
+    push(rewards,         'Reward',          'description');
     push(landingSections, 'Landing Section', 'description');
 
     return archived;
@@ -392,6 +423,39 @@ function ContentManagement() {
     }
   };
 
+  const handleCreateReward = async (formData) => {
+    console.log('[CREATE] Reward formData received:', formData);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      if (!formData.title?.trim())     { showToastMessage('Reward title is required', 'error'); return; }
+      if (!formData.points_required)   { showToastMessage('Points required is required', 'error'); return; }
+
+      const newReward = {
+        title:           formData.title.trim(),
+        points_required: formData.points_required,
+        description:     formData.description || '',
+        category:        formData.category || 'Apparel',
+        stock:           formData.stock ?? null,
+        image_url:       formData.image_url || null,
+        created_by:      user?.id,
+        created_at:      new Date().toISOString(),
+        is_active:       true,
+      };
+
+      const { data, error } = await supabase.from('rewards').insert([newReward]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Rewards', description: `Created reward: ${formData.title}`, recordId: data[0]?.id, status: 'Success' });
+      await fetchRewards();
+      closeModal();
+      showToastMessage('Reward added successfully!', 'success');
+    } catch (error) {
+      showToastMessage('Failed to add reward: ' + error.message, 'error');
+    }
+  };
+
   const handleCreateLandingSection = async (formData) => {
     console.log('[CREATE] Landing Section formData received:', formData);
     try {
@@ -552,6 +616,36 @@ function ContentManagement() {
     }
   };
 
+  const handleUpdateReward = async (id, formData) => {
+    console.log('[UPDATE] Reward - ID:', id, 'formData:', formData);
+    try {
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
+      if (!formData.title?.trim())   { showToastMessage('Reward title is required', 'error'); return; }
+      if (!formData.points_required) { showToastMessage('Points required is required', 'error'); return; }
+
+      const updates = {
+        title:           formData.title.trim(),
+        points_required: formData.points_required,
+        description:     formData.description || '',
+        category:        formData.category || 'Apparel',
+        stock:           formData.stock ?? null,
+        image_url:       formData.image_url || null,
+        updated_at:      new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from('rewards').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Rewards', description: `Updated reward: ${formData.title}`, recordId: id, status: 'Success' });
+      await fetchRewards();
+      closeModal();
+      showToastMessage('Reward updated successfully!', 'success');
+    } catch (error) {
+      showToastMessage('Failed to update reward: ' + error.message, 'error');
+    }
+  };
+
   const handleUpdateLandingSection = async (id, formData) => {
     console.log('[UPDATE] Landing Section - ID:', id, 'formData:', formData);
     try {
@@ -654,6 +748,7 @@ function ContentManagement() {
       announcements: 'announcements',
       jobs:          'jobs',
       discounts:     'discounts',
+      rewards:       'rewards',
       landingpage:   'landing_sections',
     };
     const moduleMap = {
@@ -661,6 +756,7 @@ function ContentManagement() {
       announcements: 'Announcements',
       jobs:          'Jobs',
       discounts:     'Discounts',
+      rewards:       'Rewards',
       landingpage:   'Landing Page',
     };
 
@@ -708,6 +804,7 @@ function ContentManagement() {
         announcements: { table: 'announcements',    module: 'Announcements', data: announcements },
         jobs:          { table: 'jobs',             module: 'Jobs',          data: jobs },
         discounts:     { table: 'discounts',        module: 'Discounts',     data: discounts },
+        rewards:       { table: 'rewards',          module: 'Rewards',       data: rewards },
         landingpage:   { table: 'landing_sections', module: 'Landing Page',  data: landingSections },
       };
 
@@ -748,6 +845,7 @@ function ContentManagement() {
         'Announcement':    { table: 'announcements',    module: 'Announcement' },
         'Job':             { table: 'jobs',             module: 'Job' },
         'Discount':        { table: 'discounts',        module: 'Discount' },
+        'Reward':          { table: 'rewards',          module: 'Reward' },
         'Landing Section': { table: 'landing_sections', module: 'Landing Section' },
       };
 
@@ -796,7 +894,8 @@ function ContentManagement() {
       loading={loading}
       toast={toast}
       confirmAction={confirmAction}
-      TABS={TABS}
+      TABS={alumniType === 'shs' ? SHS_TABS : TABS}
+      alumniType={alumniType}
       activeItems={getActiveItems()}
       archivedItems={getArchivedItems()}
       landingSections={activeLandingSections}
@@ -822,6 +921,8 @@ function ContentManagement() {
       onUpdateJob={handleUpdateJob}
       onCreateDiscount={handleCreateDiscount}
       onUpdateDiscount={handleUpdateDiscount}
+      onCreateReward={handleCreateReward}
+      onUpdateReward={handleUpdateReward}
       onCreateLandingSection={handleCreateLandingSection}
       onUpdateLandingSection={handleUpdateLandingSection}
       onArchive={handleArchive}

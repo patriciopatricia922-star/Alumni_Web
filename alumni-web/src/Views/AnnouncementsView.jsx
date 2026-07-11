@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
-import megaphoneIcon from '../assets/megaphone_ic.svg';
+import megaphoneIcon from '../assets/announcement_icn.svg';
 import calenderIcon from '../assets/calendar_ic.svg';
 import documentIcon from '../assets/document_ic.svg';
 import clockIcon from '../assets/clock_icn.svg';
 import { getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { truncateHtml, createMarkup } from '../utils/textHelpers';
 import '../styles/Announcements.css';
+import '../styles/About.css';
 
 const CATEGORY_ICONS = {
   'News':       megaphoneIcon,
@@ -23,10 +24,74 @@ const ClockIcon = () => (
 const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   const [expanded, setExpanded] = useState(false);
   const [read, setRead] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
+
+  const images = announcement.images?.length ? announcement.images : announcement.image ? [announcement.image] : [];
+  const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
+  const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
+
   const iconSize = isMobile ? '48px' : isTablet ? '52px' : '56px';
 
   return (
-    <div className={`ann-card ${expanded ? 'ann-card--expanded' : ''}`}>
+    <div className={`ann-card ${expanded ? 'ann-card--expanded' : ''}`} style={{ maxWidth: '97.5%' }}>
+
+      {/* ── Photo with arrows ── */}
+      {images.length > 0 && (
+        <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', flexShrink: 0 }}>
+          <img
+            src={images[imgIndex]}
+            alt={announcement.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+
+          {/* Left arrow */}
+          <button onClick={prevImg} style={{
+            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Right arrow */}
+          <button onClick={nextImg} style={{
+            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          <div style={{
+            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', gap: '5px', zIndex: 10,
+          }}>
+            {images.map((_, i) => (
+              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                width: i === imgIndex ? '18px' : '6px', height: '6px',
+                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
       <div className="ann-card__body">
         <div
           className="ann-card__icon-box"
@@ -90,6 +155,27 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
     </div>
   );
 };
+
+// ── Notification Item (CSS-based, matches About) ───────────────────────────
+const NItem = ({ n, markOneRead, formatTime }) => (
+  <div
+    onClick={() => markOneRead(n.id)}
+    className={`ab-notif-item ${!n.read ? 'unread' : ''}`}
+  >
+    <div className="ab-notif-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+          stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/>
+      </svg>
+    </div>
+    <div className="ab-notif-content">
+      <p className="ab-notif-title">{n.title}</p>
+      <p className="ab-notif-body">{n.body}</p>
+      <span className="ab-notif-time">{formatTime(n.time)}</span>
+    </div>
+    {!n.read && <div className="ab-notif-dot" />}
+  </div>
+);
 
 // ── Notification Bell (shared white-theme dropdown) ───────────────────────────
 const NotificationBell = ({
@@ -476,58 +562,91 @@ const AnnouncementsView = ({
         position:   'relative',
       }}>
 
-        {/* ── Notification Bell ── */}
-        <NotificationBell
-          bellRef={bellRef}
-          isMobile={isMobile}
-          isTablet={isTablet}
-          notifs={notifs}
-          unreadCount={unreadCount}
-          showDropdown={showDropdown}
-          setShowDropdown={setShowDropdown}
-          notifTab={notifTab}
-          setNotifTab={setNotifTab}
-          markAllRead={markAllRead}
-          markOneRead={markOneRead}
-          groupByDate={groupByDate}
-          formatTime={formatTime}
-          navigate={navigate}
-        />
-
-        {/* ── Header ── */}
-        <div style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px' }}>
-          <button
-            className="ann-back-btn"
-            onClick={() => navigate('/dashboard')}
-            style={{
-              display:     'flex',
-              alignItems:  'center',
-              gap:         '8px',
-              background:  'none',
-              border:      'none',
-              cursor:      'pointer',
-              padding:     0,
-              marginBottom: isMobile ? '12px' : '16px',
-            }}
-          >
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <path
-                d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67"
-                stroke="var(--ann-back-color)"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+        {/* ── Notification Bell (CSS-based from About) ── */}
+        <div ref={bellRef} className="ab-bell">
+          <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
+                stroke="#fff" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '15px', color: 'var(--ann-back-color)' }}>
-              Back
-            </span>
+            {unreadCount > 0 && (
+              <div className="ab-badge">
+                <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
+              </div>
+            )}
           </button>
 
-          <h1
-            className="ann-heading"
-            style={{ fontSize: isMobile ? '27px' : isTablet ? '31px' : '39px', margin: '0 0 8px 0' }}
-          >
+          {showDropdown && (
+            <div className="ab-ndrop">
+              <div className="ab-ndrop-header">
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="ab-mark-all">
+                    Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="ab-ndrop-tabs">
+                {['all', 'unread'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setNotifTab(t)}
+                    className={`ab-tab-btn ${notifTab === t ? 'active' : ''}`}
+                  >
+                    {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                  </button>
+                ))}
+              </div>
+              <div className="ab-ndrop-list">
+                {(() => {
+                  const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+                  if (!list.length) return (
+                    <div className="ab-notif-empty">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                        <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+                          stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                      <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
+                    </div>
+                  );
+                  return Object.entries(groupByDate(list)).map(([label, items]) => {
+                    if (!items.length) return null;
+                    return (
+                      <div key={label}>
+                        <p className="ab-notif-group-label">{label}</p>
+                        {items.map(n => <NItem key={n.id} n={n} markOneRead={markOneRead} formatTime={formatTime}/>)}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+              <div className="ab-ndrop-footer">
+                <button
+                  onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
+                  className="ab-see-all"
+                >
+                  See all notifications
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Back Button — matches About page ── */}
+        <button
+          className="ann-back"
+          onClick={() => navigate(-1)}
+        >
+          <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
+            <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
+              stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>Back</span>
+        </button>
+
+        {/* ── Header ── */}
+        <div className="ann-hdr" style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px', marginLeft: '40px', marginTop: '10px' }}>
+          <h1 className="ann-heading">
             Announcements
           </h1>
 
@@ -536,9 +655,11 @@ const AnnouncementsView = ({
             style={{
               fontFamily: 'Montserrat, Arial',
               fontWeight: 400,
-              fontSize:   isMobile ? '13px' : '16px',
-              lineHeight: '22px',
+              fontSize:   isMobile ? '12px' : '13.5px',
+              lineHeight: '0.3',
               margin:     0,
+              marginLeft: '-4px',
+              marginTop:  '12px',
             }}
           >
             Stay connected with the latest news, events, and opportunities from your alumni network.
@@ -552,10 +673,14 @@ const AnnouncementsView = ({
             style={{
               position:     'relative',
               padding:      isTablet ? '24px 28px' : '24px 32px',
-              border:       '0.889px solid rgba(43,114,251,0.3)',
-              boxShadow:    '0px 4px 4px rgba(0,0,0,0.5)',
+              border:       '1px solid #E5E7EB',
+              boxShadow:    '0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06)',
               borderRadius: '24px',
               marginBottom: isTablet ? '28px' : '32px',
+              marginLeft:   '28px',
+              marginRight:  '-30px',
+              marginTop:    '40px',
+              width:        'calc(95%)',
               overflow:     'hidden',
               display:      'flex',
               gap:          '24px',
@@ -569,7 +694,7 @@ const AnnouncementsView = ({
               right:        '-30px',
               top:          '-127px',
               background:   '#2B72FB',
-              opacity:      0.1,
+              opacity:      0.05,
               filter:       'blur(64px)',
               borderRadius: '50%',
               pointerEvents:'none',
@@ -579,8 +704,8 @@ const AnnouncementsView = ({
               width:          isTablet ? '80px' : '120px',
               height:         isTablet ? '80px' : '120px',
               flexShrink:     0,
-              background:     'linear-gradient(180deg, rgba(30,37,85,0.8) 0%, rgba(15,19,56,0.8) 100%)',
-              boxShadow:      '0px 10px 15px rgba(97,95,255,0.5), 0px 4px 6px rgba(43,114,251,0.15)',
+              background:     'linear-gradient(180deg, #fcc7cb 0%, #ffb7ba 80%)',
+              boxShadow:      '0px 4px 10px rgba(43, 114, 251, 0.15)',
               borderRadius:   '14px',
               display:        'flex',
               alignItems:     'center',
@@ -589,7 +714,7 @@ const AnnouncementsView = ({
               <img
                 src={megaphoneIcon}
                 alt="Megaphone"
-                style={{ width: '82%', height: '82%', objectFit: 'contain', filter: 'drop-shadow(0px 4px 4px #2B72FB)' }}
+                style={{ width: '110%', height: '110%', objectFit: 'contain', filter: 'drop-shadow(0px 3px 4px #000000)' }}
               />
             </div>
 
@@ -600,7 +725,7 @@ const AnnouncementsView = ({
                 fontSize:      isTablet ? '20px' : '25px',
                 lineHeight:    '1.3',
                 letterSpacing: '-0.35px',
-                color:         '#FFFFFF',
+                color:         '#324D87',
                 margin:        '0 0 8px 0',
               }}>
                 Alumni Tracer Survey
@@ -610,15 +735,15 @@ const AnnouncementsView = ({
                 fontWeight: 400,
                 fontSize:   '13px',
                 lineHeight: '22px',
-                color:      'rgba(255,255,255,0.65)',
+                color:      '#545454',
                 margin:     '0 0 16px 0',
               }}>
                 Your feedback matters! Complete our annual survey to help us improve the alumni experience and community engagement.
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ClockIcon />
-                  <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <img src={clockIcon} alt="" aria-hidden="true" width="14" height="14" style={{ display: 'block', flexShrink: 0, filter: 'brightness(0.4)', opacity: 1 }} />
+                  <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '12px', color: '#8A94A6', whiteSpace: 'nowrap' }}>
                     2 hours ago
                   </span>
                 </div>
@@ -630,8 +755,8 @@ const AnnouncementsView = ({
                     padding:      '0 20px',
                     borderRadius: '14px',
                     border:       'none',
-                    background:   'rgba(0,40,255,0.85)',
-                    boxShadow:    '0px 2px 2px rgba(255,255,255,0.25)',
+                    background:   '#003EA6',
+                    boxShadow:    '0px 4px 12px rgba(0, 62, 166, 0.2)',
                     fontFamily:   'Montserrat, Arial',
                     fontWeight:   700,
                     fontSize:     '13px',
@@ -659,6 +784,9 @@ const AnnouncementsView = ({
           justifyContent:'flex-end',
           alignItems:    'center',
           marginBottom:  isMobile ? '16px' : '24px',
+          marginLeft:    '28px',
+          marginRight:   '15px',
+          paddingRight:  '15px',
           gap:           '12px',
         }}>
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
@@ -798,13 +926,13 @@ const AnnouncementsView = ({
 
         {/* ── Cards list ── */}
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', marginLeft: '28px', marginRight: '-30px' }}>
             <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '14px', color: 'var(--ann-body-color)' }}>
               Loading announcements…
             </span>
           </div>
         ) : (
-          <div className="ann-cards-list">
+          <div className="ann-cards-list" style={{ marginLeft: '28px', marginRight: '-15px', paddingRight: '15px' }}>
             {filtered.map(a => (
               <AnnouncementCard
                 key={a.id}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { AlumniTypeProvider } from './admin/contexts/AlumniTypeContext';
+import { AlumniTypeProvider as SuperAdminAlumniTypeProvider } from './superadmin/contexts/AlumniTypeContext';
 import LandingPage from './pages/Landingpage';
 import AlumniIDRegistration from './pages/AlumniIDRegistration';
 import TermsOfService from './pages/TermsOfService';
@@ -217,15 +218,19 @@ function App() {
         <Route path="/admin/content-mgmt" element={<ProtectedRoute allowedRoles={['admin']}><ContentManagement /></ProtectedRoute>} />
       </Route>
 
-      {/* Super Administrator Routes */}
-      <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
-      <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><AuditLogs /></ProtectedRoute>} />
-      <Route path="/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement /></ProtectedRoute>} />
-      <Route path="/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni /></ProtectedRoute>} />
-      <Route path="/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement /></ProtectedRoute>} />
-      <Route path="/superadmin/survey-management" element={<ProtectedRoute allowedRoles={['superadmin']}><SurveyMgmt /></ProtectedRoute>} />
-      <Route path="/superadmin/response-and-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><ResponseAnalytics /></ProtectedRoute>} />
-      <Route path="/superadmin/predictive-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><PredictiveAnaly /></ProtectedRoute>} />
+      {/* Super Administrator Routes — wrapped in AlumniTypeProvider so
+          SuperAdminDashboard (and any other superadmin page) can call
+          useAlumniType() without a missing-Provider crash. */}
+      <Route element={<SuperAdminAlumniTypeProvider />}>
+        <Route path="/superadmin/super-admin-dashboard" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/superadmin/audit-logs" element={<ProtectedRoute allowedRoles={['superadmin']}><AuditLogs /></ProtectedRoute>} />
+        <Route path="/superadmin/admin-management" element={<ProtectedRoute allowedRoles={['superadmin']}><AdminAccountManagement /></ProtectedRoute>} />
+        <Route path="/superadmin/super-admin-alumni" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminAlumni /></ProtectedRoute>} />
+        <Route path="/superadmin/super-alumni-engagement" element={<ProtectedRoute allowedRoles={['superadmin']}><SuperAdminEngagement /></ProtectedRoute>} />
+        <Route path="/superadmin/survey-management" element={<ProtectedRoute allowedRoles={['superadmin']}><SurveyMgmt /></ProtectedRoute>} />
+        <Route path="/superadmin/response-and-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><ResponseAnalytics /></ProtectedRoute>} />
+        <Route path="/superadmin/predictive-analytics" element={<ProtectedRoute allowedRoles={['superadmin']}><PredictiveAnaly /></ProtectedRoute>} />
+      </Route>
     </Routes>
   );
 }

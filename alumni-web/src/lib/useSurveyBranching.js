@@ -1,5 +1,5 @@
 /**
- * useSurveyBranching.js
+ * useSurveyBranching.js for branchings
  * ─────────────────────────────────────────────────────────────────────────────
  * Evaluates Admin-configured branching rules for a survey section.
  *

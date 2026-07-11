@@ -4,6 +4,9 @@ import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import CertificationAchievementView from '../Views/CertificationAchievementView';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
+
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 3;
@@ -276,17 +279,21 @@ const CertificationAchievement = () => {
   const getLabel       = (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId;
   const getPlaceholder = (fieldId) => questionPlaceholders[fieldId] || '';
 
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+  navigate,
+  '/survey/educational-background',   // ← same "same route as flag/back button" caveat as before — see note below
+  handleSave,
+  'Certification Achievement',
+);
+
   const formPct = computeFormPct(form);
 
   if (loadingLabels) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={4} />;
   }
 
   return (
+    <>
     <CertificationAchievementView
       form={form}
       set={set}
@@ -317,6 +324,8 @@ const CertificationAchievement = () => {
       formatTime={formatTime}
       navigate={navigate}
     />
+    <BackGuardModal />
+    </>
   );
 };
 

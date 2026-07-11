@@ -119,6 +119,12 @@ const EventCard = ({ event, isMobile }) => {
   const previewText = htmlToReadableText(event.description || '');
   const needsTrunc  = previewText.length > 120;
 
+  const [imgIndex, setImgIndex] = useState(0);
+  const images = event.images?.length ? event.images : event.image ? [event.image] : [];
+  const hasMultiple = images.length > 1;
+  const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
+  const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -129,12 +135,71 @@ const EventCard = ({ event, isMobile }) => {
         borderLeft:   expanded ? '3px solid #003EA6' : '3px solid transparent',
         boxShadow:    hovered || expanded ? T.cardShadowHover : T.cardShadow,
         borderRadius: '16px',
-        overflow:     'visible',
+        overflow:     'hidden',
         cursor:       'pointer',
         transform:    hovered ? 'translateY(-1px)' : 'translateY(0)',
         transition:   'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.12s ease',
       }}
     >
+      {/* ── Image with arrows ── */}
+      {images.length > 0 && (
+        <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', flexShrink: 0 }}>
+          <img
+            src={images[imgIndex]}
+            alt={event.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+              transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.35s ease' }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+
+          {/* Left arrow */}
+          <button onClick={prevImg} style={{
+            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Right arrow */}
+          <button onClick={nextImg} style={{
+            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          <div style={{
+            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', gap: '5px', zIndex: 10,
+          }}>
+            {images.map((_, i) => (
+              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                width: i === imgIndex ? '18px' : '6px', height: '6px',
+                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Card body */}
       <div style={{
         display:    'flex',
@@ -358,8 +423,8 @@ const EventsView = ({
         {/* ── Notification Bell ── */}
         <div ref={bellRef} style={{
           position: 'absolute',
-          top:      isMobile ? '24px' : '37px',
-          right:    isMobile ? '16px' : isTablet ? '28px' : '51px',
+          top:      isMobile ? '32px' : '45px',
+          right:    isMobile ? '59px' : isTablet ? '65px' : '84px',
           zIndex:   200,
         }}>
           <button onClick={() => setShowDropdown(v => !v)} style={{
@@ -377,7 +442,10 @@ const EventsView = ({
             justifyContent: 'center',
             position:       'relative',
             transition:     'all 0.15s',
-          }}>
+            flexShrink:     0,
+          }}
+          aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+          >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path
                 d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
@@ -416,7 +484,6 @@ const EventsView = ({
             )}
           </button>
 
-          {/* Notification dropdown */}
           {showDropdown && (
             <div style={{
               position:      'absolute',
@@ -425,6 +492,7 @@ const EventsView = ({
               width:         isMobile ? '92vw' : '380px',
               maxHeight:     '520px',
               background:    '#FFFFFF',
+              backdropFilter:'blur(16px)',
               border:        '1px solid #E5E7EB',
               borderRadius:  '16px',
               boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
@@ -648,126 +716,91 @@ const EventsView = ({
       </div>
 
         {/* ── Back Button ── */}
-        <button onClick={() => navigate('/dashboard')} style={{
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '6px',
-          background:   'none',
-          border:       'none',
-          cursor:       'pointer',
-          padding:      0,
-          marginBottom: isMobile ? '16px' : '24px',
-        }}>
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-            <path
-              d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
-              stroke={T.backColor}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+        <button className="back-button" onClick={() => navigate(-1)} style={{ position: 'relative', top: '-0.5px' }}>
+          <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginLeft: '7.5px' }}>
+            <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
+              stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span style={{
-            fontFamily: "'Montserrat', Arial, sans-serif",
-            fontWeight: 400,
-            fontSize:   '15px',
-            color:      T.backColor,
-          }}>
-            Back
-          </span>
+          <span>Back</span>
         </button>
 
         {/* ── Header ── */}
-        <div style={{ marginBottom: isMobile ? '20px' : '28px', paddingRight: isMobile ? '58px' : '90px' }}>
-          <h1 style={{
-            fontFamily:    "'Montserrat', Arial, sans-serif",
-            fontWeight:    700,
-            fontSize:      isMobile ? '28px' : isTablet ? '32px' : '40px',
-            lineHeight:    '1.2',
-            letterSpacing: '-1px',
-            color:         T.pageTitle,
-            margin:        '0 0 8px 0',
-          }}>
+        <div className={`events-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
+          <h1 className={`events-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
             Events
           </h1>
-          <p style={{
-            fontFamily: "'Montserrat', Arial, sans-serif",
-            fontWeight: 400,
-            fontSize:   isMobile ? '13px' : '16px',
-            lineHeight: '22.5px',
-            color:      T.pageSubtitle,
-            margin:     0,
-          }}>
+          <p className={`events-subtitle ${isMobile ? 'mobile' : ''}`}>
             Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community
           </p>
         </div>
 
         {/* ── Filter Bar ── */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: isMobile ? '16px' : '28px', gap: '12px' }}>
-          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+        <div style={{
+          display:        'flex',
+          justifyContent: 'flex-end',
+          alignItems:     'center',
+          marginBottom:   isMobile ? '16px' : '24px',
+          marginRight:    '34.5px',
+          gap:            '12px',
+        }}>
+          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+
+            <div style={{ position: 'relative' }}>
             <div style={{
-              height:       '37px',
-              display:      'flex',
-              alignItems:   'center',
-              padding:      '0 12px',
-              gap:          '8px',
-              background:   T.filterBg,
-              border:       `1px solid ${T.filterBorder}`,
-              borderRadius: '10px',
-              boxShadow:    T.cardShadow,
-              minWidth:     isMobile ? 0 : '211px',
-              flex:         isMobile ? 1 : 'none',
+              height:      '40px',
+              display:     'flex',
+              alignItems:  'center',
+              padding:     '0 14px',
+              gap:         '10px',
+              background:  'var(--filter-bg, #ffffff)',
+              border:      '1px solid var(--filter-border, rgba(0,62,166,0.15))',
+              borderRadius:'10px',
+              boxShadow:   '0px 2px 8px rgba(0,0,0,0.06)',
+              minWidth:    isMobile ? 0 : '240px',
+              flex:        isMobile ? 1 : 'none',
             }}>
               <span style={{
-                fontFamily:   "'Montserrat', Arial",
-                fontSize:     '14px',
-                fontWeight:   400,
-                color:        T.filterText,
-                flex:         1,
+                fontFamily:   'Montserrat, Arial, sans-serif',
+                fontWeight:   600,
+                fontSize:     '13.5px',
+                color:        '#1e3a5f',
                 whiteSpace:   'nowrap',
                 overflow:     'hidden',
                 textOverflow: 'ellipsis',
+                flex:         1,
               }}>
                 {activeCategory}
               </span>
-              <div style={{ background: T.badgeBg, borderRadius: '8px', minWidth: '22.63px', height: '19.98px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF' }}>{filtered.length}</span>
+              <div style={{
+                background:     '#003ea6',
+                borderRadius:   '6px',
+                minWidth:       '24px',
+                height:         '20px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 6px',
+                flexShrink:     0,
+              }}>
+                <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '12px', color: '#ffffff' }}>
+                  {filtered.length}
+                </span>
               </div>
             </div>
-            <button
-              onClick={() => setShowFilter(f => !f)}
-              style={{
-                height:       '37px',
-                padding:      '0 18px',
-                display:      'flex',
-                alignItems:   'center',
-                gap:          '8px',
-                background:   T.titleColor,
-                border:       'none',
-                borderRadius: '8px',
-                cursor:       'pointer',
-                boxShadow:    T.cardShadow,
-                transition:   'opacity 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-            >
-              <FaFilter size={12} color="#FFFFFF" />
-              <span style={{ fontFamily: "'Montserrat', Arial", fontWeight: 700, fontSize: '12px', color: '#FFFFFF', letterSpacing: '0.5px' }}>FILTER</span>
-            </button>
 
             {showFilter && (
               <div style={{
                 position:     'absolute',
                 top:          'calc(100% + 8px)',
                 left:         0,
-                background:   T.cardBg,
-                border:       `1px solid ${T.cardBorder}`,
+                background:   '#FFFFFF',
+                border:       '1px solid rgba(0,62,166,0.15)',
                 borderRadius: '12px',
                 overflow:     'hidden',
                 zIndex:       300,
-                minWidth:     '220px',
-                boxShadow:    '0px 10px 30px rgba(0,0,0,0.12)',
+                minWidth:     '100%',
+                width:        '100%',
+                boxShadow:    '0px 10px 30px rgba(0,0,0,0.15)',
               }}>
                 {categories.map((cat, i) => (
                   <button key={cat}
@@ -777,31 +810,79 @@ const EventsView = ({
                       display:        'flex',
                       alignItems:     'center',
                       justifyContent: 'space-between',
-                      padding:        '12px 16px',
+                      padding:        '12px 14px 12px 14.5px',
                       background:     activeCategory === cat ? 'rgba(43,114,251,0.08)' : 'transparent',
                       border:         'none',
-                      borderTop:      i > 0 ? `1px solid ${T.footerBorder}` : 'none',
+                      borderTop:      i > 0 ? '1px solid rgba(0,62,166,0.08)' : 'none',
                       cursor:         'pointer',
                       transition:     'background 0.15s',
                     }}
-                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
+                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(0,62,166,0.05)'; }}
                     onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <span style={{
-                      fontFamily: "'Montserrat', Arial",
-                      fontSize:   '13px',
-                      color:      activeCategory === cat ? T.titleColor : T.bodyColor,
-                      fontWeight: activeCategory === cat ? 700 : 400,
+                      fontFamily:  'Montserrat, Arial, sans-serif',
+                      fontSize:    '13.5px',
+                      color:       activeCategory === cat ? '#1e3a5f' : '#545454',
+                      fontWeight:  activeCategory === cat ? 700 : 400,
+                      whiteSpace:  'nowrap',
                     }}>
                       {cat}
                     </span>
-                    <div style={{ background: activeCategory === cat ? T.accent : 'rgba(43,114,251,0.12)', borderRadius: '6px', padding: '1px 7px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: activeCategory === cat ? '#FFFFFF' : T.accent }}>{categoryCounts[cat]}</span>
+                    <div style={{
+                      background:     activeCategory === cat ? '#003ea6' : 'rgba(43,114,251,0.15)',
+                      borderRadius:   '6px',
+                      minWidth:       '24px',
+                      height:         '20px',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      padding:        '0 6px',
+                      flexShrink:     0,
+                      marginLeft:     '0',
+                    }}>
+                      <span style={{
+                        fontFamily: 'Montserrat, Arial, sans-serif',
+                        fontWeight: 700,
+                        fontSize:   '11px',
+                        color:      activeCategory === cat ? '#FFFFFF' : '#1e3a5f',
+                      }}>
+                        {categoryCounts[cat]}
+                      </span>
                     </div>
                   </button>
                 ))}
               </div>
             )}
+            </div>
+
+            <button
+              onClick={() => setShowFilter(f => !f)}
+              style={{
+                height:         '40px',
+                padding:        '0 18px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            '8px',
+                background:     '#003ea6',
+                border:         'none',
+                borderRadius:   '10px',
+                cursor:         'pointer',
+                flexShrink:     0,
+                boxShadow:      '0px 4px 6px -4px rgba(0,0,0,0.1), 0px 10px 15px -3px rgba(0,0,0,0.1)',
+                transition:     'opacity 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
+              </svg>
+              <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '13px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>
+                FILTER
+              </span>
+            </button>
           </div>
         </div>
 

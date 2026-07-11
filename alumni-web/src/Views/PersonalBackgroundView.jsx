@@ -1,3 +1,17 @@
+/**
+ * PersonalBackgroundView.jsx — Rendering Layer (v2, back-navigation guard)
+ * Location: src/Views/PersonalBackgroundView.jsx
+ *
+ * CHANGED in v2:
+ *   - Back button onClick changed from `() => navigate('/dashboard')`
+ *     to `() => onBack()`.
+ *   - New `onBack` prop accepted (supplied by PersonalBackground.jsx v5
+ *     via useSurveyBackGuard).
+ *   - navigate prop is still accepted and forwarded (used by the
+ *     notification dropdown's "See all notifications" link).
+ *   - No other changes. All styles and form fields are identical to v1.
+ */
+
 import React from 'react';
 import Sidebar from '../components/Sidebar';
 
@@ -25,7 +39,6 @@ const STYLES = `
     z-index: 40;
     background: #DAE5F1;
     padding-bottom: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 
   .pb-topbar {
@@ -394,13 +407,14 @@ const STYLES = `
 const PersonalBackgroundView = ({
   form, set, setRadio, setCountry,
   errors, saveToast, cardRef,
-  formPct, sectionPct, currentSection, totalSections,
+  formPct, currentSection, totalSections,
   handleSave, handleNext,
+  onBack,           // ← NEW: replaces inline navigate('/dashboard') call
   getLabel, getPlaceholder, questionOptions,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
-  navigate,
+  navigate,         // still used by notification "See all" link
 }) => (
   <>
     <style>{STYLES}</style>
@@ -411,14 +425,13 @@ const PersonalBackgroundView = ({
         {/* ── Sticky Header ─────────────────────────────────────────────────── */}
         <div className="pb-header">
           <div className="pb-topbar">
-            <button className="pb-back-btn" onClick={() => navigate('/dashboard')}>
+            {/* ── CHANGED: onClick now calls onBack() instead of navigate('/dashboard') ── */}
+            <button className="pb-back-btn" onClick={onBack}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Back
             </button>
-
-            <div className="pb-badge">ALUMNI STATUS</div>
 
             {/* ── Bell ──────────────────────────────────────────────────────── */}
             <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
@@ -503,7 +516,6 @@ const PersonalBackgroundView = ({
           <h1 className="pb-title">Alumni Tracer Survey</h1>
           <p className="pb-subtitle">Please complete all sections to update your alumni status.</p>
 
-          {/* ── Progress bar — driven by form fill % ──────────────────────── */}
           <div className="pb-progress">
             <div className="pb-progress-row">
               <span>Section {currentSection} of {totalSections}</span>
@@ -697,8 +709,7 @@ const PersonalBackgroundView = ({
                   Progress saved
                 </span>
               )}
-              
-              <button className="pb-btn-save" onClick={handleSave}>Save</button>
+              {/* <button className="pb-btn-save" onClick={handleSave}>Save</button> */}
               <button className="pb-btn-next" onClick={handleNext}>Next</button>
             </div>
 

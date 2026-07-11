@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import FeedbackAndAlumniEngagementView from '../Views/FeedbackAndAlumniEngagementView';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 7;
@@ -340,15 +342,19 @@ const FeedbackAndAlumniEngagement = () => {
 
   const formPct = computeFormPct(form);
 
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+    navigate,
+    '/dashboard',
+    handleSave,
+    'Feedback and Alumni Engagement',
+  );
+
   if (loadingLabels) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={4} />;
   }
 
   return (
+    <>
     <FeedbackAndAlumniEngagementView
       form={form}
       set={set}
@@ -380,6 +386,8 @@ const FeedbackAndAlumniEngagement = () => {
       formatTime={formatTime}
       navigate={navigate}
     />
+    <BackGuardModal />
+    </>
   );
 };
 

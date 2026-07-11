@@ -16,6 +16,9 @@ import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyC
 import useUserProfile from '../hooks/Useuserprofile';
 import EducationalBackgroundView from '../views/EducationalBackgroundView';
 import { useSurveyBranching } from '../lib/useSurveyBranching'; // ← BRANCHING ADD 1/3
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
+
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 2;
@@ -397,17 +400,18 @@ const EducationalBackground = () => {
   const getLabel       = useCallback((fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS[fieldId] || fieldId, [questionLabels]);
   const getPlaceholder = useCallback((fieldId) => questionPlaceholders[fieldId] || '', [questionPlaceholders]);
 
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+    navigate,
+    '/dashboard',
+    handleSave,
+    'Educational Background',
+  );
+
   const formPct = computeFormPct(form);
 
+
   if (loadingLabels || !hasLoadedSavedData) {
-    return (
-      <div style={{
-        display: 'flex', justifyContent: 'center', alignItems: 'center',
-        height: '100vh', background: '#002263',
-      }}>
-        <div style={{ color: '#fff', fontFamily: 'Arimo, sans-serif' }}>Loading…</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={9} />;
   }
 
   return (
@@ -416,6 +420,7 @@ const EducationalBackground = () => {
     // The View uses shouldShowField(fieldKey) to conditionally render each
     // question that might be skipped by an Admin-configured branching rule.
     // ──────────────────────────────────────────────────────────────────────
+    <>
     <EducationalBackgroundView
       form={form}
       set={set}
@@ -438,6 +443,7 @@ const EducationalBackground = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
+      onBack={handleBack}
       lockedFields={lockedFields}
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs}
@@ -451,9 +457,11 @@ const EducationalBackground = () => {
       groupByDate={groupByDate}
       formatTime={formatTime}
       navigate={navigate}
-      shouldShowField={shouldShowField}    // ← BRANCHING ADD 3/3
-      branchingReady={branchingReady}      // ← BRANCHING ADD 3/3
-    />
+      shouldShowField={shouldShowField}
+      branchingReady={branchingReady}
+     />
+      <BackGuardModal />
+    </>
   );
 };
 

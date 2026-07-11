@@ -6,7 +6,7 @@ const STYLES = `
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   .je-root { display: flex; min-height: 100vh; background: #DAE5F1; font-family: 'Arimo', Arial, sans-serif; }
   .je-content { flex: 1; min-width: 0; margin-left: 229px; }
-  .je-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .je-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px;}
   .je-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
   .je-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
   .je-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
@@ -61,6 +61,7 @@ const JobExperienceView = ({
   firstJobOptions, factorsOptions,
   getLabel, getPlaceholder,
   handleSave, handleNext,
+  onBack,
   bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
   notifTab, setNotifTab, markAllRead, markOneRead,
   groupByDate, formatTime,
@@ -74,13 +75,13 @@ const JobExperienceView = ({
 
         <div className="je-header">
           <div className="je-topbar">
-            <button className="je-back-btn" onClick={() => navigate('/survey/employment-information')}>
+            <button className="je-back-btn" onClick={onBack}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                 <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Back
             </button>
-            <div className="je-badge">ALUMNI STATUS</div>
+           
 
             <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
               <button
@@ -284,7 +285,6 @@ const JobExperienceView = ({
                     Progress saved
                   </span>
                 )}
-                <button className="je-btn-save" onClick={handleSave}>Save</button>
                 <button className="je-btn-next" onClick={handleNext}>Next</button>
               </div>
             </div>

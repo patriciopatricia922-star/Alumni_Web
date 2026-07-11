@@ -1,29 +1,21 @@
 /**
- * PersonalBackgroundViewSHS.jsx — Rendering Layer
+ * PersonalBackgroundViewSHS.jsx — Rendering Layer (v2, back-navigation guard)
  * Location: src/surveyshs/views/PersonalBackgroundViewSHS.jsx
  *
- * Pure presentation component — no business logic, no Supabase, no hooks.
- * All state and handlers are injected via props from PersonalBackgroundSHS.jsx.
- *
- * SHS Section 1 fields (from survey reference):
- *   1. Full Name      → last_name / first_name / middle_name (separate controlled inputs)
- *   2. Gender         → radio: Male | Female | Other
- *   3. Birthday       → date input
- *   4. Complete Address → single text input (street_address)
- *   5. Contact Number → phone row with prefix
- *   6. Personal Email → email input
- *   7. Track/Strand   → radio: STEM | HUMSS | ABM
- *   8. Year Graduated → radio: Batch 2022 – Batch 2027
- *
- * Notification panel is a 1-to-1 structural mirror of the College view
- * so admin-side behaviour stays consistent across both survey types.
+ * CHANGED in v2:
+ *   - Back button onClick changed from `() => navigate('/dashboard')`
+ *     to `() => onBack()`.
+ *   - New `onBack` prop accepted (supplied by PersonalBackgroundSHS.jsx v3
+ *     via useSurveyBackGuard).
+ *   - navigate prop is still accepted and forwarded (notification dropdown).
+ *   - No other changes. All styles and form fields are identical to v1.
  */
 
 import React from 'react';
 import Sidebar from '../../components/Sidebar';
 import '../styles/PersonalBackgroundSHS.css';
 
-/* ─── Bell icon (shared SVG, same as College view) ──────────────────────── */
+/* ─── Bell icon ──────────────────────────────────────────────────────────── */
 const BellIcon = () => (
   <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
     <path
@@ -61,7 +53,7 @@ const BackArrow = () => (
   </svg>
 );
 
-/* ─── Notification dropdown — identical UX to College survey ─────────────── */
+/* ─── Notification dropdown ───────────────────────────────────────────────── */
 const NotificationDropdown = ({
   notifs,
   unreadCount,
@@ -78,7 +70,6 @@ const NotificationDropdown = ({
 
   return (
     <div className="shs-pb-notif-dropdown">
-      {/* Header */}
       <div className="shs-pb-notif-header">
         <span className="shs-pb-notif-header-title">Notifications</span>
         {unreadCount > 0 && (
@@ -88,7 +79,6 @@ const NotificationDropdown = ({
         )}
       </div>
 
-      {/* Tabs */}
       <div className="shs-pb-notif-tabs">
         {['all', 'unread'].map((t) => (
           <button
@@ -101,7 +91,6 @@ const NotificationDropdown = ({
         ))}
       </div>
 
-      {/* List */}
       <div className="shs-pb-notif-list">
         {!list.length ? (
           <div className="shs-pb-notif-empty">
@@ -162,7 +151,6 @@ const NotificationDropdown = ({
         )}
       </div>
 
-      {/* Footer */}
       <div className="shs-pb-notif-footer">
         <button
           className="shs-pb-notif-see-all"
@@ -194,6 +182,7 @@ const PersonalBackgroundViewSHS = ({
   /* actions */
   handleSave,
   handleNext,
+  onBack,           // ← NEW: replaces inline navigate('/dashboard') call
   /* dynamic labels / options */
   getLabel,
   getPlaceholder,
@@ -211,7 +200,7 @@ const PersonalBackgroundViewSHS = ({
   groupByDate,
   formatTime,
   /* routing */
-  navigate,
+  navigate,         // still used by notification "See all" link
 }) => (
   <div className="shs-pb-root">
     <Sidebar />
@@ -221,10 +210,10 @@ const PersonalBackgroundViewSHS = ({
       <div className="shs-pb-header">
         <div className="shs-pb-topbar">
 
-          {/* Back button */}
+          {/* ── CHANGED: onClick now calls onBack() instead of navigate('/dashboard') ── */}
           <button
             className="shs-pb-back-btn"
-            onClick={() => navigate('/dashboard')}
+            onClick={onBack}
           >
             <BackArrow />
             Back
@@ -305,7 +294,7 @@ const PersonalBackgroundViewSHS = ({
 
           <div className="shs-pb-fields">
 
-            {/* ── 1. Full Name (Last / First / Middle) ──────────────────── */}
+            {/* ── 1. Full Name ──────────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('last_name')} <span className="shs-pb-req">*</span>
@@ -445,7 +434,7 @@ const PersonalBackgroundViewSHS = ({
               />
             </div>
 
-            {/* ── 7. Track / Strand Completed ───────────────────────────── */}
+            {/* ── 7. Track / Strand ─────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('track_strand')} <span className="shs-pb-req">*</span>

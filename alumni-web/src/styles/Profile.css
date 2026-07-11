@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
-
+/* Mine */
 :root {
   --prof-sidebar-w:        clamp(12.5rem, 15vw, 14.3125rem);
   --prof-sidebar-w-tablet: 12.5rem;
@@ -36,15 +36,9 @@
   --prof-font-body:        'Montserrat', sans-serif;
   --prof-transition:       150ms ease;
 
-  /* ── Top row: reduced from 25.8vh to allow bottom cards more breathing room ── */
   --prof-top-h: clamp(130px, 20vh, 210px);
   --prof-header-h: 110px;
 
-  /*
-   * Content inset — mirrors About page's explicit 60px side margin on .ab-hero / .ab-support.
-   * Applied to .prof-top-row and .prof-bottom-row so they align with the back button
-   * and page-title left edge (which sit at the full padding boundary).
-   */
   --prof-content-inset: 60px;
 }
 
@@ -65,7 +59,6 @@ html, body, #root {
   font-family: var(--prof-font-body);
 }
 
-/* ── Content wrapper: adequate bottom padding so cards breathe ── */
 .prof-content-wrapper {
   flex: 1;
   display: flex;
@@ -80,7 +73,6 @@ html, body, #root {
   box-sizing: border-box;
 }
 
-/* ── Main grid: 4 rows — back btn, page-header, top-row (hero+strength), bottom-row (cards) ── */
 .prof-main {
   display: grid;
   grid-template-rows:
@@ -98,7 +90,6 @@ html, body, #root {
   padding-bottom: calc(var(--prof-bottom-nav-h) + 0.5rem);
 }
 
-/* ── Back button ── */
 .prof-back {
   display: inline-flex;
   align-items: center;
@@ -124,7 +115,6 @@ html, body, #root {
 .prof-back svg path { stroke: #002263; }
 .prof-back:hover    { opacity: 0.7; }
 
-/* ── Page header ── */
 .prof-page-header {
   display: flex;
   flex-direction: row;
@@ -157,7 +147,6 @@ html, body, #root {
   margin: 0 0 0 65px;
 }
 
-/* ── Bell: same position logic as dashboard ── */
 .prof-bell-wrap {
   position: absolute;
   top: clamp(28px, 4vh, 52px);
@@ -177,7 +166,7 @@ html, body, #root {
     top: clamp(12px, 2vh, 18px);
     right: clamp(12px, 4vw, 18px);
   }
-   .prof-page-header {
+  .prof-page-header {
     padding-right: calc(clamp(44px, 4vw, 52px) + 12px);
     margin-top: clamp(38px, 7vh, 56px);
   }
@@ -438,14 +427,6 @@ html, body, #root {
 
 .prof-notif-see-all:hover { background: #F0F4FB; }
 
-/* ════════════════════════════════════════════════════════════════
-   TOP ROW — hero + strength
-   ────────────────────────────────────────────────────────────────
-   Aligned to About page pattern:
-     • explicit margin-left / margin-right mirrors .ab-hero margin: 0 60px
-     • width auto (fills space between those margins)
-   This keeps the left edge flush with the back button / page title.
-════════════════════════════════════════════════════════════════ */
 .prof-top-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -456,7 +437,6 @@ html, body, #root {
   margin-right: var(--prof-content-inset);
 }
 
-/* ── Hero card ── */
 .prof-hero-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -595,7 +575,6 @@ html, body, #root {
   margin: 0;
 }
 
-/* ── Strength card ── */
 .prof-strength-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -679,12 +658,6 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   BOTTOM ROW — Personal Info + Change Password
-   ────────────────────────────────────────────────────────────────
-   Same margin-left/right as .prof-top-row to match About page
-   alignment where .ab-support uses margin: 60px.
-════════════════════════════════════════════════════════════════ */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -696,7 +669,7 @@ html, body, #root {
   margin-right: var(--prof-content-inset);
 }
 
-/* ── Cards ── */
+/* ── Shared card base ── */
 .prof-info-card,
 .prof-cp-card {
   background: var(--prof-card-bg);
@@ -714,7 +687,12 @@ html, body, #root {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* ── Card header ── */
+/* ── Personal Info card: fixed height with internal scroll ── */
+.prof-info-card {
+  height: clamp(320px, 46vh, 480px);
+  overflow: hidden;
+}
+
 .prof-info-card-header {
   display: flex;
   align-items: flex-start;
@@ -747,7 +725,7 @@ html, body, #root {
 .prof-info-card-title {
   font-family: var(--prof-font-display);
   font-weight: 700;
-  font-size: clamp(13px, 1.4vw, 20px);
+  font-size: clamp(13px, 1.4vw, 18px);
   line-height: 1.3;
   color: var(--prof-text-dark);
   margin: 0 0 2px;
@@ -756,7 +734,7 @@ html, body, #root {
 .prof-info-card-subtitle {
   font-family: var(--prof-font-display);
   font-weight: 500;
-  font-size: clamp(10px, 0.75vw, 13px);
+  font-size: clamp(10px, 0.75vw, 14px);
   line-height: 1.4;
   color: var(--prof-text-secondary);
   margin: 0;
@@ -783,7 +761,7 @@ html, body, #root {
   color: #6B7280;
 }
 
-/* ── Info list ── */
+/* ── Info list: scrollable content area ── */
 .prof-info-list {
   display: flex;
   flex-direction: column;
@@ -809,6 +787,7 @@ html, body, #root {
   padding: clamp(9.2px, 0.60vh, 10px) 0;
   min-height: 0;
   border-bottom: none;
+  flex-shrink: 0;
 }
 
 .prof-info-row:last-child { border-bottom: none; }
@@ -821,16 +800,17 @@ html, body, #root {
   width: 18px;
 }
 
+/* ── Value: wrap instead of clip so long addresses are fully visible ── */
 .prof-info-value {
   font-family: var(--prof-font-display);
   font-size: clamp(13.7px, 0.78vw, 13px);
-  line-height: 1.3;
+  line-height: 1.4;
   color: var(--prof-text-tertiary);
   word-break: break-word;
   flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .prof-info-value--empty {
@@ -838,7 +818,6 @@ html, body, #root {
   font-style: italic;
 }
 
-/* ── Action buttons ── */
 .prof-info-card-action-btn,
 .prof-cp-card-action-btn {
   width: 100%;
@@ -877,7 +856,6 @@ html, body, #root {
 .prof-info-card-action-btn:active,
 .prof-cp-card-action-btn:active { transform: scale(0.99); }
 
-/* ── CP card body ── */
 .prof-cp-card-body {
   flex: 1;
   display: flex;
@@ -918,9 +896,6 @@ html, body, #root {
 
 .prof-cp-last-changed { font-weight: 700 !important; }
 
-/* ════════════════════════════════════════════════════════════════
-   MODALS
-════════════════════════════════════════════════════════════════ */
 .prof-modal-overlay {
   position: fixed;
   inset: 0;
@@ -960,7 +935,7 @@ html, body, #root {
 
 .prof-pi-modal-header,
 .prof-cp-modal-header {
-   background: #003EA6;
+  background: #003EA6;
   padding: clamp(16px, 3vh, 24px) clamp(20px, 4vw, 32px);
   display: flex;
   align-items: flex-start;
@@ -1048,10 +1023,10 @@ html, body, #root {
   gap: 8px;
 }
 
-.prof-pi-form { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 20.4px; 
+.prof-pi-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20.4px;
 }
 
 .prof-cp-form {
@@ -1075,9 +1050,6 @@ html, body, #root {
   margin-left: 2px;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════════════════════════ */
 .prof-toast {
   position: fixed;
   bottom: 24px;
@@ -1116,9 +1088,6 @@ html, body, #root {
   .prof-toast-content { width: 100%; min-width: auto; }
 }
 
-/* ════════════════════════════════════════════════════════════════
-   FORM ELEMENTS
-════════════════════════════════════════════════════════════════ */
 .prof-pi-field,
 .prof-cp-field { display: flex; flex-direction: column; gap: 5px; }
 
@@ -1399,9 +1368,6 @@ html, body, #root {
 
 @keyframes prof-spin { to { transform: rotate(360deg); } }
 
-/* ════════════════════════════════════════════════════════════════
-   MOBILE BOTTOM NAV
-════════════════════════════════════════════════════════════════ */
 .prof-bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -1480,10 +1446,18 @@ html, body, #root {
 /* ── Short desktop screens ── */
 @media (max-height: 768px) and (min-width: 768px) {
   :root { --prof-top-h: 155px; }
+
+  .prof-info-card {
+    height: clamp(280px, 42vh, 400px);
+  }
 }
 
 @media (max-height: 640px) and (min-width: 768px) {
   :root { --prof-top-h: 130px; }
+
+  .prof-info-card {
+    height: clamp(240px, 38vh, 340px);
+  }
 }
 
 /* ── Mobile ── */
@@ -1531,6 +1505,12 @@ html, body, #root {
     overflow: visible;
   }
 
+  /* ── On mobile the card is naturally tall; remove fixed height ── */
+  .prof-info-card {
+    height: auto;
+    overflow: visible;
+  }
+
   .prof-info-list {
     flex: none;
     overflow: visible;
@@ -1544,7 +1524,11 @@ html, body, #root {
     border-bottom: none;
   }
 
-  .prof-info-value { white-space: normal; }
+  .prof-info-value {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
 
   .prof-cp-card-body { overflow: visible; }
   .prof-cp-req-list  { flex: none; gap: 8px; }
@@ -1575,4 +1559,8 @@ html, body, #root {
 
   .prof-top-row,
   .prof-bottom-row { gap: 38px; }
+
+  .prof-info-card {
+    height: clamp(360px, 48vh, 520px);
+  }
 }

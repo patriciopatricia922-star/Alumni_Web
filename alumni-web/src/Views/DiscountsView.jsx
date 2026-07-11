@@ -48,11 +48,16 @@ const linkifyHtml = (html) => {
 const DiscountCard = ({ item }) => {
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
+
+  const images = item.images?.length ? item.images : [item.image];
+  const hasMultiple = images.length > 1;
+
+  const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
+  const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
 
   const hasDetails = item.location || item.validUntil;
 
-  // Collapsed description uses truncation; expanded shows the full content.
-  // linkifyHtml runs after so URLs in both states become clickable.
   const descriptionContent = linkifyHtml(
     expanded ? item.discount : truncateHtml(item.discount, 80)
   );
@@ -61,16 +66,62 @@ const DiscountCard = ({ item }) => {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`discount-card ${hovered ? 'hovered' : ''}`}
+      className={`discount-card ${hovered ? 'hovered' : ''} ${expanded ? 'expanded' : ''}`}
     >
       {/* ── Photo with discount badge + category tag ── */}
       <div className="discount-card-image-wrapper">
         <img
-          src={item.image}
+          src={images[imgIndex]}
           alt={item.name}
           className={`discount-card-image ${hovered ? 'hovered' : ''}`}
           onError={e => { e.target.style.background = '#dbeafe'; e.target.style.display = 'none'; }}
         />
+
+        {/* Left / Right arrows */}
+        <>
+          <button onClick={prevImg} style={{
+            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <button onClick={nextImg} style={{
+            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          <div style={{
+            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', gap: '5px', zIndex: 10,
+          }}>
+            {images.map((_, i) => (
+              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                width: i === imgIndex ? '18px' : '6px', height: '6px',
+                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }} />
+            ))}
+          </div>
+        </>
 
         {/* Discount % badge — top-right, red pill */}
         {item.discountPercent && (
@@ -182,10 +233,33 @@ const DiscountsView = ({
 
       <div className={`discounts-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
         {/* ── Notification Bell ─────────────────────────────────────────────── */}
-        <div ref={bellRef} className={`notification-bell-wrapper ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
+        <div
+          ref={bellRef}
+          style={{
+            position: 'absolute',
+            top:   isMobile ? '32px' : '45px',
+            right: isMobile ? '59px' : isTablet ? '65px' : '84px',
+            zIndex: 200,
+          }}
+        >
           <button
             onClick={() => setShowDropdown(v => !v)}
-            className={`notification-bell-btn ${showDropdown ? 'active' : ''}`}
+            style={{
+              width:          isMobile ? '44px' : '52px',
+              height:         isMobile ? '44px' : '52px',
+              background:     showDropdown ? 'rgba(43,114,251,0.25)' : '#003EA6',
+              border:         showDropdown ? '1px solid rgba(43,114,251,0.5)' : '1px solid rgba(255,255,255,0.15)',
+              boxShadow:      '0px 4px 12px rgba(0,0,0,0.35)',
+              borderRadius:   '14px',
+              cursor:         'pointer',
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: 'center',
+              position:       'relative',
+              transition:     'all 0.15s',
+              flexShrink:     0,
+            }}
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path
@@ -197,8 +271,28 @@ const DiscountsView = ({
               />
             </svg>
             {unreadCount > 0 && (
-              <div className="notification-badge">
-                <span className="notification-badge-text">
+              <div style={{
+                position:       'absolute',
+                top:            '-7px',
+                right:          '-7px',
+                minWidth:       '20px',
+                height:         '20px',
+                background:     '#E53935',
+                borderRadius:   '10px',
+                border:         '2px solid #DAE5F1',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 4px',
+                boxSizing:      'border-box',
+              }}>
+                <span style={{
+                  fontFamily: 'Montserrat, Arial, sans-serif',
+                  fontSize:   '10px',
+                  fontWeight: 700,
+                  color:      '#FFFFFF',
+                  lineHeight: 1,
+                }}>
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               </div>
@@ -206,42 +300,76 @@ const DiscountsView = ({
           </button>
 
           {showDropdown && (
-            <div className={`notification-dropdown ${isMobile ? 'mobile' : ''}`}>
-              <div className="dropdown-header">
-                <span className="dropdown-title">Notifications</span>
+            <div style={{
+              position:      'absolute',
+              top:           `calc(${isMobile ? '44px' : '52px'} + 10px)`,
+              right:         0,
+              width:         isMobile ? '92vw' : '380px',
+              maxHeight:     '520px',
+              background:    '#FFFFFF',
+              backdropFilter:'blur(16px)',
+              border:        '1px solid #E5E7EB',
+              borderRadius:  '16px',
+              boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
+              display:       'flex',
+              flexDirection: 'column',
+              overflow:      'hidden',
+              zIndex:        300,
+            }}>
+              <div style={{
+                padding:        '16px 18px 12px',
+                borderBottom:   '1px solid #F0F2F5',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'space-between',
+                flexShrink:     0,
+              }}>
+                <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '16px', color: '#003EA6' }}>
+                  Notifications
+                </span>
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="mark-all-read-btn">
+                  <button
+                    onClick={markAllRead}
+                    style={{ background: 'none', border: 'none', fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+                  >
                     Mark all read
                   </button>
                 )}
               </div>
 
-              <div className="dropdown-tabs">
+              <div style={{ display: 'flex', padding: '10px 18px 0', gap: '6px', flexShrink: 0 }}>
                 {['all', 'unread'].map(t => (
                   <button
                     key={t}
                     onClick={() => setNotifTab(t)}
-                    className={`dropdown-tab ${notifTab === t ? 'active' : ''}`}
+                    style={{
+                      height:       '30px',
+                      padding:      '0 14px',
+                      background:   notifTab === t ? '#003EA6' : 'transparent',
+                      border:       notifTab === t ? 'none' : '1px solid #D1D5DC',
+                      borderRadius: '20px',
+                      cursor:       'pointer',
+                      fontFamily:   'Montserrat, Arial, sans-serif',
+                      fontSize:     '12px',
+                      fontWeight:   notifTab === t ? 700 : 400,
+                      color:        notifTab === t ? '#FFFFFF' : '#4A5565',
+                      transition:   'all 0.15s',
+                    }}
                   >
                     {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                   </button>
                 ))}
               </div>
 
-              <div className="dropdown-body">
+              <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
                 {(() => {
                   const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
                   if (!list.length) return (
-                    <div className="empty-notifications">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
                       <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                        <path
-                          d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                          stroke="rgba(0,0,0,0.2)"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                        />
+                        <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round" />
                       </svg>
-                      <p className="empty-text">
+                      <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '13px', color: 'rgba(0,0,0,0.3)', margin: 0 }}>
                         {notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
                       </p>
                     </div>
@@ -250,29 +378,45 @@ const DiscountsView = ({
                     if (!items.length) return null;
                     return (
                       <div key={label}>
-                        <p className="notification-date-label">{label}</p>
+                        <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '10px', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>
+                          {label}
+                        </p>
                         {items.map(n => (
                           <div
                             key={n.id}
                             onClick={() => markOneRead(n.id)}
-                            className={`notification-item ${n.read ? 'read' : 'unread'}`}
+                            style={{
+                              display:    'flex',
+                              alignItems: 'flex-start',
+                              gap:        '12px',
+                              padding:    '10px 18px',
+                              background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)',
+                              cursor:     'pointer',
+                              transition: 'background 0.12s',
+                              borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
+                            onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
                           >
-                            <div className="notification-icon">
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0,62,166,0.08)', border: '1px solid rgba(0,62,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path
-                                  d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                                  stroke="#003EA6"
-                                  strokeWidth="1.67"
-                                  strokeLinecap="round"
-                                />
+                                <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round" />
                               </svg>
                             </div>
-                            <div className="notification-content">
-                              <p className="notification-title">{n.title}</p>
-                              <p className="notification-body">{n.body}</p>
-                              <span className="notification-time">{formatTime(n.time)}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#0A0A0A', margin: '0 0 2px 0', lineHeight: '1.4' }}>
+                                {n.title}
+                              </p>
+                              <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '12px', color: '#4A5565', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {n.body}
+                              </p>
+                              <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '11px', color: 'rgba(0,0,0,0.35)' }}>
+                                {formatTime(n.time)}
+                              </span>
                             </div>
-                            {!n.read && <div className="notification-unread-dot" />}
+                            {!n.read && (
+                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003EA6', flexShrink: 0, marginTop: '6px' }} />
+                            )}
                           </div>
                         ))}
                       </div>
@@ -281,10 +425,12 @@ const DiscountsView = ({
                 })()}
               </div>
 
-              <div className="dropdown-footer">
+              <div style={{ padding: '10px 18px', borderTop: '1px solid #F0F2F5', flexShrink: 0 }}>
                 <button
                   onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                  className="see-all-btn"
+                  style={{ width: '100%', height: '36px', background: '#F9FAFB', border: '1px solid #D1D5DC', borderRadius: '10px', fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '13px', color: '#4A5565', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
                 >
                   See all notifications
                 </button>
@@ -294,17 +440,12 @@ const DiscountsView = ({
         </div>
 
         {/* ── Back Button ───────────────────────────────────────────────────── */}
-        <button onClick={() => navigate('/dashboard')} className="back-button">
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-            <path
-              d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
-              stroke="#003EA6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+        <button className="back-button" onClick={() => navigate(-1)} style={{ position: 'relative', top: '-0.5px', marginLeft: '-20px' }}>
+          <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginLeft: '0.5px' }}>
+            <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
+              stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span className="back-button-text">Back</span>
+          <span>Back</span>
         </button>
 
         {/* ── Header ────────────────────────────────────────────────────────── */}
@@ -318,43 +459,119 @@ const DiscountsView = ({
         </div>
 
         {/* ── Filter Bar ────────────────────────────────────────────────────── */}
-        <div className={`filter-bar ${isMobile ? 'mobile' : ''}`}>
-          <div ref={filterRef} className="filter-container">
-            <div className={`filter-display ${isMobile ? 'mobile' : ''}`}>
-              <span className="filter-active-text">
+        <div style={{
+          display:        'flex',
+          justifyContent: 'flex-end',
+          alignItems:     'center',
+          marginBottom:   isMobile ? '16px' : '24px',
+          marginRight:    '34.5px',
+          gap:            '12px',
+        }}>
+          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+
+            <div style={{ position: 'relative' }}>
+            <div style={{
+              height:      '40px',
+              display:     'flex',
+              alignItems:  'center',
+              padding:     '0 14px',
+              gap:         '10px',
+              background:  'var(--filter-bg, #ffffff)',
+              border:      '1px solid var(--filter-border, rgba(0,62,166,0.15))',
+              borderRadius:'10px',
+              boxShadow:   '0px 2px 8px rgba(0,0,0,0.06)',
+              minWidth:    isMobile ? 0 : '240px',
+              flex:        isMobile ? 1 : 'none',
+            }}>
+              <span style={{
+                fontFamily:   'Montserrat, Arial, sans-serif',
+                fontWeight:   600,
+                fontSize:     '13.5px',
+                color:        '#1e3a5f',
+                whiteSpace:   'nowrap',
+                overflow:     'hidden',
+                textOverflow: 'ellipsis',
+                flex:         1,
+              }}>
                 {activeCategory === 'All' ? 'All Discounts' : activeCategory}
               </span>
-              <div className="filter-count-badge">
-                <span className="filter-count-text">
+              <div style={{
+                background:     '#003ea6',
+                borderRadius:   '6px',
+                minWidth:       '24px',
+                height:         '20px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                padding:        '0 6px',
+                flexShrink:     0,
+              }}>
+                <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '12px', color: '#ffffff' }}>
                   {categoryCounts[activeCategory]}
                 </span>
               </div>
             </div>
 
-            <button
-              onClick={() => setShowFilter(f => !f)}
-              className="filter-button"
-            >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
-              </svg>
-              <span className="filter-button-text">FILTER</span>
-            </button>
-
             {showFilter && (
-              <div className="filter-dropdown">
+              <div style={{
+                position:     'absolute',
+                top:          'calc(100% + 8px)',
+                left:         0,
+                background:   '#FFFFFF',
+                border:       '1px solid rgba(0,62,166,0.15)',
+                borderRadius: '12px',
+                overflow:     'hidden',
+                zIndex:       300,
+                minWidth:     '100%',
+                width:        '100%',
+                boxShadow:    '0px 10px 30px rgba(0,0,0,0.15)',
+              }}>
                 {categories.map((cat, i) => (
                   <button
                     key={cat}
                     onClick={() => { setActiveCategory(cat); setShowFilter(false); }}
-                    className={`filter-option ${activeCategory === cat ? 'active' : ''}`}
-                    style={{ borderTop: i > 0 ? '1px solid rgba(0,0,0,0.06)' : 'none' }}
+                    style={{
+                      width:          '100%',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'space-between',
+                      padding:        '12px 14px 12px 14.5px',
+                      background:     activeCategory === cat ? 'rgba(43,114,251,0.08)' : 'transparent',
+                      border:         'none',
+                      borderTop:      i > 0 ? '1px solid rgba(0,62,166,0.08)' : 'none',
+                      cursor:         'pointer',
+                      transition:     'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'rgba(0,62,166,0.05)'; }}
+                    onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <span className={`filter-option-text ${activeCategory === cat ? 'active' : ''}`}>
+                    <span style={{
+                      fontFamily:  'Montserrat, Arial, sans-serif',
+                      fontSize:    '13.5px',
+                      color:       activeCategory === cat ? '#1e3a5f' : '#545454',
+                      fontWeight:  activeCategory === cat ? 700 : 400,
+                      whiteSpace:  'nowrap',
+                    }}>
                       {cat}
                     </span>
-                    <div className={`filter-option-count ${activeCategory === cat ? 'active' : ''}`}>
-                      <span className="filter-option-count-text">
+                    <div style={{
+                      background:     activeCategory === cat ? '#003ea6' : 'rgba(43,114,251,0.15)',
+                      borderRadius:   '6px',
+                      minWidth:       '24px',
+                      height:         '20px',
+                      display:        'flex',
+                      alignItems:     'center',
+                      justifyContent: 'center',
+                      padding:        '0 6px',
+                      flexShrink:     0,
+                      marginLeft:     '0',
+                    }}>
+                      <span style={{
+                        fontFamily: 'Montserrat, Arial, sans-serif',
+                        fontWeight: 700,
+                        fontSize:   '11px',
+                        color:      activeCategory === cat ? '#FFFFFF' : '#1e3a5f',
+                      }}>
                         {categoryCounts[cat]}
                       </span>
                     </div>
@@ -362,13 +579,42 @@ const DiscountsView = ({
                 ))}
               </div>
             )}
+            </div>
+
+            <button
+              onClick={() => setShowFilter(f => !f)}
+              style={{
+                height:         '40px',
+                padding:        '0 18px',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            '8px',
+                background:     '#003ea6',
+                border:         'none',
+                borderRadius:   '10px',
+                cursor:         'pointer',
+                flexShrink:     0,
+                boxShadow:      '0px 4px 6px -4px rgba(0,0,0,0.1), 0px 10px 15px -3px rgba(0,0,0,0.1)',
+                transition:     'opacity 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
+              </svg>
+              <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '13px', color: '#FFFFFF', whiteSpace: 'nowrap' }}>
+                FILTER
+              </span>
+            </button>
           </div>
         </div>
 
         {/* ── Cards grid ────────────────────────────────────────────────────── */}
         {filtered.length > 0 ? (
-          <div className={`discounts-grid ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
-            {filtered.map(item => (
+          <div className={`discounts-grid ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`} style={{ marginLeft: '27px', marginRight: '27.5px', marginTop: '-8px' }}>
+            {filtered.map((item) => (
               <DiscountCard key={item.id} item={item} />
             ))}
           </div>

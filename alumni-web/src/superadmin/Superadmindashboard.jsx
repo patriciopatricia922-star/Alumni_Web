@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import SuperAdminDashboardView from "./views/SuperAdminDashboardView";
 import { buildAllKpiInsights } from "../services/kpiInsightsService";
+import { useAlumniType } from "./contexts/AlumniTypeContext";
+import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
 const SATISFACTION_SCORE = {
   'Very Satisfied':    5,
@@ -168,6 +170,24 @@ const institutionalKpis = {
       trend: { dir: "none", delta: "" },
     },
   ],
+  seniorrhigh: [
+    {
+      id: "shs_pursued_undergrad",
+      category: "Senior High",
+      label: "SHS Alumni Who Pursued Undergraduate Degree",
+      value: "0%", progress: 0, target: 100,
+      targetLabel: "Goal: 100%",
+      trend: { dir: "none", delta: "" },
+    },
+    {
+      id: "shs_pursued_undergrad_nu",
+      category: "Senior High",
+      label: "SHS Alumni Who Pursued Undergraduate at NU",
+      value: "0%", progress: 0, target: 100,
+      targetLabel: "Goal: 100%",
+      trend: { dir: "none", delta: "" },
+    },
+  ],
 };
 
 const buildCareerAlignmentData = (predictions) => {
@@ -194,6 +214,8 @@ const buildCareerAlignmentData = (predictions) => {
 
 const SuperAdminDashboard = () => {
 
+  const { alumniType } = useAlumniType();
+
   const [activeKpiTab, setActiveKpiTab] = useState("employment");
 
   const [alumniCount,          setAlumniCount]          = useState('—');
@@ -206,6 +228,18 @@ const SuperAdminDashboard = () => {
   const [satisfactionSub,      setSatisfactionSub]       = useState('based on feedback');
   const [employmentRate,       setEmploymentRate]        = useState('—');
   const [employmentRateSub,    setEmploymentRateSub]     = useState('loading...');
+
+  const [shsAlumniCount,          setShsAlumniCount]          = useState('—');
+  const [shsAlumniSubText,        setShsAlumniSubText]         = useState('loading...');
+  const [shsSurveyCompletionRate, setShsSurveyCompletionRate]  = useState('—');
+  const [shsSurveySubText,        setShsSurveySubText]         = useState('loading...');
+  const [shsRetentionRate,        setShsRetentionRate]         = useState('—');
+  const [shsRetentionSub,         setShsRetentionSub]          = useState('loading...');
+  const [shsAlumniSatisfaction,   setShsAlumniSatisfaction]    = useState('—');
+  const [shsSatisfactionSub,      setShsSatisfactionSub]       = useState('based on feedback');
+
+  const [shsPostGradPathData,     setShsPostGradPathData]      = useState([]);
+  const [shsContinuedStudiesData, setShsContinuedStudiesData]  = useState([]);
 
   const [kpiData, setKpiData] = useState(institutionalKpis);
 
@@ -220,53 +254,85 @@ const SuperAdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
 
-      const { count: alumniTotal, error: alumniErr } = await supabase
+      const { data: allAlumni, error: alumniErr } = await supabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
+        .select('id, program, created_at')
         .eq('role', 'alumni');
-      if (!alumniErr) setAlumniCount(String(alumniTotal ?? 0));
-      else console.error('Alumni count error:', alumniErr.message);
+
+      if (alumniErr) {
+        console.error('Alumni fetch error:', alumniErr.message);
+        return;
+      }
+
+      const alumniRows    = allAlumni ?? [];
+      const collegeAlumni = alumniRows.filter(u => isCollegeProgram(u.program));
+      const shsAlumni     = alumniRows.filter(u => isSHSProgram(u.program));
+      const collegeIds    = new Set(collegeAlumni.map(u => u.id));
+      const shsIds        = new Set(shsAlumni.map(u => u.id));
+
+      setAlumniCount(String(collegeAlumni.length));
+      setShsAlumniCount(String(shsAlumni.length));
 
       const now              = new Date();
-      const startOfMonth     = new Date(now.getFullYear(), now.getMonth(),     1).toISOString();
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const startOfMonth     = new Date(now.getFullYear(), now.getMonth(),     1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-      const { count: newThisMonth, error: newErr } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'alumni')
-        .gte('created_at', startOfMonth);
-      if (!newErr) setAlumniSubText(`+${newThisMonth ?? 0} new this month`);
+      const newCollegeThisMonth = collegeAlumni.filter(u => new Date(u.created_at) >= startOfMonth).length;
+      const newShsThisMonth     = shsAlumni.filter(u => new Date(u.created_at) >= startOfMonth).length;
+      setAlumniSubText(`+${newCollegeThisMonth} new this month`);
+      setShsAlumniSubText(`+${newShsThisMonth} new this month`);
 
-      const { count: completed, error: surveyErr } = await supabase
+      const { data: allSurveyRows, error: surveyFetchErr } = await supabase
         .from('survey_progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('completed', true);
+        .select(
+          'user_id, completed, last_updated, completed_at, ' +
+          'employment_information_data, educational_background_data, ' +
+          'alumni_engagement_data, job_experience_data, ' +
+          'feedback_university_data, skills_competencies_data, ' +
+          'shs_feedback_and_engagement_data, shs_educational_background_data, ' +
+          'shs_employment_information_data, shs_job_experience_data, ' +
+          'shs_skills_and_competencies_data'
+        );
 
-      if (!surveyErr) {
-        const total = alumniTotal ?? 0;
-        const rate  = total > 0 ? Math.round(((completed ?? 0) / total) * 100) : 0;
-        setSurveyCompletionRate(`${rate}%`);
+      if (surveyFetchErr) {
+        console.error('Survey fetch error:', surveyFetchErr.message);
+        return;
+      }
 
-        const { count: completedThisMonth } = await supabase
-          .from('survey_progress').select('*', { count: 'exact', head: true })
-          .eq('completed', true).gte('last_updated', startOfMonth);
-        const { count: completedLastMonth } = await supabase
-          .from('survey_progress').select('*', { count: 'exact', head: true })
-          .eq('completed', true)
-          .gte('last_updated', startOfLastMonth)
-          .lt('last_updated', startOfMonth);
+      const allRowsRaw         = allSurveyRows ?? [];
+      const collegeSurveyRows  = allRowsRaw.filter(r => collegeIds.has(r.user_id));
+      const shsSurveyRows      = allRowsRaw.filter(r => shsIds.has(r.user_id));
 
-        const thisM = completedThisMonth ?? 0;
-        const lastM = completedLastMonth ?? 0;
-        if (lastM === 0) {
-          setSurveySubText(thisM > 0 ? `+${thisM} completed this month` : 'No completions yet');
-        } else {
-          const diff = thisM - lastM;
-          setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
-        }
+      const collegeCompleted = collegeSurveyRows.filter(r => r.completed).length;
+      const shsCompleted     = shsSurveyRows.filter(r => r.completed).length;
+
+      setSurveyCompletionRate(collegeAlumni.length > 0 ? `${Math.round((collegeCompleted / collegeAlumni.length) * 100)}%` : '0%');
+      setShsSurveyCompletionRate(shsAlumni.length > 0 ? `${Math.round((shsCompleted / shsAlumni.length) * 100)}%` : '0%');
+
+      const collegeCompletedThisMonth = collegeSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfMonth
+      ).length;
+      const collegeCompletedLastMonth = collegeSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfLastMonth && new Date(r.last_updated) < startOfMonth
+      ).length;
+      if (collegeCompletedLastMonth === 0) {
+        setSurveySubText(collegeCompletedThisMonth > 0 ? `+${collegeCompletedThisMonth} completed this month` : 'No completions yet');
       } else {
-        console.error('Survey completion error:', surveyErr.message);
+        const diff = collegeCompletedThisMonth - collegeCompletedLastMonth;
+        setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
+      }
+
+      const shsCompletedThisMonth = shsSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfMonth
+      ).length;
+      const shsCompletedLastMonth = shsSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfLastMonth && new Date(r.last_updated) < startOfMonth
+      ).length;
+      if (shsCompletedLastMonth === 0) {
+        setShsSurveySubText(shsCompletedThisMonth > 0 ? `+${shsCompletedThisMonth} completed this month` : 'No completions yet');
+      } else {
+        const diff = shsCompletedThisMonth - shsCompletedLastMonth;
+        setShsSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
       }
 
       try {
@@ -295,51 +361,53 @@ const SuperAdminDashboard = () => {
       } catch (e) { console.error('Active programs error:', e); }
 
       try {
-        const { data: feedbackRows, error: feedbackErr } = await supabase
-          .from('survey_progress')
-          .select('feedback_university_data');
-
-        if (feedbackErr) {
-          console.error('Alumni satisfaction error:', feedbackErr.message);
-          setAlumniSatisfaction('—');
-          setSatisfactionSub('Unable to load');
-        } else if (feedbackRows) {
-          const scores = feedbackRows
+        const collegeSat = (() => {
+          const scores = collegeSurveyRows
             .filter(r => r.feedback_university_data !== null)
             .map(r => {
               const parsed = safeParse(r.feedback_university_data);
               return SATISFACTION_SCORE[parsed?.satisfaction] || null;
             })
             .filter(Boolean);
+          if (scores.length === 0) return { avg: 'N/A', count: 0 };
+          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+          return { avg: avg.toFixed(1), count: scores.length };
+        })();
 
-          if (scores.length > 0) {
-            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-            setAlumniSatisfaction(avg.toFixed(1));
-            setSatisfactionSub(`Based on ${scores.length} response${scores.length !== 1 ? 's' : ''}`);
-          } else {
-            setAlumniSatisfaction('N/A');
-            setSatisfactionSub('No feedback yet');
-          }
+        if (collegeSat.count > 0) {
+          setAlumniSatisfaction(collegeSat.avg);
+          setSatisfactionSub(`Based on ${collegeSat.count} response${collegeSat.count !== 1 ? 's' : ''}`);
+        } else {
+          setAlumniSatisfaction('N/A');
+          setSatisfactionSub('No feedback yet');
+        }
+
+        const shsSat = (() => {
+          const scores = shsSurveyRows
+            .filter(r => r.shs_feedback_and_engagement_data !== null)
+            .map(r => {
+              const parsed = safeParse(r.shs_feedback_and_engagement_data);
+              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
+            })
+            .filter(Boolean);
+          if (scores.length === 0) return { avg: 'N/A', count: 0 };
+          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+          return { avg: avg.toFixed(1), count: scores.length };
+        })();
+
+        if (shsSat.count > 0) {
+          setShsAlumniSatisfaction(shsSat.avg);
+          setShsSatisfactionSub(`Based on ${shsSat.count} response${shsSat.count !== 1 ? 's' : ''}`);
+        } else {
+          setShsAlumniSatisfaction('N/A');
+          setShsSatisfactionSub('No feedback yet');
         }
       } catch (e) { console.error('Alumni satisfaction error:', e); }
 
-      const { data: allRows, error: allErr } = await supabase
-        .from('survey_progress')
-        .select(
-          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data, feedback_university_data, skills_competencies_data'
-        );
-
-      if (allErr) {
-        console.error('Institutional KPI fetch error:', allErr.message);
-        return;
-      }
-
-      const surveyRows = allRows ?? [];
-
-      const insights = buildAllKpiInsights(surveyRows);
+      const insights = buildAllKpiInsights(collegeSurveyRows);
       setKpiInsights(insights);
 
-      const parsed = surveyRows.map(row => ({
+      const parsed = collegeSurveyRows.map(row => ({
         emp:    safeParse(row.employment_information_data),
         edu:    safeParse(row.educational_background_data),
         eng:    safeParse(row.alumni_engagement_data),
@@ -474,6 +542,86 @@ const SuperAdminDashboard = () => {
         setEmploymentRateSub('No employment data yet');
       }
 
+      const shsWithEduData = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
+      const shsRetained = shsWithEduData.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
+          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
+          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
+        return val === 'Yes' || val === true || val === 1;
+      }).length;
+
+      if (shsWithEduData.length > 0) {
+        const retPct = Math.round((shsRetained / shsWithEduData.length) * 100);
+        setShsRetentionRate(`${retPct}%`);
+        setShsRetentionSub(`${shsRetained} of ${shsWithEduData.length} continued studies`);
+      } else {
+        setShsRetentionRate('N/A');
+        setShsRetentionSub('No education data yet');
+      }
+
+      const postGradCounts = {};
+      shsSurveyRows.forEach(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return;
+        const path = edu.post_graduation_path || edu.postGraduationPath || edu.after_graduation ||
+          edu.afterGraduation || edu.plans_after_shs || edu.plansAfterShs ||
+          edu.what_did_you_do || edu.whatDidYouDo || '';
+        if (!path) return;
+        postGradCounts[path] = (postGradCounts[path] || 0) + 1;
+      });
+      setShsPostGradPathData(
+        Object.entries(postGradCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
+      );
+
+      let shsContinuedAtNu = 0, shsContinuedElsewhere = 0, shsDidNotContinue = 0;
+      shsSurveyRows.forEach(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return;
+        const pursued = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
+          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
+          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
+        const didPursue = pursued === 'Yes' || pursued === true || pursued === 1;
+        if (!didPursue) { shsDidNotContinue++; return; }
+        const school = edu.school || edu.institution || edu.university ||
+          edu.undergraduate_school || edu.undergraduateSchool || edu.continued_at || edu.continuedAt || '';
+        if (isNuBranch(school)) shsContinuedAtNu++; else shsContinuedElsewhere++;
+      });
+      setShsContinuedStudiesData(
+        [
+          { name: 'Continued at NU', value: shsContinuedAtNu },
+          { name: 'Continued Elsewhere', value: shsContinuedElsewhere },
+          { name: 'Did Not Continue', value: shsDidNotContinue },
+        ].filter(d => d.value > 0)
+      );
+
+      const shsWithEduRows = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
+      const shsPursuedUndergrad = shsWithEduRows.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
+          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
+          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
+        return val === 'Yes' || val === true || val === 1;
+      }).length;
+      const shsPursuedUndergradPct = shsWithEduRows.length > 0
+        ? Math.round((shsPursuedUndergrad / shsWithEduRows.length) * 100) : 0;
+
+      const shsPursuedUndergradNu = shsWithEduRows.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
+          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
+          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
+        if (val !== 'Yes' && val !== true && val !== 1) return false;
+        const school = edu.school || edu.institution || edu.university ||
+          edu.undergraduate_school || edu.undergraduateSchool || edu.continued_at || edu.continuedAt || '';
+        return isNuBranch(school);
+      }).length;
+      const shsPursuedUndergradNuPct = shsWithEduRows.length > 0
+        ? Math.round((shsPursuedUndergradNu / shsWithEduRows.length) * 100) : 0;
+
       setKpiData({
         employment: institutionalKpis.employment.map(kpi => {
           switch (kpi.id) {
@@ -530,6 +678,27 @@ const SuperAdminDashboard = () => {
               return kpi;
           }
         }),
+
+        seniorrhigh: institutionalKpis.seniorrhigh.map(kpi => {
+          switch (kpi.id) {
+            case 'shs_pursued_undergrad':
+              return {
+                ...kpi,
+                value: `${shsPursuedUndergradPct}%`,
+                progress: shsPursuedUndergradPct,
+                targetLabel: `Goal: 100% (${shsPursuedUndergrad} of ${shsWithEduRows.length})`,
+              };
+            case 'shs_pursued_undergrad_nu':
+              return {
+                ...kpi,
+                value: `${shsPursuedUndergradNuPct}%`,
+                progress: shsPursuedUndergradNuPct,
+                targetLabel: `Goal: 100% (${shsPursuedUndergradNu} of ${shsWithEduRows.length})`,
+              };
+            default:
+              return kpi;
+          }
+        }),
       });
     };
 
@@ -565,13 +734,23 @@ const SuperAdminDashboard = () => {
 
         const { data: surveyData } = await supabase
           .from('survey_progress')
-          .select('employment_information_data');
+          .select('user_id, employment_information_data');
+
+        const { data: userPrograms } = await supabase
+          .from('users')
+          .select('id, program')
+          .eq('role', 'alumni');
+
+        const collegeUserIds = new Set(
+          (userPrograms ?? []).filter(u => isCollegeProgram(u.program)).map(u => u.id)
+        );
 
         const employmentStatuses = {
           'Employed': 0, 'Unemployed': 0, 'Self-Employed': 0, 'Student': 0, 'Contractual': 0,
         };
 
         surveyData?.forEach(row => {
+          if (!collegeUserIds.has(row.user_id)) return;
           const parsed = safeParse(row.employment_information_data);
           if (!parsed) return;
           const status = parsed.employment_status
@@ -633,9 +812,10 @@ const SuperAdminDashboard = () => {
         if (Object.keys(skillCount).length === 0) {
           const { data: surveyEmpData } = await supabase
             .from('survey_progress')
-            .select('employment_information_data');
+            .select('user_id, employment_information_data');
 
           surveyEmpData?.forEach(row => {
+            if (!collegeUserIds.has(row.user_id)) return;
             const parsed = safeParse(row.employment_information_data);
             if (!parsed) return;
             const factors = parsed.job_factors || parsed.first_job_factors;
@@ -683,18 +863,29 @@ const SuperAdminDashboard = () => {
     { label: "Alumni Satisfaction",  value: alumniSatisfaction,   sub: satisfactionSub    },
   ];
 
+  const shsKpis = [
+    { label: "Registered Alumni",    value: shsAlumniCount,          sub: shsAlumniSubText   },
+    { label: "Survey Response Rate", value: shsSurveyCompletionRate, sub: shsSurveySubText   },
+    { label: "Retention Rate",       value: shsRetentionRate,        sub: shsRetentionSub    },
+    { label: "Alumni Satisfaction",  value: shsAlumniSatisfaction,   sub: shsSatisfactionSub },
+  ];
+
   return (
     <SuperAdminDashboardView
       activeKpiTab={activeKpiTab}
       setActiveKpiTab={setActiveKpiTab}
       kpiData={kpiData}
       kpis2={kpis2}
+      shsKpis={shsKpis}
       employmentAlignmentData={employmentAlignmentData}
       employmentStatusData={employmentStatusData}
       inDemandSkillsData={inDemandSkillsData}
       careerAlignmentData={careerAlignmentData}
       loadingCharts={loadingCharts}
       kpiInsights={kpiInsights}
+      alumniType={alumniType}
+      shsPostGradPathData={shsPostGradPathData}
+      shsContinuedStudiesData={shsContinuedStudiesData}
     />
   );
 };

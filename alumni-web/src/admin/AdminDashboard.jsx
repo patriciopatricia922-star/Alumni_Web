@@ -6,14 +6,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import AdminDashboardView from "./views/AdminDashboardView";
 import { buildAllKpiInsights } from "../services/kpiInsightsService";
-// ↓ Corrected from friend's "./contexts/..." — must match the single canonical
-//   location used by AdminSidebar and the rest of your project.
-//   Both files now import the same module instance, so the Provider and
-//   consumers share one context object and useContext() resolves correctly.
 import { useAlumniType } from "./contexts/AlumniTypeContext";
+import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
 // ============================================================================
 // SATISFACTION SCORE MAPPING
+// Shared by both College and SHS satisfaction computation.
 // ============================================================================
 const SATISFACTION_SCORE = {
   'Very Satisfied':    5,
@@ -74,8 +72,6 @@ const UNEMPLOYED_STATUSES = new Set([
 
 // ============================================================================
 // NU BRANCH KEYWORDS
-// All known National University branches — used to detect if an alumni
-// pursued graduate studies at any NU campus.
 // ============================================================================
 const NU_BRANCH_KEYWORDS = [
   'nu manila',
@@ -124,9 +120,40 @@ const safeParse = (value) => {
 };
 
 // ============================================================================
+// computeSatisfaction
+// Generic helper — accepts an array of raw JSONB values (already fetched) and
+// the field name that holds the satisfaction string inside each parsed object.
+//
+// Used by both College (feedback_university_data → parsed.satisfaction) and
+// SHS (shs_feedback_and_engagement_data → parsed.satisfaction).
+// Returns { avg: string|'N/A', count: number }.
+// ============================================================================
+const computeSatisfaction = (rows, dataField, innerField = 'satisfaction') => {
+  const scores = rows
+    .filter(r => r[dataField] !== null && r[dataField] !== undefined)
+    .map(r => {
+      const parsed = safeParse(r[dataField]);
+      return SATISFACTION_SCORE[parsed?.[innerField]] || null;
+    })
+    .filter(Boolean);
+
+  if (scores.length === 0) return { avg: 'N/A', count: 0 };
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  return { avg: avg.toFixed(1), count: scores.length };
+};
+
+// ============================================================================
+// computeSurveyRate
+// Generic helper — given the total count for a cohort and the number of
+// completed rows that belong to that cohort, returns a formatted percentage.
+// ============================================================================
+const computeSurveyRate = (completedCount, totalCount) => {
+  if (totalCount === 0) return '0%';
+  return `${Math.round((completedCount / totalCount) * 100)}%`;
+};
+
+// ============================================================================
 // INSTITUTIONAL KPIs STRUCTURE — 9 KPIs across 3 tabs + SHS tab
-// seniorrhigh tab added from friend's version — KPI values are passed through
-// untouched until SHS-specific survey data and computation logic are ready.
 // ============================================================================
 const institutionalKpis = {
   employment: [
@@ -209,8 +236,6 @@ const institutionalKpis = {
       trend: { dir: "none", delta: "" },
     },
   ],
-  // Added from friend's version. Passed through untouched in setKpiData until
-  // SHS-specific computation logic is implemented.
   seniorrhigh: [
     {
       id: "shs_pursued_undergrad",
@@ -269,15 +294,12 @@ const buildCareerAlignmentData = (predictions) => {
 // ============================================================================
 const AdminDashboard = () => {
 
-  // alumniType drives view-level filtering (College vs SHS). The value is set
-  // by the AlumniTypeSwitcher in AdminSidebar and shared via context so this
-  // page re-renders automatically when the user toggles.
   const { alumniType } = useAlumniType();
 
   // ── Tab ──────────────────────────────────────────────────────────────────
   const [activeKpiTab, setActiveKpiTab] = useState("employment");
 
-  // ── Alumni Tracer stat cards ──────────────────────────────────────────────
+  // ── College Alumni stat cards ─────────────────────────────────────────────
   const [alumniCount,          setAlumniCount]          = useState('—');
   const [alumniSubText,        setAlumniSubText]         = useState('loading...');
   const [surveyCompletionRate, setSurveyCompletionRate]  = useState('—');
@@ -287,126 +309,302 @@ const AdminDashboard = () => {
   const [alumniSatisfaction,   setAlumniSatisfaction]    = useState('—');
   const [satisfactionSub,      setSatisfactionSub]       = useState('based on feedback');
 
+  // ── SHS Alumni stat cards ─────────────────────────────────────────────────
+  // Each mirrors the equivalent College state above, prefixed with "shs".
+  const [shsAlumniCount,          setShsAlumniCount]          = useState('—');
+  const [shsAlumniSubText,        setShsAlumniSubText]         = useState('loading...');
+  const [shsSurveyCompletionRate, setShsSurveyCompletionRate]  = useState('—');
+  const [shsSurveySubText,        setShsSurveySubText]         = useState('loading...');
+  const [shsRetentionRate,        setShsRetentionRate]         = useState('—');
+  const [shsRetentionSub,         setShsRetentionSub]          = useState('loading...');
+  const [shsAlumniSatisfaction,   setShsAlumniSatisfaction]    = useState('—');
+  const [shsSatisfactionSub,      setShsSatisfactionSub]       = useState('based on feedback');
+
   // ── Institutional KPI grid ────────────────────────────────────────────────
   const [kpiData, setKpiData] = useState(institutionalKpis);
 
-  // ── Chart data ────────────────────────────────────────────────────────────
+  // ── College chart data ────────────────────────────────────────────────────
   const [employmentAlignmentData, setEmploymentAlignmentData] = useState([]);
   const [employmentStatusData,    setEmploymentStatusData]    = useState([]);
   const [inDemandSkillsData,      setInDemandSkillsData]      = useState([]);
   const [careerAlignmentData,     setCareerAlignmentData]     = useState([]);
   const [loadingCharts,           setLoadingCharts]           = useState(true);
 
-  // ── Dynamic KPI insights (employment / feedback / engagement) ─────────────
+  // ── SHS chart data ────────────────────────────────────────────────────────
+  const [shsPostGradPathData,    setShsPostGradPathData]    = useState([]);
+  const [shsContinuedStudiesData, setShsContinuedStudiesData] = useState([]);
+
+  // ── Dynamic KPI insights ──────────────────────────────────────────────────
   const [kpiInsights, setKpiInsights] = useState(null);
 
   // ==========================================================================
   // KPI DATA FETCHING
+  // Fetches all alumni, then partitions into College / SHS sets so both
+  // stat cards and survey rows can be independently computed in one pass.
   // ==========================================================================
   useEffect(() => {
     const fetchStats = async () => {
 
-      // ── 1. Registered alumni count ────────────────────────────────────────
-      const { count: alumniTotal, error: alumniErr } = await supabase
+      // ── 1. Fetch all alumni users with their program column ───────────────
+      // We need the program field to partition College vs SHS.
+      const { data: allAlumni, error: alumniErr } = await supabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
+        .select('id, program, created_at')
         .eq('role', 'alumni');
-      if (!alumniErr) setAlumniCount(String(alumniTotal ?? 0));
-      else console.error('Alumni count error:', alumniErr.message);
 
-      // ── 2. New alumni this month ──────────────────────────────────────────
-      const now = new Date();
-      const startOfMonth     = new Date(now.getFullYear(), now.getMonth(),     1).toISOString();
-      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-
-      const { count: newThisMonth, error: newErr } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'alumni')
-        .gte('created_at', startOfMonth);
-      if (!newErr) setAlumniSubText(`+${newThisMonth ?? 0} new this month`);
-
-      // ── 3. Survey completion rate ─────────────────────────────────────────
-      const { count: completed, error: surveyErr } = await supabase
-        .from('survey_progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('completed', true);
-
-      if (!surveyErr) {
-        const total = alumniTotal ?? 0;
-        const rate  = total > 0 ? Math.round(((completed ?? 0) / total) * 100) : 0;
-        setSurveyCompletionRate(`${rate}%`);
-
-        const { count: completedThisMonth } = await supabase
-          .from('survey_progress').select('*', { count: 'exact', head: true })
-          .eq('completed', true).gte('last_updated', startOfMonth);
-        const { count: completedLastMonth } = await supabase
-          .from('survey_progress').select('*', { count: 'exact', head: true })
-          .eq('completed', true)
-          .gte('last_updated', startOfLastMonth)
-          .lt('last_updated', startOfMonth);
-
-        const thisM = completedThisMonth ?? 0;
-        const lastM = completedLastMonth ?? 0;
-        if (lastM === 0) {
-          setSurveySubText(thisM > 0 ? `+${thisM} completed this month` : 'No completions yet');
-        } else {
-          const diff = thisM - lastM;
-          setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
-        }
-      } else {
-        console.error('Survey completion error:', surveyErr.message);
-      }
-
-      // ── 4. Alumni satisfaction ────────────────────────────────────────────
-      try {
-        const { data: feedbackRows, error: feedbackErr } = await supabase
-          .from('survey_progress')
-          .select('feedback_university_data');
-
-        if (feedbackErr) {
-          console.error('Alumni satisfaction error:', feedbackErr.message);
-          setAlumniSatisfaction('—');
-          setSatisfactionSub('Unable to load');
-        } else if (feedbackRows) {
-          const scores = feedbackRows
-            .filter(r => r.feedback_university_data !== null)
-            .map(r => {
-              const parsed = safeParse(r.feedback_university_data);
-              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
-            })
-            .filter(Boolean);
-
-          if (scores.length > 0) {
-            const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-            setAlumniSatisfaction(avg.toFixed(1));
-            setSatisfactionSub(`Based on ${scores.length} response${scores.length !== 1 ? 's' : ''}`);
-          } else {
-            setAlumniSatisfaction('N/A');
-            setSatisfactionSub('No feedback yet');
-          }
-        }
-      } catch (e) { console.error('Alumni satisfaction error:', e); }
-
-      // ── 5. All 9 Institutional KPIs + dynamic insights ────────────────────
-      const { data: allRows, error: allErr } = await supabase
-        .from('survey_progress')
-        .select(
-          'employment_information_data, educational_background_data, alumni_engagement_data, job_experience_data, feedback_university_data, skills_competencies_data'
-        );
-
-      if (allErr) {
-        console.error('Institutional KPI fetch error:', allErr.message);
+      if (alumniErr) {
+        console.error('Alumni fetch error:', alumniErr.message);
         return;
       }
 
-      const surveyRows = allRows ?? [];
+      const alumniRows = allAlumni ?? [];
 
-      // ── Build dynamic insights from raw rows ──────────────────────────────
-      const insights = buildAllKpiInsights(surveyRows);
+      // Partition by program prefix — single source of truth for categorisation.
+      const collegeAlumni = alumniRows.filter(u => isCollegeProgram(u.program));
+      const shsAlumni     = alumniRows.filter(u => isSHSProgram(u.program));
+
+      const collegeIds = new Set(collegeAlumni.map(u => u.id));
+      const shsIds     = new Set(shsAlumni.map(u => u.id));
+
+      // ── 2. Registered alumni counts ───────────────────────────────────────
+      setAlumniCount(String(collegeAlumni.length));
+      setShsAlumniCount(String(shsAlumni.length));
+
+      // ── 3. New alumni this month ──────────────────────────────────────────
+      const now              = new Date();
+      const startOfMonth     = new Date(now.getFullYear(), now.getMonth(),     1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+      const newCollegeThisMonth = collegeAlumni.filter(
+        u => new Date(u.created_at) >= startOfMonth
+      ).length;
+      const newShsThisMonth = shsAlumni.filter(
+        u => new Date(u.created_at) >= startOfMonth
+      ).length;
+
+      setAlumniSubText(`+${newCollegeThisMonth} new this month`);
+      setShsAlumniSubText(`+${newShsThisMonth} new this month`);
+
+      // ── 4. Survey rows — fetch once, partition in memory ─────────────────
+      // Selecting every column needed across College and SHS avoids a second
+      // round-trip.  The shs_* columns are null for College respondents and
+      // vice-versa, so there is no bleed between cohorts.
+      const { data: allSurveyRows, error: surveyFetchErr } = await supabase
+        .from('survey_progress')
+        .select(
+          'user_id, completed, last_updated, completed_at, ' +
+          // College columns
+          'employment_information_data, educational_background_data, ' +
+          'alumni_engagement_data, job_experience_data, ' +
+          'feedback_university_data, skills_competencies_data, ' +
+          // SHS columns
+          'shs_feedback_and_engagement_data, shs_educational_background_data, ' +
+          'shs_employment_information_data, shs_job_experience_data, ' +
+          'shs_skills_and_competencies_data'
+        );
+
+      if (surveyFetchErr) {
+        console.error('Survey fetch error:', surveyFetchErr.message);
+        return;
+      }
+
+      const allRows = allSurveyRows ?? [];
+
+      // Partition survey rows by cohort using the user ID sets built above.
+      const collegeSurveyRows = allRows.filter(r => collegeIds.has(r.user_id));
+      const shsSurveyRows     = allRows.filter(r => shsIds.has(r.user_id));
+
+      // ── 5. Survey completion rates ────────────────────────────────────────
+      const collegeCompleted      = collegeSurveyRows.filter(r => r.completed).length;
+      const shsCompleted          = shsSurveyRows.filter(r => r.completed).length;
+
+      setSurveyCompletionRate(computeSurveyRate(collegeCompleted, collegeAlumni.length));
+      setShsSurveyCompletionRate(computeSurveyRate(shsCompleted, shsAlumni.length));
+
+      // Month-over-month delta for College (preserves existing behaviour).
+      const collegeCompletedThisMonth = collegeSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfMonth
+      ).length;
+      const collegeCompletedLastMonth = collegeSurveyRows.filter(
+        r => r.completed &&
+             new Date(r.last_updated) >= startOfLastMonth &&
+             new Date(r.last_updated) < startOfMonth
+      ).length;
+
+      if (collegeCompletedLastMonth === 0) {
+        setSurveySubText(
+          collegeCompletedThisMonth > 0
+            ? `+${collegeCompletedThisMonth} completed this month`
+            : 'No completions yet'
+        );
+      } else {
+        const diff = collegeCompletedThisMonth - collegeCompletedLastMonth;
+        setSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
+      }
+
+      // Same delta logic for SHS.
+      const shsCompletedThisMonth = shsSurveyRows.filter(
+        r => r.completed && new Date(r.last_updated) >= startOfMonth
+      ).length;
+      const shsCompletedLastMonth = shsSurveyRows.filter(
+        r => r.completed &&
+             new Date(r.last_updated) >= startOfLastMonth &&
+             new Date(r.last_updated) < startOfMonth
+      ).length;
+
+      if (shsCompletedLastMonth === 0) {
+        setShsSurveySubText(
+          shsCompletedThisMonth > 0
+            ? `+${shsCompletedThisMonth} completed this month`
+            : 'No completions yet'
+        );
+      } else {
+        const diff = shsCompletedThisMonth - shsCompletedLastMonth;
+        setShsSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
+      }
+
+      // ── 6. Satisfaction scores ────────────────────────────────────────────
+      // College — same field as before (feedback_university_data).
+      const collegeSat = computeSatisfaction(collegeSurveyRows, 'feedback_university_data', 'satisfaction');
+      if (collegeSat.count > 0) {
+        setAlumniSatisfaction(collegeSat.avg);
+        setSatisfactionSub(`Based on ${collegeSat.count} response${collegeSat.count !== 1 ? 's' : ''}`);
+      } else {
+        setAlumniSatisfaction('N/A');
+        setSatisfactionSub('No feedback yet');
+      }
+
+      // SHS — uses shs_feedback_and_engagement_data with the same inner field.
+      const shsSat = computeSatisfaction(shsSurveyRows, 'shs_feedback_and_engagement_data', 'satisfaction');
+      if (shsSat.count > 0) {
+        setShsAlumniSatisfaction(shsSat.avg);
+        setShsSatisfactionSub(`Based on ${shsSat.count} response${shsSat.count !== 1 ? 's' : ''}`);
+      } else {
+        setShsAlumniSatisfaction('N/A');
+        setShsSatisfactionSub('No feedback yet');
+      }
+
+      // ── 7. SHS Retention Rate ─────────────────────────────────────────────
+      // "Retention" for SHS = alumni whose shs_educational_background_data
+      // indicates they continued studying (pursued undergraduate degree) at any
+      // institution.  This mirrors the College employment-rate pattern: filter
+      // to rows that have the relevant data, then compute the percentage.
+      const shsWithEduData = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
+      const shsRetained    = shsWithEduData.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        // Accept any truthy "pursued_undergrad" / "continued_studies" variant.
+        const val =
+          edu.pursued_undergrad         ??
+          edu.pursuedUndergrad          ??
+          edu.continued_studies         ??
+          edu.continuedStudies          ??
+          edu.pursue_undergraduate      ??
+          edu.pursueUndergraduate       ??
+          edu.enrolled_undergraduate    ??
+          edu.enrolledUndergraduate     ??
+          null;
+        return val === 'Yes' || val === true || val === 1;
+      }).length;
+
+      if (shsWithEduData.length > 0) {
+        const retPct = Math.round((shsRetained / shsWithEduData.length) * 100);
+        setShsRetentionRate(`${retPct}%`);
+        setShsRetentionSub(`${shsRetained} of ${shsWithEduData.length} continued studies`);
+      } else {
+        setShsRetentionRate('N/A');
+        setShsRetentionSub('No education data yet');
+      }
+
+      // ── 8. SHS Post-Graduation Path chart data ────────────────────────────
+      // Aggregates what SHS alumni did after graduation into labelled buckets
+      // for the pie/bar chart in the SHS section.
+      const postGradCounts = {};
+      shsSurveyRows.forEach(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return;
+
+        // Try multiple field-name variants authored by different survey versions.
+        const path =
+          edu.post_graduation_path    ||
+          edu.postGraduationPath      ||
+          edu.after_graduation        ||
+          edu.afterGraduation         ||
+          edu.plans_after_shs         ||
+          edu.plansAfterShs           ||
+          edu.what_did_you_do         ||
+          edu.whatDidYouDo            ||
+          '';
+
+        if (!path) return;
+        postGradCounts[path] = (postGradCounts[path] || 0) + 1;
+      });
+
+      const postGradChartData = Object.entries(postGradCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+      setShsPostGradPathData(postGradChartData);
+
+      // ── 9. SHS Continued Studies chart data ──────────────────────────────
+      // Buckets: "NU" vs "Other Institution" vs "Did Not Continue".
+      let shsContinuedAtNu    = 0;
+      let shsContinuedElsewhere = 0;
+      let shsDidNotContinue   = 0;
+
+      shsSurveyRows.forEach(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return;
+
+        const pursued =
+          edu.pursued_undergrad      ??
+          edu.pursuedUndergrad       ??
+          edu.continued_studies      ??
+          edu.continuedStudies       ??
+          edu.pursue_undergraduate   ??
+          edu.pursueUndergraduate    ??
+          edu.enrolled_undergraduate ??
+          edu.enrolledUndergraduate  ??
+          null;
+
+        const didPursue = pursued === 'Yes' || pursued === true || pursued === 1;
+
+        if (!didPursue) {
+          shsDidNotContinue++;
+          return;
+        }
+
+        const school =
+          edu.school                  ||
+          edu.institution             ||
+          edu.university              ||
+          edu.undergraduate_school    ||
+          edu.undergraduateSchool     ||
+          edu.continued_at            ||
+          edu.continuedAt             ||
+          '';
+
+        if (isNuBranch(school)) {
+          shsContinuedAtNu++;
+        } else {
+          shsContinuedElsewhere++;
+        }
+      });
+
+      const continuedStudiesChartData = [
+        { name: 'Continued at NU',           value: shsContinuedAtNu     },
+        { name: 'Continued Elsewhere',        value: shsContinuedElsewhere },
+        { name: 'Did Not Continue',           value: shsDidNotContinue    },
+      ].filter(d => d.value > 0);
+
+      setShsContinuedStudiesData(continuedStudiesChartData);
+
+      // ── 10. All 9 College Institutional KPIs + dynamic insights ──────────
+      // Build dynamic insights from College survey rows only.
+      const insights = buildAllKpiInsights(collegeSurveyRows);
       setKpiInsights(insights);
 
-      const parsed = surveyRows.map(row => ({
+      const parsedCollege = collegeSurveyRows.map(row => ({
         emp:    safeParse(row.employment_information_data),
         edu:    safeParse(row.educational_background_data),
         eng:    safeParse(row.alumni_engagement_data),
@@ -414,7 +612,6 @@ const AdminDashboard = () => {
         skills: safeParse(row.skills_competencies_data),
       }));
 
-      // Helper: is this respondent currently employed?
       const isEmployedHelper = (emp) => {
         if (!emp) return false;
         const status = emp.employment_status || emp.employmentStatus || emp.current_employment_status || '';
@@ -422,10 +619,10 @@ const AdminDashboard = () => {
         return !UNEMPLOYED_STATUSES.has(status);
       };
 
-      const withEmpData  = parsed.filter(r => r.emp !== null);
-      const withEduData  = parsed.filter(r => r.edu !== null);
+      const withEmpData  = parsedCollege.filter(r => r.emp  !== null);
+      const withEduData  = parsedCollege.filter(r => r.edu  !== null);
       const employedRows = withEmpData.filter(r => isEmployedHelper(r.emp));
-      const withJobData  = parsed.filter(r => r.job !== null);
+      const withJobData  = parsedCollege.filter(r => r.job  !== null);
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[internship KPI] all first_job_source values:',
@@ -435,10 +632,9 @@ const AdminDashboard = () => {
 
       // ── Employment tab KPIs ───────────────────────────────────────────────
 
-      // KPI 1: Absorption from Internship
       const internshipCount = withJobData.filter(r => {
         const rawSrc =
-          r.job.first_job_source   ||
+          r.job.first_job_source    ||
           r.job.how_found_first_job ||
           r.job.source_of_first_job ||
           r.job.job_source          ||
@@ -448,12 +644,10 @@ const AdminDashboard = () => {
       const internshipPct = withJobData.length > 0
         ? Math.round((internshipCount / withJobData.length) * 100) : 0;
 
-      // KPI 2: Employed Within 2 Years of Graduation
       const empWithinTwoYears = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       const empTwoYearsPct    = withEmpData.length > 0
         ? Math.round((empWithinTwoYears / withEmpData.length) * 100) : 0;
 
-      // KPI 3: Employed in Field / Related Field
       const fieldRelatedCount = employedRows.filter(r => {
         const val = r.emp.job_related_to_degree
           || r.emp.is_job_related_to_degree
@@ -466,7 +660,6 @@ const AdminDashboard = () => {
 
       // ── Career tab KPIs ───────────────────────────────────────────────────
 
-      // KPI 4: Employed Outside Field of Specialization
       const outsideFieldCount = employedRows.filter(r => {
         const val = r.emp.job_related_to_degree
           || r.emp.is_job_related_to_degree
@@ -477,7 +670,6 @@ const AdminDashboard = () => {
       const outsideFieldPct = employedRows.length > 0
         ? Math.round((outsideFieldCount / employedRows.length) * 100) : 0;
 
-      // KPI 5: Engaged in Entrepreneurship
       const entrepreneurCount = withEmpData.filter(r => {
         const status = r.emp.employment_status
           || r.emp.current_employment_status
@@ -488,7 +680,6 @@ const AdminDashboard = () => {
       const entrepreneurPct = withEmpData.length > 0
         ? Math.round((entrepreneurCount / withEmpData.length) * 100) : 0;
 
-      // KPI 6: Occupying Supervisory Positions
       const supervisoryCount = employedRows.filter(r => {
         const pos = (r.emp.job_position || r.emp.jobPosition || r.emp.position || '').toLowerCase();
         return SUPERVISORY_KEYWORDS.some(kw => pos.includes(kw));
@@ -498,7 +689,6 @@ const AdminDashboard = () => {
 
       // ── Education tab KPIs ────────────────────────────────────────────────
 
-      // KPI 7: Pursued Graduate Studies (within 1 yr)
       const gradStudiesCount = withEduData.filter(r => {
         const plans = r.edu.post_grad_plans
           || r.edu.postGradPlans
@@ -512,7 +702,6 @@ const AdminDashboard = () => {
       const gradStudiesPct = withEduData.length > 0
         ? Math.round((gradStudiesCount / withEduData.length) * 100) : 0;
 
-      // KPI 8: Pursued Graduate Studies at NU
       const nuGradStudiesCount = withEduData.filter(r => {
         const plans = r.edu.post_grad_plans
           || r.edu.postGradPlans
@@ -522,7 +711,6 @@ const AdminDashboard = () => {
           || r.edu.post_graduate_plans
           || '';
         if (plans !== 'Yes' && plans !== true) return false;
-
         const institution = r.edu.post_grad_course
           || r.edu.postGradCourse
           || r.edu.post_grad_school
@@ -535,8 +723,7 @@ const AdminDashboard = () => {
       const nuGradStudiesPct = withEduData.length > 0
         ? Math.round((nuGradStudiesCount / withEduData.length) * 100) : 0;
 
-      // KPI 9: In Positions in Professional Organizations (Leadership)
-      const withSkillsData = parsed.filter(r => r.skills !== null);
+      const withSkillsData  = parsedCollege.filter(r => r.skills !== null);
       const leadershipCount = withSkillsData.filter(r => {
         const ratings = r.skills.skill_ratings || r.skills.skillRatings || {};
         const leadershipRating =
@@ -547,7 +734,7 @@ const AdminDashboard = () => {
         return leadershipRating !== null && Number(leadershipRating) >= 4;
       }).length;
 
-      // ── Employment Rate stat card ─────────────────────────────────────────
+      // ── College Employment Rate stat card ─────────────────────────────────
       const employedStatCount = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       if (withEmpData.length > 0) {
         const empRatePct = Math.round((employedStatCount / withEmpData.length) * 100);
@@ -557,6 +744,56 @@ const AdminDashboard = () => {
         setEmploymentRate('N/A');
         setEmploymentRateSub('No employment data yet');
       }
+
+      // ── SHS Institutional KPI tab values ──────────────────────────────────
+      // Reads from shs_educational_background_data, reusing the same helpers.
+      const shsWithEduRows = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
+
+      const shsPursuedUndergrad = shsWithEduRows.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        const val =
+          edu.pursued_undergrad      ??
+          edu.pursuedUndergrad       ??
+          edu.continued_studies      ??
+          edu.continuedStudies       ??
+          edu.pursue_undergraduate   ??
+          edu.pursueUndergraduate    ??
+          edu.enrolled_undergraduate ??
+          edu.enrolledUndergraduate  ??
+          null;
+        return val === 'Yes' || val === true || val === 1;
+      }).length;
+      const shsPursuedUndergradPct = shsWithEduRows.length > 0
+        ? Math.round((shsPursuedUndergrad / shsWithEduRows.length) * 100) : 0;
+
+      const shsPursuedUndergradNu = shsWithEduRows.filter(r => {
+        const edu = safeParse(r.shs_educational_background_data);
+        if (!edu) return false;
+        const val =
+          edu.pursued_undergrad      ??
+          edu.pursuedUndergrad       ??
+          edu.continued_studies      ??
+          edu.continuedStudies       ??
+          edu.pursue_undergraduate   ??
+          edu.pursueUndergraduate    ??
+          edu.enrolled_undergraduate ??
+          edu.enrolledUndergraduate  ??
+          null;
+        if (val !== 'Yes' && val !== true && val !== 1) return false;
+        const school =
+          edu.school               ||
+          edu.institution          ||
+          edu.university           ||
+          edu.undergraduate_school ||
+          edu.undergraduateSchool  ||
+          edu.continued_at         ||
+          edu.continuedAt          ||
+          '';
+        return isNuBranch(school);
+      }).length;
+      const shsPursuedUndergradNuPct = shsWithEduRows.length > 0
+        ? Math.round((shsPursuedUndergradNu / shsWithEduRows.length) * 100) : 0;
 
       // ── Apply computed KPIs to state ──────────────────────────────────────
       setKpiData({
@@ -616,9 +853,26 @@ const AdminDashboard = () => {
           }
         }),
 
-        // SHS KPI computation is not yet implemented — pass through the
-        // initial structure so the view can render the tab without crashing.
-        seniorrhigh: institutionalKpis.seniorrhigh,
+        seniorrhigh: institutionalKpis.seniorrhigh.map(kpi => {
+          switch (kpi.id) {
+            case 'shs_pursued_undergrad':
+              return {
+                ...kpi,
+                value: `${shsPursuedUndergradPct}%`,
+                progress: shsPursuedUndergradPct,
+                targetLabel: `Goal: 100% (${shsPursuedUndergrad} of ${shsWithEduRows.length})`,
+              };
+            case 'shs_pursued_undergrad_nu':
+              return {
+                ...kpi,
+                value: `${shsPursuedUndergradNuPct}%`,
+                progress: shsPursuedUndergradNuPct,
+                targetLabel: `Goal: 100% (${shsPursuedUndergradNu} of ${shsWithEduRows.length})`,
+              };
+            default:
+              return kpi;
+          }
+        }),
       });
     };
 
@@ -627,20 +881,22 @@ const AdminDashboard = () => {
 
   // ==========================================================================
   // CHART DATA FETCHING
+  // College charts are unchanged. SHS charts (Post-Grad Path, Continued
+  // Studies) are populated in fetchStats above since they share the same
+  // survey_progress query.
   // ==========================================================================
   useEffect(() => {
     const fetchChartData = async () => {
       setLoadingCharts(true);
 
       try {
-        // ── 1. Predictions — Employment Alignment ─────────────────────────
+        // ── 1. Predictions — Employment Alignment (College only) ──────────
         const { data: predictions, error: predError } = await supabase
           .from('predictions')
           .select('*')
           .order('year', { ascending: true });
 
         if (!predError && predictions && predictions.length > 0) {
-          // ── 1a. Employment Alignment
           const programs   = [...new Set(predictions.map(p => p.program))];
           const latestYear = Math.max(...predictions.map(p => p.year));
 
@@ -651,20 +907,35 @@ const AdminDashboard = () => {
           }).sort((a, b) => b.alignment - a.alignment);
           setEmploymentAlignmentData(alignmentByProgram.slice(0, 6));
 
-          // ── 1b. Career Alignment Prediction
           setCareerAlignmentData(buildCareerAlignmentData(predictions).slice(0, 10));
         } else if (predError) {
           console.error('Predictions fetch error:', predError.message);
         }
 
-        // ── 2. Employment Status distribution ─────────────────────────────
+        // ── 2. Employment Status distribution (College only) ──────────────
         const { data: surveyData } = await supabase
           .from('survey_progress')
-          .select('employment_information_data');
+          .select('user_id, employment_information_data');
+
+        // Fetch user programs once more to filter to College rows only.
+        // (Avoids a join — the users query above is already out of scope here.)
+        const { data: userPrograms } = await supabase
+          .from('users')
+          .select('id, program')
+          .eq('role', 'alumni');
+
+        const collegeUserIds = new Set(
+          (userPrograms ?? [])
+            .filter(u => isCollegeProgram(u.program))
+            .map(u => u.id)
+        );
 
         const employmentStatuses = { 'Employed': 0, 'Unemployed': 0, 'Self-Employed': 0, 'Student': 0, 'Contractual': 0 };
 
         surveyData?.forEach(row => {
+          // Skip SHS alumni so their data doesn't inflate the College chart.
+          if (!collegeUserIds.has(row.user_id)) return;
+
           const parsed = safeParse(row.employment_information_data);
           if (!parsed) return;
           const status = parsed.employment_status
@@ -695,7 +966,7 @@ const AdminDashboard = () => {
             .map(([name, value]) => ({ name, value }))
         );
 
-        // ── 3. In-Demand Skills ───────────────────────────────────────────
+        // ── 3. In-Demand Skills ────────────────────────────────────────────
         const skillCount = {};
 
         const { data: jobsData } = await supabase
@@ -724,13 +995,13 @@ const AdminDashboard = () => {
           });
         });
 
-        // Fallback: derive skills from survey job_factors if jobs table is empty
         if (Object.keys(skillCount).length === 0) {
           const { data: surveyEmpData } = await supabase
             .from('survey_progress')
-            .select('employment_information_data');
+            .select('user_id, employment_information_data');
 
           surveyEmpData?.forEach(row => {
+            if (!collegeUserIds.has(row.user_id)) return;
             const parsed = safeParse(row.employment_information_data);
             if (!parsed) return;
             const factors = parsed.job_factors || parsed.first_job_factors;
@@ -745,7 +1016,6 @@ const AdminDashboard = () => {
           });
         }
 
-        // Final fallback: sample skills for empty-state display
         if (Object.keys(skillCount).length === 0) {
           ['Leadership', 'Communication', 'Problem Solving', 'Teamwork',
            'Project Management', 'Critical Thinking', 'Adaptability', 'Digital Literacy']
@@ -773,13 +1043,24 @@ const AdminDashboard = () => {
   }, []);
 
   // ==========================================================================
-  // ALUMNI TRACER STAT CARDS
+  // STAT CARD ARRAYS
   // ==========================================================================
+
+  // College — unchanged shape, passed as kpis2 for backward compatibility.
   const kpis2 = [
     { label: "Registered Alumni",    value: alumniCount,          sub: alumniSubText      },
     { label: "Survey Response Rate", value: surveyCompletionRate, sub: surveySubText      },
     { label: "Employment Rate",      value: employmentRate,       sub: employmentRateSub  },
     { label: "Alumni Satisfaction",  value: alumniSatisfaction,   sub: satisfactionSub    },
+  ];
+
+  // SHS — mirrors College shape; "Retention Rate" replaces "Employment Rate"
+  // because SHS alumni are typically students who may not be in the workforce.
+  const shsKpis = [
+    { label: "Registered Alumni",    value: shsAlumniCount,          sub: shsAlumniSubText       },
+    { label: "Survey Response Rate", value: shsSurveyCompletionRate,  sub: shsSurveySubText       },
+    { label: "Retention Rate",       value: shsRetentionRate,         sub: shsRetentionSub        },
+    { label: "Alumni Satisfaction",  value: shsAlumniSatisfaction,    sub: shsSatisfactionSub     },
   ];
 
   // ==========================================================================
@@ -791,6 +1072,7 @@ const AdminDashboard = () => {
       setActiveKpiTab={setActiveKpiTab}
       kpiData={kpiData}
       kpis2={kpis2}
+      shsKpis={shsKpis}
       employmentAlignmentData={employmentAlignmentData}
       employmentStatusData={employmentStatusData}
       inDemandSkillsData={inDemandSkillsData}
@@ -798,6 +1080,8 @@ const AdminDashboard = () => {
       loadingCharts={loadingCharts}
       kpiInsights={kpiInsights}
       alumniType={alumniType}
+      shsPostGradPathData={shsPostGradPathData}
+      shsContinuedStudiesData={shsContinuedStudiesData}
     />
   );
 };

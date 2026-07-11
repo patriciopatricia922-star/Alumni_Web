@@ -584,9 +584,12 @@
   border-radius: 50%;
   pointer-events: none;
 }
+/* MERGED: left offset adjusted from -2px to -12px — friend's decorative
+   positioning refinement. Purely cosmetic (background circle placement),
+   no behavior affected. */
 .survey-deco-circle--tl {
   width: 220px; height: 220px;
-  top: -150px; left: -2px;
+  top: -150px; left: -12px;
 }
 .survey-deco-circle--br {
   width: 180px; height: 180px;
@@ -629,6 +632,10 @@
   align-items: center;
 }
 
+/* MERGED: richer hover/active feedback from friend's version — adds a subtle
+   background tint, shadow, and lift on hover, plus a defined pressed state.
+   Purely visual (transition/box-shadow/transform); onClick handler, disabled
+   logic, and button text are untouched. */
 .continue-button {
   display: inline-flex;
   align-items: center;
@@ -643,12 +650,21 @@
   line-height: 1.54;
   color: #324D87;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
   white-space: nowrap;
   align-self: flex-start;
 }
 
-.continue-button:hover { opacity: 0.85; }
+.continue-button:hover {
+  background: #EEF3FF;
+  box-shadow: 0 4px 16px rgba(0, 62, 166, 0.2);
+  transform: translateY(-1px);
+}
+
+.continue-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
 
 /* ============================ PROGRESS CIRCLE ============================ */
 .progress-circle {
@@ -738,6 +754,9 @@
 }
 
 /* ============================ FOR YOU CARD ============================ */
+/* MERGED: min-height increased 145px -> 152px (friend's version) — gives
+   card content slightly more breathing room. Layout-only, no functional
+   change. */
 .for-you-card {
   background: #FFFFFF;
   border-radius: 16px;
@@ -749,7 +768,7 @@
   position: relative;
   transition: all 0.2s ease;
   box-shadow: 1px 7px 15px rgba(0, 0, 0, 0.25);
-  min-height: 145px;
+  min-height: 152px;
   justify-content: flex-start;
 }
 
@@ -856,6 +875,11 @@
   text-align: center;
 }
 
+/* KEPT (mine): friend's version changed color to #324D87, line-height to 2.3,
+   and font-size cap to 15px. Rejected — #FFED97 is an intentional accent
+   color for contrast against the icon-box gradient backgrounds, and
+   friend's change risked reducing legibility. No clear improvement, so
+   original preserved per "keep mine when uncertain." */
 .card-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
@@ -867,6 +891,10 @@
 }
 
 /* ── FIX: Was rgba(255,255,255,0.9) — near-invisible on white card bg ── */
+/* KEPT (mine): friend's version set line-height: 0.1, which would cause
+   the description text to visually overlap/clip on any multi-line content.
+   That reads as a bug, not an improvement, so original line-height (1.4)
+   is preserved. */
 .card-description {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;

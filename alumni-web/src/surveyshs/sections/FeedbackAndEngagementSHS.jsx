@@ -2,44 +2,23 @@
  * FeedbackAndEngagementSHS.jsx — Logic Layer
  * Location: src/surveyshs/FeedbackAndEngagementSHS.jsx
  *
- * Architecture follows the SHS module pattern established in
- * EducationalBackgroundSHS.jsx:
- *   • surveyConfig realtime subscription wired and ready
- *   • Two-step load: saved DB data first, then config hydration
- *   • Branch-aware validation — participate_in array + "Others" sub-field
- *   • Notification handling identical to all SHS sections
- *   • logAction on final submit — mirrors college FeedbackAndAlumniEngagement
+ * FIX: PREV_ROUTE is now resolved dynamically from sessionStorage on mount
+ * instead of being hardcoded to shs-employment-information.
  *
- * This is the final section of the SHS survey. It ends with handleSubmit
- * (not handleNext), which:
- *   1. Validates the form
- *   2. Persists to DB via saveSectionProgress
- *   3. Logs the audit event via logAction
- *   4. Reads the survey_claim_reward sessionStorage flag (same as college)
- *   5. Navigates to /rewards?survey_completed=1 or /surveyshs/shs-complete
+ * Why: Two paths reach this component:
+ *   Skip path  (Studying/Graduated/Stopped) → arrives from Educational Background
+ *   Full path  (Working)                    → arrives from Skills and Competencies
  *
- * Reached from:
- *   • EducationalBackgroundSHS  (when status === 'Stopped' or 'Currently Studying'/'Graduated')
- *   • SkillsAndCompetenciesSHS  (when status === 'Working', after completing all Working-path sections)
+ * The previous hardcoded value was only correct for the Working path, and
+ * even then it pointed to Employment rather than Skills. Both paths now write
+ * sessionStorage.shs_feedback_prev_route before navigating here, so the back
+ * button always returns to the correct preceding section.
  *
- * Form fields:
- *   — Feedback for the University —
- *   satisfaction            Radio  (Very Satisfied → Very Dissatisfied)
- *   recommend               Radio  (Yes / No)
- *   suggestions             Textarea
+ * Fallback: if sessionStorage is unavailable or the key is missing (e.g. direct
+ * navigation, page refresh), falls back to shs-educational-background — the
+ * lowest common ancestor that both paths share.
  *
- *   — Alumni Engagement —
- *   informed_about_events   Radio  (Yes / No)
- *   participate_in          Checkbox array
- *   other_participate       Text   (visible when 'Others' is checked)
- *
- * CHANGE LOG:
- *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
- *     count. CURRENT_SECTION corrected from 5 → 6 (Feedback is the 6th and
- *     final section; Skills is section 5). This ensures computeFormPct() caps
- *     at 100% and that saveSectionProgress stores percentage = 100 for the
- *     last section via the isLast guard in surveyProgress.js.
- *   • PREV_ROUTE corrected: removed spurious /sections/ path segment.
+ * All other logic is unchanged from the original.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -50,21 +29,16 @@ import { logAction } from '../../lib/auditLogger';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import FeedbackAndEngagementViewSHS from '../views/FeedbackAndEngagementViewSHS';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Survey constants
-// ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
-const CURRENT_SECTION = 6;   // FIX: was 5 — Feedback is section 6, Skills is section 5
+const TOTAL_SECTIONS  = 6;
+const CURRENT_SECTION = 6;
 const SECTION_KEY     = 'shs_feedback_and_engagement';
-const PREV_ROUTE      = '/surveyshs/shs-employment-information'; // FIX: removed spurious /sections/
 
-// Submit destinations — mirrors college section sessionStorage pattern exactly
+// Fallback used when sessionStorage is empty (direct nav / page refresh)
+const PREV_ROUTE_FALLBACK = '/surveyshs/shs-educational-background';
+
 const SUBMIT_ROUTE_DEFAULT = '/surveyshs/shs-complete';
 const SUBMIT_ROUTE_REWARD  = '/rewards?survey_completed=1';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Static option lists
-// ─────────────────────────────────────────────────────────────────────────────
 const SATISFACTION_OPTIONS = [
   'Very Satisfied',
   'Satisfied',
@@ -82,9 +56,6 @@ const PARTICIPATE_OPTIONS = [
   'Others',
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty form shape
-// ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   satisfaction:          '',
   recommend:             '',
@@ -94,34 +65,22 @@ const EMPTY_FORM = {
   other_participate:     '',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form completion percentage
-// ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const base = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
-
   const required = [
-    'satisfaction',
-    'recommend',
-    'suggestions',
-    'informed_about_events',
-    'participate_in',
+    'satisfaction', 'recommend', 'suggestions',
+    'informed_about_events', 'participate_in',
   ];
   if (form.participate_in.includes('Others')) required.push('other_participate');
-
   const filled = required.filter((k) => {
     const v = form[k];
     if (Array.isArray(v)) return v.length > 0;
     return v && String(v).trim() !== '';
   }).length;
-
   const contrib = (filled / required.length) * (1 / TOTAL_SECTIONS) * 100;
   return Math.min(parseFloat((base + contrib).toFixed(2)), 100);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
@@ -152,11 +111,19 @@ const formatTime = (iso) => {
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Controller
-// ─────────────────────────────────────────────────────────────────────────────
 const FeedbackAndEngagementSHS = () => {
   const navigate = useNavigate();
+
+  // ── Resolve prevRoute from sessionStorage on mount ──────────────────────
+  // Written by EducationalBackgroundSHS (skip path) and
+  // SkillsAndCompetenciesSHS (Working path) before navigating here.
+  const [prevRoute] = useState(() => {
+    try {
+      return sessionStorage.getItem('shs_feedback_prev_route') || PREV_ROUTE_FALLBACK;
+    } catch (_) {
+      return PREV_ROUTE_FALLBACK;
+    }
+  });
 
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
@@ -183,14 +150,12 @@ const FeedbackAndEngagementSHS = () => {
       }
     };
     init();
-
     const channel = subscribeToSurveyConfigChanges(async () => {
       await loadSurveyConfig(true);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -275,7 +240,6 @@ const FeedbackAndEngagementSHS = () => {
       const updated = already
         ? f.participate_in.filter((v) => v !== value)
         : [...f.participate_in, value];
-
       return {
         ...f,
         participate_in:    updated,
@@ -342,6 +306,9 @@ const FeedbackAndEngagementSHS = () => {
         status:      'Success',
       });
 
+      // Clean up — no longer needed after submission
+      try { sessionStorage.removeItem('shs_feedback_prev_route'); } catch (_) {}
+
       const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
       sessionStorage.removeItem('survey_claim_reward');
 
@@ -400,7 +367,7 @@ const FeedbackAndEngagementSHS = () => {
       groupByDate={groupByDate}
       formatTime={formatTime}
       navigate={navigate}
-      prevRoute={PREV_ROUTE}
+      prevRoute={prevRoute}
     />
   );
 };

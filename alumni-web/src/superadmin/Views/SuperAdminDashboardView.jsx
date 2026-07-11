@@ -1,3 +1,4 @@
+//SuperAdminDashboardView.jsx
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -197,6 +198,15 @@ const statCardIcons = {
       </svg>
     ),
   },
+  'Retention Rate': {
+    bg: '#F0FDF4',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+      </svg>
+    ),
+  },
 };
 
 function KpiStatCard({ label, value, sub }) {
@@ -390,6 +400,28 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
     : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
+function ShsContinuedStudiesChart({ data, title, subtitle, height = 300 }) {
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+          <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+          <Tooltip formatter={(value) => `${value} alumni`} />
+          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+
+  return <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
+}
+
 const resolveInsightsCategory = (label) => {
   const employmentLabels = [
     "Absorption from Internship",
@@ -449,10 +481,17 @@ const staticFallbackSuggestions = (label) => {
       "Encourage alumni to join and lead professional associations.",
       "Host networking events connecting alumni to professional bodies.",
     ],
+    "SHS Alumni Who Pursued Undergraduate Degree": [
+      "Strengthen SHS-to-college transition programs.",
+      "Provide early college counseling for Grade 12 students.",
+    ],
+    "SHS Alumni Who Pursued Undergraduate at NU": [
+      "Offer SHS-to-NU enrollment incentives.",
+      "Highlight NU undergraduate programs to current SHS students.",
+    ],
   };
   return map[label] || ["Review current data to generate recommendations."];
 };
-
 function KpiAlertModal({ label, onClose, kpiInsights }) {
   const category     = resolveInsightsCategory(label);
   const data         = kpiInsights?.[category];
@@ -553,12 +592,16 @@ const SuperAdminDashboardView = ({
   setActiveKpiTab,
   kpiData,
   kpis2,
+  shsKpis,
   employmentAlignmentData,
   employmentStatusData,
   inDemandSkillsData,
   careerAlignmentData,
   loadingCharts,
   kpiInsights,
+  alumniType,
+  shsPostGradPathData,
+  shsContinuedStudiesData,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -591,9 +634,10 @@ const SuperAdminDashboardView = ({
 
           <div className="kpi-tabs">
             {[
-              { id: "employment", label: "EMPLOYMENT" },
-              { id: "career",     label: "CAREER PROGRESS" },
-              { id: "education",  label: "EDUCATION" },
+              { id: "employment",  label: "EMPLOYMENT" },
+              { id: "career",      label: "CAREER PROGRESS" },
+              { id: "education",   label: "EDUCATION" },
+              { id: "seniorrhigh", label: "SENIOR HIGH" },
             ].map(({ id, label }) => (
               <button
                 key={id}
@@ -612,57 +656,97 @@ const SuperAdminDashboardView = ({
           </div>
         </div>
 
-        <div className="super-dashboard-section">
-          <div className="section-header">
-            <IoMdSchool className="section-icon" />
-            <div className="section-title">Alumni Tracer</div>
-          </div>
-          <div className="alumni-tracer-grid">
-            {kpis2.map((k) => (
-              <KpiStatCard key={k.label} {...k} />
-            ))}
-          </div>
-        </div>
+        {alumniType === 'shs' ? (
 
-        <div className="charts-row">
-          <CustomBarChart
-            data={employmentAlignmentData}
-            dataKey="alignment"
-            nameKey="name"
-            title="Degree Alignment Rate"
-            subtitle="Percentage of alumni aligned with their degree per program"
-            height={280}
-            navigateTo="/superadmin/response-and-analytics"
-          />
-          <CustomPieChart
-            data={employmentStatusData}
-            title="Employment Status Distribution"
-            subtitle="Breakdown of alumni by employment type"
-            height={280}
-            navigateTo="/superadmin/response-and-analytics"
-          />
-        </div>
+          <>
+            <div className="super-dashboard-section">
+              <div className="section-header">
+                <IoMdSchool className="section-icon" />
+                <div className="section-title">SHS Alumni</div>
+              </div>
+              <div className="alumni-tracer-grid">
+                {shsKpis.map((k) => (
+                  <KpiStatCard key={k.label} {...k} />
+                ))}
+              </div>
+            </div>
 
-        <div className="full-width-chart">
-          <CareerAlignmentChart
-            data={careerAlignmentData}
-            title="Career Alignment Prediction"
-            subtitle="Predicted vs. actual career alignment rate by program"
-            height={300}
-            navigateTo="/superadmin/response-and-analytics"
-          />
-        </div>
+            <div className="charts-row">
+              <CustomPieChart
+                data={shsPostGradPathData}
+                title="Post-Graduation Path"
+                subtitle="Where SHS alumni went after graduation"
+                height={280}
+              />
+            </div>
 
-        <div className="full-width-chart">
-          <CustomBarChart
-            data={inDemandSkillsData}
-            dataKey="count"
-            nameKey="name"
-            title="Most In-Demand Skills"
-            subtitle="Top skills required by employers"
-            height={300}
-          />
-        </div>
+            <div className="full-width-chart">
+              <ShsContinuedStudiesChart
+                data={shsContinuedStudiesData}
+                title="Continued Studies: NU vs Other Schools"
+                subtitle="% of SHS alumni who pursued undergrad at NU vs elsewhere"
+                height={300}
+              />
+            </div>
+          </>
+
+        ) : (
+
+          <>
+            <div className="super-dashboard-section">
+              <div className="section-header">
+                <IoMdSchool className="section-icon" />
+                <div className="section-title">College Alumni</div>
+              </div>
+              <div className="alumni-tracer-grid">
+                {kpis2.map((k) => (
+                  <KpiStatCard key={k.label} {...k} />
+                ))}
+              </div>
+            </div>
+
+            <div className="charts-row">
+              <CustomBarChart
+                data={employmentAlignmentData}
+                dataKey="alignment"
+                nameKey="name"
+                title="Degree Alignment Rate"
+                subtitle="Percentage of alumni aligned with their degree per program"
+                height={280}
+                navigateTo="/superadmin/response-and-analytics"
+              />
+              <CustomPieChart
+                data={employmentStatusData}
+                title="Employment Status Distribution"
+                subtitle="Breakdown of alumni by employment type"
+                height={280}
+                navigateTo="/superadmin/response-and-analytics"
+              />
+            </div>
+
+            <div className="full-width-chart">
+              <CareerAlignmentChart
+                data={careerAlignmentData}
+                title="Career Alignment Prediction"
+                subtitle="Predicted vs. actual career alignment rate by program"
+                height={300}
+                navigateTo="/superadmin/response-and-analytics"
+              />
+            </div>
+
+            <div className="full-width-chart">
+              <CustomBarChart
+                data={inDemandSkillsData}
+                dataKey="count"
+                nameKey="name"
+                title="Most In-Demand Skills"
+                subtitle="Top skills required by employers"
+                height={300}
+              />
+            </div>
+          </>
+
+        )}
 
         {activeKpiModal && (
           <KpiAlertModal

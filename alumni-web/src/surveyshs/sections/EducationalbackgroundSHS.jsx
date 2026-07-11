@@ -2,30 +2,15 @@
  * EducationalBackgroundSHS.jsx — Logic Layer
  * Location: src/surveyshs/EducationalBackgroundSHS.jsx
  *
- * Architecture mirrors College EducationalBackground.jsx exactly:
- *   • surveyConfig realtime subscription for dynamic labels / options
- *   • Two-step load: saved DB data first, then profile autofill
- *   • Branch-aware validation — only validates fields currently visible
- *   • State resets cascade down the tree when a parent answer changes,
- *     preventing stale values from persisting in hidden branches
- *   • Notification handling identical to all other SHS / College sections
+ * FIX: When navigating to Feedback (the skip path for Studying/Graduated/Stopped),
+ * store the originating route in sessionStorage so FeedbackAndEngagementSHS can
+ * read it as its prevRoute. This is the only change from the original.
  *
- * SHS-specific branching (all driven by form.status):
- *
+ * Routing summary:
+ *   'Working'                              → /surveyshs/shs-employment-information
  *   'Currently Studying' | 'Graduated'
- *     → pursued_nu_branch (Yes/No)
- *         YES → nu_branch, reason_nu, education_level (+other), course_program, year_level
- *         NO  → pursued_other_school (Yes/No)
- *                 YES → reason_not_nu, school_name, education_level (+other), course_program, year_level
- *                 NO  → (no further fields — dead end)
- *   'Stopped'
- *     → stopped_reason (+other textarea)
- *   'Working'
- *     → (no follow-up)
- *
- * CHANGE LOG:
- *   • TOTAL_SECTIONS corrected from 5 → 6 to match the actual SHS section
- *     count. Frontend progress bar now aligns with DB percentage values.
+ *   | 'Stopped'                            → /surveyshs/shs-feedback-and-engagement
+ *                                            (sets sessionStorage prevRoute)
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -35,29 +20,24 @@ import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import EducationalBackgroundViewSHS from '../views/EducationalBackgroundViewSHS';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Survey constants
-// ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
+const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 2;
 const SECTION_KEY     = 'shs_educational_background';
 const PREV_ROUTE                = '/surveyshs/shs-personal-background';
-const NEXT_ROUTE_DEFAULT        = '/surveyshs/shs-feedback-and-engagement';   // Currently Studying / Graduated
-const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';    // Working → Employment
-const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';   // Stopped  → skip Employment
+const NEXT_ROUTE_DEFAULT        = '/surveyshs/shs-feedback-and-engagement';
+const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';
+const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Resolve the correct next route based on the current status selection.
-// ─────────────────────────────────────────────────────────────────────────────
+// The route this section is mounted at — stored as prevRoute for Feedback
+// when the skip path is taken.
+const THIS_ROUTE = '/surveyshs/shs-educational-background';
+
 const resolveNextRoute = (status) => {
   if (status === 'Working') return NEXT_ROUTE_WORKING;
   if (status === 'Stopped') return NEXT_ROUTE_STOPPED;
-  return NEXT_ROUTE_DEFAULT; // 'Currently Studying' | 'Graduated'
+  return NEXT_ROUTE_DEFAULT;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Required fields per branch path
-// ─────────────────────────────────────────────────────────────────────────────
 const getRequiredFields = (form) => {
   const required = new Set(['status']);
 
@@ -74,7 +54,6 @@ const getRequiredFields = (form) => {
       if (form.education_level === 'Other') required.add('education_level_other');
       required.add('course_program');
       required.add('year_level');
-
     } else if (form.pursued_nu_branch === 'No') {
       required.add('pursued_other_school');
 
@@ -97,9 +76,6 @@ const getRequiredFields = (form) => {
   return required;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form completion percentage
-// ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const required = getRequiredFields(form);
   const base     = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
@@ -114,9 +90,6 @@ const computeFormPct = (form) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
@@ -147,9 +120,6 @@ const formatTime = (iso) => {
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty form shape
-// ─────────────────────────────────────────────────────────────────────────────
 const EMPTY_FORM = {
   status: '',
   pursued_nu_branch:    '',
@@ -166,18 +136,15 @@ const EMPTY_FORM = {
   stopped_reason_other: '',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Controller
-// ─────────────────────────────────────────────────────────────────────────────
 const EducationalBackgroundSHS = () => {
   const navigate = useNavigate();
 
   const [loadingConfig, setLoadingConfig] = useState(true);
   const [hasLoadedSavedData, setHasLoadedSavedData] = useState(false);
 
-  const [form,     setForm]     = useState(EMPTY_FORM);
-  const [errors,   setErrors]   = useState(new Set());
-  const [saveToast,setSaveToast]= useState(false);
+  const [form,      setForm]      = useState(EMPTY_FORM);
+  const [errors,    setErrors]    = useState(new Set());
+  const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
   const bellRef                        = useRef(null);
@@ -204,7 +171,6 @@ const EducationalBackgroundSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
 
-  // STEP 1: Load saved data
   useEffect(() => {
     const load = async () => {
       try {
@@ -349,7 +315,20 @@ const EducationalBackgroundSHS = () => {
       return;
     }
     setErrors(new Set());
+
     const nextRoute = resolveNextRoute(form.status);
+
+    // ── FIX: store prevRoute for FeedbackAndEngagementSHS ─────────────────
+    // When skipping Employment/Job/Skills, Feedback's back button must return
+    // here — not to Employment (which the user never visited).
+    // Working-path users overwrite this in SkillsAndCompetenciesSHS, so the
+    // correct route is always the last one set before reaching Feedback.
+    if (nextRoute !== NEXT_ROUTE_WORKING) {
+      try {
+        sessionStorage.setItem('shs_feedback_prev_route', THIS_ROUTE);
+      } catch (_) {}
+    }
+
     saveSectionProgress(SECTION_KEY, form)
       .then(() => navigate(nextRoute))
       .catch((err) =>

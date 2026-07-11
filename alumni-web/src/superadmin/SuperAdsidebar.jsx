@@ -14,9 +14,10 @@
  *  unnecessary, and keeping this file simple makes that invariant obvious.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAlumniType } from './contexts/AlumniTypeContext';
 import SuperAdminSidebarView from './Views/SuperAdSidebarview';
 import { MODULES } from '../utils/modulePermissions'; // ← imported for annotation only
 
@@ -37,11 +38,22 @@ const useWindowWidth = () => {
 const SuperAdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser]             = useState(null);
-  const width                       = useWindowWidth();
-  const isMobile                    = width < 768;
-  const isTablet                    = width >= 768 && width < 1024;
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser]               = useState(null);
+  const [isLoadingUser, setIsLoading] = useState(true);
+  const width                         = useWindowWidth();
+  const isMobile                      = width < 768;
+  const isTablet                      = width >= 768 && width < 1024;
+  const [mobileOpen, setMobileOpen]   = useState(false);
+
+  // Alumni type switcher — shared context, migrated into superadmin folder
+  const { alumniType, setAlumniType } = useAlumniType();
+
+  // Unmount-safety guard (mirrors Admin sidebar's mountedRef pattern)
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   // Close mobile menu on navigation (unchanged)
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
@@ -61,9 +73,11 @@ const SuperAdminSidebar = () => {
           .eq('id', authUser.id)
           .single();
 
-        if (data && isMounted) setUser(data);
+        if (data && isMounted && mountedRef.current) setUser(data);
       } catch (error) {
         console.error('Error fetching user:', error);
+      } finally {
+        if (isMounted && mountedRef.current) setIsLoading(false);
       }
     };
 
@@ -156,7 +170,10 @@ const SuperAdminSidebar = () => {
       displayName={displayName}
       initials={initials}
       menuItems={menuItems}
+      isLoadingUser={isLoadingUser}
       handleLogout={handleLogout}
+      alumniType={alumniType}
+      setAlumniType={setAlumniType}
     />
   );
 };

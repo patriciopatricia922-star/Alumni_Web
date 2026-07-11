@@ -1,17 +1,19 @@
 /**
- * PersonalBackground.jsx — Logic Layer (v4, full autofill fix)
+ * PersonalBackground.jsx — Logic Layer (v5, back-navigation guard)
  * Location: src/pages/PersonalBackground.jsx
  *
- * FIXED in v4:
- *  - Autofill guard was too aggressive: if ANY field had saved data the entire
- *    autofill was skipped, leaving first_name / last_name / email blank whenever
- *    those fields existed only in the users table (not personal_background_data).
- *  - New strategy: autofill runs field-by-field and only fills fields that are
- *    currently empty in the loaded form — saved answers are never overwritten.
- *  - useUserProfile now merges both users table AND survey_progress so every
- *    field is available from the hook as a reliable fallback.
- *  - invalidateProfileCache() is called once on mount so a fresh profile save
- *    in the Profile modal is always picked up when returning to this page.
+ * CHANGED in v5 (back-navigation guard only — no other logic modified):
+ *
+ *   1. Import useSurveyBackGuard from '../hooks/useSurveyBackGuard'.
+ *   2. Instantiate the hook, passing navigate, the back route, handleSave,
+ *      and a human-readable section name.
+ *   3. Pass handleBack (from the hook) to PersonalBackgroundView via a new
+ *      `onBack` prop — the view's back button calls onBack instead of
+ *      the inline navigate('/dashboard').
+ *   4. Render <BackGuardModal /> once at the end of the return block.
+ *
+ * Everything else — autofill, progress, validation, save, notifications —
+ * is identical to v4.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -20,7 +22,9 @@ import { supabase } from '../lib/supabase';
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import useUserProfile from '../hooks/Useuserprofile';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
 import PersonalBackgroundView from '../Views/PersonalBackgroundView';
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
@@ -149,8 +153,6 @@ const PersonalBackground = () => {
   const navigate = useNavigate();
 
   // ── Shared profile hook — autofill source ─────────────────────────────────
-  // The updated hook now merges users table + survey_progress so firstName,
-  // lastName, middleName and email are always present if they exist anywhere.
   const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
   // ── Autofill / load control flags ─────────────────────────────────────────
@@ -185,12 +187,10 @@ const PersonalBackground = () => {
   const [notifTab,     setNotifTab]     = useState('all');
 
   // ── Force a fresh profile fetch on mount ──────────────────────────────────
-  // This ensures that if the user saved their Profile and then navigated here,
-  // the hook cache is not stale.
   useEffect(() => {
     refreshProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally run once on mount
+  }, []);
 
   // ── surveyConfig loading + realtime subscription ──────────────────────────
   const applyConfig = useCallback((configData) => {
@@ -253,19 +253,10 @@ const PersonalBackground = () => {
   }, []);
 
   // ── STEP 2: Autofill from profile — field-by-field, never overwrites ───────
-  //
-  // FIX: The previous implementation bailed out entirely if ANY saved field
-  // existed.  That meant first_name/last_name/email — which were only written
-  // to the users table and not to personal_background_data — were never filled
-  // after the user had touched any other survey field.
-  //
-  // New approach: always iterate every PROFILE_TO_SURVEY mapping and apply the
-  // profile value only when the corresponding form field is still empty.
-  // This is safe even if the user has partially filled the form.
   useEffect(() => {
-    if (!hasLoadedSavedData) return; // wait for DB load to finish
-    if (profileLoading)      return; // wait for hook to resolve
-    if (hasAttemptedAutofill) return; // only run once per page visit
+    if (!hasLoadedSavedData) return;
+    if (profileLoading)      return;
+    if (hasAttemptedAutofill) return;
 
     console.log('[PersonalBackground] Running field-by-field autofill...');
     console.log('[PersonalBackground] Profile:', profile);
@@ -279,9 +270,6 @@ const PersonalBackground = () => {
           const profileValue = profile[profileKey];
           const formValue    = currentForm[surveyKey];
 
-          // Only autofill if:
-          //  a) the profile has a non-empty value for this field
-          //  b) the form field is currently empty (preserve user edits / saved data)
           if (
             profileValue &&
             String(profileValue).trim() !== '' &&
@@ -293,7 +281,6 @@ const PersonalBackground = () => {
           }
         });
 
-        // Derive phone prefix from country if it changed
         if (updated.country && updated.phone_prefix === '+63') {
           if (updated.country === 'United States') updated.phone_prefix = '+1';
         }
@@ -429,50 +416,58 @@ const PersonalBackground = () => {
   const getLabel       = useCallback((id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,  [questionLabels]);
   const getPlaceholder = useCallback((id) => questionPlaceholders[id] || DEFAULT_PLACEHOLDERS[id] || '', [questionPlaceholders]);
 
+  // ── Back-navigation guard ─────────────────────────────────────────────────
+  // NEW in v5: replaces the inline navigate('/dashboard') in the back button.
+  // handleSave is passed so "Save & Exit" persists progress before leaving.
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+    navigate,
+    '/dashboard',
+    handleSave,
+    'Personal Background',
+  );
+
   const formPct = computeFormPct(form);
 
   // Loading gate — wait for config and saved data
+  // Loading gate — wait for config and saved data
   if (loadingConfig || !hasLoadedSavedData) {
-    return (
-      <div style={{
-        display: 'flex', justifyContent: 'center', alignItems: 'center',
-        height: '100vh', background: '#002263',
-      }}>
-        <div style={{ color: '#fff', fontFamily: 'Arimo, sans-serif' }}>Loading…</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={9} />;
   }
 
   return (
-    <PersonalBackgroundView
-      form={form}
-      set={setField}
-      setRadio={setRadio}
-      setCountry={setCountry}
-      errors={errors}
-      saveToast={saveToast}
-      cardRef={cardRef}
-      formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
-      handleSave={handleSave}
-      handleNext={handleNext}
-      getLabel={getLabel}
-      getPlaceholder={getPlaceholder}
-      questionOptions={questionOptions}
-      bellRef={bellRef}
-      notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
-      unreadCount={unreadCount}
-      showDropdown={showDropdown}
-      setShowDropdown={setShowDropdown}
-      notifTab={notifTab}
-      setNotifTab={setNotifTab}
-      markAllRead={markAllRead}
-      markOneRead={markOneRead}
-      groupByDate={groupByDate}
-      formatTime={formatTime}
-      navigate={navigate}
-    />
+    <>
+      <PersonalBackgroundView
+        form={form}
+        set={setField}
+        setRadio={setRadio}
+        setCountry={setCountry}
+        errors={errors}
+        saveToast={saveToast}
+        cardRef={cardRef}
+        formPct={formPct}
+        currentSection={CURRENT_SECTION}
+        totalSections={TOTAL_SECTIONS}
+        handleSave={handleSave}
+        handleNext={handleNext}
+        onBack={handleBack}
+        getLabel={getLabel}
+        getPlaceholder={getPlaceholder}
+        questionOptions={questionOptions}
+        bellRef={bellRef}
+        notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
+        unreadCount={unreadCount}
+        showDropdown={showDropdown}
+        setShowDropdown={setShowDropdown}
+        notifTab={notifTab}
+        setNotifTab={setNotifTab}
+        markAllRead={markAllRead}
+        markOneRead={markOneRead}
+        groupByDate={groupByDate}
+        formatTime={formatTime}
+        navigate={navigate}
+      />
+      <BackGuardModal />
+    </>
   );
 };
 

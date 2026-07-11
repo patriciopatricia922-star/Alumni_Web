@@ -77,6 +77,50 @@ const NavLabel = ({ label, isTablet, isActive }) => {
   return <span className={className}>{label}</span>;
 };
 
+// ── Alumni Type Switcher ───────────────────────────────────────────────────
+const AlumniTypeSwitcher = ({ alumniType, setAlumniType }) => (
+  <div className="alumni-type-switcher">
+    <button
+      className={`switcher-pill ${alumniType === 'college' ? 'active' : ''}`}
+      onClick={() => setAlumniType('college')}
+    >
+      College
+    </button>
+    <button
+      className={`switcher-pill ${alumniType === 'shs' ? 'active' : ''}`}
+      onClick={() => setAlumniType('shs')}
+    >
+      SHS
+    </button>
+  </div>
+);
+
+const SKELETON_COUNT = 5;
+
+const MenuSkeleton = () => (
+  <div className="superadmin-sidebar-skeleton-list" aria-hidden="true">
+    {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+      <div key={i} className="superadmin-sidebar-skeleton-item">
+        <div className="superadmin-sidebar-skeleton-icon" />
+        <div
+          className="superadmin-sidebar-skeleton-label"
+          style={{ width: `${52 + (i % 3) * 12}%` }}
+        />
+      </div>
+    ))}
+  </div>
+);
+
+const UserCardSkeleton = () => (
+  <div className="superadmin-sidebar-user-card" aria-hidden="true">
+    <div className="superadmin-sidebar-skeleton-avatar" />
+    <div className="superadmin-sidebar-skeleton-user-info">
+      <div className="superadmin-sidebar-skeleton-name" />
+      <div className="superadmin-sidebar-skeleton-role" />
+    </div>
+  </div>
+);
+
 const SuperAdminSidebarView = ({
   location,
   isMobile,
@@ -87,7 +131,10 @@ const SuperAdminSidebarView = ({
   initials,
   role,
   menuItems,
+  isLoadingUser = false,
   handleLogout,
+  alumniType,
+  setAlumniType,
 }) => {
 
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
@@ -123,6 +170,10 @@ const SuperAdminSidebarView = ({
           </button>
         </nav>
 
+        <div className="alumni-type-switcher-mobile">
+          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
+        </div>
+
         <button
           onClick={() => setMobileOpen(o => !o)}
           className="superadmin-mobile-hamburger"
@@ -155,59 +206,72 @@ const SuperAdminSidebarView = ({
         {/* Divider */}
         <div className="superadmin-sidebar-divider" />
 
+        {/* Alumni type switcher */}
+        <div style={{ padding: '26px 12px 0px' }}>
+          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
+        </div>
+
         {/* Nav items */}
         <div className="superadmin-sidebar-menu-section">
           <p className="superadmin-sidebar-menu-heading">MENU</p>
 
-          {menuItems.map(({ path, icon, label, marginTop }) => {
-            const isActive = location.pathname === path;
-            const iconSrc  = iconMap[icon];
-            return (
-              <Link
-                key={path}
-                to={path}
-                className={`superadmin-sidebar-menu-item ${
-                  isActive ? 'superadmin-sidebar-menu-item-active' : ''
-                }`}
-                style={marginTop ? { marginTop } : undefined}
-              >
-                <img
-                  src={iconSrc}
-                  alt={label}
-                  className={`superadmin-sidebar-icon ${
-                    isActive ? 'superadmin-sidebar-icon-active' : 'superadmin-sidebar-icon-inactive'
+          {isLoadingUser ? (
+            <MenuSkeleton />
+          ) : (
+            menuItems.map(({ path, icon, label, marginTop }) => {
+              const isActive = location.pathname === path;
+              const iconSrc  = iconMap[icon];
+              return (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`superadmin-sidebar-menu-item ${
+                    isActive ? 'superadmin-sidebar-menu-item-active' : ''
                   }`}
-                />
-                <NavLabel label={label} isTablet={isTablet} isActive={isActive} />
-              </Link>
-            );
-          })}
+                  style={marginTop ? { marginTop } : undefined}
+                >
+                  <img
+                    src={iconSrc}
+                    alt={label}
+                    className={`superadmin-sidebar-icon ${
+                      isActive ? 'superadmin-sidebar-icon-active' : 'superadmin-sidebar-icon-inactive'
+                    }`}
+                  />
+                  <NavLabel label={label} isTablet={isTablet} isActive={isActive} />
+                </Link>
+              );
+            })
+          )}
         </div>
 
-        {/* User card */}
+         {/* User card — skeleton on cold load, real card once resolved */}
         <div className="superadmin-sidebar-footer">
-          <div className="superadmin-sidebar-user-card">
-            <div className="superadmin-sidebar-avatar">
-              <span className="superadmin-sidebar-initials">{initials}</span>
-            </div>
+          {isLoadingUser ? (
+            <UserCardSkeleton />
+          ) : (
+            <div className="superadmin-sidebar-user-card">
+              <div className="superadmin-sidebar-avatar">
+                <span className="superadmin-sidebar-initials">{initials}</span>
+              </div>
 
-            <div className="superadmin-sidebar-user-info">
-              <span className="superadmin-sidebar-user-name" title={displayName}>
-                {displayName}
-              </span>
-              <span className="superadmin-sidebar-user-role">{role}</span>
-            </div>
+              <div className="superadmin-sidebar-user-info">
+                <span className="superadmin-sidebar-user-name" title={displayName}>
+                  {displayName}
+                </span>
+                <span className="superadmin-sidebar-user-role">{role}</span>
+              </div>
 
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              className="superadmin-sidebar-logout-btn"
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-            >
-              <LogoutIcon />
-            </button>
-          </div>
+              <button
+                onClick={handleLogout}
+                title="Logout"
+                className="superadmin-sidebar-logout-btn"
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.12)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <LogoutIcon />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 

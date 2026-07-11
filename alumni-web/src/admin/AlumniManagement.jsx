@@ -1,5 +1,5 @@
 // ============================================================================
-// AlumniManagement.jsx — Logic Controller // mine (merged)
+// AlumniManagement.jsx — Logic Controller
 // ============================================================================
 // Handles all business logic, Supabase API calls, data processing,
 // filtering (including sort-by-name), pagination, state management,
@@ -9,13 +9,13 @@
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AlumniManagementView from "./views/AlumniManagementView";
-import { useAlumniType } from "./contexts/AlumniTypeContext"; // [friend] alumni type context
+import { useAlumniType } from "./contexts/AlumniTypeContext";
+import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
 // Preserved from your version
 const PER_PAGE = 12;
 
 function AlumniManagement() {
-  // [friend] Alumni type context — drives tab/view filtering in the view layer
   const { alumniType } = useAlumniType();
 
   // ── State ────────────────────────────────────────────────────────────────
@@ -141,9 +141,12 @@ function AlumniManagement() {
         };
       });
 
+      // Store the full list — cohort partitioning happens at render time so
+      // switching alumniType never requires a refetch.
       setAlumni(merged);
-      setStats(calcStats(merged));
 
+      // availablePrograms / availableBatches are derived from the full list so
+      // each filter dropdown always reflects all alumni, not just the current cohort.
       const programs = [
         ...new Set(merged.map((a) => a.program).filter((p) => p !== "—")),
       ].sort();
@@ -162,6 +165,15 @@ function AlumniManagement() {
     loadAlumni();
   }, []);
 
+  // ── Cohort partitioning ───────────────────────────────────────────────────
+  // Derived on every render — toggling alumniType costs zero extra DB calls.
+  const cohortAlumni = alumni.filter((a) =>
+    alumniType === "shs" ? isSHSProgram(a.program) : isCollegeProgram(a.program)
+  );
+
+  // Stats always reflect the active cohort so metric cards stay accurate.
+  const cohortStats = calcStats(cohortAlumni);
+
   // ── Account status update ────────────────────────────────────────────────
   const updateStatus = async (id, newStatus) => {
     try {
@@ -175,7 +187,6 @@ function AlumniManagement() {
         a.id === id ? { ...a, account_status: newStatus } : a
       );
       setAlumni(updated);
-      setStats(calcStats(updated));
     } catch (e) {
       console.error("updateStatus error:", e);
     }
@@ -211,16 +222,23 @@ function AlumniManagement() {
       )
     );
 
-  const filteredByFilters = applyFilters(alumni);
+  // Filter and search operate on the active cohort only.
+  const filteredByFilters = applyFilters(cohortAlumni);
   const filtered = applySearch(filteredByFilters);
 
-  const total = alumni.length || 1;
-  const completedPct = Math.round((stats.completed / total) * 100);
-  const pendingPct = Math.round((stats.pending / total) * 100);
+  const total = cohortAlumni.length || 1;
+  const completedPct = Math.round((cohortStats.completed / total) * 100);
+  const pendingPct = Math.round((cohortStats.pending / total) * 100);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   const startEntry = filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1;
   const endEntry = Math.min(page * PER_PAGE, filtered.length);
+
+  // Reset to page 1 whenever the cohort switches so stale offsets don't
+  // produce an empty table.
+  useEffect(() => {
+    setPage(1);
+  }, [alumniType]);
 
   // ── Event handlers ───────────────────────────────────────────────────────
   const handleSearch = (value) => {
@@ -306,8 +324,8 @@ function AlumniManagement() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <AlumniManagementView
-      alumni={alumni}
-      stats={stats}
+      alumni={cohortAlumni}
+      stats={cohortStats}
       search={search}
       page={page}
       isMobile={isMobile}
@@ -341,7 +359,7 @@ function AlumniManagement() {
       onNextPage={handleNextPage}
       onGoToPage={handleGoToPage}
       onCloseModal={handleCloseModal}
-      alumniType={alumniType} // [friend] passed to view for tab/type-aware rendering
+      alumniType={alumniType}
     />
   );
 }

@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.
+   THIS IS FOR INLINE STYLES. mine
    ============================================================================
    Purpose: Contains all CSS styles for the Content Management component.
             Includes layout, responsive breakpoints, animations, and all
@@ -85,6 +85,12 @@ body {
   flex-wrap: wrap;
 }
 
+/* INTEGRATION: Visual grouping — adds a gap before the 3rd and 6th tabs */
+.cm-tab:nth-child(3),
+.cm-tab:nth-child(6) {
+  margin-left: 16px;
+}
+
 .cm-tab {
   display: inline-flex;
   align-items: center;
@@ -110,12 +116,47 @@ body {
   border-color: #1E293B;
 }
 
+/* INTEGRATION: cm-board-header wraps the board title and reward filter bar.
+   Bottom margin moves here from cm-board-title so the layout stays correct
+   when the filter bar is present. */
+.cm-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .cm-board-title {
   font-family: 'Lexend', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #1E293B;
-  margin: 0 0 20px;
+  margin: 0;
+}
+
+/* INTEGRATION: Reward category filter bar */
+.cm-reward-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.cm-filter-btn {
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-family: 'Arimo', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cm-filter-btn.active {
+  background: #1E293B;
+  color: #fff;
+  border-color: #1E293B;
 }
 
 /* ============================ BOARD GRID ============================ */
@@ -281,12 +322,19 @@ body {
   grid-column: span 2;
 }
 
+/* INTEGRATION: padding moves to .content-item-body so images bleed to the
+   card edges and are clipped by the card's border-radius. */
 .content-item-card {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 0;
   transition: all 0.2s;
+}
+
+/* INTEGRATION: Inner wrapper carries the padding previously on the card. */
+.content-item-body {
+  padding: 20px;
 }
 
 .content-item-card:hover {
@@ -294,12 +342,12 @@ body {
   transform: translateY(-2px);
 }
 
+/* INTEGRATION: No border-radius or margin — image sits flush at the top of
+   the card and is clipped by the card's own border-radius. */
 .content-item-image {
   width: 100%;
   height: 140px;
   overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 12px;
   background: #F1F5F9;
 }
 

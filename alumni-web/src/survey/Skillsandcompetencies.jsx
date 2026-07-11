@@ -4,6 +4,8 @@ import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import SkillsAndCompetenciesView from '../Views/SkillsAndCompetenciesView';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 6;
@@ -285,15 +287,19 @@ const SkillsAndCompetencies = () => {
 
   const formPct = computeFormPct(form, skillRatingsKeys);
 
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+    navigate,
+    '/dashboard',
+    handleSave,
+    'Skills and Competencies',
+  );
+
   if (loadingLabels) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={4} />;
   }
 
   return (
+    <>
     <SkillsAndCompetenciesView
       form={form}
       toggleCompetency={toggleCompetency}
@@ -324,6 +330,8 @@ const SkillsAndCompetencies = () => {
       formatTime={formatTime}
       navigate={navigate}
     />
+    <BackGuardModal />
+    </>  
   );
 };
 

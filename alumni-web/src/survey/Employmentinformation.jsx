@@ -4,6 +4,8 @@ import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import EmploymentInformationView from '../Views/EmploymentInformationView';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
+import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 4;
@@ -340,15 +342,21 @@ const EmploymentInformation = () => {
   const employedStatuses   = DEFAULT_EMPLOYED_STATUSES;
   const unemployedStatuses = DEFAULT_UNEMPLOYED_STATUSES;
 
+
+  const { handleBack, BackGuardModal } = useSurveyBackGuard(
+  navigate,
+  '/dashboard',
+  handleSave,
+  'Employment Information',
+);
+
+
   if (loadingLabels) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#002263' }}>
-        <div style={{ color: '#fff' }}>Loading...</div>
-      </div>
-    );
+    return <SkeletonLoader fieldCount={9} />;
   }
 
   return (
+    <>
     <EmploymentInformationView
       form={form}
       set={set}
@@ -384,6 +392,8 @@ const EmploymentInformation = () => {
       formatTime={formatTime}
       navigate={navigate}
     />
+    <BackGuardModal />
+    </>
   );
 };
 

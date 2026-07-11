@@ -61,6 +61,7 @@
 /* ── Page wrapper ──────────────────────────────────────────── */
 .ann-page {
   background: var(--ann-page-bg);
+  font-family: 'Montserrat', sans-serif;
 }
 
 /* ── Header text ───────────────────────────────────────────── */
@@ -69,24 +70,60 @@
   font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -1px;
+  font-size: clamp(28px, 3.2vw, 29px);
+  margin-top: 14px;
+  margin-bottom: 2px;
+  margin-left: -4px;
 }
 
 .ann-subheading {
   color: var(--ann-page-subtitle);
+  font-weight: 400;
+  font-size: clamp(11px, 0.75vw, 12px);
+  line-height: 1.6;
+  margin-left: 0.5rem;
+  margin-top: 12px;
 }
 
 /* ── Back button ───────────────────────────────────────────── */
-.ann-back-btn span {
-  color: var(--ann-back-color);
+.ann-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0px;
+  width: fit-content;
+  flex-shrink: 0;
+  margin-bottom: clamp(8px, 1.2vh, 14px);
+  margin-top: clamp(2px, 0.4vh, 6px);
+  margin-left: -19px;
+  position: relative;
+  top: -0.5px;
+  transition: opacity 0.15s ease;
 }
 
-.ann-back-btn svg path {
-  stroke: var(--ann-back-color);
+.ann-back:hover { opacity: 0.7; }
+
+.ann-hdr {
+  flex-shrink: 0;
+  margin-bottom: clamp(10px, 1.4vh, 16px);
+  padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
 }
+
+.ann-back span {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: clamp(13px, 0.9vw, 15px);
+  color: #002263;
+}
+
 
 /* ── Featured banner ───────────────────────────────────────── */
 .ann-banner {
-  background: var(--ann-banner-bg) !important;
+  background: #FFFFFF !important;
+  margin-right: clamp(30px, 4vw, 70px) !important;
 }
 
 /* ── Filter bar ────────────────────────────────────────────── */
@@ -104,6 +141,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin-right: 40px;
 }
 
 /* ── Announcement Card ─────────────────────────────────────── */
@@ -145,7 +183,7 @@
   min-width: 40px;
   background: rgba(0, 62, 166, 0.08);
   border: 1px solid rgba(0, 62, 166, 0.15);
-  border-radius: 50%;
+  border-radius: 30%;
   display: flex;
   align-items: center;
   justify-content: center;
