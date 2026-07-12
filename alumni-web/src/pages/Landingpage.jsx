@@ -69,12 +69,26 @@ const LandingPage = () => {
   }, []);
 
   // ── Scroll ────────────────────────────────────────────────
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+const [isScrolled, setIsScrolled] = useState(false);
+
+useEffect(() => {
+  const getScrollTop = () =>
+    window.scrollY ||
+    document.documentElement.scrollTop ||
+    document.body.scrollTop ||
+    0;
+
+  const onScroll = () => {
+    setIsScrolled(getScrollTop() > 50);
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true, capture: true });
+  onScroll();
+
+  return () => {
+    window.removeEventListener("scroll", onScroll, { capture: true });
+  };
+}, []);
 
   // ── Stats ─────────────────────────────────────────────────
   const [alumniCount, setAlumniCount] = useState('...');

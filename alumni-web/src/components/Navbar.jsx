@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import NavbarView from './Navbarview';
 
-const Navbar = ({ onOpenRegister, onOpenLogin }) => {
-  const [scrolled,  setScrolled]  = useState(false);
+const Navbar = ({
+  isScrolled,
+  onOpenRegister,
+  onOpenLogin,
+}) => {
+  // const [scrolled,  setScrolled]  = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   useEffect(() => {
     const onResize = () => { if (window.innerWidth > 768) setMenuOpen(false); };
@@ -53,7 +51,7 @@ const Navbar = ({ onOpenRegister, onOpenLogin }) => {
 
   return (
     <NavbarView
-      scrolled={scrolled}
+      scrolled={isScrolled}
       menuOpen={menuOpen}
       setMenuOpen={setMenuOpen}
       navLinks={navLinks}
