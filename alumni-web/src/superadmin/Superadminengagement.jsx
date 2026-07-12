@@ -3,17 +3,29 @@ import SuperAdSidebar from "./SuperAdSidebar";
 import ContentManagementView from './Views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
+import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 const TABS = [
   { id: "events",          label: "Events"                        },
   { id: "announcements",   label: "Announcements"                 },
   { id: "jobs",            label: "Jobs"                          },
   { id: "discounts",       label: "Discounts"                     },
+  { id: "rewards",         label: "Rewards"                       },
+  { id: "landingpage",     label: "Landing Page"                  },
+  { id: "disclosurepage",  label: "User Notification/Disclosure"  },
+];
+
+const SHS_TABS = [
+  { id: "events",          label: "Events"                        },
+  { id: "announcements",   label: "Announcements"                 },
+  { id: "discounts",       label: "Discounts"                     },
+  { id: "rewards",         label: "Rewards"                       },
   { id: "landingpage",     label: "Landing Page"                  },
   { id: "disclosurepage",  label: "User Notification/Disclosure"  },
 ];
 
 function useContentManagement() {
+  const { alumniType } = useAlumniType();
 
   const [activeTab,       setActiveTab]       = useState("events");
   const [showArchive,     setShowArchive]      = useState(false);
@@ -29,6 +41,7 @@ function useContentManagement() {
   const [announcements,   setAnnouncements]    = useState([]);
   const [jobs,            setJobs]             = useState([]);
   const [discounts,       setDiscounts]        = useState([]);
+  const [rewards,         setRewards]          = useState([]);
   const [landingSections, setLandingSections]  = useState([]);
 
   const [disclosure,              setDisclosure]              = useState(null);
@@ -38,6 +51,14 @@ function useContentManagement() {
   const showToastMessage = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
+  };
+
+  // Strips HTML markup for disclosure emptiness validation.
+  const stripHtml = (html) => {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return (tmp.textContent || tmp.innerText || '').trim();
   };
 
   const fetchEvents = async () => {
@@ -76,6 +97,15 @@ function useContentManagement() {
     return data || [];
   };
 
+  const fetchRewards = async () => {
+    const { data, error } = await supabase
+      .from('rewards')
+      .select('*')
+      .order('points_required', { ascending: true });
+    if (!error) setRewards(data || []);
+    return data || [];
+  };
+
   const fetchLandingSections = async () => {
     const { data, error } = await supabase
       .from('landing_sections')
@@ -101,6 +131,7 @@ function useContentManagement() {
       fetchAnnouncements(),
       fetchJobs(),
       fetchDiscounts(),
+      fetchRewards(),
       fetchLandingSections(),
       fetchDisclosure(),
     ]);
@@ -113,6 +144,7 @@ function useContentManagement() {
   const activeAnnouncements   = announcements  .filter(a => a.is_active !== false);
   const activeJobs            = jobs           .filter(j => j.is_active !== false);
   const activeDiscounts       = discounts      .filter(d => d.is_active !== false);
+  const activeRewards         = rewards        .filter(r => r.is_active !== false);
   const activeLandingSections = landingSections.filter(l => l.is_active !== false);
 
   const getActiveItems = () => {
@@ -121,6 +153,7 @@ function useContentManagement() {
       case 'announcements': return activeAnnouncements;
       case 'jobs':          return activeJobs;
       case 'discounts':     return activeDiscounts;
+      case 'rewards':       return activeRewards;
       case 'landingpage':   return activeLandingSections;
       default:              return [];
     }
@@ -137,7 +170,7 @@ function useContentManagement() {
           type,
           title:       i.title,
           dateLabel:   `Archived: ${i.archived_at ? new Date(i.archived_at).toLocaleDateString() : 'Unknown date'}`,
-          description: i[descField]?.substring(0, 100) + (i[descField]?.length > 100 ? '...' : ''),
+          description: (i[descField]?.substring(0, 100) ?? '') + (i[descField]?.length > 100 ? '...' : ''),
           createdBy:   'Admin',
         }));
 
@@ -145,6 +178,7 @@ function useContentManagement() {
     push(announcements,   'Announcement',    'content');
     push(jobs,            'Job',             'description');
     push(discounts,       'Discount',        'description');
+    push(rewards,         'Reward',          'description');
     push(landingSections, 'Landing Section', 'description');
 
     return archived;
@@ -189,10 +223,20 @@ function useContentManagement() {
   };
 
   const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
+    if (!stripHtml(tos_content)) {
+      showToastMessage('Terms of Service content cannot be empty.', 'error');
+      return;
+    }
+    if (!stripHtml(pp_content)) {
+      showToastMessage('Privacy Policy content cannot be empty.', 'error');
+      return;
+    }
+
     try {
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('disclosures')
-        .upsert({ id: 1, tos_content, pp_content }, { onConflict: 'id' });
+        .upsert({ id: 1, tos_content, pp_content, updated_at: now }, { onConflict: 'id' });
 
       if (error) {
         showToastMessage(`Failed to save: ${error.message}`, 'error');
@@ -354,6 +398,39 @@ function useContentManagement() {
     }
   };
 
+  const handleCreateReward = async (formData) => {
+    console.log('[CREATE] Reward formData received:', formData);
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+
+      if (!formData.title?.trim())   { showToastMessage('Reward title is required', 'error'); return; }
+      if (!formData.points_required) { showToastMessage('Points required is required', 'error'); return; }
+
+      const newReward = {
+        title:           formData.title.trim(),
+        points_required: formData.points_required,
+        description:     formData.description || '',
+        category:        formData.category || 'Apparel',
+        stock:           formData.stock ?? null,
+        image_url:       formData.image_url || null,
+        created_by:      user?.id,
+        created_at:      new Date().toISOString(),
+        is_active:       true,
+      };
+
+      const { data, error } = await supabase.from('rewards').insert([newReward]).select();
+      if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Create', module: 'Rewards', description: `Created reward: ${formData.title}`, recordId: data[0]?.id, status: 'Success' });
+      await fetchRewards();
+      closeModal();
+      showToastMessage('Reward added successfully!', 'success');
+    } catch (err) {
+      showToastMessage('Failed to add reward: ' + err.message, 'error');
+    }
+  };
+
   const handleCreateLandingSection = async (formData) => {
     console.log('[CREATE] Landing Section formData received:', formData);
     try {
@@ -371,6 +448,7 @@ function useContentManagement() {
         image_url:    formData.image_url || null,
         order_index:  landingSections.length,
         created_at:   new Date().toISOString(),
+        updated_at:   new Date().toISOString(),
         is_active:    true,
         created_by:   user?.id,
       };
@@ -402,6 +480,7 @@ function useContentManagement() {
         location:    formData.location?.trim() || '',
         category:    formData.category || 'Upcoming Events',
         image_url:   formData.image_url || null,
+        updated_at:  new Date().toISOString(),
         ...(eventDate && !isNaN(eventDate.getTime()) && { event_date: eventDate.toISOString() }),
       };
 
@@ -424,7 +503,11 @@ function useContentManagement() {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
-      const updates = { title: formData.title?.trim(), content: formData.content || '' };
+      const updates = {
+        title:      formData.title?.trim(),
+        content:    formData.content || '',
+        updated_at: new Date().toISOString(),
+      };
       if (!updates.title) { showToastMessage('Announcement title is required', 'error'); return; }
 
       const { error } = await supabase.from('announcements').update(updates).eq('id', id);
@@ -457,6 +540,7 @@ function useContentManagement() {
         tags,
         image_url:   formData.image_url || null,
         expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        updated_at:  new Date().toISOString(),
       };
 
       if (!updates.title)   { showToastMessage('Job title is required',    'error'); return; }
@@ -479,13 +563,14 @@ function useContentManagement() {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
-      const updates = {
+     const updates = {
         title:         formData.title?.trim(),
         description:   formData.description || '',
         company:       formData.company?.trim(),
         discount_code: formData.discountCode?.trim() || null,
         image_url:     formData.image_url || null,
         valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
+        updated_at:    new Date().toISOString(),
       };
 
       if (!updates.title)   { showToastMessage('Discount title is required', 'error'); return; }
@@ -514,6 +599,7 @@ function useContentManagement() {
         section_type: formData.section_type,
         content:      formData.content || '',
         image_url:    formData.image_url || null,
+        updated_at:   new Date().toISOString(),
       };
 
       if (!updates.title)        { showToastMessage('Section title is required', 'error'); return; }
@@ -531,11 +617,42 @@ function useContentManagement() {
     }
   };
 
+  const handleUpdateReward = async (id, formData) => {
+    console.log('[UPDATE] Reward - ID:', id, 'formData:', formData);
+    try {
+      if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
+      if (!formData.title?.trim())   { showToastMessage('Reward title is required', 'error'); return; }
+      if (!formData.points_required) { showToastMessage('Points required is required', 'error'); return; }
+
+      const updates = {
+        title:           formData.title.trim(),
+        points_required: formData.points_required,
+        description:     formData.description || '',
+        category:        formData.category || 'Apparel',
+        stock:           formData.stock ?? null,
+        image_url:       formData.image_url || null,
+        updated_at:      new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from('rewards').update(updates).eq('id', id);
+      if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
+
+      await logAction({ action: 'Update', module: 'Rewards', description: `Updated reward: ${formData.title}`, recordId: id, status: 'Success' });
+      await fetchRewards();
+      closeModal();
+      showToastMessage('Reward updated successfully!', 'success');
+    } catch (err) {
+      showToastMessage('Failed to update reward: ' + err.message, 'error');
+    }
+  };
+
   const TABLE_MAP = {
     events:        { table: 'events',           module: 'Events'       },
     announcements: { table: 'announcements',    module: 'Announcements'},
     jobs:          { table: 'jobs',             module: 'Jobs'         },
     discounts:     { table: 'discounts',        module: 'Discounts'    },
+    rewards:       { table: 'rewards',          module: 'Rewards'      },
     landingpage:   { table: 'landing_sections', module: 'Landing Page' },
   };
 
@@ -544,10 +661,11 @@ function useContentManagement() {
     'Announcement':    { table: 'announcements',    module: 'Announcement'    },
     'Job':             { table: 'jobs',             module: 'Job'             },
     'Discount':        { table: 'discounts',        module: 'Discount'        },
+    'Reward':          { table: 'rewards',          module: 'Reward'          },
     'Landing Section': { table: 'landing_sections', module: 'Landing Section' },
   };
 
-  const DATA_MAP = { events, announcements, jobs, discounts, landingpage: landingSections };
+  const DATA_MAP = { events, announcements, jobs, discounts, rewards, landingpage: landingSections };
 
   const handleArchive = async (type, id) => {
     console.log('[ARCHIVE] Type:', type, 'ID:', id);
@@ -562,7 +680,7 @@ function useContentManagement() {
 
       const { error } = await supabase
         .from(config.table)
-        .update({ is_active: false, archived_at: new Date().toISOString() })
+        .update({ is_active: false, archived_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) { showToastMessage(`Failed to archive: ${error.message}`, 'error'); return; }
@@ -585,7 +703,7 @@ function useContentManagement() {
 
       const { error } = await supabase
         .from(config.table)
-        .update({ is_active: true, restored_at: new Date().toISOString() })
+        .update({ is_active: true, updated_at: new Date().toISOString() })
         .eq('id', id);
 
       if (error) { showToastMessage(`Failed to restore: ${error.message}`, 'error'); return; }
@@ -596,6 +714,38 @@ function useContentManagement() {
       showToastMessage('Item restored successfully!', 'success');
     } catch (err) {
       showToastMessage('Failed to restore item: ' + err.message, 'error');
+    }
+  };
+
+  const handleToggleActive = async (type, id, currentState) => {
+    console.log('[TOGGLE] Type:', type, 'ID:', id, 'currentState:', currentState);
+
+    const config = TABLE_MAP[type];
+    if (!config) { showToastMessage('Unknown content type', 'error'); return; }
+
+    try {
+      const { error } = await supabase
+        .from(config.table)
+        .update({ is_active: !currentState, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) { showToastMessage(`Failed to update visibility: ${error.message}`, 'error'); return; }
+
+      await logAction({
+        action:      'Update',
+        module:      config.module,
+        description: `Set ${type} id ${id} visibility to ${!currentState ? 'visible' : 'hidden'}`,
+        recordId:    id,
+        status:      'Success',
+      });
+
+      await fetchAllContent();
+      showToastMessage(
+        !currentState ? 'Section is now visible on the landing page.' : 'Section hidden from the landing page.',
+        'success'
+      );
+    } catch (err) {
+      showToastMessage('Failed to update visibility: ' + err.message, 'error');
     }
   };
 
@@ -612,6 +762,7 @@ function useContentManagement() {
     loading,
     toast,
     confirmAction,
+    alumniType,
     activeItems:          getActiveItems(),
     archivedItems:        getArchivedItems(),
     activeLandingSections,
@@ -626,9 +777,11 @@ function useContentManagement() {
     handleCreateAnnouncement,   handleUpdateAnnouncement,
     handleCreateJob,            handleUpdateJob,
     handleCreateDiscount,       handleUpdateDiscount,
+    handleCreateReward,         handleUpdateReward,
     handleCreateLandingSection, handleUpdateLandingSection,
     handleArchive,
     handleRestore,
+    handleToggleActive,
   };
 }
 
@@ -648,7 +801,8 @@ function Superadminengagement() {
       loading={cm.loading}
       toast={cm.toast}
       confirmAction={cm.confirmAction}
-      TABS={TABS}
+      TABS={cm.alumniType === 'shs' ? SHS_TABS : TABS}
+      alumniType={cm.alumniType}
       activeItems={cm.activeItems}
       archivedItems={cm.archivedItems}
       landingSections={cm.activeLandingSections}
@@ -676,6 +830,7 @@ function Superadminengagement() {
       onUpdateLandingSection={cm.handleUpdateLandingSection}
       onArchive={cm.handleArchive}
       onRestore={cm.handleRestore}
+      onToggleActive={cm.handleToggleActive}
       onShowConfirm={cm.showConfirm}
       sidebar={<SuperAdSidebar />}
     />

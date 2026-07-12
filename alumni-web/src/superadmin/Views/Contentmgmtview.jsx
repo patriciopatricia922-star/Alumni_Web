@@ -1,3 +1,4 @@
+//SuperAdmin Contentmgmtview.jsx
 import React, { useEffect, useCallback } from 'react';
 import '../styles/ContentMgmt.css';
 
