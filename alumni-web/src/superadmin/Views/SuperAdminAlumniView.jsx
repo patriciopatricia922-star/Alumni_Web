@@ -772,7 +772,8 @@ function UploadCSVModal({ onClose, onSuccess }) {
 // ============================================================================
 // ALUMNI PROFILE MODAL
 // ============================================================================
-function AlumniProfileModal({ alumni, onClose }) {
+function AlumniProfileModal({ alumni, onClose, alumniType  }) {
+
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
@@ -820,6 +821,12 @@ function AlumniProfileModal({ alumni, onClose }) {
       value: alumni.account_status || "—",
       isBadge: true,
     },
+    {
+    icon: <MdWork size={18} color="#155DFC" />,
+    label: alumniType === "shs" ? "dqpaalam" : "Employment Status",
+    value: alumni.employment_status || "—",
+    isText: true,
+  },
   ];
 
   return (
@@ -914,6 +921,7 @@ function SuperAdminAlumniView({
   onNextPage,
   onGoToPage,
   onCloseModal,
+  alumniType,
 }) {
   return (
     <div className="am-page">
@@ -922,7 +930,11 @@ function SuperAdminAlumniView({
       <div className="am-heading-row">
         <div>
           <h1 className="am-title">Alumni Management</h1>
-          <p className="am-subtitle">Monitor and manage alumni data.</p>
+          <p className="am-subtitle">
+            {alumniType === "shs"
+              ? "Monitor and manage SHS alumni data."
+              : "Monitor and manage alumni data."}
+          </p>
         </div>
       </div>
 
@@ -1089,7 +1101,11 @@ function SuperAdminAlumniView({
 
       {/* Profile Modal */}
       {selectedAlumni && (
-        <AlumniProfileModal alumni={selectedAlumni} onClose={onCloseModal} />
+        <AlumniProfileModal
+          alumni={selectedAlumni}
+          onClose={onCloseModal}
+          alumniType={alumniType}
+        />
       )}
     </div>
   );

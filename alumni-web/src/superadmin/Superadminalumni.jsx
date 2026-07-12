@@ -10,10 +10,14 @@ import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AlumniManagementView from "./Views/SuperAdminAlumniView";
 import SuperAdminAlumniView from "./Views/SuperAdminAlumniView";
+import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
+import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 const PER_PAGE = 12;
 
 function SuperAdminAlumni() {
+  
+  const { alumniType } = useAlumniType();
   // ── State ────────────────────────────────────────────────────────────────
   const [alumni, setAlumni] = useState([]);
   const [search, setSearch] = useState("");
@@ -154,9 +158,18 @@ function SuperAdminAlumni() {
     }
   };
 
-  useEffect(() => {
+   useEffect(() => {
     loadAlumni();
   }, []);
+
+  // ── Cohort partitioning ───────────────────────────────────────────────────
+  // Derived on every render — toggling alumniType costs zero extra DB calls.
+  const cohortAlumni = alumni.filter((a) =>
+    alumniType === "shs" ? isSHSProgram(a.program) : isCollegeProgram(a.program)
+  );
+
+  // Stats always reflect the active cohort so metric cards stay accurate.
+  const cohortStats = calcStats(cohortAlumni);
 
   // ── Account status update ────────────────────────────────────────────────
   const updateStatus = async (id, newStatus) => {
@@ -207,12 +220,12 @@ function SuperAdminAlumni() {
       )
     );
 
-  const filteredByFilters = applyFilters(alumni);
+  const filteredByFilters = applyFilters(cohortAlumni);
   const filtered = applySearch(filteredByFilters);
 
-  const total = alumni.length || 1;
-  const completedPct = Math.round((stats.completed / total) * 100);
-  const pendingPct = Math.round((stats.pending / total) * 100);
+  const total = cohortAlumni.length || 1;
+  const completedPct = Math.round((cohortStats.completed / total) * 100);
+  const pendingPct = Math.round((cohortStats.pending / total) * 100);
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
   const startEntry = filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1;
@@ -223,6 +236,10 @@ function SuperAdminAlumni() {
     setSearch(value);
     setPage(1);
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [alumniType]);
 
   const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
   const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -302,8 +319,8 @@ function SuperAdminAlumni() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <SuperAdminAlumniView
-      alumni={alumni}
-      stats={stats}
+      alumni={cohortAlumni}
+      stats={cohortStats}
       search={search}
       page={page}
       isMobile={isMobile}
@@ -337,6 +354,7 @@ function SuperAdminAlumni() {
       onNextPage={handleNextPage}
       onGoToPage={handleGoToPage}
       onCloseModal={handleCloseModal}
+      alumniType={alumniType}
     />
   );
 }
