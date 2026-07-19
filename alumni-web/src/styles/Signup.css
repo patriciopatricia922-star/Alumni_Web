@@ -240,6 +240,24 @@
   box-shadow: none;
 }
 
+.sup-input[type="password"]::-ms-reveal,
+.sup-input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.sup-input[type="password"]::-webkit-textfield-decoration-container {
+  visibility: hidden;
+}
+
+.sup-input[type="password"]::-webkit-credentials-auto-fill-button,
+.sup-input[type="password"]::-webkit-caps-lock-indicator {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
 /* ── Password wrapper ────────────────────────────────────────── */
 .sup-pw-wrap {
   position: relative;
@@ -398,6 +416,7 @@
   cursor: not-allowed;
   transition: background 0.25s ease, box-shadow 0.2s;
   margin-bottom: 14px;
+  margin-top: 14.9px;
 }
 .sup-submit-btn--active {
   background: #003EA6;

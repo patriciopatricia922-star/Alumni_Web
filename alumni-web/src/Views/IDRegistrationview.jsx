@@ -113,20 +113,6 @@ const IDRegistrationView = ({
                   <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>JPG, PNG, or other image formats</p>
                 </div>
               </button>
-              {/* Use camera */}
-              <button onClick={startCamera} className="aid-choice-btn">
-                <div className="aid-choice-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
-                      stroke="#51A2FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="13" r="4" stroke="#51A2FF" strokeWidth="2" />
-                  </svg>
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Use Camera</p>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>ID will be captured automatically when stable</p>
-                </div>
-              </button>
               <button
                 onClick={() => setShowModal(false)}
                 style={{ background: 'none', border: 'none', fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', marginTop: '4px' }}
@@ -435,7 +421,7 @@ const IDRegistrationView = ({
                   {extractedData.program    && <p className="aid-extracted-row"><span className="aid-extracted-label">Program: </span>{extractedData.program}</p>}
                   {extractedData.batchYear  && <p className="aid-extracted-row"><span className="aid-extracted-label">Batch Year: </span>{extractedData.batchYear}</p>}
                 </div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgba(255,255,255,0.25)', margin: '6px 0 0 26px' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: '#0000009a', margin: '6px 0 0 26px' }}>
                   This info will be pre-filled in your signup form.
                 </p>
               </div>

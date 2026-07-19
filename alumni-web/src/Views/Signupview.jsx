@@ -95,23 +95,14 @@ const SignupView = ({
   handleChange,
   handleBlur,
   handleSignup,
-  // Modal-context props (optional)
   isModal = false,
   onClose,
   onSwitchToLogin,
 }) => {
-  const [legalModal, setLegalModal] = useState(null); // 'terms' | 'privacy' | null
-
-  /* Derived: button is active only when form is complete enough */
   const canSubmit = !loading;
 
   return (
     <>
-      {/*
-        sup-page-root:
-          • Full-page route  → dark blue backdrop, fills viewport (default)
-          • Modal context    → transparent, no min-height
-      */}
       <div
         className={`sup-page-root${isModal ? ' sup-page-root--modal' : ''}`}
         style={{ fontFamily: 'Montserrat, Arial, sans-serif' }}
@@ -363,27 +354,7 @@ const SignupView = ({
                 </p>
               </div>
             </div>
-
-            {/* ── Terms checkbox ─────────────────────────────────── */}
-            <div className="sup-terms-row">
-              <input
-                type="checkbox"
-                id="sup-terms-id"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
-                className="sup-checkbox"
-              />
-              <label htmlFor="sup-terms-id" className="sup-terms-label">
-                I agree to the{' '}
-                <button type="button" className="sup-legal-btn" onClick={() => setLegalModal('terms')}>
-                  Terms of Service
-                </button>
-                {' '}and{' '}
-                <button type="button" className="sup-legal-btn" onClick={() => setLegalModal('privacy')}>
-                  Privacy Policy
-                </button>
-              </label>
-            </div>
+          
 
             {/* ── Create Account button ──────────────────────────── */}
             <button
@@ -408,10 +379,6 @@ const SignupView = ({
           </div>{/* /sup-card-body */}
         </div>{/* /sup-floating-card */}
       </div>
-
-      {/* ── Legal modals — above everything ───────────────────── */}
-      {legalModal === 'terms'   && <TermsModal         onClose={() => setLegalModal(null)} />}
-      {legalModal === 'privacy' && <PrivacyPolicyModal  onClose={() => setLegalModal(null)} />}
     </>
   );
 };
