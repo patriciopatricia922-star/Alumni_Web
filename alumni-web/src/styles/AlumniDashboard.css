@@ -883,11 +883,12 @@
 .card-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(12px, 1.9vw, 18px);
+  font-size: clamp(12px, 1.9vw, 15.5px);
   line-height: 1.25;
-  color: #FFED97;
+  color: #324D87;
   margin: 0 0 6px 0;
   text-align: center;
+  margin-top: 10.5px;
 }
 
 /* ── FIX: Was rgba(255,255,255,0.9) — near-invisible on white card bg ── */
