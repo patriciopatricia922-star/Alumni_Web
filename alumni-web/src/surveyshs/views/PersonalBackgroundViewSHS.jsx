@@ -1,21 +1,12 @@
 /**
- * PersonalBackgroundViewSHS.jsx — Rendering Layer (v2, back-navigation guard)
+ * PersonalBackgroundViewSHS.jsx — Rendering Layer (v4, locked pre-fill fields)
  * Location: src/surveyshs/views/PersonalBackgroundViewSHS.jsx
- *
- * CHANGED in v2:
- *   - Back button onClick changed from `() => navigate('/dashboard')`
- *     to `() => onBack()`.
- *   - New `onBack` prop accepted (supplied by PersonalBackgroundSHS.jsx v3
- *     via useSurveyBackGuard).
- *   - navigate prop is still accepted and forwarded (notification dropdown).
- *   - No other changes. All styles and form fields are identical to v1.
  */
 
 import React from 'react';
 import Sidebar from '../../components/Sidebar';
 import '../styles/PersonalBackgroundSHS.css';
 
-/* ─── Bell icon ──────────────────────────────────────────────────────────── */
 const BellIcon = () => (
   <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
     <path
@@ -28,7 +19,6 @@ const BellIcon = () => (
   </svg>
 );
 
-/* ─── Notification bell icon (inside item avatar) ────────────────────────── */
 const NotifIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
     <path
@@ -40,7 +30,6 @@ const NotifIcon = () => (
   </svg>
 );
 
-/* ─── Back arrow ──────────────────────────────────────────────────────────── */
 const BackArrow = () => (
   <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
     <path
@@ -53,7 +42,6 @@ const BackArrow = () => (
   </svg>
 );
 
-/* ─── Notification dropdown ───────────────────────────────────────────────── */
 const NotificationDropdown = ({
   notifs,
   unreadCount,
@@ -166,28 +154,24 @@ const NotificationDropdown = ({
   );
 };
 
-/* ─── Main view ──────────────────────────────────────────────────────────── */
 const PersonalBackgroundViewSHS = ({
-  /* form state */
   form,
   set,
   setRadio,
+  setCountry,
   errors,
   saveToast,
   cardRef,
-  /* progress */
   formPct,
   currentSection,
   totalSections,
-  /* actions */
   handleSave,
   handleNext,
-  onBack,           // ← NEW: replaces inline navigate('/dashboard') call
-  /* dynamic labels / options */
+  onBack,
   getLabel,
   getPlaceholder,
   questionOptions,
-  /* notifications */
+  lockedFields,
   bellRef,
   notifs,
   unreadCount,
@@ -199,18 +183,18 @@ const PersonalBackgroundViewSHS = ({
   markOneRead,
   groupByDate,
   formatTime,
-  /* routing */
-  navigate,         // still used by notification "See all" link
-}) => (
+  navigate,
+}) => {
+  const isLocked = (key) => !!lockedFields && lockedFields.has(key);
+
+  return (
   <div className="shs-pb-root">
     <Sidebar />
     <div className="shs-pb-content">
 
-      {/* ── Sticky header ─────────────────────────────────────────────────── */}
       <div className="shs-pb-header">
         <div className="shs-pb-topbar">
 
-          {/* ── CHANGED: onClick now calls onBack() instead of navigate('/dashboard') ── */}
           <button
             className="shs-pb-back-btn"
             onClick={onBack}
@@ -219,10 +203,8 @@ const PersonalBackgroundViewSHS = ({
             Back
           </button>
 
-          {/* Badge */}
           <div className="shs-pb-badge">ALUMNI STATUS</div>
 
-          {/* Bell */}
           <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
             <button
               className={`shs-pb-bell${showDropdown ? ' active' : ''}`}
@@ -256,13 +238,11 @@ const PersonalBackgroundViewSHS = ({
           </div>
         </div>
 
-        {/* Page heading */}
         <h1 className="shs-pb-title">Alumni Tracer Survey</h1>
         <p className="shs-pb-subtitle">
           Please complete all sections to update your alumni status.
         </p>
 
-        {/* Progress bar */}
         <div className="shs-pb-progress">
           <div className="shs-pb-progress-row">
             <span>
@@ -282,11 +262,9 @@ const PersonalBackgroundViewSHS = ({
         </div>
       </div>
 
-      {/* ── Body ──────────────────────────────────────────────────────────── */}
       <div className="shs-pb-body">
         <div className="shs-pb-card" ref={cardRef}>
 
-          {/* Card heading */}
           <div>
             <h2 className="shs-pb-section-title">Personal Information</h2>
             <p className="shs-pb-section-sub">Basic information about you</p>
@@ -294,7 +272,6 @@ const PersonalBackgroundViewSHS = ({
 
           <div className="shs-pb-fields">
 
-            {/* ── 1. Full Name ──────────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('last_name')} <span className="shs-pb-req">*</span>
@@ -307,6 +284,8 @@ const PersonalBackgroundViewSHS = ({
                 placeholder={getPlaceholder('last_name')}
                 value={form.last_name}
                 onChange={set('last_name')}
+                readOnly={isLocked('last_name')}
+                style={isLocked('last_name') ? { cursor: 'default' } : undefined}
               />
             </div>
 
@@ -323,6 +302,8 @@ const PersonalBackgroundViewSHS = ({
                   placeholder={getPlaceholder('first_name')}
                   value={form.first_name}
                   onChange={set('first_name')}
+                  readOnly={isLocked('first_name')}
+                  style={isLocked('first_name') ? { cursor: 'default' } : undefined}
                 />
               </div>
               <div className="shs-pb-field">
@@ -334,11 +315,12 @@ const PersonalBackgroundViewSHS = ({
                   placeholder={getPlaceholder('middle_name')}
                   value={form.middle_name}
                   onChange={set('middle_name')}
+                  readOnly={isLocked('middle_name')}
+                  style={isLocked('middle_name') ? { cursor: 'default' } : undefined}
                 />
               </div>
             </div>
 
-            {/* ── 2. Gender ─────────────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('gender')} <span className="shs-pb-req">*</span>
@@ -364,7 +346,6 @@ const PersonalBackgroundViewSHS = ({
               </div>
             </div>
 
-            {/* ── 3. Birthday ───────────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('birthday')} <span className="shs-pb-req">*</span>
@@ -381,23 +362,87 @@ const PersonalBackgroundViewSHS = ({
               />
             </div>
 
-            {/* ── 4. Complete Address ───────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
-                {getLabel('complete_address')} <span className="shs-pb-req">*</span>
-                {errors.has('complete_address') && (
+                {getLabel('street_address')} <span className="shs-pb-req">*</span>
+                {errors.has('street_address') && (
                   <span className="shs-pb-field-error">Required</span>
                 )}
               </label>
               <input
                 className="shs-pb-input"
-                placeholder={getPlaceholder('complete_address')}
-                value={form.complete_address}
-                onChange={set('complete_address')}
+                placeholder={getPlaceholder('street_address')}
+                value={form.street_address}
+                onChange={set('street_address')}
               />
             </div>
 
-            {/* ── 5. Contact Number ─────────────────────────────────────── */}
+            <div className="shs-pb-row">
+              <div className="shs-pb-field">
+                <label className="shs-pb-label">
+                  {getLabel('city')} <span className="shs-pb-req">*</span>
+                  {errors.has('city') && (
+                    <span className="shs-pb-field-error">Required</span>
+                  )}
+                </label>
+                <input
+                  className="shs-pb-input"
+                  placeholder={getPlaceholder('city')}
+                  value={form.city}
+                  onChange={set('city')}
+                />
+              </div>
+              <div className="shs-pb-field">
+                <label className="shs-pb-label">
+                  {getLabel('province')} <span className="shs-pb-req">*</span>
+                  {errors.has('province') && (
+                    <span className="shs-pb-field-error">Required</span>
+                  )}
+                </label>
+                <input
+                  className="shs-pb-input"
+                  placeholder={getPlaceholder('province')}
+                  value={form.province}
+                  onChange={set('province')}
+                />
+              </div>
+            </div>
+
+            <div className="shs-pb-row">
+              <div className="shs-pb-field">
+                <label className="shs-pb-label">
+                  {getLabel('zip_code')} <span className="shs-pb-req">*</span>
+                  {errors.has('zip_code') && (
+                    <span className="shs-pb-field-error">Required</span>
+                  )}
+                </label>
+                <input
+                  className="shs-pb-input"
+                  placeholder={getPlaceholder('zip_code')}
+                  value={form.zip_code}
+                  onChange={set('zip_code')}
+                />
+              </div>
+              <div className="shs-pb-field">
+                <label className="shs-pb-label">
+                  {getLabel('country')} <span className="shs-pb-req">*</span>
+                  {errors.has('country') && (
+                    <span className="shs-pb-field-error">Required</span>
+                  )}
+                </label>
+                <select
+                  className="shs-pb-input shs-pb-input-select"
+                  value={form.country}
+                  onChange={setCountry}
+                >
+                  <option value="" disabled>Select</option>
+                  {(questionOptions['country'] || ['Philippines', 'United States', 'Other']).map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('contact_number')} <span className="shs-pb-req">*</span>
@@ -406,7 +451,18 @@ const PersonalBackgroundViewSHS = ({
                 )}
               </label>
               <div className="shs-pb-phone-row">
-                <div className="shs-pb-phone-prefix">+63</div>
+                {form.country === 'Other' ? (
+                  <input
+                    className="shs-pb-input"
+                    style={{ width: '68px', flexShrink: 0, padding: '12px 8px', textAlign: 'center' }}
+                    value={form.phone_prefix}
+                    onChange={set('phone_prefix')}
+                    placeholder="+"
+                    maxLength={5}
+                  />
+                ) : (
+                  <div className="shs-pb-phone-prefix">{form.phone_prefix || '+63'}</div>
+                )}
                 <input
                   type="tel"
                   className="shs-pb-input shs-pb-phone-input"
@@ -417,7 +473,6 @@ const PersonalBackgroundViewSHS = ({
               </div>
             </div>
 
-            {/* ── 6. Personal Email ─────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('email')} <span className="shs-pb-req">*</span>
@@ -434,7 +489,6 @@ const PersonalBackgroundViewSHS = ({
               />
             </div>
 
-            {/* ── 7. Track / Strand ─────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('track_strand')} <span className="shs-pb-req">*</span>
@@ -445,22 +499,25 @@ const PersonalBackgroundViewSHS = ({
               <div className="shs-pb-radio-group">
                 {(
                   questionOptions['track_strand'] || ['STEM', 'HUMSS', 'ABM']
-                ).map((opt) => (
-                  <label key={opt} className="shs-pb-radio-label">
-                    <input
-                      type="radio"
-                      name="shs_track_strand"
-                      value={opt}
-                      checked={form.track_strand === opt}
-                      onChange={() => setRadio('track_strand')(opt)}
-                    />
-                    {opt}
-                  </label>
-                ))}
+                ).map((opt) => {
+                  const locked = isLocked('track_strand');
+                  return (
+                    <label key={opt} className="shs-pb-radio-label">
+                      <input
+                        type="radio"
+                        name="shs_track_strand"
+                        value={opt}
+                        checked={form.track_strand === opt}
+                        disabled={locked}
+                        onChange={() => !locked && setRadio('track_strand')(opt)}
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
-            {/* ── 8. Year Graduated ─────────────────────────────────────── */}
             <div className="shs-pb-field">
               <label className="shs-pb-label">
                 {getLabel('year_graduated')} <span className="shs-pb-req">*</span>
@@ -478,31 +535,31 @@ const PersonalBackgroundViewSHS = ({
                     'Batch 2026',
                     'Batch 2027',
                   ]
-                ).map((opt) => (
-                  <label key={opt} className="shs-pb-radio-label">
-                    <input
-                      type="radio"
-                      name="shs_year_graduated"
-                      value={opt}
-                      checked={form.year_graduated === opt}
-                      onChange={() => setRadio('year_graduated')(opt)}
-                    />
-                    {opt}
-                  </label>
-                ))}
+                ).map((opt) => {
+                  const locked = isLocked('year_graduated');
+                  return (
+                    <label key={opt} className="shs-pb-radio-label">
+                      <input
+                        type="radio"
+                        name="shs_year_graduated"
+                        value={opt}
+                        checked={form.year_graduated === opt}
+                        disabled={locked}
+                        onChange={() => !locked && setRadio('year_graduated')(opt)}
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
-          </div>{/* end .shs-pb-fields */}
+          </div>
 
-          {/* ── Footer ──────────────────────────────────────────────────── */}
           <div className="shs-pb-footer">
             {saveToast && (
               <span className="shs-pb-save-toast">Progress saved</span>
             )}
-            <button className="shs-pb-btn-save" onClick={handleSave}>
-              Save
-            </button>
             <button className="shs-pb-btn-next" onClick={handleNext}>
               Next
             </button>
@@ -513,6 +570,7 @@ const PersonalBackgroundViewSHS = ({
 
     </div>
   </div>
-);
+  );
+};
 
 export default PersonalBackgroundViewSHS;

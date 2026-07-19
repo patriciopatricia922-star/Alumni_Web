@@ -123,8 +123,8 @@ const ModalSignup = ({ idExtracted, onSuccess, onSwitchToLogin, onClose }) => {
 
     if (!form.firstName || !form.lastName || !form.email || !form.password || !form.confirmPassword)
       return setError('Please fill in all required fields.');
-    if (!agreed)
-      return setError('Please agree to the Terms of Service and Privacy Policy.');
+    // if (!agreed)
+    //   return setError('Please agree to the Terms of Service and Privacy Policy.');
     if (fieldErrors.email)           { setTouched(prev => ({ ...prev, email: true })); return; }
     if (form.password.length < 8)    return setError('Password must be at least 8 characters long.');
     if (fieldErrors.password)        return setError(fieldErrors.password);

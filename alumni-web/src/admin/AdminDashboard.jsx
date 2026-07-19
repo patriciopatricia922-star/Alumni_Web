@@ -490,111 +490,69 @@ const AdminDashboard = () => {
       // institution.  This mirrors the College employment-rate pattern: filter
       // to rows that have the relevant data, then compute the percentage.
       const shsWithEduData = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
-      const shsRetained    = shsWithEduData.filter(r => {
-        const edu = safeParse(r.shs_educational_background_data);
-        if (!edu) return false;
-        // Accept any truthy "pursued_undergrad" / "continued_studies" variant.
-        const val =
-          edu.pursued_undergrad         ??
-          edu.pursuedUndergrad          ??
-          edu.continued_studies         ??
-          edu.continuedStudies          ??
-          edu.pursue_undergraduate      ??
-          edu.pursueUndergraduate       ??
-          edu.enrolled_undergraduate    ??
-          edu.enrolledUndergraduate     ??
-          null;
-        return val === 'Yes' || val === true || val === 1;
-      }).length;
+const shsRetained    = shsWithEduData.filter(r => {
+  const edu = safeParse(r.shs_educational_background_data);
+  if (!edu) return false;
+  return edu.status === 'Currently Studying';
+}).length;
 
-      if (shsWithEduData.length > 0) {
-        const retPct = Math.round((shsRetained / shsWithEduData.length) * 100);
-        setShsRetentionRate(`${retPct}%`);
-        setShsRetentionSub(`${shsRetained} of ${shsWithEduData.length} continued studies`);
-      } else {
-        setShsRetentionRate('N/A');
-        setShsRetentionSub('No education data yet');
-      }
+if (shsWithEduData.length > 0) {
+  const retPct = Math.round((shsRetained / shsWithEduData.length) * 100);
+  setShsRetentionRate(`${retPct}%`);
+  setShsRetentionSub(`${shsRetained} of ${shsWithEduData.length} continued studies`);
+} else {
+  setShsRetentionRate('N/A');
+  setShsRetentionSub('No education data yet');
+}
 
       // ── 8. SHS Post-Graduation Path chart data ────────────────────────────
       // Aggregates what SHS alumni did after graduation into labelled buckets
       // for the pie/bar chart in the SHS section.
       const postGradCounts = {};
-      shsSurveyRows.forEach(r => {
-        const edu = safeParse(r.shs_educational_background_data);
-        if (!edu) return;
+        shsSurveyRows.forEach(r => {
+          const edu = safeParse(r.shs_educational_background_data);
+          if (!edu) return;
 
-        // Try multiple field-name variants authored by different survey versions.
-        const path =
-          edu.post_graduation_path    ||
-          edu.postGraduationPath      ||
-          edu.after_graduation        ||
-          edu.afterGraduation         ||
-          edu.plans_after_shs         ||
-          edu.plansAfterShs           ||
-          edu.what_did_you_do         ||
-          edu.whatDidYouDo            ||
-          '';
+          let bucket = '';
+          if (edu.pursued_nu_branch === 'Yes') {
+            bucket = (edu.nu_branch || '').trim();
+          } else if (edu.pursued_nu_branch === 'No') {
+            bucket = (edu.school_name || '').trim();
+          }
 
-        if (!path) return;
-        postGradCounts[path] = (postGradCounts[path] || 0) + 1;
-      });
+          if (!bucket) return;
+          postGradCounts[bucket] = (postGradCounts[bucket] || 0) + 1;
+        });
 
-      const postGradChartData = Object.entries(postGradCounts)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
+        const postGradChartData = Object.entries(postGradCounts)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value);
 
-      setShsPostGradPathData(postGradChartData);
+        setShsPostGradPathData(postGradChartData);
 
       // ── 9. SHS Continued Studies chart data ──────────────────────────────
       // Buckets: "NU" vs "Other Institution" vs "Did Not Continue".
-      let shsContinuedAtNu    = 0;
-      let shsContinuedElsewhere = 0;
-      let shsDidNotContinue   = 0;
+      let shsContinuedAtNu       = 0;
+      let shsContinuedElsewhere  = 0;
+      let shsDidNotContinue      = 0;
 
       shsSurveyRows.forEach(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return;
 
-        const pursued =
-          edu.pursued_undergrad      ??
-          edu.pursuedUndergrad       ??
-          edu.continued_studies      ??
-          edu.continuedStudies       ??
-          edu.pursue_undergraduate   ??
-          edu.pursueUndergraduate    ??
-          edu.enrolled_undergraduate ??
-          edu.enrolledUndergraduate  ??
-          null;
-
-        const didPursue = pursued === 'Yes' || pursued === true || pursued === 1;
-
-        if (!didPursue) {
-          shsDidNotContinue++;
-          return;
-        }
-
-        const school =
-          edu.school                  ||
-          edu.institution             ||
-          edu.university              ||
-          edu.undergraduate_school    ||
-          edu.undergraduateSchool     ||
-          edu.continued_at            ||
-          edu.continuedAt             ||
-          '';
-
-        if (isNuBranch(school)) {
+        if (edu.pursued_nu_branch === 'Yes') {
           shsContinuedAtNu++;
-        } else {
+        } else if (edu.pursued_nu_branch === 'No' && edu.pursued_other_school === 'Yes') {
           shsContinuedElsewhere++;
+        } else {
+          shsDidNotContinue++;
         }
       });
 
       const continuedStudiesChartData = [
-        { name: 'Continued at NU',           value: shsContinuedAtNu     },
-        { name: 'Continued Elsewhere',        value: shsContinuedElsewhere },
-        { name: 'Did Not Continue',           value: shsDidNotContinue    },
+        { name: 'Continued at NU',    value: shsContinuedAtNu      },
+        { name: 'Continued Elsewhere', value: shsContinuedElsewhere },
+        { name: 'Did Not Continue',    value: shsDidNotContinue     },
       ].filter(d => d.value > 0);
 
       setShsContinuedStudiesData(continuedStudiesChartData);

@@ -1,18 +1,33 @@
 /**
- * PersonalBackgroundSHS.jsx — Logic Layer (v3, back-navigation guard)
+ * PersonalBackgroundSHS.jsx — Logic Layer (v6, fixed track/strand & year-graduated resolution)
  * Location: src/surveyshs/PersonalBackgroundSHS.jsx
  *
- * CHANGED in v3 (back-navigation guard only — no other logic modified):
+ * CHANGED in v6 (root-cause fix only — no other logic modified):
  *
- *   1. Import useSurveyBackGuard from '../../hooks/useSurveyBackGuard'.
- *   2. Instantiate the hook, passing navigate, the back route, handleSave,
- *      and a human-readable section name.
- *   3. Pass handleBack (from the hook) to PersonalBackgroundViewSHS via a
- *      new `onBack` prop.
- *   4. Render <BackGuardModal /> once at the end of the return block.
+ *   1. Track/Strand Completed & Year Graduated pre-fill:
+ *      - profile.program / profile.batchYear never existed on the object
+ *        returned by useUserProfile (it maps DB `program` → `academicProgram`
+ *        and DB `batch_year` → `yearGraduated`). These dead references are
+ *        removed; the hook's actual keys are read directly.
+ *      - The real bug: the resolved value written into form state
+ *        (e.g. 'SHS-STEM', '2024') never matched the rendered radio option
+ *        strings (e.g. 'STEM', 'Batch 2024'), so `checked={form.x === opt}`
+ *        never matched — regardless of correct data fetch. Fixed by
+ *        resolveTrackStrand()/resolveYearGraduated(), which match the DB
+ *        value against the SHS survey's OWN questionOptions (falling back to
+ *        the local SHS default list), so the stored form value is always one
+ *        of the exact strings actually rendered as a radio option.
+ *      - The autofill effect now depends on questionOptions (gated on
+ *        !loadingConfig) so resolution reruns once SHS survey config has
+ *        actually loaded, instead of possibly resolving against stale
+ *        fallback options before config arrives.
  *
- * Everything else — autofill bug fixes from v2, progress, validation,
- * save, notifications — is identical to v2.
+ *   2. Locked-field behavior (v5) is preserved: once resolved, track_strand
+ *      and year_graduated are written directly into form state, excluded
+ *      from validation prompts, and rendered as locked/disabled in the view.
+ *
+ * Everything else — v5 read-only name fields, v4 address split, back-nav
+ * guard, progress, save, notifications — is identical to v5.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -21,7 +36,7 @@ import { supabase } from '../../lib/supabase';
 import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import useUserProfile from '../../hooks/Useuserprofile';
-import useSurveyBackGuard from '../../hooks/useSurveyBackGuard'; // ← NEW
+import useSurveyBackGuard from '../../hooks/useSurveyBackGuard';
 import PersonalBackgroundViewSHS from '../views/PersonalBackgroundViewSHS';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,17 +46,42 @@ const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 1;
 const SECTION_KEY     = 'shs_personal_background';
 const NEXT_ROUTE      = '/surveyshs/shs-educational-background';
+const DEPARTMENT_TYPE = 'shs';
 
 const REQUIRED_FIELDS = [
   'last_name',
   'first_name',
   'gender',
   'birthday',
-  'complete_address',
+  'street_address',
+  'city',
+  'province',
+  'zip_code',
+  'country',
   'contact_number',
   'email',
   'track_strand',
   'year_graduated',
+];
+
+// Fields pre-filled from the user's record that must not require
+// (re-)selection or editing once loaded.
+const LOCKED_FIELDS = new Set([
+  'last_name',
+  'first_name',
+  'middle_name',
+  'track_strand',
+  'year_graduated',
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Default option lists — used only when survey_config hasn't loaded options
+// for these fields yet. Also the resolution target for DB → option matching.
+// ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_TRACK_STRAND_OPTIONS = ['STEM', 'HUMSS', 'ABM'];
+const DEFAULT_YEAR_GRADUATED_OPTIONS = [
+  'Batch 2022', 'Batch 2023', 'Batch 2024',
+  'Batch 2025', 'Batch 2026', 'Batch 2027',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,7 +93,11 @@ const DEFAULT_LABELS = {
   middle_name:      'Middle Name',
   gender:           'Gender',
   birthday:         'Birthday (MM/DD/YYYY)',
-  complete_address: 'Complete Address',
+  street_address:   'Street Address',
+  city:             'City',
+  province:         'Province',
+  zip_code:         'ZIP Code',
+  country:          'Country',
   contact_number:   'Contact Number',
   email:            'Personal Email Address',
   track_strand:     'Track/Strand Completed',
@@ -64,19 +108,34 @@ const DEFAULT_PLACEHOLDERS = {
   last_name:        'e.g. Dela Cruz',
   first_name:       'e.g. Juan',
   middle_name:      'e.g. Mercado',
-  complete_address: 'e.g. Blk 1 Lot 2, AlumnAI St., Dasmariñas, Cavite',
+  street_address:   'e.g. Blk 1 Lot 2, AlumnAI St.',
+  city:             'e.g. Dasmariñas',
+  province:         'e.g. Cavite',
+  zip_code:         'e.g. 4114',
   contact_number:   'e.g. 912-345-6789',
   email:            'e.g. juandelacruz@gmail.com',
 };
 
 const INDEX_TO_FIELD = [
   'last_name', 'first_name', 'middle_name',
-  'gender', 'birthday', 'complete_address',
+  'gender', 'birthday', 'street_address', 'city', 'province',
+  'zip_code', 'country',
   'contact_number', 'email', 'track_strand', 'year_graduated',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHS Track/Strand normalisation (unchanged from v2)
+// Profile JS key → survey snake_case key mapping (address)
+// ─────────────────────────────────────────────────────────────────────────────
+const PROFILE_TO_SURVEY_ADDRESS = {
+  street:   'street_address',
+  city:     'city',
+  province: 'province',
+  zipCode:  'zip_code',
+  country:  'country',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHS Track/Strand normalisation (fallback only — see resolveTrackStrand)
 // ─────────────────────────────────────────────────────────────────────────────
 const SHS_TRACK_CANONICAL = ['SHS-STEM', 'SHS-ABM', 'SHS-HUMSS'];
 
@@ -89,6 +148,69 @@ const normalizeTrackStrand = (raw) => {
   if (suffix) return suffix;
   if (upper.startsWith('SHS-')) return upper;
   return String(raw).trim();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Root-cause fix: resolve the DB value against the ACTUAL rendered option
+// list (survey_config-provided, falling back to the SHS default list) so the
+// value written into form state is always one of the exact strings the radio
+// group renders as `opt`. Without this, `checked={form.x === opt}` compares
+// two independently-formatted strings (e.g. 'SHS-STEM' vs 'STEM', or '2024'
+// vs 'Batch 2024') and never matches, regardless of correct data fetch.
+//
+// `program` in the users table holds either a College program or an SHS
+// strand — useUserProfile maps both uniformly to profile.academicProgram.
+// Scoping resolution to THIS survey's own questionOptions (SHS strand list)
+// keeps it correctly isolated from the College program list.
+// ─────────────────────────────────────────────────────────────────────────────
+const resolveTrackStrand = (rawProgram, configOptions) => {
+  if (!rawProgram) return '';
+  const options = (configOptions && configOptions.length)
+    ? configOptions
+    : DEFAULT_TRACK_STRAND_OPTIONS;
+  const raw = String(rawProgram).trim().toUpperCase().replace(/^SHS-/, '');
+  const found = options.find(
+    (opt) => String(opt).trim().toUpperCase().replace(/^SHS-/, '') === raw
+  );
+  // Fallback preserves prior normalized behavior rather than silently
+  // returning blank if no option-list match is found (e.g. config typo).
+  return found || normalizeTrackStrand(rawProgram);
+};
+
+const resolveYearGraduated = (rawBatchYear, configOptions) => {
+  if (rawBatchYear == null || String(rawBatchYear).trim() === '') return '';
+  const options = (configOptions && configOptions.length)
+    ? configOptions
+    : DEFAULT_YEAR_GRADUATED_OPTIONS;
+  const yearStr = String(rawBatchYear).trim();
+  const found = options.find((opt) => String(opt).replace(/\D/g, '') === yearStr);
+  return found || `Batch ${yearStr}`;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy `complete_address` migration helper
+// ─────────────────────────────────────────────────────────────────────────────
+const migrateLegacyAddress = (data) => {
+  if (!data || !data.complete_address) return data;
+
+  const hasSplitFields =
+    (data.street_address && String(data.street_address).trim()) ||
+    (data.city && String(data.city).trim()) ||
+    (data.province && String(data.province).trim());
+
+  if (hasSplitFields) return data;
+
+  const parts = String(data.complete_address)
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const migrated = { ...data };
+  if (parts.length > 0 && !migrated.street_address) migrated.street_address = parts[0];
+  if (parts.length > 1 && !migrated.city)            migrated.city = parts[1];
+  if (parts.length > 2 && !migrated.province)         migrated.province = parts[2];
+
+  return migrated;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -164,11 +286,17 @@ const PersonalBackgroundSHS = () => {
     middle_name:      '',
     gender:           '',
     birthday:         '',
-    complete_address: '',
+    street_address:   '',
+    city:             '',
+    province:         '',
+    zip_code:         '',
+    country:          '',
     contact_number:   '',
     email:            '',
     track_strand:     '',
     year_graduated:   '',
+    phone_prefix:     '+63',
+    complete_address: '', // legacy — preserved, not rendered, not required
   });
 
   const [errors,    setErrors]    = useState(new Set());
@@ -188,7 +316,7 @@ const PersonalBackgroundSHS = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── surveyConfig loading + realtime subscription ──────────────────────────
+  // ── surveyConfig loading + realtime subscription (SHS department) ────────
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
@@ -218,7 +346,7 @@ const PersonalBackgroundSHS = () => {
     const init = async () => {
       setLoadingConfig(true);
       try {
-        const config = await loadSurveyConfig(true);
+        const config = await loadSurveyConfig(true, DEPARTMENT_TYPE);
         if (!cancelled && config) applyConfig(config);
       } finally {
         if (!cancelled) setLoadingConfig(false);
@@ -227,7 +355,7 @@ const PersonalBackgroundSHS = () => {
     init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      const fresh = await loadSurveyConfig(true);
+      const fresh = await loadSurveyConfig(true, DEPARTMENT_TYPE);
       if (!cancelled && fresh) applyConfig(fresh);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
@@ -237,9 +365,10 @@ const PersonalBackgroundSHS = () => {
   useEffect(() => {
     const loadSavedData = async () => {
       try {
-        const savedData = await loadSectionData(SECTION_KEY);
-        if (savedData && Object.keys(savedData).length > 0) {
-          console.log('[PersonalBackgroundSHS] Loaded saved survey data:', savedData);
+        const savedDataRaw = await loadSectionData(SECTION_KEY);
+        if (savedDataRaw && Object.keys(savedDataRaw).length > 0) {
+          console.log('[PersonalBackgroundSHS] Loaded saved survey data:', savedDataRaw);
+          const savedData = migrateLegacyAddress(savedDataRaw);
           setForm((f) => {
             const merged = { ...f, ...savedData };
             Object.entries(profileAcademicRef.current).forEach(([key, val]) => {
@@ -260,33 +389,40 @@ const PersonalBackgroundSHS = () => {
   }, []);
 
   // ── STEP 2: Autofill from profile ─────────────────────────────────────────
+  // Track/Strand Completed and Year Graduated are sourced from the user
+  // record via useUserProfile:
+  //   users.program    → profile.academicProgram
+  //   users.batch_year → profile.yearGraduated
+  //
+  // ROOT-CAUSE FIX: resolve each raw DB value against THIS survey's own
+  // questionOptions (SHS strand / batch-year option lists) so the value
+  // written into form state is always one of the exact strings the radio
+  // group renders — guaranteeing `checked={form.x === opt}` matches. This
+  // effect depends on questionOptions (gated on !loadingConfig) so it
+  // reruns once SHS survey config has actually loaded, rather than
+  // resolving once against stale/fallback options.
   useEffect(() => {
     if (!hasLoadedSavedData)   return;
     if (profileLoading)        return;
-    if (hasAttemptedAutofill)  return;
-
-    console.log('[PersonalBackgroundSHS] Running autofill...');
-    console.log('[PersonalBackgroundSHS] Profile:', profile);
+    if (loadingConfig)         return;
 
     if (profile && Object.keys(profile).length > 0) {
-      const rawProgram =
-        profile.program         ??
-        profile.academicProgram ??
-        null;
-
-      const rawBatchYear =
-        profile.batchYear     ??
-        profile.batch_year    ??
-        profile.yearGraduated ??
-        null;
+      const rawProgram   = profile.academicProgram || null;
+      const rawBatchYear = profile.yearGraduated || null;
 
       const academicValues = {};
 
-      if (rawProgram && String(rawProgram).trim()) {
-        academicValues.track_strand = normalizeTrackStrand(rawProgram);
+      if (rawProgram) {
+        academicValues.track_strand = resolveTrackStrand(
+          rawProgram,
+          questionOptions['track_strand']
+        );
       }
-      if (rawBatchYear && String(rawBatchYear).trim()) {
-        academicValues.year_graduated = String(rawBatchYear).trim();
+      if (rawBatchYear) {
+        academicValues.year_graduated = resolveYearGraduated(
+          rawBatchYear,
+          questionOptions['year_graduated']
+        );
       }
 
       if (Object.keys(academicValues).length > 0) {
@@ -310,8 +446,18 @@ const PersonalBackgroundSHS = () => {
           }
         };
 
-        fillIfEmpty('track_strand',   academicValues.track_strand);
-        fillIfEmpty('year_graduated', academicValues.year_graduated);
+        // Locked fields: set directly from the resolved user-record value
+        // (source of truth) so they display immediately and never require
+        // reselection, even re-running as questionOptions finishes loading.
+        if (academicValues.track_strand && updated.track_strand !== academicValues.track_strand) {
+          updated.track_strand = academicValues.track_strand;
+          didChange = true;
+        }
+        if (academicValues.year_graduated && updated.year_graduated !== academicValues.year_graduated) {
+          updated.year_graduated = academicValues.year_graduated;
+          didChange = true;
+        }
+
         fillIfEmpty('first_name',     profile.firstName);
         fillIfEmpty('middle_name',    profile.middleName);
         fillIfEmpty('last_name',      profile.lastName);
@@ -320,19 +466,26 @@ const PersonalBackgroundSHS = () => {
         fillIfEmpty('gender',         profile.gender);
         fillIfEmpty('birthday',       profile.birthday);
 
-        if (!updated.complete_address || String(updated.complete_address).trim() === '') {
-          const parts = [profile.street, profile.city, profile.province]
-            .filter(Boolean)
-            .map((p) => String(p).trim())
-            .filter((p) => p !== '');
-          if (parts.length > 0) {
-            updated.complete_address = parts.join(', ');
-            didChange = true;
-            console.log('[PersonalBackgroundSHS] Autofilled complete_address from address parts');
-          }
+        Object.entries(PROFILE_TO_SURVEY_ADDRESS).forEach(([profileKey, surveyKey]) => {
+          fillIfEmpty(surveyKey, profile[profileKey]);
+        });
+
+        if (updated.country && (!updated.phone_prefix || updated.phone_prefix === '+63')) {
+          if (updated.country === 'United States') updated.phone_prefix = '+1';
         }
 
         return didChange ? updated : currentForm;
+      });
+
+      // Locked fields are pre-answered by definition once resolved — clear
+      // any stale validation error for them.
+      setErrors((prev) => {
+        if (!prev.size) return prev;
+        const next = new Set(prev);
+        let changed = false;
+        if (academicValues.track_strand   && next.delete('track_strand'))   changed = true;
+        if (academicValues.year_graduated && next.delete('year_graduated')) changed = true;
+        return changed ? next : prev;
       });
     } else {
       console.log('[PersonalBackgroundSHS] No profile data available for autofill');
@@ -340,7 +493,7 @@ const PersonalBackgroundSHS = () => {
 
     setHasAttemptedAutofill(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileLoading, hasLoadedSavedData, hasAttemptedAutofill]);
+  }, [profileLoading, hasLoadedSavedData, loadingConfig, questionOptions]);
 
   // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -389,6 +542,7 @@ const PersonalBackgroundSHS = () => {
 
   // ── Field setters ──────────────────────────────────────────────────────────
   const setField = (key) => (e) => {
+    if (LOCKED_FIELDS.has(key)) return;
     setForm((f) => ({ ...f, [key]: e.target.value }));
     if (errors.has(key)) {
       setErrors((prev) => {
@@ -400,6 +554,7 @@ const PersonalBackgroundSHS = () => {
   };
 
   const setRadio = (key) => (val) => {
+    if (LOCKED_FIELDS.has(key)) return;
     setForm((f) => ({ ...f, [key]: val }));
     if (errors.has(key)) {
       setErrors((prev) => {
@@ -410,10 +565,24 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
+  const setCountry = (e) => {
+    const c      = e.target.value;
+    const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
+    setForm((f) => ({ ...f, country: c, phone_prefix: prefix }));
+    if (errors.has('country')) {
+      setErrors((prev) => {
+        const next = new Set(prev);
+        next.delete('country');
+        return next;
+      });
+    }
+  };
+
   // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
     REQUIRED_FIELDS.forEach((field) => {
+      if (LOCKED_FIELDS.has(field) && form[field] && String(form[field]).trim()) return;
       if (!form[field] || !String(form[field]).trim()) e.add(field);
     });
     return e;
@@ -457,7 +626,6 @@ const PersonalBackgroundSHS = () => {
   );
 
   // ── Back-navigation guard ─────────────────────────────────────────────────
-  // NEW in v3: replaces the inline navigate('/dashboard') in the back button.
   const { handleBack, BackGuardModal } = useSurveyBackGuard(
     navigate,
     '/dashboard',
@@ -486,6 +654,7 @@ const PersonalBackgroundSHS = () => {
         form={form}
         set={setField}
         setRadio={setRadio}
+        setCountry={setCountry}
         errors={errors}
         saveToast={saveToast}
         cardRef={cardRef}
@@ -501,6 +670,8 @@ const PersonalBackgroundSHS = () => {
         getLabel={getLabel}
         getPlaceholder={getPlaceholder}
         questionOptions={questionOptions}
+        /* pre-fill lock behavior */
+        lockedFields={LOCKED_FIELDS}
         /* notifications */
         bellRef={bellRef}
         notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
@@ -516,7 +687,6 @@ const PersonalBackgroundSHS = () => {
         /* routing */
         navigate={navigate}
       />
-      {/* ← NEW: modal renders via React portal, outside the view's DOM tree */}
       <BackGuardModal />
     </>
   );
