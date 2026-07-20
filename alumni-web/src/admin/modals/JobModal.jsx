@@ -1,29 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaBold, 
-  FaItalic, 
-  FaUnderline, 
-  FaAlignLeft, 
-  FaAlignCenter, 
-  FaAlignRight 
+import {
+  FaBold,
+  FaItalic,
+  FaUnderline,
+  FaAlignLeft,
+  FaAlignCenter,
+  FaAlignRight
 } from 'react-icons/fa';
-import { FiImage, FiTrash2 } from 'react-icons/fi';
+import { FiImage, FiTrash2, FiX } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
+import MultiImageUpload from '../modals/MultiImageUpload';
+import '../modals/Disc.css';
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.33" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+    <div className="cm-modal-overlay" onClick={onClose}>
+      <div className="cm-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="cm-modal-close" onClick={onClose}>
+          <FiX size={16} />
         </button>
-        <h2 className="modal-title">{title}</h2>
-        <p className="modal-subtitle">{subtitle}</p>
+        <h2 className="cm-modal-title">{title}</h2>
+        <p className="cm-modal-subtitle">{subtitle}</p>
         {children}
       </div>
     </div>
@@ -31,20 +30,19 @@ const Modal = ({ open, onClose, title, subtitle, children }) => {
 };
 
 const Field = ({ label, required, children }) => (
-  <div className="field-wrap">
-    <label className="field-label">
+  <div className="cm-field">
+    <label className="cm-label">
       {label}
-      {required && <span className="field-required"> *</span>}
+      {required && <span className="cm-label-required"> *</span>}
     </label>
     {children}
   </div>
 );
 
-// FIXED: Added onSubmit prop
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
-  <div className="modal-footer">
-    <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" onClick={onSubmit} disabled={loading}>
+  <div className="cm-modal-actions">
+    <button className="cm-btn-cancel" onClick={onCancel}>Cancel</button>
+    <button className="cm-btn-submit" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
@@ -67,30 +65,30 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   }, [value]);
 
   return (
-    <div className="rich-text-editor">
-      <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
+    <div className="cm-rich-editor">
+      <div className="cm-rich-toolbar">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
           <FaBold size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
           <FaItalic size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
           <FaUnderline size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
           <FaAlignLeft size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
           <FaAlignCenter size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
           <FaAlignRight size={14} />
         </button>
       </div>
       <div
         ref={editorRef}
-        className="rich-text-content"
+        className="cm-rich-content"
         contentEditable="true"
         onInput={() => onChange(editorRef.current.innerHTML)}
         data-placeholder={placeholder}
@@ -100,6 +98,9 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
+// Retained for reference/backwards-compat (JobModal now uses MultiImageUpload
+// via the "Company Photos" field below), but styled with cm- classes in case
+// it's used elsewhere.
 const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'job-images', folder = 'jobs' }) => {
   const [preview, setPreview] = useState(currentImage || null);
   const [uploading, setUploading] = useState(false);
@@ -152,32 +153,32 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'job-images', f
   };
 
   return (
-    <div className="image-upload-container">
+    <div className="cm-image-upload-container">
       {preview && (
-        <div className="image-preview">
+        <div className="cm-image-preview">
           <img src={preview} alt="Preview" />
-          <button type="button" className="remove-image-btn" onClick={handleRemove}>
+          <button type="button" className="cm-remove-image-btn" onClick={handleRemove}>
             <FiTrash2 size={12} />
           </button>
         </div>
       )}
-      <div className="image-upload-area" onClick={() => document.getElementById('job-image-input').click()}>
+      <div className="cm-image-upload-area" onClick={() => document.getElementById('job-image-input').click()}>
         {uploading ? (
           <div className="uploading-spinner"></div>
         ) : (
           <FiImage size={20} color="#155DFC" />
         )}
         <span>{uploading ? 'Uploading...' : (preview ? 'Change Logo' : 'Upload Company Logo')}</span>
-        <input 
-          id="job-image-input" 
-          type="file" 
-          accept="image/*" 
-          onChange={handleImageChange} 
-          style={{ display: 'none' }} 
+        <input
+          id="job-image-input"
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          style={{ display: 'none' }}
           disabled={uploading}
         />
       </div>
-      <p className="field-hint">Recommended: Square logo, max 2MB</p>
+      <p className="cm-field-hint">Recommended: Square logo, max 2MB</p>
     </div>
   );
 };
@@ -192,7 +193,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
     salary_range: '',
     tags: '',
     expiry: '',
-    image_url: null,
+    image_urls: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -207,7 +208,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         salary_range: job.salary_range || '',
         tags: Array.isArray(job.tags) ? job.tags.join(', ') : job.tags || '',
         expiry: job.expires_at ? new Date(job.expires_at).toISOString().split('T')[0] : '',
-        image_url: job.image_url || null,
+        image_urls: job.image_urls?.length ? job.image_urls : (job.image_url ? [job.image_url] : []),
       });
     } else {
       setForm({
@@ -219,7 +220,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         salary_range: '',
         tags: '',
         expiry: '',
-        image_url: null,
+        image_urls: [],
       });
     }
   }, [mode, job]);
@@ -249,21 +250,23 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
       title={mode === 'edit' ? 'Edit Job' : 'Create New Job'}
       subtitle={mode === 'edit' ? 'Update job details' : 'Create a new job for alumni'}
     >
-      <div className="modal-form">
+      <div className="cm-modal-fields">
         <Field label="Job Title" required>
-          <input className="field-input" placeholder="Enter job title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <input className="cm-input" placeholder="Enter job title" value={form.title} onChange={(e) => s('title', e.target.value)} />
         </Field>
 
         <Field label="Company" required>
-          <input className="field-input" placeholder="Enter company name" value={form.company} onChange={(e) => s('company', e.target.value)} />
+          <input className="cm-input" placeholder="Enter company name" value={form.company} onChange={(e) => s('company', e.target.value)} />
         </Field>
 
-        <Field label="Company Logo">
-          <ImageUpload
-            currentImage={form.image_url}
-            onImageUpload={(url) => s('image_url', url)}
+        <Field label="Company Photos">
+          <MultiImageUpload
+            images={form.image_urls}
+            onChange={(urls) => s('image_urls', urls)}
             bucketName="job-images"
             folder="jobs"
+            label="Upload Photos"
+            classPrefix="cm-"
           />
         </Field>
 
@@ -275,13 +278,13 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           />
         </Field>
 
-        <div className="field-grid">
+        <div className="cm-field-grid">
           <Field label="Location" required>
-            <input className="field-input" placeholder="Enter job location" value={form.location} onChange={(e) => s('location', e.target.value)} />
+            <input className="cm-input" placeholder="Enter job location" value={form.location} onChange={(e) => s('location', e.target.value)} />
           </Field>
 
           <Field label="Category" required>
-            <select className="field-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
+            <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
               <option>Full-time</option>
               <option>Part-time</option>
               <option>Contract</option>
@@ -291,23 +294,23 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           </Field>
         </div>
 
-        <div className="field-grid">
+        <div className="cm-field-grid">
           <Field label="Salary Range">
-            <input className="field-input" placeholder="e.g. ₱30,000 - ₱50,000" value={form.salary_range} onChange={(e) => s('salary_range', e.target.value)} />
+            <input className="cm-input" placeholder="e.g. ₱30,000 - ₱50,000" value={form.salary_range} onChange={(e) => s('salary_range', e.target.value)} />
           </Field>
 
           <Field label="Requirements/Tags (comma-separated)">
-            <input className="field-input" placeholder="e.g. Graphic Design, Multimedia Arts, Fine Arts" value={form.tags} onChange={(e) => s('tags', e.target.value)} />
+            <input className="cm-input" placeholder="e.g. Graphic Design, Multimedia Arts, Fine Arts" value={form.tags} onChange={(e) => s('tags', e.target.value)} />
           </Field>
         </div>
 
         <Field label="Expiry Date">
-          <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
         </Field>
 
-        <ModalFooter 
-          onCancel={onClose} 
-          createLabel={mode === 'edit' ? 'Update Job' : 'Create Job'} 
+        <ModalFooter
+          onCancel={onClose}
+          createLabel={mode === 'edit' ? 'Update Job' : 'Create Job'}
           loading={loading}
           onSubmit={handleSubmit}
         />

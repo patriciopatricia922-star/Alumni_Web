@@ -6,6 +6,7 @@ import { FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, FaAlignRight
 import { FiImage, FiTrash2 } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 import '../modals/Disc.css';
+import MultiImageUpload from '../modals/MultiImageUpload';
 
 // ── Rich Text Editor (same as other modals) ──────────────────────────────────
 const RichTextEditor = ({ value, onChange, placeholder }) => {
@@ -123,7 +124,7 @@ const CATEGORY_OPTIONS = ['Apparel', 'Drinkware', 'Accessories', 'Other'];
 const RewardModal = ({ open, onClose, mode, reward, onCreate, onUpdate }) => {
   const [form, setForm] = useState({
     title: '', description: '', points_required: '',
-    category: 'Apparel', image_url: null,
+    category: 'Apparel', image_urls: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -134,10 +135,10 @@ const RewardModal = ({ open, onClose, mode, reward, onCreate, onUpdate }) => {
         description:     reward.description     || '',
         points_required: reward.points_required != null ? String(reward.points_required) : '',
         category:        reward.category        || 'Apparel',
-        image_url:       reward.image_url       || null,
+        image_urls: reward.image_urls?.length ? reward.image_urls : (reward.image_url ? [reward.image_url] : []),
       });
     } else {
-      setForm({ title: '', description: '', points_required: '', category: 'Apparel', image_url: null });
+      setForm({ title: '', description: '', points_required: '', category: 'Apparel', image_urls: [] });
     }
   }, [mode, reward]);
 
@@ -187,10 +188,14 @@ const RewardModal = ({ open, onClose, mode, reward, onCreate, onUpdate }) => {
 
             {/* Image */}
             <div className="cm-field">
-              <label className="cm-label">Reward Image</label>
-              <ImageUpload
-                currentImage={form.image_url}
-                onImageUpload={url => s('image_url', url)}
+              <label className="cm-label">Reward Photos</label>
+              <MultiImageUpload
+                images={form.image_urls}
+                onChange={urls => s('image_urls', urls)}
+                bucketName="reward-images"
+                folder="rewards"
+                label="Upload Photos"
+                classPrefix="cm-"
               />
             </div>
 

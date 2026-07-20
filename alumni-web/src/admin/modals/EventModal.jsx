@@ -7,21 +7,21 @@ import {
   FaAlignCenter,
   FaAlignRight,
 } from 'react-icons/fa';
+import { FiX } from 'react-icons/fi';
+import MultiImageUpload from '../modals/MultiImageUpload';
+import '../modals/Disc.css';
 
 // ── Shared modal shell ────────────────────────────────────────────────────────
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6"  y2="18" />
-            <line x1="6"  y1="6" x2="18" y2="18" />
-          </svg>
+    <div className="cm-modal-overlay" onClick={onClose}>
+      <div className="cm-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="cm-modal-close" onClick={onClose} aria-label="Close">
+          <FiX size={16} />
         </button>
-        <h2 className="modal-title">{title}</h2>
-        <p className="modal-subtitle">{subtitle}</p>
+        <h2 className="cm-modal-title">{title}</h2>
+        <p className="cm-modal-subtitle">{subtitle}</p>
         {children}
       </div>
     </div>
@@ -30,10 +30,10 @@ const Modal = ({ open, onClose, title, subtitle, children }) => {
 
 // ── Field wrapper ─────────────────────────────────────────────────────────────
 const Field = ({ label, required, children }) => (
-  <div className="field-wrap">
-    <label className="field-label">
+  <div className="cm-field">
+    <label className="cm-label">
       {label}
-      {required && <span className="field-required"> *</span>}
+      {required && <span className="cm-label-required"> *</span>}
     </label>
     {children}
   </div>
@@ -41,9 +41,9 @@ const Field = ({ label, required, children }) => (
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
-  <div className="modal-footer">
-    <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" onClick={onSubmit} disabled={loading}>
+  <div className="cm-modal-actions">
+    <button className="cm-btn-cancel" onClick={onCancel}>Cancel</button>
+    <button className="cm-btn-submit" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
@@ -66,18 +66,18 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   }, [value]);
 
   return (
-    <div className="rich-text-editor">
-      <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')}          title="Bold">          <FaBold        size={13} /></button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')}        title="Italic">        <FaItalic      size={13} /></button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')}     title="Underline">     <FaUnderline   size={13} /></button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')}   title="Align Left">    <FaAlignLeft   size={13} /></button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">  <FaAlignCenter size={13} /></button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')}  title="Align Right">   <FaAlignRight  size={13} /></button>
+    <div className="cm-rich-editor">
+      <div className="cm-rich-toolbar">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('bold')}          title="Bold">          <FaBold        size={13} /></button>
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('italic')}        title="Italic">        <FaItalic      size={13} /></button>
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('underline')}     title="Underline">     <FaUnderline   size={13} /></button>
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyLeft')}   title="Align Left">    <FaAlignLeft   size={13} /></button>
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">  <FaAlignCenter size={13} /></button>
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyRight')}  title="Align Right">   <FaAlignRight  size={13} /></button>
       </div>
       <div
         ref={editorRef}
-        className="rich-text-content"
+        className="cm-rich-content"
         contentEditable="true"
         onInput={() => onChange(editorRef.current.innerHTML)}
         data-placeholder={placeholder}
@@ -88,7 +88,6 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
 };
 
 // ── EventModal ────────────────────────────────────────────────────────────────
-// Image upload has been fully removed from this modal.
 const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
   const [form, setForm] = useState({
     title:       '',
@@ -98,6 +97,7 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
     startTime:   '',
     endTime:     '',
     location:    '',
+    image_urls:  [], // ← CHANGED: was image_url (single), now array like Job/Discount/Reward
   });
   const [loading, setLoading] = useState(false);
 
@@ -111,11 +111,15 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
         startTime:   event.event_date  ? new Date(event.event_date).toTimeString().slice(0, 5)  : '',
         endTime:     event.end_time    || '',
         location:    event.location    || '',
+        // ← CHANGED: same fallback pattern as JobModal/DiscountModal/RewardModal —
+        //   use image_urls if present, else wrap a legacy single image_url into an array.
+        image_urls:  event.image_urls?.length ? event.image_urls : (event.image_url ? [event.image_url] : []),
       });
     } else {
       setForm({
         title: '', description: '', date: '',
         category: 'Upcoming Events', startTime: '', endTime: '', location: '',
+        image_urls: [], // ← CHANGED
       });
     }
   }, [mode, event]);
@@ -144,13 +148,25 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
       title={mode === 'edit' ? 'Edit Event' : 'Create New Event'}
       subtitle={mode === 'edit' ? 'Update event details' : 'Create a new event for alumni'}
     >
-      <div className="modal-form">
+      <div className="cm-modal-fields">
         <Field label="Event Title" required>
           <input
-            className="field-input"
+            className="cm-input"
             placeholder="Enter event title"
             value={form.title}
             onChange={(e) => s('title', e.target.value)}
+          />
+        </Field>
+
+        {/* ── CHANGED: single ImageUpload → MultiImageUpload, same as Job/Discount/Reward ── */}
+        <Field label="Event Photos">
+          <MultiImageUpload
+            images={form.image_urls}
+            onChange={(urls) => s('image_urls', urls)}
+            bucketName="event-images"
+            folder="events"
+            label="Upload Photos"
+            classPrefix="cm-"
           />
         </Field>
 
@@ -162,35 +178,35 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
           />
         </Field>
 
-        <div className="field-grid">
+        <div className="cm-field-grid">
           <Field label="Date" required>
             <input
-              className="field-input"
+              className="cm-input"
               type="date"
               value={form.date}
               onChange={(e) => s('date', e.target.value)}
             />
           </Field>
           <Field label="Category" required>
-            <select className="field-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
+            <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
               <option>Upcoming Events</option>
               <option>Exclusive Events</option>
             </select>
           </Field>
         </div>
 
-        <div className="field-grid">
+        <div className="cm-field-grid">
           <Field label="Start Time" required>
-            <input className="field-input" type="time" value={form.startTime} onChange={(e) => s('startTime', e.target.value)} />
+            <input className="cm-input" type="time" value={form.startTime} onChange={(e) => s('startTime', e.target.value)} />
           </Field>
           <Field label="End Time">
-            <input className="field-input" type="time" value={form.endTime} onChange={(e) => s('endTime', e.target.value)} />
+            <input className="cm-input" type="time" value={form.endTime} onChange={(e) => s('endTime', e.target.value)} />
           </Field>
         </div>
 
         <Field label="Location" required>
           <input
-            className="field-input"
+            className="cm-input"
             placeholder="Enter event location"
             value={form.location}
             onChange={(e) => s('location', e.target.value)}

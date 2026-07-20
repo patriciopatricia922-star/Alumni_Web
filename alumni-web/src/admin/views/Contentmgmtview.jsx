@@ -1,5 +1,5 @@
 // ============================================================================
-// Purpose: Content Management View — renders all visual components. Admin
+// Purpose: Content Management View — renders all visual components.
 //mine
 // INTEGRATION: Added Disclosure tab content, DisclosureModal, hidden section
 //              type filtering, inline Edit button on landing cards, archive
@@ -253,53 +253,55 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
         </div>
       )}
 
-      <div className="content-item-header">
-        <div className="content-item-icon" style={{ background: typeColor }}>{typeIcon()}</div>
-        <div className="content-item-actions">
-          <button className="content-edit-btn" onClick={() => onEdit(item, type)}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
-            </svg>
-            Edit
-          </button>
-          {/* INTEGRATION: Archive now shows confirmation dialog with item title */}
-          <button className="content-archive-btn" onClick={() => onArchive(type, item.id, item.title)}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="21 8 21 21 3 21 3 8"/>
-              <rect x="1" y="3" width="22" height="5"/>
-              <line x1="10" y1="12" x2="14" y2="12"/>
-            </svg>
-            Archive
-          </button>
+      <div className="content-item-body">
+        <div className="content-item-header">
+          <div className="content-item-icon" style={{ background: typeColor }}>{typeIcon()}</div>
+          <div className="content-item-actions">
+            <button className="content-edit-btn" onClick={() => onEdit(item, type)}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
+              </svg>
+              Edit
+            </button>
+            {/* INTEGRATION: Archive now shows confirmation dialog with item title */}
+            <button className="content-archive-btn" onClick={() => onArchive(type, item.id, item.title)}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="21 8 21 21 3 21 3 8"/>
+                <rect x="1" y="3" width="22" height="5"/>
+                <line x1="10" y1="12" x2="14" y2="12"/>
+              </svg>
+              Archive
+            </button>
+          </div>
         </div>
-      </div>
-
-      <h4 className="content-item-title">{item.title}</h4>
-      <p className="content-item-description">
-        {strip(item.description)?.substring(0, 120)}
-        {strip(item.description)?.length > 120 ? '...' : ''}
-      </p>
-
-      {type === 'events' && item.event_date && (
-        <div className="content-item-meta">
-          <span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-              <line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            {new Date(item.event_date).toLocaleDateString()}
-          </span>
-          {item.location && (
+      
+        <h4 className="content-item-title">{item.title}</h4>
+        <p className="content-item-description">
+          {strip(item.description)?.substring(0, 120)}
+          {strip(item.description)?.length > 120 ? '...' : ''}
+        </p>
+        
+        {type === 'events' && item.event_date && (
+          <div className="content-item-meta">
             <span>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
-              {item.location}
+              {new Date(item.event_date).toLocaleDateString()}
             </span>
-          )}
-        </div>
-      )}
+            {item.location && (
+              <span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                {item.location}
+              </span>
+            )}
+          </div>
+        )}
+
       {type === 'jobs' && (
         <div className="content-item-meta">
           {item.company  && <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>{item.company}</span>}
@@ -324,6 +326,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
           {item.stock != null && <span>Stock: {item.stock}</span>}
         </div>
       )}
+      </div>
     </div>
   );
 };

@@ -59,6 +59,10 @@ const Events = () => {
             description: event.description,
             category: category,
             location: event.location,
+            image: event.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+            images: event.image_urls?.length
+              ? event.image_urls
+              : [event.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80'],
           };
         });
         setEvents(formattedEvents);

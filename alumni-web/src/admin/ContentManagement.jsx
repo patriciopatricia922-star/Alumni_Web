@@ -99,6 +99,15 @@ function ContentManagement() {
     return (tmp.textContent || tmp.innerText || '').trim();
   };
 
+  const resolveImages = (formData, existingUrls = []) => {
+  const urls = Array.isArray(formData.image_urls) ? formData.image_urls : null;
+  const finalUrls = urls && urls.length > 0 ? urls : existingUrls;
+  return {
+    image_urls: finalUrls,
+    image_url: finalUrls.length > 0 ? finalUrls[0] : null,
+  };
+};
+
   // ============================ SUPABASE FETCH FUNCTIONS ============================
   const fetchEvents = async () => {
     const { data, error } = await supabase
@@ -296,7 +305,9 @@ function ContentManagement() {
         ? new Date(`${formData.date}T${formData.startTime}`)
         : new Date(formData.date);
 
-      if (isNaN(eventDate.getTime())) { showToastMessage('Invalid date format', 'error'); return; }
+       if (isNaN(eventDate.getTime())) { showToastMessage('Invalid date format', 'error'); return; }
+
+      const { image_urls, image_url } = resolveImages(formData);
 
       const newEvent = {
         title:       formData.title.trim(),
@@ -304,10 +315,12 @@ function ContentManagement() {
         event_date:  eventDate.toISOString(),
         location:    formData.location?.trim() || '',
         category:    formData.category || 'Upcoming Events',
-        image_url:   formData.image_url || null,
+        image_url,
+        image_urls,
         created_by:  user?.id,
         is_active:   true,
       };
+
 
       const { data, error } = await supabase.from('events').insert([newEvent]).select();
       if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
@@ -334,11 +347,15 @@ function ContentManagement() {
       if (formData.priority === 'High')        category = 'News';
       else if (formData.priority === 'Medium') category = 'Updates';
 
+      const { image_urls, image_url } = resolveImages(formData);
+
       const newAnnouncement = {
         title,
         content:      formData.content || '',
         author_id:    user?.id,
         category,
+        image_url,
+        image_urls,
         published_at: new Date().toISOString(),
         is_active:    true,
       };
@@ -368,6 +385,8 @@ function ContentManagement() {
       if (Array.isArray(formData.tags)) tags = formData.tags;
       else if (typeof formData.tags === 'string') tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
 
+      const { image_urls, image_url } = resolveImages(formData);
+
       const newJob = {
         title:       formData.title.trim(),
         company:     formData.company.trim(),
@@ -375,12 +394,14 @@ function ContentManagement() {
         location:    formData.location?.trim() || 'Remote',
         category:    formData.category || 'Full-time',
         tags,
-        image_url:   formData.image_url || null,
+        image_url,
+        image_urls,
         posted_by:   user?.id,
         posted_at:   new Date().toISOString(),
         expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
         is_active:   true,
       };
+
 
       const { data, error } = await supabase.from('jobs').insert([newJob]).select();
       if (error) { showToastMessage(`Failed to create: ${error.message}`, 'error'); return; }
@@ -400,12 +421,15 @@ function ContentManagement() {
       if (!formData.title?.trim())   { showToastMessage('Discount title is required', 'error'); return; }
       if (!formData.company?.trim()) { showToastMessage('Company name is required', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData);
+
       const newDiscount = {
         title:         formData.title.trim(),
         description:   formData.description || '',
         company:       formData.company.trim(),
         discount_code: formData.discountCode?.trim() || null,
-        image_url:     formData.image_url || null,
+        image_url,
+        image_urls,
         created_at:    new Date().toISOString(),
         valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
         is_active:     true,
@@ -432,13 +456,16 @@ function ContentManagement() {
       if (!formData.title?.trim())     { showToastMessage('Reward title is required', 'error'); return; }
       if (!formData.points_required)   { showToastMessage('Points required is required', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData);
+
       const newReward = {
         title:           formData.title.trim(),
         points_required: formData.points_required,
         description:     formData.description || '',
         category:        formData.category || 'Apparel',
         stock:           formData.stock ?? null,
-        image_url:       formData.image_url || null,
+        image_url,
+        image_urls,
         created_by:      user?.id,
         created_at:      new Date().toISOString(),
         is_active:       true,
@@ -465,12 +492,15 @@ function ContentManagement() {
       if (!formData.title?.trim())  { showToastMessage('Section title is required', 'error'); return; }
       if (!formData.section_type)   { showToastMessage('Section type is required', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData);
+      
       const newSection = {
         title:        formData.title.trim(),
         description:  formData.description || '',
         section_type: formData.section_type,
         content:      formData.content || '',
-        image_url:    formData.image_url || null,
+        image_url,
+        image_urls,
         order_index:  landingSections.length,
         created_at:   new Date().toISOString(),
         updated_at:   new Date().toISOString(),
@@ -501,12 +531,15 @@ function ContentManagement() {
       if (formData.startTime)  eventDate = new Date(`${formData.date}T${formData.startTime}`);
       else if (formData.date)  eventDate = new Date(formData.date);
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:       formData.title?.trim(),
         description: formData.description || '',
         location:    formData.location?.trim() || '',
         category:    formData.category || 'Upcoming Events',
-        image_url:   formData.image_url || null,
+        image_url,
+        image_urls,
         updated_at:  new Date().toISOString(),
       };
 
@@ -530,11 +563,16 @@ function ContentManagement() {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:      formData.title?.trim(),
         content:    formData.content || '',
+        image_url,
+        image_urls,
         updated_at: new Date().toISOString(),
       };
+
 
       if (!updates.title) { showToastMessage('Announcement title is required', 'error'); return; }
 
@@ -559,6 +597,8 @@ function ContentManagement() {
       if (Array.isArray(formData.tags)) tags = formData.tags;
       else if (typeof formData.tags === 'string') tags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:       formData.title?.trim(),
         company:     formData.company?.trim(),
@@ -566,7 +606,8 @@ function ContentManagement() {
         location:    formData.location?.trim() || 'Remote',
         category:    formData.category || 'Full-time',
         tags,
-        image_url:   formData.image_url || null,
+        image_url,
+        image_urls,
         expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
         updated_at:  new Date().toISOString(),
       };
@@ -591,12 +632,15 @@ function ContentManagement() {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:         formData.title?.trim(),
         description:   formData.description || '',
         company:       formData.company?.trim(),
         discount_code: formData.discountCode?.trim() || null,
-        image_url:     formData.image_url || null,
+        image_url,
+        image_urls,
         valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
         updated_at:    new Date().toISOString(),
       };
@@ -624,13 +668,16 @@ function ContentManagement() {
       if (!formData.title?.trim())   { showToastMessage('Reward title is required', 'error'); return; }
       if (!formData.points_required) { showToastMessage('Points required is required', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:           formData.title.trim(),
         points_required: formData.points_required,
         description:     formData.description || '',
         category:        formData.category || 'Apparel',
         stock:           formData.stock ?? null,
-        image_url:       formData.image_url || null,
+        image_url,
+        image_urls,
         updated_at:      new Date().toISOString(),
       };
 
@@ -651,12 +698,15 @@ function ContentManagement() {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
+      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+
       const updates = {
         title:        formData.title?.trim(),
         description:  formData.description || '',
         section_type: formData.section_type,
         content:      formData.content || '',
-        image_url:    formData.image_url || null,
+        image_url,
+        image_urls,
         updated_at:   new Date().toISOString(),
       };
 

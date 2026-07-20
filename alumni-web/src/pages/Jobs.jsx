@@ -85,6 +85,7 @@ const Jobs = () => {
           keywords: getProgramKeywords(alumniProgram),
           // Use the admin-uploaded image; fall back to null so the card shows the SVG icon instead
           image: job.image_url || job.image || null,
+          images: job.image_urls?.length ? job.image_urls : (job.image_url ? [job.image_url] : null),
         }));
         setJobs(formattedJobs);
       }

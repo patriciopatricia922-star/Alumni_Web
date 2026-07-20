@@ -86,6 +86,9 @@ const Discounts = () => {
           location: discount.company || 'Various locations',
           validUntil: discount.valid_until ? `Valid until ${new Date(discount.valid_until).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}` : null,
           image: discount.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+          images: discount.image_urls?.length
+            ? discount.image_urls
+            : [discount.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80'],
         }));
         
         console.log('Formatted discounts with images:', formattedDiscounts.map(d => ({ 

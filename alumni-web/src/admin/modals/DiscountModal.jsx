@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FaBold, 
-  FaItalic, 
-  FaUnderline, 
-  FaAlignLeft, 
-  FaAlignCenter, 
-  FaAlignRight 
+import {
+  FaBold,
+  FaItalic,
+  FaUnderline,
+  FaAlignLeft,
+  FaAlignCenter,
+  FaAlignRight
 } from 'react-icons/fa';
 import { FiImage, FiTrash2, FiX } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
+import MultiImageUpload from '../modals/MultiImageUpload';
+import '../modals/Disc.css';
+
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
+    <div className="cm-modal-overlay" onClick={onClose}>
+      <div className="cm-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="cm-modal-close" onClick={onClose}>
           <FiX size={16} />
         </button>
-        <h2 className="modal-title">{title}</h2>
-        <p className="modal-subtitle">{subtitle}</p>
+        <h2 className="cm-modal-title">{title}</h2>
+        <p className="cm-modal-subtitle">{subtitle}</p>
         {children}
       </div>
     </div>
@@ -28,20 +31,19 @@ const Modal = ({ open, onClose, title, subtitle, children }) => {
 };
 
 const Field = ({ label, required, children }) => (
-  <div className="field-wrap">
-    <label className="field-label">
+  <div className="cm-field">
+    <label className="cm-label">
       {label}
-      {required && <span className="field-required"> *</span>}
+      {required && <span className="cm-label-required"> *</span>}
     </label>
     {children}
   </div>
 );
 
-// FIXED: Already had onSubmit prop - keep as is
 const ModalFooter = ({ onCancel, createLabel, loading, onSubmit }) => (
-  <div className="modal-footer">
-    <button className="btn-cancel" onClick={onCancel}>Cancel</button>
-    <button className="btn-create" onClick={onSubmit} disabled={loading}>
+  <div className="cm-modal-actions">
+    <button className="cm-btn-cancel" onClick={onCancel}>Cancel</button>
+    <button className="cm-btn-submit" onClick={onSubmit} disabled={loading}>
       {loading ? 'Saving...' : createLabel}
     </button>
   </div>
@@ -64,30 +66,30 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   }, [value]);
 
   return (
-    <div className="rich-text-editor">
-      <div className="rich-text-toolbar">
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
+    <div className="cm-rich-editor">
+      <div className="cm-rich-toolbar">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('bold')} title="Bold">
           <FaBold size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('italic')} title="Italic">
           <FaItalic size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('underline')} title="Underline">
           <FaUnderline size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyLeft')} title="Align Left">
           <FaAlignLeft size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyCenter')} title="Align Center">
           <FaAlignCenter size={14} />
         </button>
-        <button type="button" className="toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
+        <button type="button" className="cm-toolbar-btn" onClick={() => execCommand('justifyRight')} title="Align Right">
           <FaAlignRight size={14} />
         </button>
       </div>
       <div
         ref={editorRef}
-        className="rich-text-content"
+        className="cm-rich-content"
         contentEditable="true"
         onInput={() => onChange(editorRef.current.innerHTML)}
         data-placeholder={placeholder}
@@ -97,6 +99,9 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   );
 };
 
+// Retained for reference/backwards-compat (DiscountModal now uses
+// MultiImageUpload via the "Discount Photos" field below), but styled with
+// cm- classes in case it's used elsewhere.
 const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-images', folder = 'discounts' }) => {
   const [preview, setPreview] = useState(currentImage || null);
   const [uploading, setUploading] = useState(false);
@@ -157,32 +162,32 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
   };
 
   return (
-    <div className="image-upload-container">
+    <div className="cm-image-upload-container">
       {preview && (
-        <div className="image-preview">
+        <div className="cm-image-preview">
           <img src={preview} alt="Preview" />
-          <button type="button" className="remove-image-btn" onClick={handleRemove}>
+          <button type="button" className="cm-remove-image-btn" onClick={handleRemove}>
             <FiTrash2 size={12} />
           </button>
         </div>
       )}
-      <div className="image-upload-area" onClick={() => document.getElementById('discount-image-input').click()}>
+      <div className="cm-image-upload-area" onClick={() => document.getElementById('discount-image-input').click()}>
         {uploading ? (
           <div className="uploading-spinner"></div>
         ) : (
           <FiImage size={20} color="#155DFC" />
         )}
         <span>{uploading ? 'Uploading...' : (preview ? 'Change Image' : 'Upload Discount Image')}</span>
-        <input 
-          id="discount-image-input" 
-          type="file" 
-          accept="image/*" 
-          onChange={handleImageChange} 
-          style={{ display: 'none' }} 
+        <input
+          id="discount-image-input"
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          style={{ display: 'none' }}
           disabled={uploading}
         />
       </div>
-      <p className="field-hint">Supported formats: JPG, PNG. Max size: 2MB</p>
+      <p className="cm-field-hint">Supported formats: JPG, PNG. Max size: 2MB</p>
     </div>
   );
 };
@@ -195,7 +200,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
     discountCode: '',
     audience: 'All Alumni',
     expiry: '',
-    image_url: null,
+    image_urls: [],
   });
   const [loading, setLoading] = useState(false);
 
@@ -208,7 +213,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         discountCode: discount.discount_code || '',
         audience: discount.audience || 'All Alumni',
         expiry: discount.valid_until ? new Date(discount.valid_until).toISOString().split('T')[0] : '',
-        image_url: discount.image_url || null,
+        image_urls: discount.image_urls?.length ? discount.image_urls : (discount.image_url ? [discount.image_url] : []),
       });
     } else {
       setForm({
@@ -218,7 +223,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         discountCode: '',
         audience: 'All Alumni',
         expiry: '',
-        image_url: null,
+        image_urls: [],
       });
     }
   }, [mode, discount]);
@@ -251,22 +256,24 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
       title={mode === 'edit' ? 'Edit Discount' : 'Create New Discount'}
       subtitle={mode === 'edit' ? 'Update discount details' : 'Create a new discount for alumni'}
     >
-      <div className="modal-form">
+      <div className="cm-modal-fields">
         <Field label="Discount Title" required>
-          <input className="field-input" placeholder="Enter discount title" value={form.title} onChange={(e) => s('title', e.target.value)} />
+          <input className="cm-input" placeholder="Enter discount title" value={form.title} onChange={(e) => s('title', e.target.value)} />
         </Field>
 
-        <Field label="Discount Image">
-          <ImageUpload
-            currentImage={form.image_url}
-            onImageUpload={(url) => s('image_url', url)}
+        <Field label="Discount Photos">
+          <MultiImageUpload
+            images={form.image_urls}
+            onChange={(urls) => s('image_urls', urls)}
             bucketName="discount-images"
             folder="discounts"
+            label="Upload Photos"
+            classPrefix="cm-"
           />
         </Field>
 
         <Field label="Location" required>
-          <input className="field-input" placeholder="Enter location" value={form.company} onChange={(e) => s('company', e.target.value)} />
+          <input className="cm-input" placeholder="Enter location" value={form.company} onChange={(e) => s('company', e.target.value)} />
         </Field>
 
         <Field label="Description" required>
@@ -277,13 +284,13 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
           />
         </Field>
 
-        <div className="field-grid">
+        <div className="cm-field-grid">
           <Field label="Discount Code">
-            <input className="field-input" placeholder="Enter discount code (if any)" value={form.discountCode} onChange={(e) => s('discountCode', e.target.value)} />
+            <input className="cm-input" placeholder="Enter discount code (if any)" value={form.discountCode} onChange={(e) => s('discountCode', e.target.value)} />
           </Field>
 
           <Field label="Target Audience" required>
-            <select className="field-select" value={form.audience} onChange={(e) => s('audience', e.target.value)}>
+            <select className="cm-select" value={form.audience} onChange={(e) => s('audience', e.target.value)}>
               <option>All Alumni</option>
               <option>By Program</option>
               <option>By Batch</option>
@@ -292,12 +299,12 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         </div>
 
         <Field label="Expiry Date">
-          <input className="field-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
         </Field>
 
-        <ModalFooter 
-          onCancel={onClose} 
-          createLabel={mode === 'edit' ? 'Update Discount' : 'Create Discount'} 
+        <ModalFooter
+          onCancel={onClose}
+          createLabel={mode === 'edit' ? 'Update Discount' : 'Create Discount'}
           loading={loading}
           onSubmit={handleSubmit}
         />
