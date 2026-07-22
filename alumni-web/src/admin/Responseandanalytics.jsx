@@ -17,6 +17,7 @@ import ResponseAnalyticsView from './views/ResponseAnalyticsView';
 import ResponseAnalyticsSkeleton from './views/ResponseAnalyticsSkeleton'; // ← SKELETON
 import { supabase } from '../lib/supabase';
 import { useLocation } from "react-router-dom";
+import { useAlumniType } from './contexts/AlumniTypeContext';
 
 // ============================ EMPLOYMENT STATUS MAPPING ============================
 const STATUS_MAPPING = {
@@ -124,7 +125,8 @@ const resolveEmploymentStatus = (empData) => {
 };
 
 // ============================ SINGLE RESPONSE EXTRACTION ============================
-const extractRespondentData = (row, userEmail = '') => {
+const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
+  const isShs = alumniType === 'shs';
   const personal = row.personal_background_data || {};
   const educational = row.educational_background_data || {};
   const certificationData = row.certification_achievement_data || {};
@@ -144,13 +146,23 @@ const extractRespondentData = (row, userEmail = '') => {
   const program = safeText(educational.degree_program) || 'Not specified';
   const employmentStatus = resolveEmploymentStatus(employmentData);
 
-  const skillRatings = skillsData.skill_ratings || {};
+  const skillRatings = isShs ? skillsData : (skillsData.skill_ratings || {});
 
-  const commSkillRating = skillRatings.communication_skills || skillRatings.communicationSkills || skillRatings.communication || skillRatings['Communication Skills'] || 0;
-  const itSkillRating   = skillRatings.information_technology_skills || skillRatings.informationTechnologySkills || skillRatings.it_skills || skillRatings.itSkills || skillRatings['Information & Technology Skills'] || skillRatings['Information Technology Skills'] || 0;
-  const leadershipRating  = skillRatings.leadership_skills || skillRatings.leadershipSkills || skillRatings.leadership || skillRatings['Leadership Skills'] || 0;
-  const criticalRating    = skillRatings.critical_problem_solving_skills || skillRatings.criticalProblemSolvingSkills || skillRatings.critical_thinking || skillRatings['Critical & Problem-Solving Skills'] || skillRatings.criticalThinking || 0;
-  const workEthicsRating  = skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0;
+  const commSkillRating = isShs
+    ? (skillRatings.communication_skills || 0)
+    : (skillRatings.communication_skills || skillRatings.communicationSkills || skillRatings.communication || skillRatings['Communication Skills'] || 0);
+  const itSkillRating = isShs
+    ? (skillRatings.technical_knowledge || 0)
+    : (skillRatings.information_technology_skills || skillRatings.informationTechnologySkills || skillRatings.it_skills || skillRatings.itSkills || skillRatings['Information & Technology Skills'] || skillRatings['Information Technology Skills'] || 0);
+  const leadershipRating = isShs
+    ? (skillRatings.leadership_skills || 0)
+    : (skillRatings.leadership_skills || skillRatings.leadershipSkills || skillRatings.leadership || skillRatings['Leadership Skills'] || 0);
+  const criticalRating = isShs
+    ? (skillRatings.critical_thinking || 0)
+    : (skillRatings.critical_problem_solving_skills || skillRatings.criticalProblemSolvingSkills || skillRatings.critical_thinking || skillRatings['Critical & Problem-Solving Skills'] || skillRatings.criticalThinking || 0);
+  const workEthicsRating = isShs
+    ? (skillRatings.work_ethics || 0)
+    : (skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0);
 
   return {
     id: row.id,
@@ -220,7 +232,7 @@ const extractRespondentData = (row, userEmail = '') => {
 };
 
 // ============================ PROCESS ALL SURVEY DATA ============================
-const processSurveyData = (rows, userEmails = {}) => {
+const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
   let totalResponses = 0;
   let satisfactionSum = 0;
   let satisfactionCount = 0;
@@ -235,19 +247,20 @@ const processSurveyData = (rows, userEmails = {}) => {
   const timeToJob = { '< 1 month': 0, '1–3 months': 0, '3–6 months': 0, '6 + months': 0 };
   const skills = new Map();
   const respondents = [];
+  const isShs = alumniType === 'shs';
 
   rows.forEach(row => {
     totalResponses++;
-    const respondent = extractRespondentData(row, userEmails[row.user_id]);
+    const respondent = extractRespondentData(row, userEmails[row.user_id], alumniType);
     respondents.push(respondent);
 
-    const personal = row.personal_background_data || {};
-    const educational = row.educational_background_data || {};
-    const certificationData = row.certification_achievement_data || {};
-    const employmentData = row.employment_information_data || {};
-    const jobExperience = row.job_experience_data || {};
-    const skillsData = row.skills_competencies_data || {};
-    const feedback = row.feedback_university_data || {};
+    const personal = (isShs ? row.shs_personal_background_data : row.personal_background_data) || {};
+    const educational = (isShs ? row.shs_educational_background_data : row.educational_background_data) || {};
+    const certificationData = (isShs ? row.shs_certification_achievement_data : row.certification_achievement_data) || {};
+    const employmentData = (isShs ? row.shs_employment_information_data : row.employment_information_data) || {};
+    const jobExperience = (isShs ? row.shs_job_experience_data : row.job_experience_data) || {};
+    const skillsData = (isShs ? row.shs_skills_and_competencies_data : row.skills_competencies_data) || {};
+    const feedback = (isShs ? row.shs_feedback_and_engagement_data : row.feedback_university_data) || {};
 
     const gender = safeText(personal.gender);
     if (gender === 'Male') genderDistribution.Male++;
@@ -352,6 +365,7 @@ const LoadingScreen = ({ message, isError = false }) => {
 
 // ============================ MAIN COMPONENT ============================
 const ResponseAnalytics = () => {
+  const { alumniType } = useAlumniType();
   const location = useLocation();
   const focus = location.state?.focus;
 
@@ -394,9 +408,9 @@ const ResponseAnalytics = () => {
           .eq('role', 'alumni');
 
         const userEmails = {};
-        if (usersData) {
-          usersData.forEach(user => { userEmails[user.id] = user.email || ''; });
-        }
+          if (usersData) {
+            usersData.forEach(user => { userEmails[user.id] = user.email || ''; });
+          }
 
         const { data, error: fetchError } = await supabase
           .from('survey_progress')
@@ -413,7 +427,13 @@ const ResponseAnalytics = () => {
             job_experience_data,
             skills_competencies_data,
             feedback_university_data,
-            alumni_engagement_data
+            alumni_engagement_data,
+            shs_personal_background_data,
+            shs_educational_background_data,
+            shs_employment_information_data,
+            shs_job_experience_data,
+            shs_skills_and_competencies_data,
+            shs_feedback_and_engagement_data
           `);
 
         if (fetchError) throw fetchError;
@@ -424,7 +444,11 @@ const ResponseAnalytics = () => {
           return;
         }
 
-        const completedSurveys = data.filter(row => row.completed === true);
+        const completedSurveys = data.filter(row => {
+          if (row.completed !== true) return false;
+          if (alumniType === 'shs') return !!row.shs_personal_background_data;
+          return !!row.personal_background_data;
+        });
 
         if (completedSurveys.length === 0) {
           setError('No completed survey responses found.');
@@ -432,7 +456,7 @@ const ResponseAnalytics = () => {
           return;
         }
 
-        const processed = processSurveyData(completedSurveys, userEmails);
+        const processed = processSurveyData(completedSurveys, userEmails, alumniType);
         setStats({
           totalResponses: processed.totalResponses,
           avgSatisfaction: processed.avgSatisfaction,
@@ -457,7 +481,7 @@ const ResponseAnalytics = () => {
     };
 
     fetchSurveyData();
-  }, []);
+  }, [alumniType]);
 
   // ============================ HELPER FUNCTIONS ============================
   const renderStars = (num) => "★".repeat(num) + "☆".repeat(5 - num);
@@ -497,6 +521,7 @@ const ResponseAnalytics = () => {
       isSectionVisible={isSectionVisible}
       renderStars={renderStars}
       sidebar={<AdminSidebar />}
+      alumniType={alumniType}
     />
   );
 };

@@ -386,6 +386,7 @@ const ResponseAnalyticsView = ({
   isSectionVisible,
   renderStars,
   sidebar,
+  alumniType
 }) => {
   const filterRef = useRef(null);
 
@@ -494,7 +495,7 @@ const ResponseAnalyticsView = ({
                       "All Sections",
                       "Personal Information",
                       "Educational Information",
-                      "Certification Achievements",
+                      (alumniType !== 'shs' ? ["Certification Achievements"] : []),
                       "Employment Information",
                       "Job Experience",
                       "Skills & Competencies",
@@ -550,7 +551,7 @@ const ResponseAnalyticsView = ({
                 </div>
               )}
 
-              {isSectionVisible("educational-information") && (
+              {isSectionVisible("educational-information") && alumniType !== 'shs' && (
                 <div className="ra-chart-single">
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Board Exam Pass Rate</h3>
@@ -567,7 +568,7 @@ const ResponseAnalyticsView = ({
                 </div>
               )}
 
-              {isSectionVisible("certification-achievements") && (
+              {isSectionVisible("certification-achievements") && alumniType !== 'shs' && (
                 <div className="ra-chart-single">
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Certification Status</h3>
@@ -720,26 +721,34 @@ const ResponseAnalyticsView = ({
                     <col /><col /><col /><col />
                   </colgroup>
                   <tbody>
-                    {visibleRows.map((a, i) => (
-                      <tr key={pageStart + i} onClick={() => setSelectedResponse(a)} style={{ cursor: "pointer" }}>
-                        <td>
-                          <div className="ra-name-cell">
-                            <div className="ra-avatar">{a.name?.charAt(0) || '?'}</div>
-                            <div>
-                              <div className="ra-name">{a.name}</div>
-                              <div className="ra-email">{a.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td><span className="ra-batch">{a.batch}</span></td>
-                        <td>{a.program?.length > 40 ? a.program.slice(0, 40) + "…" : a.program}</td>
-                        <td>
-                          <span className={`ra-status ${a.status?.toLowerCase().replace(/ /g, '-') || ''}`}>
-                            {a.status}
-                          </span>
+                    {visibleRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: '#94A3B8' }}>
+                          No alumni records here
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      visibleRows.map((a, i) => (
+                        <tr key={pageStart + i} onClick={() => setSelectedResponse(a)} style={{ cursor: "pointer" }}>
+                          <td>
+                            <div className="ra-name-cell">
+                              <div className="ra-avatar">{a.name?.charAt(0) || '?'}</div>
+                              <div>
+                                <div className="ra-name">{a.name}</div>
+                                <div className="ra-email">{a.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td><span className="ra-batch">{a.batch}</span></td>
+                          <td>{a.program?.length > 40 ? a.program.slice(0, 40) + "…" : a.program}</td>
+                          <td>
+                            <span className={`ra-status ${a.status?.toLowerCase().replace(/ /g, '-') || ''}`}>
+                              {a.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
