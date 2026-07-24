@@ -42,7 +42,8 @@ import SurveySkeletonView from "./views/SurveySkeletonView";
 // DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
 // ============================================================================
 const DEBUG = () =>
-  typeof localStorage !== "undefined" && localStorage.getItem("surveyDebug") === "1";
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem("surveyDebug") === "1";
 
 const dbg = (...args) => {
   if (DEBUG()) console.log("[SurveyMgmt]", ...args);
@@ -63,16 +64,70 @@ const DEFAULT_SURVEY = {
       title: "Personal Background",
       description: "Basic information about you",
       questions: [
-        { id: 1,  type: "short",    label: "Last Name",              required: true,  placeholder: "e.g. Dela Cruz" },
-        { id: 2,  type: "short",    label: "First Name",             required: true,  placeholder: "e.g. Juan" },
-        { id: 3,  type: "short",    label: "Middle Name",            required: false, placeholder: "e.g. Mercado" },
-        { id: 4,  type: "short",    label: "Student Number",         required: true,  placeholder: "e.g. 2023-123456" },
-        { id: 5,  type: "multiple", label: "Gender",                 required: true,  options: ["Male", "Female", "Other"] },
-        { id: 6,  type: "date",     label: "Birthday",               required: true },
-        { id: 7,  type: "multiple", label: "Civil Status",           required: true,  options: ["Single", "Married", "Other"] },
-        { id: 8,  type: "short",    label: "Complete Address",       required: true,  placeholder: "Enter your complete address" },
-        { id: 9,  type: "short",    label: "Contact Number",         required: true,  placeholder: "e.g. 912-345-6789" },
-        { id: 10, type: "short",    label: "Personal Email Address", required: true,  placeholder: "e.g. juandelacruz@gmail.com" },
+        {
+          id: 1,
+          type: "short",
+          label: "Last Name",
+          required: true,
+          placeholder: "e.g. Dela Cruz",
+        },
+        {
+          id: 2,
+          type: "short",
+          label: "First Name",
+          required: true,
+          placeholder: "e.g. Juan",
+        },
+        {
+          id: 3,
+          type: "short",
+          label: "Middle Name",
+          required: false,
+          placeholder: "e.g. Mercado",
+        },
+        {
+          id: 4,
+          type: "short",
+          label: "Student Number",
+          required: true,
+          placeholder: "e.g. 2023-123456",
+        },
+        {
+          id: 5,
+          type: "multiple",
+          label: "Gender",
+          required: true,
+          options: ["Male", "Female", "Other"],
+        },
+        { id: 6, type: "date", label: "Birthday", required: true },
+        {
+          id: 7,
+          type: "multiple",
+          label: "Civil Status",
+          required: true,
+          options: ["Single", "Married", "Other"],
+        },
+        {
+          id: 8,
+          type: "short",
+          label: "Complete Address",
+          required: true,
+          placeholder: "Enter your complete address",
+        },
+        {
+          id: 9,
+          type: "short",
+          label: "Contact Number",
+          required: true,
+          placeholder: "e.g. 912-345-6789",
+        },
+        {
+          id: 10,
+          type: "short",
+          label: "Personal Email Address",
+          required: true,
+          placeholder: "e.g. juandelacruz@gmail.com",
+        },
       ],
     },
     {
@@ -80,18 +135,117 @@ const DEFAULT_SURVEY = {
       title: "Educational Background",
       description: "Your academic history",
       questions: [
-        { id: 1,  type: "multiple", label: "Degree Program Completed", required: true, options: ["Bachelor of Arts in Communication", "Bachelor of Science in Psychology", "Bachelor of Science in Physical Education", "Bachelor of Science in Accountancy", "Bachelor of Science in Management Accounting", "Bachelor of Science in Business Administration major in Marketing Management", "Bachelor of Science in Business Administration major in Financial Management", "Bachelor of Science in Business Administration major in Human Resource Management", "Bachelor of Science in Tourism Management", "Bachelor of Science in Hospitality Management", "Bachelor of Science in Architecture", "Bachelor of Science in Civil Engineering, Bachelor of Science in Computer Science with specialization in Machine Learning", "Bachelor of Science in Computer Engineering", "Bachelor of Science in Information Technology with specialization in Mobile and Web Application", "Master's in management with specialization in Business Analytics"] },
-        { id: 2,  type: "long",     label: "Reason(s) of taking the course", required: true, placeholder: "Enter your answer" },
-        { id: 3,  type: "multiple", label: "Year Graduated", required: true, options: ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034"] },
-        { id: 4,  type: "multiple", label: "Distinction Received", required: true, options: ["Summa Cum Laude", "Magna Cum Laude", "Cum Laude", "None"] },
-        { id: 5,  type: "multiple", label: "Do you have plans on taking a post-graduate studies?", required: true, options: ["Yes", "No"] },
-        { id: 6,  type: "long",     label: "If yes, what course?", required: false, placeholder: "Enter your answer" },
-        { id: 7,  type: "multiple", label: "Are you currently taking/reviewing for licensure examination?", required: true, options: ["Yes", "No", "Not applicable"] },
-        { id: 8,  type: "multiple", label: "Do you have any plans on taking licensure examination?", required: false, options: ["Yes", "No", "Already taken", "Not applicable"] },
-        { id: 9,  type: "long",     label: "Reason(s) for not taking or taking licensure examination", required: false, placeholder: "Enter your answer" },
-        { id: 10, type: "short",    label: "Name of board/licensure examination", required: false, placeholder: "Enter your answer" },
-        { id: 11, type: "date",     label: "Date taken/date of examination", required: false },
-        { id: 12, type: "multiple", label: "Results", required: false, options: ["Passed", "Failed", "Not Applicable", "Other"] },
+        {
+          id: 1,
+          type: "multiple",
+          label: "Degree Program Completed",
+          required: true,
+          options: [
+            "Bachelor of Arts in Communication",
+            "Bachelor of Science in Psychology",
+            "Bachelor of Science in Physical Education",
+            "Bachelor of Science in Accountancy",
+            "Bachelor of Science in Management Accounting",
+            "Bachelor of Science in Business Administration major in Marketing Management",
+            "Bachelor of Science in Business Administration major in Financial Management",
+            "Bachelor of Science in Business Administration major in Human Resource Management",
+            "Bachelor of Science in Tourism Management",
+            "Bachelor of Science in Hospitality Management",
+            "Bachelor of Science in Architecture",
+            "Bachelor of Science in Civil Engineering, Bachelor of Science in Computer Science with specialization in Machine Learning",
+            "Bachelor of Science in Computer Engineering",
+            "Bachelor of Science in Information Technology with specialization in Mobile and Web Application",
+            "Master's in management with specialization in Business Analytics",
+          ],
+        },
+        {
+          id: 2,
+          type: "long",
+          label: "Reason(s) of taking the course",
+          required: true,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 3,
+          type: "multiple",
+          label: "Year Graduated",
+          required: true,
+          options: [
+            "2025",
+            "2026",
+            "2027",
+            "2028",
+            "2029",
+            "2030",
+            "2031",
+            "2032",
+            "2033",
+            "2034",
+          ],
+        },
+        {
+          id: 4,
+          type: "multiple",
+          label: "Distinction Received",
+          required: true,
+          options: ["Summa Cum Laude", "Magna Cum Laude", "Cum Laude", "None"],
+        },
+        {
+          id: 5,
+          type: "multiple",
+          label: "Do you have plans on taking a post-graduate studies?",
+          required: true,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 6,
+          type: "long",
+          label: "If yes, what course?",
+          required: false,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 7,
+          type: "multiple",
+          label:
+            "Are you currently taking/reviewing for licensure examination?",
+          required: true,
+          options: ["Yes", "No", "Not applicable"],
+        },
+        {
+          id: 8,
+          type: "multiple",
+          label: "Do you have any plans on taking licensure examination?",
+          required: false,
+          options: ["Yes", "No", "Already taken", "Not applicable"],
+        },
+        {
+          id: 9,
+          type: "long",
+          label: "Reason(s) for not taking or taking licensure examination",
+          required: false,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 10,
+          type: "short",
+          label: "Name of board/licensure examination",
+          required: false,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 11,
+          type: "date",
+          label: "Date taken/date of examination",
+          required: false,
+        },
+        {
+          id: 12,
+          type: "multiple",
+          label: "Results",
+          required: false,
+          options: ["Passed", "Failed", "Not Applicable", "Other"],
+        },
       ],
     },
     {
@@ -99,10 +253,42 @@ const DEFAULT_SURVEY = {
       title: "Certification Achievement",
       description: "Certifications you have",
       questions: [
-        { id: 1, type: "multiple", label: "Are you a certiport passer?", required: true, options: ["Yes", "No"] },
-        { id: 2, type: "checkbox", label: "Please specify any certiport certification earned", required: false, options: ["Microsoft Office Specialist (MOS) - Word", "Microsoft Office Specialist (MOS) - Excel", "Microsoft Office Specialist (MOS) - PowerPoint", "Microsoft Office Specialist (MOS) - Outlook", "Microsoft Office Specialist (MOS) - OneNote", "Other"] },
-        { id: 3, type: "multiple", label: "Does your certification help in your current job?", required: false, options: ["Yes", "No"] },
-        { id: 4, type: "short",    label: "How has your certification been useful in your career?", required: false, placeholder: "Please describe how your certifications have helped your career" },
+        {
+          id: 1,
+          type: "multiple",
+          label: "Are you a certiport passer?",
+          required: true,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 2,
+          type: "checkbox",
+          label: "Please specify any certiport certification earned",
+          required: false,
+          options: [
+            "Microsoft Office Specialist (MOS) - Word",
+            "Microsoft Office Specialist (MOS) - Excel",
+            "Microsoft Office Specialist (MOS) - PowerPoint",
+            "Microsoft Office Specialist (MOS) - Outlook",
+            "Microsoft Office Specialist (MOS) - OneNote",
+            "Other",
+          ],
+        },
+        {
+          id: 3,
+          type: "multiple",
+          label: "Does your certification help in your current job?",
+          required: false,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 4,
+          type: "short",
+          label: "How has your certification been useful in your career?",
+          required: false,
+          placeholder:
+            "Please describe how your certifications have helped your career",
+        },
       ],
     },
     {
@@ -110,17 +296,118 @@ const DEFAULT_SURVEY = {
       title: "Employment Information",
       description: "Information related to your job",
       questions: [
-        { id: 1,  type: "multiple", label: "Is your current job related to your degree?", required: true, options: ["Yes", "No"] },
-        { id: 2,  type: "multiple", label: "Current Employment Status", required: true, options: ["Regular / Permanent", "Contractual", "Part-Time", "Probationary", "Self-Employed", "Unemployed, but looking for work", "Unemployed, but not looking for work", "Other"] },
-        { id: 3,  type: "short",    label: "Please specify your employment status", required: false, placeholder: "Please specify" },
-        { id: 4,  type: "short",    label: "Job position", required: false, placeholder: "Enter your answer" },
-        { id: 5,  type: "short",    label: "Name of company / employer", required: false, placeholder: "Enter your answer" },
-        { id: 6,  type: "multiple", label: "Type of industry", required: false, options: ["Agriculture, Forestry and Fishing", "Information and Communication Technology (ICT)", "Financial and Insurance Activities", "Education", "Other"] },
-        { id: 7,  type: "multiple", label: "Location of employment", required: false, options: ["Local", "Abroad"] },
-        { id: 8,  type: "multiple", label: "Monthly income range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000"] },
-        { id: 9,  type: "multiple", label: "Reasons for accepting the job", required: false, options: ["Salaries and Benefits", "Career Challenge", "Related to Special Skill", "Related to Course or Program of Study", "Proximity of Residence", "Peer Influence", "Family Influence", "Other"] },
-        { id: 10, type: "multiple", label: "Reasons of being unemployed", required: false, options: ["Pursuing further studies", "Family responsibilities or personal matters", "Health-related reasons", "Lack of job opportunities related to the field of study", "Other"] },
-        { id: 11, type: "short",    label: "Please specify other reason", required: false, placeholder: "Please specify" },
+        {
+          id: 1,
+          type: "multiple",
+          label: "Is your current job related to your degree?",
+          required: true,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 2,
+          type: "multiple",
+          label: "Current Employment Status",
+          required: true,
+          options: [
+            "Regular / Permanent",
+            "Contractual",
+            "Part-Time",
+            "Probationary",
+            "Self-Employed",
+            "Unemployed, but looking for work",
+            "Unemployed, but not looking for work",
+            "Other",
+          ],
+        },
+        {
+          id: 3,
+          type: "short",
+          label: "Please specify your employment status",
+          required: false,
+          placeholder: "Please specify",
+        },
+        {
+          id: 4,
+          type: "short",
+          label: "Job position",
+          required: false,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 5,
+          type: "short",
+          label: "Name of company / employer",
+          required: false,
+          placeholder: "Enter your answer",
+        },
+        {
+          id: 6,
+          type: "multiple",
+          label: "Type of industry",
+          required: false,
+          options: [
+            "Agriculture, Forestry and Fishing",
+            "Information and Communication Technology (ICT)",
+            "Financial and Insurance Activities",
+            "Education",
+            "Other",
+          ],
+        },
+        {
+          id: 7,
+          type: "multiple",
+          label: "Location of employment",
+          required: false,
+          options: ["Local", "Abroad"],
+        },
+        {
+          id: 8,
+          type: "multiple",
+          label: "Monthly income range",
+          required: false,
+          options: [
+            "Below ₱15,000",
+            "₱15,001 – ₱30,000",
+            "₱30,001 – ₱50,000",
+            "Above ₱50,000",
+          ],
+        },
+        {
+          id: 9,
+          type: "multiple",
+          label: "Reasons for accepting the job",
+          required: false,
+          options: [
+            "Salaries and Benefits",
+            "Career Challenge",
+            "Related to Special Skill",
+            "Related to Course or Program of Study",
+            "Proximity of Residence",
+            "Peer Influence",
+            "Family Influence",
+            "Other",
+          ],
+        },
+        {
+          id: 10,
+          type: "multiple",
+          label: "Reasons of being unemployed",
+          required: false,
+          options: [
+            "Pursuing further studies",
+            "Family responsibilities or personal matters",
+            "Health-related reasons",
+            "Lack of job opportunities related to the field of study",
+            "Other",
+          ],
+        },
+        {
+          id: 11,
+          type: "short",
+          label: "Please specify other reason",
+          required: false,
+          placeholder: "Please specify",
+        },
       ],
     },
     {
@@ -128,10 +415,67 @@ const DEFAULT_SURVEY = {
       title: "Work Experience",
       description: "Your work hunting experience",
       questions: [
-        { id: 1, type: "multiple", label: "How long did it take you to find your first job after graduation?", required: true, options: ["Less than a month", "1–3 months", "4–6 months", "7–12 months", "More than a year", "Not applicable"] },
-        { id: 2, type: "multiple", label: "How long have you been employed in your current job?", required: true, options: ["Less than a month", "1–6 months", "7–11 months", "1 year or less than 2 years", "2 years or less than 3 years", "3 years or less than 4 years", "Other"] },
-        { id: 3, type: "multiple", label: "How did you find your first job?", required: true, options: ["Job/Career Fair", "Internship Absorption", "Online", "Recommendation", "Walk-in Applications", "Not applicable", "Other"] },
-        { id: 4, type: "checkbox", label: "What factors helped you most in getting your first job? (Check all that apply)", required: true, options: ["Academic performance", "Internship / On-the-job Training", "Personal connections", "Skills/Competencies acquired in school", "Certifications", "Not applicable", "Other"] },
+        {
+          id: 1,
+          type: "multiple",
+          label:
+            "How long did it take you to find your first job after graduation?",
+          required: true,
+          options: [
+            "Less than a month",
+            "1–3 months",
+            "4–6 months",
+            "7–12 months",
+            "More than a year",
+            "Not applicable",
+          ],
+        },
+        {
+          id: 2,
+          type: "multiple",
+          label: "How long have you been employed in your current job?",
+          required: true,
+          options: [
+            "Less than a month",
+            "1–6 months",
+            "7–11 months",
+            "1 year or less than 2 years",
+            "2 years or less than 3 years",
+            "3 years or less than 4 years",
+            "Other",
+          ],
+        },
+        {
+          id: 3,
+          type: "multiple",
+          label: "How did you find your first job?",
+          required: true,
+          options: [
+            "Job/Career Fair",
+            "Internship Absorption",
+            "Online",
+            "Recommendation",
+            "Walk-in Applications",
+            "Not applicable",
+            "Other",
+          ],
+        },
+        {
+          id: 4,
+          type: "checkbox",
+          label:
+            "What factors helped you most in getting your first job? (Check all that apply)",
+          required: true,
+          options: [
+            "Academic performance",
+            "Internship / On-the-job Training",
+            "Personal connections",
+            "Skills/Competencies acquired in school",
+            "Certifications",
+            "Not applicable",
+            "Other",
+          ],
+        },
       ],
     },
     {
@@ -139,13 +483,54 @@ const DEFAULT_SURVEY = {
       title: "Skills & Competencies",
       description: "Your workplace skills",
       questions: [
-        { id: 1, type: "checkbox", label: "What are the competencies learned in college did you find very useful?", required: true, options: ["Communication Skills", "Information & Technology Skills", "Leadership Skills", "Critical & Problem-Solving Skills", "Work Ethics/Professionalism", "Other"] },
-        { id: 2, type: "rating",   label: "Communication Skills",                required: true },
-        { id: 3, type: "rating",   label: "Information & Technology Skills",     required: true },
-        { id: 4, type: "rating",   label: "Leadership Skills",                   required: true },
-        { id: 5, type: "rating",   label: "Critical & Problem-Solving Skills",   required: true },
-        { id: 6, type: "rating",   label: "Work Ethics/Professionalism Skills",  required: true },
-        { id: 7, type: "short",    label: "What other skills should NU Dasma develop in students to make them more employable?", required: true, placeholder: "Enter your answer" },
+        {
+          id: 1,
+          type: "checkbox",
+          label:
+            "What are the competencies learned in college did you find very useful?",
+          required: true,
+          options: [
+            "Communication Skills",
+            "Information & Technology Skills",
+            "Leadership Skills",
+            "Critical & Problem-Solving Skills",
+            "Work Ethics/Professionalism",
+            "Other",
+          ],
+        },
+        {
+          id: 2,
+          type: "rating",
+          label: "Communication Skills",
+          required: true,
+        },
+        {
+          id: 3,
+          type: "rating",
+          label: "Information & Technology Skills",
+          required: true,
+        },
+        { id: 4, type: "rating", label: "Leadership Skills", required: true },
+        {
+          id: 5,
+          type: "rating",
+          label: "Critical & Problem-Solving Skills",
+          required: true,
+        },
+        {
+          id: 6,
+          type: "rating",
+          label: "Work Ethics/Professionalism Skills",
+          required: true,
+        },
+        {
+          id: 7,
+          type: "short",
+          label:
+            "What other skills should NU Dasma develop in students to make them more employable?",
+          required: true,
+          placeholder: "Enter your answer",
+        },
       ],
     },
     {
@@ -153,9 +538,34 @@ const DEFAULT_SURVEY = {
       title: "Feedback for the University",
       description: "Your insights and feedback",
       questions: [
-        { id: 1, type: "multiple", label: "How satisfied are you with your education at NU Dasma?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
-        { id: 2, type: "multiple", label: "Would you recommend NU Dasma to others?", required: true, options: ["Yes", "No"] },
-        { id: 3, type: "long",     label: "Suggestions for improving academic programs and alumni services", required: true, placeholder: "Enter your answer" },
+        {
+          id: 1,
+          type: "multiple",
+          label: "How satisfied are you with your education at NU Dasma?",
+          required: true,
+          options: [
+            "Very Satisfied",
+            "Satisfied",
+            "Neutral",
+            "Dissatisfied",
+            "Very Dissatisfied",
+          ],
+        },
+        {
+          id: 2,
+          type: "multiple",
+          label: "Would you recommend NU Dasma to others?",
+          required: true,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 3,
+          type: "long",
+          label:
+            "Suggestions for improving academic programs and alumni services",
+          required: true,
+          placeholder: "Enter your answer",
+        },
       ],
     },
     {
@@ -163,8 +573,28 @@ const DEFAULT_SURVEY = {
       title: "Alumni Engagement",
       description: "Your connection with the university",
       questions: [
-        { id: 1, type: "multiple", label: "Would you like to be informed about upcoming alumni events and activities?", required: true, options: ["Yes", "No"] },
-        { id: 2, type: "checkbox", label: "Would you be willing to participate in:", required: true, options: ["Alumni Seminars/Webinar programs for professional growth", "Career talks for students", "Alumni fundraising events/activities", "Volunteer opportunities", "Not at all", "Other"] },
+        {
+          id: 1,
+          type: "multiple",
+          label:
+            "Would you like to be informed about upcoming alumni events and activities?",
+          required: true,
+          options: ["Yes", "No"],
+        },
+        {
+          id: 2,
+          type: "checkbox",
+          label: "Would you be willing to participate in:",
+          required: true,
+          options: [
+            "Alumni Seminars/Webinar programs for professional growth",
+            "Career talks for students",
+            "Alumni fundraising events/activities",
+            "Volunteer opportunities",
+            "Not at all",
+            "Other",
+          ],
+        },
       ],
     },
   ],
@@ -174,13 +604,13 @@ const DEFAULT_SURVEY = {
 // TYPE LABELS MAPPING
 // ============================================================================
 const TYPE_LABELS = {
-  short:    "Short Answer",
-  long:     "Long Answer",
+  short: "Short Answer",
+  long: "Long Answer",
   multiple: "Multiple Choice",
-  date:     "Date",
-  rating:   "Rating (1–5)",
-  name:     "Name Fields",
-  title:    "Section Title",
+  date: "Date",
+  rating: "Rating (1–5)",
+  name: "Name Fields",
+  title: "Section Title",
 };
 
 // ============================================================================
@@ -204,12 +634,19 @@ export const LoadingScreen = ({ message }) => {
   return (
     <>
       <AdminSidebar />
-      <div style={{
-        marginLeft: isMobile ? 0 : "229px",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        height: "100vh", background: "#E1ECF7",
-        fontFamily: "Lexend, sans-serif", color: "#6A7282", fontSize: "14px",
-      }}>
+      <div
+        style={{
+          marginLeft: isMobile ? 0 : "229px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          background: "#E1ECF7",
+          fontFamily: "Lexend, sans-serif",
+          color: "#6A7282",
+          fontSize: "14px",
+        }}
+      >
         {message}
       </div>
     </>
@@ -223,10 +660,10 @@ function normalizeIds(survey) {
   dbg("normalizeIds: assigning uid-based IDs to all integer-id questions");
   return {
     ...survey,
-    sections: survey.sections.map(sec => ({
+    sections: survey.sections.map((sec) => ({
       ...sec,
       id: typeof sec.id === "number" ? uid() : sec.id,
-      questions: sec.questions.map(q => ({
+      questions: sec.questions.map((q) => ({
         ...q,
         id: typeof q.id === "number" ? uid() : q.id,
       })),
@@ -238,16 +675,23 @@ function normalizeIds(survey) {
 // migrateIntegerIds — FIX 2
 // ============================================================================
 function migrateIntegerIds(surveyData, savedBranches) {
-  const hasIntegerIds = surveyData.sections.some(sec =>
-    sec.questions.some(q => typeof q.id === "number")
+  const hasIntegerIds = surveyData.sections.some((sec) =>
+    sec.questions.some((q) => typeof q.id === "number"),
   );
 
   if (!hasIntegerIds) {
-    dbg("migrateIntegerIds: no integer IDs found — fast path, no migration needed");
-    return { migratedSurvey: surveyData, migratedBranches: savedBranches ?? {} };
+    dbg(
+      "migrateIntegerIds: no integer IDs found — fast path, no migration needed",
+    );
+    return {
+      migratedSurvey: surveyData,
+      migratedBranches: savedBranches ?? {},
+    };
   }
 
-  dbg("migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys");
+  dbg(
+    "migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys",
+  );
 
   const idMap = new Map();
 
@@ -281,11 +725,11 @@ function migrateIntegerIds(surveyData, savedBranches) {
   });
 
   const remapKey = (key) => {
-    const withoutQ  = key.slice(2);
+    const withoutQ = key.slice(2);
     const optMarker = withoutQ.indexOf("-opt");
-    const rawId     = optMarker === -1 ? withoutQ : withoutQ.slice(0, optMarker);
-    const suffix    = optMarker === -1 ? "" : withoutQ.slice(optMarker);
-    const newId     = firstNewIdForOldInt.get(rawId);
+    const rawId = optMarker === -1 ? withoutQ : withoutQ.slice(0, optMarker);
+    const suffix = optMarker === -1 ? "" : withoutQ.slice(optMarker);
+    const newId = firstNewIdForOldInt.get(rawId);
     if (newId) {
       const remapped = `q-${newId}${suffix}`;
       dbg(`migrateIntegerIds: remap key "${key}" → "${remapped}"`);
@@ -297,7 +741,7 @@ function migrateIntegerIds(surveyData, savedBranches) {
   const remapDestination = (val) => {
     if (!val.startsWith("q-")) return val;
     const withoutQ = val.slice(2);
-    const newId    = firstNewIdForOldInt.get(withoutQ);
+    const newId = firstNewIdForOldInt.get(withoutQ);
     if (newId) {
       const remapped = `q-${newId}`;
       dbg(`migrateIntegerIds: remap destination "${val}" → "${remapped}"`);
@@ -308,7 +752,7 @@ function migrateIntegerIds(surveyData, savedBranches) {
 
   const migratedBranches = {};
   Object.entries(savedBranches ?? {}).forEach(([key, val]) => {
-    const newKey       = remapKey(key);
+    const newKey = remapKey(key);
     const destinations = Array.isArray(val) ? val : val ? [val] : ["next"];
     migratedBranches[newKey] = destinations.map(remapDestination);
   });
@@ -326,26 +770,32 @@ function sanitiseBranches(savedBranches, survey) {
   if (!savedBranches || typeof savedBranches !== "object") return {};
 
   const validRefs = new Set(["next", "end"]);
-  survey.sections.forEach(sec =>
-    sec.questions.forEach(q => validRefs.add(`q-${q.id}`))
+  survey.sections.forEach((sec) =>
+    sec.questions.forEach((q) => validRefs.add(`q-${q.id}`)),
   );
 
   const clean = {};
 
   for (const [key, val] of Object.entries(savedBranches)) {
     const withoutPrefix = key.slice(2);
-    const optIdx        = withoutPrefix.indexOf("-opt");
-    const sourceId      = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
+    const optIdx = withoutPrefix.indexOf("-opt");
+    const sourceId =
+      optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
 
     if (!validRefs.has(`q-${sourceId}`)) {
-      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
+      dbgWarn(
+        `sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`,
+      );
       continue;
     }
 
-    const arr      = Array.isArray(val) ? val : val ? [val] : ["next"];
-    const filtered = arr.filter(v => {
+    const arr = Array.isArray(val) ? val : val ? [val] : ["next"];
+    const filtered = arr.filter((v) => {
       const valid = validRefs.has(v);
-      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
+      if (!valid)
+        dbgWarn(
+          `sanitiseBranches: pruning stale destination "${v}" from key "${key}"`,
+        );
       return valid;
     });
 
@@ -360,31 +810,30 @@ function sanitiseBranches(savedBranches, survey) {
 // SurveyManagement — Main Logic Controller
 // ============================================================================
 export default function SurveyManagement() {
-
   // ── Survey data ───────────────────────────────────────────────────────────
-  const [survey,        setSurvey]        = useState(null);
-  const [configId,      setConfigId]      = useState(null);
+  const [survey, setSurvey] = useState(null);
+  const [configId, setConfigId] = useState(null);
   const [activeSection, setActiveSection] = useState(0);
 
   const configIdRef = useRef(null);
 
   // ── UI mode ───────────────────────────────────────────────────────────────
   const [branchMode, setBranchMode] = useState(false);
-  const [editingQ,   setEditingQ]   = useState(null);
+  const [editingQ, setEditingQ] = useState(null);
 
   // ── Edit tracking ─────────────────────────────────────────────────────────
   const editSnapshotRef = useRef(null);
   const [dirtyQ, setDirtyQ] = useState(false);
 
   // ── Publication ───────────────────────────────────────────────────────────
-  const [saving,   setSaving]   = useState(false);
-  const [status,   setStatus]   = useState("");
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
   const [branches, setBranches] = useState({});
 
   const branchesRef = useRef({});
 
   const setBranchesAndRef = useCallback((updater) => {
-    setBranches(prev => {
+    setBranches((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
       branchesRef.current = next;
       dbg("setBranchesAndRef →", next);
@@ -397,11 +846,11 @@ export default function SurveyManagement() {
   }, [branches]);
 
   // ── Notifications ─────────────────────────────────────────────────────────
-  const [toasts,       setToasts]       = useState([]);
+  const [toasts, setToasts] = useState([]);
   const [confirmState, setConfirmState] = useState(null);
 
   // ── Branching UI ──────────────────────────────────────────────────────────
-  const [highlightQ,    setHighlightQ]    = useState(null);
+  const [highlightQ, setHighlightQ] = useState(null);
   const [branchTargetQ, setBranchTargetQ] = useState(null);
 
   // ==========================================================================
@@ -409,10 +858,15 @@ export default function SurveyManagement() {
   // ==========================================================================
   const addToast = useCallback((message, type = "success") => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type, exiting: false }]);
+    setToasts((prev) => [...prev, { id, message, type, exiting: false }]);
     setTimeout(() => {
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 350);
+      setToasts((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)),
+      );
+      setTimeout(
+        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+        350,
+      );
     }, 2400);
   }, []);
 
@@ -451,8 +905,10 @@ export default function SurveyManagement() {
 
       const { branches: savedBranches, ...surveyData } = data.config;
 
-      const { migratedSurvey, migratedBranches } =
-        migrateIntegerIds(surveyData, savedBranches ?? {});
+      const { migratedSurvey, migratedBranches } = migrateIntegerIds(
+        surveyData,
+        savedBranches ?? {},
+      );
 
       configIdRef.current = data.id;
       setConfigId(data.id);
@@ -507,7 +963,12 @@ export default function SurveyManagement() {
           .eq("id", currentConfigId)
           .select("id, config");
 
-        dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
+        dbg(
+          "UPDATE response — error:",
+          updateError,
+          "| returned rows:",
+          updateData?.length ?? "n/a",
+        );
 
         if (updateError) throw updateError;
 
@@ -518,22 +979,32 @@ export default function SurveyManagement() {
         }
 
         const savedBranches = updateData[0]?.config?.branches;
-        dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
+        dbg(
+          "Read-back branches from UPDATE:",
+          JSON.stringify(savedBranches, null, 2),
+        );
 
-        const sentKeys  = Object.keys(currentBranches).sort().join(",");
-        const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
+        const sentKeys = Object.keys(currentBranches).sort().join(",");
+        const savedKeys = Object.keys(savedBranches ?? {})
+          .sort()
+          .join(",");
 
         if (sentKeys !== savedKeys) {
           console.error(
             "[SurveyMgmt] PFIX-D: Branch key mismatch after UPDATE!\n" +
-            "  Sent:  " + sentKeys + "\n" +
-            "  Saved: " + savedKeys
+              "  Sent:  " +
+              sentKeys +
+              "\n" +
+              "  Saved: " +
+              savedKeys,
           );
-          addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+          addToast(
+            "Warning: branch data may not have saved correctly. Check console.",
+            "delete",
+          );
         } else {
           dbg("PFIX-D: Read-back verified ✓ — branch keys match");
         }
-
       } else {
         dbg("INSERT path — no existing config row");
 
@@ -543,7 +1014,12 @@ export default function SurveyManagement() {
           .select("id, config")
           .single();
 
-        dbg("INSERT response — error:", insertError, "| returned row:", insertData?.id);
+        dbg(
+          "INSERT response — error:",
+          insertError,
+          "| returned row:",
+          insertData?.id,
+        );
 
         if (insertError) throw insertError;
 
@@ -553,18 +1029,29 @@ export default function SurveyManagement() {
           dbg("INSERT success — new configId:", insertData.id);
 
           const savedBranches = insertData?.config?.branches;
-          dbg("Read-back branches from INSERT:", JSON.stringify(savedBranches, null, 2));
+          dbg(
+            "Read-back branches from INSERT:",
+            JSON.stringify(savedBranches, null, 2),
+          );
 
-          const sentKeys  = Object.keys(currentBranches).sort().join(",");
-          const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
+          const sentKeys = Object.keys(currentBranches).sort().join(",");
+          const savedKeys = Object.keys(savedBranches ?? {})
+            .sort()
+            .join(",");
 
           if (sentKeys !== savedKeys) {
             console.error(
               "[SurveyMgmt] PFIX-D: Branch key mismatch after INSERT!\n" +
-              "  Sent:  " + sentKeys + "\n" +
-              "  Saved: " + savedKeys
+                "  Sent:  " +
+                sentKeys +
+                "\n" +
+                "  Saved: " +
+                savedKeys,
             );
-            addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+            addToast(
+              "Warning: branch data may not have saved correctly. Check console.",
+              "delete",
+            );
           } else {
             dbg("PFIX-D: Read-back verified ✓ — branch keys match");
           }
@@ -574,7 +1061,6 @@ export default function SurveyManagement() {
       dbg("=== PUBLISH SUCCESS ===");
       setStatus("saved");
       setTimeout(() => setStatus(""), 3000);
-
     } catch (err) {
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);
@@ -607,20 +1093,26 @@ export default function SurveyManagement() {
   // QUESTION CRUD
   // ==========================================================================
   const updateQuestion = (sIdx, qIdx, patch) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
       sections: prev.sections.map((sec, si) =>
-        si !== sIdx ? sec : {
-          ...sec,
-          questions: sec.questions.map((q, qi) => qi !== qIdx ? q : { ...q, ...patch }),
-        }
+        si !== sIdx
+          ? sec
+          : {
+              ...sec,
+              questions: sec.questions.map((q, qi) =>
+                qi !== qIdx ? q : { ...q, ...patch },
+              ),
+            },
       ),
     }));
     if (editingQ?.sIdx === sIdx && editingQ?.qIdx === qIdx) setDirtyQ(true);
   };
 
   const openEdit = (sIdx, qIdx) => {
-    editSnapshotRef.current = JSON.stringify(survey.sections[sIdx].questions[qIdx]);
+    editSnapshotRef.current = JSON.stringify(
+      survey.sections[sIdx].questions[qIdx],
+    );
     setDirtyQ(false);
     setEditingQ({ sIdx, qIdx });
   };
@@ -642,19 +1134,19 @@ export default function SurveyManagement() {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
       () => {
-        const deletedId  = survey.sections[sIdx].questions[qIdx].id;
+        const deletedId = survey.sections[sIdx].questions[qIdx].id;
         const deletedRef = `q-${deletedId}`;
 
-        setBranchesAndRef(prev => {
+        setBranchesAndRef((prev) => {
           const next = { ...prev };
 
-          Object.keys(next).forEach(k => {
+          Object.keys(next).forEach((k) => {
             if (k === deletedRef || k.startsWith(`${deletedRef}-opt`)) {
               delete next[k];
               return;
             }
             if (Array.isArray(next[k])) {
-              const filtered = next[k].filter(v => v !== deletedRef);
+              const filtered = next[k].filter((v) => v !== deletedRef);
               next[k] = filtered.length > 0 ? filtered : ["next"];
             }
           });
@@ -663,18 +1155,20 @@ export default function SurveyManagement() {
           return next;
         });
 
-        setSurvey(prev => ({
+        setSurvey((prev) => ({
           ...prev,
           sections: prev.sections.map((sec, si) =>
-            si !== sIdx ? sec : {
-              ...sec,
-              questions: sec.questions.filter((_, qi) => qi !== qIdx),
-            }
+            si !== sIdx
+              ? sec
+              : {
+                  ...sec,
+                  questions: sec.questions.filter((_, qi) => qi !== qIdx),
+                },
           ),
         }));
         setConfirmState(null);
         addToast("Question deleted", "delete");
-      }
+      },
     );
   };
 
@@ -684,18 +1178,19 @@ export default function SurveyManagement() {
       `Delete the section "${sectionTitle}" and all its questions? This action cannot be undone.`,
       () => {
         const deletedIdStrings = new Set(
-          survey.sections[index].questions.map(q => String(q.id))
+          survey.sections[index].questions.map((q) => String(q.id)),
         );
 
-        setBranchesAndRef(prev => {
+        setBranchesAndRef((prev) => {
           const next = { ...prev };
 
-          Object.keys(next).forEach(k => {
+          Object.keys(next).forEach((k) => {
             const withoutPrefix = k.slice(2);
-            const optMarker     = withoutPrefix.indexOf("-opt");
-            const sourceIdStr   = optMarker === -1
-              ? withoutPrefix
-              : withoutPrefix.slice(0, optMarker);
+            const optMarker = withoutPrefix.indexOf("-opt");
+            const sourceIdStr =
+              optMarker === -1
+                ? withoutPrefix
+                : withoutPrefix.slice(0, optMarker);
 
             if (deletedIdStrings.has(sourceIdStr)) {
               delete next[k];
@@ -703,7 +1198,7 @@ export default function SurveyManagement() {
             }
 
             if (Array.isArray(next[k])) {
-              const filtered = next[k].filter(v => {
+              const filtered = next[k].filter((v) => {
                 if (!v.startsWith("q-")) return true;
                 return !deletedIdStrings.has(v.slice(2));
               });
@@ -715,54 +1210,69 @@ export default function SurveyManagement() {
           return next;
         });
 
-        setSurvey(prev => ({
+        setSurvey((prev) => ({
           ...prev,
           sections: prev.sections.filter((_, i) => i !== index),
         }));
 
-        setActiveSection(prev => Math.min(prev, survey.sections.length - 2));
+        setActiveSection((prev) => Math.min(prev, survey.sections.length - 2));
         setConfirmState(null);
         addToast("Section deleted", "delete");
-      }
+      },
     );
   };
 
   const duplicateQuestion = (sIdx, qIdx) => {
-    setSurvey(prev => {
+    setSurvey((prev) => {
       const sec = prev.sections[sIdx];
-      const q   = { ...sec.questions[qIdx], id: uid() };
-      const qs  = [...sec.questions];
+      const q = { ...sec.questions[qIdx], id: uid() };
+      const qs = [...sec.questions];
       qs.splice(qIdx + 1, 0, q);
       return {
         ...prev,
-        sections: prev.sections.map((s, si) => si !== sIdx ? s : { ...s, questions: qs }),
+        sections: prev.sections.map((s, si) =>
+          si !== sIdx ? s : { ...s, questions: qs },
+        ),
       };
     });
     addToast("Question duplicated", "copy");
   };
 
   const addQuestion = (sIdx) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
       sections: prev.sections.map((s, si) =>
-        si !== sIdx ? s : {
-          ...s,
-          questions: [
-            ...s.questions,
-            { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
-          ],
-        }
+        si !== sIdx
+          ? s
+          : {
+              ...s,
+              questions: [
+                ...s.questions,
+                {
+                  id: uid(),
+                  type: "short",
+                  label: "New Question",
+                  required: false,
+                  placeholder: "Enter your answer",
+                },
+              ],
+            },
       ),
     }));
   };
 
   const addSection = () => {
-    setSurvey(prev => {
+    setSurvey((prev) => {
       const updated = {
         ...prev,
         sections: [
           ...prev.sections,
-          { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
+          {
+            id: uid(),
+            title: `Section ${prev.sections.length + 1}`,
+            description: "New section",
+            questions: [],
+          },
         ],
       };
       setActiveSection(updated.sections.length - 1);
@@ -775,7 +1285,9 @@ export default function SurveyManagement() {
   // ==========================================================================
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
-    updateQuestion(sIdx, qIdx, { options: [...(q.options || []), "New Option"] });
+    updateQuestion(sIdx, qIdx, {
+      options: [...(q.options || []), "New Option"],
+    });
   };
 
   const updateOption = (sIdx, qIdx, oIdx, val) => {
@@ -785,17 +1297,19 @@ export default function SurveyManagement() {
   };
 
   const deleteOption = (sIdx, qIdx, oIdx) => {
-    const qId    = survey.sections[sIdx].questions[qIdx].id;
+    const qId = survey.sections[sIdx].questions[qIdx].id;
     const optKey = `q-${qId}-opt${oIdx}`;
 
-    setBranchesAndRef(prev => {
+    setBranchesAndRef((prev) => {
       const next = { ...prev };
       delete next[optKey];
 
-      const higherKeys = Object.keys(next).filter(k =>
-        k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx
+      const higherKeys = Object.keys(next).filter(
+        (k) =>
+          k.startsWith(`q-${qId}-opt`) &&
+          parseInt(k.split("opt")[1], 10) > oIdx,
       );
-      higherKeys.forEach(k => {
+      higherKeys.forEach((k) => {
         const oldIdx = parseInt(k.split("opt")[1], 10);
         next[`q-${qId}-opt${oldIdx - 1}`] = next[k];
         delete next[k];
@@ -805,7 +1319,9 @@ export default function SurveyManagement() {
       return next;
     });
 
-    const opts = survey.sections[sIdx].questions[qIdx].options.filter((_, i) => i !== oIdx);
+    const opts = survey.sections[sIdx].questions[qIdx].options.filter(
+      (_, i) => i !== oIdx,
+    );
     updateQuestion(sIdx, qIdx, { options: opts });
   };
 
@@ -814,9 +1330,15 @@ export default function SurveyManagement() {
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
 
-  const allQuestions = survey?.sections.flatMap((s, si) =>
-    s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title }))
-  ) || [];
+  const allQuestions =
+    survey?.sections.flatMap((s, si) =>
+      s.questions.map((q, qi) => ({
+        ...q,
+        sIdx: si,
+        qIdx: qi,
+        sectionTitle: s.title,
+      })),
+    ) || [];
 
   // ── FIX 7 — targetSectionIdx ──────────────────────────────────────────────
   // Previous code:
@@ -834,9 +1356,11 @@ export default function SurveyManagement() {
   const targetSectionIdx = (() => {
     if (!branchTargetQ || !survey) return activeSection;
     // branchTargetQ is "q-<uid>"; strip the leading "q-"
-    const qId = branchTargetQ.startsWith("q-") ? branchTargetQ.slice(2) : branchTargetQ;
-    const idx = survey.sections.findIndex(s =>
-      s.questions.some(q => String(q.id) === qId)
+    const qId = branchTargetQ.startsWith("q-")
+      ? branchTargetQ.slice(2)
+      : branchTargetQ;
+    const idx = survey.sections.findIndex((s) =>
+      s.questions.some((q) => String(q.id) === qId),
     );
     return idx >= 0 ? idx : activeSection;
   })();
