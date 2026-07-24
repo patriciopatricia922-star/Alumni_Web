@@ -1,4 +1,6 @@
+//friends
 import React, { useState, useEffect } from 'react';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import Sidebar from '../components/Sidebar';
 import megaphoneIcon from '../assets/announcement_icn.svg';
 import calenderIcon from '../assets/calendar_ic.svg';
@@ -30,127 +32,178 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
 
-  const iconSize = isMobile ? '48px' : isTablet ? '52px' : '56px';
+  const [hovered, setHovered] = useState(false);
+  const hasDetails = Boolean(announcement.time);
 
   return (
-    <div className={`ann-card ${expanded ? 'ann-card--expanded' : ''}`} style={{ maxWidth: '97.5%' }}>
-
-      {/* ── Photo with arrows ── */}
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background:   '#ffffff',
+        border:       `1px solid ${hovered || expanded ? 'rgba(0,62,166,0.25)' : 'rgba(0,0,0,0.07)'}`,
+        boxShadow:    hovered || expanded
+                        ? '0px 12px 32px rgba(0,62,166,0.15), 0px 4px 16px rgba(0,0,0,0.08)'
+                        : '0px 4px 16px rgba(0,0,0,0.07)',
+        borderRadius: '16px',
+        overflow:     'hidden',
+        cursor:       'pointer',
+        maxWidth:     '96%',
+        transform:    hovered ? 'translateY(-4px)' : 'translateY(0)',
+        transition:   'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+      }}
+    >
+      {/* ── Photo with arrows + category pill ── */}
       {images.length > 0 && (
-        <div style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', flexShrink: 0 }}>
+        <div style={{ position: 'relative', width: '100%', height: '330px', overflow: 'hidden', flexShrink: 0 }}>
           <img
             src={images[imgIndex]}
             alt={announcement.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+              transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.35s ease' }}
             onError={e => { e.target.style.display = 'none'; }}
           />
 
-          {/* Left arrow */}
-          <button onClick={prevImg} style={{
-            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '40px', height: '40px', borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 10, transition: 'background 0.15s',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-          >
-            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          {/* Left / Right arrows */}
+          <>
+            <button onClick={prevImg} style={{
+              position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 10, transition: 'background 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+            >
+              <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button onClick={nextImg} style={{
+              position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 10, transition: 'background 0.15s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+            >
+              <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
 
-          {/* Right arrow */}
-          <button onClick={nextImg} style={{
-            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '40px', height: '40px', borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 10, transition: 'background 0.15s',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-          >
-            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+            {/* Dot indicators */}
+            <div style={{
+              position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+              display: 'flex', gap: '5px', zIndex: 10,
+            }}>
+              {images.map((_, i) => (
+                <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                  width: i === imgIndex ? '18px' : '6px', height: '6px',
+                  borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                }} />
+              ))}
+            </div>
+          </>
 
-          {/* Dot indicators */}
-          <div style={{
-            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', gap: '5px', zIndex: 10,
-          }}>
-            {images.map((_, i) => (
-              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
-                width: i === imgIndex ? '18px' : '6px', height: '6px',
-                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
-                cursor: 'pointer', transition: 'all 0.2s',
-              }} />
-            ))}
-          </div>
+          {/* Category tag — bottom-left, white pill (matches discount card) */}
+          {announcement.category && (
+            <div style={{
+              position: 'absolute', bottom: '14px', left: '12px',
+              background: 'rgba(255,255,255,0.92)', borderRadius: '999px',
+              padding: '4px 10px',
+            }}>
+              <span style={{
+                fontFamily: "'Montserrat', Arial, sans-serif",
+                fontWeight: 600, fontSize: '11px', color: '#1e3a5f', lineHeight: 1,
+              }}>
+                {announcement.category}
+              </span>
+            </div>
+          )}
         </div>
       )}
-      <div className="ann-card__body">
-        <div
-          className="ann-card__icon-box"
-          style={{ width: iconSize, height: iconSize, minWidth: iconSize }}
-        >
-          <img
-            src={getIcon(announcement.category)}
-            alt={announcement.category}
+
+      {/* ── Body ── */}
+      <div style={{ padding: '18px 20px 0', display: 'flex', flexDirection: 'column' }}>
+        {/* Title row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+          <p style={{
+            fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 700,
+            fontSize: '15px', lineHeight: 1.45, color: '#1e3a5f', margin: 0, wordBreak: 'break-word', flex: 1,
+          }}>
+            {announcement.title}
+          </p>
+        </div>
+
+        {/* Description — truncated or full depending on expanded state */}
+        {!expanded ? (
+          <p style={{
+            fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 400, fontSize: '13px',
+            lineHeight: 1.65, color: '#4a5565', margin: '0 0 16px 0', wordBreak: 'break-word', overflowWrap: 'break-word',
+          }}>
+            {truncateHtml(announcement.description, 80)}
+          </p>
+        ) : (
+          <div
             style={{
-             width: '55%',
-             height: '55%',
-             objectFit: 'contain',
-             filter: 'drop-shadow(0px 2px 4px rgba(0, 62, 166, 0.45))',
+              fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 400, fontSize: '13px',
+              lineHeight: 1.65, color: '#4a5565', margin: '0 0 16px 0', wordBreak: 'break-word', overflowWrap: 'break-word',
             }}
+            dangerouslySetInnerHTML={createMarkup(announcement.description)}
           />
-          {!read && (
-            <div className="ann-card__notif-ring">
-              <div className="ann-card__notif-dot" />
+        )}
+
+        {/* Divider */}
+        <div style={{ width: '100%', height: '1px', background: 'rgba(0,0,0,0.08)' }} />
+
+        {/* ── Expandable details (timestamp) ── */}
+        <div style={{
+          overflow: 'hidden',
+          maxHeight: expanded ? '200px' : '0px',
+          transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.35s cubic-bezier(0.4,0,0.2,1)',
+        }}>
+          {hasDetails && (
+            <div style={{ padding: '14px 0 4px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <div style={{ marginTop: '2px', flexShrink: 0 }}><ClockIcon /></div>
+                <p style={{
+                  fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 400, fontSize: '12px',
+                  lineHeight: 1.6, color: '#4a5565', margin: 0,
+                }}>
+                  {announcement.time}
+                </p>
+              </div>
             </div>
           )}
         </div>
+      </div>
 
-        <div className="ann-card__content">
-          <div className="ann-card__top-row">
-            <h3 className="ann-card__title">{announcement.title}</h3>
-            <div className="ann-card__timestamp">
-              <ClockIcon />
-              <span>{announcement.time}</span>
-            </div>
-          </div>
-
-          {!expanded && (
-            <p className="ann-card__preview">
-              {truncateHtml(announcement.description, 120)}
-              {' '}
-              <button
-                className="ann-card__see-more-inline"
-                onClick={(e) => { e.stopPropagation(); setExpanded(true); setRead(true); }}
-              >
-                See more
-              </button>
-            </p>
+      {/* ── Toggle button ── */}
+      <div style={{ padding: '14px 20px 20px' }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); if (!expanded) setRead(true); }}
+          style={{
+            width: '100%', height: '37px',
+            background: expanded ? 'transparent' : '#003ea6',
+            border: expanded ? '1.5px solid #003ea6' : 'none',
+            borderRadius: '10px',
+            fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 700, fontSize: '13px',
+            color: expanded ? '#003ea6' : '#ffffff',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+          }}
+        >
+          {expanded ? (
+            <>See Less <FaChevronUp size={10} /></>
+          ) : (
+            <>See More <FaChevronDown size={10} /></>
           )}
-
-          {expanded && (
-            <div className="ann-card__full-content">
-              <div
-                className="announcement-full-content"
-                dangerouslySetInnerHTML={createMarkup(announcement.description)}
-              />
-              <button
-                className="ann-card__see-more-inline ann-card__see-less"
-                onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
-              >
-                See less
-              </button>
-            </div>
-          )}
-        </div>
+        </button>
       </div>
     </div>
   );
@@ -196,7 +249,6 @@ const NotificationBell = ({
         zIndex: 200,
       }}
     >
-      {/* ── Bell button — matches Dashboard exactly ── */}
       <button
         onClick={() => setShowDropdown(v => !v)}
         style={{
@@ -228,7 +280,6 @@ const NotificationBell = ({
           />
         </svg>
 
-        {/* Badge — matches Dashboard */}
         {unreadCount > 0 && (
           <div style={{
             position:    'absolute',
@@ -258,7 +309,6 @@ const NotificationBell = ({
         )}
       </button>
 
-      {/* ── Dropdown — white theme matching PersonalBackground ── */}
       {showDropdown && (
         <div style={{
           position:       'absolute',
@@ -276,8 +326,6 @@ const NotificationBell = ({
           overflow:       'hidden',
           zIndex:         300,
         }}>
-
-          {/* Header */}
           <div style={{
             padding:      '16px 18px 12px',
             borderBottom: '1px solid #F0F2F5',
@@ -313,7 +361,6 @@ const NotificationBell = ({
             )}
           </div>
 
-          {/* Tabs */}
           <div style={{
             display:    'flex',
             padding:    '10px 18px 0',
@@ -343,7 +390,6 @@ const NotificationBell = ({
             ))}
           </div>
 
-          {/* Body */}
           <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
             {(() => {
               const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
@@ -480,7 +526,6 @@ const NotificationBell = ({
             })()}
           </div>
 
-          {/* Footer */}
           <div style={{
             padding:    '10px 18px',
             borderTop:  '1px solid #F0F2F5',
@@ -562,8 +607,7 @@ const AnnouncementsView = ({
         position:   'relative',
       }}>
 
-        {/* ── Notification Bell (CSS-based from About) ── */}
-        <div ref={bellRef} className="ab-bell">
+        <div ref={bellRef} className="ab-bell" style={{ transform: 'translateX(16px)' }}>
           <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
@@ -632,7 +676,6 @@ const AnnouncementsView = ({
           )}
         </div>
 
-        {/* ── Back Button — matches About page ── */}
         <button
           className="ann-back"
           onClick={() => navigate(-1)}
@@ -644,7 +687,6 @@ const AnnouncementsView = ({
           <span>Back</span>
         </button>
 
-        {/* ── Header ── */}
         <div className="ann-hdr" style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px', marginLeft: '40px', marginTop: '10px' }}>
           <h1 className="ann-heading">
             Announcements
@@ -666,7 +708,6 @@ const AnnouncementsView = ({
           </p>
         </div>
 
-        {/* ── Featured Banner ── */}
         {!isMobile && (
           <div
             className="ann-banner"
@@ -677,10 +718,11 @@ const AnnouncementsView = ({
               boxShadow:    '0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06)',
               borderRadius: '24px',
               marginBottom: isTablet ? '28px' : '32px',
-              marginLeft:   '28px',
-              marginRight:  '-30px',
+              marginLeft:   '20px',
+              marginRight:  '-24px',
+              transform:    'translateX(6px)',
               marginTop:    '40px',
-              width:        'calc(95%)',
+              width:        'calc(100% - 42px)',
               overflow:     'hidden',
               display:      'flex',
               gap:          '24px',
@@ -778,7 +820,6 @@ const AnnouncementsView = ({
           </div>
         )}
 
-        {/* ── Filter bar ── */}
         <div style={{
           display:       'flex',
           justifyContent:'flex-end',
@@ -787,49 +828,52 @@ const AnnouncementsView = ({
           marginLeft:    '28px',
           marginRight:   '15px',
           paddingRight:  '15px',
-          gap:           '12px',
+          gap:           '2px',
         }}>
-          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'relative' }}>
 
             <div
               className="ann-filter-display"
               style={{
-                height:     '37px',
-                display:    'flex',
-                alignItems: 'center',
-                padding:    '0 12px',
-                gap:        '8px',
+                height:      '40px',
+                display:     'flex',
+                alignItems:  'center',
+                padding:     '0 14px',
+                gap:         '10px',
                 borderRadius:'10px',
-                filter:     'drop-shadow(0px 2px 2px rgba(0,0,0,0.1))',
-                minWidth:   isMobile ? 0 : '211px',
-                flex:       isMobile ? 1 : 'none',
+                background:  '#FFFFFF',
+                border:      '1px solid var(--ann-card-border)',
+                boxShadow:   '0px 2px 8px rgba(0,0,0,0.06)',
+                minWidth:    isMobile ? 0 : '236px',
+                flex:        isMobile ? 1 : 'none',
               }}
             >
               <span style={{
-                fontFamily:    'Montserrat, Arial',
-                fontWeight:    400,
-                fontSize:      '14px',
-                lineHeight:    '20px',
-                color:         'var(--ann-filter-text)',
+                fontFamily:    'Montserrat, Arial, sans-serif',
+                fontWeight:    700,
+                fontSize:      '13.5px',
+                lineHeight:    '1.4',
+                color:         '#1e3a5f',
                 whiteSpace:    'nowrap',
                 overflow:      'hidden',
                 textOverflow:  'ellipsis',
+                marginLeft:    '2px',
                 flex:          1,
               }}>
                 {activeCategory}
               </span>
               <div style={{
-                background:     'var(--ann-badge-bg)',
-                borderRadius:   '8px',
-                minWidth:       '22.63px',
-                height:         '19.98px',
-                display:        'flex',
+                background:     '#003ea6',
+                borderRadius:   '6px',
+                display:        'inline-flex',
                 alignItems:     'center',
                 justifyContent: 'center',
-                padding:        '0 5px',
+                padding:        '1px 7px',
+                marginLeft:     '-5px',
                 flexShrink:     0,
+                verticalAlign:  'middle',
               }}>
-                <span style={{ fontFamily: 'Montserrat, Arial', fontWeight: 700, fontSize: '12px', color: '#FFFFFF' }}>
+                <span style={{ fontFamily: 'Montserrat, Arial', fontWeight: 700, fontSize: '11px', color: '#FFFFFF' }}>
                   {filtered.length}
                 </span>
               </div>
@@ -840,6 +884,7 @@ const AnnouncementsView = ({
               style={{
                 height:         '37px',
                 padding:        '0 18px',
+                transform:      'translateX(12px)',
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
@@ -873,7 +918,7 @@ const AnnouncementsView = ({
                 borderRadius:'12px',
                 overflow:  'hidden',
                 zIndex:    300,
-                minWidth:  '220px',
+                minWidth:  '236px',
                 boxShadow: '0px 10px 30px rgba(0,0,0,0.15)',
               }}>
                 {categories.map((cat, i) => (
@@ -896,15 +941,16 @@ const AnnouncementsView = ({
                     onMouseLeave={e => { if (activeCategory !== cat) e.currentTarget.style.background = 'transparent'; }}
                   >
                     <span style={{
-                      fontFamily: 'Montserrat, Arial',
-                      fontSize:   '14px',
-                      color:      activeCategory === cat ? 'var(--ann-title-color)' : 'var(--ann-body-color)',
+                      fontFamily: 'Montserrat, Arial, sans-serif',
+                      fontSize:   '13.5px',
+                      color:      '#1e3a5f',
                       fontWeight: activeCategory === cat ? 700 : 400,
+                      whiteSpace: 'nowrap',
                     }}>
                       {cat}
                     </span>
                     <div style={{
-                      background:   activeCategory === cat ? 'var(--ann-badge-bg)' : 'rgba(43,114,251,0.15)',
+                      background:   activeCategory === cat ? '#003ea6' : '#dbeafe',
                       borderRadius: '6px',
                       padding:      '1px 7px',
                     }}>
@@ -912,7 +958,7 @@ const AnnouncementsView = ({
                         fontFamily: 'Montserrat, Arial',
                         fontWeight: 700,
                         fontSize:   '11px',
-                        color:      activeCategory === cat ? '#FFFFFF' : 'var(--ann-title-color)',
+                        color:      activeCategory === cat ? '#FFFFFF' : '#003ea6',
                       }}>
                         {categoryCounts[cat]}
                       </span>
@@ -924,7 +970,6 @@ const AnnouncementsView = ({
           </div>
         </div>
 
-        {/* ── Cards list ── */}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0', marginLeft: '28px', marginRight: '-30px' }}>
             <span style={{ fontFamily: 'Montserrat, Arial', fontSize: '14px', color: 'var(--ann-body-color)' }}>
@@ -932,7 +977,18 @@ const AnnouncementsView = ({
             </span>
           </div>
         ) : (
-          <div className="ann-cards-list" style={{ marginLeft: '28px', marginRight: '-15px', paddingRight: '15px' }}>
+          <div
+            className="ann-cards-list"
+            style={{
+              display:             'grid',
+              gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+              gap:                 isMobile ? '16px' : '14px',
+              alignItems:          'start',
+              marginLeft:          '24px',
+              marginRight:         '-10px',
+              paddingRight:        '10px',
+            }}
+          >
             {filtered.map(a => (
               <AnnouncementCard
                 key={a.id}
