@@ -1,5 +1,5 @@
 // ============================================================================
-// RewardStoreView.jsx — Merged (Friend's UI + My Logic)
+// RewardStoreView.jsx — Merged (Friend's UI + Modal + My Logic, no dummy data)
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -77,65 +77,23 @@ const RewardStoreView = ({
 }) => {
   const filters = ['All', 'Apparel', 'Drinkware', 'Accessories'];
 
-  const dummyItems = [
-    {
-      id: 'dummy-1',
-      name: 'NU Classic Polo Shirt',
-      description: 'Premium navy polo with embroidered NU logo.',
-      category: 'Apparel',
-      points: 150,
-      image: 'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=600&q=80',
-    },
-    {
-      id: 'dummy-2',
-      name: 'NU Insulated Tumbler',
-      description: 'Keep drinks hot or cold for up to 12 hours.',
-      category: 'Drinkware',
-      points: 100,
-      image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80',
-    },
-    {
-      id: 'dummy-3',
-      name: 'NU Snapback Cap',
-      description: 'Adjustable snapback cap with gold and blue colorway.',
-      category: 'Accessories',
-      points: 80,
-      image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
-    },
-    {
-      id: 'dummy-4',
-      name: 'NU Varsity Jacket',
-      description: 'Classic varsity jacket with NU branding on chest and back.',
-      category: 'Apparel',
-      points: 300,
-      image: 'https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=600&q=80',
-    },
-    {
-      id: 'dummy-5',
-      name: 'NU Ceramic Mug',
-      description: '11oz ceramic mug with NU seal print.',
-      category: 'Drinkware',
-      points: 60,
-      image: 'https://images.unsplash.com/photo-1534040385115-33dcb3acba5b?w=600&q=80',
-    },
-    {
-      id: 'dummy-6',
-      name: 'NU Lanyard',
-      description: 'Durable woven lanyard with metal clip and NU branding.',
-      category: 'Accessories',
-      points: 30,
-      image: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=600&q=80',
-    },
-  ];
-
-  const allItems = [...(merchandise || []), ...dummyItems];
   const filtered = activeFilter === 'All'
-    ? allItems
-    : allItems.filter(m => m.category === activeFilter);
+    ? (merchandise || [])
+    : (merchandise || []).filter(m => m.category === activeFilter);
 
   const navigate = useNavigate();
 
-  // Survey button derived state (from my logic — controls disabled + label)
+  // ── Redeem confirmation modal ──────────────────────────────────────────
+  const [redeemedItem, setRedeemedItem] = useState(null);
+
+  const handleRedeem = (item) => {
+    onRedeem(item);
+    setRedeemedItem(item);
+  };
+
+  const closeRedeemModal = () => setRedeemedItem(null);
+
+  // Survey button derived state (my logic — controls disabled + label)
   const surveyLoading = !surveyRoute;
   const surveyBtnLabel = surveyLoading
     ? 'Loading…'
@@ -265,7 +223,7 @@ const RewardStoreView = ({
             key={item.id}
             item={item}
             userPoints={rewardPoints ?? 0}
-            onRedeem={onRedeem}
+            onRedeem={handleRedeem}
           />
         ))
       )}
@@ -297,7 +255,7 @@ const RewardStoreView = ({
           style={{
             position: 'fixed',
             top:   isMobile ? '32px' : '45px',
-            right: isMobile ? '59px' : '84px',
+            right: isMobile ? '69px' : '94px',
             zIndex: 200,
           }}
         >
@@ -345,6 +303,50 @@ const RewardStoreView = ({
         {pointsBanner}
         {merchandiseSection}
       </div>
+
+      {/* ── Redeem confirmation modal ── */}
+      {redeemedItem && (
+        <div className="redeem-modal-overlay" onClick={closeRedeemModal}>
+          <div className="redeem-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="redeem-modal-close"
+              onClick={closeRedeemModal}
+              aria-label="Close"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            <div className="redeem-modal-icon">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                <path d="M20 12v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M22 7H2v5h20V7z" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 22V7" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
+            <h2 className="redeem-modal-title">Redeem Request Received</h2>
+
+            <p className="redeem-modal-subtitle">
+              Your request to redeem <span className="redeem-modal-item-name">{redeemedItem.name}</span> has been noted.
+            </p>
+
+            <div className="redeem-modal-notice">
+              <p className="redeem-modal-notice-title">Important Notice</p>
+              <p className="redeem-modal-notice-text">
+                Please visit the <strong>Alumni Relations Office</strong> at NU-Dasmariñas Main Campus to claim your merchandise. Bring a valid ID for verification.
+              </p>
+            </div>
+
+            <button className="redeem-modal-confirm-btn" onClick={closeRedeemModal}>
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

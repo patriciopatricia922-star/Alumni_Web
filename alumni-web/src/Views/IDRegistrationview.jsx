@@ -68,61 +68,6 @@ const IDRegistrationView = ({
           </div>
         )}
 
-        {/* ── Upload / Camera choice modal ──────────────────────────────────── */}
-        {showModal && (
-          <div
-            onClick={() => setShowModal(false)}
-            style={{
-              position: 'fixed', inset: 0, zIndex: 200,
-              background: 'rgba(0,0,0,0.65)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backdropFilter: 'blur(6px)',
-            }}
-          >
-            <div className="aid-modal-box" onClick={e => e.stopPropagation()}>
-              <div style={{
-                width: '52px', height: '52px', borderRadius: '14px',
-                background: 'rgba(43,114,251,0.15)',
-                border: '1px solid rgba(43,114,251,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 3H5a2 2 0 00-2 2v4M9 3h6M9 3v18m6-18h4a2 2 0 012 2v4M15 3v18M9 21h6M3 9v6m18-6v6M3 15h18"
-                    stroke="#51A2FF" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <h3 style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '17px', color: '#FFFFFF', margin: '0 0 5px' }}>Scan Alumni ID</h3>
-                <p style={{ fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: '18px' }}>
-                  Choose how you'd like to provide your ID for verification
-                </p>
-              </div>
-              {/* Upload from device */}
-              <button
-                onClick={() => { setShowModal(false); fileInputRef.current?.click(); }}
-                className="aid-choice-btn"
-              >
-                <div className="aid-choice-icon">
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
-                      stroke="#51A2FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <p style={{ fontFamily: 'Montserrat', fontWeight: 600, fontSize: '13px', color: '#FFFFFF', margin: 0 }}>Upload from Device</p>
-                  <p style={{ fontFamily: 'Montserrat', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>JPG, PNG, or other image formats</p>
-                </div>
-              </button>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontFamily: 'Montserrat', fontSize: '12px', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', marginTop: '4px' }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* ── Camera fullscreen overlay ──────────────────────────────────────── */}
         {cameraActive && (
           <div style={{
@@ -272,7 +217,7 @@ const IDRegistrationView = ({
               {/* Upload area */}
               <div
                 className="aid-upload-area"
-                onClick={() => !preview && setShowModal(true)}
+                onClick={() => !preview && fileInputRef.current?.click()}
                 style={{
                   border: `1.5px solid ${borderColor}`,
                   cursor: preview ? 'default' : 'pointer',
@@ -291,7 +236,7 @@ const IDRegistrationView = ({
                       alt="Upload ID"
                       style={{ width: '52px', height: '52px', opacity: 1 }}
                     />
-                    <p className="aid-upload-hint">Click to upload or use camera</p>
+                    <p className="aid-upload-hint">Click to upload your Alumni ID</p>
                   </div>
                 )}
 
@@ -350,30 +295,6 @@ const IDRegistrationView = ({
               )}
             </div>
 
-            {/* Tips panel — idle, no preview */}
-            {status === 'idle' && !preview && (
-              <div className="aid-tips-panel">
-                <div className="aid-tips-header">
-                  <div className="aid-tips-icon">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="#51A2FF" strokeWidth="2" />
-                      <path d="M12 8v4M12 16h.01" stroke="#51A2FF" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <p className="aid-tips-title">Tips for a successful scan</p>
-                </div>
-                {[
-                  '1. Place your ID on a flat, well-lit surface before scanning.',
-                  '2. Keep the ID straight and avoid tilting or angling it.',
-                  '3. Make sure all text on the ID is clearly visible and not blurry.',
-                  '4. Avoid covering any part of the ID with your fingers.',
-                  "5. Avoid glare — don't scan under direct bright light or flash.",
-                ].map((tip, i) => (
-                  <p key={i} className="aid-tip-line">{tip}</p>
-                ))}
-              </div>
-            )}
-
             {/* Scanning banner */}
             {status === 'scanning' && (
               <div className="aid-banner aid-banner-info">
@@ -421,7 +342,7 @@ const IDRegistrationView = ({
                   {extractedData.program    && <p className="aid-extracted-row"><span className="aid-extracted-label">Program: </span>{extractedData.program}</p>}
                   {extractedData.batchYear  && <p className="aid-extracted-row"><span className="aid-extracted-label">Batch Year: </span>{extractedData.batchYear}</p>}
                 </div>
-                <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: '#0000009a', margin: '6px 0 0 26px' }}>
+                <p style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgb(2, 2, 2)', margin: '6px 0 0 26px' }}>
                   This info will be pre-filled in your signup form.
                 </p>
               </div>

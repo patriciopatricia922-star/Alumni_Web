@@ -53,7 +53,7 @@ const Announcements = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('announcements')
-        .select('id, title, content, published_at, is_active, category')
+        .select('id, title, content, published_at, is_active, category, image_url, image_urls')
         .eq('is_active', true)
         .order('published_at', { ascending: false });
 
@@ -65,6 +65,8 @@ const Announcements = () => {
           time:         formatTime(a.published_at),
           category:     a.category || 'News',
           published_at: a.published_at,
+          image:        a.image_url || null,
+          images:       a.image_urls?.length ? a.image_urls : (a.image_url ? [a.image_url] : null),
         }));
         setAnnouncements(formattedAnnouncements);
       }

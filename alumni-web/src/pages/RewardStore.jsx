@@ -1,31 +1,31 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate }  from 'react-router-dom';
-import { supabase }     from '../lib/supabase';
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 import {
   getResumeRoute,
   getSurveySections,
   isSurveyComplete,
-} from '../lib/surveyProgress';
+} from "../lib/surveyProgress";
 import {
   fetchRewardProfile,
   deductPoints,
   claimSurveyReward,
   subscribeToRewardPoints,
-} from '../lib/rewardPoints';
-import { useDpaGate }   from '../hooks/useDpaGate';
-import DataPrivacyModal from '../modals/DataPrivacyModal';
-import rewardIcon       from '../assets/reward_icn.svg';
-import RewardStoreView  from '../views/RewardStoreView';
-import PointsToast      from '../modals/PointsToast';
+} from "../lib/rewardPoints";
+import { useDpaGate } from "../hooks/useDpaGate";
+import DataPrivacyModal from "../modals/DataPrivacyModal";
+import rewardIcon from "../assets/reward_icn.svg";
+import RewardStoreView from "../views/RewardStoreView";
+import PointsToast from "../modals/PointsToast";
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : 1440
+    typeof window !== "undefined" ? window.innerWidth : 1440,
   );
   useEffect(() => {
     const handler = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, []);
   return width;
 };
@@ -33,43 +33,44 @@ const useWindowWidth = () => {
 const SURVEY_REWARD_POINTS = 50;
 
 const RewardStore = () => {
-  const navigate     = useNavigate();
-  const windowWidth  = useWindowWidth();
-  const isMobile     = windowWidth < 768;
+  const navigate = useNavigate();
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
   const sidebarWidth = windowWidth < 768 ? 0 : windowWidth < 1100 ? 72 : 220;
-  const bellRef      = useRef(null);
+  const bellRef = useRef(null);
 
   // Holds the real Supabase channel so cleanup is reliable
   const realtimeChannelRef = useRef(null);
   // Ref-based mutex — immune to stale closure issues with useState
-  const isClaimingRef      = useRef(false);
+  const isClaimingRef = useRef(false);
 
-  const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
+  const { showModal, requestNavigation, handleAccept, handleDecline } =
+    useDpaGate(navigate);
 
-  const [rewardPoints,         setRewardPoints]         = useState(0);
-  const [merchandise,          setMerchandise]          = useState([]);
-  const [activeFilter,         setActiveFilter]         = useState('All');
-  const [unreadCount,          setUnreadCount]          = useState(0);
-  const [showDropdown,         setShowDropdown]         = useState(false);
-  const [surveyRoute,          setSurveyRoute]          = useState(null);
+  const [rewardPoints, setRewardPoints] = useState(0);
+  const [merchandise, setMerchandise] = useState([]);
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [surveyRoute, setSurveyRoute] = useState(null);
   const [surveyAlreadyClaimed, setSurveyAlreadyClaimed] = useState(false);
-  const [isClaiming,           setIsClaiming]           = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   // Toast state — replaces the browser alert()
   const [toast, setToast] = useState({
-    visible:    false,
-    points:     0,
+    visible: false,
+    points: 0,
     newBalance: 0,
-    label:      '',
+    label: "",
   });
 
   const dismissToast = useCallback(() => {
-    setToast(t => ({ ...t, visible: false }));
+    setToast((t) => ({ ...t, visible: false }));
   }, []);
 
   // ── Fetch reward profile ──────────────────────────────────────────────────
   useEffect(() => {
-    fetchRewardProfile().then(profile => {
+    fetchRewardProfile().then((profile) => {
       if (!profile) return;
       setRewardPoints(profile.rewardPoints);
       setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
@@ -79,9 +80,9 @@ const RewardStore = () => {
   // ── Realtime reward sync ──────────────────────────────────────────────────
   useEffect(() => {
     subscribeToRewardPoints((newPoints) => {
-      console.log('[RewardStore] realtime reward update:', newPoints);
+      console.log("[RewardStore] realtime reward update:", newPoints);
       setRewardPoints(newPoints);
-    }).then(channel => {
+    }).then((channel) => {
       realtimeChannelRef.current = channel;
     });
 
@@ -95,14 +96,26 @@ const RewardStore = () => {
   useEffect(() => {
     const fetchMerchandise = async () => {
       const { data, error } = await supabase
-        .from('merchandise')
-        .select('*')
-        .order('points', { ascending: true });
+        .from("rewards")
+        .select("*")
+        .eq("is_active", true)
+        .order("points_required", { ascending: true });
       if (error) {
-        console.error('[RewardStore] fetchMerchandise failed:', error);
+        console.error("[RewardStore] fetchMerchandise failed:", error);
         return;
       }
-      if (data) setMerchandise(data);
+      // Map rewards-table fields onto the shape RewardStoreView/MerchCard expect
+      // (name/points/image) without touching the view component.
+      if (data) {
+        setMerchandise(
+          data.map((r) => ({
+            ...r,
+            name: r.title,
+            points: r.points_required,
+            image: r.image_url || (r.image_urls?.[0] ?? ""),
+          })),
+        );
+      }
     };
     fetchMerchandise();
   }, []);
@@ -110,14 +123,16 @@ const RewardStore = () => {
   // ── Fetch unread notifications ────────────────────────────────────────────
   useEffect(() => {
     const fetchUnread = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       const { count, error } = await supabase
-        .from('announcements')
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .from("announcements")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
       if (error) {
-        console.error('[RewardStore] fetchUnread failed:', error);
+        console.error("[RewardStore] fetchUnread failed:", error);
         return;
       }
       setUnreadCount(count ?? 0);
@@ -133,14 +148,16 @@ const RewardStore = () => {
         await getSurveySections();
         const complete = await isSurveyComplete();
         if (cancelled) return;
-        setSurveyRoute(complete ? '/update-tracer' : await getResumeRoute());
+        setSurveyRoute(complete ? "/update-tracer" : await getResumeRoute());
       } catch (err) {
-        console.error('[RewardStore] resolveSurveyRoute error:', err);
-        if (!cancelled) setSurveyRoute('/survey/personal-background');
+        console.error("[RewardStore] resolveSurveyRoute error:", err);
+        if (!cancelled) setSurveyRoute("/survey/personal-background");
       }
     };
     resolveSurveyRoute();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
@@ -150,21 +167,23 @@ const RewardStore = () => {
         setShowDropdown(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // ── Auto-claim on return from survey ─────────────────────────────────────
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('survey_completed') !== '1') return;
+    if (params.get("survey_completed") !== "1") return;
 
     // Strip param immediately — prevents re-trigger on refresh
-    window.history.replaceState({}, '', window.location.pathname);
+    window.history.replaceState({}, "", window.location.pathname);
 
     const attemptClaim = async () => {
       if (isClaimingRef.current) {
-        console.warn('[RewardStore] attemptClaim already in progress, skipping');
+        console.warn(
+          "[RewardStore] attemptClaim already in progress, skipping",
+        );
         return;
       }
       isClaimingRef.current = true;
@@ -173,13 +192,15 @@ const RewardStore = () => {
       try {
         // saveSectionProgress awaits its own upsert before navigate() fires
         // so the DB write is already committed. Short buffer covers replication lag.
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise((r) => setTimeout(r, 400));
 
-        console.log('[RewardStore] attemptClaim: calling claimSurveyReward...');
+        console.log("[RewardStore] attemptClaim: calling claimSurveyReward...");
         const result = await claimSurveyReward(SURVEY_REWARD_POINTS);
 
         if (!result) {
-          console.error('[RewardStore] claimSurveyReward returned null — re-fetching balance');
+          console.error(
+            "[RewardStore] claimSurveyReward returned null — re-fetching balance",
+          );
           const profile = await fetchRewardProfile();
           if (profile) {
             setRewardPoints(profile.rewardPoints);
@@ -188,10 +209,10 @@ const RewardStore = () => {
           return;
         }
 
-        console.log('[RewardStore] attemptClaim result:', result);
+        console.log("[RewardStore] attemptClaim result:", result);
 
         // Sync to DB-confirmed balance regardless of awarded flag
-        if (typeof result.points === 'number' && result.points >= 0) {
+        if (typeof result.points === "number" && result.points >= 0) {
           setRewardPoints(result.points);
         }
 
@@ -199,24 +220,39 @@ const RewardStore = () => {
           setSurveyAlreadyClaimed(true);
           // Show the polished toast instead of a browser alert
           setToast({
-            visible:    true,
-            points:     SURVEY_REWARD_POINTS,
+            visible: true,
+            points: SURVEY_REWARD_POINTS,
             newBalance: result.points,
-            label:      'Survey completed',
+            label: "Survey completed",
           });
-        } else if (result.reason === 'survey_incomplete') {
-          console.warn('[RewardStore] RPC returned survey_incomplete — verifying via direct fetch');
+        } else if (result.reason === "survey_incomplete") {
+          console.warn(
+            "[RewardStore] RPC returned survey_incomplete — verifying via direct fetch",
+          );
           const profile = await fetchRewardProfile();
           if (profile) {
             setRewardPoints(profile.rewardPoints);
             setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
           }
-        } else if (result.reason === 'already_claimed') {
+        } else if (result.reason === "already_claimed") {
           setSurveyAlreadyClaimed(true);
-          console.log('[RewardStore] reward already claimed previously, balance synced');
+          console.log(
+            "[RewardStore] reward already claimed previously, balance synced",
+          );
+        } else if (result.reason === "cooldown_active") {
+          console.log(
+            "[RewardStore] reward cooldown active, no points awarded this update",
+          );
+          setToast({
+            visible: true,
+            points: 0,
+            newBalance: result.points,
+            label:
+              "Survey updated! You can earn more points again after the cooldown period.",
+          });
         }
       } catch (err) {
-        console.error('[RewardStore] attemptClaim threw unexpectedly:', err);
+        console.error("[RewardStore] attemptClaim threw unexpectedly:", err);
         const profile = await fetchRewardProfile();
         if (profile) {
           setRewardPoints(profile.rewardPoints);
@@ -229,21 +265,72 @@ const RewardStore = () => {
     };
 
     attemptClaim();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally runs once on mount only
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  const handleRedeem = async (item) => {
-    if (rewardPoints < item.points) return;
+  const isRedeemingRef = useRef(false);
 
-    const confirmedPoints = await deductPoints(rewardPoints, item.points);
-    if (confirmedPoints === null) {
-      alert('Redemption failed — your points were not deducted. Please try again.');
-      return;
+  const handleRedeem = async (item) => {
+    if (isRedeemingRef.current) return;
+    isRedeemingRef.current = true;
+
+    try {
+      // Re-fetch the authoritative balance instead of trusting stale closure state.
+      const profile = await fetchRewardProfile();
+      const currentPoints = profile ? profile.rewardPoints : rewardPoints;
+
+      if (currentPoints < item.points) {
+        setToast({
+          visible: true,
+          points: 0,
+          newBalance: currentPoints,
+          label: `Not enough points — you need ${item.points - currentPoints} more.`,
+        });
+        return;
+      }
+
+      const confirmedPoints = await deductPoints(currentPoints, item.points);
+      if (confirmedPoints === null) {
+        setToast({
+          visible: true,
+          points: 0,
+          newBalance: currentPoints,
+          label:
+            "Redemption failed — your points were not deducted. Please try again.",
+        });
+        return;
+      }
+
+      // Record the redemption using the existing Supabase client.
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { error: redemptionError } = await supabase
+          .from("reward_redemptions")
+          .insert([
+            { user_id: user.id, reward_id: item.id, points_spent: item.points },
+          ]);
+        if (redemptionError) {
+          console.error(
+            "[RewardStore] failed to record redemption:",
+            redemptionError,
+          );
+        }
+      }
+
+      setRewardPoints(confirmedPoints);
+      setToast({
+        visible: true,
+        points: -item.points,
+        newBalance: confirmedPoints,
+        label: `Redeemed ${item.name}!`,
+      });
+    } finally {
+      isRedeemingRef.current = false;
     }
-    setRewardPoints(confirmedPoints);
-    alert(`Successfully redeemed ${item.name}! A confirmation will be sent to you.`);
   };
 
   const handleCompleteSurvey = useCallback(() => {
@@ -251,7 +338,7 @@ const RewardStore = () => {
 
     // Write intent to sessionStorage — survives section-to-section navigation,
     // unlike a URL param which is lost after the first navigate() call.
-    sessionStorage.setItem('survey_claim_reward', '1');
+    sessionStorage.setItem("survey_claim_reward", "1");
 
     requestNavigation(surveyRoute);
   }, [surveyRoute, requestNavigation]);
@@ -260,10 +347,7 @@ const RewardStore = () => {
   return (
     <>
       {showModal && (
-        <DataPrivacyModal
-          onAccept={handleAccept}
-          onDecline={handleDecline}
-        />
+        <DataPrivacyModal onAccept={handleAccept} onDecline={handleDecline} />
       )}
 
       <PointsToast

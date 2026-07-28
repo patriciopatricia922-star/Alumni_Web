@@ -108,7 +108,7 @@
 }
 
 .rewards-points-banner {
-  width: 1135px;
+  width: 1115px;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -305,7 +305,7 @@
 .merchandise-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 22px;
   padding-bottom: 32px;
   align-items: start;
 }
@@ -503,5 +503,156 @@
 @media (max-width: 767px) {
   .rewards-survey-claimed-hint {
     text-align: left;
+  }
+}
+
+/* ── Redeem confirmation modal ───────────────────────────────────────────── */
+.redeem-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: redeem-modal-fade-in 0.2s ease;
+}
+
+@keyframes redeem-modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes redeem-modal-pop-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.redeem-modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 40px 36px 32px;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  animation: redeem-modal-pop-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.redeem-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+  transition: color 0.15s;
+}
+
+.redeem-modal-close:hover {
+  color: #1e3a5f;
+}
+
+.redeem-modal-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #2B72FB 0%, #003EA6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 20px rgba(0, 62, 166, 0.25);
+}
+
+.redeem-modal-title {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: #002263;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.redeem-modal-subtitle {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #4A5565;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.redeem-modal-item-name {
+  font-weight: 700;
+  color: #003EA6;
+}
+
+.redeem-modal-notice {
+  background: #EAF1FF;
+  border: 1.5px solid rgba(43, 114, 251, 0.45);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.redeem-modal-notice-title {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #003EA6;
+  margin: 0 0 8px 0;
+}
+
+.redeem-modal-notice-text {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.redeem-modal-notice-text strong {
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.redeem-modal-confirm-btn {
+  width: 100%;
+  padding: 14px;
+  background: #003EA6;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.redeem-modal-confirm-btn:hover {
+  background: #0050cc;
+  transform: translateY(-1px);
+}
+
+.redeem-modal-confirm-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .redeem-modal {
+    padding: 32px 24px 24px;
+    border-radius: 20px;
   }
 }
