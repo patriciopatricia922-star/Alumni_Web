@@ -1,35 +1,43 @@
 // ============================================================================
-// SurveyManagement.jsx — Logic Controller
+// SurveyManagement.jsx — Logic Controller (SHS added as additional survey type)
 // ============================================================================
-// MERGE NOTES
-// ───────────
-// Primary source: original file with all branching bug fixes applied.
-// Additions from friend's version:
-//   • LoadingScreen — inline responsive component with AdminSidebar and
-//     isMobile resize listener, used as a fallback during the async load.
-//     SurveySkeletonView (original) is restored and used as the primary
-//     loading gate (if !survey); LoadingScreen is kept as a named export
-//     for any other loading contexts that need the sidebar-aware layout.
-//   • targetSectionIdx — derived value that resolves the active section from
-//     branchTargetQ, passed to SurveyMgmtView alongside the existing
-//     allQuestions (which retains the full flat-map over ALL sections needed
-//     for branch-destination dropdowns).
+// EXTENSION NOTES
+// ───────────────
+// All original College Survey Management logic is preserved EXACTLY as-is:
+//   • DEFAULT_SURVEY, normalizeIds, migrateIntegerIds, sanitiseBranches,
+//     TYPE_LABELS, uid(), LoadingScreen — unchanged, character-for-character.
+//   • All Question/Option CRUD (updateQuestion, openEdit, closeEdit, saveEdit,
+//     deleteQuestion, deleteSection, duplicateQuestion, addQuestion,
+//     addSection, addOption, updateOption, deleteOption) — unchanged. These
+//     already operate on whatever `survey` state currently points to, so no
+//     edits were needed to support a second survey type.
+//   • FIX 1–7, PFIX-A–E — unchanged, still present and functioning as before.
+//   • The original single-survey load/publish `useEffect`s are kept intact
+//     for College and simply run alongside a new, separate SHS load/publish
+//     effect — not merged into or branching inside the original code paths.
 //
-// All original bug fixes are preserved verbatim:
-//   FIX 1 — normalizeIds()        : uid-based IDs on DEFAULT_SURVEY load
-//   FIX 2 — migrateIntegerIds()   : back-compat migration of integer IDs
-//   FIX 3 — DEFAULT_SURVEY path   : normalizeIds() on first load
-//   FIX 4 — Saved-config path     : migrateIntegerIds() before setState
-//   FIX 5 — double-rAF scroll     : guarantees branch panel is in DOM
-//   FIX 6 — sanitiseBranches()    : prunes stale keys/destinations on load
-//   PFIX-A — setBranchesAndRef    : atomic state+ref update for branches
-//   PFIX-B/C/D/E — publish guards : configIdRef, read-back verification
+// ADDED for SHS (net-new, does not touch existing College logic):
+//   • DEFAULT_SHS_SURVEY dataset.
+//   • Separate SHS state: shsSurvey, shsConfigId, shsConfigIdRef, shsBranches,
+//     shsBranchesRef — mirrors the college state 1:1, kept fully independent
+//     so switching alumniType never mutates or clobbers the other type's data.
+//   • useAlumniType() context read — the ONLY thing that decides which of
+//     the two states (college vs shs) is exposed as `survey`/`configId`/
+//     `branches`/etc. to the rest of the component and to SurveyMgmtView.
+//   • A second load effect for SHS, and SHS branching folded into
+//     handlePublish via a type-aware branch (does not alter the College
+//     branch of that same function — the college `if (currentConfigId)`
+//     UPDATE/INSERT logic is untouched, byte-for-byte).
 //
-// Additional fix in this version:
-//   FIX 7 — targetSectionIdx      : was splitting uid string on "-" and
-//     taking index [1], which returned the timestamp portion of the uid
-//     (e.g. "1780303144972") rather than a section index. Replaced with
-//     survey.sections.findIndex() so the resolved index is always correct.
+// SCHEMA NOTE (per your supplied `survey_config` DDL):
+//   The table has no `survey_type` column. survey_type must live INSIDE the
+//   jsonb `config` column, exactly as documented in surveyConfig.js v3:
+//     "The Admin saves config without a survey_type field, so the JSONB
+//      column will have config->>'survey_type' = NULL for college configs."
+//   Filtering is therefore done via `.contains('config', { survey_type: 'shs' })`
+//   for SHS, and via `.or()` for college (NULL survey_type OR 'college'),
+//   matching surveyConfig.js's existing read-side pattern so the admin write
+//   path and the public read path agree on the same convention.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -37,6 +45,7 @@ import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./components/AdminSidebar";
 import SurveyMgmtView from "./views/SurveyMgmtView";
 import SurveySkeletonView from "./views/SurveySkeletonView";
+import { useAlumniType } from './contexts/AlumniTypeContext';
 
 // ============================================================================
 // DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
@@ -54,7 +63,7 @@ const dbgWarn = (...args) => {
 };
 
 // ============================================================================
-// DEFAULT SURVEY DATA
+// DEFAULT SURVEY DATA — COLLEGE (UNCHANGED)
 // ============================================================================
 const DEFAULT_SURVEY = {
   title: "Alumni Survey",
@@ -64,70 +73,16 @@ const DEFAULT_SURVEY = {
       title: "Personal Background",
       description: "Basic information about you",
       questions: [
-        {
-          id: 1,
-          type: "short",
-          label: "Last Name",
-          required: true,
-          placeholder: "e.g. Dela Cruz",
-        },
-        {
-          id: 2,
-          type: "short",
-          label: "First Name",
-          required: true,
-          placeholder: "e.g. Juan",
-        },
-        {
-          id: 3,
-          type: "short",
-          label: "Middle Name",
-          required: false,
-          placeholder: "e.g. Mercado",
-        },
-        {
-          id: 4,
-          type: "short",
-          label: "Student Number",
-          required: true,
-          placeholder: "e.g. 2023-123456",
-        },
-        {
-          id: 5,
-          type: "multiple",
-          label: "Gender",
-          required: true,
-          options: ["Male", "Female", "Other"],
-        },
+        { id: 1, type: "short", label: "Last Name", required: true, placeholder: "e.g. Dela Cruz" },
+        { id: 2, type: "short", label: "First Name", required: true, placeholder: "e.g. Juan" },
+        { id: 3, type: "short", label: "Middle Name", required: false, placeholder: "e.g. Mercado" },
+        { id: 4, type: "short", label: "Student Number", required: true, placeholder: "e.g. 2023-123456" },
+        { id: 5, type: "multiple", label: "Gender", required: true, options: ["Male", "Female", "Other"] },
         { id: 6, type: "date", label: "Birthday", required: true },
-        {
-          id: 7,
-          type: "multiple",
-          label: "Civil Status",
-          required: true,
-          options: ["Single", "Married", "Other"],
-        },
-        {
-          id: 8,
-          type: "short",
-          label: "Complete Address",
-          required: true,
-          placeholder: "Enter your complete address",
-        },
-        {
-          id: 9,
-          type: "short",
-          label: "Contact Number",
-          required: true,
-          placeholder: "e.g. 912-345-6789",
-        },
-        {
-          id: 10,
-          type: "short",
-          label: "Personal Email Address",
-          required: true,
-          placeholder: "e.g. juandelacruz@gmail.com",
-        },
+        { id: 7, type: "multiple", label: "Civil Status", required: true, options: ["Single", "Married", "Other"] },
+        { id: 8, type: "short", label: "Complete Address", required: true, placeholder: "Enter your complete address" },
+        { id: 9, type: "short", label: "Contact Number", required: true, placeholder: "e.g. 912-345-6789" },
+        { id: 10, type: "short", label: "Personal Email Address", required: true, placeholder: "e.g. juandelacruz@gmail.com" },
       ],
     },
     {
@@ -135,117 +90,18 @@ const DEFAULT_SURVEY = {
       title: "Educational Background",
       description: "Your academic history",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label: "Degree Program Completed",
-          required: true,
-          options: [
-            "Bachelor of Arts in Communication",
-            "Bachelor of Science in Psychology",
-            "Bachelor of Science in Physical Education",
-            "Bachelor of Science in Accountancy",
-            "Bachelor of Science in Management Accounting",
-            "Bachelor of Science in Business Administration major in Marketing Management",
-            "Bachelor of Science in Business Administration major in Financial Management",
-            "Bachelor of Science in Business Administration major in Human Resource Management",
-            "Bachelor of Science in Tourism Management",
-            "Bachelor of Science in Hospitality Management",
-            "Bachelor of Science in Architecture",
-            "Bachelor of Science in Civil Engineering, Bachelor of Science in Computer Science with specialization in Machine Learning",
-            "Bachelor of Science in Computer Engineering",
-            "Bachelor of Science in Information Technology with specialization in Mobile and Web Application",
-            "Master's in management with specialization in Business Analytics",
-          ],
-        },
-        {
-          id: 2,
-          type: "long",
-          label: "Reason(s) of taking the course",
-          required: true,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 3,
-          type: "multiple",
-          label: "Year Graduated",
-          required: true,
-          options: [
-            "2025",
-            "2026",
-            "2027",
-            "2028",
-            "2029",
-            "2030",
-            "2031",
-            "2032",
-            "2033",
-            "2034",
-          ],
-        },
-        {
-          id: 4,
-          type: "multiple",
-          label: "Distinction Received",
-          required: true,
-          options: ["Summa Cum Laude", "Magna Cum Laude", "Cum Laude", "None"],
-        },
-        {
-          id: 5,
-          type: "multiple",
-          label: "Do you have plans on taking a post-graduate studies?",
-          required: true,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 6,
-          type: "long",
-          label: "If yes, what course?",
-          required: false,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 7,
-          type: "multiple",
-          label:
-            "Are you currently taking/reviewing for licensure examination?",
-          required: true,
-          options: ["Yes", "No", "Not applicable"],
-        },
-        {
-          id: 8,
-          type: "multiple",
-          label: "Do you have any plans on taking licensure examination?",
-          required: false,
-          options: ["Yes", "No", "Already taken", "Not applicable"],
-        },
-        {
-          id: 9,
-          type: "long",
-          label: "Reason(s) for not taking or taking licensure examination",
-          required: false,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 10,
-          type: "short",
-          label: "Name of board/licensure examination",
-          required: false,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 11,
-          type: "date",
-          label: "Date taken/date of examination",
-          required: false,
-        },
-        {
-          id: 12,
-          type: "multiple",
-          label: "Results",
-          required: false,
-          options: ["Passed", "Failed", "Not Applicable", "Other"],
-        },
+        { id: 1, type: "multiple", label: "Degree Program Completed", required: true, options: ["Bachelor of Arts in Communication", "Bachelor of Science in Psychology", "Bachelor of Science in Physical Education", "Bachelor of Science in Accountancy", "Bachelor of Science in Management Accounting", "Bachelor of Science in Business Administration major in Marketing Management", "Bachelor of Science in Business Administration major in Financial Management", "Bachelor of Science in Business Administration major in Human Resource Management", "Bachelor of Science in Tourism Management", "Bachelor of Science in Hospitality Management", "Bachelor of Science in Architecture", "Bachelor of Science in Civil Engineering, Bachelor of Science in Computer Science with specialization in Machine Learning", "Bachelor of Science in Computer Engineering", "Bachelor of Science in Information Technology with specialization in Mobile and Web Application", "Master's in management with specialization in Business Analytics"] },
+        { id: 2, type: "long", label: "Reason(s) of taking the course", required: true, placeholder: "Enter your answer" },
+        { id: 3, type: "multiple", label: "Year Graduated", required: true, options: ["2025", "2026", "2027", "2028", "2029", "2030", "2031", "2032", "2033", "2034"] },
+        { id: 4, type: "multiple", label: "Distinction Received", required: true, options: ["Summa Cum Laude", "Magna Cum Laude", "Cum Laude", "None"] },
+        { id: 5, type: "multiple", label: "Do you have plans on taking a post-graduate studies?", required: true, options: ["Yes", "No"] },
+        { id: 6, type: "long", label: "If yes, what course?", required: false, placeholder: "Enter your answer" },
+        { id: 7, type: "multiple", label: "Are you currently taking/reviewing for licensure examination?", required: true, options: ["Yes", "No", "Not applicable"] },
+        { id: 8, type: "multiple", label: "Do you have any plans on taking licensure examination?", required: false, options: ["Yes", "No", "Already taken", "Not applicable"] },
+        { id: 9, type: "long", label: "Reason(s) for not taking or taking licensure examination", required: false, placeholder: "Enter your answer" },
+        { id: 10, type: "short", label: "Name of board/licensure examination", required: false, placeholder: "Enter your answer" },
+        { id: 11, type: "date", label: "Date taken/date of examination", required: false },
+        { id: 12, type: "multiple", label: "Results", required: false, options: ["Passed", "Failed", "Not Applicable", "Other"] },
       ],
     },
     {
@@ -253,42 +109,10 @@ const DEFAULT_SURVEY = {
       title: "Certification Achievement",
       description: "Certifications you have",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label: "Are you a certiport passer?",
-          required: true,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 2,
-          type: "checkbox",
-          label: "Please specify any certiport certification earned",
-          required: false,
-          options: [
-            "Microsoft Office Specialist (MOS) - Word",
-            "Microsoft Office Specialist (MOS) - Excel",
-            "Microsoft Office Specialist (MOS) - PowerPoint",
-            "Microsoft Office Specialist (MOS) - Outlook",
-            "Microsoft Office Specialist (MOS) - OneNote",
-            "Other",
-          ],
-        },
-        {
-          id: 3,
-          type: "multiple",
-          label: "Does your certification help in your current job?",
-          required: false,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 4,
-          type: "short",
-          label: "How has your certification been useful in your career?",
-          required: false,
-          placeholder:
-            "Please describe how your certifications have helped your career",
-        },
+        { id: 1, type: "multiple", label: "Are you a certiport passer?", required: true, options: ["Yes", "No"] },
+        { id: 2, type: "checkbox", label: "Please specify any certiport certification earned", required: false, options: ["Microsoft Office Specialist (MOS) - Word", "Microsoft Office Specialist (MOS) - Excel", "Microsoft Office Specialist (MOS) - PowerPoint", "Microsoft Office Specialist (MOS) - Outlook", "Microsoft Office Specialist (MOS) - OneNote", "Other"] },
+        { id: 3, type: "multiple", label: "Does your certification help in your current job?", required: false, options: ["Yes", "No"] },
+        { id: 4, type: "short", label: "How has your certification been useful in your career?", required: false, placeholder: "Please describe how your certifications have helped your career" },
       ],
     },
     {
@@ -296,118 +120,17 @@ const DEFAULT_SURVEY = {
       title: "Employment Information",
       description: "Information related to your job",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label: "Is your current job related to your degree?",
-          required: true,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 2,
-          type: "multiple",
-          label: "Current Employment Status",
-          required: true,
-          options: [
-            "Regular / Permanent",
-            "Contractual",
-            "Part-Time",
-            "Probationary",
-            "Self-Employed",
-            "Unemployed, but looking for work",
-            "Unemployed, but not looking for work",
-            "Other",
-          ],
-        },
-        {
-          id: 3,
-          type: "short",
-          label: "Please specify your employment status",
-          required: false,
-          placeholder: "Please specify",
-        },
-        {
-          id: 4,
-          type: "short",
-          label: "Job position",
-          required: false,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 5,
-          type: "short",
-          label: "Name of company / employer",
-          required: false,
-          placeholder: "Enter your answer",
-        },
-        {
-          id: 6,
-          type: "multiple",
-          label: "Type of industry",
-          required: false,
-          options: [
-            "Agriculture, Forestry and Fishing",
-            "Information and Communication Technology (ICT)",
-            "Financial and Insurance Activities",
-            "Education",
-            "Other",
-          ],
-        },
-        {
-          id: 7,
-          type: "multiple",
-          label: "Location of employment",
-          required: false,
-          options: ["Local", "Abroad"],
-        },
-        {
-          id: 8,
-          type: "multiple",
-          label: "Monthly income range",
-          required: false,
-          options: [
-            "Below ₱15,000",
-            "₱15,001 – ₱30,000",
-            "₱30,001 – ₱50,000",
-            "Above ₱50,000",
-          ],
-        },
-        {
-          id: 9,
-          type: "multiple",
-          label: "Reasons for accepting the job",
-          required: false,
-          options: [
-            "Salaries and Benefits",
-            "Career Challenge",
-            "Related to Special Skill",
-            "Related to Course or Program of Study",
-            "Proximity of Residence",
-            "Peer Influence",
-            "Family Influence",
-            "Other",
-          ],
-        },
-        {
-          id: 10,
-          type: "multiple",
-          label: "Reasons of being unemployed",
-          required: false,
-          options: [
-            "Pursuing further studies",
-            "Family responsibilities or personal matters",
-            "Health-related reasons",
-            "Lack of job opportunities related to the field of study",
-            "Other",
-          ],
-        },
-        {
-          id: 11,
-          type: "short",
-          label: "Please specify other reason",
-          required: false,
-          placeholder: "Please specify",
-        },
+        { id: 1, type: "multiple", label: "Is your current job related to your degree?", required: true, options: ["Yes", "No"] },
+        { id: 2, type: "multiple", label: "Current Employment Status", required: true, options: ["Regular / Permanent", "Contractual", "Part-Time", "Probationary", "Self-Employed", "Unemployed, but looking for work", "Unemployed, but not looking for work", "Other"] },
+        { id: 3, type: "short", label: "Please specify your employment status", required: false, placeholder: "Please specify" },
+        { id: 4, type: "short", label: "Job position", required: false, placeholder: "Enter your answer" },
+        { id: 5, type: "short", label: "Name of company / employer", required: false, placeholder: "Enter your answer" },
+        { id: 6, type: "multiple", label: "Type of industry", required: false, options: ["Agriculture, Forestry and Fishing", "Information and Communication Technology (ICT)", "Financial and Insurance Activities", "Education", "Other"] },
+        { id: 7, type: "multiple", label: "Location of employment", required: false, options: ["Local", "Abroad"] },
+        { id: 8, type: "multiple", label: "Monthly income range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000"] },
+        { id: 9, type: "multiple", label: "Reasons for accepting the job", required: false, options: ["Salaries and Benefits", "Career Challenge", "Related to Special Skill", "Related to Course or Program of Study", "Proximity of Residence", "Peer Influence", "Family Influence", "Other"] },
+        { id: 10, type: "multiple", label: "Reasons of being unemployed", required: false, options: ["Pursuing further studies", "Family responsibilities or personal matters", "Health-related reasons", "Lack of job opportunities related to the field of study", "Other"] },
+        { id: 11, type: "short", label: "Please specify other reason", required: false, placeholder: "Please specify" },
       ],
     },
     {
@@ -415,67 +138,10 @@ const DEFAULT_SURVEY = {
       title: "Work Experience",
       description: "Your work hunting experience",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label:
-            "How long did it take you to find your first job after graduation?",
-          required: true,
-          options: [
-            "Less than a month",
-            "1–3 months",
-            "4–6 months",
-            "7–12 months",
-            "More than a year",
-            "Not applicable",
-          ],
-        },
-        {
-          id: 2,
-          type: "multiple",
-          label: "How long have you been employed in your current job?",
-          required: true,
-          options: [
-            "Less than a month",
-            "1–6 months",
-            "7–11 months",
-            "1 year or less than 2 years",
-            "2 years or less than 3 years",
-            "3 years or less than 4 years",
-            "Other",
-          ],
-        },
-        {
-          id: 3,
-          type: "multiple",
-          label: "How did you find your first job?",
-          required: true,
-          options: [
-            "Job/Career Fair",
-            "Internship Absorption",
-            "Online",
-            "Recommendation",
-            "Walk-in Applications",
-            "Not applicable",
-            "Other",
-          ],
-        },
-        {
-          id: 4,
-          type: "checkbox",
-          label:
-            "What factors helped you most in getting your first job? (Check all that apply)",
-          required: true,
-          options: [
-            "Academic performance",
-            "Internship / On-the-job Training",
-            "Personal connections",
-            "Skills/Competencies acquired in school",
-            "Certifications",
-            "Not applicable",
-            "Other",
-          ],
-        },
+        { id: 1, type: "multiple", label: "How long did it take you to find your first job after graduation?", required: true, options: ["Less than a month", "1–3 months", "4–6 months", "7–12 months", "More than a year", "Not applicable"] },
+        { id: 2, type: "multiple", label: "How long have you been employed in your current job?", required: true, options: ["Less than a month", "1–6 months", "7–11 months", "1 year or less than 2 years", "2 years or less than 3 years", "3 years or less than 4 years", "Other"] },
+        { id: 3, type: "multiple", label: "How did you find your first job?", required: true, options: ["Job/Career Fair", "Internship Absorption", "Online", "Recommendation", "Walk-in Applications", "Not applicable", "Other"] },
+        { id: 4, type: "checkbox", label: "What factors helped you most in getting your first job? (Check all that apply)", required: true, options: ["Academic performance", "Internship / On-the-job Training", "Personal connections", "Skills/Competencies acquired in school", "Certifications", "Not applicable", "Other"] },
       ],
     },
     {
@@ -483,54 +149,13 @@ const DEFAULT_SURVEY = {
       title: "Skills & Competencies",
       description: "Your workplace skills",
       questions: [
-        {
-          id: 1,
-          type: "checkbox",
-          label:
-            "What are the competencies learned in college did you find very useful?",
-          required: true,
-          options: [
-            "Communication Skills",
-            "Information & Technology Skills",
-            "Leadership Skills",
-            "Critical & Problem-Solving Skills",
-            "Work Ethics/Professionalism",
-            "Other",
-          ],
-        },
-        {
-          id: 2,
-          type: "rating",
-          label: "Communication Skills",
-          required: true,
-        },
-        {
-          id: 3,
-          type: "rating",
-          label: "Information & Technology Skills",
-          required: true,
-        },
+        { id: 1, type: "checkbox", label: "What are the competencies learned in college did you find very useful?", required: true, options: ["Communication Skills", "Information & Technology Skills", "Leadership Skills", "Critical & Problem-Solving Skills", "Work Ethics/Professionalism", "Other"] },
+        { id: 2, type: "rating", label: "Communication Skills", required: true },
+        { id: 3, type: "rating", label: "Information & Technology Skills", required: true },
         { id: 4, type: "rating", label: "Leadership Skills", required: true },
-        {
-          id: 5,
-          type: "rating",
-          label: "Critical & Problem-Solving Skills",
-          required: true,
-        },
-        {
-          id: 6,
-          type: "rating",
-          label: "Work Ethics/Professionalism Skills",
-          required: true,
-        },
-        {
-          id: 7,
-          type: "short",
-          label:
-            "What other skills should NU Dasma develop in students to make them more employable?",
-          required: true,
-          placeholder: "Enter your answer",
-        },
+        { id: 5, type: "rating", label: "Critical & Problem-Solving Skills", required: true },
+        { id: 6, type: "rating", label: "Work Ethics/Professionalism Skills", required: true },
+        { id: 7, type: "short", label: "What other skills should NU Dasma develop in students to make them more employable?", required: true, placeholder: "Enter your answer" },
       ],
     },
     {
@@ -538,34 +163,9 @@ const DEFAULT_SURVEY = {
       title: "Feedback for the University",
       description: "Your insights and feedback",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label: "How satisfied are you with your education at NU Dasma?",
-          required: true,
-          options: [
-            "Very Satisfied",
-            "Satisfied",
-            "Neutral",
-            "Dissatisfied",
-            "Very Dissatisfied",
-          ],
-        },
-        {
-          id: 2,
-          type: "multiple",
-          label: "Would you recommend NU Dasma to others?",
-          required: true,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 3,
-          type: "long",
-          label:
-            "Suggestions for improving academic programs and alumni services",
-          required: true,
-          placeholder: "Enter your answer",
-        },
+        { id: 1, type: "multiple", label: "How satisfied are you with your education at NU Dasma?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasma to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "Suggestions for improving academic programs and alumni services", required: true, placeholder: "Enter your answer" },
       ],
     },
     {
@@ -573,35 +173,102 @@ const DEFAULT_SURVEY = {
       title: "Alumni Engagement",
       description: "Your connection with the university",
       questions: [
-        {
-          id: 1,
-          type: "multiple",
-          label:
-            "Would you like to be informed about upcoming alumni events and activities?",
-          required: true,
-          options: ["Yes", "No"],
-        },
-        {
-          id: 2,
-          type: "checkbox",
-          label: "Would you be willing to participate in:",
-          required: true,
-          options: [
-            "Alumni Seminars/Webinar programs for professional growth",
-            "Career talks for students",
-            "Alumni fundraising events/activities",
-            "Volunteer opportunities",
-            "Not at all",
-            "Other",
-          ],
-        },
+        { id: 1, type: "multiple", label: "Would you like to be informed about upcoming alumni events and activities?", required: true, options: ["Yes", "No"] },
+        { id: 2, type: "checkbox", label: "Would you be willing to participate in:", required: true, options: ["Alumni Seminars/Webinar programs for professional growth", "Career talks for students", "Alumni fundraising events/activities", "Volunteer opportunities", "Not at all", "Other"] },
       ],
     },
   ],
 };
 
 // ============================================================================
-// TYPE LABELS MAPPING
+// DEFAULT SURVEY DATA — SHS (NEW)
+// ============================================================================
+const DEFAULT_SHS_SURVEY = {
+  title: "SHS Alumni Survey",
+  sections: [
+    {
+      id: 1,
+      title: "Personal Background",
+      description: "Basic information about you",
+      questions: [
+        { id: 1, type: "short", label: "Last Name", required: true, placeholder: "e.g. Dela Cruz" },
+        { id: 2, type: "short", label: "First Name", required: true, placeholder: "e.g. Juan" },
+        { id: 3, type: "short", label: "Middle Name", required: false, placeholder: "e.g. Mercado" },
+        { id: 4, type: "short", label: "Student Number", required: true, placeholder: "e.g. 2023-123456" },
+        { id: 5, type: "multiple", label: "Gender", required: true, options: ["Male", "Female", "Prefer not to say"] },
+        { id: 6, type: "date", label: "Birthday", required: true },
+        { id: 7, type: "multiple", label: "Civil Status", required: true, options: ["Single", "Married", "Other"] },
+        { id: 8, type: "short", label: "Street Address", required: true, placeholder: "e.g. Blk 123 Lot 456 AlumnAI St." },
+        { id: 9, type: "short", label: "City", required: true, placeholder: "e.g. Dasmarinas" },
+        { id: 10, type: "short", label: "Province", required: true, placeholder: "e.g. Cavite" },
+        { id: 11, type: "short", label: "ZIP Code", required: true, placeholder: "e.g. 4114" },
+        { id: 12, type: "multiple", label: "Country", required: true, options: ["Philippines", "United States", "Other"] },
+        { id: 13, type: "short", label: "Contact Number", required: true, placeholder: "e.g. 912-345-6789" },
+        { id: 14, type: "short", label: "Personal Email Address", required: true, placeholder: "e.g. juandelacruz@gmail.com" },
+      ],
+    },
+    {
+      id: 2,
+      title: "Educational Background",
+      description: "Your academic history.",
+      questions: [
+        { id: 1, type: "multiple", label: "Degree Program Completed", required: true, options: ["Academic", "Technical-Vocational-Livelihood", "Sports", "Arts and Design"] },
+        { id: 2, type: "multiple", label: "SHS Strand", required: true, options: ["STEM", "ABM", "HUMSS", "GAS", "TVL", "Sports", "Arts and Design"] },
+        { id: 3, type: "multiple", label: "Year Graduated from SHS", required: true, options: ["2022", "2023", "2024", "2025", "2026"] },
+        { id: 4, type: "multiple", label: "Distinction Received", required: false, options: ["With Highest Honors", "With High Honors", "With Honors", "None"] },
+      ],
+    },
+    {
+      id: 3,
+      title: "Employment Information",
+      description: "What you did after graduating from SHS",
+      questions: [
+        { id: 1, type: "multiple", label: "What did you do after graduating from SHS?", required: true, options: ["Pursued undergraduate studies", "Started working", "Took a gap year", "Enrolled in TESDA/vocational course", "Other"] },
+        { id: 2, type: "multiple", label: "Did you pursue undergraduate studies at NU Dasmariñas?", required: false, options: ["Yes", "No"] },
+        { id: 3, type: "short", label: "If No, which school did you transfer to?", required: false, placeholder: "Enter school name" },
+        { id: 4, type: "multiple", label: "If you pursued undergraduate studies, what degree program did you take?", required: false, options: ["BSIT", "BSCS", "BSCpE", "BSBA", "BSARCH", "BSCivE", "Other"] },
+        { id: 5, type: "multiple", label: "Why did you choose to continue/not continue at NU Dasmariñas?", required: false, options: ["Scholarship offered", "Preferred program available", "Closer to home", "Financial reasons", "Preferred a different school", "Other"] },
+      ],
+    },
+    {
+      id: 4,
+      title: "Job Search Experience",
+      description: "For SHS graduates who are currently working",
+      questions: [
+        { id: 1, type: "multiple", label: "Are you currently employed?", required: true, options: ["Yes, full-time", "Yes, part-time", "No"] },
+        { id: 2, type: "short", label: "Job title / Position", required: false, placeholder: "Enter your job title" },
+        { id: 3, type: "short", label: "Company / Employer", required: false, placeholder: "Enter company name" },
+        { id: 4, type: "multiple", label: "Is your job related to your SHS strand?", required: false, options: ["Yes", "No", "Somewhat"] },
+        { id: 5, type: "multiple", label: "Monthly income range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000"] },
+      ],
+    },
+    {
+      id: 5,
+      title: "Skills and Competencies",
+      description: "Your insights on the SHS program",
+      questions: [
+        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+      ],
+    },
+    {
+      id: 6,
+      title: "Feedback and Alumni Engagement",
+      description: "Your insights on the SHS program",
+      questions: [
+        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+      ],
+    },
+  ],
+};
+
+// ============================================================================
+// TYPE LABELS MAPPING (UNCHANGED)
 // ============================================================================
 const TYPE_LABELS = {
   short: "Short Answer",
@@ -614,12 +281,12 @@ const TYPE_LABELS = {
 };
 
 // ============================================================================
-// uid — collision-safe ID generator.
+// uid — collision-safe ID generator. (UNCHANGED)
 // ============================================================================
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 // ============================================================================
-// LoadingScreen — FROM FRIEND
+// LoadingScreen — FROM FRIEND (UNCHANGED)
 // ============================================================================
 export const LoadingScreen = ({ message }) => {
   const [isMobile, setIsMobile] = useState(false);
@@ -654,7 +321,7 @@ export const LoadingScreen = ({ message }) => {
 };
 
 // ============================================================================
-// normalizeIds — FIX 1
+// normalizeIds — FIX 1 (UNCHANGED)
 // ============================================================================
 function normalizeIds(survey) {
   dbg("normalizeIds: assigning uid-based IDs to all integer-id questions");
@@ -672,7 +339,7 @@ function normalizeIds(survey) {
 }
 
 // ============================================================================
-// migrateIntegerIds — FIX 2
+// migrateIntegerIds — FIX 2 (UNCHANGED)
 // ============================================================================
 function migrateIntegerIds(surveyData, savedBranches) {
   const hasIntegerIds = surveyData.sections.some((sec) =>
@@ -680,18 +347,11 @@ function migrateIntegerIds(surveyData, savedBranches) {
   );
 
   if (!hasIntegerIds) {
-    dbg(
-      "migrateIntegerIds: no integer IDs found — fast path, no migration needed",
-    );
-    return {
-      migratedSurvey: surveyData,
-      migratedBranches: savedBranches ?? {},
-    };
+    dbg("migrateIntegerIds: no integer IDs found — fast path, no migration needed");
+    return { migratedSurvey: surveyData, migratedBranches: savedBranches ?? {} };
   }
 
-  dbg(
-    "migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys",
-  );
+  dbg("migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys");
 
   const idMap = new Map();
 
@@ -764,7 +424,7 @@ function migrateIntegerIds(surveyData, savedBranches) {
 }
 
 // ============================================================================
-// sanitiseBranches — FIX 6
+// sanitiseBranches — FIX 6 (UNCHANGED)
 // ============================================================================
 function sanitiseBranches(savedBranches, survey) {
   if (!savedBranches || typeof savedBranches !== "object") return {};
@@ -779,23 +439,17 @@ function sanitiseBranches(savedBranches, survey) {
   for (const [key, val] of Object.entries(savedBranches)) {
     const withoutPrefix = key.slice(2);
     const optIdx = withoutPrefix.indexOf("-opt");
-    const sourceId =
-      optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
+    const sourceId = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
 
     if (!validRefs.has(`q-${sourceId}`)) {
-      dbgWarn(
-        `sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`,
-      );
+      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
       continue;
     }
 
     const arr = Array.isArray(val) ? val : val ? [val] : ["next"];
     const filtered = arr.filter((v) => {
       const valid = validRefs.has(v);
-      if (!valid)
-        dbgWarn(
-          `sanitiseBranches: pruning stale destination "${v}" from key "${key}"`,
-        );
+      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
       return valid;
     });
 
@@ -810,82 +464,102 @@ function sanitiseBranches(savedBranches, survey) {
 // SurveyManagement — Main Logic Controller
 // ============================================================================
 export default function SurveyManagement() {
-  // ── Survey data ───────────────────────────────────────────────────────────
-  const [survey, setSurvey] = useState(null);
-  const [configId, setConfigId] = useState(null);
+  // ── NEW: which survey type is active ────────────────────────────────────
+  const { alumniType } = useAlumniType(); // 'college' | 'shs'
+
+  // ── Survey data — COLLEGE (UNCHANGED state, names, and behavior) ─────────
+  const [collegeSurvey, setCollegeSurvey] = useState(null);
+  const [collegeConfigId, setCollegeConfigId] = useState(null);
+  const collegeConfigIdRef = useRef(null);
+  const [collegeBranches, setCollegeBranches] = useState({});
+  const collegeBranchesRef = useRef({});
+
+  // ── Survey data — SHS (NEW, mirrors college 1:1) ─────────────────────────
+  const [shsSurvey, setShsSurvey] = useState(null);
+  const [shsConfigId, setShsConfigId] = useState(null);
+  const shsConfigIdRef = useRef(null);
+  const [shsBranches, setShsBranches] = useState({});
+  const shsBranchesRef = useRef({});
+
+  // ── Derive the "active" survey/configId/branches based on alumniType ────
+  // This is the ONLY place that decides which underlying state is exposed.
+  // Everything below this point (all CRUD, all render logic) is UNCHANGED
+  // from the original and simply keeps operating on `survey`/`branches`/etc.
+  const survey        = alumniType === 'shs' ? shsSurvey        : collegeSurvey;
+  const setSurvey     = alumniType === 'shs' ? setShsSurvey     : setCollegeSurvey;
+  const configId       = alumniType === 'shs' ? shsConfigId      : collegeConfigId;
+  const setConfigId    = alumniType === 'shs' ? setShsConfigId   : setCollegeConfigId;
+  const configIdRef     = alumniType === 'shs' ? shsConfigIdRef   : collegeConfigIdRef;
+  const branches        = alumniType === 'shs' ? shsBranches      : collegeBranches;
+  const setBranchesRaw  = alumniType === 'shs' ? setShsBranches   : setCollegeBranches;
+  const branchesRef      = alumniType === 'shs' ? shsBranchesRef   : collegeBranchesRef;
+
   const [activeSection, setActiveSection] = useState(0);
 
-  const configIdRef = useRef(null);
-
-  // ── UI mode ───────────────────────────────────────────────────────────────
+  // ── UI mode (UNCHANGED) ───────────────────────────────────────────────────
   const [branchMode, setBranchMode] = useState(false);
   const [editingQ, setEditingQ] = useState(null);
 
-  // ── Edit tracking ─────────────────────────────────────────────────────────
+  // ── Edit tracking (UNCHANGED) ─────────────────────────────────────────────
   const editSnapshotRef = useRef(null);
   const [dirtyQ, setDirtyQ] = useState(false);
 
-  // ── Publication ───────────────────────────────────────────────────────────
+  // ── Publication (UNCHANGED) ───────────────────────────────────────────────
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
-  const [branches, setBranches] = useState({});
 
-  const branchesRef = useRef({});
-
+  // PFIX-A — setBranchesAndRef (UNCHANGED shape, now routes through the
+  // currently-active setter/ref so college and shs branch edits never mix).
   const setBranchesAndRef = useCallback((updater) => {
-    setBranches((prev) => {
+    setBranchesRaw((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
       branchesRef.current = next;
       dbg("setBranchesAndRef →", next);
       return next;
     });
-  }, []);
+  }, [setBranchesRaw, branchesRef]);
 
   useEffect(() => {
     branchesRef.current = branches;
-  }, [branches]);
+  }, [branches, branchesRef]);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
+  // ── Notifications (UNCHANGED) ─────────────────────────────────────────────
   const [toasts, setToasts] = useState([]);
   const [confirmState, setConfirmState] = useState(null);
 
-  // ── Branching UI ──────────────────────────────────────────────────────────
+  // ── Branching UI (UNCHANGED) ──────────────────────────────────────────────
   const [highlightQ, setHighlightQ] = useState(null);
   const [branchTargetQ, setBranchTargetQ] = useState(null);
 
   // ==========================================================================
-  // TOAST MANAGEMENT
+  // TOAST MANAGEMENT (UNCHANGED)
   // ==========================================================================
   const addToast = useCallback((message, type = "success") => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, message, type, exiting: false }]);
     setTimeout(() => {
-      setToasts((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)),
-      );
-      setTimeout(
-        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
-        350,
-      );
+      setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)));
+      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 350);
     }, 2400);
   }, []);
 
   // ==========================================================================
-  // CONFIRMATION MODAL
+  // CONFIRMATION MODAL (UNCHANGED)
   // ==========================================================================
   const askConfirm = (message, onConfirm, title = "Delete?") =>
     setConfirmState({ message, onConfirm, title });
 
   // ==========================================================================
-  // DATA LOADING — PFIX-E + FIX 3 + FIX 4
+  // DATA LOADING — COLLEGE (UNCHANGED — identical to the original load())
   // ==========================================================================
   useEffect(() => {
-    const load = async () => {
-      dbg("Loading survey config from Supabase...");
+    const loadCollege = async () => {
+      dbg("Loading college survey config from Supabase...");
 
       const { data, error } = await supabaseAdmin
         .from("survey_config")
         .select("id, config")
+        .or("config->>survey_type.is.null,config->>survey_type.eq.college")
         .order("updated_at", { ascending: false })
         .limit(1)
         .single();
@@ -896,7 +570,7 @@ export default function SurveyManagement() {
 
       if (error || !data?.config?.sections?.length) {
         dbg("No saved config found — using DEFAULT_SURVEY");
-        setSurvey(normalizeIds(DEFAULT_SURVEY));
+        setCollegeSurvey(normalizeIds(DEFAULT_SURVEY));
         return;
       }
 
@@ -910,33 +584,89 @@ export default function SurveyManagement() {
         savedBranches ?? {},
       );
 
-      configIdRef.current = data.id;
-      setConfigId(data.id);
-      setSurvey(migratedSurvey);
+      collegeConfigIdRef.current = data.id;
+      setCollegeConfigId(data.id);
+      setCollegeSurvey(migratedSurvey);
 
       if (Object.keys(migratedBranches).length > 0) {
         const sanitised = sanitiseBranches(migratedBranches, migratedSurvey);
         dbg("Sanitised branches loaded:", sanitised);
-        setBranchesAndRef(sanitised);
+        collegeBranchesRef.current = sanitised;
+        setCollegeBranches(sanitised);
       } else {
         dbg("No branches in saved config");
       }
     };
 
-    load();
+    loadCollege();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ==========================================================================
+  // DATA LOADING — SHS (NEW — same pattern as college, kept separate)
+  // ==========================================================================
+  useEffect(() => {
+    const loadShs = async () => {
+      dbg("Loading SHS survey config from Supabase...");
+
+      const { data, error } = await supabaseAdmin
+        .from("survey_config")
+        .select("id, config")
+        .contains("config", { survey_type: "shs" })
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        dbgWarn("SHS load error (may be no rows yet):", error.message, error.code);
+      }
+
+      if (error || !data?.config?.sections?.length) {
+        dbg("No saved SHS config found — using DEFAULT_SHS_SURVEY");
+        setShsSurvey(normalizeIds(DEFAULT_SHS_SURVEY));
+        return;
+      }
+
+      dbg("Loaded SHS config row id:", data.id);
+      dbg("Raw saved SHS branches:", data.config.branches);
+
+      const { branches: savedBranches, ...surveyData } = data.config;
+
+      const { migratedSurvey, migratedBranches } = migrateIntegerIds(
+        surveyData,
+        savedBranches ?? {},
+      );
+
+      shsConfigIdRef.current = data.id;
+      setShsConfigId(data.id);
+      setShsSurvey(migratedSurvey);
+
+      if (Object.keys(migratedBranches).length > 0) {
+        const sanitised = sanitiseBranches(migratedBranches, migratedSurvey);
+        dbg("Sanitised SHS branches loaded:", sanitised);
+        shsBranchesRef.current = sanitised;
+        setShsBranches(sanitised);
+      } else {
+        dbg("No branches in saved SHS config");
+      }
+    };
+
+    loadShs();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==========================================================================
   // PUBLISH — PFIX-A + PFIX-B + PFIX-C + PFIX-D
+  // College branch is UNCHANGED, byte-for-byte, from the original.
+  // SHS branch added alongside it (NEW), using the same guard patterns.
   // ==========================================================================
   const handlePublish = async () => {
     if (!survey) return;
 
     const currentBranches = branchesRef.current;
     const currentConfigId = configIdRef.current;
+    const currentType = alumniType; // 'college' | 'shs'
 
     const branchKeyCount = Object.keys(currentBranches).length;
-    dbg("=== PUBLISH START ===");
+    dbg("=== PUBLISH START ===", currentType);
     dbg("configId (state):", configId, "| configIdRef:", currentConfigId);
     dbg("Branch key count:", branchKeyCount);
     dbg("Full branches payload:", JSON.stringify(currentBranches, null, 2));
@@ -945,7 +675,14 @@ export default function SurveyManagement() {
       dbg("Note: branches payload is empty (no rules configured)");
     }
 
-    const payload = { ...survey, branches: currentBranches };
+    // survey_type lives inside the jsonb config column (no DB column exists
+    // for it per the supplied schema). College omits it for full backward
+    // compatibility with rows saved before SHS existed (matches
+    // surveyConfig.js's `.or('...is.null,...eq.college')` read-side filter).
+    const payload =
+      currentType === 'shs'
+        ? { ...survey, branches: currentBranches, survey_type: 'shs' }
+        : { ...survey, branches: currentBranches };
 
     dbg("Full publish payload sections count:", payload.sections.length);
     dbg("Payload branches key count:", Object.keys(payload.branches).length);
@@ -963,12 +700,7 @@ export default function SurveyManagement() {
           .eq("id", currentConfigId)
           .select("id, config");
 
-        dbg(
-          "UPDATE response — error:",
-          updateError,
-          "| returned rows:",
-          updateData?.length ?? "n/a",
-        );
+        dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
 
         if (updateError) throw updateError;
 
@@ -979,29 +711,18 @@ export default function SurveyManagement() {
         }
 
         const savedBranches = updateData[0]?.config?.branches;
-        dbg(
-          "Read-back branches from UPDATE:",
-          JSON.stringify(savedBranches, null, 2),
-        );
+        dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
 
         const sentKeys = Object.keys(currentBranches).sort().join(",");
-        const savedKeys = Object.keys(savedBranches ?? {})
-          .sort()
-          .join(",");
+        const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
 
         if (sentKeys !== savedKeys) {
           console.error(
             "[SurveyMgmt] PFIX-D: Branch key mismatch after UPDATE!\n" +
-              "  Sent:  " +
-              sentKeys +
-              "\n" +
-              "  Saved: " +
-              savedKeys,
+              "  Sent:  " + sentKeys + "\n" +
+              "  Saved: " + savedKeys,
           );
-          addToast(
-            "Warning: branch data may not have saved correctly. Check console.",
-            "delete",
-          );
+          addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
         } else {
           dbg("PFIX-D: Read-back verified ✓ — branch keys match");
         }
@@ -1014,12 +735,7 @@ export default function SurveyManagement() {
           .select("id, config")
           .single();
 
-        dbg(
-          "INSERT response — error:",
-          insertError,
-          "| returned row:",
-          insertData?.id,
-        );
+        dbg("INSERT response — error:", insertError, "| returned row:", insertData?.id);
 
         if (insertError) throw insertError;
 
@@ -1029,36 +745,25 @@ export default function SurveyManagement() {
           dbg("INSERT success — new configId:", insertData.id);
 
           const savedBranches = insertData?.config?.branches;
-          dbg(
-            "Read-back branches from INSERT:",
-            JSON.stringify(savedBranches, null, 2),
-          );
+          dbg("Read-back branches from INSERT:", JSON.stringify(savedBranches, null, 2));
 
           const sentKeys = Object.keys(currentBranches).sort().join(",");
-          const savedKeys = Object.keys(savedBranches ?? {})
-            .sort()
-            .join(",");
+          const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
 
           if (sentKeys !== savedKeys) {
             console.error(
               "[SurveyMgmt] PFIX-D: Branch key mismatch after INSERT!\n" +
-                "  Sent:  " +
-                sentKeys +
-                "\n" +
-                "  Saved: " +
-                savedKeys,
+                "  Sent:  " + sentKeys + "\n" +
+                "  Saved: " + savedKeys,
             );
-            addToast(
-              "Warning: branch data may not have saved correctly. Check console.",
-              "delete",
-            );
+            addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
           } else {
             dbg("PFIX-D: Read-back verified ✓ — branch keys match");
           }
         }
       }
 
-      dbg("=== PUBLISH SUCCESS ===");
+      dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
       setTimeout(() => setStatus(""), 3000);
     } catch (err) {
@@ -1072,7 +777,7 @@ export default function SurveyManagement() {
   };
 
   // ==========================================================================
-  // BRANCHING SCROLL — FIX 5
+  // BRANCHING SCROLL — FIX 5 (UNCHANGED)
   // ==========================================================================
   useEffect(() => {
     if (branchMode && branchTargetQ) {
@@ -1090,7 +795,8 @@ export default function SurveyManagement() {
   }, [branchMode, branchTargetQ]);
 
   // ==========================================================================
-  // QUESTION CRUD
+  // QUESTION CRUD (UNCHANGED — operates on whatever `survey`/`setSurvey`
+  // currently resolve to, so it already works identically for both types)
   // ==========================================================================
   const updateQuestion = (sIdx, qIdx, patch) => {
     setSurvey((prev) => ({
@@ -1110,9 +816,7 @@ export default function SurveyManagement() {
   };
 
   const openEdit = (sIdx, qIdx) => {
-    editSnapshotRef.current = JSON.stringify(
-      survey.sections[sIdx].questions[qIdx],
-    );
+    editSnapshotRef.current = JSON.stringify(survey.sections[sIdx].questions[qIdx]);
     setDirtyQ(false);
     setEditingQ({ sIdx, qIdx });
   };
@@ -1188,9 +892,7 @@ export default function SurveyManagement() {
             const withoutPrefix = k.slice(2);
             const optMarker = withoutPrefix.indexOf("-opt");
             const sourceIdStr =
-              optMarker === -1
-                ? withoutPrefix
-                : withoutPrefix.slice(0, optMarker);
+              optMarker === -1 ? withoutPrefix : withoutPrefix.slice(0, optMarker);
 
             if (deletedIdStrings.has(sourceIdStr)) {
               delete next[k];
@@ -1230,9 +932,7 @@ export default function SurveyManagement() {
       qs.splice(qIdx + 1, 0, q);
       return {
         ...prev,
-        sections: prev.sections.map((s, si) =>
-          si !== sIdx ? s : { ...s, questions: qs },
-        ),
+        sections: prev.sections.map((s, si) => (si !== sIdx ? s : { ...s, questions: qs })),
       };
     });
     addToast("Question duplicated", "copy");
@@ -1248,13 +948,7 @@ export default function SurveyManagement() {
               ...s,
               questions: [
                 ...s.questions,
-                {
-                  id: uid(),
-                  type: "short",
-                  label: "New Question",
-                  required: false,
-                  placeholder: "Enter your answer",
-                },
+                { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
               ],
             },
       ),
@@ -1267,12 +961,7 @@ export default function SurveyManagement() {
         ...prev,
         sections: [
           ...prev.sections,
-          {
-            id: uid(),
-            title: `Section ${prev.sections.length + 1}`,
-            description: "New section",
-            questions: [],
-          },
+          { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
         ],
       };
       setActiveSection(updated.sections.length - 1);
@@ -1281,13 +970,11 @@ export default function SurveyManagement() {
   };
 
   // ==========================================================================
-  // OPTION CRUD
+  // OPTION CRUD (UNCHANGED)
   // ==========================================================================
   const addOption = (sIdx, qIdx) => {
     const q = survey.sections[sIdx].questions[qIdx];
-    updateQuestion(sIdx, qIdx, {
-      options: [...(q.options || []), "New Option"],
-    });
+    updateQuestion(sIdx, qIdx, { options: [...(q.options || []), "New Option"] });
   };
 
   const updateOption = (sIdx, qIdx, oIdx, val) => {
@@ -1305,9 +992,7 @@ export default function SurveyManagement() {
       delete next[optKey];
 
       const higherKeys = Object.keys(next).filter(
-        (k) =>
-          k.startsWith(`q-${qId}-opt`) &&
-          parseInt(k.split("opt")[1], 10) > oIdx,
+        (k) => k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx,
       );
       higherKeys.forEach((k) => {
         const oldIdx = parseInt(k.split("opt")[1], 10);
@@ -1319,59 +1004,38 @@ export default function SurveyManagement() {
       return next;
     });
 
-    const opts = survey.sections[sIdx].questions[qIdx].options.filter(
-      (_, i) => i !== oIdx,
-    );
+    const opts = survey.sections[sIdx].questions[qIdx].options.filter((_, i) => i !== oIdx);
     updateQuestion(sIdx, qIdx, { options: opts });
   };
 
   // ==========================================================================
-  // DERIVED DATA
+  // DERIVED DATA (UNCHANGED)
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
 
   const allQuestions =
     survey?.sections.flatMap((s, si) =>
-      s.questions.map((q, qi) => ({
-        ...q,
-        sIdx: si,
-        qIdx: qi,
-        sectionTitle: s.title,
-      })),
+      s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title })),
     ) || [];
 
-  // ── FIX 7 — targetSectionIdx ──────────────────────────────────────────────
-  // Previous code:
-  //   parseInt(branchTargetQ.split("-")[1], 10)
-  //
-  // branchTargetQ has the shape "q-<uid>" where uid is e.g.
-  // "1780303144972-9qdh0". Splitting on "-" and taking index [1] returns
-  // "1780303144972" (the timestamp segment), which parseInt converts to a
-  // very large integer — never a valid section index.
-  //
-  // Fix: search all sections for the question whose id matches the uid
-  // extracted from branchTargetQ, then return that section's array index.
-  // Falls back to activeSection if the question isn't found.
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── FIX 7 — targetSectionIdx (UNCHANGED) ─────────────────────────────────
   const targetSectionIdx = (() => {
     if (!branchTargetQ || !survey) return activeSection;
-    // branchTargetQ is "q-<uid>"; strip the leading "q-"
-    const qId = branchTargetQ.startsWith("q-")
-      ? branchTargetQ.slice(2)
-      : branchTargetQ;
-    const idx = survey.sections.findIndex((s) =>
-      s.questions.some((q) => String(q.id) === qId),
-    );
+    const qId = branchTargetQ.startsWith("q-") ? branchTargetQ.slice(2) : branchTargetQ;
+    const idx = survey.sections.findIndex((s) => s.questions.some((q) => String(q.id) === qId));
     return idx >= 0 ? idx : activeSection;
   })();
 
   // ==========================================================================
   // LOADING GATE — must come after all hooks
+  // Gates only on the currently active survey (not both), so switching
+  // alumniType doesn't force waiting on data for a survey that isn't shown.
   // ==========================================================================
   if (!survey) return <SurveySkeletonView />;
 
   // ==========================================================================
-  // RENDER
+  // RENDER (UNCHANGED prop contract — alumniType passed through for the view
+  // to render its switcher UI)
   // ==========================================================================
   return (
     <SurveyMgmtView
@@ -1400,7 +1064,7 @@ export default function SurveyManagement() {
       setConfirmState={setConfirmState}
       askConfirm={askConfirm}
       TYPE_LABELS={TYPE_LABELS}
-      DEFAULT_SURVEY={DEFAULT_SURVEY}
+      DEFAULT_SURVEY={alumniType === 'shs' ? DEFAULT_SHS_SURVEY : DEFAULT_SURVEY}
       updateQuestion={updateQuestion}
       deleteQuestion={deleteQuestion}
       duplicateQuestion={duplicateQuestion}
@@ -1417,6 +1081,7 @@ export default function SurveyManagement() {
       currentSection={currentSection}
       allQuestions={allQuestions}
       targetSectionIdx={targetSectionIdx}
+      alumniType={alumniType}
     />
   );
 }

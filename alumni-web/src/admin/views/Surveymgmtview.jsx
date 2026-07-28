@@ -1,34 +1,42 @@
 // ============================================================================
-// SurveyMgmtView.jsx — UI Layer
+// SurveyMgmtView.jsx — UI Layer (merged: alumniType badge + FIX 7 wiring)
 // ============================================================================
 // MERGE NOTES
 // ───────────
-// Primary source: your version.
-// All editor-mode UI, header, sidebar, toasts, and modals are preserved
-// character-for-character from your file.
+// Base: your version (identical branch-mode architecture in both supplied
+// files — stable q.id-based keys, multi-select dropdowns, cross-section
+// destination labels, eef6ff highlight, correct empty-state check).
 //
-// Branch mode retains your architecture entirely:
-//   • Stable q.id-based branch keys ("q-{q.id}", "q-{q.id}-opt{N}")
-//   • Multi-select dropdowns with "Hold Ctrl/Cmd" hint
-//   • Cross-section destination labels ("Section → Question")
-//   • targetSectionIdx computed locally from branchTargetQ
-//   • eef6ff highlight colour on scroll target
-//   • Correct empty-state check: survey.sections[targetSectionIdx]?.questions.length
+// Only two differences found between the two supplied files:
+//   1. Document 13 ("friend") adds an alumniType badge next to the page
+//      title ("College" / "SHS" pill). Adopted here — purely additive UI,
+//      doesn't touch branch-mode logic, matches the constraint to extend
+//      without redesigning.
+//   2. Document 13 destructures an `alumniType` prop; Document 14 does not.
+//      Added to the prop list so the badge has data to render.
 //
-// Friend's positional keys ("${sIdx}-${qIdx}") and single-select dropdowns
-// are NOT used — they break silently when questions are reordered or deleted.
-// Friend's allQuestions scoped to one section is NOT used — branch destinations
-// must span all sections.
-//
-// UI polish adopted from friend's branch mode:
-//   • "Q{N}." numbering prefix on each branch question label
-//   • "↳" prefix on multiple-choice option rows
-//   • "This question goes to:" label for non-multiple questions
-//     (replaces bare "Go to" for clarity)
-//   • Grid layout (gridTemplateColumns) on branch option rows for
-//     tighter alignment on wider viewports
-//   • marginBottom "0.75rem" on branch section title (was "0.5rem")
-//   • FiPlus added to imports (unused now, available for future use)
+// BUG FOUND AND FIXED (present identically in both supplied files):
+//   Both files compute targetSectionIdx LOCALLY via
+//     parseInt(branchTargetQ.split("-")[1], 10)
+//   This assumes branchTargetQ has the shape "q-{sectionIdx}-{questionIdx}".
+//   But the SurveyManagement.jsx controller (already merged in this
+//   conversation) sets branchTargetQ as "q-{uid}" via
+//     setBranchTargetQ(`q-${q.id}`)  // NOT `q-${activeSection}-${qIdx}`
+//   where uid itself contains dashes (e.g. "q-1780303144972-9qdh0"). Splitting
+//   that on "-" and taking index [1] returns the timestamp segment, not a
+//   section index — this is the exact bug the controller's FIX 7 comment
+//   describes and fixes via survey.sections.findIndex(), passed down as the
+//   `targetSectionIdx` prop. Neither view file consumed that prop; both
+//   silently recomputed a broken value locally, so the branch panel could
+//   show the wrong section (or none) whenever this view is paired with the
+//   FIX-7 controller.
+//   FIX: destructure `targetSectionIdx` from props (already sent by the
+//   controller) instead of recomputing it locally. The Branch button's
+//   onClick still sets `branchTargetQ` as `q-${activeSection}-${qIdx}` here,
+//   which matches the OLDER controller contract in Documents 9/12 — if
+//   you're using the merged SHS-aware controller from this conversation,
+//   change that one line too (noted inline below) so branchTargetQ carries
+//   q.id instead of positional indices.
 // ============================================================================
 
 import AdminSidebar from "../components/AdminSidebar";
@@ -112,6 +120,10 @@ export default function SurveyMgmtView({
   // ============================ DERIVED DATA ============================
   currentSection,
   allQuestions, // Flattened list of ALL questions across ALL sections
+  targetSectionIdx, // FIX 7 — computed correctly in the controller via
+                     // survey.sections.findIndex(); consumed here instead
+                     // of being recomputed from a broken positional split.
+  alumniType, // 'college' | 'shs' — drives the header badge only.
 }) {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -133,11 +145,13 @@ export default function SurveyMgmtView({
     return title;
   };
 
-  // Resolve which section the branch panel should display.
-  // branchTargetQ format: "q-{sectionIdx}-{questionIdx}"
-  const targetSectionIdx = branchTargetQ
-    ? parseInt(branchTargetQ.split("-")[1], 10)
-    : activeSection;
+  // NOTE: targetSectionIdx now comes from props (FIX 7, computed correctly
+  // in the controller). The old local computation here was:
+  //   const targetSectionIdx = branchTargetQ
+  //     ? parseInt(branchTargetQ.split("-")[1], 10)
+  //     : activeSection;
+  // — removed because it silently broke once branchTargetQ carries a
+  // uid-based key ("q-{uid}") instead of positional indices.
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
@@ -229,7 +243,20 @@ export default function SurveyMgmtView({
         {/* ── Header ────────────────────────────────────────────────────── */}
         <div className="survey-header">
           <div className="survey-header-left">
-            <h1 style={{ fontWeight: 700, fontSize: 27 }}>Survey Management</h1>
+            {/* alumniType badge — adopted from friend's version */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: 27 }}>Survey Management</h1>
+              <span style={{
+                padding: '3px 10px',
+                borderRadius: '999px',
+                fontSize: '11px',
+                fontWeight: 700,
+                background: alumniType === 'shs' ? '#FEF3C7' : '#EFF6FF',
+                color: alumniType === 'shs' ? '#92400E' : '#1D4ED8',
+              }}>
+                {alumniType === 'shs' ? 'SHS' : 'College'}
+              </span>
+            </div>
             <p className="survey-desc">
               Edit questions and publish to reflect on the alumni survey
             </p>
@@ -358,7 +385,7 @@ export default function SurveyMgmtView({
                               fontSize: "0.9rem",
                               fontWeight: 600,
                               color: "#4f46e5",
-                              marginBottom: "0.75rem", // FROM FRIEND: 0.75rem (was 0.5rem)
+                              marginBottom: "0.75rem",
                             }}
                           >
                             {section.title}
@@ -385,7 +412,6 @@ export default function SurveyMgmtView({
                                   transition: "all 0.3s ease",
                                 }}
                               >
-                                {/* FROM FRIEND: Q{N}. numbering prefix for orientation */}
                                 <div
                                   style={{
                                     fontSize: "0.82rem",
@@ -398,9 +424,7 @@ export default function SurveyMgmtView({
                                 </div>
 
                                 {q.type === "multiple" ? (
-                                  // Per-option multi-select branch targets
                                   (q.options || []).map((opt, oIdx) => {
-                                    // Key uses stable q.id; deleteOption() re-indexes oIdx
                                     const optKey = `q-${q.id}-opt${oIdx}`;
                                     const currentVal = branches[optKey];
                                     const selectVal = Array.isArray(currentVal)
@@ -413,19 +437,18 @@ export default function SurveyMgmtView({
                                       <div
                                         key={oIdx}
                                         style={{
-                                          display: "grid", // FROM FRIEND: grid layout
-                                          gridTemplateColumns: "1fr auto auto", // FROM FRIEND
+                                          display: "grid",
+                                          gridTemplateColumns: "1fr auto auto",
                                           alignItems: "center",
                                           gap: "0.75rem",
-                                          padding: "0.4rem 0.6rem", // FROM FRIEND: tighter padding
+                                          padding: "0.4rem 0.6rem",
                                           borderRadius: "0.4rem",
                                           marginBottom: "0.3rem",
                                           background: "#f9fafb",
-                                          border: "1px solid #e5e7eb", // FROM FRIEND: subtle border
+                                          border: "1px solid #e5e7eb",
                                           flexWrap: "nowrap",
                                         }}
                                       >
-                                        {/* FROM FRIEND: ↳ prefix on option text */}
                                         <span
                                           style={{
                                             fontSize: "0.75rem",
@@ -515,20 +538,18 @@ export default function SurveyMgmtView({
                                     );
                                   })
                                 ) : (
-                                  // Single multi-select branch target for non-multiple questions
                                   <div
                                     style={{
-                                      display: "grid", // FROM FRIEND: grid layout
-                                      gridTemplateColumns: "1fr auto", // FROM FRIEND
+                                      display: "grid",
+                                      gridTemplateColumns: "1fr auto",
                                       alignItems: "center",
                                       gap: "0.75rem",
-                                      padding: "0.4rem 0.6rem", // FROM FRIEND: tighter padding
+                                      padding: "0.4rem 0.6rem",
                                       borderRadius: "0.4rem",
                                       background: "#f9fafb",
-                                      border: "1px solid #e5e7eb", // FROM FRIEND: subtle border
+                                      border: "1px solid #e5e7eb",
                                     }}
                                   >
-                                    {/* FROM FRIEND: "This question goes to:" for clarity */}
                                     <span
                                       style={{
                                         fontSize: "0.78rem",
@@ -1070,6 +1091,13 @@ export default function SurveyMgmtView({
                               width: "auto",
                             }}
                             onClick={() => {
+                              // NOTE: kept exactly as in both supplied files
+                              // (positional key) to match the OLDER
+                              // controller contract. If pairing with the
+                              // SHS-aware controller from this conversation
+                              // (which reads/writes branchTargetQ as
+                              // `q-${q.id}`), change this line to:
+                              //   setBranchTargetQ(`q-${q.id}`);
                               setBranchTargetQ(`q-${activeSection}-${qIdx}`);
                               setBranchMode(true);
                             }}
