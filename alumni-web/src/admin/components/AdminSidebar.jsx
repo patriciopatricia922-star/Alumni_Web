@@ -64,6 +64,7 @@ const ALL_ADMIN_MENU_ITEMS = [
     label:     'Predictive Analytics',
     marginTop: '16px',
     module:    MODULES.REPORTS,
+    collegeOnly: true,
   },
   {
     path:      '/admin/content-mgmt',
@@ -87,8 +88,9 @@ const ALL_ADMIN_MENU_ITEMS = [
  * @param {object|null} user  – must include `role` and `module_permissions`
  * @returns {object[]}
  */
-function filterMenuByPermissions(items, user) {
+function filterMenuByPermissions(items, user, alumniType) {
   return items.filter(item => {
+    if (item.collegeOnly && alumniType === 'shs') return false;
     if (!item.module) return true;
     return canAccessModule(user, item.module);
   });
@@ -111,7 +113,7 @@ const AdminSidebar = () => {
 
   // Alumni type switcher state — sourced from shared context so other pages
   // (e.g. Alumni Management, Analytics) can react to the selection.
-  const { alumniType, setAlumniType } = useAlumniType();
+  const { alumniType, setAlumniType, isCollegeOnlyRoute } = useAlumniType();
 
   // Track whether the component is still mounted to avoid setState after
   // unmount — a common source of "missing content" when navigating quickly.
@@ -211,7 +213,7 @@ const AdminSidebar = () => {
   // While loading (cold start, no cache): only always-visible items are shown
   // and the view renders a skeleton in their place.
   // Once user resolves: full filtered list, stable across navigations.
-  const menuItems = filterMenuByPermissions(ALL_ADMIN_MENU_ITEMS, user);
+  const menuItems = filterMenuByPermissions(ALL_ADMIN_MENU_ITEMS, user, alumniType);
 
   return (
     <AdminSidebarView
@@ -229,6 +231,7 @@ const AdminSidebar = () => {
       handleLogout={handleLogout}
       alumniType={alumniType}
       setAlumniType={setAlumniType}
+      isCollegeOnlyRoute={isCollegeOnlyRoute}
     />
   );
 };

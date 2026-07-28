@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { getExcerpt } from '../utils/textHelpers';
+import { getExcerpt } from "../utils/textHelpers";
 import {
   getResumeRoute,
   getSurveySections,
@@ -18,6 +18,7 @@ import DataPrivacyModal from "../modals/DataPrivacyModal";
 import rewardIcon from "../assets/reward_icn.svg";
 import RewardStoreView from "../views/RewardStoreView";
 import PointsToast from "../modals/PointsToast";
+import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -43,7 +44,8 @@ const RewardStore = () => {
   // Holds the real Supabase channel so cleanup is reliable
   const realtimeChannelRef = useRef(null);
   // Ref-based mutex — immune to stale closure issues with useState
-  const isClaimingRef = useRef(false);
+  // const isClaimingRef = useRef(false);
+
 
   const { showModal, requestNavigation, handleAccept, handleDecline } =
     useDpaGate(navigate);
@@ -54,40 +56,57 @@ const RewardStore = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifs, setNotifs] = useState([]);
-  const [notifTab, setNotifTab] = useState('all');
+  const [notifTab, setNotifTab] = useState("all");
   const [surveyRoute, setSurveyRoute] = useState(null);
   const [surveyAlreadyClaimed, setSurveyAlreadyClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
-  const NOTIF_KEY   = 'alumnai_read_notifs';
-const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
-const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
+  const NOTIF_KEY = "alumnai_read_notifs";
+  const getReadIds = () => {
+    try {
+      return JSON.parse(localStorage.getItem(NOTIF_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  };
+  const saveReadIds = (ids) => {
+    try {
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
+    } catch {}
+  };
 
-const groupByDate = (list) => {
-  const now       = new Date();
-  const today     = new Date(now); today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
-  const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
-  list.forEach((n) => {
-    const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-    if      (d >= today)     groups['Today'].push(n);
-    else if (d >= yesterday) groups['Yesterday'].push(n);
-    else if (d >= weekAgo)   groups['This Week'].push(n);
-    else                     groups['Earlier'].push(n);
-  });
-  return groups;
-};
+  const groupByDate = (list) => {
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(today.getDate() - 7);
+    const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
+    list.forEach((n) => {
+      const d = new Date(n.time);
+      d.setHours(0, 0, 0, 0);
+      if (d >= today) groups["Today"].push(n);
+      else if (d >= yesterday) groups["Yesterday"].push(n);
+      else if (d >= weekAgo) groups["This Week"].push(n);
+      else groups["Earlier"].push(n);
+    });
+    return groups;
+  };
 
-const formatTime = (iso) => {
-  if (!iso) return '';
-  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (diff < 60)     return 'Just now';
-  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-};
+  const formatTime = (iso) => {
+    if (!iso) return "";
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    return new Date(iso).toLocaleDateString("en-PH", {
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   // Toast state — replaces the browser alert()
   const [toast, setToast] = useState({
@@ -112,14 +131,17 @@ const formatTime = (iso) => {
 
   // ── Realtime reward sync ──────────────────────────────────────────────────
   useEffect(() => {
+    let mounted = true;
     subscribeToRewardPoints((newPoints) => {
       console.log("[RewardStore] realtime reward update:", newPoints);
-      setRewardPoints(newPoints);
+      if (mounted) setRewardPoints(newPoints);
     }).then((channel) => {
-      realtimeChannelRef.current = channel;
+      if (mounted) realtimeChannelRef.current = channel;
+      else channel?.unsubscribe();
     });
 
     return () => {
+      mounted = false;
       realtimeChannelRef.current?.unsubscribe();
       realtimeChannelRef.current = null;
     };
@@ -156,20 +178,20 @@ const formatTime = (iso) => {
   // ── Fetch notifications ───────────────────────────────────────────────────
   useEffect(() => {
     supabase
-      .from('announcements')
-      .select('id, title, content, published_at, is_active')
-      .eq('is_active', true)
-      .order('published_at', { ascending: false })
+      .from("announcements")
+      .select("id, title, content, published_at, is_active")
+      .eq("is_active", true)
+      .order("published_at", { ascending: false })
       .limit(20)
       .then(({ data, error }) => {
         if (error || !data) return;
         const readIds = getReadIds();
-        const mapped  = data.map((n) => ({
-          id:    n.id,
+        const mapped = data.map((n) => ({
+          id: n.id,
           title: n.title,
-          body:  n.content,
-          time:  n.published_at,
-          read:  readIds.includes(n.id),
+          body: n.content,
+          time: n.published_at,
+          read: readIds.includes(n.id),
         }));
         setNotifs(mapped);
         setUnreadCount(mapped.filter((n) => !n.read).length);
@@ -208,101 +230,107 @@ const formatTime = (iso) => {
   }, []);
 
   // ── Auto-claim on return from survey ─────────────────────────────────────
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("survey_completed") !== "1") return;
+  // useEffect(() => {
+  //   const params = new URLSearchParams(window.location.search);
+  //   if (params.get("survey_completed") !== "1") return;
 
-    // Strip param immediately — prevents re-trigger on refresh
-    window.history.replaceState({}, "", window.location.pathname);
+  //   // Strip param immediately — prevents re-trigger on refresh
+  //   window.history.replaceState({}, "", window.location.pathname);
 
-    const attemptClaim = async () => {
-      if (isClaimingRef.current) {
-        console.warn(
-          "[RewardStore] attemptClaim already in progress, skipping",
-        );
-        return;
-      }
-      isClaimingRef.current = true;
-      setIsClaiming(true);
+  //   const attemptClaim = async () => {
+  //     if (isClaimingRef.current) {
+  //       console.warn(
+  //         "[RewardStore] attemptClaim already in progress, skipping",
+  //       );
+  //       return;
+  //     }
+  //     isClaimingRef.current = true;
+  //     setIsClaiming(true);
 
-      try {
-        // saveSectionProgress awaits its own upsert before navigate() fires
-        // so the DB write is already committed. Short buffer covers replication lag.
-        await new Promise((r) => setTimeout(r, 400));
+  //     try {
+  //       // saveSectionProgress awaits its own upsert before navigate() fires
+  //       // so the DB write is already committed. Short buffer covers replication lag.
+  //       await new Promise((r) => setTimeout(r, 400));
 
-        console.log("[RewardStore] attemptClaim: calling claimSurveyReward...");
-        const result = await claimSurveyReward(SURVEY_REWARD_POINTS);
+  //       console.log("[RewardStore] attemptClaim: calling claimSurveyReward...");
+  //       const result = await claimSurveyReward(SURVEY_REWARD_POINTS);
 
-        if (!result) {
-          console.error(
-            "[RewardStore] claimSurveyReward returned null — re-fetching balance",
-          );
-          const profile = await fetchRewardProfile();
-          if (profile) {
-            setRewardPoints(profile.rewardPoints);
-            setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
-          }
-          return;
-        }
+  //       if (!result) {
+  //         console.error(
+  //           "[RewardStore] claimSurveyReward returned null — re-fetching balance",
+  //         );
+  //         const profile = await fetchRewardProfile();
+  //         if (profile) {
+  //           setRewardPoints(profile.rewardPoints);
+  //           setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
+  //         }
+  //         return;
+  //       }
 
-        console.log("[RewardStore] attemptClaim result:", result);
+  //       console.log("[RewardStore] attemptClaim result:", result);
 
-        // Sync to DB-confirmed balance regardless of awarded flag
-        if (typeof result.points === "number" && result.points >= 0) {
-          setRewardPoints(result.points);
-        }
+  //       // Sync to DB-confirmed balance regardless of awarded flag
+  //       if (typeof result.points === "number" && result.points >= 0) {
+  //         setRewardPoints(result.points);
+  //       }
 
-        if (result.awarded) {
-          setSurveyAlreadyClaimed(true);
-          // Show the polished toast instead of a browser alert
-          setToast({
-            visible: true,
-            points: SURVEY_REWARD_POINTS,
-            newBalance: result.points,
-            label: "Survey completed",
-          });
-        } else if (result.reason === "survey_incomplete") {
-          console.warn(
-            "[RewardStore] RPC returned survey_incomplete — verifying via direct fetch",
-          );
-          const profile = await fetchRewardProfile();
-          if (profile) {
-            setRewardPoints(profile.rewardPoints);
-            setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
-          }
-        } else if (result.reason === "already_claimed") {
-          setSurveyAlreadyClaimed(true);
-          console.log(
-            "[RewardStore] reward already claimed previously, balance synced",
-          );
-        } else if (result.reason === "cooldown_active") {
-          console.log(
-            "[RewardStore] reward cooldown active, no points awarded this update",
-          );
-          setToast({
-            visible: true,
-            points: 0,
-            newBalance: result.points,
-            label:
-              "Survey updated! You can earn more points again after the cooldown period.",
-          });
-        }
-      } catch (err) {
-        console.error("[RewardStore] attemptClaim threw unexpectedly:", err);
-        const profile = await fetchRewardProfile();
-        if (profile) {
-          setRewardPoints(profile.rewardPoints);
-          setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
-        }
-      } finally {
-        isClaimingRef.current = false;
-        setIsClaiming(false);
-      }
-    };
+  //       if (result.awarded) {
+  //         setSurveyAlreadyClaimed(true);
+  //         // Show the polished toast instead of a browser alert
+  //         setToast({
+  //           visible: true,
+  //           points: SURVEY_REWARD_POINTS,
+  //           newBalance: result.points,
+  //           label: "Survey completed",
+  //         });
+  //       } else if (result.reason === "survey_incomplete") {
+  //         console.warn(
+  //           "[RewardStore] RPC returned survey_incomplete — verifying via direct fetch",
+  //         );
+  //         const profile = await fetchRewardProfile();
+  //         if (profile) {
+  //           setRewardPoints(profile.rewardPoints);
+  //           setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
+  //         }
+  //       } else if (result.reason === "already_claimed") {
+  //         setSurveyAlreadyClaimed(true);
+  //         console.log(
+  //           "[RewardStore] reward already claimed previously, balance synced",
+  //         );
+  //       } else if (result.reason === "cooldown_active") {
+  //         console.log(
+  //           "[RewardStore] reward cooldown active, no points awarded this update",
+  //         );
+  //         setToast({
+  //           visible: true,
+  //           points: 0,
+  //           newBalance: result.points,
+  //           label:
+  //             "Survey updated! You can earn more points again after the cooldown period.",
+  //         });
+  //       }
+  //     } catch (err) {
+  //       console.error("[RewardStore] attemptClaim threw unexpectedly:", err);
+  //       const profile = await fetchRewardProfile();
+  //       if (profile) {
+  //         setRewardPoints(profile.rewardPoints);
+  //         setSurveyAlreadyClaimed(profile.surveyAlreadyClaimed);
+  //       }
+  //     } finally {
+  //       isClaimingRef.current = false;
+  //       setIsClaiming(false);
+  //     }
+  //   };
 
-    attemptClaim();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // intentionally runs once on mount only
+  //   attemptClaim();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []); // intentionally runs once on mount only
+
+  useSurveyRewardClaim({
+  onPointsSynced: setRewardPoints,
+  onClaimedStatus: setSurveyAlreadyClaimed,
+  onToast: setToast,
+});
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -316,8 +344,13 @@ const formatTime = (iso) => {
 
   const markOneRead = useCallback((id) => {
     const ids = getReadIds();
-    if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    if (!ids.includes(id)) {
+      ids.push(id);
+      saveReadIds(ids);
+    }
+    setNotifs((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+    );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
@@ -384,11 +417,7 @@ const formatTime = (iso) => {
 
   const handleCompleteSurvey = useCallback(() => {
     if (!surveyRoute) return;
-
-    // Write intent to sessionStorage — survives section-to-section navigation,
-    // unlike a URL param which is lost after the first navigate() call.
     sessionStorage.setItem("survey_claim_reward", "1");
-
     requestNavigation(surveyRoute);
   }, [surveyRoute, requestNavigation]);
 
@@ -424,7 +453,7 @@ const formatTime = (iso) => {
         unreadCount={unreadCount}
         showDropdown={showDropdown}
         setShowDropdown={setShowDropdown}
-        notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
+        notifs={notifTab === "unread" ? notifs.filter((n) => !n.read) : notifs}
         notifTab={notifTab}
         setNotifTab={setNotifTab}
         markAllRead={markAllRead}

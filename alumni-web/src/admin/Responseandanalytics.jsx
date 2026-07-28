@@ -127,14 +127,23 @@ const resolveEmploymentStatus = (empData) => {
 // ============================ SINGLE RESPONSE EXTRACTION ============================
 const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
   const isShs = alumniType === 'shs';
-  const personal = row.personal_background_data || {};
-  const educational = row.educational_background_data || {};
-  const certificationData = row.certification_achievement_data || {};
-  const employmentData = row.employment_information_data || {};
-  const jobExperience = row.job_experience_data || {};
-  const skillsData = row.skills_competencies_data || {};
-  const feedback = row.feedback_university_data || {};
-  const engagement = row.alumni_engagement_data || {};
+  // const personal = row.personal_background_data || {};
+  // const educational = row.educational_background_data || {};
+  // const certificationData = row.certification_achievement_data || {};
+  // const employmentData = row.employment_information_data || {};
+  // const jobExperience = row.job_experience_data || {};
+  // const skillsData = row.skills_competencies_data || {};
+  // const feedback = row.feedback_university_data || {};
+  // const engagement = row.alumni_engagement_data || {};
+
+  const personal        = (isShs ? row.shs_personal_background_data      : row.personal_background_data)        || {};
+  const educational     = (isShs ? row.shs_educational_background_data  : row.educational_background_data)      || {};
+  const certificationData = isShs ? {} : (row.certification_achievement_data || {}); // SHS has no certification section
+  const employmentData  = (isShs ? row.shs_employment_information_data   : row.employment_information_data)      || {};
+  const jobExperience    = (isShs ? row.shs_job_experience_data          : row.job_experience_data)              || {};
+  const skillsData      = (isShs ? row.shs_skills_and_competencies_data : row.skills_competencies_data)          || {};
+  const feedback         = (isShs ? row.shs_feedback_and_engagement_data : row.feedback_university_data)          || {};
+  const engagement       = isShs ? feedback : (row.alumni_engagement_data || {}); // SHS merges engagement into feedback
 
   const firstName = safeText(personal.first_name);
   const lastName = safeText(personal.last_name);
@@ -142,8 +151,17 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
   const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ') || 'Anonymous';
 
   const email = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
-  const batch = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
-  const program = safeText(educational.degree_program) || 'Not specified';
+  // const batch = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
+  // const program = safeText(educational.degree_program) || 'Not specified';
+  const program = isShs
+    ? (safeText(personal.track_strand) || 'Not specified')          // SHS: track/strand, stored on personal_background
+    : (safeText(educational.degree_program) || 'Not specified');
+
+  const batch = isShs
+    ? (safeText(personal.year_graduated).replace(/\D/g, '') || extractYear(row.last_updated) || 'N/A')
+    : (extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A');
+  // const employmentStatus = resolveEmploymentStatus(employmentData);
+  const employmentStatusRaw = isShs ? employmentData.employment_status : employmentData.employment_status;
   const employmentStatus = resolveEmploymentStatus(employmentData);
 
   const skillRatings = isShs ? skillsData : (skillsData.skill_ratings || {});
@@ -196,38 +214,46 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     certifications: toArray(certificationData.certifications),
     certificationUseful: safeText(certificationData.helped_career) || '',
     certificationUsefulness: safeText(certificationData.how_helped) || '',
-    jobRelatedToDegree: safeText(employmentData.job_related_to_degree) || '',
     employmentType: safeText(employmentData.employment_status) || '',
     employmentStatusOther: safeText(employmentData.employment_status_other) || '',
-    jobTitle: safeText(employmentData.job_position) || '',
+    jobTitle: isShs ? safeText(employmentData.job_position) : safeText(employmentData.job_position) || '',
     company: safeText(employmentData.company_name) || '',
     industry: safeText(employmentData.type_of_industry) || '',
     employmentLocation: safeText(employmentData.location_of_employment) || '',
     salary: safeText(employmentData.monthly_income) || '',
+    jobRelatedToDegree: isShs
+      ? safeText(employmentData.job_related_to_strand)   // ← SHS key differs from college's job_related_to_degree
+      : safeText(employmentData.job_related_to_degree) || '',
     jobAcceptReason: safeText(employmentData.reason_for_job) || '',
     jobAcceptReasonOther: safeText(employmentData.other_reason_for_job) || '',
     unemployedReason: safeText(employmentData.reasons_unemployed) || '',
     unemployedReasonOther: safeText(employmentData.other_reason_unemployed) || '',
-    timeToJob: safeText(jobExperience.time_to_find_job) || '',
+    // timeToJob: safeText(jobExperience.time_to_find_job) || '',
     employmentDuration: safeText(jobExperience.employment_duration) || '',
     employmentDurationOther: safeText(jobExperience.other_employment_duration) || '',
-    howFoundJob: safeText(jobExperience.first_job_source) || '',
-    howFoundJobOther: safeText(jobExperience.other_first_job_source) || '',
-    factorsForJob: toArray(jobExperience.first_job_factors),
-    factorsForJobOther: safeText(jobExperience.other_job_factors) || '',
-    usefulCompetencies: toArray(skillsData.useful_competencies),
-    suggestedSkills: safeText(skillsData.skills_to_develop) || '',
+    // SHS Job Experience uses factors_first_job / other_factors / other_how_found_job
+    factorsForJob: isShs ? toArray(jobExperience.factors_first_job) : toArray(jobExperience.first_job_factors),
+    factorsForJobOther: isShs ? safeText(jobExperience.other_factors) : safeText(jobExperience.other_job_factors) || '',
+    howFoundJob: isShs ? safeText(jobExperience.how_found_job) : safeText(jobExperience.first_job_source) || '',
+    howFoundJobOther: isShs ? safeText(jobExperience.other_how_found_job) : safeText(jobExperience.other_first_job_source) || '',
+    timeToJob: safeText(jobExperience.time_to_find_job) || '',
+    usefulCompetencies: isShs ? [] : toArray(skillsData.useful_competencies), // SHS has no competencies checklist
+    suggestedSkills: isShs
+      ? safeText(skillsData.other_skills_suggestion)   // ← SHS key
+      : safeText(skillsData.skills_to_develop) || '',
     commSkillRating: Number(commSkillRating) || 0,
     itSkillRating: Number(itSkillRating) || 0,
     leadershipRating: Number(leadershipRating) || 0,
     criticalRating: Number(criticalRating) || 0,
     workEthicsRating: Number(workEthicsRating) || 0,
     satisfaction: safeText(feedback.satisfaction) || '',
-    wouldRecommend: safeText(feedback.recommend) || '',
+    wouldRecommend: isShs ? safeText(feedback.recommend) : safeText(feedback.recommend) || '', // same key name, fine as-is
     suggestions: safeText(feedback.suggestions) || '',
     informedAboutEvents: safeText(engagement.informed_about_events) || '',
-    willingToParticipate: toArray(engagement.participate_in),
-    willingToParticipateOther: safeText(engagement.participate_in_other) || '',
+    willingToParticipate: isShs ? toArray(engagement.participate_in) : toArray(engagement.participate_in),
+    willingToParticipateOther: isShs
+      ? safeText(engagement.other_participate)         // ← SHS key differs ('other_participate' vs 'participate_in_other')
+      : safeText(engagement.participate_in_other) || '',
   };
 };
 

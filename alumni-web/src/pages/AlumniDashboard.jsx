@@ -8,26 +8,33 @@
 //   • forYouItems order: Announcements → Discounts → Events → Jobs
 // ============================================================================
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { loadSurveyProgress, getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
-import { logAction } from '../lib/auditLogger';
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import {
+  loadSurveyProgress,
+  getResumeRoute,
+  getSurveySections,
+  isSurveyComplete,
+} from "../lib/surveyProgress";
+import { logAction } from "../lib/auditLogger";
 
 // Icons — announcement_icn.svg (friend's variant) is used as the primary
 // announcement icon; the original announcement_ic.svg is kept as a fallback
 // alias so any view code referencing either name continues to work.
-import announcementIcon from '../assets/announcement_icn.svg';
-import rewardIcon       from '../assets/reward_icn.svg';
-import discountIcon     from '../assets/discount_ic.svg';
-import eventsIcon       from '../assets/events_ic.svg';
-import jobsIcon         from '../assets/jobs_ic.svg';
-import grandWestsideHotel from '../assets/grandwestside_hotel.jpeg';
+import announcementIcon from "../assets/announcement_icn.svg";
+import rewardIcon from "../assets/reward_icn.svg";
+import discountIcon from "../assets/discount_ic.svg";
+import eventsIcon from "../assets/events_ic.svg";
+import jobsIcon from "../assets/jobs_ic.svg";
+import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
 
-import AlumniDashboardView from '../views/Alumnidashboardview';
-import DataPrivacyModal    from '../modals/DataPrivacyModal';
-import { useDpaGate }      from '../hooks/useDpaGate';
-import { subscribeToRewardPoints } from '../lib/rewardPoints';
+import AlumniDashboardView from "../views/Alumnidashboardview";
+import DataPrivacyModal from "../modals/DataPrivacyModal";
+import { useDpaGate } from "../hooks/useDpaGate";
+import { subscribeToRewardPoints } from "../lib/rewardPoints";
+import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
+import PointsToast from "../modals/PointsToast";
 
 // ============================ STORAGE KEYS ============================
 // Centralised localStorage keys for all four badge categories.
@@ -35,16 +42,19 @@ import { subscribeToRewardPoints } from '../lib/rewardPoints';
 // events|discounts|jobs: numeric count watermark — badge shows when
 //   active item count exceeds the stored watermark.
 const STORAGE_KEYS = {
-  announcements: 'read_notifs',
-  events:        'read_events_badge',
-  discounts:     'read_discounts_badge',
-  jobs:          'read_jobs_badge',
+  announcements: "read_notifs",
+  events: "read_events_badge",
+  discounts: "read_discounts_badge",
+  jobs: "read_jobs_badge",
 };
 
 // ============================ HELPERS ============================
 // Returns true when the user has already seen all items in `category`.
 const isCategoryDismissed = (category, currentCount) => {
-  const stored = parseInt(localStorage.getItem(STORAGE_KEYS[category]) || '0', 10);
+  const stored = parseInt(
+    localStorage.getItem(STORAGE_KEYS[category]) || "0",
+    10,
+  );
   return stored >= currentCount;
 };
 
@@ -55,11 +65,13 @@ const persistDismissed = (category, count) => {
 
 // ============================ WINDOW WIDTH HOOK ============================
 const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1440,
+  );
   useEffect(() => {
     const handler = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handler);
-    return () => window.removeEventListener('resize', handler);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, []);
   return width;
 };
@@ -67,19 +79,26 @@ const useWindowWidth = () => {
 // ============================ MAIN COMPONENT ============================
 const AlumniDashboard = () => {
   const navigate = useNavigate();
-  const width    = useWindowWidth();
+  const width = useWindowWidth();
 
   // ============================ DPA GATE ============================
-  const { showModal, requestNavigation, handleAccept, handleDecline } = useDpaGate(navigate);
+  const { showModal, requestNavigation, handleAccept, handleDecline } =
+    useDpaGate(navigate);
 
   // ============================ STATE DECLARATIONS ============================
-  const [user,               setUser]               = useState(null);
-  const [surveyProgress,     setSurveyProgress]     = useState({ percentage: 0 });
+  const [user, setUser] = useState(null);
+  const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const [notifs,             setNotifs]             = useState([]);
-  const [unreadCount,        setUnreadCount]        = useState(0);
-  const [showDropdown,       setShowDropdown]       = useState(false);
-  const [notifTab,           setNotifTab]           = useState('all');
+  const [notifs, setNotifs] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [notifTab, setNotifTab] = useState("all");
+  const [toast, setToast] = useState({
+    visible: false,
+    points: 0,
+    newBalance: 0,
+    label: "",
+  });
   const bellRef = useRef(null);
 
   // Survey route — null while resolving (same pattern as Sidebar).
@@ -87,51 +106,107 @@ const AlumniDashboard = () => {
 
   const [cardBadges, setCardBadges] = useState({
     announcements: false,
-    events:        false,
-    discounts:     false,
-    jobs:          false,
+    events: false,
+    discounts: false,
+    jobs: false,
   });
 
   // ============================ DYNAMIC COUNTS FOR FOR-YOU CARDS ============================
   const [cardCounts, setCardCounts] = useState({
-    events:    0,
+    events: 0,
     discounts: 0,
-    jobs:      0,
+    jobs: 0,
   });
 
   // ============================ REWARD POINTS (from friend's code) ============================
   const [rewardPoints, setRewardPoints] = useState(0);
 
+  useSurveyRewardClaim({
+    onPointsSynced: setRewardPoints,
+    onClaimedStatus: () => {},
+    onToast: setToast,
+    onClaimed: () => {
+      refreshSurveyProgress();
+      refreshBadges();
+    },
+  });
+
   // ============================ RESPONSIVE BREAKPOINTS ============================
-  const isMobile    = width < 768;
-  const isTablet    = width >= 768 && width < 1024;
+  const isMobile = width < 768;
+  const isTablet = width >= 768 && width < 1024;
   const sidebarWidth = isTablet ? 200 : 229;
+
+  const refreshSurveyProgress = useCallback(async () => {
+      const progress = await loadSurveyProgress();
+      if (progress) setSurveyProgress(progress);
+    }, []);
+
+    const refreshBadges = useCallback(async () => {
+      const [eventsRes, discountsRes, jobsRes] = await Promise.all([
+        supabase
+          .from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("discounts")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+      ]);
+      const eventsCount = eventsRes.count || 0;
+      const discountsCount = discountsRes.count || 0;
+      const jobsCount = jobsRes.count || 0;
+      setCardCounts({
+        events: eventsCount,
+        discounts: discountsCount,
+        jobs: jobsCount,
+      });
+      setCardBadges((prev) => ({
+        ...prev,
+        events: eventsCount > 0 && !isCategoryDismissed("events", eventsCount),
+        discounts:
+          discountsCount > 0 &&
+          !isCategoryDismissed("discounts", discountsCount),
+        jobs: jobsCount > 0 && !isCategoryDismissed("jobs", jobsCount),
+      }));
+    }, []);
 
   // ============================ DATA FETCHING ============================
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       if (!authUser) return;
 
       // Fetch basic profile
       const { data } = await supabase
-        .from('users')
-        .select('first_name, last_name')
-        .eq('id', authUser.id)
+        .from("users")
+        .select("first_name, last_name")
+        .eq("id", authUser.id)
         .single();
       if (data) setUser(data);
 
       // Fetch reward points (additive — from friend's code)
       const { data: rewardData, error: rewardError } = await supabase
-        .from('users')
-        .select('reward_points')
-        .eq('id', authUser.id)
+        .from("users")
+        .select("reward_points")
+        .eq("id", authUser.id)
         .single();
 
       if (rewardError) {
-        console.error('[AlumniDashboard] reward_points fetch failed:', rewardError);
+        console.error(
+          "[AlumniDashboard] reward_points fetch failed:",
+          rewardError,
+        );
       } else {
-        console.log('[AlumniDashboard] reward_points fetched:', rewardData?.reward_points);
+        console.log(
+          "[AlumniDashboard] reward_points fetched:",
+          rewardData?.reward_points,
+        );
         setRewardPoints(rewardData?.reward_points ?? 0);
       }
 
@@ -139,10 +214,10 @@ const AlumniDashboard = () => {
       const progress = await loadSurveyProgress();
       if (progress) setSurveyProgress(progress);
       await logAction({
-        action:      'View',
-        module:      'Dashboard',
-        description: 'Alumni viewed dashboard (web)',
-        status:      'Success',
+        action: "View",
+        module: "Dashboard",
+        description: "Alumni viewed dashboard (web)",
+        status: "Success",
       });
     };
     fetchData();
@@ -159,22 +234,24 @@ const AlumniDashboard = () => {
         if (cancelled) return;
 
         if (complete) {
-          setSurveyRoute('/update-tracer');
+          setSurveyRoute("/update-tracer");
         } else {
           const route = await getResumeRoute();
           if (!cancelled) setSurveyRoute(route);
         }
       } catch (err) {
-        console.error('AlumniDashboard: error resolving survey route:', err);
-        if (!cancelled) setSurveyRoute('/survey/personal-background');
+        console.error("AlumniDashboard: error resolving survey route:", err);
+        if (!cancelled) setSurveyRoute("/survey/personal-background");
       }
     };
 
     resolveSurveyRoute();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const firstName   = user?.first_name || 'Alumni';
+  const firstName = user?.first_name || "Alumni";
   const progressPct = Math.min(surveyProgress?.percentage || 0, 100);
 
   // ============================ ANIMATE PROGRESS CIRCLE ============================
@@ -200,26 +277,33 @@ const AlumniDashboard = () => {
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
-        .from('announcements')
-        .select('id, title, content, published_at, is_active')
-        .eq('is_active', true)
-        .order('published_at', { ascending: false })
+        .from("announcements")
+        .select("id, title, content, published_at, is_active")
+        .eq("is_active", true)
+        .order("published_at", { ascending: false })
         .limit(20);
       if (error || !data) return;
-      const readIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.announcements) || '[]');
-      const mapped  = data.map(n => ({
-        id:    n.id,
+      const readIds = JSON.parse(
+        localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
+      );
+      const mapped = data.map((n) => ({
+        id: n.id,
         title: n.title,
-        body:  n.content,
-        time:  n.published_at,
-        read:  readIds.includes(n.id),
+        body: n.content,
+        time: n.published_at,
+        read: readIds.includes(n.id),
       }));
       setNotifs(mapped);
-      setUnreadCount(mapped.filter(n => !n.read).length);
-      setCardBadges(prev => ({ ...prev, announcements: mapped.some(n => !n.read) }));
+      setUnreadCount(mapped.filter((n) => !n.read).length);
+      setCardBadges((prev) => ({
+        ...prev,
+        announcements: mapped.some((n) => !n.read),
+      }));
     };
     fetchNotifs();
   }, []);
+
+  
 
   // ============================ FETCH CARD BADGES (EVENTS / DISCOUNTS / JOBS) ============================
   // Badge is shown when: active items exist AND stored watermark < current count.
@@ -228,27 +312,38 @@ const AlumniDashboard = () => {
   useEffect(() => {
     const fetchBadges = async () => {
       const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-        supabase.from('events').select('id',    { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('jobs').select('id',      { count: 'exact', head: true }).eq('is_active', true),
+        supabase
+          .from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("discounts")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
       ]);
 
-      const eventsCount    = eventsRes.count    || 0;
+      const eventsCount = eventsRes.count || 0;
       const discountsCount = discountsRes.count || 0;
-      const jobsCount      = jobsRes.count      || 0;
+      const jobsCount = jobsRes.count || 0;
 
       // Store live counts for card descriptions
       setCardCounts({
-        events:    eventsCount,
+        events: eventsCount,
         discounts: discountsCount,
-        jobs:      jobsCount,
+        jobs: jobsCount,
       });
 
-      setCardBadges(prev => ({
+      setCardBadges((prev) => ({
         ...prev,
-        events:    eventsCount    > 0 && !isCategoryDismissed('events',    eventsCount),
-        discounts: discountsCount > 0 && !isCategoryDismissed('discounts', discountsCount),
-        jobs:      jobsCount      > 0 && !isCategoryDismissed('jobs',      jobsCount),
+        events: eventsCount > 0 && !isCategoryDismissed("events", eventsCount),
+        discounts:
+          discountsCount > 0 &&
+          !isCategoryDismissed("discounts", discountsCount),
+        jobs: jobsCount > 0 && !isCategoryDismissed("jobs", jobsCount),
       }));
     };
     fetchBadges();
@@ -257,27 +352,31 @@ const AlumniDashboard = () => {
   // ============================ BELL OUTSIDE CLICK ============================
   useEffect(() => {
     const handler = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) setShowDropdown(false);
+      if (bellRef.current && !bellRef.current.contains(e.target))
+        setShowDropdown(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // ============================ REAL-TIME REWARD SYNC (Dashboard) ============================
   const rewardChannelRef = useRef(null);
-    useEffect(() => {
-      subscribeToRewardPoints((newPoints) => {
-        console.log('[AlumniDashboard] realtime reward update:', newPoints);
-        setRewardPoints(newPoints);
-      }).then(channel => {
-        rewardChannelRef.current = channel;
-      });
+  useEffect(() => {
+    let mounted = true;
+    subscribeToRewardPoints((newPoints) => {
+      console.log("[AlumniDashboard] realtime reward update:", newPoints);
+      if (mounted) setRewardPoints(newPoints);
+    }).then((channel) => {
+      if (mounted) rewardChannelRef.current = channel;
+      else channel?.unsubscribe();
+    });
 
-      return () => {
-        rewardChannelRef.current?.unsubscribe();
-        rewardChannelRef.current = null;
-      };
-    }, []);
+    return () => {
+      mounted = false;
+      rewardChannelRef.current?.unsubscribe();
+      rewardChannelRef.current = null;
+    };
+  }, []);
 
   // ============================ NOTIFICATION HANDLERS ============================
 
@@ -287,51 +386,65 @@ const AlumniDashboard = () => {
   // gone until new content is added.
   const markAllRead = useCallback(async () => {
     // ── Announcements ──
-    const allIds = notifs.map(n => n.id);
+    const allIds = notifs.map((n) => n.id);
     localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(allIds));
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
 
     // ── Events / Discounts / Jobs ──
     // Optimistically clear all dots immediately; then persist the watermarks.
     setCardBadges({
       announcements: false,
-      events:        false,
-      discounts:     false,
-      jobs:          false,
+      events: false,
+      discounts: false,
+      jobs: false,
     });
 
     try {
       const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-        supabase.from('events').select('id',    { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('discounts').select('id', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('jobs').select('id',      { count: 'exact', head: true }).eq('is_active', true),
+        supabase
+          .from("events")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("discounts")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
+        supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("is_active", true),
       ]);
-      persistDismissed('events',    eventsRes.count    || 0);
-      persistDismissed('discounts', discountsRes.count || 0);
-      persistDismissed('jobs',      jobsRes.count      || 0);
+      persistDismissed("events", eventsRes.count || 0);
+      persistDismissed("discounts", discountsRes.count || 0);
+      persistDismissed("jobs", jobsRes.count || 0);
     } catch (err) {
       // Fetch failed — write a safe sentinel so badges stay cleared.
-      console.warn('AlumniDashboard: markAllRead badge fetch failed', err);
-      persistDismissed('events',    999999);
-      persistDismissed('discounts', 999999);
-      persistDismissed('jobs',      999999);
+      console.warn("AlumniDashboard: markAllRead badge fetch failed", err);
+      persistDismissed("events", 999999);
+      persistDismissed("discounts", 999999);
+      persistDismissed("jobs", 999999);
     }
   }, [notifs]);
 
   // Per-item announcement read (existing behaviour — unchanged).
   const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.announcements) || '[]');
+    const readIds = JSON.parse(
+      localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
+    );
     if (!readIds.includes(id)) {
       readIds.push(id);
       localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(readIds));
     }
-    setNotifs(prev => {
-      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      setCardBadges(p => ({ ...p, announcements: updated.some(n => !n.read) }));
+    setNotifs((prev) => {
+      const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+      setCardBadges((p) => ({
+        ...p,
+        announcements: updated.some((n) => !n.read),
+      }));
       return updated;
     });
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
   // Per-card dismiss for Events / Discounts / Jobs.
@@ -340,20 +453,23 @@ const AlumniDashboard = () => {
   // Announcements are handled exclusively through markOneRead / markAllRead
   // (their IDs are already tracked individually), so this is a no-op for them.
   const dismissBadge = useCallback(async (category) => {
-    if (category === 'announcements') return;
+    if (category === "announcements") return;
 
     // Optimistic UI clear — instant feedback.
-    setCardBadges(prev => ({ ...prev, [category]: false }));
+    setCardBadges((prev) => ({ ...prev, [category]: false }));
 
     // Persist watermark so the badge stays gone after a page refresh.
     try {
       const { count } = await supabase
         .from(category)
-        .select('id', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
       persistDismissed(category, count || 0);
     } catch (err) {
-      console.warn(`AlumniDashboard: dismissBadge fetch failed for "${category}"`, err);
+      console.warn(
+        `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
+        err,
+      );
       // Optimistic clear is already applied; use sentinel as fallback.
       persistDismissed(category, 999999);
     }
@@ -367,28 +483,28 @@ const AlumniDashboard = () => {
     yesterday.setDate(today.getDate() - 1);
     const weekAgo = new Date(today);
     weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
-    list.forEach(n => {
+    const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
+    list.forEach((n) => {
       const d = new Date(n.time);
       d.setHours(0, 0, 0, 0);
-      if (d >= today)          groups['Today'].push(n);
-      else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo)   groups['This Week'].push(n);
-      else                     groups['Earlier'].push(n);
+      if (d >= today) groups["Today"].push(n);
+      else if (d >= yesterday) groups["Yesterday"].push(n);
+      else if (d >= weekAgo) groups["This Week"].push(n);
+      else groups["Earlier"].push(n);
     });
     return groups;
   };
 
   const formatTime = (iso) => {
-    if (!iso) return '';
-    const d    = new Date(iso);
-    const now  = new Date();
+    if (!iso) return "";
+    const d = new Date(iso);
+    const now = new Date();
     const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return Math.floor(diff / 60)    + 'm ago';
-    if (diff < 86400)  return Math.floor(diff / 3600)  + 'h ago';
-    if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
-    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+    if (diff < 60) return "Just now";
+    if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+    if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+    if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
+    return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
   };
 
   // ============================ FOR YOU ITEMS ============================
@@ -398,60 +514,75 @@ const AlumniDashboard = () => {
   // the Supabase table name for events / discounts / jobs.
   const forYouItems = [
     {
-      icon:        announcementIcon,
-      title:       'Announcements',
-      description: unreadCount > 0
-        ? `${unreadCount} unread announcement${unreadCount !== 1 ? 's' : ''}`
-        : 'Check latest news',
-      path:        '/announcements',
-      category:    'announcements',
-      showDot:     cardBadges.announcements,
+      icon: announcementIcon,
+      title: "Announcements",
+      description:
+        unreadCount > 0
+          ? `${unreadCount} unread announcement${unreadCount !== 1 ? "s" : ""}`
+          : "Check latest news",
+      path: "/announcements",
+      category: "announcements",
+      showDot: cardBadges.announcements,
     },
     {
-      icon:        discountIcon,
-      title:       'Discounts',
-      description: cardCounts.discounts > 0
-        ? `${cardCounts.discounts} offer${cardCounts.discounts !== 1 ? 's' : ''} available`
-        : 'No offers available',
-      path:        '/discounts',
-      category:    'discounts',
-      showDot:     cardBadges.discounts,
+      icon: discountIcon,
+      title: "Discounts",
+      description:
+        cardCounts.discounts > 0
+          ? `${cardCounts.discounts} offer${cardCounts.discounts !== 1 ? "s" : ""} available`
+          : "No offers available",
+      path: "/discounts",
+      category: "discounts",
+      showDot: cardBadges.discounts,
     },
     {
-      icon:        eventsIcon,
-      title:       'Events',
-      description: cardCounts.events > 0
-        ? `${cardCounts.events} upcoming event${cardCounts.events !== 1 ? 's' : ''}`
-        : 'No upcoming events',
-      path:        '/events',
-      category:    'events',
-      showDot:     cardBadges.events,
+      icon: eventsIcon,
+      title: "Events",
+      description:
+        cardCounts.events > 0
+          ? `${cardCounts.events} upcoming event${cardCounts.events !== 1 ? "s" : ""}`
+          : "No upcoming events",
+      path: "/events",
+      category: "events",
+      showDot: cardBadges.events,
     },
     {
-      icon:        jobsIcon,
-      title:       'Jobs',
-      description: cardCounts.jobs > 0
-        ? `${cardCounts.jobs} listing${cardCounts.jobs !== 1 ? 's' : ''} available`
-        : 'No listings available',
-      path:        '/jobs',
-      category:    'jobs',
-      showDot:     cardBadges.jobs,
+      icon: jobsIcon,
+      title: "Jobs",
+      description:
+        cardCounts.jobs > 0
+          ? `${cardCounts.jobs} listing${cardCounts.jobs !== 1 ? "s" : ""} available`
+          : "No listings available",
+      path: "/jobs",
+      category: "jobs",
+      showDot: cardBadges.jobs,
     },
   ];
 
   // ============================ SURVEY NAVIGATION (DPA-GATED) ============================
-  const handleSurveyNavigate = useCallback((route) => {
-    requestNavigation(route);
-  }, [requestNavigation]);
+  const handleSurveyNavigate = useCallback(
+    (route) => {
+      if (route === "/update-tracer") {
+        navigate(route);
+        return;
+      }
+      requestNavigation(route);
+    },
+    [requestNavigation, navigate],
+  );
 
   // ============================ RENDER ============================
   return (
     <>
+      <PointsToast
+        visible={toast.visible}
+        points={toast.points}
+        newBalance={toast.newBalance}
+        label={toast.label}
+        onDismiss={() => setToast((t) => ({ ...t, visible: false }))}
+      />
       {showModal && (
-        <DataPrivacyModal
-          onAccept={handleAccept}
-          onDecline={handleDecline}
-        />
+        <DataPrivacyModal onAccept={handleAccept} onDecline={handleDecline} />
       )}
 
       <AlumniDashboardView
@@ -473,7 +604,10 @@ const AlumniDashboard = () => {
         markOneRead={markOneRead}
         groupByDate={groupByDate}
         formatTime={formatTime}
-        onSeeAllNotifs={() => { setShowDropdown(false); navigate('/notifications'); }}
+        onSeeAllNotifs={() => {
+          setShowDropdown(false);
+          navigate("/notifications");
+        }}
         // ── Survey progress ──
         animatedPercentage={animatedPercentage}
         surveyRoute={surveyRoute}

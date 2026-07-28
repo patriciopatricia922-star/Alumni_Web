@@ -687,6 +687,13 @@ const AdminDashboardView = ({
     window.addEventListener('openKpiModal', handler);
     return () => window.removeEventListener('openKpiModal', handler);
   }, []);
+  useEffect(() => {
+  if (alumniType === 'shs' && activeKpiTab !== 'seniorrhigh') {
+    setActiveKpiTab('seniorrhigh');
+  } else if (alumniType !== 'shs' && activeKpiTab === 'seniorrhigh') {
+    setActiveKpiTab('employment');
+  }
+}, [alumniType, activeKpiTab, setActiveKpiTab]);
 
   return (
     <div className="dashboard-layout">
@@ -709,12 +716,14 @@ const AdminDashboardView = ({
 
           {/* SENIOR HIGH tab added from friend's version */}
           <div className="kpi-tabs">
-            {[
-              { id: "employment",  label: "EMPLOYMENT"     },
-              { id: "career",      label: "CAREER PROGRESS" },
-              { id: "education",   label: "EDUCATION"       },
-              { id: "seniorrhigh", label: "SENIOR HIGH"     },
-            ].map(({ id, label }) => (
+            {(alumniType === 'shs'
+              ? [{ id: "seniorrhigh", label: "SENIOR HIGH" }]
+              : [
+                  { id: "employment", label: "EMPLOYMENT"      },
+                  { id: "career",     label: "CAREER PROGRESS" },
+                  { id: "education",  label: "EDUCATION"       },
+                ]
+            ).map(({ id, label }) => (
               <button
                 key={id}
                 className={`kpi-tab-btn${activeKpiTab === id ? " active" : ""}`}
@@ -725,7 +734,7 @@ const AdminDashboardView = ({
             ))}
           </div>
 
-          <div className="kpi-grid">
+          <div className={`kpi-grid${alumniType === 'shs' ? ' kpi-grid--shs' : ''}`}>
             {kpiData[activeKpiTab].map(kpi => (
               <KpiProgressCard key={kpi.id} {...kpi} />
             ))}

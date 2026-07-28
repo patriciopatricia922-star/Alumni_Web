@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import '../styles/ResponseAnalytics.css';
 import { exportSurveyPDF } from '../../utils/exportPDF';
+import { exportSHSSurveyPDF } from '../../utils/exportSHSPDF';
 
 // ============================ CONSTANTS ============================
 const PAGE_SIZE = 10;
@@ -139,7 +140,7 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
 // ============================ RESPONSE MODAL ============================
 // INTEGRATION: Merged friend's expanded modal with all 7 sections including
 // Section 5 (Job Experience) and Section 7 (Feedback & Alumni Engagement).
-const ResponseModal = ({ data, onClose }) => {
+const ResponseModal = ({ data, onClose, alumniType }) => {
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
@@ -228,7 +229,9 @@ const ResponseModal = ({ data, onClose }) => {
               <Field label="Student Number" value={data.studentNumber} />
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
+              {!alumniType || alumniType !== 'shs' ? (
               <Field label="Civil Status" value={data.civilStatus} />
+              ) : null }
               <Field label="Contact Number" value={data.contact} />
               <Field label="Personal Email Address" value={data.email} />
             </div>
@@ -253,13 +256,16 @@ const ResponseModal = ({ data, onClose }) => {
             </div>
             <div className="ra-grid" style={{ marginBottom: 10 }}>
               <Field label="Year Graduated" value={data.batch} />
+              {!alumniType || alumniType !== 'shs' ? (
               <Field label="Distinction Received" value={data.distinction} />
+              ) : null }
               <Field label="Plans for Post-Graduate Studies" value={data.postGradPlans} />
               {data.postGradPlans === "Yes" && <Field label="Post-Graduate Course" value={data.postGradCourse} />}
             </div>
           </div>
 
           {/* Section 3: Certification Achievements */}
+          {!alumniType || alumniType !== 'shs' ? (
           <div>
             <SectionHeader title="Section 3 — Certification Achievements" color="#F59E0B" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
@@ -274,6 +280,7 @@ const ResponseModal = ({ data, onClose }) => {
               ) : <span style={{ color: "#9ca3af" }}>None</span>}
             </FullBlock>
           </div>
+          ) : null}
 
           {/* Section 4: Employment Information */}
           <div>
@@ -386,7 +393,7 @@ const ResponseAnalyticsView = ({
   isSectionVisible,
   renderStars,
   sidebar,
-  alumniType
+  alumniType={alumniType}
 }) => {
   const filterRef = useRef(null);
 
@@ -797,7 +804,7 @@ const ResponseAnalyticsView = ({
               </div>
 
               {selectedResponse && (
-                <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} />
+                <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} alumniType={alumniType} />
               )}
             </div>
           )}
@@ -867,12 +874,21 @@ const ResponseAnalyticsView = ({
                   if (exportFormat === 'csv') {
                     exportToCSV(respondents, 'survey-responses');
                   } else if (exportFormat === 'pdf') {
-                    exportSurveyPDF({
-                      filterType: exportFilterType,
-                      filterValue: exportSelected,
-                      stats: stats,
-                      respondents: respondents,
-                    }).catch(err => console.error('PDF export error:', err));
+                    if (alumniType === 'shs') {
+                      exportSHSSurveyPDF({
+                        filterType: exportFilterType,
+                        filterValue: exportSelected,
+                        stats: stats,
+                        respondents: respondents,
+                      }).catch(err => console.error('SHS PDF export error:', err));
+                    } else {
+                      exportSurveyPDF({
+                        filterType: exportFilterType,
+                        filterValue: exportSelected,
+                        stats: stats,
+                        respondents: respondents,
+                      }).catch(err => console.error('PDF export error:', err));
+                    }
                   }
                   setExportOpen(false);
                   resetExport();

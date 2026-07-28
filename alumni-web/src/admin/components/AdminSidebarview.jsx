@@ -59,7 +59,7 @@ const LogoutIcon = () => (
 // Integrated from friend's implementation. Allows toggling between College and
 // SHS alumni data views. State is owned by AlumniTypeContext (via the container)
 // so all downstream pages react to the selection automatically.
-const AlumniTypeSwitcher = ({ alumniType, setAlumniType }) => (
+const AlumniTypeSwitcher = ({ alumniType, setAlumniType, disableShs }) => (
   <div className="alumni-type-switcher">
     <button
       className={`switcher-pill ${alumniType === 'college' ? 'active' : ''}`}
@@ -70,6 +70,8 @@ const AlumniTypeSwitcher = ({ alumniType, setAlumniType }) => (
     <button
       className={`switcher-pill ${alumniType === 'shs' ? 'active' : ''}`}
       onClick={() => setAlumniType('shs')}
+      disabled={disableShs}
+      title={disableShs ? 'Not available for SHS on this page' : undefined}
     >
       SHS
     </button>
@@ -149,6 +151,7 @@ const AdminSidebarView = ({
   handleLogout,
   alumniType,
   setAlumniType,
+  isCollegeOnlyRoute,
 }) => {
 
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
@@ -186,7 +189,11 @@ const AdminSidebarView = ({
 
         {/* Switcher floats above the bottom nav on mobile */}
         <div className="alumni-type-switcher-mobile">
-          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
+          <AlumniTypeSwitcher
+            alumniType={alumniType}
+            setAlumniType={setAlumniType}
+            disableShs={isCollegeOnlyRoute}
+          />
         </div>
 
         <button
@@ -223,7 +230,11 @@ const AdminSidebarView = ({
 
         {/* Alumni type switcher — sits between divider and MENU heading */}
         <div style={{ padding: '26px 12px 0px' }}>
-          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
+          <AlumniTypeSwitcher
+            alumniType={alumniType}
+            setAlumniType={setAlumniType}
+            disableShs={isCollegeOnlyRoute}
+          />
         </div>
 
         {/* Nav items — skeleton on cold load, real list once resolved */}

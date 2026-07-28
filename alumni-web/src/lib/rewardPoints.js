@@ -1,3 +1,4 @@
+//reward_points
 import { supabase } from './supabase';
 
 // ─── internal: resolve authenticated user reliably ────────────────────────────

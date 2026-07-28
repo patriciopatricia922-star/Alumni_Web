@@ -659,6 +659,16 @@
   }
 }
 
+.kpi-grid.kpi-grid--shs {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 600px) {
+  .kpi-grid.kpi-grid--shs {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
   .charts-row {

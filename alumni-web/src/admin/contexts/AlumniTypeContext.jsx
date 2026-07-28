@@ -1,41 +1,58 @@
-/**
- * AlumniTypeContext.jsx
- *
- * Provides shared alumniType state ('college' | 'shs') across the admin section.
- *
- * AlumniTypeProvider is designed to work in two scenarios:
- *
- *   1. As a React Router v6 pathless Route wrapper (how App.jsx uses it):
- *        <Route element={<AlumniTypeProvider />}>
- *          <Route path="/admin/..." element={<AdminDashboard />} />
- *        </Route>
- *      In this case React Router injects the matched child via <Outlet />.
- *      The {children} prop will be undefined — Outlet handles rendering.
- *
- *   2. As a normal JSX wrapper (e.g. in tests or a layout component):
- *        <AlumniTypeProvider>
- *          <AdminDashboard />
- *        </AlumniTypeProvider>
- *      In this case {children} is used and Outlet renders nothing (no Router
- *      context means no matched child to inject — that's fine).
- *
- * Rendering BOTH {children} and <Outlet /> covers both cases safely.
- */
-
-import { createContext, useContext, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { createContext, useContext, useState, useCallback } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 
 const AlumniTypeContext = createContext(undefined);
 
+// Routes that only exist for College alumni — SHS has no equivalent page,
+// so switching away from College is blocked while sitting on one of these.
+const COLLEGE_ONLY_PATHS = ['/admin/predictive-analytics'];
+
 export const AlumniTypeProvider = ({ children, initialType = 'college' }) => {
-  const [alumniType, setAlumniType] = useState(initialType);
+  const [alumniType, setAlumniTypeRaw] = useState(initialType);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const location = useLocation();
+
+  const isCollegeOnlyRoute = COLLEGE_ONLY_PATHS.some(p =>
+    location.pathname.startsWith(p)
+  );
+
+  const setAlumniType = useCallback((nextType) => {
+    if (nextType === alumniType) return;
+
+    // Predictive Analytics has no SHS view — don't allow switching to SHS
+    // while sitting on it.
+    if (nextType === 'shs' && isCollegeOnlyRoute) {
+      window.alert(
+        'Predictive Analytics is only available for College alumni. ' +
+        'Leave this page before switching to SHS.'
+      );
+      return;
+    }
+
+    // Content Mgmt / Survey Mgmt forms, or an in-progress export in
+    // Response & Analytics, can set this flag — warn before discarding it.
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Switching alumni type will discard them. Continue?'
+      );
+      if (!confirmed) return;
+      setHasUnsavedChanges(false);
+    }
+
+    setAlumniTypeRaw(nextType);
+  }, [alumniType, isCollegeOnlyRoute, hasUnsavedChanges]);
 
   return (
-    <AlumniTypeContext.Provider value={{ alumniType, setAlumniType }}>
-      {/* Outlet: renders the matched child route when used as a pathless
-          React Router wrapper — required for App.jsx's Route grouping pattern */}
+    <AlumniTypeContext.Provider
+      value={{
+        alumniType,
+        setAlumniType,
+        hasUnsavedChanges,
+        setHasUnsavedChanges,
+        isCollegeOnlyRoute,
+      }}
+    >
       <Outlet />
-      {/* children: renders nested JSX when used as a normal wrapper component */}
       {children}
     </AlumniTypeContext.Provider>
   );

@@ -590,6 +590,14 @@
   width: 48%;
 }
 
+.switcher-pill:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.switcher-pill:disabled:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* Mobile (below 768px) — sidebar drawer when open */
 @media (max-width: 767px) {
   .admin-sidebar {
