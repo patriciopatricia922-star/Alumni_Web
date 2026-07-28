@@ -243,7 +243,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   };
 
   // INTEGRATION: Events now show images alongside jobs, discounts, and rewards.
-  const showImage = ['events', 'jobs', 'discounts', 'rewards'].includes(type) && item.image_url;
+  const showImage = ['events', 'jobs', 'discounts', 'rewards','announcements'].includes(type) && item.image_url;
 
   return (
     <div className="content-item-card">

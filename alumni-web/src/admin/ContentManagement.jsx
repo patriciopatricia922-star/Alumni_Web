@@ -2,7 +2,7 @@
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Content Management.
 //
-// INTEGRATION LOG - Mine
+// INTEGRATION LOG 
 // ─────────────────────────────────────────────────────────────────────────────
 // [landing-cms]   updated_at stamped on every mutating Supabase call
 //                 handleToggleActive — show/hide landing sections without archive
@@ -452,6 +452,7 @@ function ContentManagement() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
+      if (!user?.id) { showToastMessage('Authentication error. Please log in again.', 'error'); return; } // ADDED
 
       if (!formData.title?.trim())     { showToastMessage('Reward title is required', 'error'); return; }
       if (!formData.points_required)   { showToastMessage('Points required is required', 'error'); return; }
@@ -864,6 +865,24 @@ function ContentManagement() {
       const { table, module: moduleName, data: list } = entry;
       const itemTitle = list.find(i => i.id === id)?.title || String(id);
 
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      console.log("[ARCHIVE] User Metadata:", user?.user_metadata);
+      console.log("[ARCHIVE] App Metadata:", user?.app_metadata);
+      console.log("[ARCHIVE] User Error:", userError);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
+
+      console.log("[ARCHIVE] Profile:", profile);
+      console.log("[ARCHIVE] Profile Error:", profileError);
+      
       const { error } = await supabase
         .from(table)
         .update({
