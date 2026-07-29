@@ -181,12 +181,18 @@ const statCardIcons = {
       </svg>
     ),
   },
-  'Active Programs': {
-    bg: '#F5F3FF',
+  // Ported from Admin: 'Employment Rate' replaces 'Active Programs' since
+  // kpis2's College stat card set now matches Admin's exactly (see
+  // SuperAdminDashboard.jsx). 'Active Programs' icon removed as it no longer
+  // corresponds to any rendered label.
+  'Employment Rate': {
+    bg: '#FFF7ED',
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-        <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        <line x1="12" y1="12" x2="12" y2="16"/>
+        <line x1="10" y1="14" x2="14" y2="14"/>
       </svg>
     ),
   },
@@ -615,6 +621,17 @@ const SuperAdminDashboardView = ({
     return () => window.removeEventListener('openKpiModal', handler);
   }, []);
 
+  // Ported from Admin: force the KPI tab to "seniorrhigh" for SHS users and
+  // back to "employment" for College users, so an SHS Super Admin cannot
+  // land on / linger on a College-only tab (Employment/Career/Education).
+  useEffect(() => {
+    if (alumniType === 'shs' && activeKpiTab !== 'seniorrhigh') {
+      setActiveKpiTab('seniorrhigh');
+    } else if (alumniType !== 'shs' && activeKpiTab === 'seniorrhigh') {
+      setActiveKpiTab('employment');
+    }
+  }, [alumniType, activeKpiTab, setActiveKpiTab]);
+
   return (
     <div className="super-dashboard-layout">
       <SuperAdminSidebar />
@@ -632,13 +649,17 @@ const SuperAdminDashboardView = ({
             <div className="section-title">Institutional KPI</div>
           </div>
 
+          {/* Ported from Admin: SHS users see only the SENIOR HIGH tab button,
+              matching Admin's department-scoped tab bar exactly. */}
           <div className="kpi-tabs">
-            {[
-              { id: "employment",  label: "EMPLOYMENT" },
-              { id: "career",      label: "CAREER PROGRESS" },
-              { id: "education",   label: "EDUCATION" },
-              { id: "seniorrhigh", label: "SENIOR HIGH" },
-            ].map(({ id, label }) => (
+            {(alumniType === 'shs'
+              ? [{ id: "seniorrhigh", label: "SENIOR HIGH" }]
+              : [
+                  { id: "employment", label: "EMPLOYMENT"      },
+                  { id: "career",     label: "CAREER PROGRESS" },
+                  { id: "education",  label: "EDUCATION"       },
+                ]
+            ).map(({ id, label }) => (
               <button
                 key={id}
                 className={`kpi-tab-btn${activeKpiTab === id ? " active" : ""}`}
@@ -649,7 +670,8 @@ const SuperAdminDashboardView = ({
             ))}
           </div>
 
-          <div className="kpi-grid">
+          {/* Ported from Admin: kpi-grid--shs modifier class for SHS layout */}
+          <div className={`kpi-grid${alumniType === 'shs' ? ' kpi-grid--shs' : ''}`}>
             {kpiData[activeKpiTab].map(kpi => (
               <KpiProgressCard key={kpi.id} {...kpi} />
             ))}

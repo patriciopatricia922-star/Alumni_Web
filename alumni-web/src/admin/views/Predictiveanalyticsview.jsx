@@ -229,6 +229,7 @@ const Predictiveanalyticsview = ({
 }) => {
 
   const [animProgress, setAnimProgress] = useState(0);
+  const [hoveredPoint, setHoveredPoint] = useState(null);
   const animRef = useRef(null);
 
   useEffect(() => {
@@ -374,7 +375,7 @@ const Predictiveanalyticsview = ({
             <div className="pa-chart-card">
               <div className="pa-chart-header">
                 <div className="pa-chart-icon">
-                  <HiOutlineArrowTrendingUp size={28} color="#155DFC" />
+                  <HiOutlineArrowTrendingUp size={26} color="#155DFC" />
                 </div>
                 <div className="pa-chart-header-text">
                   <h2 className="pa-chart-title">Career to Degree Alignment</h2>
@@ -384,15 +385,15 @@ const Predictiveanalyticsview = ({
 
               <div className="pa-chart-legend">
                 <div className="pa-legend-item">
-                  <div className="pa-legend-swatch upper" />
+                  <span className="pa-legend-swatch upper" />
                   <span className="pa-legend-label">Upper Bound</span>
                 </div>
                 <div className="pa-legend-item">
-                  <div className="pa-legend-swatch lower" />
+                  <span className="pa-legend-swatch lower" />
                   <span className="pa-legend-label">Lower Bound</span>
                 </div>
                 <div className="pa-legend-item">
-                  <div className="pa-legend-swatch predicted" />
+                  <span className="pa-legend-swatch predicted" />
                   <span className="pa-legend-label">Predicted Rate</span>
                 </div>
               </div>
@@ -405,56 +406,79 @@ const Predictiveanalyticsview = ({
                   <div className="pa-chart-grid">
                     <span /><span /><span /><span />
                   </div>
-                  <svg className="pa-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+
+                  {/* SVG layer: area fills + line only (safe to non-uniformly scale) */}
+                  <svg
+                    className="pa-chart-svg"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
                     <defs>
                       <linearGradient id="upperGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BFDBFE" stopOpacity="0.6" />
-                        <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0.1" />
+                        <stop offset="0%" stopColor="#93C5FD" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="#93C5FD" stopOpacity="0.02" />
                       </linearGradient>
                       <linearGradient id="lowerGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#DBEAFE" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#DBEAFE" stopOpacity="0.05" />
+                        <stop offset="0%" stopColor="#BFDBFE" stopOpacity="0.22" />
+                        <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0.02" />
                       </linearGradient>
                       <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#60A5FA" />
                         <stop offset="100%" stopColor="#155DFC" />
                       </linearGradient>
-                      <filter id="lineShadow">
-                        <feDropShadow dx="0" dy="1" stdDeviation="1" floodColor="#3B82F6" floodOpacity="0.25" />
-                      </filter>
                     </defs>
                     <polygon points={upperPoints} fill="url(#upperGrad)" stroke="none" style={{ opacity: animProgress }} />
                     <polygon points={lowerPoints} fill="url(#lowerGrad)" stroke="none" style={{ opacity: animProgress }} />
                     {animatedTrend.length > 1 && (
                       <polyline
+                        className="pa-chart-line"
                         fill="none"
                         stroke="url(#lineGrad)"
-                        strokeWidth="2.2"
+                        strokeWidth="2.5"
                         strokeLinejoin="round"
                         strokeLinecap="round"
                         points={linePoints}
                         vectorEffect="non-scaling-stroke"
-                        filter="url(#lineShadow)"
                       />
                     )}
+                  </svg>
+
+                  {/* HTML marker layer: percentage-positioned so every dot stays a perfect circle
+                      regardless of the chart's aspect ratio or screen size. */}
+                  <div className="pa-chart-markers" aria-hidden="false">
                     {overviewTrend.map((d, i) => {
                       const t = i / Math.max(overviewTrend.length - 1, 1);
                       const opacity = Math.max(0, Math.min(1, (animProgress - t) / 0.1));
+                      const isHovered = hoveredPoint === i;
                       return (
-                        <circle
+                        <button
                           key={d.year}
-                          cx={toX(i)}
-                          cy={toY(d.value)}
-                          r="2.2"
-                          fill="#FFFFFF"
-                          stroke="#3B82F6"
-                          strokeWidth="1.8"
-                          vectorEffect="non-scaling-stroke"
-                          style={{ opacity }}
-                        />
+                          type="button"
+                          className={`pa-chart-marker ${isHovered ? 'is-hovered' : ''}`}
+                          style={{
+                            left: `${toX(i)}%`,
+                            top: `${toY(d.value)}%`,
+                            opacity,
+                          }}
+                          onMouseEnter={() => setHoveredPoint(i)}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                          onFocus={() => setHoveredPoint(i)}
+                          onBlur={() => setHoveredPoint(null)}
+                          aria-label={`${d.year}: ${d.value}%`}
+                        >
+                          <span className="pa-chart-marker-dot" />
+                          {isHovered && (
+                            <span className="pa-chart-marker-tooltip">
+                              <strong>{d.value}%</strong>
+                              <span>{d.year}</span>
+                            </span>
+                          )}
+                        </button>
                       );
                     })}
-                  </svg>
+                  </div>
+
                   <div className="pa-chart-x-axis">
                     {overviewTrend.map((d) => <span key={d.year}>{d.year}</span>)}
                   </div>

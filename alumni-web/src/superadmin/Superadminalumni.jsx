@@ -8,7 +8,6 @@
 
 import { useEffect, useState } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
-import AlumniManagementView from "./Views/SuperAdminAlumniView";
 import SuperAdminAlumniView from "./Views/SuperAdminAlumniView";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 import { useAlumniType } from "./contexts/AlumniTypeContext";

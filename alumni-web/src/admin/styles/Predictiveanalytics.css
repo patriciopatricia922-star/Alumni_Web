@@ -57,7 +57,7 @@ body {
   min-width: 0;
   width: 0; /* forces flex child to shrink within parent */
   margin-left: 229px;
-  padding: 37px 32px 60px;
+  padding: clamp(20px, 2.8vw, 37px) clamp(16px, 2.4vw, 32px) clamp(28px, 4vw, 60px);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -207,15 +207,14 @@ body {
 .pa-overview-container {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(200px, 22vw, 300px);
-  gap: 20px;
-  align-items: start;
-  /* Do NOT use flex:1 / min-height:0 here — that causes the grid rows to
-     collapse and clips the chart card's summary + button at the bottom.
-     Let the container grow naturally with its content instead. */
+  gap: clamp(14px, 1.8vw, 20px);
+  /* Stretch both grid items to the row's height (driven by the taller
+     Career Alignment card) so the AI Insights column matches it exactly. */
+  align-items: stretch;
   width: 100%;
   max-width: 100%;
   overflow: visible;
-  padding-bottom: 24px;
+  padding-bottom: clamp(16px, 2vw, 24px);
 }
 
 /* ============================================
@@ -224,7 +223,7 @@ body {
 .pa-chart-card {
   background: #FFFFFF;
   border-radius: 16px;
-  padding: 28px 28px 20px;
+  padding: clamp(14px, 2.2vw, 28px) clamp(14px, 2.2vw, 28px) clamp(12px, 1.6vw, 20px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
@@ -232,6 +231,7 @@ body {
      collapse siblings (summary, button) out of view. Size to content. */
   min-width: 0;
   width: 100%;
+  height: max-content;
   overflow: visible;
 }
 
@@ -239,7 +239,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
   flex-shrink: 0;
   min-width: 0;
@@ -269,15 +269,17 @@ body {
   font-weight: 700;
   color: #1E293B;
   font-family: 'Lexend', sans-serif;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .pa-chart-subtitle {
-  margin: 3px 0 0;
+  margin: 4px 0 0;
   font-size: clamp(10px, 1vw, 12.5px);
   color: #6B7280;
+  line-height: 1.4;
   overflow-wrap: break-word;
 }
 
@@ -285,34 +287,40 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: clamp(12px, 2vw, 24px);
-  margin-bottom: 20px;
-  padding-bottom: 12px;
+  gap: clamp(14px, 2.4vw, 28px);
+  margin-bottom: 22px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #F1F5F9;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
 .pa-legend-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 7px;
 }
 
 .pa-legend-swatch {
-  width: 20px;
+  display: inline-block;
+  width: 18px;
   height: 3px;
   border-radius: 3px;
   flex-shrink: 0;
 }
 
-.pa-legend-swatch.upper     { background: #BFDBFE; }
-.pa-legend-swatch.lower     { background: #DBEAFE; opacity: 0.5; }
-.pa-legend-swatch.predicted { background: linear-gradient(90deg, #60A5FA, #155DFC); }
+.pa-legend-swatch.upper     { background: #93C5FD; }
+.pa-legend-swatch.lower     { background: #BFDBFE; opacity: 0.65; }
+.pa-legend-swatch.predicted {
+  height: 3.5px;
+  background: linear-gradient(90deg, #60A5FA, #155DFC);
+  border-radius: 999px;
+}
 
 .pa-legend-label {
   font-family: 'Arimo', Arial;
-  font-size: clamp(10px, 1vw, 12.5px);
+  font-size: clamp(10.5px, 1vw, 12.5px);
+  font-weight: 500;
   color: #475569;
   white-space: nowrap;
 }
@@ -321,10 +329,11 @@ body {
   display: grid;
   grid-template-columns: 2.25rem 1fr;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  /* Use a fixed height range — flex:1 + min-height:0 was the direct cause of
-     the card clipping siblings below it when the container had constrained height. */
-  height: clamp(220px, 28vh, 320px);
+  margin-bottom: 1.35rem;
+  /* Fixed aspect-driven height range — kept as a clamp so the chart resizes
+     smoothly and never overflows its card at any breakpoint. */
+  height: clamp(200px, 30vw, 320px);
+  max-height: 340px;
   width: 100%;
   overflow: hidden;
   flex-shrink: 0;
@@ -337,7 +346,8 @@ body {
   justify-content: space-between;
   align-items: flex-end;
   font-family: 'Arimo', Arial;
-  font-size: clamp(9px, 0.8vw, 10.5px);
+  font-size: clamp(9.5px, 0.8vw, 11px);
+  font-weight: 500;
   color: #94A3B8;
   padding-bottom: 1.75rem;
   padding-top: 0.25rem;
@@ -349,7 +359,7 @@ body {
   height: 100%;
   min-width: 0;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pa-chart-grid {
@@ -362,7 +372,7 @@ body {
   pointer-events: none;
 }
 
-.pa-chart-grid span { border-top: 1px dashed #E9EFF6; }
+.pa-chart-grid span { border-top: 1px dashed #EDF2F9; }
 
 .pa-chart-svg {
   position: absolute;
@@ -373,8 +383,11 @@ body {
   overflow: visible;
 }
 
-.pa-chart-svg circle {
-  filter: drop-shadow(0 1px 2px rgba(59,130,246,0.2));
+/* Subtle drop shadow under the prediction line for depth, without a filter
+   on individual circle markers (markers are now rendered as HTML, not SVG). */
+.pa-chart-line {
+  filter: drop-shadow(0 2px 3px rgba(21, 93, 252, 0.18));
+  transition: opacity 0.2s ease;
 }
 
 .pa-chart-x-axis {
@@ -384,21 +397,132 @@ body {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   font-family: 'Arimo', Arial;
-  font-size: clamp(9px, 0.8vw, 10.5px);
+  font-size: clamp(9.5px, 0.8vw, 11px);
+  font-weight: 500;
   color: #94A3B8;
   text-align: center;
   align-items: flex-end;
   padding-bottom: 0.25rem;
+  pointer-events: none;
+}
+
+/* ============================================
+   CHART MARKERS (HTML overlay — perfect circles)
+   ------------------------------------------------
+   Rendered as absolutely-positioned HTML elements sized in fixed px units
+   with border-radius: 50%. Because these are never subject to the SVG's
+   non-uniform viewBox scaling, they stay perfectly round at every
+   screen size, zoom level, and device pixel ratio.
+   ============================================ */
+.pa-chart-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 1.75rem;
+  pointer-events: none;
+}
+
+.pa-chart-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.pa-chart-marker:focus-visible {
+  outline: 2px solid #93C5FD;
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.pa-chart-marker-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #3B82F6;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.18s ease,
+              border-color 0.18s ease;
+}
+
+.pa-chart-marker:hover .pa-chart-marker-dot,
+.pa-chart-marker.is-hovered .pa-chart-marker-dot {
+  transform: scale(1.45);
+  border-color: #155DFC;
+  box-shadow: 0 2px 8px rgba(21, 93, 252, 0.35);
+}
+
+.pa-chart-marker-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 10px;
+  background: #1E293B;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-family: 'Lexend', sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 3;
+  animation: pa-tooltip-in 0.12s ease-out;
+}
+
+.pa-chart-marker-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1E293B;
+}
+
+.pa-chart-marker-tooltip strong {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pa-chart-marker-tooltip span {
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #CBD5E1;
+  line-height: 1.2;
+}
+
+@keyframes pa-tooltip-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(3px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .pa-chart-summary {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #F8FAFD;
   border: 1px solid #EEF2F7;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 10px;
   flex-wrap: wrap;
   flex-shrink: 0;
@@ -409,24 +533,26 @@ body {
 .pa-summary-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .pa-summary-label {
   font-family: 'Arimo', Arial;
   font-size: clamp(10px, 0.9vw, 11px);
+  font-weight: 500;
   color: #64748B;
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .pa-summary-block strong {
-  font-family: 'Arimo', Arial;
-  font-size: clamp(0.9rem, 1.4vw, 1.2rem);
+  font-family: 'Lexend', 'Arimo', Arial;
+  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
   font-weight: 700;
   color: #0F172B;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .pa-summary-arrow {
@@ -454,25 +580,26 @@ body {
 .pa-view-breakdown-btn {
   display: block;
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border: none;
   background: transparent;
   text-align: left;
   font-family: 'Arimo', Arial;
   font-size: clamp(11px, 1vw, 12.5px);
+  font-weight: 500;
   color: #155DFC;
   cursor: pointer;
   border-radius: 8px;
-  font-weight: 500;
   flex-shrink: 0;
   margin-top: auto;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
   overflow-wrap: break-word;
 }
 
 .pa-view-breakdown-btn:hover {
   color: #0F47CC;
   background: #F0F6FF;
+  transform: translateX(2px);
 }
 
 /* ============================================
@@ -500,7 +627,7 @@ body {
 .pa-department-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
-  gap: 18px;
+  gap: clamp(12px, 1.6vw, 18px);
   align-content: start;
   min-width: 0;
   width: 100%;
@@ -510,7 +637,7 @@ body {
 .pa-department-card {
   background: #FFFFFF;
   border-radius: 16px;
-  padding: 22px;
+  padding: clamp(14px, 2vw, 22px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
@@ -608,13 +735,13 @@ body {
    ============================================ */
 .pa-detail-container {
   grid-template-columns: minmax(0, 1fr) clamp(200px, 22vw, 300px);
-  align-items: start;
+  align-items: stretch;
 }
 
 .pa-panel {
   background: #FFFFFF;
   border-radius: 16px;
-  padding: 26px 28px;
+  padding: clamp(14px, 2vw, 26px) clamp(14px, 2.2vw, 28px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.06);
   display: flex;
   flex-direction: column;
@@ -758,14 +885,11 @@ body {
 .pa-ai-card {
   min-width: 0;
   width: 100%;
-  position: sticky;
-  top: 0;
-  max-height: calc(100vh - 80px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
 }
-.pa-ai-card::-webkit-scrollbar { display: none; }
 
 /* ============================================
    AI INSIGHTS CARD
@@ -774,11 +898,15 @@ body {
   background: #FFFFFF;
   border: 1px solid #E8EEF7;
   border-radius: 16px;
-  padding: 18px 20px;
+  padding: clamp(12px, 1.8vw, 18px) clamp(12px, 2vw, 20px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04);
   transition: box-shadow 0.2s;
   min-width: 0;
   width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -794,6 +922,7 @@ body {
   padding-bottom: 12px;
   border-bottom: 1px solid #F0F4FA;
   flex-shrink: 0;
+  flex-grow: 0;
   min-width: 0;
   overflow: hidden;
 }
@@ -825,9 +954,35 @@ body {
 .ai-insights-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  /* Clean, unobtrusive scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+  padding-right: 4px;
+  padding-bottom: 2px;
+}
+
+.ai-insights-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ai-insights-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-insights-content::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 999px;
+}
+
+.ai-insights-content::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
 }
 
 .ai-key-insight,
@@ -835,12 +990,12 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 11px 13px;
+  padding: 12px 14px;
   background: #F8FAFD;
   border: 1px solid #EDF2F9;
   border-radius: 11px;
   min-width: 0;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ai-key-insight    { border-left: 3px solid #3B82F6; }
@@ -852,16 +1007,15 @@ body {
 .ai-insight-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
   overflow-wrap: break-word;
-  word-break: break-word;
-  overflow: hidden;
+  word-break: normal;
 }
 
 .ai-insight-text strong {
   font-family: 'Lexend', sans-serif;
-  font-size: 11.5px;
+  font-size: clamp(10.5px, 1vw, 11.5px);
   font-weight: 600;
   color: #374151;
   text-transform: uppercase;
@@ -877,18 +1031,18 @@ body {
 }
 
 .ai-section-block {
-  padding: 10px 13px;
+  padding: 11px 14px;
   background: #FAFBFE;
   border: 1px solid #EDF2F9;
   border-radius: 11px;
   min-width: 0;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ai-section-label {
-  margin: 0 0 8px;
+  margin: 0 0 9px;
   font-family: 'Lexend', sans-serif;
-  font-size: 10.5px;
+  font-size: clamp(10px, 0.9vw, 10.5px);
   font-weight: 600;
   color: #64748B;
   text-transform: uppercase;
@@ -898,9 +1052,8 @@ body {
 .ai-insight-bullets {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 9px;
   min-width: 0;
-  overflow: hidden;
 }
 
 .ai-bullet {
@@ -910,9 +1063,9 @@ body {
   font-family: 'Arimo', sans-serif;
   font-size: clamp(11px, 1vw, 12.5px);
   color: #475569;
-  line-height: 1.45;
+  line-height: 1.5;
   overflow-wrap: break-word;
-  word-break: break-word;
+  word-break: normal;
   min-width: 0;
 }
 
@@ -921,7 +1074,7 @@ body {
   height: 5px;
   background: #10B981;
   border-radius: 50%;
-  margin-top: 6px;
+  margin-top: 7px;
   flex-shrink: 0;
 }
 
@@ -929,24 +1082,24 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  padding: 10px 12px;
+  padding: 11px 13px;
   background: #FFF5F5;
   border-radius: 11px;
   border-left: 3px solid #EF4444;
   min-width: 0;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ai-risk-alert svg { color: #EF4444; flex-shrink: 0; margin-top: 1px; }
 
 .risk-text {
   font-family: 'Arimo', sans-serif;
-  font-size: 12px;
+  font-size: clamp(11px, 1vw, 12px);
   color: #991B1B;
   font-weight: 500;
-  line-height: 1.45;
+  line-height: 1.5;
   overflow-wrap: break-word;
-  word-break: break-word;
+  word-break: normal;
 }
 
 .ai-insights-card.error {
@@ -993,7 +1146,17 @@ body {
     grid-template-columns: minmax(0, 1fr) clamp(240px, 20vw, 320px);
   }
 
-  .pa-chart-shell { height: clamp(260px, 30vh, 360px); }
+  .pa-chart-shell { height: clamp(240px, 26vw, 340px); }
+}
+
+/* ============================================
+   RESPONSIVE — Standard desktop (1281–1439px)
+   Fills the gap between the small-laptop and large-desktop
+   rules so spacing/height interpolate smoothly instead of
+   jumping at either edge.
+   ============================================ */
+@media (min-width: 1281px) and (max-width: 1439px) {
+  .pa-chart-shell { height: clamp(220px, 27vw, 320px); }
 }
 
 /* ============================================
@@ -1019,9 +1182,14 @@ body {
     gap: 14px;
   }
 
-  .pa-chart-shell { height: clamp(200px, 26vh, 280px); }
+  .pa-chart-shell { height: clamp(200px, 24vw, 280px); }
+
+  .pa-chart-marker { width: 20px; height: 20px; }
+  .pa-chart-marker-dot { width: 7px; height: 7px; }
 
   .ai-badge { font-size: 9px; padding: 2px 7px; }
+
+  .pa-tab-row { row-gap: 12px; }
 }
 
 /* ============================================
@@ -1048,10 +1216,16 @@ body {
     gap: 14px;
   }
 
-  .pa-chart-shell { height: clamp(180px, 24vh, 260px); }
+  .pa-chart-shell { height: clamp(190px, 30vw, 260px); }
   .pa-chart-legend { gap: 14px; }
 
+  .pa-chart-marker { width: 18px; height: 18px; }
+  .pa-chart-marker-dot { width: 7px; height: 7px; }
+
   .ai-badge { display: none; }
+
+  .pa-tab-row { row-gap: 10px; }
+  .pa-refresh-bar { flex-wrap: wrap; }
 }
 
 /* ============================================
@@ -1075,10 +1249,34 @@ body {
   }
 
   .pa-ai-card {
-    position: static;
-    max-height: none;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ai-insights-card {
+    height: auto;
+  }
+
+  .ai-insights-content {
     overflow-y: visible;
-    overflow-x: hidden;
+    max-height: none;
+  }
+
+  .pa-page-header { margin-bottom: 18px; }
+
+  .pa-tab-row {
+    row-gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .pa-refresh-bar {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .pa-refresh-btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   .pa-department-grid {
@@ -1092,9 +1290,14 @@ body {
   .pa-chart-summary  { flex-direction: row; flex-wrap: wrap; gap: 8px; }
   .pa-summary-change { margin-left: auto; }
 
-  .pa-chart-shell { height: clamp(160px, 40vw, 240px); }
+  .pa-chart-shell { height: clamp(180px, 55vw, 260px); }
 
   .pa-chart-legend { gap: 12px; }
+
+  .pa-chart-marker { width: 16px; height: 16px; }
+  .pa-chart-marker-dot { width: 6px; height: 6px; border-width: 1.5px; }
+  .pa-chart-marker-tooltip { padding: 4px 8px; }
+  .pa-chart-marker-tooltip strong { font-size: 11px; }
 
   .pa-overview-card     { padding: 12px 14px; }
   .pa-overview-card-top { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -1116,10 +1319,13 @@ body {
   .pa-chart-card  { padding: 14px 12px; }
   .pa-chart-icon  { width: 34px; height: 34px; }
 
-  .pa-chart-shell { height: clamp(140px, 38vw, 200px); }
+  .pa-chart-shell { height: clamp(160px, 52vw, 220px); }
 
   .pa-chart-legend { gap: 10px; }
   .pa-legend-swatch { width: 14px; }
+
+  .pa-chart-marker { width: 14px; height: 14px; }
+  .pa-chart-marker-dot { width: 6px; height: 6px; border-width: 1.5px; }
 
   .pa-program-code { font-size: 11px; padding: 3px 10px; }
 
@@ -1147,4 +1353,21 @@ body {
   .pa-summary-change { margin-left: 0; }
 
   .pa-overview-stats { display: none; }
+
+  .pa-chart-marker { width: 12px; height: 12px; }
+  .pa-chart-marker-dot { width: 5px; height: 5px; }
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .pa-chart-marker-dot,
+  .pa-view-breakdown-btn,
+  .pa-chart-line {
+    transition: none;
+  }
+  .pa-chart-marker-tooltip {
+    animation: none;
+  }
 }

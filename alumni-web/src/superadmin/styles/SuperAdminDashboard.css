@@ -667,6 +667,21 @@
   }
 }
 
+/* ============================ KPI GRID — SHS MODIFIER ============================ */
+/* Ported from Admin: SHS view shows fewer institutional KPI cards, so the
+   grid drops to 2 columns instead of 3 to avoid awkward whitespace.
+   Required for the kpi-grid--shs class applied in
+   SuperAdminDashboardView.jsx to have any visual effect. */
+.kpi-grid.kpi-grid--shs {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 600px) {
+  .kpi-grid.kpi-grid--shs {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 1200px) {
   .charts-row { flex-direction: column; }

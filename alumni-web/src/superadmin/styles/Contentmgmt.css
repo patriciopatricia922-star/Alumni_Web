@@ -90,6 +90,11 @@ body {
   overflow-x: visible;
 }
 
+.cm-tab:nth-child(3),
+.cm-tab:nth-child(6) {
+  margin-left: 16px;
+}
+
 .cm-tab {
   display: inline-flex;
   align-items: center;
@@ -116,13 +121,44 @@ body {
 }
 
 /* ── Board title ──────────────────────────────────────────────────────────── */
+.cm-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .cm-board-title {
   font-family: 'Lexend', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: #1E293B;
-  margin: 0 0 20px;
+  margin: 0;
   letter-spacing: -0.2px;
+}
+
+.cm-reward-filters {
+  display: flex;
+  gap: 6px;
+}
+
+.cm-filter-btn {
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-family: 'Arimo', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cm-filter-btn.active {
+  background: #1E293B;
+  color: #fff;
+  border-color: #1E293B;
 }
 
 /* ── Board grid ───────────────────────────────────────────────────────────── */
@@ -191,9 +227,14 @@ body {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 0px;
   transition: all 0.2s;
 }
+
+.content-item-body {
+  padding: 20px;
+}
+
 .content-item-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
@@ -203,8 +244,8 @@ body {
   width: 100%;
   height: 140px;
   overflow: hidden;
-  border-radius: 8px;
-  margin-bottom: 12px;
+  /* border-radius: 8px;
+  margin-bottom: 12px; */
   background: #F1F5F9;
 }
 .content-item-image img {
@@ -290,6 +331,100 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* Edit button on landing page section cards */
+.cm-lp-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.cm-lp-edit-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
+}
+
+/* Add Section button (landing page tab header) */
+.cm-add-section-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cm-add-section-btn:hover { background: #0f172a; }
+
+/* "Edit Content" button on disclosure tab */
+.cm-disclosure-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cm-disclosure-edit-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
+}
+
+/* Disclosure preview cards */
+.cm-disclosure-card {
+  background: #ffffff;
+  border: 1px solid #e8edf3;
+  border-radius: 12px;
+  padding: 20px 22px;
+  transition: box-shadow 0.15s;
+}
+.cm-disclosure-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+
+.cm-disclosure-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cm-disclosure-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cm-disclosure-card-preview {
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.65;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ── Landing page card ────────────────────────────────────────────────────── */

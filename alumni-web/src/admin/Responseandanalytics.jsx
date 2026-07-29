@@ -252,7 +252,7 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     informedAboutEvents: safeText(engagement.informed_about_events) || '',
     willingToParticipate: isShs ? toArray(engagement.participate_in) : toArray(engagement.participate_in),
     willingToParticipateOther: isShs
-      ? safeText(engagement.other_participate)         // ← SHS key differs ('other_participate' vs 'participate_in_other')
+      ? safeText(engagement.other_participate)         
       : safeText(engagement.participate_in_other) || '',
   };
 };

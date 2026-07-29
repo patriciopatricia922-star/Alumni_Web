@@ -90,6 +90,28 @@ const safeParse = (value) => {
   try { return JSON.parse(value); } catch { return null; }
 };
 
+// Ported from Admin: generic satisfaction computation helper, used for both
+// College (feedback_university_data) and SHS (shs_feedback_and_engagement_data).
+const computeSatisfaction = (rows, dataField, innerField = "satisfaction") => {
+  const scores = rows
+    .filter((r) => r[dataField] !== null && r[dataField] !== undefined)
+    .map((r) => {
+      const parsed = safeParse(r[dataField]);
+      return SATISFACTION_SCORE[parsed?.[innerField]] || null;
+    })
+    .filter(Boolean);
+
+  if (scores.length === 0) return { avg: "N/A", count: 0 };
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+  return { avg: avg.toFixed(1), count: scores.length };
+};
+
+// Ported from Admin: generic survey completion rate helper.
+const computeSurveyRate = (completedCount, totalCount) => {
+  if (totalCount === 0) return "0%";
+  return `${Math.round((completedCount / totalCount) * 100)}%`;
+};
+
 const institutionalKpis = {
   employment: [
     {
@@ -190,6 +212,8 @@ const institutionalKpis = {
   ],
 };
 
+// Ported from Admin: adds `respondents` per program, matching Admin's
+// buildCareerAlignmentData exactly.
 const buildCareerAlignmentData = (predictions) => {
   if (!predictions || predictions.length === 0) return [];
 
@@ -208,7 +232,9 @@ const buildCareerAlignmentData = (predictions) => {
     const endRow    = sorted[sorted.length - 1];
     const predicted = Math.round(endRow.predicted_rate ?? 0);
 
-    return { program, predicted, actual };
+    const respondents = sorted.length;
+
+    return { program, predicted, actual, respondents };
   });
 };
 
@@ -218,17 +244,22 @@ const SuperAdminDashboard = () => {
 
   const [activeKpiTab, setActiveKpiTab] = useState("employment");
 
+  // ── College Alumni stat cards ─────────────────────────────────────────────
+  // NOTE: `activePrograms` state below is intentionally left in place (in case
+  // anything else in this file still references it) but is NO LONGER surfaced
+  // in kpis2 — Admin's 3rd College stat card is Employment Rate, not Active
+  // Programs, so kpis2 now uses employmentRate/employmentRateSub to match
+  // Admin's exact card set and produce identical results for equivalent data.
   const [alumniCount,          setAlumniCount]          = useState('—');
   const [surveyCompletionRate, setSurveyCompletionRate]  = useState('—');
   const [alumniSubText,        setAlumniSubText]         = useState('loading...');
   const [surveySubText,        setSurveySubText]         = useState('loading...');
-  const [activePrograms,       setActivePrograms]        = useState('—');
-  const [activeProgramsSub,    setActiveProgramsSub]     = useState('from survey responses');
   const [alumniSatisfaction,   setAlumniSatisfaction]    = useState('—');
   const [satisfactionSub,      setSatisfactionSub]       = useState('based on feedback');
   const [employmentRate,       setEmploymentRate]        = useState('—');
   const [employmentRateSub,    setEmploymentRateSub]     = useState('loading...');
 
+  // ── SHS Alumni stat cards ─────────────────────────────────────────────────
   const [shsAlumniCount,          setShsAlumniCount]          = useState('—');
   const [shsAlumniSubText,        setShsAlumniSubText]         = useState('loading...');
   const [shsSurveyCompletionRate, setShsSurveyCompletionRate]  = useState('—');
@@ -306,8 +337,9 @@ const SuperAdminDashboard = () => {
       const collegeCompleted = collegeSurveyRows.filter(r => r.completed).length;
       const shsCompleted     = shsSurveyRows.filter(r => r.completed).length;
 
-      setSurveyCompletionRate(collegeAlumni.length > 0 ? `${Math.round((collegeCompleted / collegeAlumni.length) * 100)}%` : '0%');
-      setShsSurveyCompletionRate(shsAlumni.length > 0 ? `${Math.round((shsCompleted / shsAlumni.length) * 100)}%` : '0%');
+      // Ported from Admin: use computeSurveyRate helper for exact parity.
+      setSurveyCompletionRate(computeSurveyRate(collegeCompleted, collegeAlumni.length));
+      setShsSurveyCompletionRate(computeSurveyRate(shsCompleted, shsAlumni.length));
 
       const collegeCompletedThisMonth = collegeSurveyRows.filter(
         r => r.completed && new Date(r.last_updated) >= startOfMonth
@@ -335,74 +367,32 @@ const SuperAdminDashboard = () => {
         setShsSurveySubText(`${diff >= 0 ? '+' : ''}${diff} last month`);
       }
 
-      try {
-        const { data: eduRows, error: eduErr } = await supabase
-          .from('survey_progress')
-          .select('educational_background_data');
+      // ── Satisfaction scores — ported from Admin: use computeSatisfaction ──
+      const collegeSat = computeSatisfaction(
+        collegeSurveyRows,
+        "feedback_university_data",
+        "satisfaction",
+      );
+      if (collegeSat.count > 0) {
+        setAlumniSatisfaction(collegeSat.avg);
+        setSatisfactionSub(`Based on ${collegeSat.count} response${collegeSat.count !== 1 ? 's' : ''}`);
+      } else {
+        setAlumniSatisfaction('N/A');
+        setSatisfactionSub('No feedback yet');
+      }
 
-        if (eduErr) {
-          console.error('Active programs error:', eduErr.message);
-          setActivePrograms('—');
-          setActiveProgramsSub('Unable to load');
-        } else if (eduRows) {
-          const programs = new Set(
-            eduRows
-              .filter(r => r.educational_background_data !== null)
-              .map(r => {
-                const parsed = safeParse(r.educational_background_data);
-                return parsed?.degreeProgram || parsed?.degree_program || null;
-              })
-              .filter(Boolean)
-          );
-          const count = programs.size;
-          setActivePrograms(String(count));
-          setActiveProgramsSub(count === 1 ? '1 active program' : `${count} active programs`);
-        }
-      } catch (e) { console.error('Active programs error:', e); }
-
-      try {
-        const collegeSat = (() => {
-          const scores = collegeSurveyRows
-            .filter(r => r.feedback_university_data !== null)
-            .map(r => {
-              const parsed = safeParse(r.feedback_university_data);
-              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
-            })
-            .filter(Boolean);
-          if (scores.length === 0) return { avg: 'N/A', count: 0 };
-          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-          return { avg: avg.toFixed(1), count: scores.length };
-        })();
-
-        if (collegeSat.count > 0) {
-          setAlumniSatisfaction(collegeSat.avg);
-          setSatisfactionSub(`Based on ${collegeSat.count} response${collegeSat.count !== 1 ? 's' : ''}`);
-        } else {
-          setAlumniSatisfaction('N/A');
-          setSatisfactionSub('No feedback yet');
-        }
-
-        const shsSat = (() => {
-          const scores = shsSurveyRows
-            .filter(r => r.shs_feedback_and_engagement_data !== null)
-            .map(r => {
-              const parsed = safeParse(r.shs_feedback_and_engagement_data);
-              return SATISFACTION_SCORE[parsed?.satisfaction] || null;
-            })
-            .filter(Boolean);
-          if (scores.length === 0) return { avg: 'N/A', count: 0 };
-          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-          return { avg: avg.toFixed(1), count: scores.length };
-        })();
-
-        if (shsSat.count > 0) {
-          setShsAlumniSatisfaction(shsSat.avg);
-          setShsSatisfactionSub(`Based on ${shsSat.count} response${shsSat.count !== 1 ? 's' : ''}`);
-        } else {
-          setShsAlumniSatisfaction('N/A');
-          setShsSatisfactionSub('No feedback yet');
-        }
-      } catch (e) { console.error('Alumni satisfaction error:', e); }
+      const shsSat = computeSatisfaction(
+        shsSurveyRows,
+        "shs_feedback_and_engagement_data",
+        "satisfaction",
+      );
+      if (shsSat.count > 0) {
+        setShsAlumniSatisfaction(shsSat.avg);
+        setShsSatisfactionSub(`Based on ${shsSat.count} response${shsSat.count !== 1 ? 's' : ''}`);
+      } else {
+        setShsAlumniSatisfaction('N/A');
+        setShsSatisfactionSub('No feedback yet');
+      }
 
       const insights = buildAllKpiInsights(collegeSurveyRows);
       setKpiInsights(insights);
@@ -532,6 +522,7 @@ const SuperAdminDashboard = () => {
         return leadershipRating !== null && Number(leadershipRating) >= 4;
       }).length;
 
+      // ── College Employment Rate stat card ─────────────────────────────────
       const employedStatCount = withEmpData.filter(r => isEmployedHelper(r.emp)).length;
       if (withEmpData.length > 0) {
         const empRatePct = Math.round((employedStatCount / withEmpData.length) * 100);
@@ -542,14 +533,17 @@ const SuperAdminDashboard = () => {
         setEmploymentRateSub('No employment data yet');
       }
 
+      // ── SHS Retention Rate — ported from Admin's exact field logic ───────
+      // Admin defines "retained" as shs_educational_background_data.status
+      // === "Currently Studying". The previous guessed-field version here
+      // (pursued_undergrad/continued_studies/etc.) did not match Admin's
+      // schema assumptions and would compute different results for the same
+      // rows, so it has been replaced to guarantee identical output.
       const shsWithEduData = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
       const shsRetained = shsWithEduData.filter(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return false;
-        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
-          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
-          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
-        return val === 'Yes' || val === true || val === 1;
+        return edu.status === 'Currently Studying';
       }).length;
 
       if (shsWithEduData.length > 0) {
@@ -561,32 +555,41 @@ const SuperAdminDashboard = () => {
         setShsRetentionSub('No education data yet');
       }
 
+      // ── SHS Post-Graduation Path chart — ported from Admin's exact
+      // bucketing logic (pursued_nu_branch / nu_branch / school_name) ───────
       const postGradCounts = {};
       shsSurveyRows.forEach(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return;
-        const path = edu.post_graduation_path || edu.postGraduationPath || edu.after_graduation ||
-          edu.afterGraduation || edu.plans_after_shs || edu.plansAfterShs ||
-          edu.what_did_you_do || edu.whatDidYouDo || '';
-        if (!path) return;
-        postGradCounts[path] = (postGradCounts[path] || 0) + 1;
+
+        let bucket = '';
+        if (edu.pursued_nu_branch === 'Yes') {
+          bucket = (edu.nu_branch || '').trim();
+        } else if (edu.pursued_nu_branch === 'No') {
+          bucket = (edu.school_name || '').trim();
+        }
+
+        if (!bucket) return;
+        postGradCounts[bucket] = (postGradCounts[bucket] || 0) + 1;
       });
       setShsPostGradPathData(
         Object.entries(postGradCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
       );
 
+      // ── SHS Continued Studies chart — ported from Admin's exact
+      // bucketing logic (pursued_nu_branch / pursued_other_school) ─────────
       let shsContinuedAtNu = 0, shsContinuedElsewhere = 0, shsDidNotContinue = 0;
       shsSurveyRows.forEach(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return;
-        const pursued = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
-          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
-          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
-        const didPursue = pursued === 'Yes' || pursued === true || pursued === 1;
-        if (!didPursue) { shsDidNotContinue++; return; }
-        const school = edu.school || edu.institution || edu.university ||
-          edu.undergraduate_school || edu.undergraduateSchool || edu.continued_at || edu.continuedAt || '';
-        if (isNuBranch(school)) shsContinuedAtNu++; else shsContinuedElsewhere++;
+
+        if (edu.pursued_nu_branch === 'Yes') {
+          shsContinuedAtNu++;
+        } else if (edu.pursued_nu_branch === 'No' && edu.pursued_other_school === 'Yes') {
+          shsContinuedElsewhere++;
+        } else {
+          shsDidNotContinue++;
+        }
       });
       setShsContinuedStudiesData(
         [
@@ -596,14 +599,14 @@ const SuperAdminDashboard = () => {
         ].filter(d => d.value > 0)
       );
 
+      // ── SHS Institutional KPI tab values — ported from Admin's exact
+      // field logic (pursued_other_school / pursued_nu_branch) ──────────────
       const shsWithEduRows = shsSurveyRows.filter(r => r.shs_educational_background_data !== null);
+
       const shsPursuedUndergrad = shsWithEduRows.filter(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return false;
-        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
-          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
-          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
-        return val === 'Yes' || val === true || val === 1;
+        return edu.pursued_other_school === 'Yes';
       }).length;
       const shsPursuedUndergradPct = shsWithEduRows.length > 0
         ? Math.round((shsPursuedUndergrad / shsWithEduRows.length) * 100) : 0;
@@ -611,13 +614,7 @@ const SuperAdminDashboard = () => {
       const shsPursuedUndergradNu = shsWithEduRows.filter(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return false;
-        const val = edu.pursued_undergrad ?? edu.pursuedUndergrad ?? edu.continued_studies ??
-          edu.continuedStudies ?? edu.pursue_undergraduate ?? edu.pursueUndergraduate ??
-          edu.enrolled_undergraduate ?? edu.enrolledUndergraduate ?? null;
-        if (val !== 'Yes' && val !== true && val !== 1) return false;
-        const school = edu.school || edu.institution || edu.university ||
-          edu.undergraduate_school || edu.undergraduateSchool || edu.continued_at || edu.continuedAt || '';
-        return isNuBranch(school);
+        return edu.pursued_nu_branch === 'Yes';
       }).length;
       const shsPursuedUndergradNuPct = shsWithEduRows.length > 0
         ? Math.round((shsPursuedUndergradNu / shsWithEduRows.length) * 100) : 0;
@@ -726,7 +723,8 @@ const SuperAdminDashboard = () => {
           }).sort((a, b) => b.alignment - a.alignment);
           setEmploymentAlignmentData(alignmentByProgram.slice(0, 6));
 
-          setCareerAlignmentData(buildCareerAlignmentData(predictions));
+          // Ported from Admin: slice to top 10, matching Admin exactly.
+          setCareerAlignmentData(buildCareerAlignmentData(predictions).slice(0, 10));
 
         } else if (predError) {
           console.error('Predictions fetch error:', predError.message);
@@ -856,10 +854,14 @@ const SuperAdminDashboard = () => {
     fetchChartData();
   }, []);
 
+  // ── College — matches Admin's exact card set: Registered Alumni, Survey
+  // Response Rate, Employment Rate, Alumni Satisfaction. "Active Programs"
+  // has been removed from this row since it has no Admin equivalent and
+  // would make Super Admin's College dashboard diverge from Admin's.
   const kpis2 = [
     { label: "Registered Alumni",    value: alumniCount,          sub: alumniSubText      },
     { label: "Survey Response Rate", value: surveyCompletionRate, sub: surveySubText      },
-    { label: "Active Programs",      value: activePrograms,       sub: activeProgramsSub  },
+    { label: "Employment Rate",      value: employmentRate,       sub: employmentRateSub  },
     { label: "Alumni Satisfaction",  value: alumniSatisfaction,   sub: satisfactionSub    },
   ];
 

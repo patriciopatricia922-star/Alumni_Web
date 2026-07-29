@@ -1,12 +1,13 @@
 //SuperAdmin Contentmgmtview.jsx
 import React, { useEffect, useCallback } from 'react';
-import '../styles/ContentMgmt.css';
+import '../styles/Contentmgmt.css';
 
 import EventModal        from '../modals/EventModal';
 import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal          from '../modals/JobModal';
 import DiscountModal     from '../modals/DiscountModal';
 import LandingModal      from '../modals/LandingModal';
+import RewardsModal      from '../modals/RewardsModal';
 import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
 
 const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
@@ -36,6 +37,11 @@ const TabIcon = ({ type, active }) => {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
       <line x1="7" y1="7" x2="7.01" y2="7"/>
+    </svg>
+  );
+  if (type === 'rewards') return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
     </svg>
   );
   if (type === 'landingpage') return (
@@ -168,8 +174,9 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   };
 
   const typeColor = {
-    events: '#155DFC', announcements: '#F59E0B', jobs: '#10B981', discounts: '#8B5CF6',
-  }[type] || '#6A7282';
+     events: '#155DFC', announcements: '#F59E0B', jobs: '#10B981', discounts: '#8B5CF6',
+     rewards: '#F97316',  
+    }[type] || '#6A7282';
 
   const typeIcon = () => {
     if (type === 'events') return (
@@ -197,10 +204,15 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
         <line x1="7" y1="7" x2="7.01" y2="7"/>
       </svg>
     );
+    if (type === 'rewards') return (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    );
     return null;
   };
 
-  const showImage = ['events', 'jobs', 'discounts'].includes(type) && item.image_url;
+  const showImage = ['events', 'jobs', 'discounts', 'rewards', 'announcements'].includes(type) && item.image_url;
 
   return (
     <div className="content-item-card">
@@ -268,6 +280,18 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
           {item.valid_until && <span>Valid until {new Date(item.valid_until).toLocaleDateString()}</span>}
         </div>
       )}
+      {type === 'rewards' && (
+        <div className="content-item-meta">
+          {item.category && <span>{item.category}</span>}
+          <span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            {item.points_required} pts
+          </span>
+          {item.stock != null && <span>Stock: {item.stock}</span>}
+        </div>
+      )}
     </div>
   );
 };
@@ -315,17 +339,19 @@ const ConfirmDialog = ({ action, onClose }) => {
   return (
     <div className="cm-confirm-overlay" onClick={onClose}>
       <div className="cm-confirm-box" onClick={(e) => e.stopPropagation()}>
-        <h3 className="cm-confirm-title">{action.label}</h3>
-        {action.description && <p className="cm-confirm-desc">{action.description}</p>}
-        <div className="cm-confirm-actions">
-          <button className="cm-btn-cancel" onClick={onClose}>Cancel</button>
-          <button
-            className="cm-btn-submit"
-            style={{ background: action.confirmColor || '#1E293B' }}
-            onClick={() => { action.onConfirm(); onClose(); }}
-          >
-            {action.confirmText || 'Confirm'}
-          </button>
+        <div className="cm-confirm-content">
+          <h3 className="cm-confirm-title">{action.label}</h3>
+          {action.description && <p className="cm-confirm-desc">{action.description}</p>}
+          <div className="cm-confirm-actions">
+            <button className="cm-btn-cancel" onClick={onClose}>Cancel</button>
+            <button
+              className="cm-btn-submit"
+              style={{ background: action.confirmColor || '#1E293B' }}
+              onClick={() => { action.onConfirm(); onClose(); }}
+            >
+              {action.confirmText || 'Confirm'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -383,24 +409,30 @@ const ContentManagementView = ({
   onUpdateJob,
   onCreateDiscount,
   onUpdateDiscount,
+  onCreateReward,
+  onUpdateReward,
   onCreateLandingSection,
   onUpdateLandingSection,
   onArchive,
   onRestore,
   onShowConfirm,
   sidebar,
+  alumniType,
 }) => {
   const handleToastClose = useCallback(() => {}, []);
+
+  const [rewardFilter, setRewardFilter] = React.useState('All');
+  const REWARD_FILTERS = ['All', 'Apparel', 'Drinkware', 'Accessories', 'Others'];
 
   const editableLandingSections = (landingSections || []).filter(
     s => !HIDDEN_SECTION_TYPES.includes(s.section_type)
   );
 
   const labels = {
-    create: { events: 'Add Event', announcements: 'Add Post', jobs: 'Add Job', discounts: 'Add Deal', landingpage: 'Add Section' },
-    desc:   { events: 'Schedule events for your alumni community.', announcements: 'Post updates visible to all alumni.', jobs: 'Share job opportunities with alumni.', discounts: 'Share exclusive deals for alumni.' },
-    empty:  { events: 'No events yet', announcements: 'No announcements yet', jobs: 'No job listings yet', discounts: 'No discounts yet', landingpage: 'No landing page sections', disclosurepage: 'No disclosure content yet' },
-    emptyD: { events: 'Events you create will appear here.', announcements: 'Announcements you post will appear here.', jobs: 'Job postings will appear here once added.', discounts: 'Discount offers will appear here once added.', landingpage: 'Create sections to display on the landing page.', disclosurepage: 'Click Edit on either card to update the content.' },
+    create: { events: 'Add Event', announcements: 'Add Post', jobs: 'Add Job', discounts: 'Add Deal', rewards: 'Add Reward', landingpage: 'Add Section' },
+    desc:   { events: 'Schedule events for your alumni community.', announcements: 'Post updates visible to all alumni.', jobs: 'Share job opportunities with alumni.', discounts: 'Share exclusive deals for alumni.', rewards: 'Add redeemable merch and items for alumni.' },
+    empty:  { events: 'No events yet', announcements: 'No announcements yet', jobs: 'No job listings yet', discounts: 'No discounts yet', rewards: 'No rewards yet', landingpage: 'No landing page sections', disclosurepage: 'No disclosure content yet' },
+    emptyD: { events: 'Events you create will appear here.', announcements: 'Announcements you post will appear here.', jobs: 'Job postings will appear here once added.', discounts: 'Discount offers will appear here once added.', rewards: 'Reward items will appear here once added.', landingpage: 'Create sections to display on the landing page.', disclosurepage: 'Click Edit on either card to update the content.' },
   };
 
   const boardTitle = {
@@ -408,12 +440,30 @@ const ContentManagementView = ({
     announcements:   'Announcement Board',
     jobs:            'Job Board',
     discounts:       'Discount Board',
+    rewards:         'Rewards Board',
     landingpage:     'Landing Page Content',
     disclosurepage:  'User Notification / Disclosure',
   }[activeTab] || '';
 
   const renderContent = () => {
     if (loading) return <div className="loading-state">Loading content…</div>;
+
+    if (alumniType === 'shs' && activeTab !== 'landingpage' && activeTab !== 'disclosurepage') {
+      return (
+        <div className="cm-board">
+          <div className="cm-create-card" onClick={onOpenCreate}>
+            <div className="cm-create-plus">+</div>
+            <div className="cm-create-label">{labels.create[activeTab] || 'Create'}</div>
+            <div className="cm-create-desc">{labels.desc[activeTab] || ''}</div>
+          </div>
+          <div className="empty-state-card">
+            <div className="empty-state-icon">📭</div>
+            <div className="empty-state-title">{labels.empty[activeTab] || 'No items yet'}</div>
+            <div className="empty-state-desc">No alumni records found.</div>
+          </div>
+        </div>
+      );
+    }
 
     if (activeTab === 'disclosurepage') {
       return (
@@ -451,6 +501,15 @@ const ContentManagementView = ({
       );
     }
 
+    const displayedItems = (activeTab === 'rewards' && rewardFilter !== 'All')
+      ? activeItems.filter(item => {
+          if (rewardFilter === 'Others') {
+            return !['Apparel', 'Drinkware', 'Accessories'].includes(item.category);
+          }
+          return item.category === rewardFilter;
+        })
+      : activeItems;
+
     const createCard = (
       <div className="cm-create-card" onClick={onOpenCreate}>
         <div className="cm-create-plus">+</div>
@@ -462,14 +521,14 @@ const ContentManagementView = ({
     return (
       <div className="cm-board">
         {createCard}
-        {activeItems.length === 0 ? (
+        {displayedItems.length === 0 ? (
           <div className="empty-state-card">
             <div className="empty-state-icon">📭</div>
             <div className="empty-state-title">{labels.empty[activeTab] || 'No items yet'}</div>
             <div className="empty-state-desc">{labels.emptyD[activeTab] || ''}</div>
           </div>
         ) : (
-          activeItems.map((item) => (
+          displayedItems.map((item) => (
             <ContentItemCard
               key={item.id}
               item={item}
@@ -500,7 +559,7 @@ const ContentManagementView = ({
         <div className="cm-header">
           <div>
             <h1 className="cm-title">Content Management</h1>
-            <p className="cm-subtitle">Manage announcements, jobs, events, discounts, and homepage content.</p>
+            <p className="cm-subtitle">Manage announcements, jobs, events, discounts, rewards, and homepage content.</p>
           </div>
           <button className="cm-archive-btn" onClick={() => setShowArchive(true)}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -526,7 +585,23 @@ const ContentManagementView = ({
             ))}
           </div>
 
-          <div className="cm-board-title">{boardTitle}</div>
+          {/* <div className="cm-board-title">{boardTitle}</div> */}
+          <div className="cm-board-header">
+            <div className="cm-board-title">{boardTitle}</div>
+            {activeTab === 'rewards' && (
+              <div className="cm-reward-filters">
+                {REWARD_FILTERS.map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setRewardFilter(f)}
+                    className={`cm-filter-btn ${rewardFilter === f ? 'active' : ''}`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {renderContent()}
         </div>
@@ -536,23 +611,27 @@ const ContentManagementView = ({
         <ArchivePanel archivedItems={archivedItems} onClose={() => setShowArchive(false)} onRestore={onRestore} />
       )}
 
-      {modalOpen && activeTab === 'events' && (
+      {modalOpen && !showArchive && activeTab === 'events' && (
         <EventModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           event={editingItem} onCreate={onCreateEvent} onUpdate={onUpdateEvent} />
       )}
-      {modalOpen && activeTab === 'announcements' && (
+      {modalOpen && !showArchive && activeTab === 'announcements' && (
         <AnnouncementModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           announcement={editingItem} onCreate={onCreateAnnouncement} onUpdate={onUpdateAnnouncement} />
       )}
-      {modalOpen && activeTab === 'jobs' && (
+      {modalOpen && !showArchive && activeTab === 'jobs' && (
         <JobModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           job={editingItem} onCreate={onCreateJob} onUpdate={onUpdateJob} />
       )}
-      {modalOpen && activeTab === 'discounts' && (
+      {modalOpen && !showArchive && activeTab === 'discounts' && (
         <DiscountModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           discount={editingItem} onCreate={onCreateDiscount} onUpdate={onUpdateDiscount} />
       )}
-      {modalOpen && activeTab === 'landingpage' && (
+      {modalOpen && !showArchive && activeTab === 'rewards' && (
+        <RewardsModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
+        reward={editingItem} onCreate={onCreateReward} onUpdate={onUpdateReward}/>
+      )}
+      {modalOpen && !showArchive && activeTab === 'landingpage' && (
         <LandingModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           section={editingSection || editingItem}
           onCreate={onCreateLandingSection} onUpdate={onUpdateLandingSection} />
