@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import '../styles/ResponseAnalytics.css';
 import { exportSurveyPDF } from '../../utils/exportPDF';
+import { exportSHSSurveyPDF } from '../../utils/exportSHSPDF';
 
 // ============================ CONSTANTS ============================
 const PAGE_SIZE = 10;
@@ -126,7 +127,7 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
 // ============================ RESPONSE MODAL ============================
 // INTEGRATION: Merged friend's expanded modal with all 7 sections including
 // Section 5 (Job Experience) and Section 7 (Feedback & Alumni Engagement).
-const ResponseModal = ({ data, onClose }) => {
+const ResponseModal = ({ data, onClose, alumniType }) => {
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
@@ -215,7 +216,9 @@ const ResponseModal = ({ data, onClose }) => {
               <Field label="Student Number" value={data.studentNumber} />
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
+              {!alumniType || alumniType !== 'shs' ? (
               <Field label="Civil Status" value={data.civilStatus} />
+              ) : null }
               <Field label="Contact Number" value={data.contact} />
               <Field label="Personal Email Address" value={data.email} />
             </div>
@@ -240,13 +243,16 @@ const ResponseModal = ({ data, onClose }) => {
             </div>
             <div className="ra-grid" style={{ marginBottom: 10 }}>
               <Field label="Year Graduated" value={data.batch} />
+              {!alumniType || alumniType !== 'shs' ? (
               <Field label="Distinction Received" value={data.distinction} />
+              ) : null }
               <Field label="Plans for Post-Graduate Studies" value={data.postGradPlans} />
               {data.postGradPlans === "Yes" && <Field label="Post-Graduate Course" value={data.postGradCourse} />}
             </div>
           </div>
 
           {/* Section 3: Certification Achievements */}
+          {!alumniType || alumniType !== 'shs' ? (
           <div>
             <SectionHeader title="Section 3 — Certification Achievements" color="#F59E0B" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
@@ -261,6 +267,7 @@ const ResponseModal = ({ data, onClose }) => {
               ) : <span style={{ color: "#9ca3af" }}>None</span>}
             </FullBlock>
           </div>
+          ) : null}
 
           {/* Section 4: Employment Information */}
           <div>
@@ -373,6 +380,7 @@ const ResponseAnalyticsView = ({
   isSectionVisible,
   renderStars,
   sidebar,
+  alumniType={alumniType}
 }) => {
   const filterRef = useRef(null);
 
@@ -481,7 +489,7 @@ const ResponseAnalyticsView = ({
                       "All Sections",
                       "Personal Information",
                       "Educational Information",
-                      "Certification Achievements",
+                      (alumniType !== 'shs' ? ["Certification Achievements"] : []),
                       "Employment Information",
                       "Job Experience",
                       "Skills & Competencies",
@@ -537,7 +545,7 @@ const ResponseAnalyticsView = ({
                 </div>
               )}
 
-              {isSectionVisible("educational-information") && (
+              {isSectionVisible("educational-information") && alumniType !== 'shs' && (
                 <div className="ra-chart-single">
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Board Exam Pass Rate</h3>
@@ -554,7 +562,7 @@ const ResponseAnalyticsView = ({
                 </div>
               )}
 
-              {isSectionVisible("certification-achievements") && (
+              {isSectionVisible("certification-achievements") && alumniType !== 'shs' && (
                 <div className="ra-chart-single">
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Certification Status</h3>
@@ -707,26 +715,34 @@ const ResponseAnalyticsView = ({
                     <col /><col /><col /><col />
                   </colgroup>
                   <tbody>
-                    {visibleRows.map((a, i) => (
-                      <tr key={pageStart + i} onClick={() => setSelectedResponse(a)} style={{ cursor: "pointer" }}>
-                        <td>
-                          <div className="ra-name-cell">
-                            <div className="ra-avatar">{a.name?.charAt(0) || '?'}</div>
-                            <div>
-                              <div className="ra-name">{a.name}</div>
-                              <div className="ra-email">{a.email}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td><span className="ra-batch">{a.batch}</span></td>
-                        <td>{a.program?.length > 40 ? a.program.slice(0, 40) + "…" : a.program}</td>
-                        <td>
-                          <span className={`ra-status ${a.status?.toLowerCase().replace(/ /g, '-') || ''}`}>
-                            {a.status}
-                          </span>
+                    {visibleRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: '#94A3B8' }}>
+                          No alumni records here
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      visibleRows.map((a, i) => (
+                        <tr key={pageStart + i} onClick={() => setSelectedResponse(a)} style={{ cursor: "pointer" }}>
+                          <td>
+                            <div className="ra-name-cell">
+                              <div className="ra-avatar">{a.name?.charAt(0) || '?'}</div>
+                              <div>
+                                <div className="ra-name">{a.name}</div>
+                                <div className="ra-email">{a.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td><span className="ra-batch">{a.batch}</span></td>
+                          <td>{a.program?.length > 40 ? a.program.slice(0, 40) + "…" : a.program}</td>
+                          <td>
+                            <span className={`ra-status ${a.status?.toLowerCase().replace(/ /g, '-') || ''}`}>
+                              {a.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -775,7 +791,7 @@ const ResponseAnalyticsView = ({
               </div>
 
               {selectedResponse && (
-                <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} />
+                <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} alumniType={alumniType} />
               )}
             </div>
           )}
@@ -845,12 +861,21 @@ const ResponseAnalyticsView = ({
                   if (exportFormat === 'csv') {
                     exportToCSV(respondents, 'survey-responses');
                   } else if (exportFormat === 'pdf') {
-                    exportSurveyPDF({
-                      filterType: exportFilterType,
-                      filterValue: exportSelected,
-                      stats: stats,
-                      respondents: respondents,
-                    }).catch(err => console.error('PDF export error:', err));
+                    if (alumniType === 'shs') {
+                      exportSHSSurveyPDF({
+                        filterType: exportFilterType,
+                        filterValue: exportSelected,
+                        stats: stats,
+                        respondents: respondents,
+                      }).catch(err => console.error('SHS PDF export error:', err));
+                    } else {
+                      exportSurveyPDF({
+                        filterType: exportFilterType,
+                        filterValue: exportSelected,
+                        stats: stats,
+                        respondents: respondents,
+                      }).catch(err => console.error('PDF export error:', err));
+                    }
                   }
                   setExportOpen(false);
                   resetExport();

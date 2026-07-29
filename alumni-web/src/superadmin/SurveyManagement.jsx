@@ -1,17 +1,45 @@
 // ============================================================================
-// THIS IS FOR LOGIC.
+// SurveyManagement.jsx — Logic Controller (SHS added as additional survey type) SUPER ADMIN
 // ============================================================================
-// Purpose: Handles all business logic, state management, API calls,
-//          data transformations, and event handlers for survey management.
+// SYNC NOTES
+// ───────────────
+// Ported from Admin implementation to give Super Admin full College/SHS
+// parity while preserving Super Admin's own file paths, sidebar import,
+// and component structure.
+//   • All original College Survey Management logic preserved.
+//   • Added: DEFAULT_SHS_SURVEY dataset, SHS state mirroring College 1:1,
+//     useAlumniType() context read to select active survey/configId/branches,
+//     separate SHS load effect, SHS-aware handlePublish, normalizeIds,
+//     migrateIntegerIds, sanitiseBranches, debug logger, SurveySkeletonView.
+//   • Super Admin's own import paths (./SuperAdsidebar, ./Views/SurveyMgmtView)
+//     are preserved exactly — only "./contexts/AlumniTypeContext" is new,
+//     matching wherever Super Admin's AlumniTypeContext actually lives.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./SuperAdsidebar";
 import SurveyMgmtView from "./Views/SurveyMgmtView";
+import SurveySkeletonView from "./Views/SurveySkeletonView";
+import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 // ============================================================================
-// DEFAULT SURVEY DATA - Initial survey structure when no config exists
+// DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
+// ============================================================================
+const DEBUG = () =>
+  typeof localStorage !== "undefined" &&
+  localStorage.getItem("surveyDebug") === "1";
+
+const dbg = (...args) => {
+  if (DEBUG()) console.log("[SurveyMgmt]", ...args);
+};
+
+const dbgWarn = (...args) => {
+  if (DEBUG()) console.warn("[SurveyMgmt]", ...args);
+};
+
+// ============================================================================
+// DEFAULT SURVEY DATA — COLLEGE (UNCHANGED — Super Admin's original data)
 // ============================================================================
 const DEFAULT_SURVEY = {
   title: "Alumni Survey",
@@ -129,7 +157,94 @@ const DEFAULT_SURVEY = {
 };
 
 // ============================================================================
-// TYPE LABELS MAPPING
+// DEFAULT SURVEY DATA — SHS (PORTED FROM ADMIN, unchanged)
+// ============================================================================
+const DEFAULT_SHS_SURVEY = {
+  title: "SHS Alumni Survey",
+  sections: [
+    {
+      id: 1,
+      title: "Personal Background",
+      description: "Basic information about you",
+      questions: [
+        { id: 1, type: "short", label: "Last Name", required: true, placeholder: "e.g. Dela Cruz" },
+        { id: 2, type: "short", label: "First Name", required: true, placeholder: "e.g. Juan" },
+        { id: 3, type: "short", label: "Middle Name", required: false, placeholder: "e.g. Mercado" },
+        { id: 4, type: "short", label: "Student Number", required: true, placeholder: "e.g. 2023-123456" },
+        { id: 5, type: "multiple", label: "Gender", required: true, options: ["Male", "Female", "Prefer not to say"] },
+        { id: 6, type: "date", label: "Birthday", required: true },
+        { id: 7, type: "multiple", label: "Civil Status", required: true, options: ["Single", "Married", "Other"] },
+        { id: 8, type: "short", label: "Street Address", required: true, placeholder: "e.g. Blk 123 Lot 456 AlumnAI St." },
+        { id: 9, type: "short", label: "City", required: true, placeholder: "e.g. Dasmarinas" },
+        { id: 10, type: "short", label: "Province", required: true, placeholder: "e.g. Cavite" },
+        { id: 11, type: "short", label: "ZIP Code", required: true, placeholder: "e.g. 4114" },
+        { id: 12, type: "multiple", label: "Country", required: true, options: ["Philippines", "United States", "Other"] },
+        { id: 13, type: "short", label: "Contact Number", required: true, placeholder: "e.g. 912-345-6789" },
+        { id: 14, type: "short", label: "Personal Email Address", required: true, placeholder: "e.g. juandelacruz@gmail.com" },
+      ],
+    },
+    {
+      id: 2,
+      title: "Educational Background",
+      description: "Your academic history.",
+      questions: [
+        { id: 1, type: "multiple", label: "Degree Program Completed", required: true, options: ["Academic", "Technical-Vocational-Livelihood", "Sports", "Arts and Design"] },
+        { id: 2, type: "multiple", label: "SHS Strand", required: true, options: ["STEM", "ABM", "HUMSS", "GAS", "TVL", "Sports", "Arts and Design"] },
+        { id: 3, type: "multiple", label: "Year Graduated from SHS", required: true, options: ["2022", "2023", "2024", "2025", "2026"] },
+        { id: 4, type: "multiple", label: "Distinction Received", required: false, options: ["With Highest Honors", "With High Honors", "With Honors", "None"] },
+      ],
+    },
+    {
+      id: 3,
+      title: "Employment Information",
+      description: "What you did after graduating from SHS",
+      questions: [
+        { id: 1, type: "multiple", label: "What did you do after graduating from SHS?", required: true, options: ["Pursued undergraduate studies", "Started working", "Took a gap year", "Enrolled in TESDA/vocational course", "Other"] },
+        { id: 2, type: "multiple", label: "Did you pursue undergraduate studies at NU Dasmariñas?", required: false, options: ["Yes", "No"] },
+        { id: 3, type: "short", label: "If No, which school did you transfer to?", required: false, placeholder: "Enter school name" },
+        { id: 4, type: "multiple", label: "If you pursued undergraduate studies, what degree program did you take?", required: false, options: ["BSIT", "BSCS", "BSCpE", "BSBA", "BSARCH", "BSCivE", "Other"] },
+        { id: 5, type: "multiple", label: "Why did you choose to continue/not continue at NU Dasmariñas?", required: false, options: ["Scholarship offered", "Preferred program available", "Closer to home", "Financial reasons", "Preferred a different school", "Other"] },
+      ],
+    },
+    {
+      id: 4,
+      title: "Job Search Experience",
+      description: "For SHS graduates who are currently working",
+      questions: [
+        { id: 1, type: "multiple", label: "Are you currently employed?", required: true, options: ["Yes, full-time", "Yes, part-time", "No"] },
+        { id: 2, type: "short", label: "Job title / Position", required: false, placeholder: "Enter your job title" },
+        { id: 3, type: "short", label: "Company / Employer", required: false, placeholder: "Enter company name" },
+        { id: 4, type: "multiple", label: "Is your job related to your SHS strand?", required: false, options: ["Yes", "No", "Somewhat"] },
+        { id: 5, type: "multiple", label: "Monthly income range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000"] },
+      ],
+    },
+    {
+      id: 5,
+      title: "Skills and Competencies",
+      description: "Your insights on the SHS program",
+      questions: [
+        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+      ],
+    },
+    {
+      id: 6,
+      title: "Feedback and Alumni Engagement",
+      description: "Your insights on the SHS program",
+      questions: [
+        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+      ],
+    },
+  ],
+};
+
+// ============================================================================
+// TYPE LABELS MAPPING (UNCHANGED)
 // ============================================================================
 const TYPE_LABELS = {
   short:    "Short Answer",
@@ -142,15 +257,14 @@ const TYPE_LABELS = {
 };
 
 // ============================================================================
-// uid — collision-safe ID generator.
-// Combines timestamp with a random suffix so rapid additions never collide.
+// uid — collision-safe ID generator. (UNCHANGED)
 // ============================================================================
 const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 // ============================================================================
-// LoadingScreen
+// LoadingScreen (UNCHANGED — Super Admin's own sidebar import preserved)
 // ============================================================================
-const LoadingScreen = ({ message }) => {
+export const LoadingScreen = ({ message }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -176,34 +290,210 @@ const LoadingScreen = ({ message }) => {
 };
 
 // ============================================================================
+// normalizeIds — FIX 1 (PORTED FROM ADMIN)
+// ============================================================================
+function normalizeIds(survey) {
+  dbg("normalizeIds: assigning uid-based IDs to all integer-id questions");
+  return {
+    ...survey,
+    sections: survey.sections.map((sec) => ({
+      ...sec,
+      id: typeof sec.id === "number" ? uid() : sec.id,
+      questions: sec.questions.map((q) => ({
+        ...q,
+        id: typeof q.id === "number" ? uid() : q.id,
+      })),
+    })),
+  };
+}
+
+// ============================================================================
+// migrateIntegerIds — FIX 2 (PORTED FROM ADMIN)
+// ============================================================================
+function migrateIntegerIds(surveyData, savedBranches) {
+  const hasIntegerIds = surveyData.sections.some((sec) =>
+    sec.questions.some((q) => typeof q.id === "number"),
+  );
+
+  if (!hasIntegerIds) {
+    dbg("migrateIntegerIds: no integer IDs found — fast path, no migration needed");
+    return { migratedSurvey: surveyData, migratedBranches: savedBranches ?? {} };
+  }
+
+  dbg("migrateIntegerIds: integer IDs detected — migrating question IDs and branch keys");
+
+  const idMap = new Map();
+
+  surveyData.sections.forEach((sec, sIdx) => {
+    sec.questions.forEach((q, qIdx) => {
+      if (typeof q.id === "number") {
+        idMap.set(`${sIdx}:${qIdx}`, { oldId: String(q.id), newId: uid() });
+      }
+    });
+  });
+
+  const migratedSurvey = {
+    ...surveyData,
+    sections: surveyData.sections.map((sec, sIdx) => ({
+      ...sec,
+      id: typeof sec.id === "number" ? uid() : sec.id,
+      questions: sec.questions.map((q, qIdx) => {
+        const entry = idMap.get(`${sIdx}:${qIdx}`);
+        return entry ? { ...q, id: entry.newId } : q;
+      }),
+    })),
+  };
+
+  dbg("migrateIntegerIds: ID map entries:", idMap.size);
+
+  const firstNewIdForOldInt = new Map();
+  idMap.forEach(({ oldId, newId }) => {
+    if (!firstNewIdForOldInt.has(oldId)) {
+      firstNewIdForOldInt.set(oldId, newId);
+    }
+  });
+
+  const remapKey = (key) => {
+    const withoutQ = key.slice(2);
+    const optMarker = withoutQ.indexOf("-opt");
+    const rawId = optMarker === -1 ? withoutQ : withoutQ.slice(0, optMarker);
+    const suffix = optMarker === -1 ? "" : withoutQ.slice(optMarker);
+    const newId = firstNewIdForOldInt.get(rawId);
+    if (newId) {
+      const remapped = `q-${newId}${suffix}`;
+      dbg(`migrateIntegerIds: remap key "${key}" → "${remapped}"`);
+      return remapped;
+    }
+    return key;
+  };
+
+  const remapDestination = (val) => {
+    if (!val.startsWith("q-")) return val;
+    const withoutQ = val.slice(2);
+    const newId = firstNewIdForOldInt.get(withoutQ);
+    if (newId) {
+      const remapped = `q-${newId}`;
+      dbg(`migrateIntegerIds: remap destination "${val}" → "${remapped}"`);
+      return remapped;
+    }
+    return val;
+  };
+
+  const migratedBranches = {};
+  Object.entries(savedBranches ?? {}).forEach(([key, val]) => {
+    const newKey = remapKey(key);
+    const destinations = Array.isArray(val) ? val : val ? [val] : ["next"];
+    migratedBranches[newKey] = destinations.map(remapDestination);
+  });
+
+  dbg("migrateIntegerIds: migration complete");
+  dbg("migrateIntegerIds: migratedBranches:", migratedBranches);
+
+  return { migratedSurvey, migratedBranches };
+}
+
+// ============================================================================
+// sanitiseBranches — FIX 6 (PORTED FROM ADMIN)
+// ============================================================================
+function sanitiseBranches(savedBranches, survey) {
+  if (!savedBranches || typeof savedBranches !== "object") return {};
+
+  const validRefs = new Set(["next", "end"]);
+  survey.sections.forEach((sec) =>
+    sec.questions.forEach((q) => validRefs.add(`q-${q.id}`)),
+  );
+
+  const clean = {};
+
+  for (const [key, val] of Object.entries(savedBranches)) {
+    const withoutPrefix = key.slice(2);
+    const optIdx = withoutPrefix.indexOf("-opt");
+    const sourceId = optIdx === -1 ? withoutPrefix : withoutPrefix.slice(0, optIdx);
+
+    if (!validRefs.has(`q-${sourceId}`)) {
+      dbgWarn(`sanitiseBranches: pruning stale source key "${key}" (q-${sourceId} not found)`);
+      continue;
+    }
+
+    const arr = Array.isArray(val) ? val : val ? [val] : ["next"];
+    const filtered = arr.filter((v) => {
+      const valid = validRefs.has(v);
+      if (!valid) dbgWarn(`sanitiseBranches: pruning stale destination "${v}" from key "${key}"`);
+      return valid;
+    });
+
+    clean[key] = filtered.length > 0 ? filtered : ["next"];
+  }
+
+  dbg("sanitiseBranches result:", clean);
+  return clean;
+}
+
+// ============================================================================
 // SurveyManagement — Main Logic Controller
 // ============================================================================
 export default function SurveyManagement() {
+  // ── NEW: which survey type is active ────────────────────────────────────
+  const { alumniType } = useAlumniType(); // 'college' | 'shs'
 
-  // ── Survey data ───────────────────────────────────────────────────────────
-  const [survey,        setSurvey]        = useState(null);
-  const [configId,      setConfigId]      = useState(null);
+  // ── Survey data — COLLEGE (state names preserved) ────────────────────────
+  const [collegeSurvey, setCollegeSurvey] = useState(null);
+  const [collegeConfigId, setCollegeConfigId] = useState(null);
+  const collegeConfigIdRef = useRef(null);
+  const [collegeBranches, setCollegeBranches] = useState({});
+  const collegeBranchesRef = useRef({});
+
+  // ── Survey data — SHS (NEW, mirrors college 1:1) ─────────────────────────
+  const [shsSurvey, setShsSurvey] = useState(null);
+  const [shsConfigId, setShsConfigId] = useState(null);
+  const shsConfigIdRef = useRef(null);
+  const [shsBranches, setShsBranches] = useState({});
+  const shsBranchesRef = useRef({});
+
+  // ── Derive the "active" survey/configId/branches based on alumniType ────
+  const survey        = alumniType === 'shs' ? shsSurvey        : collegeSurvey;
+  const setSurvey     = alumniType === 'shs' ? setShsSurvey     : setCollegeSurvey;
+  const configId       = alumniType === 'shs' ? shsConfigId      : collegeConfigId;
+  const setConfigId    = alumniType === 'shs' ? setShsConfigId   : setCollegeConfigId;
+  const configIdRef     = alumniType === 'shs' ? shsConfigIdRef   : collegeConfigIdRef;
+  const branches        = alumniType === 'shs' ? shsBranches      : collegeBranches;
+  const setBranchesRaw  = alumniType === 'shs' ? setShsBranches   : setCollegeBranches;
+  const branchesRef      = alumniType === 'shs' ? shsBranchesRef   : collegeBranchesRef;
+
   const [activeSection, setActiveSection] = useState(0);
 
-  // ── UI mode ───────────────────────────────────────────────────────────────
+  // ── UI mode (UNCHANGED) ───────────────────────────────────────────────────
   const [branchMode, setBranchMode] = useState(false);
-  const [editingQ,   setEditingQ]   = useState(null);
+  const [editingQ, setEditingQ] = useState(null);
 
-  // ── Edit tracking ─────────────────────────────────────────────────────────
+  // ── Edit tracking (UNCHANGED) ─────────────────────────────────────────────
   const editSnapshotRef = useRef(null);
   const [dirtyQ, setDirtyQ] = useState(false);
 
-  // ── Publication ───────────────────────────────────────────────────────────
-  const [saving,   setSaving]   = useState(false);
-  const [status,   setStatus]   = useState("");
-  const [branches, setBranches] = useState({});
+  // ── Publication (UNCHANGED) ───────────────────────────────────────────────
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState("");
 
-  // ── Notifications ─────────────────────────────────────────────────────────
-  const [toasts,       setToasts]       = useState([]);
+  // PFIX-A — setBranchesAndRef (PORTED FROM ADMIN)
+  const setBranchesAndRef = useCallback((updater) => {
+    setBranchesRaw((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      branchesRef.current = next;
+      dbg("setBranchesAndRef →", next);
+      return next;
+    });
+  }, [setBranchesRaw, branchesRef]);
+
+  useEffect(() => {
+    branchesRef.current = branches;
+  }, [branches, branchesRef]);
+
+  // ── Notifications (UNCHANGED) ─────────────────────────────────────────────
+  const [toasts, setToasts] = useState([]);
   const [confirmState, setConfirmState] = useState(null);
 
-  // ── Branching UI ──────────────────────────────────────────────────────────
-  const [highlightQ,    setHighlightQ]    = useState(null);
+  // ── Branching UI (UNCHANGED) ──────────────────────────────────────────────
+  const [highlightQ, setHighlightQ] = useState(null);
   const [branchTargetQ, setBranchTargetQ] = useState(null);
 
   // ==========================================================================
@@ -211,105 +501,276 @@ export default function SurveyManagement() {
   // ==========================================================================
   const addToast = useCallback((message, type = "success") => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type, exiting: false }]);
+    setToasts((prev) => [...prev, { id, message, type, exiting: false }]);
     setTimeout(() => {
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 350);
+      setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, exiting: true } : t)));
+      setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 350);
     }, 2400);
   }, []);
 
   // ==========================================================================
   // CONFIRMATION MODAL
-  // Accepts an optional title so the publish dialog can say "Publish Survey"
-  // while delete dialogs keep their default "Delete?" heading.
   // ==========================================================================
   const askConfirm = (message, onConfirm, title = "Delete?") =>
     setConfirmState({ message, onConfirm, title });
 
   // ==========================================================================
-  // DATA LOADING
-  // Branches are stored separately from survey data in the DB config so they
-  // are correctly restored on load without polluting the sections structure.
+  // DATA LOADING — COLLEGE (ported query pattern from Admin, with the
+  // survey_type-aware `.or()` filter so it agrees with the SHS filter below)
   // ==========================================================================
   useEffect(() => {
-    const load = async () => {
+    const loadCollege = async () => {
+      dbg("Loading college survey config from Supabase...");
+
       const { data, error } = await supabaseAdmin
         .from("survey_config")
         .select("id, config")
+        .or("config->>survey_type.is.null,config->>survey_type.eq.college")
         .order("updated_at", { ascending: false })
         .limit(1)
         .single();
 
+      if (error) {
+        dbgWarn("Load error (may be no rows yet):", error.message, error.code);
+      }
+
       if (error || !data?.config?.sections?.length) {
-        setSurvey(DEFAULT_SURVEY);
+        dbg("No saved config found — using DEFAULT_SURVEY");
+        setCollegeSurvey(normalizeIds(DEFAULT_SURVEY));
+        return;
+      }
+
+      dbg("Loaded config row id:", data.id);
+      dbg("Raw saved branches:", data.config.branches);
+
+      const { branches: savedBranches, ...surveyData } = data.config;
+
+      const { migratedSurvey, migratedBranches } = migrateIntegerIds(
+        surveyData,
+        savedBranches ?? {},
+      );
+
+      collegeConfigIdRef.current = data.id;
+      setCollegeConfigId(data.id);
+      setCollegeSurvey(migratedSurvey);
+
+      if (Object.keys(migratedBranches).length > 0) {
+        const sanitised = sanitiseBranches(migratedBranches, migratedSurvey);
+        dbg("Sanitised branches loaded:", sanitised);
+        collegeBranchesRef.current = sanitised;
+        setCollegeBranches(sanitised);
       } else {
-        setConfigId(data.id);
-        const { branches: savedBranches, ...surveyData } = data.config;
-        setSurvey(surveyData);
-        if (savedBranches) setBranches(savedBranches);
+        dbg("No branches in saved config");
       }
     };
-    load();
-  }, []);
+
+    loadCollege();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ==========================================================================
-  // PUBLISH — merges branches into the config payload before saving
+  // DATA LOADING — SHS (NEW, ported from Admin)
+  // ==========================================================================
+  useEffect(() => {
+    const loadShs = async () => {
+      dbg("Loading SHS survey config from Supabase...");
+
+      const { data, error } = await supabaseAdmin
+        .from("survey_config")
+        .select("id, config")
+        .contains("config", { survey_type: "shs" })
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) {
+        dbgWarn("SHS load error (may be no rows yet):", error.message, error.code);
+      }
+
+      if (error || !data?.config?.sections?.length) {
+        dbg("No saved SHS config found — using DEFAULT_SHS_SURVEY");
+        setShsSurvey(normalizeIds(DEFAULT_SHS_SURVEY));
+        return;
+      }
+
+      dbg("Loaded SHS config row id:", data.id);
+      dbg("Raw saved SHS branches:", data.config.branches);
+
+      const { branches: savedBranches, ...surveyData } = data.config;
+
+      const { migratedSurvey, migratedBranches } = migrateIntegerIds(
+        surveyData,
+        savedBranches ?? {},
+      );
+
+      shsConfigIdRef.current = data.id;
+      setShsConfigId(data.id);
+      setShsSurvey(migratedSurvey);
+
+      if (Object.keys(migratedBranches).length > 0) {
+        const sanitised = sanitiseBranches(migratedBranches, migratedSurvey);
+        dbg("Sanitised SHS branches loaded:", sanitised);
+        shsBranchesRef.current = sanitised;
+        setShsBranches(sanitised);
+      } else {
+        dbg("No branches in saved SHS config");
+      }
+    };
+
+    loadShs();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ==========================================================================
+  // PUBLISH — College branch preserves Super Admin's original UPDATE/INSERT
+  // shape; SHS branch added alongside using the same guard/read-back pattern
+  // as Admin, so both types persist reliably and agree on survey_type storage.
   // ==========================================================================
   const handlePublish = async () => {
     if (!survey) return;
+
+    const currentBranches = branchesRef.current;
+    const currentConfigId = configIdRef.current;
+    const currentType = alumniType; // 'college' | 'shs'
+
+    const branchKeyCount = Object.keys(currentBranches).length;
+    dbg("=== PUBLISH START ===", currentType);
+    dbg("configId (state):", configId, "| configIdRef:", currentConfigId);
+    dbg("Branch key count:", branchKeyCount);
+    dbg("Full branches payload:", JSON.stringify(currentBranches, null, 2));
+
+    if (branchKeyCount === 0) {
+      dbg("Note: branches payload is empty (no rules configured)");
+    }
+
+    const payload =
+      currentType === 'shs'
+        ? { ...survey, branches: currentBranches, survey_type: 'shs' }
+        : { ...survey, branches: currentBranches };
+
+    dbg("Full publish payload sections count:", payload.sections.length);
+    dbg("Payload branches key count:", Object.keys(payload.branches).length);
+
     setSaving(true);
     setStatus("saving");
+
     try {
-      const payload = { ...survey, branches };
-      if (configId) {
-        await supabaseAdmin
+      if (currentConfigId) {
+        dbg("UPDATE path — targeting row id:", currentConfigId);
+
+        const { data: updateData, error: updateError } = await supabaseAdmin
           .from("survey_config")
           .update({ config: payload, updated_at: new Date().toISOString() })
-          .eq("id", configId);
+          .eq("id", currentConfigId)
+          .select("id, config");
+
+        dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
+
+        if (updateError) throw updateError;
+
+        if (!updateData || updateData.length === 0) {
+          const msg = `UPDATE matched 0 rows for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
+          console.error("[SurveyMgmt] PFIX-B:", msg);
+          throw new Error(msg);
+        }
+
+        const savedBranches = updateData[0]?.config?.branches;
+        dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
+
+        const sentKeys = Object.keys(currentBranches).sort().join(",");
+        const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
+
+        if (sentKeys !== savedKeys) {
+          console.error(
+            "[SurveyMgmt] PFIX-D: Branch key mismatch after UPDATE!\n" +
+              "  Sent:  " + sentKeys + "\n" +
+              "  Saved: " + savedKeys,
+          );
+          addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+        } else {
+          dbg("PFIX-D: Read-back verified ✓ — branch keys match");
+        }
       } else {
-        const { data } = await supabaseAdmin
+        dbg("INSERT path — no existing config row");
+
+        const { data: insertData, error: insertError } = await supabaseAdmin
           .from("survey_config")
           .insert({ config: payload })
-          .select("id")
+          .select("id, config")
           .single();
-        if (data) setConfigId(data.id);
+
+        dbg("INSERT response — error:", insertError, "| returned row:", insertData?.id);
+
+        if (insertError) throw insertError;
+
+        if (insertData) {
+          configIdRef.current = insertData.id;
+          setConfigId(insertData.id);
+          dbg("INSERT success — new configId:", insertData.id);
+
+          const savedBranches = insertData?.config?.branches;
+          dbg("Read-back branches from INSERT:", JSON.stringify(savedBranches, null, 2));
+
+          const sentKeys = Object.keys(currentBranches).sort().join(",");
+          const savedKeys = Object.keys(savedBranches ?? {}).sort().join(",");
+
+          if (sentKeys !== savedKeys) {
+            console.error(
+              "[SurveyMgmt] PFIX-D: Branch key mismatch after INSERT!\n" +
+                "  Sent:  " + sentKeys + "\n" +
+                "  Saved: " + savedKeys,
+            );
+            addToast("Warning: branch data may not have saved correctly. Check console.", "delete");
+          } else {
+            dbg("PFIX-D: Read-back verified ✓ — branch keys match");
+          }
+        }
       }
+
+      dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
       setTimeout(() => setStatus(""), 3000);
-    } catch {
+    } catch (err) {
+      console.error("[SurveyManagement] Publish failed:", err);
+      dbg("=== PUBLISH FAILED ===", err);
       setStatus("error");
+      addToast("Failed to publish. Please try again.", "delete");
     } finally {
       setSaving(false);
     }
   };
 
   // ==========================================================================
-  // BRANCHING SCROLL
+  // BRANCHING SCROLL — FIX 5 (double rAF ported from Admin for reliable scroll)
   // ==========================================================================
   useEffect(() => {
     if (branchMode && branchTargetQ) {
       requestAnimationFrame(() => {
-        const el = document.getElementById(branchTargetQ);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setHighlightQ(branchTargetQ);
-          setTimeout(() => setHighlightQ(null), 1200);
-        }
+        requestAnimationFrame(() => {
+          const el = document.getElementById(branchTargetQ);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightQ(branchTargetQ);
+            setTimeout(() => setHighlightQ(null), 1200);
+          }
+        });
       });
     }
   }, [branchMode, branchTargetQ]);
 
   // ==========================================================================
-  // QUESTION CRUD
+  // QUESTION CRUD (UNCHANGED — already type-agnostic via survey/setSurvey)
   // ==========================================================================
   const updateQuestion = (sIdx, qIdx, patch) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
       sections: prev.sections.map((sec, si) =>
-        si !== sIdx ? sec : {
-          ...sec,
-          questions: sec.questions.map((q, qi) => qi !== qIdx ? q : { ...q, ...patch }),
-        }
+        si !== sIdx
+          ? sec
+          : {
+              ...sec,
+              questions: sec.questions.map((q, qi) =>
+                qi !== qIdx ? q : { ...q, ...patch },
+              ),
+            },
       ),
     }));
     if (editingQ?.sIdx === sIdx && editingQ?.qIdx === qIdx) setDirtyQ(true);
@@ -334,105 +795,145 @@ export default function SurveyManagement() {
     addToast("Question updated successfully", "edit");
   };
 
+  // deleteQuestion — upgraded to the array-based branch cleanup from Admin
+  // (previous Super Admin version only handled single-string branch values)
   const deleteQuestion = (sIdx, qIdx, label) => {
     askConfirm(
       `Delete the question "${label}"? This action cannot be undone.`,
       () => {
-        // Clean up branch rules referencing the deleted question (source or destination)
         const deletedId = survey.sections[sIdx].questions[qIdx].id;
-        setBranches(prev => {
+        const deletedRef = `q-${deletedId}`;
+
+        setBranchesAndRef((prev) => {
           const next = { ...prev };
-          Object.keys(next).forEach(k => {
-            if (k.startsWith(`q-${deletedId}`)) delete next[k];
-            if (next[k] === `q-${deletedId}`) delete next[k];
+
+          Object.keys(next).forEach((k) => {
+            if (k === deletedRef || k.startsWith(`${deletedRef}-opt`)) {
+              delete next[k];
+              return;
+            }
+            if (Array.isArray(next[k])) {
+              const filtered = next[k].filter((v) => v !== deletedRef);
+              next[k] = filtered.length > 0 ? filtered : ["next"];
+            }
           });
+
+          dbg("deleteQuestion: branches after cleanup:", next);
           return next;
         });
 
-        setSurvey(prev => ({
+        setSurvey((prev) => ({
           ...prev,
           sections: prev.sections.map((sec, si) =>
-            si !== sIdx ? sec : {
-              ...sec,
-              questions: sec.questions.filter((_, qi) => qi !== qIdx),
-            }
+            si !== sIdx
+              ? sec
+              : {
+                  ...sec,
+                  questions: sec.questions.filter((_, qi) => qi !== qIdx),
+                },
           ),
         }));
         setConfirmState(null);
         addToast("Question deleted", "delete");
-      }
+      },
     );
   };
 
+  // deleteSection — upgraded to array-based branch cleanup from Admin
   const deleteSection = (index) => {
     const sectionTitle = survey.sections[index].title;
     askConfirm(
       `Delete the section "${sectionTitle}" and all its questions? This action cannot be undone.`,
       () => {
-        // Clean up branch rules for every question in the deleted section
-        const deletedIds = new Set(survey.sections[index].questions.map(q => q.id));
-        setBranches(prev => {
+        const deletedIdStrings = new Set(
+          survey.sections[index].questions.map((q) => String(q.id)),
+        );
+
+        setBranchesAndRef((prev) => {
           const next = { ...prev };
-          Object.keys(next).forEach(k => {
-            const sourceId = k.split("-opt")[0].replace("q-", "");
-            if (deletedIds.has(Number(sourceId)) || deletedIds.has(sourceId)) delete next[k];
-            const destId = (next[k] || "").replace("q-", "");
-            if (deletedIds.has(Number(destId)) || deletedIds.has(destId)) delete next[k];
+
+          Object.keys(next).forEach((k) => {
+            const withoutPrefix = k.slice(2);
+            const optMarker = withoutPrefix.indexOf("-opt");
+            const sourceIdStr =
+              optMarker === -1 ? withoutPrefix : withoutPrefix.slice(0, optMarker);
+
+            if (deletedIdStrings.has(sourceIdStr)) {
+              delete next[k];
+              return;
+            }
+
+            if (Array.isArray(next[k])) {
+              const filtered = next[k].filter((v) => {
+                if (!v.startsWith("q-")) return true;
+                return !deletedIdStrings.has(v.slice(2));
+              });
+              next[k] = filtered.length > 0 ? filtered : ["next"];
+            }
           });
+
+          dbg("deleteSection: branches after cleanup:", next);
           return next;
         });
 
-        setSurvey(prev => ({
+        setSurvey((prev) => ({
           ...prev,
           sections: prev.sections.filter((_, i) => i !== index),
         }));
-        setActiveSection(prev => Math.min(prev, survey.sections.length - 2));
+
+        setActiveSection((prev) => Math.min(prev, survey.sections.length - 2));
         setConfirmState(null);
         addToast("Section deleted", "delete");
-      }
+      },
     );
   };
 
   const duplicateQuestion = (sIdx, qIdx) => {
-    setSurvey(prev => {
+    setSurvey((prev) => {
       const sec = prev.sections[sIdx];
-      // uid() guarantees the duplicate gets a truly unique, stable ID
-      const q  = { ...sec.questions[qIdx], id: uid() };
+      const q = { ...sec.questions[qIdx], id: uid() };
       const qs = [...sec.questions];
       qs.splice(qIdx + 1, 0, q);
       return {
         ...prev,
-        sections: prev.sections.map((s, si) => si !== sIdx ? s : { ...s, questions: qs }),
+        sections: prev.sections.map((s, si) => (si !== sIdx ? s : { ...s, questions: qs })),
       };
     });
     addToast("Question duplicated", "copy");
   };
 
   const addQuestion = (sIdx) => {
-    setSurvey(prev => ({
+    setSurvey((prev) => ({
       ...prev,
       sections: prev.sections.map((s, si) =>
-        si !== sIdx ? s : {
-          ...s,
-          questions: [
-            ...s.questions,
-            // uid() avoids ID collisions when questions are added in rapid succession
-            { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
-          ],
-        }
+        si !== sIdx
+          ? s
+          : {
+              ...s,
+              questions: [
+                ...s.questions,
+                { id: uid(), type: "short", label: "New Question", required: false, placeholder: "Enter your answer" },
+              ],
+            },
       ),
     }));
   };
 
+  // addSection — fixed to use functional update's own `prev.sections.length`
+  // for setActiveSection (Admin's pattern), instead of the stale outer
+  // `survey.sections.length` the old Super Admin version referenced.
   const addSection = () => {
-    setSurvey(prev => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
-      ],
-    }));
-    setActiveSection(survey.sections.length);
+    setSurvey((prev) => {
+      const updated = {
+        ...prev,
+        sections: [
+          ...prev.sections,
+          { id: uid(), title: `Section ${prev.sections.length + 1}`, description: "New section", questions: [] },
+        ],
+      };
+      setActiveSection(updated.sections.length - 1);
+      return updated;
+    });
   };
 
   // ==========================================================================
@@ -450,20 +951,23 @@ export default function SurveyManagement() {
   };
 
   const deleteOption = (sIdx, qIdx, oIdx) => {
-    // Clean up branch rules for the removed option and re-index higher option keys
-    const qId    = survey.sections[sIdx].questions[qIdx].id;
+    const qId = survey.sections[sIdx].questions[qIdx].id;
     const optKey = `q-${qId}-opt${oIdx}`;
-    setBranches(prev => {
+
+    setBranchesAndRef((prev) => {
       const next = { ...prev };
       delete next[optKey];
-      const higherKeys = Object.keys(next).filter(k =>
-        k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx
+
+      const higherKeys = Object.keys(next).filter(
+        (k) => k.startsWith(`q-${qId}-opt`) && parseInt(k.split("opt")[1], 10) > oIdx,
       );
-      higherKeys.forEach(k => {
+      higherKeys.forEach((k) => {
         const oldIdx = parseInt(k.split("opt")[1], 10);
         next[`q-${qId}-opt${oldIdx - 1}`] = next[k];
         delete next[k];
       });
+
+      dbg("deleteOption: branches after re-index:", next);
       return next;
     });
 
@@ -473,22 +977,31 @@ export default function SurveyManagement() {
 
   // ==========================================================================
   // DERIVED DATA
-  // allQuestions spans ALL sections so the branch destination dropdown can
-  // offer every question in the survey as a valid jump target — not just the
-  // ones in the currently visible section.
   // ==========================================================================
   const currentSection = survey?.sections[activeSection];
-  const allQuestions = survey?.sections.flatMap((s, si) =>
-    s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title }))
-  ) || [];
+
+  const allQuestions =
+    survey?.sections.flatMap((s, si) =>
+      s.questions.map((q, qi) => ({ ...q, sIdx: si, qIdx: qi, sectionTitle: s.title })),
+    ) || [];
+
+  // ── FIX 7 — targetSectionIdx (NEW, ported from Admin) ────────────────────
+  const targetSectionIdx = (() => {
+    if (!branchTargetQ || !survey) return activeSection;
+    const qId = branchTargetQ.startsWith("q-") ? branchTargetQ.slice(2) : branchTargetQ;
+    const idx = survey.sections.findIndex((s) => s.questions.some((q) => String(q.id) === qId));
+    return idx >= 0 ? idx : activeSection;
+  })();
 
   // ==========================================================================
   // LOADING GATE — must come after all hooks
+  // Uses SurveySkeletonView (ported) instead of the old inline LoadingScreen
+  // for the loading state, matching Admin's UX.
   // ==========================================================================
-  if (!survey) return <LoadingScreen message="Loading survey configuration..." />;
+  if (!survey) return <SurveySkeletonView />;
 
   // ==========================================================================
-  // RENDER
+  // RENDER (alumniType passed through so the view can render its switcher UI)
   // ==========================================================================
   return (
     <SurveyMgmtView
@@ -507,7 +1020,7 @@ export default function SurveyManagement() {
       saving={saving}
       status={status}
       branches={branches}
-      setBranches={setBranches}
+      setBranches={setBranchesAndRef}
       highlightQ={highlightQ}
       branchTargetQ={branchTargetQ}
       setBranchTargetQ={setBranchTargetQ}
@@ -517,7 +1030,7 @@ export default function SurveyManagement() {
       setConfirmState={setConfirmState}
       askConfirm={askConfirm}
       TYPE_LABELS={TYPE_LABELS}
-      DEFAULT_SURVEY={DEFAULT_SURVEY}
+      DEFAULT_SURVEY={alumniType === 'shs' ? DEFAULT_SHS_SURVEY : DEFAULT_SURVEY}
       updateQuestion={updateQuestion}
       deleteQuestion={deleteQuestion}
       duplicateQuestion={duplicateQuestion}
@@ -533,6 +1046,8 @@ export default function SurveyManagement() {
       handlePublish={handlePublish}
       currentSection={currentSection}
       allQuestions={allQuestions}
+      targetSectionIdx={targetSectionIdx}
+      alumniType={alumniType}
     />
   );
 }

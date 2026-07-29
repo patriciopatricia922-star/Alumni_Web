@@ -3,11 +3,29 @@
 // ============================================================================
 // Generates a full SHS Alumni Tracer Survey PDF report.
 // Mirrors exportPDF.js structure but uses shs_* data fields and SHS KPIs.
+//
+// FIX (data accuracy): The previous version re-fetched
+// `shs_educational_background_data` directly from Supabase and filtered on
+// field names (`pursued_undergrad`, `continued_studies`, `school`,
+// `institution`, `pursued_nu_branch`, status === 'Currently Studying', etc.)
+// that do not exist anywhere in the actual SHS schema used by
+// ResponseAnalytics.jsx's extractRespondentData(). Because those keys never
+// matched, every filter returned 0 rows, so all three institutional KPIs
+// (retention, pursued undergrad, pursued undergrad at NU) were always 0%,
+// and the page-1 "Retention Rate" / "Continued Studies" boxes were similarly
+// computed from a status/postGradPlans check that never matched real values.
+//
+// This version removes the redundant/incorrect re-fetch entirely and derives
+// every statistic — including the institutional KPIs — from the SAME
+// processed `respondents` / `stats` data the dashboard already receives from
+// processSurveyData(), using the real field names (`status`, `postGradPlans`)
+// that extractRespondentData() actually populates. This guarantees the PDF
+// is a byte-for-byte reflection of what's on screen, with no re-derivation
+// from raw/unmapped Supabase rows.
 // ============================================================================
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { supabase } from '../lib/supabase';
 
 // ── Colors ───────────────────────────────────────────────────────────────────
 const NAVY   = [30,  45,  90];
@@ -73,23 +91,25 @@ const addPageIfNeeded = (doc, y, pageH, margin = 20) => {
   return y;
 };
 
-const safeParse = (value) => {
-  if (!value) return null;
-  if (typeof value === 'object') return value;
-  try { return JSON.parse(value); } catch { return null; }
-};
-
 // ============================================================================
 // MAIN SHS EXPORT FUNCTION
 // ============================================================================
 export const exportSHSSurveyPDF = async ({
   filterType,    // 'batch' | 'program'
   filterValue,   // e.g. '2023' or 'SHS-STEM'
-  stats,         // stats object from ResponseAnalytics state
-  respondents,   // respondents array (already SHS-filtered by the view)
+  stats,         // stats object from ResponseAnalytics state (already processed)
+  respondents,   // respondents array (already processed/SHS-mapped by the view)
 }) => {
 
-  // ── Filter respondents ────────────────────────────────────────────────────
+  // Guard: make sure the dashboard's async fetch/processing has actually
+  // finished before we generate anything. If either is missing/empty there
+  // is nothing valid to export yet.
+  if (!Array.isArray(respondents) || respondents.length === 0 || !stats) {
+    alert('Analytics data is still loading or unavailable. Please wait for the dashboard to finish loading before exporting.');
+    return;
+  }
+
+  // ── Filter respondents (same processed data the dashboard renders from) ──
   const filtered = respondents.filter(r =>
     filterType === 'batch' ? r.batch === filterValue : r.program === filterValue
   );
@@ -114,15 +134,49 @@ export const exportSHSSurveyPDF = async ({
     ? (satisfactions.reduce((a, b) => a + b, 0) / satisfactions.length).toFixed(1)
     : 'N/A';
 
-  // Count those who continued studying
+  // "Continued studies" — use the SAME fields extractRespondentData() actually
+  // populates: `status` (e.g. 'Student') and `postGradPlans` (Yes/No), rather
+  // than nonexistent raw-row keys like `pursued_undergrad`/`continued_studies`.
   const continuedStudying = filtered.filter(r =>
     r.status?.toLowerCase().includes('student') ||
-    r.postGradPlans === 'Yes'
+    r.postGradPlans?.toLowerCase() === 'yes'
   ).length;
 
   const retentionRate = totalFiltered > 0
     ? Math.round((continuedStudying / totalFiltered) * 100)
     : 0;
+
+  // ── Institutional KPIs — derived from the SAME processed dataset ─────────
+  // (previously this block re-fetched raw Supabase rows and filtered on
+  // field names that don't exist in the schema, which always evaluated to 0)
+  const totalAll = respondents.length;
+
+  const retainedAll = respondents.filter(r =>
+    r.status?.toLowerCase().includes('student')
+  ).length;
+  const shsRetentionPct = totalAll > 0 ? Math.round((retainedAll / totalAll) * 100) : 0;
+
+  const pursuedUndergradAll = respondents.filter(r =>
+    r.postGradPlans?.toLowerCase() === 'yes'
+  ).length;
+  const shsPursuedUndergradPct = totalAll > 0
+    ? Math.round((pursuedUndergradAll / totalAll) * 100) : 0;
+
+  const NU_KEYWORDS = [
+    'nu manila', 'nu nazareth', 'nu fairview', 'nu laguna', 'nu baliwag',
+    'nu dasmarinas', 'nu lipa', 'nu east ortigas', 'nu bacolod', 'nu cebu',
+    'nu moa', 'nu clark', 'nu las pinas', 'national university',
+  ];
+  const isNuBranch = (v) => {
+    const s = (v || '').toLowerCase().trim();
+    return NU_KEYWORDS.some(kw => s.includes(kw));
+  };
+
+  const pursuedAtNuAll = respondents.filter(r =>
+    r.postGradPlans?.toLowerCase() === 'yes' && isNuBranch(r.postGradCourse)
+  ).length;
+  const shsPursuedUndergradNuPct = totalAll > 0
+    ? Math.round((pursuedAtNuAll / totalAll) * 100) : 0;
 
   // ── Initialize PDF ────────────────────────────────────────────────────────
   const doc  = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -171,56 +225,6 @@ export const exportSHSSurveyPDF = async ({
     pageW / 2, 110, { align: 'center' }
   );
   doc.text(`Total Respondents in this Report: ${totalFiltered}`, pageW / 2, 117, { align: 'center' });
-
-  // ── Fetch SHS KPI data from Supabase ──────────────────────────────────────
-  let shsPursuedUndergradPct = 0;
-  let shsPursuedUndergradNuPct = 0;
-  let shsRetentionPct = 0;
-
-  try {
-    const NU_KEYWORDS = [
-      'nu manila', 'nu nazareth', 'nu fairview', 'nu laguna', 'nu baliwag',
-      'nu dasmarinas', 'nu lipa', 'nu east ortigas', 'nu bacolod', 'nu cebu',
-      'nu moa', 'nu clark', 'nu las pinas', 'national university',
-    ];
-    const isNuBranch = (v) => {
-      const s = (v || '').toLowerCase().trim();
-      return NU_KEYWORDS.some(kw => s.includes(kw));
-    };
-
-    const { data: shsRows } = await supabase
-      .from('survey_progress')
-      .select('shs_educational_background_data')
-      .not('shs_educational_background_data', 'is', null);
-
-    if (shsRows && shsRows.length > 0) {
-      const eduRows = shsRows.map(r => safeParse(r.shs_educational_background_data)).filter(Boolean);
-
-      // Retention: currently studying
-      const retained = eduRows.filter(e => e.status === 'Currently Studying').length;
-      shsRetentionPct = eduRows.length > 0 ? Math.round((retained / eduRows.length) * 100) : 0;
-
-      // Pursued undergrad
-      const pursuedUndergrad = eduRows.filter(e => {
-        const v = e.pursued_undergrad ?? e.continued_studies ?? e.pursue_undergraduate ?? null;
-        return v === 'Yes' || v === true || v === 1;
-      }).length;
-      shsPursuedUndergradPct = eduRows.length > 0
-        ? Math.round((pursuedUndergrad / eduRows.length) * 100) : 0;
-
-      // Pursued undergrad at NU
-      const pursuedAtNu = eduRows.filter(e => {
-        const v = e.pursued_undergrad ?? e.continued_studies ?? e.pursue_undergraduate ?? null;
-        if (v !== 'Yes' && v !== true && v !== 1) return false;
-        const school = e.school || e.institution || e.university || e.undergraduate_school || '';
-        return isNuBranch(school) || e.pursued_nu_branch === 'Yes';
-      }).length;
-      shsPursuedUndergradNuPct = eduRows.length > 0
-        ? Math.round((pursuedAtNu / eduRows.length) * 100) : 0;
-    }
-  } catch (e) {
-    console.warn('SHS KPI fetch failed, skipping:', e);
-  }
 
   // ── Summary stat boxes ────────────────────────────────────────────────────
   const boxes = [

@@ -1,9 +1,26 @@
+// ============================================================================
+// Purpose: Handles all business logic, Supabase API calls, data processing,
+//          state management, and event handlers for Response & Analytics.
+// ============================================================================
+// SYNCED FROM ADMIN (this diff):
+//   - Added SHS vs College support (shs_* table columns, shs-aware extraction/aggregation)
+//   - Replaced <LoadingScreen> loading state with <ResponseAnalyticsSkeleton>
+//   - Wired in useAlumniType() context (same context Admin uses) to drive department branching
+//   - LoadingScreen retained for error state only
+//   Changes from the previous version are marked ← SYNCED.
+//   Super Admin-specific structure preserved: sidebar import (SuperAdsidebar), component
+//   name (ResponseandAnalytics), file/folder location, and export are UNCHANGED.
+// ============================================================================
+
 import React, { useState, useEffect } from 'react';
-import AdminSidebar from "./SuperAdsidebar";
+import SuperAdSidebar from "./SuperAdsidebar";
 import ResponseAnalyticsView from './views/ResponseAnalyticsView';
+import ResponseAnalyticsSkeleton from './views/ResponseAnalyticsSkeleton'; // ← SYNCED
 import { supabase } from '../lib/supabase';
 import { useLocation } from 'react-router-dom';
+import { useAlumniType } from './contexts/AlumniTypeContext'; // ← SYNCED (same context/path as Admin)
 
+// ============================ EMPLOYMENT STATUS MAPPING ============================
 const STATUS_MAPPING = {
   'Regular / Permanent':                  'Employed',
   'Probationary':                         'Employed',
@@ -28,6 +45,7 @@ const STATUS_MAPPING = {
   'Contract based':                       'Contractual',
 };
 
+// ============================ HELPER FUNCTIONS ============================
 const safeText = (value) => (typeof value === 'string' ? value.trim() : (value || ''));
 
 const toArray = (value) => {
@@ -79,6 +97,7 @@ const extractYear = (value) => {
   return !isNaN(date.getTime()) ? String(date.getFullYear()) : null;
 };
 
+// ============================ EMPLOYMENT STATUS NORMALIZATION ============================
 const resolveEmploymentStatus = (empData) => {
   if (!empData) return 'Not specified';
 
@@ -108,57 +127,58 @@ const resolveEmploymentStatus = (empData) => {
   return rawStatus || 'Not specified';
 };
 
-const extractRespondentData = (row, userEmail = '') => {
-  const personal         = row.personal_background_data       || {};
-  const educational      = row.educational_background_data    || {};
-  const certificationData = row.certification_achievement_data || {};
-  const employmentData   = row.employment_information_data    || {};
-  const jobExperience    = row.job_experience_data            || {};
-  const skillsData       = row.skills_competencies_data       || {};
-  const feedback         = row.feedback_university_data       || {};
-  const engagement       = row.alumni_engagement_data         || {};
+// ============================ SINGLE RESPONSE EXTRACTION ============================
+// ← SYNCED: now SHS-aware, mirroring Admin's extractRespondentData exactly.
+const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
+  const isShs = alumniType === 'shs';
+
+  const personal         = (isShs ? row.shs_personal_background_data      : row.personal_background_data)        || {};
+  const educational      = (isShs ? row.shs_educational_background_data  : row.educational_background_data)      || {};
+  const certificationData = isShs ? {} : (row.certification_achievement_data || {}); // SHS has no certification section
+  const employmentData   = (isShs ? row.shs_employment_information_data   : row.employment_information_data)      || {};
+  const jobExperience    = (isShs ? row.shs_job_experience_data          : row.job_experience_data)              || {};
+  const skillsData       = (isShs ? row.shs_skills_and_competencies_data : row.skills_competencies_data)          || {};
+  const feedback         = (isShs ? row.shs_feedback_and_engagement_data : row.feedback_university_data)          || {};
+  const engagement       = isShs ? feedback : (row.alumni_engagement_data || {}); // SHS merges engagement into feedback
 
   const firstName  = safeText(personal.first_name);
   const lastName   = safeText(personal.last_name);
   const middleName = safeText(personal.middle_name);
   const fullName   = [firstName, middleName, lastName].filter(Boolean).join(' ') || 'Anonymous';
 
-  const email  = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
-  const batch   = extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A';
-  const program = safeText(educational.degree_program) || 'Not specified';
+  const email = userEmail || safeText(personal.email) || safeText(personal.email_address) || '';
+
+  const program = isShs
+    ? (safeText(personal.track_strand) || 'Not specified')          // SHS: track/strand, stored on personal_background
+    : (safeText(educational.degree_program) || 'Not specified');
+
+  const batch = isShs
+    ? (safeText(personal.year_graduated).replace(/\D/g, '') || extractYear(row.last_updated) || 'N/A')
+    : (extractYear(educational.year_graduated) || extractYear(row.last_updated) || 'N/A');
 
   const employmentStatus = resolveEmploymentStatus(employmentData);
 
-  const skillRatings = skillsData.skill_ratings || {};
+  const skillRatings = isShs ? skillsData : (skillsData.skill_ratings || {});
 
-  const commSkillRating = skillRatings.communication_skills ||
-                          skillRatings.communicationSkills  ||
-                          skillRatings.communication        ||
-                          skillRatings['Communication Skills'] || 0;
+  const commSkillRating = isShs
+    ? (skillRatings.communication_skills || 0)
+    : (skillRatings.communication_skills || skillRatings.communicationSkills || skillRatings.communication || skillRatings['Communication Skills'] || 0);
 
-  const itSkillRating = skillRatings.information_technology_skills ||
-                        skillRatings.informationTechnologySkills   ||
-                        skillRatings.it_skills                     ||
-                        skillRatings.itSkills                      ||
-                        skillRatings['Information & Technology Skills'] ||
-                        skillRatings['Information Technology Skills'] || 0;
+  const itSkillRating = isShs
+    ? (skillRatings.technical_knowledge || 0)
+    : (skillRatings.information_technology_skills || skillRatings.informationTechnologySkills || skillRatings.it_skills || skillRatings.itSkills || skillRatings['Information & Technology Skills'] || skillRatings['Information Technology Skills'] || 0);
 
-  const leadershipRating = skillRatings.leadership_skills ||
-                           skillRatings.leadershipSkills  ||
-                           skillRatings.leadership        ||
-                           skillRatings['Leadership Skills'] || 0;
+  const leadershipRating = isShs
+    ? (skillRatings.leadership_skills || 0)
+    : (skillRatings.leadership_skills || skillRatings.leadershipSkills || skillRatings.leadership || skillRatings['Leadership Skills'] || 0);
 
-  const criticalRating = skillRatings.critical_problem_solving_skills ||
-                         skillRatings.criticalProblemSolvingSkills    ||
-                         skillRatings.critical_thinking               ||
-                         skillRatings['Critical & Problem-Solving Skills'] ||
-                         skillRatings.criticalThinking || 0;
+  const criticalRating = isShs
+    ? (skillRatings.critical_thinking || 0)
+    : (skillRatings.critical_problem_solving_skills || skillRatings.criticalProblemSolvingSkills || skillRatings.critical_thinking || skillRatings['Critical & Problem-Solving Skills'] || skillRatings.criticalThinking || 0);
 
-  const workEthicsRating = skillRatings.work_ethics_professionalism ||
-                           skillRatings.workEthicsProfessionalism   ||
-                           skillRatings.work_ethics                 ||
-                           skillRatings.workEthics                  ||
-                           skillRatings['Work Ethics / Professionalism'] || 0;
+  const workEthicsRating = isShs
+    ? (skillRatings.work_ethics || 0)
+    : (skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0);
 
   return {
     id: row.id,
@@ -192,7 +212,6 @@ const extractRespondentData = (row, userEmail = '') => {
     certifications:           toArray(certificationData.certifications),
     certificationUseful:      safeText(certificationData.helped_career)  || '',
     certificationUsefulness:  safeText(certificationData.how_helped)     || '',
-    jobRelatedToDegree:       safeText(employmentData.job_related_to_degree)      || '',
     employmentType:           safeText(employmentData.employment_status)          || '',
     employmentStatusOther:    safeText(employmentData.employment_status_other)    || '',
     jobTitle:                 safeText(employmentData.job_position)               || '',
@@ -200,19 +219,25 @@ const extractRespondentData = (row, userEmail = '') => {
     industry:                 safeText(employmentData.type_of_industry)           || '',
     employmentLocation:       safeText(employmentData.location_of_employment)     || '',
     salary:                   safeText(employmentData.monthly_income)             || '',
+    jobRelatedToDegree: isShs
+      ? safeText(employmentData.job_related_to_strand)   // ← SHS key differs from college's job_related_to_degree
+      : safeText(employmentData.job_related_to_degree) || '',
     jobAcceptReason:          safeText(employmentData.reason_for_job)             || '',
     jobAcceptReasonOther:     safeText(employmentData.other_reason_for_job)       || '',
     unemployedReason:         safeText(employmentData.reasons_unemployed)         || '',
     unemployedReasonOther:    safeText(employmentData.other_reason_unemployed)    || '',
-    timeToJob:                safeText(jobExperience.time_to_find_job)            || '',
     employmentDuration:       safeText(jobExperience.employment_duration)         || '',
     employmentDurationOther:  safeText(jobExperience.other_employment_duration)   || '',
-    howFoundJob:              safeText(jobExperience.first_job_source)            || '',
-    howFoundJobOther:         safeText(jobExperience.other_first_job_source)      || '',
-    factorsForJob:            toArray(jobExperience.first_job_factors),
-    factorsForJobOther:       safeText(jobExperience.other_job_factors)           || '',
-    usefulCompetencies:       toArray(skillsData.useful_competencies),
-    suggestedSkills:          safeText(skillsData.skills_to_develop)              || '',
+    // SHS Job Experience uses factors_first_job / other_factors / other_how_found_job
+    factorsForJob: isShs ? toArray(jobExperience.factors_first_job) : toArray(jobExperience.first_job_factors),
+    factorsForJobOther: isShs ? safeText(jobExperience.other_factors) : safeText(jobExperience.other_job_factors) || '',
+    howFoundJob: isShs ? safeText(jobExperience.how_found_job) : safeText(jobExperience.first_job_source) || '',
+    howFoundJobOther: isShs ? safeText(jobExperience.other_how_found_job) : safeText(jobExperience.other_first_job_source) || '',
+    timeToJob:                safeText(jobExperience.time_to_find_job)            || '',
+    usefulCompetencies: isShs ? [] : toArray(skillsData.useful_competencies), // SHS has no competencies checklist
+    suggestedSkills: isShs
+      ? safeText(skillsData.other_skills_suggestion)   // ← SHS key
+      : safeText(skillsData.skills_to_develop) || '',
     commSkillRating:          Number(commSkillRating)     || 0,
     itSkillRating:            Number(itSkillRating)       || 0,
     leadershipRating:         Number(leadershipRating)    || 0,
@@ -223,11 +248,15 @@ const extractRespondentData = (row, userEmail = '') => {
     suggestions:              safeText(feedback.suggestions)           || '',
     informedAboutEvents:      safeText(engagement.informed_about_events)        || '',
     willingToParticipate:     toArray(engagement.participate_in),
-    willingToParticipateOther: safeText(engagement.participate_in_other)        || '',
+    willingToParticipateOther: isShs
+      ? safeText(engagement.other_participate)
+      : safeText(engagement.participate_in_other) || '',
   };
 };
 
-const processSurveyData = (rows, userEmails = {}) => {
+// ============================ PROCESS ALL SURVEY DATA ============================
+// ← SYNCED: now accepts alumniType and reads shs_* columns per row, mirroring Admin.
+const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
   let totalResponses   = 0;
   let satisfactionSum  = 0;
   let satisfactionCount = 0;
@@ -242,19 +271,20 @@ const processSurveyData = (rows, userEmails = {}) => {
   const timeToJob          = { '< 1 month': 0, '1–3 months': 0, '3–6 months': 0, '6 + months': 0 };
   const skills             = new Map();
   const respondents        = [];
+  const isShs = alumniType === 'shs';
 
   rows.forEach(row => {
     totalResponses++;
-    const respondent = extractRespondentData(row, userEmails[row.user_id]);
+    const respondent = extractRespondentData(row, userEmails[row.user_id], alumniType);
     respondents.push(respondent);
 
-    const personal          = row.personal_background_data       || {};
-    const educational       = row.educational_background_data    || {};
-    const certificationData = row.certification_achievement_data || {};
-    const employmentData    = row.employment_information_data    || {};
-    const jobExperience     = row.job_experience_data            || {};
-    const skillsData        = row.skills_competencies_data       || {};
-    const feedback          = row.feedback_university_data       || {};
+    const personal          = (isShs ? row.shs_personal_background_data : row.personal_background_data) || {};
+    const educational       = (isShs ? row.shs_educational_background_data : row.educational_background_data) || {};
+    const certificationData = (isShs ? row.shs_certification_achievement_data : row.certification_achievement_data) || {};
+    const employmentData    = (isShs ? row.shs_employment_information_data : row.employment_information_data) || {};
+    const jobExperience     = (isShs ? row.shs_job_experience_data : row.job_experience_data) || {};
+    const skillsData        = (isShs ? row.shs_skills_and_competencies_data : row.skills_competencies_data) || {};
+    const feedback          = (isShs ? row.shs_feedback_and_engagement_data : row.feedback_university_data) || {};
 
     const gender = safeText(personal.gender);
     if (gender === 'Male')        genderDistribution.Male++;
@@ -308,32 +338,24 @@ const processSurveyData = (rows, userEmails = {}) => {
 
   const avgSatisfaction = satisfactionCount > 0 ? (satisfactionSum / satisfactionCount).toFixed(1) : 0;
 
-  const genderDistributionArray  = Object.entries(genderDistribution) .filter(([_, v]) => v > 0).map(([name, value])     => ({ name, value }));
-  const ageDistributionArray     = Object.entries(ageDistribution)    .filter(([_, v]) => v > 0).map(([range, count])    => ({ range, count }));
-  const satisfactionScoresArray  = Object.entries(satisfactionScores)                            .map(([score, count])   => ({ score, count }));
-  const boardExamArray           = Object.entries(boardExam)          .filter(([_, v]) => v > 0).map(([category, count]) => ({ category, count }));
-  const certificationArray       = Object.entries(certification)      .filter(([_, v]) => v > 0).map(([status, count])  => ({ status, count }));
-  const employmentArray          = Object.entries(employment)         .filter(([_, v]) => v > 0).map(([name, value])     => ({ name, value }));
-  const salaryArray              = Object.entries(salary)             .filter(([_, v]) => v > 0).map(([range, count])    => ({ range, count }));
-  const timeToJobArray           = Object.entries(timeToJob)          .filter(([_, v]) => v > 0).map(([label, count])    => ({ label, count }));
-  const skillsArray              = [...skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([skill, count])    => ({ skill, count }));
-
   return {
     totalResponses,
     avgSatisfaction: parseFloat(avgSatisfaction),
-    satisfactionScores: satisfactionScoresArray,
-    genderDistribution: genderDistributionArray,
-    ageDistribution:    ageDistributionArray,
-    boardExam:          boardExamArray,
-    certification:      certificationArray,
-    employment:         employmentArray,
-    salary:             salaryArray,
-    timeToJob:          timeToJobArray,
-    skills:             skillsArray,
+    satisfactionScores: Object.entries(satisfactionScores).map(([score, count]) => ({ score, count })),
+    genderDistribution: Object.entries(genderDistribution).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
+    ageDistribution:    Object.entries(ageDistribution).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
+    boardExam:          Object.entries(boardExam).filter(([_, v]) => v > 0).map(([category, count]) => ({ category, count })),
+    certification:      Object.entries(certification).filter(([_, v]) => v > 0).map(([status, count]) => ({ status, count })),
+    employment:         Object.entries(employment).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
+    salary:             Object.entries(salary).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
+    timeToJob:          Object.entries(timeToJob).filter(([_, v]) => v > 0).map(([label, count]) => ({ label, count })),
+    skills:             [...skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([skill, count]) => ({ skill, count })),
     respondents,
   };
 };
 
+// ============================ LOADING SCREEN (error state only) ============================
+// ← SYNCED: LoadingScreen is now used for the error state only, matching Admin.
 const LoadingScreen = ({ message, isError = false }) => {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -346,7 +368,7 @@ const LoadingScreen = ({ message, isError = false }) => {
 
   return (
     <>
-      <AdminSidebar />
+      <SuperAdSidebar />
       <div style={{
         marginLeft: isMobile ? 0 : "229px",
         display: "flex",
@@ -364,7 +386,10 @@ const LoadingScreen = ({ message, isError = false }) => {
   );
 };
 
+// ============================ MAIN COMPONENT ============================
+// ← unchanged: component name ResponseandAnalytics preserved (Super Admin naming convention)
 const ResponseandAnalytics = () => {
+  const { alumniType } = useAlumniType(); // ← SYNCED
   const location = useLocation();
   const focus    = location.state?.focus;
 
@@ -394,6 +419,7 @@ const ResponseandAnalytics = () => {
     if (focus === "degree_alignment")  setActiveTab("analytics");
   }, [focus]);
 
+  // ============================ FETCH DATA FROM SUPABASE ============================
   useEffect(() => {
     const fetchSurveyData = async () => {
       setLoading(true);
@@ -425,8 +451,15 @@ const ResponseandAnalytics = () => {
             job_experience_data,
             skills_competencies_data,
             feedback_university_data,
-            alumni_engagement_data
+            alumni_engagement_data,
+            shs_personal_background_data,
+            shs_educational_background_data,
+            shs_employment_information_data,
+            shs_job_experience_data,
+            shs_skills_and_competencies_data,
+            shs_feedback_and_engagement_data
           `);
+          // ← SYNCED: added shs_* columns to select
 
         if (fetchError) throw fetchError;
 
@@ -436,7 +469,12 @@ const ResponseandAnalytics = () => {
           return;
         }
 
-        const completedSurveys = data.filter(row => row.completed === true);
+        // ← SYNCED: filter now branches on alumniType, matching Admin
+        const completedSurveys = data.filter(row => {
+          if (row.completed !== true) return false;
+          if (alumniType === 'shs') return !!row.shs_personal_background_data;
+          return !!row.personal_background_data;
+        });
 
         if (completedSurveys.length === 0) {
           setError('No completed survey responses found.');
@@ -444,7 +482,7 @@ const ResponseandAnalytics = () => {
           return;
         }
 
-        const processed = processSurveyData(completedSurveys, userEmails);
+        const processed = processSurveyData(completedSurveys, userEmails, alumniType);
         setStats({
           totalResponses:    processed.totalResponses,
           avgSatisfaction:   processed.avgSatisfaction,
@@ -469,8 +507,9 @@ const ResponseandAnalytics = () => {
     };
 
     fetchSurveyData();
-  }, []);
+  }, [alumniType]); // ← SYNCED: refetch when department switches
 
+  // ============================ HELPER FUNCTIONS ============================
   const renderStars = (num) => "★".repeat(num) + "☆".repeat(5 - num);
 
   const isSectionVisible = (sectionName) => {
@@ -481,9 +520,17 @@ const ResponseandAnalytics = () => {
     return selectedSection === "All Sections" || formatted === sectionName;
   };
 
-  if (loading) return <LoadingScreen message="Loading survey data..." />;
-  if (error)   return <LoadingScreen message={`Error: ${error}`} isError={true} />;
+  // ============================ LOADING STATE ← SYNCED ============================
+  if (loading) {
+    return <ResponseAnalyticsSkeleton activeTab={activeTab} />;
+  }
 
+  // ============================ ERROR STATE ============================
+  if (error) {
+    return <LoadingScreen message={`Error: ${error}`} isError={true} />;
+  }
+
+  // ============================ RENDER ============================
   return (
     <ResponseAnalyticsView
       activeTab={activeTab}
@@ -498,7 +545,8 @@ const ResponseandAnalytics = () => {
       respondents={respondents}
       isSectionVisible={isSectionVisible}
       renderStars={renderStars}
-      sidebar={<AdminSidebar />}
+      sidebar={<SuperAdSidebar />}
+      alumniType={alumniType}
     />
   );
 };

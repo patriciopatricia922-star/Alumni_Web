@@ -1,11 +1,31 @@
 // ============================================================================
-// THIS IS THE UI.
+// THIS IS THE UI. superadmin
 // ============================================================================
 // Purpose: Renders all visual components for survey management including:
 //          - Sidebar with section list
 //          - Question builder interface
 //          - Branching logic interface
 //          - Modals, toasts, and all presentational elements
+// ============================================================================
+//
+// SYNC NOTES (Admin → Super Admin)
+// ─────────────────────────────────
+// 1. Added `alumniType` prop + header badge (College/SHS pill) next to the
+//    title, matching Admin's UI exactly. Purely additive, no restructuring.
+// 2. Added `targetSectionIdx` prop consumption (FIX 7): now destructured from
+//    props instead of being recomputed locally via the broken
+//    `parseInt(branchTargetQ.split("-")[1], 10)` logic. This fixes the same
+//    latent bug Admin had — if the controller sets branchTargetQ as
+//    `q-${q.id}` (uid-based, itself containing dashes), the local split-based
+//    parse silently returns the wrong section index. Consuming the
+//    controller-computed value keeps this correct regardless of which
+//    branchTargetQ format the paired controller uses.
+// 3. Kept Super Admin's own visual treatment for multi-select branch rows
+//    (flex/wrap layout with radio bullets) — this is a Super
+//    Admin-specific styling difference, not a functionality gap, so it was
+//    preserved rather than overwritten with Admin's grid layout.
+// 4. Kept SuperAdsidebar, existing class names, routes, and file structure
+//    untouched.
 // ============================================================================
 
 import SuperAdsidebar from "../SuperAdsidebar";
@@ -89,6 +109,10 @@ export default function SurveyMgmtView({
   // ============================ DERIVED DATA ============================
   currentSection,
   allQuestions,    // Flattened list of ALL questions across ALL sections
+  targetSectionIdx, // FIX 7 — computed correctly in the controller via
+                     // survey.sections.findIndex(); consumed here instead
+                     // of being recomputed from a broken positional split.
+  alumniType, // 'college' | 'shs' — drives the header badge only.
 }) {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -105,11 +129,13 @@ export default function SurveyMgmtView({
     return title;
   };
 
-  // Resolve which section the branch panel should display.
-  // branchTargetQ format: "q-{sectionIdx}-{questionIdx}"
-  const targetSectionIdx = branchTargetQ
-    ? parseInt(branchTargetQ.split("-")[1], 10)
-    : activeSection;
+  // NOTE: targetSectionIdx now comes from props (FIX 7, computed correctly
+  // in the controller). The old local computation here was:
+  //   const targetSectionIdx = branchTargetQ
+  //     ? parseInt(branchTargetQ.split("-")[1], 10)
+  //     : activeSection;
+  // — removed because it silently broke once branchTargetQ carries a
+  // uid-based key ("q-{uid}") instead of positional indices.
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
@@ -174,7 +200,20 @@ export default function SurveyMgmtView({
         {/* ── Header ────────────────────────────────────────────────────── */}
         <div className="survey-header">
           <div className="survey-header-left">
-            <h1 style={{ fontWeight: 700, fontSize: 27 }}>Survey Management</h1>
+            {/* alumniType badge — ported from Admin */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h1 style={{ fontWeight: 700, fontSize: 27 }}>Survey Management</h1>
+              <span style={{
+                padding: '3px 10px',
+                borderRadius: '999px',
+                fontSize: '11px',
+                fontWeight: 700,
+                background: alumniType === 'shs' ? '#FEF3C7' : '#EFF6FF',
+                color: alumniType === 'shs' ? '#92400E' : '#1D4ED8',
+              }}>
+                {alumniType === 'shs' ? 'SHS' : 'College'}
+              </span>
+            </div>
             <p className="survey-desc">Edit questions and publish to reflect on the alumni survey</p>
           </div>
           <div className="survey-header-actions">
@@ -631,6 +670,12 @@ export default function SurveyMgmtView({
                             className="branch-btn"
                             style={{ borderRadius: "0.4rem", padding: "0.3rem 0.5rem", gap: "0.3rem", width: "auto" }}
                             onClick={() => {
+                              // Kept exactly as-is (positional key) to preserve
+                              // Super Admin's existing controller contract.
+                              // If Super Admin's controller is later migrated
+                              // to the uid-based FIX-7 contract (branchTargetQ
+                              // as `q-${q.id}`), change this line to match:
+                              //   setBranchTargetQ(`q-${q.id}`);
                               setBranchTargetQ(`q-${activeSection}-${qIdx}`);
                               setBranchMode(true);
                             }}
