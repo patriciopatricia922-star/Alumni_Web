@@ -345,7 +345,7 @@ const Predictiveanalyticsview = ({
         <div className="pa-page-header">
           <h1 className="pa-page-title">Predictive Analytics</h1>
           <p className="pa-page-subtitle">
-            Welcome back! Here's what's happening with your alumni insights.
+            Welcome back! Here's whats happening with your alumni insights.
           </p>
         </div>
 
