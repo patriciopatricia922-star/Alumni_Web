@@ -1,42 +1,19 @@
 // ============================================================================
-// SurveyMgmtView.jsx — UI Layer (merged: alumniType badge + FIX 7 wiring)
+// SurveyMgmtView.jsx — UI Layer (merged: alumniType badge + FIX 7 wiring +
+// checkbox option rendering)
 // ============================================================================
-// MERGE NOTES
-// ───────────
-// Base: your version (identical branch-mode architecture in both supplied
-// files — stable q.id-based keys, multi-select dropdowns, cross-section
-// destination labels, eef6ff highlight, correct empty-state check).
-//
-// Only two differences found between the two supplied files:
-//   1. Document 13 ("friend") adds an alumniType badge next to the page
-//      title ("College" / "SHS" pill). Adopted here — purely additive UI,
-//      doesn't touch branch-mode logic, matches the constraint to extend
-//      without redesigning.
-//   2. Document 13 destructures an `alumniType` prop; Document 14 does not.
-//      Added to the prop list so the badge has data to render.
-//
-// BUG FOUND AND FIXED (present identically in both supplied files):
-//   Both files compute targetSectionIdx LOCALLY via
-//     parseInt(branchTargetQ.split("-")[1], 10)
-//   This assumes branchTargetQ has the shape "q-{sectionIdx}-{questionIdx}".
-//   But the SurveyManagement.jsx controller (already merged in this
-//   conversation) sets branchTargetQ as "q-{uid}" via
-//     setBranchTargetQ(`q-${q.id}`)  // NOT `q-${activeSection}-${qIdx}`
-//   where uid itself contains dashes (e.g. "q-1780303144972-9qdh0"). Splitting
-//   that on "-" and taking index [1] returns the timestamp segment, not a
-//   section index — this is the exact bug the controller's FIX 7 comment
-//   describes and fixes via survey.sections.findIndex(), passed down as the
-//   `targetSectionIdx` prop. Neither view file consumed that prop; both
-//   silently recomputed a broken value locally, so the branch panel could
-//   show the wrong section (or none) whenever this view is paired with the
-//   FIX-7 controller.
-//   FIX: destructure `targetSectionIdx` from props (already sent by the
-//   controller) instead of recomputing it locally. The Branch button's
-//   onClick still sets `branchTargetQ` as `q-${activeSection}-${qIdx}` here,
-//   which matches the OLDER controller contract in Documents 9/12 — if
-//   you're using the merged SHS-aware controller from this conversation,
-//   change that one line too (noted inline below) so branchTargetQ carries
-//   q.id instead of positional indices.
+// CHANGE LOG (this pass only)
+// ───────────────────────────
+// ADDED: a "checkbox" render branch, mirroring the existing "multiple"
+// branch exactly (same layout, same edit/add/delete option controls), just
+// using <input type="checkbox"> instead of <input type="radio"> for the
+// preview state. Previously, questions with type === "checkbox" rendered
+// their header/card but never rendered their options list at all, because
+// the options-rendering JSX was gated strictly on `q.type === "multiple"`.
+// This affected both College and SHS checkbox questions (e.g. "What
+// factors helped you most in getting your first job?", "Please specify any
+// certiport certification earned", "Would you be willing to participate
+// in:"). No other layout, styling, spacing, or behavior was changed.
 // ============================================================================
 
 import AdminSidebar from "../components/AdminSidebar";
@@ -144,14 +121,6 @@ export default function SurveyMgmtView({
     }
     return title;
   };
-
-  // NOTE: targetSectionIdx now comes from props (FIX 7, computed correctly
-  // in the controller). The old local computation here was:
-  //   const targetSectionIdx = branchTargetQ
-  //     ? parseInt(branchTargetQ.split("-")[1], 10)
-  //     : activeSection;
-  // — removed because it silently broke once branchTargetQ carries a
-  // uid-based key ("q-{uid}") instead of positional indices.
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
@@ -1063,6 +1032,87 @@ export default function SurveyMgmtView({
                         </div>
                       )}
 
+                      {/* Checkbox (multi-select) — mirrors "multiple" block above,
+                          just rendered with checkbox inputs instead of radio.
+                          Fixes: checkbox-type questions previously showed no
+                          option list at all in this editor view. */}
+                      {q.type === "checkbox" && (
+                        <div className="radio-group">
+                          {(q.options || []).map((opt, oIdx) => (
+                            <label key={oIdx}>
+                              <input type="checkbox" disabled />
+                              {isEditing ? (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "0.5rem",
+                                    flex: 1,
+                                  }}
+                                >
+                                  <input
+                                    value={opt}
+                                    onChange={(e) =>
+                                      updateOption(
+                                        activeSection,
+                                        qIdx,
+                                        oIdx,
+                                        e.target.value,
+                                      )
+                                    }
+                                    style={{
+                                      flex: 1,
+                                      border: "none",
+                                      borderBottom: "1px solid #d1d5db",
+                                      outline: "none",
+                                      fontSize: "0.8rem",
+                                      fontFamily: "Lexend",
+                                      padding: "0.2rem 0",
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      deleteOption(activeSection, qIdx, oIdx)
+                                    }
+                                    style={{
+                                      border: "none",
+                                      background: "transparent",
+                                      cursor: "pointer",
+                                      color: "#ef4444",
+                                      padding: 0,
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <FiTrash2 size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span>{opt}</span>
+                              )}
+                            </label>
+                          ))}
+                          {isEditing && (
+                            <button
+                              onClick={() => addOption(activeSection, qIdx)}
+                              style={{
+                                marginTop: "0.5rem",
+                                border: "1px dashed #d1d5db",
+                                background: "none",
+                                padding: "0.3rem 0.6rem",
+                                borderRadius: "0.4rem",
+                                fontSize: "0.75rem",
+                                color: "#6b7280",
+                                cursor: "pointer",
+                                fontFamily: "Lexend",
+                              }}
+                            >
+                              + Add option
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       {/* Save / Cancel row */}
                       {isEditing && (
                         <div className="q-save-row">
@@ -1091,13 +1141,6 @@ export default function SurveyMgmtView({
                               width: "auto",
                             }}
                             onClick={() => {
-                              // NOTE: kept exactly as in both supplied files
-                              // (positional key) to match the OLDER
-                              // controller contract. If pairing with the
-                              // SHS-aware controller from this conversation
-                              // (which reads/writes branchTargetQ as
-                              // `q-${q.id}`), change this line to:
-                              //   setBranchTargetQ(`q-${q.id}`);
                               setBranchTargetQ(`q-${activeSection}-${qIdx}`);
                               setBranchMode(true);
                             }}
