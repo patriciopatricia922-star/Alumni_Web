@@ -11,6 +11,7 @@ import locationIcon     from '../assets/loc_icn.svg';
 import phoneIcon        from '../assets/ph_icn.svg';
 import emailIcon        from '../assets/mail_icn.svg';
 import '../styles/Profile.css';
+import { truncateHtml } from '../utils/textHelpers';
 
 const getStrengthLabel = (pct) => {
   if (pct >= 100) return 'Excellent';
@@ -574,7 +575,7 @@ const NotificationBell = memo(({
                         <p className={`prof-notif-item-title${n.read ? '' : ' prof-notif-item-title--unread'}`}>
                           {n.title}
                         </p>
-                        <p className="prof-notif-item-body">{n.body}</p>
+                        <p className="prof-notif-item-body">{truncateHtml(n.body, 100)}</p>
                         <span className="prof-notif-time">{formatTime(n.time)}</span>
                       </div>
                       {!n.read && <div className="prof-notif-dot"/>}

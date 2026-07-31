@@ -20,6 +20,7 @@ import PaperIcon    from '../assets/paper_icn.svg';
 import ProtectIcon  from '../assets/protect_icn.svg';
 import Missionicon  from '../assets/mission_icn.svg';
 import useDisclosure from '../hooks/useDisclosure';
+import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 
 /* ─────────────────────────────────────────────────────────────
    STATIC CONTENT (migrated from the former separate-page routes)
@@ -286,7 +287,7 @@ const NItem = ({ n, markOneRead, formatTime }) => (
     </div>
     <div className="ab-notif-content">
       <p className="ab-notif-title">{n.title}</p>
-      <p className="ab-notif-body">{n.body}</p>
+      <p className="ab-notif-body">{truncateHtml(n.body, 100)}</p>
       <span className="ab-notif-time">{formatTime(n.time)}</span>
     </div>
     {!n.read && <div className="ab-notif-dot" />}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import '../styles/AlumniDashboard.css';
 import '../styles/RewardsCard.css';
+import { truncateHtml } from "../utils/textHelpers";
 
 // ============================ FOR YOU CARD COMPONENT ============================
 const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
@@ -121,7 +122,7 @@ const NotificationDropdown = ({
                 </div>
                 <div className="notification-content">
                   <p className="notification-title">{n.title}</p>
-                  <p className="notification-body">{n.body}</p>
+                  <p className="notification-body">{truncateHtml(n.body, 100)}</p>
                   <span className="notification-time">{formatTime(n.time)}</span>
                 </div>
                 {!n.read && <div className="notification-unread-dot" />}
@@ -568,11 +569,17 @@ const AlumniDashboardView = ({
                 <span className="hello-name">{firstName}!</span>
               </h2>
               <p className="hello-notification-text">
-                You have{' '}
-                <span className="hello-notif-highlight">
-                  {unreadCount} new notification{unreadCount !== 1 ? 's' : ''}.
-                </span>
-                {' '}Check it now!
+                {unreadCount > 0 ? (
+                  <>
+                    You have{' '}
+                    <span className="hello-notif-highlight">
+                      {unreadCount} new notification{unreadCount !== 1 ? 's' : ''}.
+                    </span>
+                    {' '}Check it now!
+                  </>
+                ) : (
+                  "You're all caught up. No new notifications."
+                )}
               </p>
             </div>
           </div>

@@ -6,6 +6,7 @@ import React, { useState } from "react";
 // import { useNavigate } from 'react-router-dom';
 import Sidebar from "../components/Sidebar";
 import "../styles/RewardStore.css";
+import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
 
 // ============================ MERCH CARD ============================
 const MerchCard = ({ item, userPoints, onRedeem }) => {
@@ -57,7 +58,7 @@ const MerchCard = ({ item, userPoints, onRedeem }) => {
             overflow: "hidden",
           }}
         >
-          {item.description}
+          {htmlToReadableText(item.description || '')}
         </p>
         <button
           className="merch-card-redeem-btn"

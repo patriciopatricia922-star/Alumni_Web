@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import AboutView from '../Views/AboutView';
+import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
@@ -37,8 +38,8 @@ const About = () => {
       const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
       const mapped  = data.map(n => ({
         id:    n.id,
-        title: n.title,
-        body:  n.content,
+        title: decodeHtmlEntities(n.title),
+        body:  stripHtml(n.content),
         time:  n.published_at,
         read:  readIds.includes(n.id),
       }));

@@ -18,6 +18,7 @@ import {
   isSurveyComplete,
 } from "../lib/surveyProgress";
 import { logAction } from "../lib/auditLogger";
+import { stripHtml, decodeHtmlEntities } from "../utils/textHelpers";
 
 // Icons — announcement_icn.svg (friend's variant) is used as the primary
 // announcement icon; the original announcement_ic.svg is kept as a fallback
@@ -288,8 +289,8 @@ const AlumniDashboard = () => {
       );
       const mapped = data.map((n) => ({
         id: n.id,
-        title: n.title,
-        body: n.content,
+        title: decodeHtmlEntities(n.title),
+        body: stripHtml(n.content),
         time: n.published_at,
         read: readIds.includes(n.id),
       }));

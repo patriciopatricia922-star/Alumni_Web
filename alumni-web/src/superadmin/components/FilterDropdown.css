@@ -29,12 +29,14 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 9999;
   background: #fff;
   border: 1px solid #E2E8F0;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .filter-dropdown-item {
@@ -53,4 +55,24 @@
 .filter-dropdown-item.active {
   background: #EFF6FF;
   color: #155DFC;
+}
+
+.filter-dropdown-empty {
+  color: #94A3B8;
+  cursor: default;
+}
+
+.filter-dropdown-empty:hover {
+  background: transparent;
+}
+
+.filter-dropdown-menu-fixed {
+  position: fixed;
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 240px;
 }

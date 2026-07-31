@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ProfileView from '../views/ProfileView';
 import { classifyDepartment } from '../lib/departmentClassifier';
+import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 
 // ── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -245,7 +246,7 @@ const Profile = () => {
       if (error || !data) return;
       const readIds = getReadIds();
       const mapped  = data.map((n) => ({
-        id: n.id, title: n.title, body: n.content,
+        id: n.id, title: decodeHtmlEntities(n.title), body: stripHtml(n.content),
         time: n.published_at, read: readIds.includes(n.id),
       }));
       setNotifs(mapped);
