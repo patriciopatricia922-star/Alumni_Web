@@ -591,8 +591,8 @@ const AlumniDashboardView = ({
             <div className="survey-deco-circle survey-deco-circle--br" />
 
             <div className="survey-card-content">
-              <p className="survey-label">SURVEY PROGRESS</p>
-              <p className="survey-message">Your alumni tracer survey!</p>
+              <p className="survey-label">TRACER SURVEY</p>
+              <p className="survey-message">Your alumni tracer survey progress!</p>
 
               <button
                 className="continue-button"

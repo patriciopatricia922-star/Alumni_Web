@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';  // ← removed useLocation
+import { useNavigate } from 'react-router-dom';  
 import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import FeedbackAndAlumniEngagementView from '../Views/FeedbackAndAlumniEngagementView';
-import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
-import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; 
+import SkeletonLoader from '../components/SkeletonLoader'; 
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 7;

@@ -7,9 +7,11 @@ import {
   FaAlignCenter,
   FaAlignRight
 } from 'react-icons/fa';
-import { FiImage, FiTrash2, FiX } from 'react-icons/fi';
+import { FiImage, FiTrash2, FiX, FiChevronDown } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 import MultiImageUpload from '../modals/MultiImageUpload';
+import BatchProgramModal from '../modals/BatchProgramModal';
+import { useAlumniType } from '../contexts/AlumniTypeContext'; // adjust path to match your project
 import '../modals/Disc.css';
 
 
@@ -193,6 +195,8 @@ const ImageUpload = ({ onImageUpload, currentImage, bucketName = 'discount-image
 };
 
 const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) => {
+  const { alumniType } = useAlumniType();
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -201,8 +205,12 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
     audience: 'All Alumni',
     expiry: '',
     image_urls: [],
+    // ── NEW: batch / program targeting ──────────────────────────────────────
+    target_filter_value: '',
   });
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [batchProgramPickerOpen, setBatchProgramPickerOpen] = useState(false);
 
   useEffect(() => {
     if (mode === 'edit' && discount) {
@@ -214,6 +222,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         audience: discount.audience || 'All Alumni',
         expiry: discount.valid_until ? new Date(discount.valid_until).toISOString().split('T')[0] : '',
         image_urls: discount.image_urls?.length ? discount.image_urls : (discount.image_url ? [discount.image_url] : []),
+        target_filter_value: discount.target_filter_value || '',
       });
     } else {
       setForm({
@@ -224,8 +233,10 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         audience: 'All Alumni',
         expiry: '',
         image_urls: [],
+        target_filter_value: '',
       });
     }
+    setFormError('');
   }, [mode, discount]);
 
   const s = (k, v) => {
@@ -233,7 +244,31 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
     setForm((f) => ({ ...f, [k]: v }));
   };
 
+  // Switching audience away from By Program/By Batch clears the selection,
+  // and picking either one auto-opens the picker.
+  const handleAudienceChange = (value) => {
+    setForm((f) => ({
+      ...f,
+      audience: value,
+      ...(value !== 'By Program' && value !== 'By Batch'
+        ? { target_filter_value: '' }
+        : {}),
+    }));
+    if (value === 'By Program' || value === 'By Batch') setBatchProgramPickerOpen(true);
+    setFormError('');
+  };
+
+  const handleBatchProgramSelect = (value) => {
+    setForm((f) => ({ ...f, target_filter_value: value }));
+    setFormError('');
+  };
+
   const handleSubmit = async () => {
+    if ((form.audience === 'By Program' || form.audience === 'By Batch') && !form.target_filter_value) {
+      setFormError(`Please select a ${form.audience === 'By Batch' ? 'batch' : 'program'} to target this discount to.`);
+      return;
+    }
+    setFormError('');
     console.log('[DiscountModal] Submitting form:', form);
     setLoading(true);
     try {
@@ -290,13 +325,47 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
           </Field>
 
           <Field label="Target Audience" required>
-            <select className="cm-select" value={form.audience} onChange={(e) => s('audience', e.target.value)}>
-              <option>All Alumni</option>
-              <option>By Program</option>
-              <option>By Batch</option>
-            </select>
+            <div className="cm-select-wrap">
+              <select className="cm-select" value={form.audience} onChange={(e) => handleAudienceChange(e.target.value)}>
+                <option>All Alumni</option>
+                <option>By Program</option>
+                <option>By Batch</option>
+              </select>
+              <FiChevronDown size={14} className="cm-select-arrow" />
+            </div>
           </Field>
         </div>
+
+        {/* ── Batch / Program picker ──────────────────────────────────────────── */}
+        {(form.audience === 'By Program' || form.audience === 'By Batch') && (
+          <Field label={form.audience === 'By Batch' ? 'Targeted Batch' : 'Targeted Program'} required>
+            {form.target_filter_value ? (
+              <div className="cm-target-user-chip">
+                <div className="cm-target-user-info">
+                  <div className="cm-target-user-name">
+                    {form.audience === 'By Batch' ? `Batch ${form.target_filter_value}` : form.target_filter_value}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="cm-target-user-change"
+                  onClick={() => setBatchProgramPickerOpen(true)}
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="cm-target-user-select-btn"
+                onClick={() => setBatchProgramPickerOpen(true)}
+              >
+                + Choose a {form.audience === 'By Batch' ? 'batch' : 'program'}
+              </button>
+            )}
+            {formError && <p className="cm-field-hint cm-field-error">{formError}</p>}
+          </Field>
+        )}
 
         <Field label="Expiry Date">
           <input className="cm-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
@@ -309,6 +378,15 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
           onSubmit={handleSubmit}
         />
       </div>
+
+      <BatchProgramModal
+        open={batchProgramPickerOpen}
+        onClose={() => setBatchProgramPickerOpen(false)}
+        filterType={form.audience === 'By Batch' ? 'batch' : 'program'}
+        onSelect={handleBatchProgramSelect}
+        selectedValue={form.target_filter_value}
+        alumniType={alumniType}
+      />
     </Modal>
   );
 };

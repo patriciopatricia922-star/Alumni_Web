@@ -121,6 +121,7 @@ const Sidebar = () => {
       if (item.navPath === "/update-tracer") {
         navigate(item.navPath);
       } else {
+        sessionStorage.setItem("survey_claim_reward", "1");
         requestNavigation(item.navPath);
       }
     } else {
