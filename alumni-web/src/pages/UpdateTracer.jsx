@@ -127,6 +127,8 @@ const UpdateTracerPage = () => {
   };
 
   const handleKeepResponse = () => {
+    sessionStorage.removeItem('survey_claim_reward');
+    sessionStorage.removeItem('survey_origin_route');
     navigate('/dashboard');
   };
 

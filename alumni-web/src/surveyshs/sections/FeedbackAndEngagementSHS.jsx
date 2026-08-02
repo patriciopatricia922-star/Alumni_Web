@@ -308,14 +308,13 @@ const FeedbackAndEngagementSHS = () => {
       });
 
       // Clean up — no longer needed after submission
+      // Clean up — no longer needed after submission
       try { sessionStorage.removeItem('shs_feedback_prev_route'); } catch (_) {}
 
-      const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
-      sessionStorage.removeItem('survey_claim_reward');
+      const originRoute = sessionStorage.getItem('survey_origin_route') || '/dashboard';
+      sessionStorage.removeItem('survey_origin_route');
 
-      console.log('[FeedbackAndEngagementSHS] handleSubmit: claimReward =', claimReward);
-
-      navigate(claimReward ? SUBMIT_ROUTE_REWARD : SUBMIT_ROUTE_DEFAULT);
+      navigate(`${originRoute}?survey_completed=1`);
     } catch (err) {
       console.error('[FeedbackAndEngagementSHS] Submit error:', err);
       await logAction({

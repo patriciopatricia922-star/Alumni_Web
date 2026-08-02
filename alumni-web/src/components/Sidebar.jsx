@@ -114,20 +114,21 @@ const Sidebar = () => {
 
   // ── Nav click handler — gate the survey item through DPA ─────────────────
   const handleNavClick = (item) => {
-    if (!item.navPath) return;
+  if (!item.navPath) return;
 
-    const isSurveyItem = item.path === "/survey";
-    if (isSurveyItem) {
-      if (item.navPath === "/update-tracer") {
-        navigate(item.navPath);
-      } else {
-        sessionStorage.setItem("survey_claim_reward", "1");
-        requestNavigation(item.navPath);
-      }
-    } else {
+  const isSurveyItem = item.path === "/survey";
+  if (isSurveyItem) {
+    if (item.navPath === "/update-tracer") {
+      sessionStorage.setItem("survey_origin_route", location.pathname);
       navigate(item.navPath);
+    } else {
+      sessionStorage.setItem("survey_origin_route", location.pathname);
+      requestNavigation(item.navPath);
     }
-  };
+  } else {
+    navigate(item.navPath);
+  }
+};
 
   const menuItems = [
     {

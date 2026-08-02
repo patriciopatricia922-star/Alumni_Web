@@ -184,10 +184,10 @@ const Announcements = () => {
 
   const handleSurveyNavigate = useCallback(() => {
     if (!surveyRoute) return;
+    sessionStorage.setItem("survey_origin_route", "/announcements");
     if (surveyRoute === "/update-tracer") {
       navigate(surveyRoute);
     } else {
-      sessionStorage.setItem("survey_claim_reward", "1");
       requestNavigation(surveyRoute);
     }
   }, [surveyRoute, requestNavigation, navigate]);

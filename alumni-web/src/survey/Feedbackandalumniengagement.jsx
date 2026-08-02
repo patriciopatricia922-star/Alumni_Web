@@ -323,12 +323,11 @@ const FeedbackAndAlumniEngagement = () => {
         status:      'Success',
       });
 
-      const claimReward = sessionStorage.getItem('survey_claim_reward') === '1';
-      sessionStorage.removeItem('survey_claim_reward');
+      const originRoute = sessionStorage.getItem('survey_origin_route') || '/dashboard';
+      sessionStorage.removeItem('survey_origin_route');
 
-      console.log('[FeedbackAndAlumniEngagement] handleSubmit: claimReward =', claimReward);
-
-      navigate(claimReward ? '/rewards?survey_completed=1' : '/survey/complete');
+      navigate(`${originRoute}?survey_completed=1`);
+      
     } catch (err) {
       console.error('[FeedbackAndAlumniEngagement] handleSubmit error:', err);
       await logAction({

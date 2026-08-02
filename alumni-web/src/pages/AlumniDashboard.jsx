@@ -563,11 +563,11 @@ const AlumniDashboard = () => {
   // ============================ SURVEY NAVIGATION (DPA-GATED) ============================
   const handleSurveyNavigate = useCallback(
     (route) => {
+      sessionStorage.setItem("survey_origin_route", "/dashboard");
       if (route === "/update-tracer") {
         navigate(route);
         return;
       }
-      sessionStorage.setItem("survey_claim_reward", "1");
       requestNavigation(route);
     },
     [requestNavigation, navigate],

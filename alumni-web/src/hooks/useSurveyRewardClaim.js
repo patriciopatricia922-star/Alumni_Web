@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { fetchRewardProfile, claimSurveyReward } from '../lib/rewardPoints';
 
 const SURVEY_REWARD_POINTS = 50;
+const TOAST_DISMISS_MS = 2500;
 
 /**
  * @param {object} handlers
