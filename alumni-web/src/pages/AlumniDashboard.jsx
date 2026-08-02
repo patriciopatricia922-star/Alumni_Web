@@ -567,6 +567,7 @@ const AlumniDashboard = () => {
         navigate(route);
         return;
       }
+      sessionStorage.setItem("survey_claim_reward", "1");
       requestNavigation(route);
     },
     [requestNavigation, navigate],

@@ -187,6 +187,7 @@ const Announcements = () => {
     if (surveyRoute === "/update-tracer") {
       navigate(surveyRoute);
     } else {
+      sessionStorage.setItem("survey_claim_reward", "1");
       requestNavigation(surveyRoute);
     }
   }, [surveyRoute, requestNavigation, navigate]);

@@ -416,10 +416,9 @@ const RewardStore = () => {
   };
 
   const handleCompleteSurvey = useCallback(() => {
-    if (!surveyRoute) return;
-    sessionStorage.setItem("survey_claim_reward", "1");
-    requestNavigation(surveyRoute);
-  }, [surveyRoute, requestNavigation]);
+  if (!surveyRoute) return;
+  requestNavigation(surveyRoute);
+}, [surveyRoute, requestNavigation]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
