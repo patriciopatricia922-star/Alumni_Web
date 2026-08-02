@@ -23,6 +23,8 @@ const PREV_ROUTE      = '/surveyshs/shs-job-experience';
 const NEXT_ROUTE      = '/surveyshs/shs-feedback-and-engagement';
 const THIS_ROUTE      = '/surveyshs/shs-skills-and-competencies';
 
+const DEPARTMENT_TYPE = 'shs';  // used for surveyConfig filtering
+
 export const RATING_FIELDS = [
   { key: 'communication_skills', label: '20. Communication skills' },
   { key: 'technical_knowledge',  label: '21. Technical knowledge in your field' },
@@ -117,14 +119,14 @@ const SkillsAndCompetenciesSHS = () => {
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true);
+        await loadSurveyConfig(true, DEPARTMENT_TYPE);
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
     };
     init();
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true);
+      await loadSurveyConfig(true, DEPARTMENT_TYPE);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);

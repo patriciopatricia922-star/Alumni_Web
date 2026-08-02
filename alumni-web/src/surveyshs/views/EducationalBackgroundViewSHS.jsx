@@ -28,7 +28,8 @@ const NotifBellIcon = () => (
 const onFocus = (e) => { if (!e.target.readOnly) e.target.style.borderColor = '#003EA6'; };
 const onBlur  = (e) => { if (!e.target.readOnly) e.target.style.borderColor = '#D1D5DC'; };
 
-/* ── Static option lists ─────────────────────────────────────────────────── */
+/* ── Static option lists (fallback defaults only — overridden by
+   questionOptions from survey_config when available) ────────────────────── */
 const NU_BRANCHES = [
   'NU Manila', 'NU Nazareth', 'NU Laguna', 'NU MOA', 'NU Fairview',
   'NU Baliwag', 'NU Dasma', 'NU APC', 'NU Lipa', 'NU Clark',
@@ -51,7 +52,6 @@ const YEAR_LEVELS = [
   'Not Applicable',
 ];
 
-// Matches spec exactly — note "Others" (plural) consistent with controller validation
 const STOPPED_REASONS = [
   'Financial Constraints',
   'Employment Opportunity',
@@ -61,7 +61,10 @@ const STOPPED_REASONS = [
   'Others',
 ];
 
-/* ── Notification dropdown ───────────────────────────────────────────────── */
+const STATUS_OPTIONS = ['Currently Studying', 'Graduated', 'Stopped', 'Working'];
+const YES_NO_OPTIONS  = ['Yes', 'No'];
+
+/* ── Notification dropdown (unchanged) ───────────────────────────────────── */
 const NotificationDropdown = ({
   notifs, unreadCount, notifTab, setNotifTab,
   markAllRead, markOneRead, groupByDate, formatTime,
@@ -142,7 +145,7 @@ const NotificationDropdown = ({
   );
 };
 
-/* ── Reusable radio group ────────────────────────────────────────────────── */
+/* ── Reusable radio group (unchanged) ────────────────────────────────────── */
 const RadioGroup = ({ name, options, value, onChange }) => (
   <div className="shs-eb-radio-group">
     {options.map((opt) => (
@@ -161,24 +164,30 @@ const RadioGroup = ({ name, options, value, onChange }) => (
 );
 
 /* ── Shared "further studies details" block ──────────────────────────────── */
+/* ← CHANGED: accepts getLabel/getPlaceholder/questionOptions, falls back to
+   the original hardcoded strings/arrays exactly as before when config is
+   absent for a given field key. */
 const FurtherStudiesDetails = ({
   form, set, errors,
   showNuBranch,
   showSchoolName,
   showReasonNu,
   showReasonNotNu,
+  getLabel,
+  getPlaceholder,
+  questionOptions,
 }) => (
   <>
     {/* ── NU Branch selector ──────────────────────────────────────────── */}
     {showNuBranch && (
       <div className="shs-eb-field">
         <label className="shs-eb-label-sub">
-          What Branch of NU? <span className="shs-eb-req">*</span>
+          {getLabel ? getLabel('nu_branch') : 'What Branch of NU?'} <span className="shs-eb-req">*</span>
           {errors.has('nu_branch') && <span className="shs-eb-field-error">Required</span>}
         </label>
         <RadioGroup
           name="shs_nu_branch"
-          options={NU_BRANCHES}
+          options={questionOptions?.['nu_branch'] || NU_BRANCHES}
           value={form.nu_branch}
           onChange={(v) => set('nu_branch', v)}
         />
@@ -189,12 +198,12 @@ const FurtherStudiesDetails = ({
     {showReasonNu && (
       <div className="shs-eb-field">
         <label className="shs-eb-label-sub">
-          Reason(s) why did you choose NU. <span className="shs-eb-req">*</span>
+          {getLabel ? getLabel('reason_nu') : 'Reason(s) why did you choose NU.'} <span className="shs-eb-req">*</span>
           {errors.has('reason_nu') && <span className="shs-eb-field-error">Required</span>}
         </label>
         <textarea
           className="shs-eb-textarea"
-          placeholder="Enter your reason(s)…"
+          placeholder={getPlaceholder ? (getPlaceholder('reason_nu') || 'Enter your reason(s)…') : 'Enter your reason(s)…'}
           value={form.reason_nu}
           onChange={(e) => set('reason_nu', e.target.value)}
           onFocus={onFocus}
@@ -207,12 +216,12 @@ const FurtherStudiesDetails = ({
     {showReasonNotNu && (
       <div className="shs-eb-field">
         <label className="shs-eb-label-sub">
-          Reason(s) why did you not choose NU. <span className="shs-eb-req">*</span>
+          {getLabel ? getLabel('reason_not_nu') : 'Reason(s) why did you not choose NU.'} <span className="shs-eb-req">*</span>
           {errors.has('reason_not_nu') && <span className="shs-eb-field-error">Required</span>}
         </label>
         <textarea
           className="shs-eb-textarea"
-          placeholder="Enter your reason(s)…"
+          placeholder={getPlaceholder ? (getPlaceholder('reason_not_nu') || 'Enter your reason(s)…') : 'Enter your reason(s)…'}
           value={form.reason_not_nu}
           onChange={(e) => set('reason_not_nu', e.target.value)}
           onFocus={onFocus}
@@ -225,12 +234,12 @@ const FurtherStudiesDetails = ({
     {showSchoolName && (
       <div className="shs-eb-field">
         <label className="shs-eb-label-sub">
-          Name of School/University <span className="shs-eb-req">*</span>
+          {getLabel ? getLabel('school_name') : 'Name of School/University'} <span className="shs-eb-req">*</span>
           {errors.has('school_name') && <span className="shs-eb-field-error">Required</span>}
         </label>
         <input
           className="shs-eb-input"
-          placeholder="e.g. University of the Philippines"
+          placeholder={getPlaceholder ? (getPlaceholder('school_name') || 'e.g. University of the Philippines') : 'e.g. University of the Philippines'}
           value={form.school_name}
           onChange={(e) => set('school_name', e.target.value)}
           onFocus={onFocus}
@@ -242,13 +251,13 @@ const FurtherStudiesDetails = ({
     {/* ── Education level ─────────────────────────────────────────────── */}
     <div className="shs-eb-field">
       <label className="shs-eb-label-sub">
-        What level of education are you currently in or have completed?{' '}
+        {getLabel ? getLabel('education_level') : 'What level of education are you currently in or have completed?'}{' '}
         <span className="shs-eb-req">*</span>
         {errors.has('education_level') && <span className="shs-eb-field-error">Required</span>}
       </label>
       <RadioGroup
         name="shs_education_level"
-        options={EDUCATION_LEVELS}
+        options={questionOptions?.['education_level'] || EDUCATION_LEVELS}
         value={form.education_level}
         onChange={(v) => set('education_level', v)}
       />
@@ -256,7 +265,7 @@ const FurtherStudiesDetails = ({
         <input
           className="shs-eb-input"
           style={{ marginTop: '8px' }}
-          placeholder="Please specify…"
+          placeholder={getPlaceholder ? (getPlaceholder('education_level_other') || 'Please specify…') : 'Please specify…'}
           value={form.education_level_other}
           onChange={(e) => set('education_level_other', e.target.value)}
           onFocus={onFocus}
@@ -271,12 +280,12 @@ const FurtherStudiesDetails = ({
     {/* ── Course / Program ────────────────────────────────────────────── */}
     <div className="shs-eb-field">
       <label className="shs-eb-label-sub">
-        Course/Program <span className="shs-eb-req">*</span>
+        {getLabel ? getLabel('course_program') : 'Course/Program'} <span className="shs-eb-req">*</span>
         {errors.has('course_program') && <span className="shs-eb-field-error">Required</span>}
       </label>
       <textarea
         className="shs-eb-textarea"
-        placeholder="e.g. BS Computer Science"
+        placeholder={getPlaceholder ? (getPlaceholder('course_program') || 'e.g. BS Computer Science') : 'e.g. BS Computer Science'}
         value={form.course_program}
         onChange={(e) => set('course_program', e.target.value)}
         onFocus={onFocus}
@@ -287,12 +296,12 @@ const FurtherStudiesDetails = ({
     {/* ── Year Level ──────────────────────────────────────────────────── */}
     <div className="shs-eb-field">
       <label className="shs-eb-label-sub">
-        Year Level <span className="shs-eb-req">*</span>
+        {getLabel ? getLabel('year_level') : 'Year Level'} <span className="shs-eb-req">*</span>
         {errors.has('year_level') && <span className="shs-eb-field-error">Required</span>}
       </label>
       <RadioGroup
         name="shs_year_level"
-        options={YEAR_LEVELS}
+        options={questionOptions?.['year_level'] || YEAR_LEVELS}
         value={form.year_level}
         onChange={(v) => set('year_level', v)}
       />
@@ -320,6 +329,10 @@ const EducationalBackgroundViewSHS = ({
   /* actions */
   handleSave,
   handleNext,
+  /* ← ADDED: dynamic config */
+  getLabel,
+  getPlaceholder,
+  questionOptions,
   /* notifications */
   bellRef,
   notifs,
@@ -336,10 +349,9 @@ const EducationalBackgroundViewSHS = ({
   navigate,
 }) => {
 
-  /* ── Branch visibility flags ─────────────────────────────────────────── */
+  /* ── Branch visibility flags (unchanged) ─────────────────────────────── */
   const isStudyingOrGraduated = form.status === 'Currently Studying' || form.status === 'Graduated';
   const isStopped             = form.status === 'Stopped';
-  // 'Working' intentionally renders no sub-questions — navigate goes straight to Employment
 
   const pursuedNU          = form.pursued_nu_branch === 'Yes';
   const didNotPursueNU     = form.pursued_nu_branch === 'No';
@@ -350,7 +362,7 @@ const EducationalBackgroundViewSHS = ({
       <Sidebar />
       <div className="shs-eb-content">
 
-        {/* ── Sticky header ───────────────────────────────────────────────── */}
+        {/* ── Sticky header (unchanged) ────────────────────────────────── */}
         <div className="shs-eb-header">
           <div className="shs-eb-topbar">
 
@@ -428,14 +440,14 @@ const EducationalBackgroundViewSHS = ({
               {/* ── Q: Status ───────────────────────────────────────────── */}
               <div className="shs-eb-field">
                 <label className="shs-eb-label">
-                  Status <span className="shs-eb-req">*</span>
+                  {getLabel ? getLabel('status') : 'Status'} <span className="shs-eb-req">*</span>
                   {errors.has('status') && (
                     <span className="shs-eb-field-error">Required</span>
                   )}
                 </label>
                 <RadioGroup
                   name="shs_status"
-                  options={['Currently Studying', 'Graduated', 'Stopped', 'Working']}
+                  options={questionOptions?.['status'] || STATUS_OPTIONS}
                   value={form.status}
                   onChange={setStatus}
                 />
@@ -448,7 +460,7 @@ const EducationalBackgroundViewSHS = ({
                   {/* ── Did you pursue further studies at any NU branch? ─── */}
                   <div className="shs-eb-field">
                     <label className="shs-eb-label-sub">
-                      Did you pursue further studies to any NU branch after SHS?{' '}
+                      {getLabel ? getLabel('pursued_nu_branch') : 'Did you pursue further studies to any NU branch after SHS?'}{' '}
                       <span className="shs-eb-req">*</span>
                       {errors.has('pursued_nu_branch') && (
                         <span className="shs-eb-field-error">Required</span>
@@ -456,7 +468,7 @@ const EducationalBackgroundViewSHS = ({
                     </label>
                     <RadioGroup
                       name="shs_pursued_nu_branch"
-                      options={['Yes', 'No']}
+                      options={questionOptions?.['pursued_nu_branch'] || YES_NO_OPTIONS}
                       value={form.pursued_nu_branch}
                       onChange={setPursuedNuBranch}
                     />
@@ -473,6 +485,9 @@ const EducationalBackgroundViewSHS = ({
                         showSchoolName={false}
                         showReasonNu={true}
                         showReasonNotNu={false}
+                        getLabel={getLabel}
+                        getPlaceholder={getPlaceholder}
+                        questionOptions={questionOptions}
                       />
                     </div>
                   )}
@@ -482,7 +497,7 @@ const EducationalBackgroundViewSHS = ({
                     <>
                       <div className="shs-eb-field">
                         <label className="shs-eb-label-sub">
-                          Did you pursue further studies to any school after SHS?{' '}
+                          {getLabel ? getLabel('pursued_other_school') : 'Did you pursue further studies to any school after SHS?'}{' '}
                           <span className="shs-eb-req">*</span>
                           {errors.has('pursued_other_school') && (
                             <span className="shs-eb-field-error">Required</span>
@@ -490,7 +505,7 @@ const EducationalBackgroundViewSHS = ({
                         </label>
                         <RadioGroup
                           name="shs_pursued_other_school"
-                          options={['Yes', 'No']}
+                          options={questionOptions?.['pursued_other_school'] || YES_NO_OPTIONS}
                           value={form.pursued_other_school}
                           onChange={setPursuedOtherSchool}
                         />
@@ -507,6 +522,9 @@ const EducationalBackgroundViewSHS = ({
                             showSchoolName={true}
                             showReasonNu={false}
                             showReasonNotNu={true}
+                            getLabel={getLabel}
+                            getPlaceholder={getPlaceholder}
+                            questionOptions={questionOptions}
                           />
                         </div>
                       )}
@@ -523,7 +541,7 @@ const EducationalBackgroundViewSHS = ({
                 <div className="shs-eb-branch">
                   <div className="shs-eb-field">
                     <label className="shs-eb-label-sub">
-                      What is the main reason you did not pursue further studies?{' '}
+                      {getLabel ? getLabel('stopped_reason') : 'What is the main reason you did not pursue further studies?'}{' '}
                       <span className="shs-eb-req">*</span>
                       {errors.has('stopped_reason') && (
                         <span className="shs-eb-field-error">Required</span>
@@ -531,7 +549,7 @@ const EducationalBackgroundViewSHS = ({
                     </label>
                     <RadioGroup
                       name="shs_stopped_reason"
-                      options={STOPPED_REASONS}
+                      options={questionOptions?.['stopped_reason'] || STOPPED_REASONS}
                       value={form.stopped_reason}
                       onChange={(v) => set('stopped_reason', v)}
                     />
@@ -542,7 +560,7 @@ const EducationalBackgroundViewSHS = ({
                         <input
                           className="shs-eb-input"
                           style={{ marginTop: '8px' }}
-                          placeholder="Please specify…"
+                          placeholder={getPlaceholder ? (getPlaceholder('stopped_reason_other') || 'Please specify…') : 'Please specify…'}
                           value={form.stopped_reason_other}
                           onChange={(e) => set('stopped_reason_other', e.target.value)}
                           onFocus={onFocus}
@@ -564,7 +582,7 @@ const EducationalBackgroundViewSHS = ({
 
             </div>{/* end .shs-eb-fields */}
 
-            {/* ── Footer ──────────────────────────────────────────────── */}
+            {/* ── Footer (unchanged) ─────────────────────────────────────── */}
             <div className="shs-eb-footer">
               <button
                 className="shs-eb-btn-prev"

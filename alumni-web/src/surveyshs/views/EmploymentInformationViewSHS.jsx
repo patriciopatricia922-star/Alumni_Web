@@ -140,6 +140,7 @@ const EmploymentInformationViewSHS = ({
   industryOptions,
   locationOptions,
   monthlyIncomeOptions,
+  unemployedReasonOptions, // ADDED
   // progress
   formPct,
   currentSection,
@@ -166,8 +167,8 @@ const EmploymentInformationViewSHS = ({
   const isEmployed   = employedStatuses.includes(form.employment_status);
   const isUnemployed = unemployedStatuses.includes(form.employment_status);
 
-  // Employed branch is shown when an employed status is selected
-  const showEmployedBranch = isEmployed;
+  const showEmployedBranch   = isEmployed;
+  const showUnemployedBranch = isUnemployed; // ADDED
 
   return (
     <div className="ei-shs-root">
@@ -431,6 +432,7 @@ const EmploymentInformationViewSHS = ({
                 </div>
 
                 {/* Q7 — Is your current job related to your strand? */}
+                {/* Q7 — Is your current job related to your strand? */}
                 <div className="ei-shs-field">
                   <span className="ei-shs-label">
                     Is your current job related to your strand?
@@ -457,6 +459,52 @@ const EmploymentInformationViewSHS = ({
 
               </div>
               /* end showEmployedBranch */
+            )}
+
+            {/* ── Unemployed branch ──────────────────────────────────────── */}
+            {/* ADDED — was completely missing; this is why selecting either
+                Unemployed status showed no follow-up fields at all. */}
+            {showUnemployedBranch && (
+              <div className="ei-shs-branch">
+
+                {/* Reasons of being unemployed */}
+                <div className="ei-shs-field">
+                  <span className="ei-shs-label">
+                    Reasons of being unemployed
+                    <span className="ei-shs-req">*</span>
+                    {errors.has('reason_unemployed') && (
+                      <span className="ei-shs-field-error">This field is required</span>
+                    )}
+                  </span>
+                  <div className="ei-shs-radio-group">
+                    {unemployedReasonOptions.map((opt) => (
+                      <label key={opt} className="ei-shs-radio-label">
+                        <input
+                          type="radio"
+                          name="reason_unemployed"
+                          value={opt}
+                          checked={form.reason_unemployed === opt}
+                          onChange={() => set('reason_unemployed', opt)}
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* "Other" sub-field */}
+                  {form.reason_unemployed === 'Other' && (
+                    <input
+                      className={`ei-shs-input ei-shs-other-input${errors.has('reason_unemployed_other') ? ' error' : ''}`}
+                      type="text"
+                      placeholder="Please specify"
+                      value={form.reason_unemployed_other}
+                      onChange={(e) => set('reason_unemployed_other', e.target.value)}
+                    />
+                  )}
+                </div>
+
+              </div>
+              /* end showUnemployedBranch */
             )}
 
             {/* ── Footer ──────────────────────────────────────────────────── */}

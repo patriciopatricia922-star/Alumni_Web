@@ -39,11 +39,14 @@ import EmploymentInformationViewSHS from '../views/EmploymentInformationViewSHS'
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
-const TOTAL_SECTIONS  = 6;   // FIX: was 5 — SHS has 6 sections total
+const TOTAL_SECTIONS  = 6; 
 const CURRENT_SECTION = 3;
 const SECTION_KEY     = 'shs_employment_information';
 const PREV_ROUTE      = '/surveyshs/shs-educational-background';
-const NEXT_ROUTE      = '/surveyshs/shs-job-experience';
+const NEXT_ROUTE_DEFAULT    = '/surveyshs/shs-job-experience';
+const NEXT_ROUTE_UNEMPLOYED = '/surveyshs/shs-feedback-and-engagement';
+
+const DEPARTMENT_TYPE = 'shs';  
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static option lists (SHS-specific)
@@ -72,6 +75,9 @@ export const SHS_UNEMPLOYED_STATUSES = [
   'Unemployed (Not Looking for Work)',
 ];
 
+const resolveNextRoute = (status) =>
+  SHS_UNEMPLOYED_STATUSES.includes(status) ? NEXT_ROUTE_UNEMPLOYED : NEXT_ROUTE_DEFAULT;
+
 export const SHS_INDUSTRY_OPTIONS = [
   'Education/Academe',
   'Healthcare/Medical',
@@ -93,6 +99,14 @@ export const SHS_MONTHLY_INCOME_OPTIONS = [
   'Not Applicable',
 ];
 
+export const SHS_UNEMPLOYED_REASON_OPTIONS = [
+  'Pursuing further studies',
+  'Family responsibilities or personal matters',
+  'Health-related reasons',
+  'Lack of job opportunities related to the field of study',
+  'Other',
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Required fields per branch path
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,6 +125,11 @@ const getRequiredFields = (form) => {
     required.add('location_of_employment');
     required.add('monthly_income');
     required.add('job_related_to_strand');
+  }
+
+  if (SHS_UNEMPLOYED_STATUSES.includes(form.employment_status)) {
+    required.add('reason_unemployed');
+    if (form.reason_unemployed === 'Other') required.add('reason_unemployed_other');
   }
 
   return required;
@@ -179,6 +198,8 @@ const EMPTY_FORM = {
   location_of_employment:  '',
   monthly_income:          '',
   job_related_to_strand:   '',
+  reason_unemployed:       '', // ADDED
+  reason_unemployed_other: '', // ADDED
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -206,7 +227,7 @@ const EmploymentInformationSHS = () => {
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true);
+        await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED: was loadSurveyConfig(true) — defaulted to 'college'
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
@@ -214,7 +235,7 @@ const EmploymentInformationSHS = () => {
     init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true);
+      await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
@@ -334,8 +355,20 @@ const EmploymentInformationSHS = () => {
       return;
     }
     setErrors(new Set());
+
+    const nextRoute = resolveNextRoute(form.employment_status); // FIXED: was static NEXT_ROUTE
+
+    // Skipping Job Experience — store prevRoute so Feedback's Back button
+    // returns here instead of to Job Experience (mirrors the pattern used
+    // in EducationalBackgroundSHS.jsx for its Stopped/skip branches).
+    if (nextRoute === NEXT_ROUTE_UNEMPLOYED) {
+      try {
+        sessionStorage.setItem('shs_feedback_prev_route', '/surveyshs/shs-employment-information');
+      } catch (_) {}
+    }
+
     saveSectionProgress(SECTION_KEY, form)
-      .then(() => navigate(NEXT_ROUTE))
+      .then(() => navigate(nextRoute))
       .catch((err) =>
         console.error('[EmploymentInformationSHS] Error saving before navigation:', err)
       );
@@ -369,6 +402,7 @@ const EmploymentInformationSHS = () => {
       industryOptions={SHS_INDUSTRY_OPTIONS}
       locationOptions={SHS_LOCATION_OPTIONS}
       monthlyIncomeOptions={SHS_MONTHLY_INCOME_OPTIONS}
+      unemployedReasonOptions={SHS_UNEMPLOYED_REASON_OPTIONS} 
       formPct={formPct}
       currentSection={CURRENT_SECTION}
       totalSections={TOTAL_SECTIONS}

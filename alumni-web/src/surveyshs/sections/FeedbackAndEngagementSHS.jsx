@@ -33,6 +33,7 @@ const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 6;
 const SECTION_KEY     = 'shs_feedback_and_engagement';
 
+const DEPARTMENT_TYPE = 'shs';  // used for surveyConfig filtering
 // Fallback used when sessionStorage is empty (direct nav / page refresh)
 const PREV_ROUTE_FALLBACK = '/surveyshs/shs-educational-background';
 
@@ -144,14 +145,14 @@ const FeedbackAndEngagementSHS = () => {
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true);
+        await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED: was loadSurveyConfig(true) — defaulted to 'college'
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
     };
     init();
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true);
+      await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);

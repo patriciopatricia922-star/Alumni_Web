@@ -40,6 +40,7 @@ const SECTION_KEY     = 'shs_job_experience';
 const PREV_ROUTE      = '/surveyshs/shs-employment-information';
 const NEXT_ROUTE      = '/surveyshs/shs-skills-and-competencies';
 
+const DEPARTMENT_TYPE = 'shs';  // used for surveyConfig filtering
 // ─────────────────────────────────────────────────────────────────────────────
 // Static option lists
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ const JobExperienceSHS = () => {
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true);
+        await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED: was loadSurveyConfig(true) — defaulted to 'college'
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
@@ -186,7 +187,7 @@ const JobExperienceSHS = () => {
     init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true);
+      await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);

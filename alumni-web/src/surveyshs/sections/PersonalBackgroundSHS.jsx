@@ -1,33 +1,17 @@
 /**
- * PersonalBackgroundSHS.jsx — Logic Layer (v6, fixed track/strand & year-graduated resolution)
+ * PersonalBackgroundSHS.jsx — Logic Layer (v7, fixed applyConfig ordering + keying)
  * Location: src/surveyshs/PersonalBackgroundSHS.jsx
  *
- * CHANGED in v6 (root-cause fix only — no other logic modified):
- *
- *   1. Track/Strand Completed & Year Graduated pre-fill:
- *      - profile.program / profile.batchYear never existed on the object
- *        returned by useUserProfile (it maps DB `program` → `academicProgram`
- *        and DB `batch_year` → `yearGraduated`). These dead references are
- *        removed; the hook's actual keys are read directly.
- *      - The real bug: the resolved value written into form state
- *        (e.g. 'SHS-STEM', '2024') never matched the rendered radio option
- *        strings (e.g. 'STEM', 'Batch 2024'), so `checked={form.x === opt}`
- *        never matched — regardless of correct data fetch. Fixed by
- *        resolveTrackStrand()/resolveYearGraduated(), which match the DB
- *        value against the SHS survey's OWN questionOptions (falling back to
- *        the local SHS default list), so the stored form value is always one
- *        of the exact strings actually rendered as a radio option.
- *      - The autofill effect now depends on questionOptions (gated on
- *        !loadingConfig) so resolution reruns once SHS survey config has
- *        actually loaded, instead of possibly resolving against stale
- *        fallback options before config arrives.
- *
- *   2. Locked-field behavior (v5) is preserved: once resolved, track_strand
- *      and year_graduated are written directly into form state, excluded
- *      from validation prompts, and rendered as locked/disabled in the view.
- *
- * Everything else — v5 read-only name fields, v4 address split, back-nav
- * guard, progress, save, notifications — is identical to v5.
+ * FIX (this pass):
+ *   1. "Cannot access 'section' before initialization" — applyConfig had a
+ *      stray/duplicate reference to `section` above its own `const section =
+ *      config.sections.find(...)` line. Rewritten so `section` is declared
+ *      once and only referenced afterward.
+ *   2. Section title match includes 'Personal Background' (DEFAULT_SHS_SURVEY's
+ *      actual saved title), not just 'SHS Personal Background'.
+ *   3. Field keying no longer falls back to q.id (which may be a uid, not a
+ *      semantic key) — keys strictly by INDEX_TO_FIELD[idx], matching how
+ *      College's EducationalBackground.jsx keys its config.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -64,8 +48,6 @@ const REQUIRED_FIELDS = [
   'year_graduated',
 ];
 
-// Fields pre-filled from the user's record that must not require
-// (re-)selection or editing once loaded.
 const LOCKED_FIELDS = new Set([
   'last_name',
   'first_name',
@@ -74,19 +56,12 @@ const LOCKED_FIELDS = new Set([
   'year_graduated',
 ]);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Default option lists — used only when survey_config hasn't loaded options
-// for these fields yet. Also the resolution target for DB → option matching.
-// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_TRACK_STRAND_OPTIONS = ['STEM', 'HUMSS', 'ABM'];
 const DEFAULT_YEAR_GRADUATED_OPTIONS = [
   'Batch 2022', 'Batch 2023', 'Batch 2024',
   'Batch 2025', 'Batch 2026', 'Batch 2027',
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Default labels / placeholders
-// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_LABELS = {
   last_name:        'Last Name',
   first_name:       'First Name',
@@ -123,9 +98,6 @@ const INDEX_TO_FIELD = [
   'contact_number', 'email', 'track_strand', 'year_graduated',
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Profile JS key → survey snake_case key mapping (address)
-// ─────────────────────────────────────────────────────────────────────────────
 const PROFILE_TO_SURVEY_ADDRESS = {
   street:   'street_address',
   city:     'city',
@@ -134,9 +106,6 @@ const PROFILE_TO_SURVEY_ADDRESS = {
   country:  'country',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SHS Track/Strand normalisation (fallback only — see resolveTrackStrand)
-// ─────────────────────────────────────────────────────────────────────────────
 const SHS_TRACK_CANONICAL = ['SHS-STEM', 'SHS-ABM', 'SHS-HUMSS'];
 
 const normalizeTrackStrand = (raw) => {
@@ -150,19 +119,6 @@ const normalizeTrackStrand = (raw) => {
   return String(raw).trim();
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Root-cause fix: resolve the DB value against the ACTUAL rendered option
-// list (survey_config-provided, falling back to the SHS default list) so the
-// value written into form state is always one of the exact strings the radio
-// group renders as `opt`. Without this, `checked={form.x === opt}` compares
-// two independently-formatted strings (e.g. 'SHS-STEM' vs 'STEM', or '2024'
-// vs 'Batch 2024') and never matches, regardless of correct data fetch.
-//
-// `program` in the users table holds either a College program or an SHS
-// strand — useUserProfile maps both uniformly to profile.academicProgram.
-// Scoping resolution to THIS survey's own questionOptions (SHS strand list)
-// keeps it correctly isolated from the College program list.
-// ─────────────────────────────────────────────────────────────────────────────
 const resolveTrackStrand = (rawProgram, configOptions) => {
   if (!rawProgram) return '';
   const options = (configOptions && configOptions.length)
@@ -172,8 +128,6 @@ const resolveTrackStrand = (rawProgram, configOptions) => {
   const found = options.find(
     (opt) => String(opt).trim().toUpperCase().replace(/^SHS-/, '') === raw
   );
-  // Fallback preserves prior normalized behavior rather than silently
-  // returning blank if no option-list match is found (e.g. config typo).
   return found || normalizeTrackStrand(rawProgram);
 };
 
@@ -187,9 +141,6 @@ const resolveYearGraduated = (rawBatchYear, configOptions) => {
   return found || `Batch ${yearStr}`;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Legacy `complete_address` migration helper
-// ─────────────────────────────────────────────────────────────────────────────
 const migrateLegacyAddress = (data) => {
   if (!data || !data.complete_address) return data;
 
@@ -213,9 +164,6 @@ const migrateLegacyAddress = (data) => {
   return migrated;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Form completion percentage
-// ─────────────────────────────────────────────────────────────────────────────
 const computeFormPct = (form) => {
   const base    = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const filled  = REQUIRED_FIELDS.filter((k) => form[k] && String(form[k]).trim()).length;
@@ -226,9 +174,6 @@ const computeFormPct = (form) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Notification helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const NOTIF_KEY   = 'alumnai_read_notifs';
 const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
 const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
@@ -259,27 +204,20 @@ const formatTime = (iso) => {
   return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Controller
-// ─────────────────────────────────────────────────────────────────────────────
 const PersonalBackgroundSHS = () => {
   const navigate = useNavigate();
 
-  // ── Shared profile hook ────────────────────────────────────────────────────
   const { profile, loading: profileLoading, refresh: refreshProfile } = useUserProfile();
 
-  // ── Autofill / load control flags ─────────────────────────────────────────
   const [hasLoadedSavedData,   setHasLoadedSavedData]   = useState(false);
   const [hasAttemptedAutofill, setHasAttemptedAutofill] = useState(false);
   const profileAcademicRef = useRef({});
 
-  // ── Survey config ──────────────────────────────────────────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingConfig,        setLoadingConfig]        = useState(true);
 
-  // ── Form state ────────────────────────────────────────────────────────────
   const [form, setForm] = useState({
     last_name:        '',
     first_name:       '',
@@ -296,51 +234,56 @@ const PersonalBackgroundSHS = () => {
     track_strand:     '',
     year_graduated:   '',
     phone_prefix:     '+63',
-    complete_address: '', // legacy — preserved, not rendered, not required
+    complete_address: '',
   });
 
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef                    = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   const bellRef                         = useRef(null);
   const [notifs,       setNotifs]       = useState([]);
   const [unreadCount,  setUnreadCount]  = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifTab,     setNotifTab]     = useState('all');
 
-  // ── Force a fresh profile fetch on mount ──────────────────────────────────
   useEffect(() => {
     refreshProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── surveyConfig loading + realtime subscription (SHS department) ────────
+  // ── applyConfig: `section` is declared ONCE via `const section = ...find(...)`
+  // and is only referenced on lines AFTER that declaration. No duplicate or
+  // early reference to `section` exists anywhere else in this function. ──
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
+
     const section = config.sections.find(
       (s) =>
         s.id === SECTION_KEY ||
         s.id === 'shs_personal_background' ||
+        s.title === 'Personal Background' ||
         s.title === 'SHS Personal Background'
     );
+
     if (!section?.questions) return;
 
     const labels = {}, placeholders = {}, options = {};
     section.questions.forEach((q, idx) => {
-      const key = q.id || INDEX_TO_FIELD[idx];
+      const key = INDEX_TO_FIELD[idx]; // strictly index-based, no q.id fallback
       if (!key) return;
       labels[key] = q.label;
       if (q.placeholder) placeholders[key] = q.placeholder;
       if (q.options)     options[key]      = q.options;
     });
+
     setQuestionLabels((p)       => ({ ...p, ...labels }));
     setQuestionPlaceholders((p) => ({ ...p, ...placeholders }));
     setQuestionOptions((p)      => ({ ...p, ...options }));
   }, []);
 
+  // ── This effect is declared AFTER applyConfig, so no TDZ issue. ──
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -361,7 +304,6 @@ const PersonalBackgroundSHS = () => {
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, [applyConfig]);
 
-  // ── STEP 1: Load saved survey data ────────────────────────────────────────
   useEffect(() => {
     const loadSavedData = async () => {
       try {
@@ -388,19 +330,6 @@ const PersonalBackgroundSHS = () => {
     loadSavedData();
   }, []);
 
-  // ── STEP 2: Autofill from profile ─────────────────────────────────────────
-  // Track/Strand Completed and Year Graduated are sourced from the user
-  // record via useUserProfile:
-  //   users.program    → profile.academicProgram
-  //   users.batch_year → profile.yearGraduated
-  //
-  // ROOT-CAUSE FIX: resolve each raw DB value against THIS survey's own
-  // questionOptions (SHS strand / batch-year option lists) so the value
-  // written into form state is always one of the exact strings the radio
-  // group renders — guaranteeing `checked={form.x === opt}` matches. This
-  // effect depends on questionOptions (gated on !loadingConfig) so it
-  // reruns once SHS survey config has actually loaded, rather than
-  // resolving once against stale/fallback options.
   useEffect(() => {
     if (!hasLoadedSavedData)   return;
     if (profileLoading)        return;
@@ -446,9 +375,6 @@ const PersonalBackgroundSHS = () => {
           }
         };
 
-        // Locked fields: set directly from the resolved user-record value
-        // (source of truth) so they display immediately and never require
-        // reselection, even re-running as questionOptions finishes loading.
         if (academicValues.track_strand && updated.track_strand !== academicValues.track_strand) {
           updated.track_strand = academicValues.track_strand;
           didChange = true;
@@ -477,8 +403,6 @@ const PersonalBackgroundSHS = () => {
         return didChange ? updated : currentForm;
       });
 
-      // Locked fields are pre-answered by definition once resolved — clear
-      // any stale validation error for them.
       setErrors((prev) => {
         if (!prev.size) return prev;
         const next = new Set(prev);
@@ -495,7 +419,6 @@ const PersonalBackgroundSHS = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileLoading, hasLoadedSavedData, loadingConfig, questionOptions]);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     const h = (e) => {
       if (bellRef.current && !bellRef.current.contains(e.target))
@@ -540,7 +463,6 @@ const PersonalBackgroundSHS = () => {
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
-  // ── Field setters ──────────────────────────────────────────────────────────
   const setField = (key) => (e) => {
     if (LOCKED_FIELDS.has(key)) return;
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -578,7 +500,6 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
-  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = () => {
     const e = new Set();
     REQUIRED_FIELDS.forEach((field) => {
@@ -588,7 +509,6 @@ const PersonalBackgroundSHS = () => {
     return e;
   };
 
-  // ── Save draft ─────────────────────────────────────────────────────────────
   const handleSave = async () => {
     try {
       await saveSectionProgress(SECTION_KEY, form);
@@ -599,7 +519,6 @@ const PersonalBackgroundSHS = () => {
     }
   };
 
-  // ── Next (validate → save → navigate) ─────────────────────────────────────
   const handleNext = () => {
     const e = validate();
     if (e.size > 0) {
@@ -615,7 +534,6 @@ const PersonalBackgroundSHS = () => {
       });
   };
 
-  // ── Label / placeholder helpers ────────────────────────────────────────────
   const getLabel       = useCallback(
     (id) => questionLabels[id]       || DEFAULT_LABELS[id]       || id,
     [questionLabels]
@@ -625,7 +543,6 @@ const PersonalBackgroundSHS = () => {
     [questionPlaceholders]
   );
 
-  // ── Back-navigation guard ─────────────────────────────────────────────────
   const { handleBack, BackGuardModal } = useSurveyBackGuard(
     navigate,
     '/dashboard',
@@ -635,7 +552,6 @@ const PersonalBackgroundSHS = () => {
 
   const formPct = computeFormPct(form);
 
-  // ── Loading gate ───────────────────────────────────────────────────────────
   if (loadingConfig || !hasLoadedSavedData) {
     return (
       <div style={{
@@ -650,7 +566,6 @@ const PersonalBackgroundSHS = () => {
   return (
     <>
       <PersonalBackgroundViewSHS
-        /* form state */
         form={form}
         set={setField}
         setRadio={setRadio}
@@ -658,21 +573,16 @@ const PersonalBackgroundSHS = () => {
         errors={errors}
         saveToast={saveToast}
         cardRef={cardRef}
-        /* progress */
         formPct={formPct}
         currentSection={CURRENT_SECTION}
         totalSections={TOTAL_SECTIONS}
-        /* actions */
         handleSave={handleSave}
         handleNext={handleNext}
         onBack={handleBack}
-        /* dynamic config */
         getLabel={getLabel}
         getPlaceholder={getPlaceholder}
         questionOptions={questionOptions}
-        /* pre-fill lock behavior */
         lockedFields={LOCKED_FIELDS}
-        /* notifications */
         bellRef={bellRef}
         notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
         unreadCount={unreadCount}
@@ -684,7 +594,6 @@ const PersonalBackgroundSHS = () => {
         markOneRead={markOneRead}
         groupByDate={groupByDate}
         formatTime={formatTime}
-        /* routing */
         navigate={navigate}
       />
       <BackGuardModal />

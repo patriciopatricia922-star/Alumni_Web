@@ -2,11 +2,33 @@
  * EducationalBackgroundSHS.jsx — Logic Layer
  * Location: src/surveyshs/EducationalBackgroundSHS.jsx
  *
- * FIX: When navigating to Feedback (the skip path for Studying/Graduated/Stopped),
- * store the originating route in sessionStorage so FeedbackAndEngagementSHS can
- * read it as its prevRoute. This is the only change from the original.
+ * FIX (this pass): SHS was not consuming dynamic survey_config the way
+ * College does. Two additive changes only — nothing removed:
  *
- * Routing summary:
+ *   1. loadSurveyConfig(true) → loadSurveyConfig(true, DEPARTMENT_TYPE)
+ *      Previously this called loadSurveyConfig with no departmentType arg,
+ *      which defaults to 'college' inside surveyConfig.js — meaning SHS was
+ *      silently fetching the COLLEGE config, then discarding the result
+ *      entirely (no assignment, no applyConfig call).
+ *
+ *   2. Added questionLabels / questionPlaceholders / questionOptions state
+ *      + applyConfig callback, mirroring the College pattern exactly, and
+ *      an INDEX_TO_FIELD_SHS map so config questions (indexed by their
+ *      position in the Admin's SHS "Educational Background" section) can be
+ *      keyed to this file's actual field names.
+ *
+ *      IMPORTANT: applyConfig is declared BEFORE the useEffect that
+ *      references it. useCallback-created functions are not hoisted like
+ *      function declarations — referencing applyConfig in an effect that
+ *      appears earlier in the component body throws
+ *      "Cannot access 'applyConfig' before initialization".
+ *
+ * All existing status/sub-branch selection logic (setStatus,
+ * setPursuedNuBranch, setPursuedOtherSchool, getRequiredFields,
+ * computeFormPct) is UNCHANGED — that is SHS's own working conditional-flow
+ * logic and is untouched per requirements.
+ *
+ * Routing summary (unchanged):
  *   'Working'                              → /surveyshs/shs-employment-information
  *   'Currently Studying' | 'Graduated'
  *   | 'Stopped'                            → /surveyshs/shs-feedback-and-engagement
@@ -28,9 +50,58 @@ const NEXT_ROUTE_DEFAULT        = '/surveyshs/shs-feedback-and-engagement';
 const NEXT_ROUTE_WORKING        = '/surveyshs/shs-employment-information';
 const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';
 
+// Matches the convention used in PersonalBackgroundSHS.jsx
+const DEPARTMENT_TYPE = 'shs';
+
 // The route this section is mounted at — stored as prevRoute for Feedback
 // when the skip path is taken.
 const THIS_ROUTE = '/surveyshs/shs-educational-background';
+
+// Maps question index in the Admin's SHS "Educational Background" section
+// (per DEFAULT_SHS_SURVEY in SurveyManagement.jsx) to this file's form
+// field keys. Order must match the Admin's question array order.
+const INDEX_TO_FIELD_SHS = [
+  'status',                 // idx 0
+  'pursued_nu_branch',      // idx 1
+  'nu_branch',               // idx 2
+  'reason_nu',                // idx 3
+  'education_level',          // idx 4
+  'education_level_other',    // idx 5
+  'course_program',           // idx 6
+  'year_level',                // idx 7
+  'pursued_other_school',      // idx 8
+  'reason_not_nu',              // idx 9
+  'school_name',                 // idx 10
+  'education_level',             // idx 11 (repeat branch — same field key)
+  'education_level_other',       // idx 12
+  'course_program',              // idx 13
+  'year_level',                   // idx 14
+  'nu_branch',                    // idx 15 (repeat branch — same field key)
+  'reason_nu',                     // idx 16
+  'education_level',                // idx 17
+  'education_level_other',          // idx 18
+  'course_program',                 // idx 19
+  'year_level',                      // idx 20
+  'stopped_reason',                  // idx 21
+  'stopped_reason_other',             // idx 22
+];
+
+// Default labels used if Admin config hasn't provided one yet.
+const DEFAULT_LABELS_SHS = {
+  status:                 'Status',
+  pursued_nu_branch:      'Did you pursue further studies to any NU branch after SHS?',
+  nu_branch:              'What Branch of NU?',
+  reason_nu:              'Reason(s) why did you choose NU.',
+  pursued_other_school:   'Did you pursue further studies to any school after SHS?',
+  reason_not_nu:          'Reason(s) why did you not choose NU.',
+  school_name:            'Name of School/University',
+  education_level:        'What level of education are you currently in or have completed?',
+  education_level_other:  'Please specify',
+  course_program:         'Course/Program',
+  year_level:              'Year Level',
+  stopped_reason:          'What is the main reason you did not pursue further studies?',
+  stopped_reason_other:    'Please specify',
+};
 
 const resolveNextRoute = (status) => {
   if (status === 'Working') return NEXT_ROUTE_WORKING;
@@ -153,12 +224,45 @@ const EducationalBackgroundSHS = () => {
   const [showDropdown,setShowDropdown] = useState(false);
   const [notifTab,    setNotifTab]     = useState('all');
 
+  // ── Dynamic survey config state (mirrors College) ─────────────────────
+  const [questionLabels,       setQuestionLabels]       = useState({});
+  const [questionPlaceholders, setQuestionPlaceholders] = useState({});
+  const [questionOptions,      setQuestionOptions]      = useState({});
+
+  // ── applyConfig — MUST be declared before any useEffect references it ──
+  const applyConfig = useCallback((configData) => {
+    const config = configData?.config ?? configData;
+    if (!config?.sections) return;
+    const eduSection = config.sections.find(
+      (s) => s.id === SECTION_KEY || s.title === 'Educational Background'
+    );
+    if (!eduSection?.questions) return;
+
+    const labels = {};
+    const placeholders = {};
+    const options = {};
+
+    eduSection.questions.forEach((q, idx) => {
+      const fieldKey = INDEX_TO_FIELD_SHS[idx];
+      if (!fieldKey) return;
+      labels[fieldKey] = q.label;
+      if (q.placeholder) placeholders[fieldKey] = q.placeholder;
+      if (q.options)     options[fieldKey]      = q.options;
+    });
+
+    setQuestionLabels((prev)       => ({ ...prev, ...labels }));
+    setQuestionPlaceholders((prev) => ({ ...prev, ...placeholders }));
+    setQuestionOptions((prev)      => ({ ...prev, ...options }));
+  }, []);
+
+  // ── Config load effect — comes AFTER applyConfig is defined ────────────
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true);
+        const config = await loadSurveyConfig(true, DEPARTMENT_TYPE);
+        if (!cancelled && config) applyConfig(config);
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
@@ -166,10 +270,11 @@ const EducationalBackgroundSHS = () => {
     init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true);
+      const fresh = await loadSurveyConfig(true, DEPARTMENT_TYPE);
+      if (!cancelled && fresh) applyConfig(fresh);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
-  }, []);
+  }, [applyConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -318,11 +423,6 @@ const EducationalBackgroundSHS = () => {
 
     const nextRoute = resolveNextRoute(form.status);
 
-    // ── FIX: store prevRoute for FeedbackAndEngagementSHS ─────────────────
-    // When skipping Employment/Job/Skills, Feedback's back button must return
-    // here — not to Employment (which the user never visited).
-    // Working-path users overwrite this in SkillsAndCompetenciesSHS, so the
-    // correct route is always the last one set before reaching Feedback.
     if (nextRoute !== NEXT_ROUTE_WORKING) {
       try {
         sessionStorage.setItem('shs_feedback_prev_route', THIS_ROUTE);
@@ -335,6 +435,15 @@ const EducationalBackgroundSHS = () => {
         console.error('[EducationalBackgroundSHS] Error saving before navigation:', err)
       );
   };
+
+  const getLabel       = useCallback(
+    (fieldId) => questionLabels[fieldId]       || DEFAULT_LABELS_SHS[fieldId] || fieldId,
+    [questionLabels]
+  );
+  const getPlaceholder = useCallback(
+    (fieldId) => questionPlaceholders[fieldId] || '',
+    [questionPlaceholders]
+  );
 
   const formPct = computeFormPct(form);
 
@@ -364,6 +473,9 @@ const EducationalBackgroundSHS = () => {
       totalSections={TOTAL_SECTIONS}
       handleSave={handleSave}
       handleNext={handleNext}
+      getLabel={getLabel}
+      getPlaceholder={getPlaceholder}
+      questionOptions={questionOptions}
       bellRef={bellRef}
       notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
       unreadCount={unreadCount}
