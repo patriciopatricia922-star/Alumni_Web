@@ -32,7 +32,7 @@ import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
 import ResponseAndAnalytics from './admin/Responseandanalytics';
 import PredictiveAnalytics from './admin/PredictiveAnalytics';
-import AuditLogs from './superadmin/AuditLogs';
+import AuditLogs from './superadmin/Auditlogs';
 import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
 import VerificationCode from './pages/Verificationcode';
