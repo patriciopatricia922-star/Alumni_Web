@@ -9,7 +9,7 @@ import {
   getSurveySections,
   isSurveyComplete,
 } from "../lib/surveyProgress";
-import DataPrivacyModal from "../modals/DataPrivacyModal";
+import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 
 const useWindowWidth = () => {
