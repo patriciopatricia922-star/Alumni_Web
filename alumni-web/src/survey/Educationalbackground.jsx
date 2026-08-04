@@ -14,7 +14,7 @@ import { saveSectionProgress, loadSectionData } from '../lib/surveyProgress';
 import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import useUserProfile from '../hooks/Useuserprofile';
-import EducationalBackgroundView from '../views/EducationalBackgroundView';
+import EducationalBackgroundView from '../Views/EducationalBackgroundView';
 import { useSurveyBranching } from '../lib/useSurveyBranching'; // ← BRANCHING ADD 1/3
 import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
 import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW

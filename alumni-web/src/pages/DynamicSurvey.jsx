@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { saveSectionProgress, loadSectionData, loadSurveyProgress } from '../lib/surveyProgress';
-import DynamicSurveyView from '../views/DynamicSurveyView';
+import DynamicSurveyView from '../Views/DynamicSurveyView';
 
 const DynamicSurvey = () => {
   const navigate = useNavigate();

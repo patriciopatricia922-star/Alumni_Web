@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import ResetPasswordView from '../views/ResetPasswordView';
+import ResetPasswordView from '../Views/ResetPasswordView';
 
 const getStrength = (pw) => {
   let score = 0;

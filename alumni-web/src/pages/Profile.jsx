@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import ProfileView from '../views/ProfileView';
+import ProfileView from '../Views/ProfileView';
 import { classifyDepartment } from '../lib/departmentClassifier';
 import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 

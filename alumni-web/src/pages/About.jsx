@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import AboutView from '../Views/AboutView';
+import AboutView from '../ViewsAboutView';
 import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 
 const useWindowWidth = () => {
