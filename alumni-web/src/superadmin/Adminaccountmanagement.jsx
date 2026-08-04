@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { supabaseAdmin } from '../lib/supabaseadmin';
+import { supabaseAdmin } from '../lib/supabaseAdmin';
 import { logAction } from '../lib/auditLogger';
 import AdminAccountManagementView from './views/AdminAccountManagementView';
 

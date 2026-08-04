@@ -24,7 +24,7 @@
  */
 
 import React, { useState } from 'react';
-import { supabaseAdmin } from '../../lib/supabaseadmin';
+import { supabaseAdmin } from '../../lib/supabaseAdmin';
 import { logAction } from '../../lib/auditLogger';
 import {
   MODULE_META,

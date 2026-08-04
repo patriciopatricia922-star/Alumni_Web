@@ -323,7 +323,7 @@ function UploadCSVModal({ onClose, onSuccess }) {
     try {
       const text = await selectedFile.text();
       const { rows } = parseCSV(text);
-      const { supabaseAdmin } = await import("../../lib/supabaseadmin");
+      const { supabaseAdmin } = await import("../../lib/supabaseAdmin");
 
       let inserted = 0;
       let skipped = 0;

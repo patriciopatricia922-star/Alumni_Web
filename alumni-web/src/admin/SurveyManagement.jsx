@@ -41,7 +41,7 @@
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { supabaseAdmin } from "../lib/supabaseadmin";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
 import AdminSidebar from "./components/AdminSidebar";
 import SurveyMgmtView from "./views/Surveymgmtview";
 import SurveySkeletonView from "./views/SurveySkeletonView";
