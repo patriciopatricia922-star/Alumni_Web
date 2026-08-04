@@ -23,7 +23,7 @@ import EmploymentInformation from './survey/Employmentinformation';
 import JobExperience from './survey/Jobexperience';
 import SkillsAndCompetencies from './survey/Skillsandcompetencies';
 import SurveyComplete from './survey/SurveyComplete';
-import RewardStore from './pages/Rewardstore';
+import RewardStore from './pages/RewardStore';
 import Discounts from './pages/Discounts';
 import Events from './pages/Events';
 import Jobs from './pages/Jobs';
