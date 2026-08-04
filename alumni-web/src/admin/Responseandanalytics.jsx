@@ -199,10 +199,26 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     province: safeText(personal.province) || '',
     zipCode: safeText(personal.zip_code) || safeText(personal.postal_code) || '',
     country: safeText(personal.country) || 'Philippines',
-    reasonTakingCourse: safeText(educational.reason_for_course) || '',
+    reasonTakingCourse: isShs
+      ? safeText(educational.reason_nu)
+      : safeText(educational.reason_for_course) || '',
     distinction: safeText(educational.distinction) || '',
     postGradPlans: safeText(educational.post_grad_plans) || '',
     postGradCourse: safeText(educational.post_grad_course) || '',
+    // SHS Educational Background branching fields (source: shs_educational_background_data)
+    eduStatus: safeText(educational.status) || '',
+    pursuedNuBranch: safeText(educational.pursued_nu_branch) || '',
+    pursuedOtherSchool: safeText(educational.pursued_other_school) || '',
+    nuBranch: safeText(educational.nu_branch) || '',
+    reasonNu: safeText(educational.reason_nu) || '',
+    reasonNotNu: safeText(educational.reason_not_nu) || '',
+    schoolName: safeText(educational.school_name) || '',
+    educationLevel: safeText(educational.education_level) || '',
+    educationLevelOther: safeText(educational.education_level_other) || '',
+    courseProgram: safeText(educational.course_program) || '',
+    yearLevel: safeText(educational.year_level) || '',
+    stoppedReason: safeText(educational.stopped_reason) || '',
+    stoppedReasonOther: safeText(educational.stopped_reason_other) || '',
     programOther: safeText(educational.degree_program_other) || '',
     boardExamName: safeText(educational.board_exam_name) || '',
     boardExamDate: safeText(educational.board_exam_date) || '',
@@ -331,7 +347,17 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     else if (timeToFind.includes('3–6')) timeToJob['3–6 months']++;
     else if (timeToFind.includes('6 +') || timeToFind.includes('6+')) timeToJob['6 + months']++;
 
-    const competencies = toArray(skillsData.useful_competencies);
+    const competencies = isShs
+      ? ['communication_skills', 'technical_knowledge', 'leadership_skills', 'critical_thinking', 'work_ethics']
+          .filter(key => Number(skillsData[key]) > 0)
+          .map(key => ({
+            work_ethics: 'Work Ethics',
+            critical_thinking: 'Critical Thinking',
+            leadership_skills: 'Leadership Skills',
+            technical_knowledge: 'Technical Knowledge',
+            communication_skills: 'Communication Skills',
+          }[key]))
+      : toArray(skillsData.useful_competencies);
     competencies.forEach(skill => {
       const normalized = skill.trim();
       if (normalized) skills.set(normalized, (skills.get(normalized) || 0) + 1);

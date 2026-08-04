@@ -90,9 +90,29 @@ body {
   overflow-x: visible;
 }
 
+/* .cm-tab:nth-child(3),
+.cm-tab:nth-child(6) {
+  margin-left: 16px;
+} */
+
 .cm-tab:nth-child(3),
 .cm-tab:nth-child(6) {
   margin-left: 16px;
+}
+
+.cm-tab:nth-child(6) {
+  position: relative;
+}
+
+.cm-tab:nth-child(6)::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 20px;
+  background: #E2E8F0;
 }
 
 .cm-tab {

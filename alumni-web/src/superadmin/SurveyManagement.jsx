@@ -1,19 +1,25 @@
 // ============================================================================
 // SurveyManagement.jsx — Logic Controller (SHS added as additional survey type) SUPER ADMIN
 // ============================================================================
-// SYNC NOTES
+// PARITY FIX NOTE (this pass)
 // ───────────────
-// Ported from Admin implementation to give Super Admin full College/SHS
-// parity while preserving Super Admin's own file paths, sidebar import,
-// and component structure.
-//   • All original College Survey Management logic preserved.
-//   • Added: DEFAULT_SHS_SURVEY dataset, SHS state mirroring College 1:1,
-//     useAlumniType() context read to select active survey/configId/branches,
-//     separate SHS load effect, SHS-aware handlePublish, normalizeIds,
-//     migrateIntegerIds, sanitiseBranches, debug logger, SurveySkeletonView.
-//   • Super Admin's own import paths (./SuperAdsidebar, ./Views/SurveyMgmtView)
-//     are preserved exactly — only "./contexts/AlumniTypeContext" is new,
-//     matching wherever Super Admin's AlumniTypeContext actually lives.
+// Feature-parity check against Admin's SurveyManagement.jsx found exactly
+// ONE gap: SuperAdmin's DEFAULT_SHS_SURVEY was a short, non-branching
+// placeholder dataset, while Admin's DEFAULT_SHS_SURVEY contains the full,
+// richer SHS survey with proper branching structure (NU/non-NU education
+// paths, employed/unemployed employment paths, etc).
+//
+// Everything else — normalizeIds, migrateIntegerIds, sanitiseBranches,
+// TYPE_LABELS, uid(), LoadingScreen, dual college/shs state via
+// useAlumniType(), both load effects, handlePublish (PFIX-A/B/D), the
+// branching scroll effect (FIX 5), all Question/Option CRUD, and
+// targetSectionIdx (FIX 7) — was already at full parity with Admin and is
+// left completely untouched here.
+//
+// SuperAdmin's own file paths, sidebar import, and component structure
+// (./SuperAdsidebar, ./Views/SurveyMgmtView, ./Views/SurveySkeletonView,
+// ./contexts/AlumniTypeContext) are preserved exactly as before — nothing
+// renamed, nothing restructured.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -157,7 +163,10 @@ const DEFAULT_SURVEY = {
 };
 
 // ============================================================================
-// DEFAULT SURVEY DATA — SHS (PORTED FROM ADMIN, unchanged)
+// DEFAULT SURVEY DATA — SHS
+// UPDATED per parity check against Admin: replaced with Admin's richer,
+// branching-aware SHS dataset (previous SuperAdmin version was a short
+// 6-section placeholder lacking the NU/non-NU and employment branch paths).
 // ============================================================================
 const DEFAULT_SHS_SURVEY = {
   title: "SHS Alumni Survey",
@@ -170,74 +179,118 @@ const DEFAULT_SHS_SURVEY = {
         { id: 1, type: "short", label: "Last Name", required: true, placeholder: "e.g. Dela Cruz" },
         { id: 2, type: "short", label: "First Name", required: true, placeholder: "e.g. Juan" },
         { id: 3, type: "short", label: "Middle Name", required: false, placeholder: "e.g. Mercado" },
-        { id: 4, type: "short", label: "Student Number", required: true, placeholder: "e.g. 2023-123456" },
-        { id: 5, type: "multiple", label: "Gender", required: true, options: ["Male", "Female", "Prefer not to say"] },
-        { id: 6, type: "date", label: "Birthday", required: true },
-        { id: 7, type: "multiple", label: "Civil Status", required: true, options: ["Single", "Married", "Other"] },
-        { id: 8, type: "short", label: "Street Address", required: true, placeholder: "e.g. Blk 123 Lot 456 AlumnAI St." },
-        { id: 9, type: "short", label: "City", required: true, placeholder: "e.g. Dasmarinas" },
-        { id: 10, type: "short", label: "Province", required: true, placeholder: "e.g. Cavite" },
-        { id: 11, type: "short", label: "ZIP Code", required: true, placeholder: "e.g. 4114" },
-        { id: 12, type: "multiple", label: "Country", required: true, options: ["Philippines", "United States", "Other"] },
-        { id: 13, type: "short", label: "Contact Number", required: true, placeholder: "e.g. 912-345-6789" },
-        { id: 14, type: "short", label: "Personal Email Address", required: true, placeholder: "e.g. juandelacruz@gmail.com" },
+        { id: 4, type: "multiple", label: "Gender", required: true, options: ["Male", "Female", "Prefer not to say"] },
+        { id: 5, type: "short", label: "Birthday (MM/DD/YYYY)", required: true, placeholder: "e.g. 01/15/2005" },
+        { id: 6, type: "short", label: "Street Address", required: true, placeholder: "e.g. Blk 123 Lot 456 AlumnAI St." },
+        { id: 7, type: "short", label: "City", required: true, placeholder: "e.g. Dasmarinas" },
+        { id: 8, type: "short", label: "Province", required: true, placeholder: "e.g. Cavite" },
+        { id: 9, type: "short", label: "ZIP Code", required: true, placeholder: "e.g. 4114" },
+        { id: 10, type: "multiple", label: "Country", required: true, options: ["Philippines", "United States", "Other"] },
+        { id: 11, type: "short", label: "Contact Number", required: true, placeholder: "e.g. 912-345-6789" },
+        { id: 12, type: "short", label: "Personal Email Address", required: true, placeholder: "e.g. juandelacruz@gmail.com" },
+        { id: 13, type: "multiple", label: "Track/Strand Completed", required: true, options: ["STEM", "HUMSS", "ABM"] },
+        { id: 14, type: "multiple", label: "Year Graduated", required: true, options: ["2022", "2023", "2024", "2025", "2026", "2027"] },
       ],
     },
     {
       id: 2,
       title: "Educational Background",
-      description: "Your academic history.",
+      description: "Your academic history after Senior High School",
       questions: [
-        { id: 1, type: "multiple", label: "Degree Program Completed", required: true, options: ["Academic", "Technical-Vocational-Livelihood", "Sports", "Arts and Design"] },
-        { id: 2, type: "multiple", label: "SHS Strand", required: true, options: ["STEM", "ABM", "HUMSS", "GAS", "TVL", "Sports", "Arts and Design"] },
-        { id: 3, type: "multiple", label: "Year Graduated from SHS", required: true, options: ["2022", "2023", "2024", "2025", "2026"] },
-        { id: 4, type: "multiple", label: "Distinction Received", required: false, options: ["With Highest Honors", "With High Honors", "With Honors", "None"] },
+        { id: 1, type: "multiple", label: "Status", required: true, options: ["Currently Studying", "Graduated", "Stopped", "Working"] },
+
+        // ── Branch: Currently Studying / Graduated → NU pursuit question ──
+        { id: 2, type: "multiple", label: "Did you pursue further studies to any NU Branch after SHS?", required: false, options: ["Yes", "No"] },
+
+        // ── Sub-branch (IF YES to NU branch) ──
+        { id: 3, type: "multiple", label: "What branch of NU?", required: false, options: ["NU Manila", "NU Nazareth", "NU Laguna", "NU MOA", "NU Fairview", "NU Baliwag", "NU Dasma", "NU APC", "NU Lipa", "NU Clark", "NU Bacolod", "NU East Ortigas", "NU Cebu", "NU Las Pinas"] },
+        { id: 4, type: "long", label: "Reason(s) why did you choose NU", required: false, placeholder: "Enter your answer" },
+        { id: 5, type: "multiple", label: "What level of education are you currently in or have completed?", required: false, options: ["Bachelors Degree", "Associate", "Diploma/Certificate Course", "Not Applicable", "Other"] },
+        { id: 6, type: "short", label: "Other (please specify level of education)", required: false, placeholder: "Please specify" },
+        { id: 7, type: "short", label: "Course/Program", required: false, placeholder: "Enter your course/program" },
+        { id: 8, type: "multiple", label: "Year Level", required: false, options: ["1st Year", "2nd Year", "3rd Year", "4th Year College", "Not Applicable"] },
+
+        // ── Sub-branch (IF NO to NU branch) → did you pursue studies elsewhere ──
+        { id: 9, type: "multiple", label: "Did you pursue further studies to any school after SHS?", required: false, options: ["Yes", "No"] },
+
+        // ── Sub-branch (IF YES to "any school") — went to a non-NU school ──
+        { id: 10, type: "long", label: "Reason(s) why did you not choose NU", required: false, placeholder: "Enter your answer" },
+        { id: 11, type: "short", label: "Name of School/University", required: false, placeholder: "Enter school/university name" },
+        { id: 12, type: "multiple", label: "What level of education are you currently in or have completed?", required: false, options: ["Bachelors Degree", "Associate", "Diploma/Certificate Course", "Not Applicable", "Other"] },
+        { id: 13, type: "short", label: "Other (please specify level of education)", required: false, placeholder: "Please specify" },
+        { id: 14, type: "short", label: "Course/Program", required: false, placeholder: "Enter your course/program" },
+        { id: 15, type: "multiple", label: "Year Level", required: false, options: ["1st Year", "2nd Year", "3rd Year", "4th Year College", "Not Applicable"] },
+
+        // ── Sub-branch (IF NO to "any school") — repeats the NU branch question set ──
+        { id: 16, type: "multiple", label: "What branch of NU?", required: false, options: ["NU Manila", "NU Nazareth", "NU Laguna", "NU MOA", "NU Fairview", "NU Baliwag", "NU Dasma", "NU APC", "NU Lipa", "NU Clark", "NU Bacolod", "NU East Ortigas", "NU Cebu", "NU Las Pinas"] },
+        { id: 17, type: "long", label: "Reason(s) why did you choose NU", required: false, placeholder: "Enter your answer" },
+        { id: 18, type: "multiple", label: "What level of education are you currently in or have completed?", required: false, options: ["Bachelors Degree", "Associate", "Diploma/Certificate Course", "Not Applicable", "Other"] },
+        { id: 19, type: "short", label: "Other (please specify level of education)", required: false, placeholder: "Please specify" },
+        { id: 20, type: "short", label: "Course/Program", required: false, placeholder: "Enter your course/program" },
+        { id: 21, type: "multiple", label: "Year Level", required: false, options: ["1st Year", "2nd Year", "3rd Year", "4th Year College", "Not Applicable"] },
+
+        // ── Branch: Stopped ──
+        { id: 22, type: "multiple", label: "What is the main reason you did not pursue further studies?", required: false, options: ["Financial Constraints", "Employment Opportunity", "Family Responsibility", "Lack of Interest", "Not Applicable", "Other"] },
+        { id: 23, type: "short", label: "Other (please specify reason)", required: false, placeholder: "Please specify" },
+
+        // Branch: Working — no additional question here; routes straight to Employment Information via branch jump.
       ],
     },
     {
       id: 3,
       title: "Employment Information",
-      description: "What you did after graduating from SHS",
+      description: "Information related to your current job status",
       questions: [
-        { id: 1, type: "multiple", label: "What did you do after graduating from SHS?", required: true, options: ["Pursued undergraduate studies", "Started working", "Took a gap year", "Enrolled in TESDA/vocational course", "Other"] },
-        { id: 2, type: "multiple", label: "Did you pursue undergraduate studies at NU Dasmariñas?", required: false, options: ["Yes", "No"] },
-        { id: 3, type: "short", label: "If No, which school did you transfer to?", required: false, placeholder: "Enter school name" },
-        { id: 4, type: "multiple", label: "If you pursued undergraduate studies, what degree program did you take?", required: false, options: ["BSIT", "BSCS", "BSCpE", "BSBA", "BSARCH", "BSCivE", "Other"] },
-        { id: 5, type: "multiple", label: "Why did you choose to continue/not continue at NU Dasmariñas?", required: false, options: ["Scholarship offered", "Preferred program available", "Closer to home", "Financial reasons", "Preferred a different school", "Other"] },
+        { id: 1, type: "multiple", label: "Current Employment Status", required: true, options: ["Regular/Permanent", "Contractual", "Part-time", "Probationary", "Self-Employed", "Unemployed (Looking for work)", "Unemployed (Not Looking for work)", "Other"] },
+        { id: 2, type: "short", label: "Other (please specify employment status)", required: false, placeholder: "Please specify" },
+
+        // ── Branch (IF employed: Regular/Permanent, Contractual, Part-time, Probationary, Self-Employed, Other) ──
+        { id: 3, type: "short", label: "Job Position", required: false, placeholder: "Enter your job position" },
+        { id: 4, type: "short", label: "Name of Company / Employer", required: false, placeholder: "Enter company/employer name" },
+        { id: 5, type: "multiple", label: "Type of Industry", required: false, options: ["Education/Academe", "Healthcare/Medical", "Information Technology", "Engineering", "Business/Finance", "Government/Public", "Private Companies", "Other"] },
+        { id: 6, type: "short", label: "Other (please specify industry)", required: false, placeholder: "Please specify" },
+        { id: 7, type: "multiple", label: "Location of Employment", required: false, options: ["Local", "Abroad", "None"] },
+        { id: 8, type: "multiple", label: "Monthly Income Range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000", "Not Applicable"] },
+        { id: 9, type: "multiple", label: "Is your current job related to your strand?", required: false, options: ["Yes", "No"] },
+
+        // ── Branch (IF Unemployed — Looking or Not Looking for work) ──
+        { id: 10, type: "multiple", label: "Reasons of being unemployed", required: false, options: ["Pursuing further studies", "Family responsibilities or personal matters", "Health-related reasons", "Lack of job opportunities related to the field of study", "Other"] },
+        { id: 11, type: "short", label: "Please specify other reason", required: false, placeholder: "Please specify" },
       ],
     },
     {
       id: 4,
-      title: "Job Search Experience",
-      description: "For SHS graduates who are currently working",
+      title: "Job Experience",
+      description: "Your job hunting experience",
       questions: [
-        { id: 1, type: "multiple", label: "Are you currently employed?", required: true, options: ["Yes, full-time", "Yes, part-time", "No"] },
-        { id: 2, type: "short", label: "Job title / Position", required: false, placeholder: "Enter your job title" },
-        { id: 3, type: "short", label: "Company / Employer", required: false, placeholder: "Enter company name" },
-        { id: 4, type: "multiple", label: "Is your job related to your SHS strand?", required: false, options: ["Yes", "No", "Somewhat"] },
-        { id: 5, type: "multiple", label: "Monthly income range", required: false, options: ["Below ₱15,000", "₱15,001 – ₱30,000", "₱30,001 – ₱50,000", "Above ₱50,000"] },
+        { id: 1, type: "multiple", label: "How long did it take you to find your first job after graduation?", required: true, options: ["Less than a month", "1–3 months", "4–6 months", "7–12 months", "More than a year", "Not Applicable"] },
+        { id: 2, type: "multiple", label: "How did you find your first job?", required: true, options: ["Job/Career Fair", "Internship Absorption", "Online", "Recommendation", "Walk-in Applications", "Not Applicable", "Other"] },
+        { id: 3, type: "checkbox", label: "What factors helped you most in getting your first job?", required: true, options: ["Academic performance", "Internship/On-the-job training/Immersion", "Personal Connections", "Skills/Competencies acquired in school", "Certifications", "Not Applicable", "Other"] },
       ],
     },
     {
       id: 5,
       title: "Skills and Competencies",
-      description: "Your insights on the SHS program",
+      description: "Your workplace skills",
       questions: [
-        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
-        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
-        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
-        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+        { id: 1, type: "rating", label: "Communication Skills", required: true },
+        { id: 2, type: "rating", label: "Technical Knowledge in your field", required: true },
+        { id: 3, type: "rating", label: "Leadership Skills", required: true },
+        { id: 4, type: "rating", label: "Critical Thinking & Problem Solving", required: true },
+        { id: 5, type: "rating", label: "Work Ethics / Professionalism", required: true },
+        { id: 6, type: "short", label: "What other skills should NU Dasma develop in students to make them more employable?", required: true, placeholder: "Enter your answer" },
       ],
     },
     {
       id: 6,
       title: "Feedback and Alumni Engagement",
-      description: "Your insights on the SHS program",
+      description: "Your insights and connection with the university",
       questions: [
-        { id: 1, type: "multiple", label: "How satisfied are you with your SHS education at NU Dasmariñas?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
-        { id: 2, type: "multiple", label: "Would you recommend NU Dasmariñas SHS to others?", required: true, options: ["Yes", "No"] },
-        { id: 3, type: "long", label: "What improvements would you suggest for the SHS program?", required: true, placeholder: "Enter your answer" },
-        { id: 4, type: "multiple", label: "Would you like to be informed about NU alumni events?", required: true, options: ["Yes", "No"] },
+        { id: 1, type: "multiple", label: "How satisfied are you with your education at NU Dasma?", required: true, options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"] },
+        { id: 2, type: "multiple", label: "Would you recommend NU Dasma to others?", required: true, options: ["Yes", "No"] },
+        { id: 3, type: "long", label: "Suggestions for improving academic programs/strands", required: true, placeholder: "Enter your answer" },
+        { id: 4, type: "multiple", label: "Would you like to be informed about upcoming alumni events and activities?", required: true, options: ["Yes", "No"] },
+        { id: 5, type: "checkbox", label: "Would you be willing to participate in:", required: true, options: ["Alumni fundraising events/activities", "Volunteer opportunities", "Not at all", "Other"] },
       ],
     },
   ],

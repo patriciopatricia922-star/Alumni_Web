@@ -59,7 +59,7 @@ const LogoutIcon = () => (
 // Integrated from friend's implementation. Allows toggling between College and
 // SHS alumni data views. State is owned by AlumniTypeContext (via the container)
 // so all downstream pages react to the selection automatically.
-const AlumniTypeSwitcher = ({ alumniType, setAlumniType, disableShs }) => (
+const AlumniTypeSwitcher = ({ alumniType, setAlumniType }) => (
   <div className="alumni-type-switcher">
     <button
       className={`switcher-pill ${alumniType === 'college' ? 'active' : ''}`}
@@ -70,8 +70,6 @@ const AlumniTypeSwitcher = ({ alumniType, setAlumniType, disableShs }) => (
     <button
       className={`switcher-pill ${alumniType === 'shs' ? 'active' : ''}`}
       onClick={() => setAlumniType('shs')}
-      disabled={disableShs}
-      title={disableShs ? 'Not available for SHS on this page' : undefined}
     >
       SHS
     </button>
@@ -151,7 +149,6 @@ const AdminSidebarView = ({
   handleLogout,
   alumniType,
   setAlumniType,
-  isCollegeOnlyRoute,
 }) => {
 
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
@@ -189,11 +186,7 @@ const AdminSidebarView = ({
 
         {/* Switcher floats above the bottom nav on mobile */}
         <div className="alumni-type-switcher-mobile">
-          <AlumniTypeSwitcher
-            alumniType={alumniType}
-            setAlumniType={setAlumniType}
-            disableShs={isCollegeOnlyRoute}
-          />
+          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
         </div>
 
         <button
@@ -230,11 +223,7 @@ const AdminSidebarView = ({
 
         {/* Alumni type switcher — sits between divider and MENU heading */}
         <div style={{ padding: '26px 12px 0px' }}>
-          <AlumniTypeSwitcher
-            alumniType={alumniType}
-            setAlumniType={setAlumniType}
-            disableShs={isCollegeOnlyRoute}
-          />
+          <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
         </div>
 
         {/* Nav items — skeleton on cold load, real list once resolved */}
@@ -244,7 +233,7 @@ const AdminSidebarView = ({
           {isLoadingUser ? (
             <MenuSkeleton />
           ) : (
-            menuItems.map(({ path, icon, label, marginTop }) => {
+            menuItems.map(({ path, icon, label, marginTop, iconSize }) => {   // ← add iconSize here
               const isActive = location.pathname === path;
               const iconSrc  = iconMap[icon];
               return (
@@ -262,6 +251,7 @@ const AdminSidebarView = ({
                     className={`admin-sidebar-icon ${
                       isActive ? 'admin-sidebar-icon-active' : 'admin-sidebar-icon-inactive'
                     }`}
+                    style={iconSize ? { width: iconSize, height: iconSize } : undefined}   // ← and here
                   />
                   <NavLabel label={label} isTablet={isTablet} isActive={isActive} />
                 </Link>

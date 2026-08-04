@@ -32,6 +32,7 @@ import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 
+
 // ============================ CONSTANTS ============================
 const TABS = [
   { id: "announcements",  label: "Announcements" },
@@ -86,6 +87,8 @@ function ContentManagement() {
   const [disclosureModalOpen, setDisclosureModalOpen] = useState(false);
   // 'tos' | 'pp' | null — controls which document the modal opens to
   const [disclosureInitialEditing, setDisclosureInitialEditing] = useState(null);
+
+  const [awardModalOpen, setAwardModalOpen] = useState(false);
 
   // ============================ HELPER FUNCTIONS ============================
   const showToastMessage = (message, type = "success") => {
@@ -293,6 +296,55 @@ function ContentManagement() {
     setDisclosureModalOpen(false);
     setDisclosureInitialEditing(null);
   };
+
+  const openAwardPoints = () => setAwardModalOpen(true);
+const closeAwardPoints = () => setAwardModalOpen(false);
+
+const randomPoints = (min = 10, max = 50) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+// userIds: string[] — points are generated here, not by the admin
+const handleAwardPoints = async (userIds) => {
+  try {
+    for (const userId of userIds) {
+      const points = randomPoints(); // backend-side randomization
+
+      const { data: userRow, error: fetchErr } = await supabase
+        .from('users')
+        .select('reward_points')
+        .eq('id', userId)
+        .single();
+      if (fetchErr) throw fetchErr;
+
+      const newBalance = (userRow?.reward_points || 0) + points;
+
+      const { error: updateErr } = await supabase
+        .from('users')
+        .update({ reward_points: newBalance })
+        .eq('id', userId);
+      if (updateErr) throw updateErr;
+
+      await supabase.from('point_transactions').insert([{
+        user_id: userId,
+        points,
+        reason: 'Admin awarded points',
+        created_at: new Date().toISOString(),
+      }]);
+
+      await logAction({
+        action: 'Update',
+        module: 'Rewards',
+        description: `Awarded ${points} points to user ${userId}`,
+        recordId: userId,
+        status: 'Success',
+      });
+    }
+    showToastMessage('Points awarded successfully!', 'success');
+  } catch (error) {
+    showToastMessage('Failed to award points: ' + error.message, 'error');
+    throw error;
+  }
+};
 
   // ============================ CREATE HANDLERS ============================
 
@@ -1003,6 +1055,10 @@ function ContentManagement() {
       onToggleActive={handleToggleActive}
       onShowConfirm={showConfirm}
       sidebar={<AdminSidebar />}
+      awardModalOpen={awardModalOpen}
+      onOpenAwardPoints={openAwardPoints}
+      onCloseAwardPoints={closeAwardPoints}
+      onAwardPoints={handleAwardPoints}
     />
   );
 }

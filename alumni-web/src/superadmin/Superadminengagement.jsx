@@ -560,6 +560,10 @@ const resolveImages = (formData, existingUrls = []) => {
         showToastMessage("Authentication error. Please log in again.", "error");
         return;
       }
+      if (!user?.id) {
+        showToastMessage("Authentication error. Please log in again.", "error");
+        return;
+      }
 
       if (!formData.title?.trim()) {
         showToastMessage("Reward title is required", "error");
@@ -774,7 +778,6 @@ const handleUpdateEvent = async (id, formData) => {
             .map((t) => t.trim())
             .filter(Boolean);
 
-      // handleUpdateJob
       // handleUpdateJob
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
       const updates = {
@@ -1028,6 +1031,24 @@ const handleUpdateEvent = async (id, formData) => {
 
       const items = DATA_MAP[type] || [];
       const itemTitle = items.find((i) => i.id === id)?.title || id;
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      console.log("[ARCHIVE] User Metadata:", user?.user_metadata);
+      console.log("[ARCHIVE] App Metadata:", user?.app_metadata);
+      console.log("[ARCHIVE] User Error:", userError);
+
+      const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
+
+      console.log("[ARCHIVE] Profile:", profile);
+      console.log("[ARCHIVE] Profile Error:", profileError);
 
       const { error } = await supabase
         .from(config.table)

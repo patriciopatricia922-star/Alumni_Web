@@ -1,5 +1,5 @@
 // ============================================================================
-// THIS IS THE UI. superadmin
+// THIS IS THE UI. SUPERADMIN
 // ============================================================================
 // Purpose: Renders all visual components for survey management including:
 //          - Sidebar with section list
@@ -26,6 +26,13 @@
 //    preserved rather than overwritten with Admin's grid layout.
 // 4. Kept SuperAdsidebar, existing class names, routes, and file structure
 //    untouched.
+// 5. PARITY FIX (this pass): added the "checkbox" option-rendering branch in
+//    Editor Mode, mirroring the existing "multiple" branch exactly (same
+//    layout, same edit/add/delete option controls), just using
+//    <input type="checkbox"> instead of <input type="radio"> for the preview
+//    state. Previously, checkbox-type questions rendered their header/card
+//    but never rendered their options list, because the options-rendering
+//    JSX was gated strictly on `q.type === "multiple"`. Ported from Admin.
 // ============================================================================
 
 import SuperAdsidebar from "../SuperAdsidebar";
@@ -623,6 +630,46 @@ export default function SurveyMgmtView({
                           {(q.options || []).map((opt, oIdx) => (
                             <label key={oIdx}>
                               <input type="radio" disabled />
+                              {isEditing ? (
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1 }}>
+                                  <input
+                                    value={opt}
+                                    onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
+                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0" }}
+                                  />
+                                  <button
+                                    onClick={() => deleteOption(activeSection, qIdx, oIdx)}
+                                    style={{ border: "none", background: "transparent", cursor: "pointer", color: "#ef4444", padding: 0, display: "flex", alignItems: "center" }}
+                                  >
+                                    <FiTrash2 size={14} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span>{opt}</span>
+                              )}
+                            </label>
+                          ))}
+                          {isEditing && (
+                            <button
+                              onClick={() => addOption(activeSection, qIdx)}
+                              style={{ marginTop: "0.5rem", border: "1px dashed #d1d5db", background: "none", padding: "0.3rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.75rem", color: "#6b7280", cursor: "pointer", fontFamily: "Lexend" }}
+                            >
+                              + Add option
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Checkbox (multi-select) — mirrors "multiple" block above,
+                          just rendered with checkbox inputs instead of radio.
+                          Fixes: checkbox-type questions previously showed no
+                          option list at all in this editor view (parity fix,
+                          ported from Admin). */}
+                      {q.type === "checkbox" && (
+                        <div className="radio-group">
+                          {(q.options || []).map((opt, oIdx) => (
+                            <label key={oIdx}>
+                              <input type="checkbox" disabled />
                               {isEditing ? (
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flex: 1 }}>
                                   <input

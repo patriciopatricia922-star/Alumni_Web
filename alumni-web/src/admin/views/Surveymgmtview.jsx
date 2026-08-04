@@ -1,6 +1,6 @@
 // ============================================================================
 // SurveyMgmtView.jsx — UI Layer (merged: alumniType badge + FIX 7 wiring +
-// checkbox option rendering)
+// checkbox option rendering) ADMIN
 // ============================================================================
 // CHANGE LOG (this pass only)
 // ───────────────────────────
