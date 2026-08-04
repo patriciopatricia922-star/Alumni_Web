@@ -8,7 +8,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
-import Predictiveanalyticsview from './views/Predictiveanalyticsview';
+import Predictiveanalyticsview from './Views/Predictiveanalyticsview';
 import AdminSidebar from './SuperAdsidebar';
 
 // ============================================================================

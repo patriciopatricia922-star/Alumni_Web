@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import SuperAdminDashboardView from "./views/SuperAdminDashboardView";
+import SuperAdminDashboardView from "./Views/SuperAdminDashboardView";
 import { buildAllKpiInsights } from "../services/kpiInsightsService";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";

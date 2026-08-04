@@ -14,8 +14,8 @@
 
 import React, { useState, useEffect } from 'react';
 import SuperAdSidebar from "./SuperAdsidebar";
-import ResponseAnalyticsView from './views/ResponseAnalyticsView';
-import ResponseAnalyticsSkeleton from './views/ResponseAnalyticsSkeleton'; // ← SYNCED
+import ResponseAnalyticsView from './Views/ResponseAnalyticsView';
+import ResponseAnalyticsSkeleton from './Views/ResponseAnalyticsSkeleton'; // ← SYNCED
 import { supabase } from '../lib/supabase';
 import { useLocation } from 'react-router-dom';
 import { useAlumniType } from './contexts/AlumniTypeContext'; // ← SYNCED (same context/path as Admin)
