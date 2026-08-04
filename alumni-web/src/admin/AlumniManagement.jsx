@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { supabaseAdmin } from "../lib/supabaseadmin";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
 import AlumniManagementView from "./views/AlumniManagementView";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
