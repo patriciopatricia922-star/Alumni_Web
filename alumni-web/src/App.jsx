@@ -5,7 +5,7 @@ import { AlumniTypeProvider } from './admin/contexts/AlumniTypeContext';
 import { AlumniTypeProvider as SuperAdminAlumniTypeProvider } from './superadmin/contexts/AlumniTypeContext';
 import LandingPage from './pages/Landingpage';
 import AlumniIDRegistration from './pages/AlumniIDRegistration';
-import TermsOfService from './pages/TermsOfService';
+import TermsOfService from './pages/Termsofservice';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Signup from './pages/Signup';
 import Login from './pages/Login';
