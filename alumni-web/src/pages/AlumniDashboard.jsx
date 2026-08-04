@@ -30,7 +30,7 @@ import eventsIcon from "../assets/events_ic.svg";
 import jobsIcon from "../assets/jobs_ic.svg";
 import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
 
-import AlumniDashboardView from "../views/Alumnidashboardview";
+import AlumniDashboardView from "../Views/Alumnidashboardview";
 import DataPrivacyModal from "../modals/DataPrivacyModal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
