@@ -12,7 +12,7 @@ import surveyIcon from "../assets/tracer_ic.svg";
 import profileIcon from "../assets/profile_icn.svg";
 import sidebarLogo from "../assets/alumnai_logo_new.png";
 import SidebarView from "./Sidebarview";
-import DataPrivacyModal from "../modals/DataPrivacyModal";
+import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 import PointsToast from "../modals/PointsToast";

@@ -31,7 +31,7 @@ import jobsIcon from "../assets/jobs_ic.svg";
 import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
 
 import AlumniDashboardView from "../Views/Alumnidashboardview";
-import DataPrivacyModal from "../modals/DataPrivacyModal";
+import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";

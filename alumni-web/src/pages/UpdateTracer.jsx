@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { supabase } from '../lib/supabase';
 import { getSurveySections, invalidateSectionsCache } from '../lib/surveyProgress';
-import DataPrivacyModal from '../modals/DataPrivacyModal';
+import DataPrivacyModal from '../modals/Dataprivacymodal';
 import { useDpaGate } from '../hooks/useDpaGate';
 
 /* ─── Google Fonts: Montserrat (shared with SurveyComplete) ────────────────── */
