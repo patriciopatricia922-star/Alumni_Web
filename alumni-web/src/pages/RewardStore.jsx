@@ -14,7 +14,7 @@ import {
   subscribeToRewardPoints,
 } from "../lib/rewardPoints";
 import { useDpaGate } from "../hooks/useDpaGate";
-import DataPrivacyModal from "../modals/DataPrivacyModal";
+import DataPrivacyModal from "../modals/Dataprivacymodal";
 import rewardIcon from "../assets/reward_icn.svg";
 import RewardStoreView from "../views/RewardStoreView";
 import PointsToast from "../modals/PointsToast";
