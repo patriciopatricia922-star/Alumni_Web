@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import SuperAdSidebar from "./SuperAdsidebar";
-import ResponseAnalyticsView from './Views/ResponseAnalyticsView';
+import ResponseAnalyticsView from './Views/Responseanalyticsview';
 import ResponseAnalyticsSkeleton from './Views/ResponseAnalyticsSkeleton'; // ← SYNCED
 import { supabase } from '../lib/supabase';
 import { useLocation } from 'react-router-dom';
