@@ -16,7 +16,7 @@ import {
 import { useDpaGate } from "../hooks/useDpaGate";
 import DataPrivacyModal from "../modals/Dataprivacymodal";
 import rewardIcon from "../assets/reward_icn.svg";
-import RewardStoreView from "../views/RewardStoreView";
+import RewardStoreView from "../Views/RewardStoreView";
 import PointsToast from "../modals/PointsToast";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 
