@@ -377,7 +377,8 @@ export const exportSurveyPDF = async ({
         return { code: dept, name: dept, current_rate: current, predicted_rate: predicted, change: predicted - current };
       });
 
-      const aiRes = await fetch('http://localhost:8000/api/ai/predictive-insights', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+      const aiRes = await fetch(`${API_BASE}/api/ai/predictive-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ overview_trend: overviewTrend, departments, current_view: 'overview', selected_department: null }),
