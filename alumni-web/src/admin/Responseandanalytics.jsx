@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from "./components/AdminSidebar";
-import ResponseAnalyticsView from './views/ResponseAnalyticsView';
+import ResponseAnalyticsView from './views/Responseanalyticsview';
 import ResponseAnalyticsSkeleton from './views/ResponseAnalyticsSkeleton'; // ← SKELETON
 import { supabase } from '../lib/supabase';
 import { useLocation } from "react-router-dom";

@@ -43,7 +43,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseadmin";
 import AdminSidebar from "./components/AdminSidebar";
-import SurveyMgmtView from "./views/SurveyMgmtView";
+import SurveyMgmtView from "./views/Surveymgmtview";
 import SurveySkeletonView from "./views/SurveySkeletonView";
 import { useAlumniType } from './contexts/AlumniTypeContext';
 
