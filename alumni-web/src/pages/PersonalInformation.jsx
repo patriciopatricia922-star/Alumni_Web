@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import useUserProfile from '../hooks/Useuserprofile'; // Ensure casing matches your file system
-import PersonalInformationView from '../views/PersonalInformationView';
+import PersonalInformationView from '../Views/PersonalInformationView';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Responsive breakpoint hook
