@@ -1,15 +1,3 @@
-// ============================================================================
-// AlumniManagementView.jsx — View
-// ============================================================================
-// Renders all visual components for alumni management including:
-//   - Alumni table with search and pagination
-//   - Filter modal (program, batch, employment, survey status, sort-by-name)
-//   - Upload CSV modal for batch import
-//   - Alumni profile modal
-//   - Export functionality
-//   - All badges and icons
-// ============================================================================
-
 import React, { useState, useEffect } from "react";
 import { MdEmail, MdWork, MdAssignment, MdAccountCircle } from "react-icons/md";
 import { FiFilter, FiDownload, FiSearch, FiX, FiUpload } from "react-icons/fi";
@@ -323,63 +311,75 @@ function UploadCSVModal({ onClose, onSuccess }) {
     try {
       const text = await selectedFile.text();
       const { rows } = parseCSV(text);
-      const { supabaseAdmin } = await import("../../lib/supabaseAdmin");
+      // const { supabaseAdmin } = await import("../../../backend/supabaseAdmin");
 
-      let inserted = 0;
-      let skipped = 0;
-      const errors = [];
+      // let inserted = 0;
+      // let skipped = 0;
+      // const errors = [];
 
-      for (const row of rows) {
-        const mapped = mapRow(row);
-        if (!mapped.email) { skipped++; continue; }
+      // for (const row of rows) {
+      //   const mapped = mapRow(row);
+      //   if (!mapped.email) { skipped++; continue; }
 
-        // Skip if a public users record already exists for this email.
-        const { data: existing } = await supabaseAdmin
-          .from("users")
-          .select("id")
-          .eq("email", mapped.email)
-          .maybeSingle();
+      //   // Skip if a public users record already exists for this email.
+      //   const { data: existing } = await supabaseAdmin
+      //     .from("users")
+      //     .select("id")
+      //     .eq("email", mapped.email)
+      //     .maybeSingle();
 
-        if (existing) { skipped++; continue; }
+      //   if (existing) { skipped++; continue; }
 
-        if (mapped.batch_year) {
-          const parsed = parseInt(mapped.batch_year, 10);
-          mapped.batch_year = isNaN(parsed) ? null : parsed;
-        } else {
-          mapped.batch_year = null;
-        }
+      //   if (mapped.batch_year) {
+      //     const parsed = parseInt(mapped.batch_year, 10);
+      //     mapped.batch_year = isNaN(parsed) ? null : parsed;
+      //   } else {
+      //     mapped.batch_year = null;
+      //   }
 
-        // Create the auth.users record first so the FK constraint is satisfied,
-        // then insert the public profile row using the UUID Supabase returns.
-        const { data: authData, error: authError } =
-          await supabaseAdmin.auth.admin.createUser({
-            email: mapped.email,
-            // Random password — alumni reset via "Forgot password" on first login.
-            password: crypto.randomUUID(),
-            email_confirm: true,
-          });
+      //   // Create the auth.users record first so the FK constraint is satisfied,
+      //   // then insert the public profile row using the UUID Supabase returns.
+      //   const { data: authData, error: authError } =
+      //     await supabaseAdmin.auth.admin.createUser({
+      //       email: mapped.email,
+      //       // Random password — alumni reset via "Forgot password" on first login.
+      //       password: crypto.randomUUID(),
+      //       email_confirm: true,
+      //     });
 
-        if (authError) {
-          errors.push({ email: mapped.email, message: authError.message });
-          continue;
-        }
+      //   if (authError) {
+      //     errors.push({ email: mapped.email, message: authError.message });
+      //     continue;
+      //   }
 
-        const authId = authData.user.id;
+      //   const authId = authData.user.id;
 
-        const { error: insertError } = await supabaseAdmin
-          .from("users")
-          .insert([{ id: authId, ...mapped }]);
+      //   const { error: insertError } = await supabaseAdmin
+      //     .from("users")
+      //     .insert([{ id: authId, ...mapped }]);
 
-        if (insertError) {
-          // Roll back the auth user to avoid orphaned auth records.
-          await supabaseAdmin.auth.admin.deleteUser(authId);
-          errors.push({ email: mapped.email, message: insertError.message });
-        } else {
-          inserted++;
-        }
-      }
+      //   if (insertError) {
+      //     // Roll back the auth user to avoid orphaned auth records.
+      //     await supabaseAdmin.auth.admin.deleteUser(authId);
+      //     errors.push({ email: mapped.email, message: insertError.message });
+      //   } else {
+      //     inserted++;
+      //   }
+      // }
 
-      setResult({ inserted, skipped, errors });
+      // setResult({ inserted, skipped, errors });
+
+      const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
+      const mappedRows = rows.map(mapRow).filter((r) => r.email);
+      const res = await fetch(`${API_BASE}/admin/alumni/bulk-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows: mappedRows }),
+      });
+
+      if (!res.ok) throw new Error("Bulk upload failed");
+      const result = await res.json();
+      setResult(result);
       if (inserted > 0) onSuccess();
     } catch (e) {
       setResult({

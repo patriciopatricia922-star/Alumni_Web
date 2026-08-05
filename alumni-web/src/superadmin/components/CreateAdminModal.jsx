@@ -24,7 +24,7 @@
  */
 
 import React, { useState } from 'react';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
+// import { supabaseAdmin } from '../../../backend/supabaseAdmin';
 import { logAction } from '../../lib/auditLogger';
 import {
   MODULE_META,
@@ -33,6 +33,7 @@ import {
 } from '../../utils/Modulepermissions';
 import './CreateAdminModal.css';
 
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const CreateAdminModal = ({ onClose, onCreated }) => {
@@ -98,42 +99,76 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
     // For regular admins only the explicitly checked modules are stored.
     const module_permissions = permissionsFromArray(Array.from(selectedModules));
 
+    // setLoading(true);
+    // try {
+    //   // ── Invite the new admin by email (no password set here) ────────────
+    //   // Supabase sends an email with a secure link; the recipient sets their
+    //   // own password on first login.
+    //   const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    //     form.email,
+    //     {
+    //       data: {
+    //         first_name: form.first_name,
+    //         last_name:  form.last_name,
+    //         role:       form.role,
+    //       },
+    //     }
+    //   );
+    //   if (inviteErr) throw inviteErr;
+
+    //   const uid = inviteData?.user?.id;
+    //   if (!uid) throw new Error('Admin invite failed.');
+
+    //   // ── DB insert — includes module_permissions ──────────────────────────
+    //   const { error: insertErr } = await supabaseAdmin.from('users').insert({
+    //     id:                 uid,
+    //     email:              form.email,
+    //     first_name:         form.first_name,
+    //     last_name:          form.last_name,
+    //     role:               form.role,
+    //     account_status:     'active',
+    //     module_permissions,
+    //   });
+
+    //   if (insertErr) {
+    //     // Roll back the invited auth user if DB insert fails
+    //     await supabaseAdmin.auth.admin.deleteUser(uid);
+    //     throw insertErr;
+    //   }
+
+    //   // ── Audit log ─────────────────────────────────────────────────────────
+    //   await logAction({
+    //     action:      'Create',
+    //     module:      'User Management',
+    //     description: `Invited new ${form.role} account for ${form.email}`,
+    //     recordId:    uid,
+    //   });
+
+    //   onCreated();
+    //   onClose();
     setLoading(true);
     try {
       // ── Invite the new admin by email (no password set here) ────────────
-      // Supabase sends an email with a secure link; the recipient sets their
+      // Backend sends an email with a secure link; the recipient sets their
       // own password on first login.
-      const { data: inviteData, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-        form.email,
-        {
-          data: {
-            first_name: form.first_name,
-            last_name:  form.last_name,
-            role:       form.role,
-          },
-        }
-      );
-      if (inviteErr) throw inviteErr;
-
-      const uid = inviteData?.user?.id;
-      if (!uid) throw new Error('Admin invite failed.');
-
-      // ── DB insert — includes module_permissions ──────────────────────────
-      const { error: insertErr } = await supabaseAdmin.from('users').insert({
-        id:                 uid,
-        email:              form.email,
-        first_name:         form.first_name,
-        last_name:          form.last_name,
-        role:               form.role,
-        account_status:     'active',
-        module_permissions,
+      const res = await fetch(`${API_BASE}/admin/create-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          role: form.role,
+          module_permissions,
+        }),
       });
 
-      if (insertErr) {
-        // Roll back the invited auth user if DB insert fails
-        await supabaseAdmin.auth.admin.deleteUser(uid);
-        throw insertErr;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || 'Admin invite failed.');
       }
+
+      const { uid } = await res.json();
 
       // ── Audit log ─────────────────────────────────────────────────────────
       await logAction({

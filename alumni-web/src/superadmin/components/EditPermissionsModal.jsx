@@ -17,7 +17,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
+// import { supabaseAdmin } from '../../../backend/supabaseAdmin';
 import { logAction } from '../../lib/auditLogger';
 import {
   MODULE_META,
@@ -25,6 +25,8 @@ import {
   permissionsToArray,       // ← was incorrectly imported as arrayFromPermissions
 } from '../../utils/modulePermissions';
 import './EditPermissionsModal.css';
+
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -67,15 +69,27 @@ const EditPermissionsModal = ({ admin, onClose, onSaved }) => {
     setError('');
     setLoading(true);
 
+    // try {
+    //   const module_permissions = permissionsFromArray(Array.from(selectedModules));
+
+    //   const { error: updateErr } = await supabaseAdmin
+    //     .from('users')
+    //     .update({ module_permissions })
+    //     .eq('id', admin.id);
+
+    //   if (updateErr) throw updateErr;
+
+    //   await logAction({
     try {
       const module_permissions = permissionsFromArray(Array.from(selectedModules));
 
-      const { error: updateErr } = await supabaseAdmin
-        .from('users')
-        .update({ module_permissions })
-        .eq('id', admin.id);
+      const res = await fetch(`${API_BASE}/admin/alumni/${admin.id}/permissions`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ module_permissions }),
+      });
 
-      if (updateErr) throw updateErr;
+      if (!res.ok) throw new Error("Failed to update permissions");
 
       await logAction({
         action:      'Update',

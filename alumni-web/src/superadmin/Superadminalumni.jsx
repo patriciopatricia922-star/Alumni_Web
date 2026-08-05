@@ -7,11 +7,12 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { supabaseAdmin } from "../lib/supabaseAdmin";
+// import { supabaseAdmin } from "../../backend/supabaseAdmin";
 import SuperAdminAlumniView from "./Views/SuperAdminAlumniView";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 const PER_PAGE = 12;
 
 function SuperAdminAlumni() {
@@ -59,24 +60,30 @@ function SuperAdminAlumni() {
   });
 
   // ── Load alumni data ─────────────────────────────────────────────────────
-  const loadAlumni = async () => {
-    try {
-      const { data: users, error: usersError } = await supabaseAdmin
-        .from("users")
-        .select(
-          "id, email, first_name, middle_name, last_name, program, batch_year, account_status, role"
-        )
-        .eq("role", "alumni");
+  // const loadAlumni = async () => {
+  //   try {
+  //     const { data: users, error: usersError } = await supabaseAdmin
+  //       .from("users")
+  //       .select(
+  //         "id, email, first_name, middle_name, last_name, program, batch_year, account_status, role"
+  //       )
+  //       .eq("role", "alumni");
 
-      if (usersError) throw usersError;
+  //     if (usersError) throw usersError;
 
-      const { data: surveys, error: surveyError } = await supabaseAdmin
-        .from("survey_progress")
-        .select("user_id, completed, percentage, employment_information_data");
+  //     const { data: surveys, error: surveyError } = await supabaseAdmin
+  //       .from("survey_progress")
+  //       .select("user_id, completed, percentage, employment_information_data");
 
-      if (surveyError) throw surveyError;
+  //     if (surveyError) throw surveyError;
+    const loadAlumni = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/alumni`);
+        if (!res.ok) throw new Error("Failed to load alumni");
+        const { data } = await res.json();
+        const { users, surveys } = data;
 
-      const surveyMap = {};
+        const surveyMap = {};
       (surveys || []).forEach((s) => {
         let empData = s.employment_information_data;
         if (typeof empData === "string") {
@@ -171,13 +178,23 @@ function SuperAdminAlumni() {
   const cohortStats = calcStats(cohortAlumni);
 
   // ── Account status update ────────────────────────────────────────────────
-  const updateStatus = async (id, newStatus) => {
+  // const updateStatus = async (id, newStatus) => {
+  //   try {
+  //     const { error } = await supabaseAdmin
+  //       .from("users")
+  //       .update({ account_status: newStatus })
+  //       .eq("id", id);
+  //     if (error) throw error;
+
+  //     const updated = alumni.map((a) =>
+    const updateStatus = async (id, newStatus) => {
     try {
-      const { error } = await supabaseAdmin
-        .from("users")
-        .update({ account_status: newStatus })
-        .eq("id", id);
-      if (error) throw error;
+      const res = await fetch(`${API_BASE}/admin/alumni/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
 
       const updated = alumni.map((a) =>
         a.id === id ? { ...a, account_status: newStatus } : a

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { supabaseAdmin } from '../lib/supabaseAdmin';
+// import { supabaseAdmin } from '../../backend/supabaseAdmin';
 import { logAction } from '../lib/auditLogger';
 import AdminAccountManagementView from './Views/AdminAccountManagementView';
+
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 
 const AdminAccountManagement = () => {
   const [admins, setAdmins] = useState([]);
@@ -41,79 +43,117 @@ const AdminAccountManagement = () => {
 
   // Fetch stats — depends on refreshTrigger so it re-runs after every
   // access toggle, keeping the Disabled Access counter in sync.
+  // const fetchStats = useCallback(async () => {
+  //   const { count: tot } = await supabaseAdmin
+  //     .from('users').select('*', { count: 'exact', head: true })
+  //     .in('role', ['admin', 'superadmin']);
+  //   setStatsTotal(tot ?? 0);
+
+  //   const { count: act } = await supabaseAdmin
+  //     .from('users').select('*', { count: 'exact', head: true })
+  //     .in('role', ['admin', 'superadmin'])
+  //     .eq('account_status', 'active');
+  //   setStatsActive(act ?? 0);
+
+  //   const { count: inact } = await supabaseAdmin
+  //     .from('users').select('*', { count: 'exact', head: true })
+  //     .in('role', ['admin', 'superadmin'])
+  //     .eq('account_status', 'inactive');
+  //   setStatsInactive(inact ?? 0);
+
+  //   const { count: dis } = await supabaseAdmin
+  //     .from('users').select('*', { count: 'exact', head: true })
+  //     .in('role', ['admin', 'superadmin'])
+  //     .eq('account_status', 'disabled');
+  //   setStatsDisabled(dis ?? 0);
+  // }, [refreshTrigger]); // re-fetch whenever a toggle fires
   const fetchStats = useCallback(async () => {
-    const { count: tot } = await supabaseAdmin
-      .from('users').select('*', { count: 'exact', head: true })
-      .in('role', ['admin', 'superadmin']);
-    setStatsTotal(tot ?? 0);
-
-    const { count: act } = await supabaseAdmin
-      .from('users').select('*', { count: 'exact', head: true })
-      .in('role', ['admin', 'superadmin'])
-      .eq('account_status', 'active');
-    setStatsActive(act ?? 0);
-
-    const { count: inact } = await supabaseAdmin
-      .from('users').select('*', { count: 'exact', head: true })
-      .in('role', ['admin', 'superadmin'])
-      .eq('account_status', 'inactive');
-    setStatsInactive(inact ?? 0);
-
-    const { count: dis } = await supabaseAdmin
-      .from('users').select('*', { count: 'exact', head: true })
-      .in('role', ['admin', 'superadmin'])
-      .eq('account_status', 'disabled');
-    setStatsDisabled(dis ?? 0);
+    try {
+      const res = await fetch(`${API_BASE}/admin/accounts/stats`);
+      if (!res.ok) throw new Error("Failed to load admin stats");
+      const { data } = await res.json();
+      setStatsTotal(data.total ?? 0);
+      setStatsActive(data.active ?? 0);
+      setStatsInactive(data.inactive ?? 0);
+      setStatsDisabled(data.disabled ?? 0);
+    } catch (e) {
+      console.error('fetchStats error:', e.message);
+    }
   }, [refreshTrigger]); // re-fetch whenever a toggle fires
 
   // Fetch admin list — module_permissions included in select
+  // const fetchAdmins = useCallback(async () => {
+  //   setLoading(true);
+  //   try {
+  //     let q = supabaseAdmin
+  //       .from('users')
+  //       .select(
+  //         'id, first_name, last_name, email, role, account_status, created_at, module_permissions',
+  //         { count: 'exact' }
+  //       )
+  //       .in('role', ['admin', 'superadmin'])
+  //       .order('created_at', { ascending: false })
+  //       .range((page - 1) * PER_PAGE, page * PER_PAGE - 1);
+
+  //     if (roleFilter === 'Admin')       q = q.eq('role', 'admin');
+  //     if (roleFilter === 'Super Admin') q = q.eq('role', 'superadmin');
+
+  //     if (statusFilter === 'Active')   q = q.eq('account_status', 'active');
+  //     if (statusFilter === 'Inactive') q = q.eq('account_status', 'inactive');
+  //     if (statusFilter === 'Disabled') q = q.eq('account_status', 'disabled');
+
+  //     if (debouncedSearch.trim()) {
+  //       q = q.or(
+  //         `first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`
+  //       );
+  //     }
+
+  //     const { data, count, error } = await q;
+  //     if (error) throw error;
+
+  //     // Fetch last login from audit_logs
+  //     const ids = (data || []).map(u => u.id);
+  //     let lastLogins = {};
+  //     if (ids.length > 0) {
+  //       const { data: loginData } = await supabaseAdmin
+  //         .from('audit_logs')
+  //         .select('user_id, created_at')
+  //         .eq('action', 'Login')
+  //         .eq('status', 'Success')
+  //         .in('user_id', ids)
+  //         .order('created_at', { ascending: false });
+
+  //       (loginData || []).forEach(l => {
+  //         if (!lastLogins[l.user_id]) lastLogins[l.user_id] = l.created_at;
+  //       });
+  //     }
+
+  //     setAdmins((data || []).map(u => ({ ...u, last_login: lastLogins[u.id] || null })));
+  //     setTotal(count || 0);
+  //   } catch (err) {
+  //     console.error('fetchAdmins error:', err.message);
+  //     setAdmins([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [page, roleFilter, statusFilter, debouncedSearch, refreshTrigger]);
+
   const fetchAdmins = useCallback(async () => {
     setLoading(true);
     try {
-      let q = supabaseAdmin
-        .from('users')
-        .select(
-          'id, first_name, last_name, email, role, account_status, created_at, module_permissions',
-          { count: 'exact' }
-        )
-        .in('role', ['admin', 'superadmin'])
-        .order('created_at', { ascending: false })
-        .range((page - 1) * PER_PAGE, page * PER_PAGE - 1);
+      const params = new URLSearchParams({
+        page: String(page),
+        per_page: String(PER_PAGE),
+        role_filter: roleFilter,
+        status_filter: statusFilter,
+        search: debouncedSearch,
+      });
 
-      if (roleFilter === 'Admin')       q = q.eq('role', 'admin');
-      if (roleFilter === 'Super Admin') q = q.eq('role', 'superadmin');
+      const res = await fetch(`${API_BASE}/admin/accounts?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to load admins");
+      const { data, count } = await res.json();
 
-      if (statusFilter === 'Active')   q = q.eq('account_status', 'active');
-      if (statusFilter === 'Inactive') q = q.eq('account_status', 'inactive');
-      if (statusFilter === 'Disabled') q = q.eq('account_status', 'disabled');
-
-      if (debouncedSearch.trim()) {
-        q = q.or(
-          `first_name.ilike.%${debouncedSearch}%,last_name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`
-        );
-      }
-
-      const { data, count, error } = await q;
-      if (error) throw error;
-
-      // Fetch last login from audit_logs
-      const ids = (data || []).map(u => u.id);
-      let lastLogins = {};
-      if (ids.length > 0) {
-        const { data: loginData } = await supabaseAdmin
-          .from('audit_logs')
-          .select('user_id, created_at')
-          .eq('action', 'Login')
-          .eq('status', 'Success')
-          .in('user_id', ids)
-          .order('created_at', { ascending: false });
-
-        (loginData || []).forEach(l => {
-          if (!lastLogins[l.user_id]) lastLogins[l.user_id] = l.created_at;
-        });
-      }
-
-      setAdmins((data || []).map(u => ({ ...u, last_login: lastLogins[u.id] || null })));
+      setAdmins(data || []);
       setTotal(count || 0);
     } catch (err) {
       console.error('fetchAdmins error:', err.message);
@@ -135,29 +175,45 @@ const AdminAccountManagement = () => {
   useEffect(() => { fetchAdmins(); }, [fetchAdmins]);
 
   // Toggle access
-  const handleToggleAccess = async () => {
+  // const handleToggleAccess = async () => {
+  //   if (!confirmUser) return;
+  //   setConfirmLoading(true);
+  //   try {
+  //     const { user, currentEnabled } = confirmUser;
+  //     const newStatus = currentEnabled ? 'disabled' : 'active';
+
+  //     const { error: updateError } = await supabaseAdmin
+  //       .from('users')
+  //       .update({ account_status: newStatus })
+  //       .eq('id', user.id);
+
+  //     if (updateError) throw updateError;
+
+  //     const { data: verifyData, error: verifyError } = await supabaseAdmin
+  //       .from('users')
+  //       .select('account_status')
+  //       .eq('id', user.id)
+  //       .single();
+
+  //     if (!verifyError && verifyData.account_status !== newStatus) {
+  //       console.error('Status mismatch! Expected:', newStatus, 'Got:', verifyData.account_status);
+  //     }
+
+  //     await logAction({
+      const handleToggleAccess = async () => {
     if (!confirmUser) return;
     setConfirmLoading(true);
     try {
       const { user, currentEnabled } = confirmUser;
       const newStatus = currentEnabled ? 'disabled' : 'active';
 
-      const { error: updateError } = await supabaseAdmin
-        .from('users')
-        .update({ account_status: newStatus })
-        .eq('id', user.id);
+      const res = await fetch(`${API_BASE}/admin/alumni/${user.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
 
-      if (updateError) throw updateError;
-
-      const { data: verifyData, error: verifyError } = await supabaseAdmin
-        .from('users')
-        .select('account_status')
-        .eq('id', user.id)
-        .single();
-
-      if (!verifyError && verifyData.account_status !== newStatus) {
-        console.error('Status mismatch! Expected:', newStatus, 'Got:', verifyData.account_status);
-      }
+      if (!res.ok) throw new Error("Failed to update status");
 
       await logAction({
         action:      'Update',

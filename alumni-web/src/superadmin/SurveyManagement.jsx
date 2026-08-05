@@ -23,11 +23,14 @@
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { supabaseAdmin } from "../lib/supabaseAdmin";
+// import { supabaseAdmin } from "../../backend/supabaseAdmin";
 import AdminSidebar from "./SuperAdSidebar";
 import SurveyMgmtView from "./Views/Surveymgmtview";
 import SurveySkeletonView from "./Views/SurveySkeletonView";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
+
+
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 
 // ============================================================================
 // DEBUG LOGGER — toggle with localStorage.setItem('surveyDebug', '1')
@@ -575,16 +578,31 @@ export default function SurveyManagement() {
     const loadCollege = async () => {
       dbg("Loading college survey config from Supabase...");
 
-      const { data, error } = await supabaseAdmin
-        .from("survey_config")
-        .select("id, config")
-        .or("config->>survey_type.is.null,config->>survey_type.eq.college")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
+      // const { data, error } = await supabaseAdmin
+      //   .from("survey_config")
+      //   .select("id, config")
+      //   .or("config->>survey_type.is.null,config->>survey_type.eq.college")
+      //   .order("updated_at", { ascending: false })
+      //   .limit(1)
+      //   .single();
+
+      // if (error) {
+      //   dbgWarn("Load error (may be no rows yet):", error.message, error.code);
+      // }
+
+      // if (error || !data?.config?.sections?.length) {
+      let data, error;
+      try {
+        const res = await fetch(`${API_BASE}/admin/survey-config?survey_type=college`);
+        if (!res.ok) throw new Error("Failed to load college survey config");
+        const json = await res.json();
+        data = json.data;
+      } catch (e) {
+        error = e;
+      }
 
       if (error) {
-        dbgWarn("Load error (may be no rows yet):", error.message, error.code);
+        dbgWarn("Load error (may be no rows yet):", error.message);
       }
 
       if (error || !data?.config?.sections?.length) {
@@ -627,16 +645,29 @@ export default function SurveyManagement() {
     const loadShs = async () => {
       dbg("Loading SHS survey config from Supabase...");
 
-      const { data, error } = await supabaseAdmin
-        .from("survey_config")
-        .select("id, config")
-        .contains("config", { survey_type: "shs" })
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
+      // const { data, error } = await supabaseAdmin
+      //   .from("survey_config")
+      //   .select("id, config")
+      //   .contains("config", { survey_type: "shs" })
+      //   .order("updated_at", { ascending: false })
+      //   .limit(1)
+      //   .single();
+
+      // if (error) {
+      //   dbgWarn("SHS load error (may be no rows yet):", error.message, error.code);
+      // }
+      let data, error;
+      try {
+        const res = await fetch(`${API_BASE}/admin/survey-config?survey_type=shs`);
+        if (!res.ok) throw new Error("Failed to load SHS survey config");
+        const json = await res.json();
+        data = json.data;
+      } catch (e) {
+        error = e;
+      }
 
       if (error) {
-        dbgWarn("SHS load error (may be no rows yet):", error.message, error.code);
+        dbgWarn("SHS load error (may be no rows yet):", error.message);
       }
 
       if (error || !data?.config?.sections?.length) {
@@ -706,24 +737,45 @@ export default function SurveyManagement() {
     setStatus("saving");
 
     try {
+      // if (currentConfigId) {
+      //   dbg("UPDATE path — targeting row id:", currentConfigId);
+
+      //   const { data: updateData, error: updateError } = await supabaseAdmin
+      //     .from("survey_config")
+      //     .update({ config: payload, updated_at: new Date().toISOString() })
+      //     .eq("id", currentConfigId)
+      //     .select("id, config");
+
+      //   dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
+
+      //   if (updateError) throw updateError;
+
+      //   if (!updateData || updateData.length === 0) {
+      //     const msg = `UPDATE matched 0 rows for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
+      //     console.error("[SurveyMgmt] PFIX-B:", msg);
+      //     throw new Error(msg);
+      //   }
+
+      //   const savedBranches = updateData[0]?.config?.branches;
       if (currentConfigId) {
         dbg("UPDATE path — targeting row id:", currentConfigId);
 
-        const { data: updateData, error: updateError } = await supabaseAdmin
-          .from("survey_config")
-          .update({ config: payload, updated_at: new Date().toISOString() })
-          .eq("id", currentConfigId)
-          .select("id, config");
+        const res = await fetch(`${API_BASE}/admin/survey-config/${currentConfigId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ config: payload }),
+        });
 
-        dbg("UPDATE response — error:", updateError, "| returned rows:", updateData?.length ?? "n/a");
-
-        if (updateError) throw updateError;
-
-        if (!updateData || updateData.length === 0) {
-          const msg = `UPDATE matched 0 rows for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
+        if (!res.ok) {
+          const msg = `UPDATE failed for id=${currentConfigId}. The row may have been deleted or the ID is stale.`;
           console.error("[SurveyMgmt] PFIX-B:", msg);
           throw new Error(msg);
         }
+
+        const updateJson = await res.json();
+        const updateData = [updateJson.data];
+
+        dbg("UPDATE response — returned rows:", updateData?.length ?? "n/a");
 
         const savedBranches = updateData[0]?.config?.branches;
         dbg("Read-back branches from UPDATE:", JSON.stringify(savedBranches, null, 2));
@@ -741,18 +793,21 @@ export default function SurveyManagement() {
         } else {
           dbg("PFIX-D: Read-back verified ✓ — branch keys match");
         }
-      } else {
+     
+        } else {
         dbg("INSERT path — no existing config row");
 
-        const { data: insertData, error: insertError } = await supabaseAdmin
-          .from("survey_config")
-          .insert({ config: payload })
-          .select("id, config")
-          .single();
+        const res = await fetch(`${API_BASE}/admin/survey-config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ config: payload }),
+        });
 
-        dbg("INSERT response — error:", insertError, "| returned row:", insertData?.id);
+        if (!res.ok) throw new Error("Failed to insert survey config");
+        const insertJson = await res.json();
+        const insertData = insertJson.data;
 
-        if (insertError) throw insertError;
+        dbg("INSERT response — returned row:", insertData?.id);
 
         if (insertData) {
           configIdRef.current = insertData.id;
