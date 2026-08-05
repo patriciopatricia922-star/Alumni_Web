@@ -8,7 +8,7 @@ import LandingPage from './pages/Landingpage';
 import TermsOfService from './pages/Termsofservice';
 import PrivacyPolicy from './pages/Privacypolicy';
 // import Signup from './pages/Signup';
-import Login from './pages/Login';
+// import Login from './pages/Login';
 import AlumniDashboard from './pages/AlumniDashboard';
 import Announcements from './pages/Announcements';
 import Profile from './pages/Profile';
@@ -27,7 +27,7 @@ import RewardStore from './pages/RewardStore';
 import Discounts from './pages/Discounts';
 import Events from './pages/Events';
 import Jobs from './pages/Jobs';
-import ForgotPassword from './pages/Forgotpassword';
+// import ForgotPassword from './pages/Forgotpassword';
 import AdminDashboard from './admin/AdminDashboard';
 import AlumniManagement from './admin/AlumniManagement';
 import ResponseAndAnalytics from './admin/Responseandanalytics';
@@ -35,8 +35,8 @@ import PredictiveAnalytics from './admin/PredictiveAnalytics';
 import AuditLogs from './superadmin/Auditlogs';
 import SuperAdminAlumni from './superadmin/Superadminalumni';
 import AuthCallback from './pages/AuthCallback';
-import VerificationCode from './pages/Verificationcode';
-import ResetPassword from './pages/Resetpassword';
+// import VerificationCode from './pages/Verificationcode';
+// import ResetPassword from './pages/Resetpassword';
 import SurveyManagement from './admin/SurveyManagement';
 import UpdateTracer from './pages/UpdateTracer';
 import AdminAccountManagement from './superadmin/Adminaccountmanagement';
@@ -155,7 +155,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }, [location.pathname, allowedRoles, status, prevPath]);
 
   if (status === 'checking') return null;
-  if (status === 'denied') return <Navigate to="/login" replace />;
+  // if (status === 'denied') return <Navigate to="/login" replace />;
+  if (status === 'denied') return <Navigate to="/" replace />;
   return children;
 };
 
@@ -168,10 +169,10 @@ function App() {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       {/* <Route path="/signup" element={<Signup />} /> */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/verify" element={<VerificationCode />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
+      {/* <Route path="/login" element={<Login />} /> */}
+      {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+      {/* <Route path="/verify" element={<VerificationCode />} /> */}
+      {/* <Route path="/reset-password" element={<ResetPassword />} /> */}
       <Route path="/auth/callback" element={<AuthCallback />} />
 
       {/* Main Routes */}
