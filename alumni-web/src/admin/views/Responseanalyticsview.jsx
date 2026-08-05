@@ -28,7 +28,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import "../styles/ResponseAnalytics.css";
+import "../styles/Responseanalytics.css";
 import { exportSurveyPDF } from "../../utils/exportPDF";
 import { exportSHSSurveyPDF } from "../../utils/exportSHSPDF";
 
