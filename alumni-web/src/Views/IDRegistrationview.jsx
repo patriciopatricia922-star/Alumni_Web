@@ -25,8 +25,8 @@ import { Link } from 'react-router-dom';
 import CameraIcon from '../assets/camera_icn.svg';
 import CameraIconBlue from '../assets/camerablue_icn.svg';
 import '../styles/IDregistration.css';
-import TermsModal         from '../modals/TermsModal';
-import PrivacyPolicyModal from '../modals/PrivacyPolicyModal';
+import TermsModal         from '../modals/Termsmodal';
+import PrivacyPolicyModal from '../modals/Privacypolicymodal';
 
 const IDRegistrationView = ({
   fileInputRef, videoRef, canvasRef,
