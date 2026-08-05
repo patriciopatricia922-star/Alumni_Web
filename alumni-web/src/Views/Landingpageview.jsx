@@ -10,6 +10,7 @@ import {
 } from 'react-icons/hi2';
 
 const alumnaiLogo = new URL('../assets/alumnai_logo_new.svg', import.meta.url).href;
+const footerLogo = new URL('../assets/footer_logo.png', import.meta.url).href;
 
 const stripHtml = (html) => {
   if (!html) return '';
@@ -306,7 +307,7 @@ const LandingPageView = ({
     <footer style={{ width: '100%', background: '#002263', marginTop: '0', flex: 1 }}>
       <div className="lp-footer-inner">
         <div className="lp-footer-logo">
-          <img src={alumnaiLogo} alt="AlumnAI Logo" style={{ width: '130%', height: '130%', objectFit: 'contain', marginLeft: '39px' }} />
+          <img src={footerLogo} alt="AlumnAI Logo" style={{ width: '130%', height: '130%', objectFit: 'contain', marginLeft: '39px' }} />
         </div>
         <div className="lp-footer-contact">
           <h3 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '18px', lineHeight: '26px', letterSpacing: '0.2em', color: '#FFFFFF', margin: '0 0 24px', textTransform: 'uppercase' }}>CONTACT US</h3>
