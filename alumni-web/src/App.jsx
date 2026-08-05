@@ -4,7 +4,7 @@ import { supabase } from './lib/supabase';
 import { AlumniTypeProvider } from './admin/contexts/AlumniTypeContext';
 import { AlumniTypeProvider as SuperAdminAlumniTypeProvider } from './superadmin/contexts/AlumniTypeContext';
 import LandingPage from './pages/Landingpage';
-import AlumniIDRegistration from './pages/AlumniIDRegistration';
+// import AlumniIDRegistration from './pages/AlumniIDRegistration';
 import TermsOfService from './pages/Termsofservice';
 import PrivacyPolicy from './pages/Privacypolicy';
 import Signup from './pages/Signup';
@@ -164,7 +164,7 @@ function App() {
     <Routes>
       {/* Main Authentication Routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/register" element={<AlumniIDRegistration />} />
+      {/* <Route path="/register" element={<AlumniIDRegistration />} /> */}
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/signup" element={<Signup />} />
