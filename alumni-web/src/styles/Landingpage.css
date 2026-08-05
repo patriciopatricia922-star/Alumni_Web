@@ -95,9 +95,13 @@
   .lp-explore-more { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; gap: 4px; margin-top: auto; margin-bottom: 16px; }
   .lp-explore-more p { font-family: Arial; font-size: clamp(13px, 1.2vw, 16px); color: #FFFFFF; margin: 0; letter-spacing: 0.4px; }
 
-  
   /* ============================================
    CONTENT CARDS WITH IMAGES (3-Column Grid)
+   Ratio, sizing, spacing, and hover behavior
+   standardized to match the Alumni Discounts
+   card system (see Discounts.css) — image
+   proportion expressed as aspect-ratio instead
+   of a fixed px height to stay responsive.
    ============================================ */
 
 .lp-cards-grid {
@@ -111,10 +115,11 @@
 /* Card Styles */
 .lp-content-card {
   background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.07);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -123,27 +128,32 @@
 
 .lp-content-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 62, 166, 0.25);
+  box-shadow: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Card Image */
+/* Card Image — aspect-ratio mirrors the Discounts card's on-screen
+   proportion (~386px wide : 330px tall in a 3-col grid), but stays
+   fluid across all breakpoints instead of a fixed height. */
 .lp-card-image {
   position: relative;
   width: 100%;
-  height: 180px;
+  aspect-ratio: 7 / 6;
   overflow: hidden;
   background: #F1F5F9;
+  flex-shrink: 0;
 }
 
 .lp-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  display: block;
+  transition: transform 0.35s ease;
 }
 
 .lp-content-card:hover .lp-card-image img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 /* Category Badge on Image */
@@ -151,19 +161,19 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: #FFFFFF;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Card Body */
 .lp-card-body {
-  padding: 20px;
+  padding: 18px 20px 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -174,9 +184,9 @@
   font-family: 'Arial';
   font-weight: 700;
   font-size: clamp(15px, 1.6vw, 18px);
-  line-height: 1.4;
+  line-height: 1.45;
   color: #101828;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -186,8 +196,9 @@
 
 .lp-card-description {
   font-family: 'Arial';
+  font-weight: 400;
   font-size: clamp(13px, 1.3vw, 14px);
-  line-height: 1.5;
+  line-height: 1.65;
   color: #4A5565;
   margin: 0 0 16px;
   display: -webkit-box;
@@ -207,7 +218,7 @@
   color: #6A7282;
   margin-top: auto;
   padding-top: 12px;
-  border-top: 1px solid #F1F5F9;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .lp-card-meta svg {
@@ -273,15 +284,14 @@
   font-size: 14px;
 }
 
-/* Responsive Breakpoints */
+/* Responsive Breakpoints — grid columns only; aspect-ratio on
+   .lp-card-image keeps the image proportion consistent at every
+   width automatically, so no per-breakpoint height overrides
+   are needed anymore. */
 @media (max-width: 1023px) {
   .lp-cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
-  }
-  
-  .lp-card-image {
-    height: 160px;
   }
 }
 
@@ -290,21 +300,13 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
-  .lp-card-image {
-    height: 200px;
-  }
-  
+
   .lp-card-meta {
     font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
-  .lp-card-image {
-    height: 180px;
-  }
-  
   .lp-card-body {
     padding: 16px;
   }

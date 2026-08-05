@@ -258,7 +258,7 @@ const LandingPageView = ({
           <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>We are committed to our:</p>
           {missionItems.map((item, i) => (
             <p key={i} style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 10px', textAlign: 'justify' }}>
-              <span style={{ fontWeight: 700, color: '#DAA520' }}>{item.label}</span>{', '}{item.desc}
+              <span style={{ fontWeight: 700, color: '#003EA6' }}>{item.label}</span>{', '}{item.desc}
             </p>
           ))}
         </div>
