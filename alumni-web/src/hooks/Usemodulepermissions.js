@@ -16,7 +16,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';       // adjust path as needed
-import { canAccessModule } from '../utils/modulePermissions'; // adjust path as needed
+import { canAccessModule } from '../utils/Modulepermissions'; // adjust path as needed
 
 /**
  * useModulePermissions()

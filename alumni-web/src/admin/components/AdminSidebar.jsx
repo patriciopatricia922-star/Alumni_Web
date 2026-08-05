@@ -10,7 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAlumniType } from '../contexts/AlumniTypeContext';
 import AdminSidebarView from './AdminSidebarview';
-import { MODULES, canAccessModule } from '../../utils/modulePermissions';
+import { MODULES, canAccessModule } from '../../utils/Modulepermissions';
 
 // ─── Module-level user cache ──────────────────────────────────────────────────
 // Survives component remounts within the same JS session (i.e. same tab).

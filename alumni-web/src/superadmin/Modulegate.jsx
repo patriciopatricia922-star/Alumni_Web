@@ -6,7 +6,7 @@
  *
  * Usage:
  *   import { ModuleGate } from '../components/ModuleGate';
- *   import { MODULES } from '../utils/modulePermissions';
+ *   import { MODULES } from '../utils/Modulepermissions';
  *
  *   // Hides entirely if no access
  *   <ModuleGate module={MODULES.REPORTS}>

@@ -29,7 +29,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAlumniType } from './contexts/AlumniTypeContext';
 import SuperAdminSidebarView from './Views/SuperAdSidebarview';
-import { MODULES } from '../utils/modulePermissions'; // ← imported for annotation only
+import { MODULES } from '../utils/Modulepermissions'; // ← imported for annotation only
 
 // ─── Module-level user cache ──────────────────────────────────────────────────
 // Survives component remounts within the same JS session (i.e. same tab).

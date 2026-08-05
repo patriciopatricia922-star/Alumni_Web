@@ -23,7 +23,7 @@ import {
   MODULE_META,
   permissionsFromArray,
   permissionsToArray,       // ← was incorrectly imported as arrayFromPermissions
-} from '../../utils/modulePermissions';
+} from '../../utils/Modulepermissions';
 import './EditPermissionsModal.css';
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
