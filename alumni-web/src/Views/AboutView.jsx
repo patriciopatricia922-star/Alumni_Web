@@ -19,7 +19,7 @@ import MessageIcon  from '../assets/message_icn.svg';
 import PaperIcon    from '../assets/paper_icn.svg';
 import ProtectIcon  from '../assets/protect_icn.svg';
 import Missionicon  from '../assets/mission_icn.svg';
-import useDisclosure from '../hooks/useDisclosure';
+import useDisclosure from '../hooks/Usedisclosure';
 import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 
 /* ─────────────────────────────────────────────────────────────

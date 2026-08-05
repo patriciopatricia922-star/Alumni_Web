@@ -11,7 +11,7 @@
 //                    this view is rendered) must fetch the disclosure row and
 //                    pass it down:
 //
-//                      import useDisclosure from '../hooks/useDisclosure';
+//                      import useDisclosure from '../hooks/Usedisclosure';
 //                      const { disclosure } = useDisclosure();
 //                      <IDRegistrationView disclosure={disclosure} … />
 //
