@@ -7,7 +7,7 @@ import LandingPage from './pages/Landingpage';
 // import AlumniIDRegistration from './pages/AlumniIDRegistration';
 import TermsOfService from './pages/Termsofservice';
 import PrivacyPolicy from './pages/Privacypolicy';
-import Signup from './pages/Signup';
+// import Signup from './pages/Signup';
 import Login from './pages/Login';
 import AlumniDashboard from './pages/AlumniDashboard';
 import Announcements from './pages/Announcements';
@@ -167,7 +167,7 @@ function App() {
       {/* <Route path="/register" element={<AlumniIDRegistration />} /> */}
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/signup" element={<Signup />} />
+      {/* <Route path="/signup" element={<Signup />} /> */}
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/verify" element={<VerificationCode />} />
