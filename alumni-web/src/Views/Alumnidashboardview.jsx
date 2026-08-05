@@ -169,6 +169,11 @@ const slideTransitionStyles = `
 
   @media (max-width: 767px) {
     .reward-slide { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .reward-banner-slider { min-height: clamp(200px, 56vw, 260px); }
+  }
+  
+  @media (max-width: 380px) {
+    .reward-banner-slider { min-height: clamp(220px, 64vw, 260px); }
   }
 
   /* Slide indicator dots */
@@ -365,51 +370,54 @@ const AlumniDashboardView = ({
     return 'reward-slide reward-slide--enter-next';
   };
 
-  const renderSlideContent = (slide) => (
-    <>
-      <div className="reward-banner-left" onClick={(e) => e.stopPropagation()}>
-        <div className="reward-banner-icon-box" style={{ background: slide.iconBg, boxShadow: 'none' }}>
-          <img
-            src={slide.icon}
-            alt={slide.label}
-            width={slide.isReward ? 100 : (slide.iconSize ?? 130)}
-            height={slide.isReward ? 100 : (slide.iconSize ?? 130)}
-            style={{
-              objectFit: 'contain',
-              transform: slide.isReward ? 'translateY(2px)' : (slide.iconTransform ?? undefined),
-              filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.18))',
-            }}
-          />
+  const renderSlideContent = (slide) => {
+    const iconSize = slide.isReward ? 100 : (slide.iconSize ?? 130);
+    return (
+      <>
+        <div className="reward-banner-left" onClick={(e) => e.stopPropagation()}>
+          <div className="reward-banner-icon-box" style={{ background: slide.iconBg, boxShadow: 'none' }}>
+            <img
+              src={slide.icon}
+              alt={slide.label}
+              style={{
+                width: `clamp(40px, 12vw, ${iconSize}px)`,
+                height: `clamp(40px, 12vw, ${iconSize}px)`,
+                objectFit: 'contain',
+                transform: slide.isReward ? 'translateY(2px)' : (slide.iconTransform ?? undefined),
+                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.18))',
+              }}
+            />
+          </div>
+          <div className="reward-banner-text">
+            <p className="reward-banner-label">{slide.label}</p>
+            <p className="reward-banner-points">
+              {slide.isReward ? (
+                <>
+                  {rewardSlides[0].points}
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFD600" style={{ marginLeft: 8, verticalAlign: 'middle' }}>
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </>
+              ) : (
+                <span style={{ fontSize: 'clamp(18px, 4vw, 30px)', fontWeight: 700 }}>{slide.title}</span>
+              )}
+            </p>
+            <p className="reward-banner-sub">
+              {slide.isReward ? rewardSlides[0].sub : slide.description}
+            </p>
+          </div>
         </div>
-        <div className="reward-banner-text">
-          <p className="reward-banner-label">{slide.label}</p>
-          <p className="reward-banner-points">
-            {slide.isReward ? (
-              <>
-                {rewardSlides[0].points}
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="#FFD600" style={{ marginLeft: 8, verticalAlign: 'middle' }}>
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-              </>
-            ) : (
-              <span style={{ fontSize: '30px', fontWeight: 700 }}>{slide.title}</span>
-            )}
-          </p>
-          <p className="reward-banner-sub">
-            {slide.isReward ? rewardSlides[0].sub : slide.description}
-          </p>
-        </div>
-      </div>
 
-      <button
-        className="redeem-button"
-        style={slide.buttonColor ? { color: slide.buttonColor, boxShadow: slide.buttonShadow } : undefined}
-        onClick={() => onNavigate(slide.buttonPath || '/rewards')}
-      >
-        {slide.buttonLabel || 'Redeem Rewards'}
-      </button>
-    </>
-  );
+        <button
+          className="redeem-button"
+          style={slide.buttonColor ? { color: slide.buttonColor, boxShadow: slide.buttonShadow } : undefined}
+          onClick={() => onNavigate(slide.buttonPath || '/rewards')}
+        >
+          {slide.buttonLabel || 'Redeem Rewards'}
+        </button>
+      </>
+    );
+  };
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
@@ -499,7 +507,8 @@ const AlumniDashboardView = ({
         </div>
 
         {/* ── Reward Points Banner (Slider) — friend's new feature ── */}
-        <div className="reward-banner reward-banner-slider" style={{ minHeight: 120 }}>
+        {/* <div className="reward-banner reward-banner-slider" style={{ minHeight: 120 }}> */}
+        <div className="reward-banner reward-banner-slider">
 
           <button className="reward-nav reward-nav--left" onClick={prevSlide} aria-label="Previous" style={{ zIndex: 10 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
