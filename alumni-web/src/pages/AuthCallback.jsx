@@ -13,7 +13,7 @@ const AuthCallback = () => {
     // the SIGNED_IN event never fires — so we set a timeout
     // to redirect back to login with an error after 4 seconds.
     const timeout = setTimeout(() => {
-      navigate('/login', {
+      navigate('/', {
         state: { error: 'This account is not registered yet. Sign up to login.' },
       });
     }, 4000);
@@ -31,8 +31,8 @@ const AuthCallback = () => {
         // 1. Block admin / superadmin
         if (BLOCKED_EMAILS.includes(email)) {
           await supabase.auth.signOut();
-          navigate('/login', {
-            state: { error: 'Admin accounts must log in with email and password.' },
+          navigate('/', {
+            state: { error: 'Admin accounts must log in with email and password.', openLogin: true },
           });
           return;
         }
@@ -46,7 +46,7 @@ const AuthCallback = () => {
 
         if (fetchError || !existingUser) {
           await supabase.auth.signOut();
-          navigate('/login', {
+          navigate('/', {
             state: { error: 'This account is not registered yet. Sign up to login.' },
           });
           return;
@@ -55,8 +55,8 @@ const AuthCallback = () => {
         // 3. Only alumni role allowed via Google
         if (existingUser.role !== 'alumni') {
           await supabase.auth.signOut();
-          navigate('/login', {
-            state: { error: 'Admin accounts must log in with email and password.' },
+          navigate('/', {
+            state: { error: 'Admin accounts must log in with email and password.', openLogin: true },
           });
           return;
         }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import LandingPageView from '../Views/Landingpageview';
@@ -16,6 +17,16 @@ const parseSeparatedContent = (content, expectedCount = 3) => {
 
 const LandingPage = () => {
   const navigate = useNavigate();
+
+  const location = useLocation();
+
+useEffect(() => {
+  if (location.state?.openLogin) {
+    setModal('login');
+    // if you want to surface location.state.error inside ModalLogin,
+    // pass it down as a prop here (e.g. via a new `initialError` state)
+  }
+}, [location.state]);
 
   // ── Modal state ──────────────────────────────────────────
   // modal: null | 'register' | 'signup' | 'login' | 'forgot-password' | 'verification' | 'reset-password'
