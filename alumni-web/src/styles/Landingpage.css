@@ -412,6 +412,9 @@ body {
   .lp-footer-contact h3 {
     margin-bottom: 16px !important;
   }
+  .lp-footer-contact {
+    margin-bottom: -16px !important;
+  }
 }
 /* ===== Small mobile (320px-480px) ===== */
 @media (max-width: 480px) {
