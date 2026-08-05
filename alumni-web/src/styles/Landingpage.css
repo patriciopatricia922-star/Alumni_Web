@@ -407,8 +407,8 @@ body {
     height: clamp(160px, 40vw, 220px) !important;
   }
   .lp-footer-inner {
-    padding-bottom: 16px !important;
-    gap: 20px !important;
+    padding-bottom: 12px !important;
+    min-height: auto !important;
   }
   .lp-footer-contact h3 {
     margin-bottom: 16px !important;
@@ -436,6 +436,12 @@ body {
     padding: 28px 16px 24px;
     gap: 24px;
   }
+   /* ── FOOTER HEIGHT REDUCTION (480px) ── */
+  .lp-footer-inner {
+    padding-bottom: 8px !important;
+    min-height: auto !important;
+  }
+  
   section {
     padding-left: 16px !important;
     padding-right: 16px !important;
@@ -443,6 +449,7 @@ body {
   .lp-view-all {
     width: 100%;
   }
+  
 }
 
 .lp-hero {
