@@ -11,7 +11,7 @@ import {
 } from 'react-icons/hi2';
 import { LuArrowUpRight, LuArrowRight } from 'react-icons/lu';
 import { FiBarChart2, FiTrendingUp, FiAlertCircle, FiCpu } from 'react-icons/fi';
-import '../styles/PredictiveAnalytics.css';
+import '../styles/Predictiveanalytics.css';
 
 // ─── API base URL (mirrors the logic file) ───────────────────────────────────
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
