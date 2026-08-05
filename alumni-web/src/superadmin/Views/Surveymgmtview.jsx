@@ -35,7 +35,7 @@
 //    JSX was gated strictly on `q.type === "multiple"`. Ported from Admin.
 // ============================================================================
 
-import SuperAdsidebar from "../SuperAdsidebar";
+import SuperAdsidebar from "../SuperAdSidebar";
 import '../styles/Surveymgmt.css';
 import { 
   FiTrash2, 

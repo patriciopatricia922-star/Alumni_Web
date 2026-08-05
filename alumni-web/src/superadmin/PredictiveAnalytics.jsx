@@ -9,7 +9,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Predictiveanalyticsview from './Views/Predictiveanalyticsview';
-import AdminSidebar from './SuperAdsidebar';
+import AdminSidebar from './SuperAdSidebar';
 
 // ============================================================================
 // API BASE URL — set VITE_API_BASE_URL in your .env to override

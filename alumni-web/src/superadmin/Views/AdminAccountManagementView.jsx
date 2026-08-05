@@ -1,5 +1,5 @@
 import React from 'react';
-import SuperAdSidebar from '../SuperAdsidebar';
+import SuperAdSidebar from '../SuperAdSidebar';
 import { formatDate, roleLabel, statusBadge, isEnabled } from '../../utils/adminHelpers';
 import StatCard from '../components/StatCard';
 import FilterDropdown from '../components/FilterDropdown';

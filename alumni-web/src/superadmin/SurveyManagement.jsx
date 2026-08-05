@@ -17,14 +17,14 @@
 // left completely untouched here.
 //
 // SuperAdmin's own file paths, sidebar import, and component structure
-// (./SuperAdsidebar, ./Views/SurveyMgmtView, ./Views/SurveySkeletonView,
+// (./SuperAdSidebar, ./Views/SurveyMgmtView, ./Views/SurveySkeletonView,
 // ./contexts/AlumniTypeContext) are preserved exactly as before — nothing
 // renamed, nothing restructured.
 // ============================================================================
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
-import AdminSidebar from "./SuperAdsidebar";
+import AdminSidebar from "./SuperAdSidebar";
 import SurveyMgmtView from "./Views/SurveyMgmtView";
 import SurveySkeletonView from "./Views/SurveySkeletonView";
 import { useAlumniType } from "./contexts/AlumniTypeContext";

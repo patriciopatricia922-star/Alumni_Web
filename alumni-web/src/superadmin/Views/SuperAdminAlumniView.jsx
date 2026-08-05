@@ -16,7 +16,7 @@ import { MdWork } from "react-icons/md";
 import { MdAssignment } from "react-icons/md";
 import { MdAccountCircle } from "react-icons/md";
 import { FiFilter, FiDownload, FiSearch, FiX, FiUpload } from "react-icons/fi";
-import SuperAdSidebar from "../SuperAdsidebar";
+import SuperAdSidebar from "../SuperAdSidebar";
 import "../styles/SuperAdminAlumni.css";
 
 // ============================================================================

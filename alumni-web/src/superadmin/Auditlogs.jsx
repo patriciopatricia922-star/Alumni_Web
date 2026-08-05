@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
-import SuperAdsidebar from './SuperAdsidebar';
+import SuperAdsidebar from './SuperAdSidebar';
 import {
   FiSearch, FiRotateCcw, FiDownload,
   FiChevronLeft, FiChevronRight,

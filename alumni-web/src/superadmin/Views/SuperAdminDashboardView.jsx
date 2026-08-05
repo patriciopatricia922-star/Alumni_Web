@@ -15,7 +15,7 @@ import {
   MdWarningAmber,
   MdClose,
 } from "react-icons/md";
-import SuperAdminSidebar from "../SuperAdsidebar";
+import SuperAdminSidebar from "../SuperAdSidebar";
 import "../styles/SuperAdminDashboard.css";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];

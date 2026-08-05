@@ -13,7 +13,7 @@
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
-import SuperAdSidebar from "./SuperAdsidebar";
+import SuperAdSidebar from "./SuperAdSidebar";
 import ResponseAnalyticsView from './Views/Responseanalyticsview';
 import ResponseAnalyticsSkeleton from './Views/ResponseAnalyticsSkeleton'; // ← SYNCED
 import { supabase } from '../lib/supabase';

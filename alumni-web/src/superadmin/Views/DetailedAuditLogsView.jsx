@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import SuperAdsidebar from '../SuperAdsidebar';
+import SuperAdsidebar from '../SuperAdSidebar';
 import { 
   FiSearch, 
   FiRotateCcw, 
