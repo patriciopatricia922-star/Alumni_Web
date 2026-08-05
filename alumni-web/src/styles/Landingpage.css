@@ -403,6 +403,8 @@ body {
     margin-right: auto !important;
     /* Ensure logo stays centered even when parent uses flex-start alignment */
     align-self: center !important;
+    width: clamp(160px, 40vw, 220px) !important;
+    height: clamp(160px, 40vw, 220px) !important;
   }
 }
 /* ===== Small mobile (320px-480px) ===== */
