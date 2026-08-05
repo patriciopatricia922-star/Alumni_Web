@@ -11,7 +11,7 @@
 
 import React, { memo, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
-import '../styles/PersonalInformation.css';
+import '../styles/Personalinformation.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Atomic field components
