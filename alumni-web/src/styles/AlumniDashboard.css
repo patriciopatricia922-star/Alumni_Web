@@ -705,6 +705,8 @@
   min-height: -0.1px;
   display: flex;
   flex-direction: column;
+  width: 100%; 
+  box-sizing: border-box;
 }
 
 .for-you-heading {
@@ -736,9 +738,10 @@
   row-gap: clamp(20px, 2.4vh, 30px);
   flex: 1;
   min-height: 0;
-  height: 70%;
+  height: auto; 
   width: 100%;
   align-content: start;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1200px) {
@@ -755,6 +758,7 @@
   }
 }
 
+
 /* ============================ FOR YOU CARD ============================ */
 /* MERGED: min-height increased 145px -> 152px (friend's version) — gives
    card content slightly more breathing room. Layout-only, no functional
@@ -763,15 +767,21 @@
   background: #FFFFFF;
   border-radius: 16px;
   cursor: pointer;
-  padding: 18px 18px;
+  /* Fluid padding that scales down gracefully on tiny screens */
+  padding: clamp(12px, 2vw, 18px);
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   transition: all 0.2s ease;
   box-shadow: 1px 7px 15px rgba(0, 0, 0, 0.25);
-  min-height: 152px;
+  /* Use min-height with clamp instead of fixed px for better mobile fit */
+  min-height: clamp(130px, 20vw, 152px);
   justify-content: flex-start;
+  /* Critical: Prevent card from overflowing its grid cell */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .for-you-card-content {
@@ -791,8 +801,9 @@
 }
 
 .for-you-icon-box {
-  width: 64px;
-  height: 64px;
+  /* Scale icon box proportionally on smaller screens */
+  width: clamp(48px, 8vw, 64px);
+  height: clamp(48px, 8vw, 64px);
   background: linear-gradient(180deg, #1E3A8A 0%, #1E40AF 100%);
   border-radius: 14px;
   display: flex;
@@ -801,6 +812,7 @@
   position: relative;
   flex-shrink: 0;
   transition: all 0.2s ease;
+  margin-bottom: clamp(6px, 1vw, 10px);
 }
 
 .for-you-card:hover .for-you-icon-box {
@@ -830,7 +842,11 @@
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.38));
+  /* Ensure icons never exceed their container */
+  max-width: 100%;
+  max-height: 100%;
 }
+
 
 .for-you-icon.discount-icon {
   width: 80%;
@@ -869,12 +885,15 @@
 
 .for-you-text {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Critical for text truncation/wrapping in flex containers */
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  /* Prevent text block from forcing card wider than grid cell */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* KEPT (mine): friend's version changed color to #324D87, line-height to 2.3,
@@ -890,7 +909,11 @@
   color: #324D87;
   margin: 0 0 6px 0;
   text-align: center;
-  margin-top: 10.5px;
+  margin-top: clamp(6px, 1vw, 10.5px);
+  /* Ensure title wraps instead of overflowing */
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ── FIX: Was rgba(255,255,255,0.9) — near-invisible on white card bg ── */
@@ -906,6 +929,10 @@
   color: #5A6A8A;
   margin: 0;
   text-align: center;
+  /* Allow description to wrap naturally within card bounds */
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* ============================ MOBILE BOTTOM NAV ============================ */
@@ -1007,14 +1034,30 @@
   .survey-card {
     height: clamp(120px, 22vh, 180px);
   }
-  .for-you-grid {
+   .for-you-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: repeat(4, 1fr);
+    /* Auto rows instead of fixed repeat to accommodate variable content heights */
+    grid-template-rows: auto;
   }
   .for-you-icon-box {
     width: 52px;
     height: 52px;
     min-width: 52px;
+  }
+  .for-you-card {
+    min-height: clamp(110px, 25vw, 140px);
+  }
+}
+
+@media (min-width: 1600px) {
+  .for-you-grid {
+    column-gap: 24px;
+    row-gap: 30px;
+  }
+  
+  .for-you-card {
+    padding: 18px;
+    min-height: 152px;
   }
 }
 
