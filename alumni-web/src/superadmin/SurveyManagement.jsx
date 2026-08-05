@@ -25,7 +25,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import AdminSidebar from "./SuperAdSidebar";
-import SurveyMgmtView from "./Views/SurveyMgmtView";
+import SurveyMgmtView from "./Views/Surveymgmtview";
 import SurveySkeletonView from "./Views/SurveySkeletonView";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 
