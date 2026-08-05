@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { MdEmail, MdWork, MdAssignment, MdAccountCircle } from "react-icons/md";
 import { FiFilter, FiDownload, FiSearch, FiX, FiUpload } from "react-icons/fi";
 import AdminSidebar from "../components/AdminSidebar";
-import "../styles/AlumniManagement.css";
+import "../styles/Alumnimanagement.css";
 
 // ============================================================================
 // SVG ICONS - Used for metric cards (preserved from your version)
