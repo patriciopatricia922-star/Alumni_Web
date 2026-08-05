@@ -1,7 +1,7 @@
 // ModalVerification.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import ModalVerificationView from '../Views/ModalVerificationView';
+import ModalVerificationView from '../Views/Modalverificationview';
 
 /**
  * ModalVerification
