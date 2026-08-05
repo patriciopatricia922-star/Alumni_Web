@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import SignupIcon from '../assets/camera_icn.svg';
 import '../styles/Signup.css';
-import TermsModal         from '../modals/TermsModal';
-import PrivacyPolicyModal from '../modals/PrivacyPolicyModal';
+import TermsModal         from '../modals/Termsmodal';
+import PrivacyPolicyModal from '../modals/Privacypolicymodal';
 
 /* ── Eye icon ────────────────────────────────────────────────── */
 const EyeIcon = ({ visible }) =>
