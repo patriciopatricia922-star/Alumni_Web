@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import ModalIDRegistration from './ModalIDRegistration';
 import ModalSignup         from './ModalSignup';
 import ModalLogin          from './ModalLogin';
-import ModalForgotPassword from './ModalForgotPassword';
+import ModalForgotPassword from './Modalforgotpassword';
 import ModalVerification   from './ModalVerification';
 import ModalResetPassword  from './ModalResetPassword';
 
