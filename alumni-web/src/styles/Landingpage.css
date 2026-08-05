@@ -403,7 +403,7 @@ body {
     align-self: center !important;
     width: clamp(160px, 40vw, 220px) !important;
     height: clamp(160px, 40vw, 220px) !important;
-    transform: translateX(8px);
+    transform: translateX(20px);
   }
   .lp-footer-inner {
     padding-bottom: 12px !important;
