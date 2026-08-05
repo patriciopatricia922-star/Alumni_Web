@@ -398,13 +398,12 @@ body {
     padding: 36px 24px 28px;
   }
   .lp-footer-logo {
-    /* Override the existing margin-left: 0 from the parent mobile breakpoint */
     margin-left: auto !important;
     margin-right: auto !important;
-    /* Ensure logo stays centered even when parent uses flex-start alignment */
     align-self: center !important;
     width: clamp(160px, 40vw, 220px) !important;
     height: clamp(160px, 40vw, 220px) !important;
+    transform: translateX(8px);
   }
   .lp-footer-inner {
     padding-bottom: 12px !important;
