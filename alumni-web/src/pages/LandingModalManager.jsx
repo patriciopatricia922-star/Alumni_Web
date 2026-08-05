@@ -4,7 +4,7 @@ import ModalIDRegistration from './ModalIDRegistration';
 import ModalSignup         from './ModalSignup';
 import ModalLogin          from './ModalLogin';
 import ModalForgotPassword from './Modalforgotpassword';
-import ModalVerification   from './ModalVerification';
+import ModalVerification   from './Modalverification';
 import ModalResetPassword  from './ModalResetPassword';
 
 const LandingModalManager = ({
