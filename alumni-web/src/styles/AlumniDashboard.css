@@ -21,6 +21,24 @@
   min-width: 0;
 }
 
+/* ============================ MOBILE SCROLLBAR HIDING ============================ */
+/* Hide scrollbar for mobile only while maintaining scroll functionality */
+@media (max-width: 767px) {
+  .dashboard-content {
+    /* Firefox */
+    scrollbar-width: none;
+    /* IE/Edge Legacy */
+    -ms-overflow-style: none;
+  }
+  
+  /* Chrome, Safari, Opera */
+  .dashboard-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
+
 /* ============================ PAGE HEADER ============================ */
 .dashboard-header {
   flex-shrink: 0;
