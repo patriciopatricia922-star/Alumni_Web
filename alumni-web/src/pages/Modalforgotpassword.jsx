@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ModalForgotPasswordView from '../Views/Modalforgotpasswordview';
-import ModalVerification from './ModalVerification';
+import ModalVerification from './Modalverification';
 
 /**
  * ModalForgotPassword
