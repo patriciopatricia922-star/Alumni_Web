@@ -43,6 +43,7 @@ body {
   }
 }
 
+
 .lp-nav {
   position: fixed;
   top: 0;
@@ -397,7 +398,11 @@ body {
     padding: 36px 24px 28px;
   }
   .lp-footer-logo {
-    margin-left: 0;
+    /* Override the existing margin-left: 0 from the parent mobile breakpoint */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    /* Ensure logo stays centered even when parent uses flex-start alignment */
+    align-self: center !important;
   }
 }
 /* ===== Small mobile (320px-480px) ===== */
