@@ -406,6 +406,13 @@ body {
     width: clamp(160px, 40vw, 220px) !important;
     height: clamp(160px, 40vw, 220px) !important;
   }
+  .lp-footer-inner {
+    padding-bottom: 16px !important;
+    gap: 20px !important;
+  }
+  .lp-footer-contact h3 {
+    margin-bottom: 16px !important;
+  }
 }
 /* ===== Small mobile (320px-480px) ===== */
 @media (max-width: 480px) {
