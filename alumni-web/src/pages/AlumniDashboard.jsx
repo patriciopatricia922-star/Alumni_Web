@@ -36,6 +36,8 @@ import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 import PointsToast from "../modals/PointsToast";
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css';
 
 // ============================ STORAGE KEYS ============================
 // Centralised localStorage keys for all four badge categories.
@@ -90,17 +92,22 @@ const AlumniDashboard = () => {
   const [user, setUser] = useState(null);
   const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState("all");
+  // const [notifs, setNotifs] = useState([]);
+  // const [unreadCount, setUnreadCount] = useState(0);
+  // const [showDropdown, setShowDropdown] = useState(false);
+  // const [notifTab, setNotifTab] = useState("all");
+  const {
+    unreadCount,
+    markAllRead,
+    markOneRead,
+  } = useNotifications();
   const [toast, setToast] = useState({
     visible: false,
     points: 0,
     newBalance: 0,
     label: "",
   });
-  const bellRef = useRef(null);
+  // const bellRef = useRef(null);
 
   // Survey route — null while resolving (same pattern as Sidebar).
   const [surveyRoute, setSurveyRoute] = useState(null);
@@ -275,34 +282,34 @@ const AlumniDashboard = () => {
   }, [progressPct]);
 
   // ============================ FETCH NOTIFICATIONS (ANNOUNCEMENTS) ============================
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("id, title, content, published_at, is_active")
-        .eq("is_active", true)
-        .order("published_at", { ascending: false })
-        .limit(20);
-      if (error || !data) return;
-      const readIds = JSON.parse(
-        localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
-      );
-      const mapped = data.map((n) => ({
-        id: n.id,
-        title: decodeHtmlEntities(n.title),
-        body: stripHtml(n.content),
-        time: n.published_at,
-        read: readIds.includes(n.id),
-      }));
-      setNotifs(mapped);
-      setUnreadCount(mapped.filter((n) => !n.read).length);
-      setCardBadges((prev) => ({
-        ...prev,
-        announcements: mapped.some((n) => !n.read),
-      }));
-    };
-    fetchNotifs();
-  }, []);
+  // useEffect(() => {
+  //   const fetchNotifs = async () => {
+  //     const { data, error } = await supabase
+  //       .from("announcements")
+  //       .select("id, title, content, published_at, is_active")
+  //       .eq("is_active", true)
+  //       .order("published_at", { ascending: false })
+  //       .limit(20);
+  //     if (error || !data) return;
+  //     const readIds = JSON.parse(
+  //       localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
+  //     );
+  //     const mapped = data.map((n) => ({
+  //       id: n.id,
+  //       title: decodeHtmlEntities(n.title),
+  //       body: stripHtml(n.content),
+  //       time: n.published_at,
+  //       read: readIds.includes(n.id),
+  //     }));
+  //     setNotifs(mapped);
+  //     setUnreadCount(mapped.filter((n) => !n.read).length);
+  //     setCardBadges((prev) => ({
+  //       ...prev,
+  //       announcements: mapped.some((n) => !n.read),
+  //     }));
+  //   };
+  //   fetchNotifs();
+  // }, []);
 
   
 
@@ -351,14 +358,14 @@ const AlumniDashboard = () => {
   }, []);
 
   // ============================ BELL OUTSIDE CLICK ============================
-  useEffect(() => {
-    const handler = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target))
-        setShowDropdown(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  // useEffect(() => {
+  //   const handler = (e) => {
+  //     if (bellRef.current && !bellRef.current.contains(e.target))
+  //       setShowDropdown(false);
+  //   };
+  //   document.addEventListener("mousedown", handler);
+  //   return () => document.removeEventListener("mousedown", handler);
+  // }, []);
 
   // ============================ REAL-TIME REWARD SYNC (Dashboard) ============================
   const rewardChannelRef = useRef(null);
@@ -396,128 +403,128 @@ const AlumniDashboard = () => {
   // Announcements: marks every fetched notification ID as read in localStorage.
   // Events / Discounts / Jobs: writes current count as watermark so badge stays
   // gone until new content is added.
-  const markAllRead = useCallback(async () => {
-    // ── Announcements ──
-    const allIds = notifs.map((n) => n.id);
-    localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(allIds));
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
+  // // const markAllRead = useCallback(async () => {
+  // //   // ── Announcements ──
+  // //   const allIds = notifs.map((n) => n.id);
+  // //   localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(allIds));
+  // //   setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  // //   setUnreadCount(0);
 
-    // ── Events / Discounts / Jobs ──
-    // Optimistically clear all dots immediately; then persist the watermarks.
-    setCardBadges({
-      announcements: false,
-      events: false,
-      discounts: false,
-      jobs: false,
-    });
+  // //   // ── Events / Discounts / Jobs ──
+  // //   // Optimistically clear all dots immediately; then persist the watermarks.
+  // //   setCardBadges({
+  // //     announcements: false,
+  // //     events: false,
+  // //     discounts: false,
+  // //     jobs: false,
+  // //   });
 
-    try {
-      const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-        supabase
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-        supabase
-          .from("discounts")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-        supabase
-          .from("jobs")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-      ]);
-      persistDismissed("events", eventsRes.count || 0);
-      persistDismissed("discounts", discountsRes.count || 0);
-      persistDismissed("jobs", jobsRes.count || 0);
-    } catch (err) {
-      // Fetch failed — write a safe sentinel so badges stay cleared.
-      console.warn("AlumniDashboard: markAllRead badge fetch failed", err);
-      persistDismissed("events", 999999);
-      persistDismissed("discounts", 999999);
-      persistDismissed("jobs", 999999);
-    }
-  }, [notifs]);
+  // //   try {
+  // //     const [eventsRes, discountsRes, jobsRes] = await Promise.all([
+  // //       supabase
+  // //         .from("events")
+  // //         .select("id", { count: "exact", head: true })
+  // //         .eq("is_active", true),
+  // //       supabase
+  // //         .from("discounts")
+  // //         .select("id", { count: "exact", head: true })
+  // //         .eq("is_active", true),
+  // //       supabase
+  // //         .from("jobs")
+  // //         .select("id", { count: "exact", head: true })
+  // //         .eq("is_active", true),
+  // //     ]);
+  // //     persistDismissed("events", eventsRes.count || 0);
+  // //     persistDismissed("discounts", discountsRes.count || 0);
+  // //     persistDismissed("jobs", jobsRes.count || 0);
+  // //   } catch (err) {
+  // //     // Fetch failed — write a safe sentinel so badges stay cleared.
+  // //     console.warn("AlumniDashboard: markAllRead badge fetch failed", err);
+  // //     persistDismissed("events", 999999);
+  // //     persistDismissed("discounts", 999999);
+  // //     persistDismissed("jobs", 999999);
+  // //   }
+  // // }, [notifs]);
 
-  // Per-item announcement read (existing behaviour — unchanged).
-  const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(
-      localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
-    );
-    if (!readIds.includes(id)) {
-      readIds.push(id);
-      localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(readIds));
-    }
-    setNotifs((prev) => {
-      const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
-      setCardBadges((p) => ({
-        ...p,
-        announcements: updated.some((n) => !n.read),
-      }));
-      return updated;
-    });
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  }, []);
+  // // // Per-item announcement read (existing behaviour — unchanged).
+  // // const markOneRead = useCallback((id) => {
+  // //   const readIds = JSON.parse(
+  // //     localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
+  // //   );
+  // //   if (!readIds.includes(id)) {
+  // //     readIds.push(id);
+  // //     localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(readIds));
+  // //   }
+  // //   setNotifs((prev) => {
+  // //     const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
+  // //     setCardBadges((p) => ({
+  // //       ...p,
+  // //       announcements: updated.some((n) => !n.read),
+  // //     }));
+  // //     return updated;
+  // //   });
+  // //   setUnreadCount((prev) => Math.max(0, prev - 1));
+  // // }, []);
 
-  // Per-card dismiss for Events / Discounts / Jobs.
-  // Called the moment the user clicks a ForYouCard so the dot vanishes
-  // before the route transition completes.
-  // Announcements are handled exclusively through markOneRead / markAllRead
-  // (their IDs are already tracked individually), so this is a no-op for them.
-  const dismissBadge = useCallback(async (category) => {
-    if (category === "announcements") return;
+  // // Per-card dismiss for Events / Discounts / Jobs.
+  // // Called the moment the user clicks a ForYouCard so the dot vanishes
+  // // before the route transition completes.
+  // // Announcements are handled exclusively through markOneRead / markAllRead
+  // // (their IDs are already tracked individually), so this is a no-op for them.
+  // const dismissBadge = useCallback(async (category) => {
+  //   if (category === "announcements") return;
 
-    // Optimistic UI clear — instant feedback.
-    setCardBadges((prev) => ({ ...prev, [category]: false }));
+  //   // Optimistic UI clear — instant feedback.
+  //   setCardBadges((prev) => ({ ...prev, [category]: false }));
 
-    // Persist watermark so the badge stays gone after a page refresh.
-    try {
-      const { count } = await supabase
-        .from(category)
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true);
-      persistDismissed(category, count || 0);
-    } catch (err) {
-      console.warn(
-        `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
-        err,
-      );
-      // Optimistic clear is already applied; use sentinel as fallback.
-      persistDismissed(category, 999999);
-    }
-  }, []);
+  //   // Persist watermark so the badge stays gone after a page refresh.
+  //   try {
+  //     const { count } = await supabase
+  //       .from(category)
+  //       .select("id", { count: "exact", head: true })
+  //       .eq("is_active", true);
+  //     persistDismissed(category, count || 0);
+  //   } catch (err) {
+  //     console.warn(
+  //       `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
+  //       err,
+  //     );
+  //     // Optimistic clear is already applied; use sentinel as fallback.
+  //     persistDismissed(category, 999999);
+  //   }
+  // }, []);
 
   // ============================ HELPER FUNCTIONS ============================
-  const groupByDate = (list) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
-    list.forEach((n) => {
-      const d = new Date(n.time);
-      d.setHours(0, 0, 0, 0);
-      if (d >= today) groups["Today"].push(n);
-      else if (d >= yesterday) groups["Yesterday"].push(n);
-      else if (d >= weekAgo) groups["This Week"].push(n);
-      else groups["Earlier"].push(n);
-    });
-    return groups;
-  };
+  // const groupByDate = (list) => {
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+  //   const yesterday = new Date(today);
+  //   yesterday.setDate(today.getDate() - 1);
+  //   const weekAgo = new Date(today);
+  //   weekAgo.setDate(today.getDate() - 7);
+  //   const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
+  //   list.forEach((n) => {
+  //     const d = new Date(n.time);
+  //     d.setHours(0, 0, 0, 0);
+  //     if (d >= today) groups["Today"].push(n);
+  //     else if (d >= yesterday) groups["Yesterday"].push(n);
+  //     else if (d >= weekAgo) groups["This Week"].push(n);
+  //     else groups["Earlier"].push(n);
+  //   });
+  //   return groups;
+  // };
 
-  const formatTime = (iso) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return "Just now";
-    if (diff < 3600) return Math.floor(diff / 60) + "m ago";
-    if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
-    if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
-    return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
-  };
+  // const formatTime = (iso) => {
+  //   if (!iso) return "";
+  //   const d = new Date(iso);
+  //   const now = new Date();
+  //   const diff = Math.floor((now - d) / 1000);
+  //   if (diff < 60) return "Just now";
+  //   if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+  //   if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+  //   if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
+  //   return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
+  // };
 
   // ============================ FOR YOU ITEMS ============================
   // Order: Announcements → Discounts → Events → Jobs (friend's order).
@@ -606,21 +613,21 @@ const AlumniDashboard = () => {
         // ── User ──
         firstName={firstName}
         // ── Notifications / Bell ──
-        bellRef={bellRef}
-        notifs={notifs}
+        // bellRef={bellRef}
+        // notifs={notifs}
         unreadCount={unreadCount}
-        showDropdown={showDropdown}
-        notifTab={notifTab}
-        setShowDropdown={setShowDropdown}
-        setNotifTab={setNotifTab}
-        markAllRead={markAllRead}
-        markOneRead={markOneRead}
-        groupByDate={groupByDate}
-        formatTime={formatTime}
-        onSeeAllNotifs={() => {
-          setShowDropdown(false);
-          navigate("/notifications");
-        }}
+        // showDropdown={showDropdown}
+        // notifTab={notifTab}
+        // setShowDropdown={setShowDropdown}
+        // setNotifTab={setNotifTab}
+        // markAllRead={markAllRead}
+        // markOneRead={markOneRead}
+        // groupByDate={groupByDate}
+        // formatTime={formatTime}
+        // onSeeAllNotifs={() => {
+        //   setShowDropdown(false);
+        //   navigate("/notifications");
+        // }}
         // ── Survey progress ──
         animatedPercentage={animatedPercentage}
         surveyRoute={surveyRoute}

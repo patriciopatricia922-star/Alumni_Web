@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
+import NotificationBell from '../components/notifications/NotificationBell';
 import '../styles/AlumniDashboard.css';
+import '../styles/NotificationBell.css';
 import '../styles/RewardsCard.css';
 import { truncateHtml } from "../utils/textHelpers";
 
@@ -68,72 +70,72 @@ const ProgressCircle = ({ animatedPercentage }) => {
 };
 
 // ============================ NOTIFICATION DROPDOWN ============================
-const NotificationDropdown = ({
-  notifs,
-  unreadCount,
-  notifTab,
-  setNotifTab,
-  markAllRead,
-  markOneRead,
-  groupByDate,
-  formatTime,
-  onSeeAllNotifs,
-}) => {
-  const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
+// const NotificationDropdown = ({
+//   notifs,
+//   unreadCount,
+//   notifTab,
+//   setNotifTab,
+//   markAllRead,
+//   markOneRead,
+//   groupByDate,
+//   formatTime,
+//   onSeeAllNotifs,
+// }) => {
+//   const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
 
-  if (!list.length) {
-    return (
-      <div className="notification-empty">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-            stroke="rgba(0,0,0,0.2)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-        <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-      </div>
-    );
-  }
+//   if (!list.length) {
+//     return (
+//       <div className="notification-empty">
+//         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+//           <path
+//             d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+//             stroke="rgba(0,0,0,0.2)"
+//             strokeWidth="1.5"
+//             strokeLinecap="round"
+//           />
+//         </svg>
+//         <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className="notification-list">
-      {Object.entries(groupByDate(list)).map(([label, items]) => {
-        if (!items.length) return null;
-        return (
-          <div key={label}>
-            <p className="notification-group-label">{label}</p>
-            {items.map(n => (
-              <div
-                key={n.id}
-                className={`notification-item ${!n.read ? 'unread' : ''}`}
-                onClick={() => markOneRead(n.id)}
-              >
-                <div className="notification-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                      stroke="#003EA6"
-                      strokeWidth="1.67"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <div className="notification-content">
-                  <p className="notification-title">{n.title}</p>
-                  <p className="notification-body">{truncateHtml(n.body, 100)}</p>
-                  <span className="notification-time">{formatTime(n.time)}</span>
-                </div>
-                {!n.read && <div className="notification-unread-dot" />}
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+//   return (
+//     <div className="notification-list">
+//       {Object.entries(groupByDate(list)).map(([label, items]) => {
+//         if (!items.length) return null;
+//         return (
+//           <div key={label}>
+//             <p className="notification-group-label">{label}</p>
+//             {items.map(n => (
+//               <div
+//                 key={n.id}
+//                 className={`notification-item ${!n.read ? 'unread' : ''}`}
+//                 onClick={() => markOneRead(n.id)}
+//               >
+//                 <div className="notification-icon">
+//                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+//                     <path
+//                       d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
+//                       stroke="#003EA6"
+//                       strokeWidth="1.67"
+//                       strokeLinecap="round"
+//                     />
+//                   </svg>
+//                 </div>
+//                 <div className="notification-content">
+//                   <p className="notification-title">{n.title}</p>
+//                   <p className="notification-body">{truncateHtml(n.body, 100)}</p>
+//                   <span className="notification-time">{formatTime(n.time)}</span>
+//                 </div>
+//                 {!n.read && <div className="notification-unread-dot" />}
+//               </div>
+//             ))}
+//           </div>
+//         );
+//       })}
+//     </div>
+//   );
+// };
 
 // ============================ SLIDE TRANSITION STYLES ============================
 const slideTransitionStyles = `
@@ -214,16 +216,16 @@ const AlumniDashboardView = ({
   firstName,
   bellRef,
   notifs,
-  unreadCount,
-  showDropdown,
-  notifTab,
-  setShowDropdown,
-  setNotifTab,
-  markAllRead,
-  markOneRead,
-  groupByDate,
-  formatTime,
-  onSeeAllNotifs,
+  // unreadCount,
+  // showDropdown,
+  // notifTab,
+  // setShowDropdown,
+  // setNotifTab,
+  // markAllRead,
+  // markOneRead,
+  // groupByDate,
+  // formatTime,
+  // onSeeAllNotifs,
   animatedPercentage,
   forYouItems,
   onNavigate,
@@ -436,7 +438,7 @@ const AlumniDashboardView = ({
             <p>Let's see what's new in your alumni network.</p>
           </div>
 
-          <div
+          {/* <div
             ref={bellRef}
             className={`notification-bell ${isMobile ? 'mobile' : ''}`}
             style={{ marginLeft: 'auto', alignSelf: 'flex-start', paddingTop: '15px', marginRight: '35px' }}
@@ -503,7 +505,11 @@ const AlumniDashboardView = ({
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
+            <NotificationBell
+              onSeeAll={() => onNavigate('/notifications')}
+              className={isMobile ? 'mobile' : ''}
+            />
         </div>
 
         {/* ── Reward Points Banner (Slider) — friend's new feature ── */}
