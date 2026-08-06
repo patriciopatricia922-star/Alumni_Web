@@ -1,4 +1,3 @@
-//friends
 import React, { useState, useEffect } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Sidebar from "../components/Sidebar";
@@ -879,6 +878,13 @@ const AnnouncementsView = ({
       <Sidebar />
 
       <div
+        className={
+          isMobile
+            ? "announcements-main-content mobile"
+            : isTablet
+              ? "announcements-main-content tablet"
+              : "announcements-main-content"
+        }
         style={{
           marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
           flex: 1,
@@ -1202,6 +1208,7 @@ const AnnouncementsView = ({
         )}
 
         <div
+          className={isMobile ? "ann-filter-row mobile" : "ann-filter-row"}
           style={{
             display: "flex",
             justifyContent: "flex-end",
@@ -1220,6 +1227,7 @@ const AnnouncementsView = ({
               alignItems: "center",
               gap: "2px",
               position: "relative",
+              width: isMobile ? "100%" : "auto",
             }}
           >
             <div
@@ -1324,6 +1332,7 @@ const AnnouncementsView = ({
 
             {showFilter && (
               <div
+                className="ann-filter-dropdown"
                 style={{
                   position: "absolute",
                   top: "calc(100% + 8px)",
@@ -1333,8 +1342,10 @@ const AnnouncementsView = ({
                   borderRadius: "12px",
                   overflow: "hidden",
                   zIndex: 300,
-                  minWidth: "236px",
+                  minWidth: isMobile ? "100%" : "236px",
+                  width: isMobile ? "100%" : "auto",
                   boxShadow: "0px 10px 30px rgba(0,0,0,0.15)",
+                  boxSizing: "border-box",
                 }}
               >
                 {categories.map((cat, i) => (

@@ -1066,3 +1066,180 @@ body.ann-modal-open {
     font-size: clamp(11px, 3.6vw, 13px) !important;
   }
 }
+
+/* ============================================================
+   MOBILE-ONLY RESPONSIVE ADDITIONS
+   Scope: phones only (<= 767px), small/medium/large tiers.
+   Desktop and tablet rules above are untouched. Uses only the
+   Announcements page's own classes (.ann-*, .announcement-card-*),
+   mirroring the approach already implemented on Discounts/Jobs.
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+  /* ── Global overflow guard ─────────────────────────────── */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .ann-page,
+  .announcements-view-container {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .announcements-main-content,
+  .announcements-main-content.mobile {
+    overflow-x: hidden;
+    box-sizing: border-box;
+    padding: clamp(20px, 5vw, 28px) clamp(12px, 4vw, 18px) 90px;
+  }
+
+  /* ── 1. Back button: keep fully visible ──────────────────── */
+  .ann-back {
+    margin-left: 0 !important;
+    gap: clamp(10px, 3vw, 15px);
+    max-width: 100%;
+  }
+
+  .ann-back span {
+    font-size: clamp(13px, 3.6vw, 15px);
+  }
+
+  /* ── 2. Notification bell + dropdown: viewport-safe,
+     positioning kept via .ann-bell (already clamp-based);
+     ensure the dropdown itself (rendered inline, no class hook
+     beyond inline styles) stays on-screen. Since AnnouncementsView
+     renders the bell dropdown using the CSS-based .ab-ndrop
+     classes, constrain those to the viewport here. ── */
+  .ann-bell {
+    position: fixed;
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
+    z-index: 200;
+  }
+
+  .ab-bell-btn {
+    width: clamp(40px, 11vw, 44px) !important;
+    height: clamp(40px, 11vw, 44px) !important;
+  }
+
+  .ab-ndrop {
+    position: absolute;
+    top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
+    right: 0 !important;
+    left: auto !important;
+    width: min(92vw, 380px) !important;
+    min-width: 260px;
+    max-width: calc(100vw - 24px);
+    max-height: min(70vh, 520px) !important;
+    overflow: hidden;
+  }
+
+  .ab-ndrop-list {
+    max-height: none;
+  }
+
+  /* ── 3. Filter: consistent width, viewport-safe dropdown ── */
+  .ann-filter-row {
+    width: 100%;
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .ann-filter-row > div[style*="position: relative"] {
+    width: 100%;
+  }
+
+  .ann-filter-display {
+    min-width: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ann-filter-display span {
+    max-width: 100%;
+  }
+
+  /* Filter dropdown menu (absolute-positioned inline in JSX) */
+  .ann-filter-row [style*="zIndex: 300"],
+  .ann-filter-row div[style*="z-index: 300"] {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .ann-hdr {
+    padding-right: calc(clamp(40px, 11vw, 44px) + clamp(12px, 4vw, 18px) + 10px) !important;
+  }
+
+  .ann-heading {
+    margin: clamp(16px, 5vw, 22px) 0 0 0 !important;
+    font-size: clamp(22px, 6.5vw, 27px);
+    letter-spacing: -0.6px;
+    word-break: break-word;
+  }
+
+  .ann-subheading {
+    margin: 6px 0 0 0 !important;
+    font-size: clamp(12.5px, 3.4vw, 14px) !important;
+    line-height: 1.5 !important;
+    overflow-wrap: break-word;
+  }
+
+  /* ── 4. Cards list: full-width, no clipping ──────────────── */
+  .ann-cards-list {
+    width: 100%;
+    box-sizing: border-box;
+    gap: clamp(12px, 4vw, 16px);
+  }
+
+  .announcement-card-body {
+    padding: clamp(12px, 3.6vw, 14px) clamp(12px, 3.6vw, 16px) 0;
+  }
+
+  .announcement-card-title {
+    font-size: clamp(13.5px, 3.7vw, 15px);
+  }
+
+  .announcement-card-description {
+    font-size: clamp(12px, 3.3vw, 13px);
+  }
+
+  .announcement-card-toggle-btn {
+    font-size: clamp(12px, 3.2vw, 13px);
+  }
+
+  .announcement-card-button-wrapper {
+    padding: 14px clamp(12px, 3.6vw, 16px) 20px;
+  }
+}
+
+/* ── Small phones (<= 380px) ─────────────────────────────── */
+@media (max-width: 380px) {
+  .ab-bell-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .ab-ndrop {
+    width: calc(100vw - 20px) !important;
+    min-width: 240px;
+  }
+
+  .ann-heading {
+    font-size: clamp(20px, 6.8vw, 24px);
+  }
+}
+
+/* ── Large phones (min 480px, still mobile) ──────────────── */
+@media (min-width: 480px) and (max-width: 767px) {
+  .ann-cards-list {
+    gap: 18px;
+  }
+}
