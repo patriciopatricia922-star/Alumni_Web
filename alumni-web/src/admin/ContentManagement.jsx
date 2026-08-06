@@ -304,11 +304,13 @@ const randomPoints = (min = 10, max = 50) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
 // userIds: string[] — points are generated here, not by the admin
-const handleAwardPoints = async (userIds) => {
+// userIds: string[], points: number — points now comes from admin input;
+// falls back to randomPoints() only if not provided, preserving old behavior
+const handleAwardPoints = async (userIds, points) => {
   try {
-    for (const userId of userIds) {
-      const points = randomPoints(); // backend-side randomization
+    const awardAmount = (typeof points === 'number' && points > 0) ? points : randomPoints();
 
+    for (const userId of userIds) {
       const { data: userRow, error: fetchErr } = await supabase
         .from('users')
         .select('reward_points')
@@ -316,7 +318,7 @@ const handleAwardPoints = async (userIds) => {
         .single();
       if (fetchErr) throw fetchErr;
 
-      const newBalance = (userRow?.reward_points || 0) + points;
+      const newBalance = (userRow?.reward_points || 0) + awardAmount;
 
       const { error: updateErr } = await supabase
         .from('users')
@@ -326,7 +328,7 @@ const handleAwardPoints = async (userIds) => {
 
       await supabase.from('point_transactions').insert([{
         user_id: userId,
-        points,
+        points: awardAmount,
         reason: 'Admin awarded points',
         created_at: new Date().toISOString(),
       }]);
@@ -334,7 +336,7 @@ const handleAwardPoints = async (userIds) => {
       await logAction({
         action: 'Update',
         module: 'Rewards',
-        description: `Awarded ${points} points to user ${userId}`,
+        description: `Awarded ${awardAmount} points to user ${userId}`,
         recordId: userId,
         status: 'Success',
       });

@@ -1,24 +1,16 @@
-// ============================================================================
-// AwardPointsModal.jsx — Select alumni and award points
-// Points are NOT set by the admin — they're randomized automatically when
-// the award is submitted (see onAward / handleAwardPoints in the parent).
-// ============================================================================
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
-import './Disc.css'; // reuse existing modal look (cm-modal, cm-input, etc.)
+import './Disc.css';
 
 const AwardPointsModal = ({ open, onClose, onAward }) => {
   const [search, setSearch]     = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
-  const [alumni, setAlumni]     = useState([]);    // all alumni loaded from users table
-  const [selectedMap, setSelectedMap] = useState({}); // { [userId]: userObject }
+  const [alumni, setAlumni]     = useState([]);
+  const [selectedMap, setSelectedMap] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [points, setPoints] = useState(''); // NEW: admin-entered points value
 
-  // FIX: `full_name` does not exist on `public.users` (that's what caused the
-  // 400 — PostgREST rejects a select referencing an unknown column). The real
-  // name columns are last_name / first_name / middle_name. There's also no
-  // attendance table, so this simply loads all alumni for the admin to pick from.
   useEffect(() => {
     if (!open) return;
     const fetchAttendees = async () => {
@@ -46,7 +38,7 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
             name: displayName,
             email: u.email,
             avatar_url: null,
-            eventTitles: [], // no attendance table to source this from
+            eventTitles: [],
           };
         });
 
@@ -61,12 +53,12 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
     fetchAttendees();
   }, [open]);
 
-  // Reset everything when the modal closes
   useEffect(() => {
     if (!open) {
       setSearch('');
       setSelectedMap({});
       setError(null);
+      setPoints(''); // NEW: reset points on close
     }
   }, [open]);
 
@@ -97,12 +89,31 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
     });
   };
 
+  // NEW: only digits allowed, no decimals/minus signs
+  const handlePointsChange = (e) => {
+    const val = e.target.value;
+    if (val === '' || /^\d+$/.test(val)) {
+      setPoints(val);
+    }
+  };
+
+  const parsedPoints = parseInt(points, 10);
+  const isPointsValid = points.trim() !== '' && !isNaN(parsedPoints) && parsedPoints > 0;
+
   const handleSend = async () => {
     if (selectedList.length === 0) return;
+
+    // NEW: points validation
+    if (!isPointsValid) {
+      setError('Please enter a valid number of points greater than 0.');
+      return;
+    }
+
     setSubmitting(true);
+    setError(null);
     try {
       const userIds = selectedList.map(u => u.id);
-      await onAward(userIds);
+      await onAward(userIds, parsedPoints); // NEW: pass points through
       onClose();
     } catch (err) {
       console.error('[AwardPointsModal] award error:', err);
@@ -257,18 +268,33 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
             )}
           </div>
 
+          {/* NEW: Points input field */}
+          <div className="cm-field" style={{ marginTop: 16 }}>
+            <label className="cm-label">Points to Award</label>
+            <input
+              className="cm-input"
+              type="number"
+              min="1"
+              step="1"
+              inputMode="numeric"
+              placeholder="Enter number of points…"
+              value={points}
+              onChange={handlePointsChange}
+            />
+          </div>
+
           <p className="cm-field-hint" style={{ marginTop: 10 }}>
-            Points will be automatically assigned to each selected alumni upon sending.
+            Enter the number of points to award to each selected alumni.
           </p>
 
           <div className="cm-modal-actions">
             <button className="cm-btn-cancel" onClick={onClose}>Cancel</button>
             <button
               className="cm-btn-submit"
-              disabled={selectedList.length === 0 || submitting}
+              disabled={selectedList.length === 0 || !isPointsValid || submitting}
               onClick={handleSend}
             >
-              {submitting ? 'Sending...' : `Send (${selectedList.length})`}
+              {submitting ? 'Sending...' : `Award Points (${selectedList.length})`}
             </button>
           </div>
         </div>
