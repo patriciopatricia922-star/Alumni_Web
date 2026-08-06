@@ -235,18 +235,20 @@ const DiscountsView = ({
         {/* ── Notification Bell ─────────────────────────────────────────────── */}
         <div
           ref={bellRef}
+          className={isMobile ? 'discounts-bell-wrapper mobile' : 'discounts-bell-wrapper'}
           style={{
             position: 'absolute',
-            top:   isMobile ? '32px' : '45px',
-            right: isMobile ? '59px' : isTablet ? '65px' : '84px',
+            top:   isMobile ? undefined : '45px',
+            right: isMobile ? undefined : isTablet ? '65px' : '84px',
             zIndex: 200,
           }}
         >
           <button
             onClick={() => setShowDropdown(v => !v)}
+            className={isMobile ? 'discounts-bell-btn mobile' : 'discounts-bell-btn'}
             style={{
-              width:          isMobile ? '44px' : '52px',
-              height:         isMobile ? '44px' : '52px',
+              width:          isMobile ? undefined : '52px',
+              height:         isMobile ? undefined : '52px',
               background:     showDropdown ? 'rgba(43,114,251,0.25)' : '#003EA6',
               border:         showDropdown ? '1px solid rgba(43,114,251,0.5)' : '1px solid rgba(255,255,255,0.15)',
               boxShadow:      '0px 4px 12px rgba(0,0,0,0.35)',
@@ -300,22 +302,25 @@ const DiscountsView = ({
           </button>
 
           {showDropdown && (
-            <div style={{
-              position:      'absolute',
-              top:           `calc(${isMobile ? '44px' : '52px'} + 10px)`,
-              right:         0,
-              width:         isMobile ? '92vw' : '380px',
-              maxHeight:     '520px',
-              background:    '#FFFFFF',
-              backdropFilter:'blur(16px)',
-              border:        '1px solid #E5E7EB',
-              borderRadius:  '16px',
-              boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
-              display:       'flex',
-              flexDirection: 'column',
-              overflow:      'hidden',
-              zIndex:        300,
-            }}>
+            <div
+              className={isMobile ? 'discounts-notif-dropdown mobile' : 'discounts-notif-dropdown'}
+              style={{
+                position:      'absolute',
+                top:           isMobile ? undefined : `calc(52px + 10px)`,
+                right:         isMobile ? undefined : 0,
+                width:         isMobile ? undefined : '380px',
+                maxHeight:     '520px',
+                background:    '#FFFFFF',
+                backdropFilter:'blur(16px)',
+                border:        '1px solid #E5E7EB',
+                borderRadius:  '16px',
+                boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
+                display:       'flex',
+                flexDirection: 'column',
+                overflow:      'hidden',
+                zIndex:        300,
+              }}
+            >
               <div style={{
                 padding:        '16px 18px 12px',
                 borderBottom:   '1px solid #F0F2F5',
@@ -440,7 +445,11 @@ const DiscountsView = ({
         </div>
 
         {/* ── Back Button ───────────────────────────────────────────────────── */}
-        <button className="back-button" onClick={() => navigate(-1)} style={{ position: 'relative', top: '-0.5px', marginLeft: '-20px' }}>
+        <button
+          className={isMobile ? 'back-button mobile' : 'back-button'}
+          onClick={() => navigate(-1)}
+          style={{ position: 'relative', top: '-0.5px', marginLeft: isMobile ? 0 : '-20px' }}
+        >
           <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginLeft: '0.5px' }}>
             <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
               stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -459,30 +468,40 @@ const DiscountsView = ({
         </div>
 
         {/* ── Filter Bar ────────────────────────────────────────────────────── */}
-        <div style={{
-          display:        'flex',
-          justifyContent: 'flex-end',
-          alignItems:     'center',
-          marginBottom:   isMobile ? '16px' : '24px',
-          marginRight:    '34.5px',
-          gap:            '12px',
-        }}>
-          <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+        <div
+          className={isMobile ? 'discounts-filter-bar mobile' : 'discounts-filter-bar'}
+          style={{
+            display:        'flex',
+            justifyContent: 'flex-end',
+            alignItems:     'center',
+            marginBottom:   isMobile ? '16px' : '24px',
+            marginRight:    isMobile ? undefined : '34.5px',
+            gap:            '12px',
+          }}
+        >
+          <div
+            ref={filterRef}
+            className={isMobile ? 'discounts-filter-container mobile' : 'discounts-filter-container'}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
+          >
 
-            <div style={{ position: 'relative' }}>
-            <div style={{
-              height:      '40px',
-              display:     'flex',
-              alignItems:  'center',
-              padding:     '0 14px',
-              gap:         '10px',
-              background:  'var(--filter-bg, #ffffff)',
-              border:      '1px solid var(--filter-border, rgba(0,62,166,0.15))',
-              borderRadius:'10px',
-              boxShadow:   '0px 2px 8px rgba(0,0,0,0.06)',
-              minWidth:    isMobile ? 0 : '240px',
-              flex:        isMobile ? 1 : 'none',
-            }}>
+            <div style={{ position: 'relative' }} className={isMobile ? 'discounts-filter-trigger-wrap mobile' : undefined}>
+            <div
+              className={isMobile ? 'discounts-filter-display mobile' : 'discounts-filter-display'}
+              style={{
+                height:      '40px',
+                display:     'flex',
+                alignItems:  'center',
+                padding:     '0 14px',
+                gap:         '10px',
+                background:  'var(--filter-bg, #ffffff)',
+                border:      '1px solid var(--filter-border, rgba(0,62,166,0.15))',
+                borderRadius:'10px',
+                boxShadow:   '0px 2px 8px rgba(0,0,0,0.06)',
+                minWidth:    isMobile ? undefined : '240px',
+                flex:        isMobile ? 1 : 'none',
+              }}
+            >
               <span style={{
                 fontFamily:   'Montserrat, Arial, sans-serif',
                 fontWeight:   600,
@@ -513,19 +532,22 @@ const DiscountsView = ({
             </div>
 
             {showFilter && (
-              <div style={{
-                position:     'absolute',
-                top:          'calc(100% + 8px)',
-                left:         0,
-                background:   '#FFFFFF',
-                border:       '1px solid rgba(0,62,166,0.15)',
-                borderRadius: '12px',
-                overflow:     'hidden',
-                zIndex:       300,
-                minWidth:     '100%',
-                width:        '100%',
-                boxShadow:    '0px 10px 30px rgba(0,0,0,0.15)',
-              }}>
+              <div
+                className={isMobile ? 'discounts-filter-dropdown mobile' : 'discounts-filter-dropdown'}
+                style={{
+                  position:     'absolute',
+                  top:          'calc(100% + 8px)',
+                  left:         0,
+                  background:   '#FFFFFF',
+                  border:       '1px solid rgba(0,62,166,0.15)',
+                  borderRadius: '12px',
+                  overflow:     'hidden',
+                  zIndex:       300,
+                  minWidth:     '100%',
+                  width:        '100%',
+                  boxShadow:    '0px 10px 30px rgba(0,0,0,0.15)',
+                }}
+              >
                 {categories.map((cat, i) => (
                   <button
                     key={cat}
@@ -583,6 +605,7 @@ const DiscountsView = ({
 
             <button
               onClick={() => setShowFilter(f => !f)}
+              className={isMobile ? 'discounts-filter-button mobile' : 'discounts-filter-button'}
               style={{
                 height:         '40px',
                 padding:        '0 18px',
@@ -613,7 +636,14 @@ const DiscountsView = ({
 
         {/* ── Cards grid ────────────────────────────────────────────────────── */}
         {filtered.length > 0 ? (
-          <div className={`discounts-grid ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`} style={{ marginLeft: '27px', marginRight: '27.5px', marginTop: '-8px' }}>
+          <div
+            className={`discounts-grid ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}
+            style={{
+              marginLeft: isMobile ? undefined : '27px',
+              marginRight: isMobile ? undefined : '27.5px',
+              marginTop: '-8px',
+            }}
+          >
             {filtered.map((item) => (
               <DiscountCard key={item.id} item={item} />
             ))}

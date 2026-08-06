@@ -844,3 +844,204 @@
   color: #2b72fb;
   opacity: 0.85;
 }
+
+/* ============================================================
+   MOBILE-ONLY RESPONSIVE ADDITIONS
+   Scope: phones only (<= 767px), split into small/medium/large
+   tiers. Desktop and tablet rules above are untouched.
+   These rules use the Discounts page's own classes/variables
+   only (.discounts-*, .discount-card-*, .back-button, etc.)
+   and add ".mobile" state classes already wired up in JSX for
+   the inline-styled bell / dropdown / filter pieces.
+   ============================================================ */
+
+@media (max-width: 767px) {
+
+  /* ── Global overflow guard ─────────────────────────────── */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .discounts-view-container {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .discounts-main-content {
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .discounts-main-content.mobile {
+    padding: clamp(20px, 5vw, 28px) clamp(12px, 4vw, 18px) 90px;
+  }
+
+  /* ── 1. Back button: keep fully visible, no negative margin ── */
+  .back-button.mobile {
+    margin-left: 0 !important;
+    gap: clamp(12px, 3vw, 19px);
+    max-width: 100%;
+  }
+
+  .back-button.mobile span {
+    font-size: clamp(13px, 3.6vw, 15px);
+  }
+
+  /* ── 2. Notification bell + dropdown: viewport-safe positioning,
+     reference = Dashboard's clamp-based, self-anchoring approach,
+     but implemented with the Discounts page's own classes ── */
+  .discounts-bell-wrapper.mobile {
+    position: absolute;
+    top: clamp(20px, 5vw, 28px);
+    right: clamp(12px, 4vw, 18px);
+    z-index: 200;
+  }
+
+  .discounts-bell-btn.mobile {
+    width: clamp(40px, 11vw, 44px) !important;
+    height: clamp(40px, 11vw, 44px) !important;
+  }
+
+  .discounts-notif-dropdown.mobile {
+    position: absolute;
+    top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
+    right: 0 !important;
+    left: auto !important;
+    width: min(92vw, 380px) !important;
+    min-width: 260px;
+    max-width: calc(100vw - 24px);
+    max-height: min(70vh, 520px) !important;
+    overflow: hidden;
+  }
+
+  .discounts-notif-dropdown.mobile > div[style*="overflowY"] {
+    max-height: none;
+  }
+
+  /* ── 3. Filter: consistent width, viewport-safe dropdown,
+     reference = Announcements' fixed-width filter trigger ── */
+  .discounts-filter-bar.mobile {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .discounts-filter-container.mobile {
+    width: 100%;
+  }
+
+  .discounts-filter-trigger-wrap.mobile {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .discounts-filter-display.mobile {
+    min-width: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .discounts-filter-display.mobile span {
+    max-width: 100%;
+  }
+
+  .discounts-filter-dropdown.mobile {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .discounts-filter-button.mobile {
+    padding: 0 clamp(12px, 4vw, 18px) !important;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .discounts-header.mobile {
+    padding-right: calc(clamp(40px, 11vw, 44px) + clamp(12px, 4vw, 18px) + 10px);
+  }
+
+  .discounts-title.mobile {
+    margin: clamp(20px, 5vw, 26px) 0 0 0;
+    font-size: clamp(22px, 6.5vw, 27px);
+    letter-spacing: -0.6px;
+    word-break: break-word;
+  }
+
+  .discounts-subtitle.mobile {
+    margin: 6px 0 0 0;
+    font-size: clamp(12.5px, 3.4vw, 14px);
+    overflow-wrap: break-word;
+  }
+
+  /* ── 4. Grid / cards: full-width, no clipping ────────────── */
+  .discounts-grid.mobile {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+    gap: clamp(12px, 4vw, 16px);
+  }
+
+  .discounts-grid.mobile .discount-card {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .discounts-grid.mobile .discount-card-image-wrapper {
+    height: clamp(200px, 55vw, 280px);
+  }
+
+  .discounts-grid.mobile .discount-card-title {
+    font-size: clamp(14px, 3.8vw, 15px);
+  }
+
+  .discounts-grid.mobile .discount-card-description {
+    font-size: clamp(12.5px, 3.4vw, 13px);
+  }
+
+  .discounts-grid.mobile .discount-card-toggle-btn {
+    font-size: clamp(12px, 3.2vw, 13px);
+  }
+
+  .empty-discounts {
+    padding: 60px 16px;
+    font-size: clamp(13px, 3.6vw, 15px);
+  }
+}
+
+/* ── Small phones (<= 380px) ─────────────────────────────── */
+@media (max-width: 380px) {
+  .discounts-grid.mobile .discount-card-image-wrapper {
+    height: clamp(180px, 58vw, 220px);
+  }
+
+  .discounts-bell-btn.mobile {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .discounts-notif-dropdown.mobile {
+    width: calc(100vw - 20px) !important;
+    min-width: 240px;
+  }
+
+  .discounts-title.mobile {
+    font-size: clamp(20px, 6.8vw, 24px);
+  }
+}
+
+/* ── Large phones (min 480px, still mobile) ──────────────── */
+@media (min-width: 480px) and (max-width: 767px) {
+  .discounts-grid.mobile {
+    gap: 18px;
+  }
+
+  .discounts-grid.mobile .discount-card-image-wrapper {
+    height: clamp(240px, 45vw, 300px);
+  }
+}
