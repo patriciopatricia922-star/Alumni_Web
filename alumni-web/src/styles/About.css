@@ -1062,18 +1062,29 @@
 
 /* Mobile — mirrors @media (max-width: 767px) in Dashboard */
 @media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
   .ab-root {
     height: auto;
     overflow: visible;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   .ab-main {
     margin-left: 0;
     height: auto;
     overflow: visible;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    /* FIX: bottom padding now clears the Sidebar's fixed mobile bottom nav
+       (68px bar + safe-area-inset-bottom), matching the Discounts page's
+       90px-equivalent bottom clearance so content is never hidden under it. */
     padding: clamp(20px, 3vh, 32px)
              clamp(12px, 4vw, 18px)
-             clamp(16px, 2.4vh, 28px)
+             calc(68px + env(safe-area-inset-bottom) + clamp(16px, 2.4vh, 28px))
              clamp(12px, 4vw, 18px);
   }
 
@@ -1083,6 +1094,13 @@
     right: clamp(12px, 4vw, 18px);
   }
 
+  /* FIX: the desktop-only -65px offset (meant to counter the wide desktop
+     sidebar padding) overflowed off the left edge on mobile's much smaller
+     padding. Reset to 0 so the Back button stays fully on-screen. */
+  .ab-back {
+    margin-left: 0;
+  }
+
   .ab-hdr {
     padding-right: calc(clamp(44px, 4vw, 52px) + 12px);
     margin-top: clamp(38px, 7vh, 56px);
@@ -1090,11 +1108,18 @@
 
   .ab-hero {
     gap: clamp(8px, 1.2vh, 14px);
+    /* FIX: reset desktop's asymmetric 60px/-15px side margins so the hero
+       card doesn't shrink lopsidedly or bleed past the mobile padding. */
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .ab-logo-row img {
     height: clamp(36px, 4.5vh, 56px);
     margin-bottom: clamp(12px, 2vh, 20px);
+    /* FIX: desktop's 2.3x scale, combined with .ab-hero's overflow:hidden,
+       could clip the logo on narrow screens. Normalize to natural size. */
+    transform: scale(1);
   }
 
   .ab-mv {
@@ -1104,6 +1129,9 @@
     .ab-support {
     height: auto;
     flex: none;
+    /* FIX: reset desktop's 60px/-15px side margins, same reasoning as .ab-hero. */
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .ab-s-grid {
@@ -1119,6 +1147,11 @@
     justify-content: flex-start;
     gap: 12px;
     padding: 12px 14px;
+  }
+
+  .ab-tile-text {
+    min-width: 0;
+    flex: 1;
   }
 
   .ab-tile-name,
