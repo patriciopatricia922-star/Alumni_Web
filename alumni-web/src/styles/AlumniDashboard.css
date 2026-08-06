@@ -1025,8 +1025,16 @@
   }
 }
   .notification-dropdown.mobile {
+    right: 0;
+    left: auto;
     width: min(92vw, 380px);
     max-width: calc(100vw - 16px);
+    max-height: min(520px, calc(100vh - clamp(20px, 3vh, 32px) - clamp(44px, 4vw, 52px) - 40px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .notification-dropdown.mobile .dropdown-body {
+    max-height: none;
   }
 }
 
