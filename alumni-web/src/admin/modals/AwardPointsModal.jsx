@@ -1,5 +1,5 @@
 // ============================================================================
-// AwardPointsModal.jsx — Select alumni (who attended events) and award points
+// AwardPointsModal.jsx — Select alumni and award points
 // Points are NOT set by the admin — they're randomized automatically when
 // the award is submitted (see onAward / handleAwardPoints in the parent).
 // ============================================================================
@@ -11,15 +11,14 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
   const [search, setSearch]     = useState('');
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState(null);
-  const [alumni, setAlumni]     = useState([]);    // all eligible alumni (attended >=1 event)
+  const [alumni, setAlumni]     = useState([]);    // all alumni loaded from users table
   const [selectedMap, setSelectedMap] = useState({}); // { [userId]: userObject }
   const [submitting, setSubmitting] = useState(false);
 
-  // FIX (root cause): there is no `event_attendees` table in this project —
-  // that endpoint 404'd because PostgREST had no such relation to serve.
-  // Eligibility/identification of alumni is tracked solely via the `users`
-  // table (matched by email), so we fetch directly from there instead of
-  // trying to join through a non-existent attendance table.
+  // FIX: `full_name` does not exist on `public.users` (that's what caused the
+  // 400 — PostgREST rejects a select referencing an unknown column). The real
+  // name columns are last_name / first_name / middle_name. There's also no
+  // attendance table, so this simply loads all alumni for the admin to pick from.
   useEffect(() => {
     if (!open) return;
     const fetchAttendees = async () => {
@@ -28,18 +27,25 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
       try {
         const { data: usersData, error: usersErr } = await supabase
           .from('users')
-          .select('id, full_name, email, avatar_url')
+          .select('id, last_name, first_name, middle_name, email')
           .not('email', 'is', null);
 
         if (usersErr) throw usersErr;
 
         const byUser = {};
         (usersData || []).forEach(u => {
+          const last = u.last_name?.trim() || '';
+          const first = u.first_name?.trim() || '';
+          const middle = u.middle_name?.trim() || '';
+          const displayName = last
+            ? `${last}, ${[first, middle].filter(Boolean).join(' ')}`.trim()
+            : ([first, middle].filter(Boolean).join(' ') || 'Unnamed Alumni');
+
           byUser[u.id] = {
             id: u.id,
-            name: u.full_name || 'Unnamed Alumni',
+            name: displayName,
             email: u.email,
-            avatar_url: u.avatar_url,
+            avatar_url: null,
             eventTitles: [], // no attendance table to source this from
           };
         });
@@ -95,7 +101,6 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
     if (selectedList.length === 0) return;
     setSubmitting(true);
     try {
-      // Only user IDs go out — points are decided on the backend/handler side.
       const userIds = selectedList.map(u => u.id);
       await onAward(userIds);
       onClose();
