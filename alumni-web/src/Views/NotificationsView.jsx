@@ -300,6 +300,8 @@ const NotificationsPageView = ({
           margin: 0;
           flex: 1;
           min-width: 0;
+          overflow-wrap: break-word;
+          word-break: break-word;
         }
         .np-notif-card__title--unread { font-weight: 700; }
         .np-notif-card__title--read   { font-weight: 600; }
@@ -342,6 +344,8 @@ const NotificationsPageView = ({
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          overflow-wrap: break-word;
+          word-break: break-word;
         }
 
         /* ── Empty / loading states ───────────────────────────── */
@@ -396,7 +400,7 @@ const NotificationsPageView = ({
         }
 
         @media (max-width: 900px) {
-          .np-content        { padding: 24px 16px 60px; }
+          .np-content        { padding: 24px 16px 60px; margin-left: 0 !important; }
           .np-heading        { font-size: 27px; }
           .np-subheading     { font-size: 13px; }
           .np-topbar         { flex-direction: column; gap: 0; }
@@ -410,6 +414,14 @@ const NotificationsPageView = ({
         @media (max-width: 480px) {
           .np-notif-card__top-row { flex-direction: column; gap: 4px; }
           .np-notif-card__meta    { align-self: flex-start; }
+        }
+
+        @media (max-width: 380px) {
+          .np-content { padding: 20px 12px 48px; }
+          .np-heading { font-size: 23px; }
+          .np-notif-card__body { padding: 12px; gap: 10px; }
+          .np-notif-card__icon { width: 40px; height: 40px; min-width: 40px; }
+          .np-tabs { flex-wrap: wrap; }
         }
       `}</style>
 
