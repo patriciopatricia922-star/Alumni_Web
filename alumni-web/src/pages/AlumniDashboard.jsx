@@ -472,28 +472,28 @@ const AlumniDashboard = () => {
   // // before the route transition completes.
   // // Announcements are handled exclusively through markOneRead / markAllRead
   // // (their IDs are already tracked individually), so this is a no-op for them.
-  // const dismissBadge = useCallback(async (category) => {
-  //   if (category === "announcements") return;
+  const dismissBadge = useCallback(async (category) => {
+    if (category === "announcements") return;
 
-  //   // Optimistic UI clear — instant feedback.
-  //   setCardBadges((prev) => ({ ...prev, [category]: false }));
+    // Optimistic UI clear — instant feedback.
+    setCardBadges((prev) => ({ ...prev, [category]: false }));
 
-  //   // Persist watermark so the badge stays gone after a page refresh.
-  //   try {
-  //     const { count } = await supabase
-  //       .from(category)
-  //       .select("id", { count: "exact", head: true })
-  //       .eq("is_active", true);
-  //     persistDismissed(category, count || 0);
-  //   } catch (err) {
-  //     console.warn(
-  //       `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
-  //       err,
-  //     );
-  //     // Optimistic clear is already applied; use sentinel as fallback.
-  //     persistDismissed(category, 999999);
-  //   }
-  // }, []);
+    // Persist watermark so the badge stays gone after a page refresh.
+    try {
+      const { count } = await supabase
+        .from(category)
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
+      persistDismissed(category, count || 0);
+    } catch (err) {
+      console.warn(
+        `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
+        err,
+      );
+      // Optimistic clear is already applied; use sentinel as fallback.
+      persistDismissed(category, 999999);
+    }
+  }, []);
 
   // ============================ HELPER FUNCTIONS ============================
   // const groupByDate = (list) => {
