@@ -1112,19 +1112,19 @@ body.ann-modal-open {
      beyond inline styles) stays on-screen. Since AnnouncementsView
      renders the bell dropdown using the CSS-based .ab-ndrop
      classes, constrain those to the viewport here. ── */
-  .ann-bell.mobile {
-    position: absolute;
-    top: clamp(20px, 5vw, 28px);
+  .ann-bell {
+    position: fixed;
+    top: clamp(12px, 2vh, 18px);
     right: clamp(12px, 4vw, 18px);
     z-index: 200;
   }
 
-  .ann-bell-btn.mobile {
+  .ab-bell-btn {
     width: clamp(40px, 11vw, 44px) !important;
     height: clamp(40px, 11vw, 44px) !important;
   }
 
-  .ann-ndrop.mobile {
+  .ab-ndrop {
     position: absolute;
     top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
     right: 0 !important;
@@ -1134,6 +1134,10 @@ body.ann-modal-open {
     max-width: calc(100vw - 24px);
     max-height: min(70vh, 520px) !important;
     overflow: hidden;
+  }
+
+  .ab-ndrop-list {
+    max-height: none;
   }
 
   /* ── 3. Filter: consistent width, viewport-safe dropdown ── */

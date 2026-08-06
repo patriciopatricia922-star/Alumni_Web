@@ -148,9 +148,9 @@ const Announcements = () => {
     };
   }, []);
 
-  // Fetch notifications for the bell dropdown.
-  // Mirrors Discounts: read actual read/unread state from localStorage
-  // instead of force-marking everything as read on mount.
+  // Fetch notifications for the bell dropdown AND auto-mark all as read
+  // because the user is on the Announcements page — they are actively
+  // viewing the content, so the red indicator should clear immediately.
   useEffect(() => {
     const fetchNotifs = async () => {
       const { data, error } = await supabase
@@ -161,18 +161,32 @@ const Announcements = () => {
         .limit(20);
       if (error || !data) return;
 
-      const readIds = JSON.parse(
+      // Auto-mark every fetched announcement as read in localStorage.
+      // This mirrors the exact same key used by AlumniDashboard so the
+      // dashboard bell badge clears the next time it mounts/re-renders.
+      const allIds = data.map((n) => n.id);
+      const existingReadIds = JSON.parse(
         localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS) || "[]",
       );
+      const mergedReadIds = Array.from(
+        new Set([...existingReadIds, ...allIds]),
+      );
+      localStorage.setItem(
+        STORAGE_KEY_ANNOUNCEMENTS,
+        JSON.stringify(mergedReadIds),
+      );
+
+      // Build notif list with every item pre-marked read so the bell
+      // dropdown also reflects the cleared state instantly.
       const mapped = data.map((n) => ({
         id: n.id,
         title: n.title,
         body: n.content,
         time: n.published_at,
-        read: readIds.includes(n.id),
+        read: true, // all read — user is on this page
       }));
       setNotifs(mapped);
-      setUnreadCount(mapped.filter((n) => !n.read).length);
+      setUnreadCount(0); // clear the red badge on the bell immediately
     };
     fetchNotifs();
   }, []);
@@ -205,6 +219,9 @@ const Announcements = () => {
     }
   }, [surveyRoute, requestNavigation, navigate]);
 
+  // markAllRead is kept for the dropdown's "Mark all read" button;
+  // on this page it is effectively a no-op since all are already read,
+  // but we preserve the handler so the view contract is unchanged.
   const markAllRead = useCallback(() => {
     const allIds = notifs.map((n) => n.id);
     localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(allIds));
