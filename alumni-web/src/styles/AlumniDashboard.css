@@ -1024,17 +1024,23 @@
     height: auto;
     min-height: clamp(130px, 22vh, 200px);
   }
+  .hello-card {
+    min-height: clamp(100px, 16vh, 160px);
+    padding-bottom: clamp(14px, 2vh, 20px);
+  }
   .hello-card-inner {
     justify-content: flex-start !important;
     gap: clamp(6px, 1.5vh, 12px);
   }
   .hello-text {
     font-size: clamp(22px, 6.5vw, 32px) !important;
+    margin-bottom: 0;
   }
   .hello-notification-text {
     font-size: clamp(13px, 3.6vw, 16px) !important;
     overflow-wrap: break-word;
     word-break: break-word;
+    margin-bottom: 0;
   }
 }
   .notification-dropdown.mobile {
