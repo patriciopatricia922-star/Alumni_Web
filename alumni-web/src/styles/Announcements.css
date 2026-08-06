@@ -941,6 +941,15 @@ body.ann-modal-open {
   }
 }
 
+@media (max-width: 767px) {
+  .ab-bell {
+    position: fixed !important;
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
+    left: auto !important;
+  }
+}
+
 /* ── Expanded card state ───────────────────────────────────── */
 .ann-card--expanded {
   border-color: var(--ann-card-border-hover);
