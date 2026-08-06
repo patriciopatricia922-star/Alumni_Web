@@ -5,69 +5,72 @@
 
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {
-  --ann-page-bg:           #DAE5F1;
-  --ann-sidebar-bg:        #00226D;
-  --ann-banner-bg:         linear-gradient(180deg, #2B72FB 0%, #1E2555 100%);
+  --ann-page-bg: #dae5f1;
+  --ann-sidebar-bg: #00226d;
+  --ann-banner-bg: linear-gradient(180deg, #2b72fb 0%, #1e2555 100%);
 
-  --ann-card-bg:           #FFFFFF;
-  --ann-card-border:       #E5E7EB;
-  --ann-card-shadow:       0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06);
-  --ann-card-shadow-hover: 0px 8px 24px rgba(43, 114, 251, 0.14),
-                           0px 2px 8px rgba(0, 0, 0, 0.08);
-  --ann-card-border-hover: #2B72FB;
+  --ann-card-bg: #ffffff;
+  --ann-card-border: #e5e7eb;
+  --ann-card-shadow:
+    0px 2px 8px rgba(0, 0, 0, 0.08), 0px 1px 2px rgba(0, 0, 0, 0.06);
+  --ann-card-shadow-hover:
+    0px 8px 24px rgba(43, 114, 251, 0.14), 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --ann-card-border-hover: #2b72fb;
 
-  --ann-title-color:       #003EA6;
-  --ann-body-color:        #4A5565;
-  --ann-meta-color:        #8A94A6;
-  --ann-timestamp-color:   rgba(74, 85, 101, 0.65);
-  --ann-clock-stroke:      rgba(74, 85, 101, 0.45);
+  --ann-title-color: #003ea6;
+  --ann-body-color: #4a5565;
+  --ann-meta-color: #8a94a6;
+  --ann-timestamp-color: rgba(74, 85, 101, 0.65);
+  --ann-clock-stroke: rgba(74, 85, 101, 0.45);
 
-  --ann-accent:            #003EA6;
-  --ann-accent-btn:        #003EA6;
-  --ann-badge-bg:          #2B72FB;
+  --ann-accent: #003ea6;
+  --ann-accent-btn: #003ea6;
+  --ann-badge-bg: #2b72fb;
 
-  --ann-page-title:        #324D87;
-  --ann-page-subtitle:     #545454;
-  --ann-back-color:        #003EA6;
-  --ann-content-left-pad:  40px;
+  --ann-page-title: #324d87;
+  --ann-page-subtitle: #545454;
+  --ann-back-color: #003ea6;
+  --ann-content-left-pad: 40px;
   --ann-content-right-pad: 24px;
 
-  --ann-icon-box-bg:       linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
-  --ann-icon-box-shadow:   0px 4px 10px rgba(43, 114, 251, 0.35);
+  --ann-icon-box-bg: linear-gradient(180deg, #2b7fff 0%, #155dfc 100%);
+  --ann-icon-box-shadow: 0px 4px 10px rgba(43, 114, 251, 0.35);
 
   /* Aligned to Dashboard .bell-badge treatment */
-  --ann-notif-dot-outer:   rgba(255, 0, 0, 0.35);
-  --ann-notif-dot-inner:   #E53935;
+  --ann-notif-dot-outer: rgba(255, 0, 0, 0.35);
+  --ann-notif-dot-inner: #e53935;
 
-  --ann-footer-border:     #F0F2F5;
-  --ann-filter-bg:         #FFFFFF;
-  --ann-filter-border:     #E5E7EB;
-  --ann-filter-text:       #1e3a5f;
-  --ann-chevron:           #8A94A6;
+  --ann-footer-border: #f0f2f5;
+  --ann-filter-bg: #ffffff;
+  --ann-filter-border: #e5e7eb;
+  --ann-filter-text: #1e3a5f;
+  --ann-chevron: #8a94a6;
 
-  --ann-modal-overlay:     rgba(15, 23, 42, 0.6);
-  --ann-modal-blur:        12px;
-  --ann-modal-bg:          #FFFFFF;
-  --ann-modal-border:      #E5E7EB;
-  --ann-modal-shadow:      0px 24px 64px rgba(0, 0, 0, 0.18), 0px 8px 24px rgba(0, 0, 0, 0.1);
-  --ann-modal-title:       #003EA6;
-  --ann-modal-body:        #4A5565;
-  --ann-modal-meta:        #8A94A6;
-  --ann-modal-divider:     #F0F2F5;
-  --ann-modal-tag-bg:      #EEF4FF;
-  --ann-modal-tag-text:    #2B72FB;
-  --ann-modal-close-bg:    #F5F7FA;
-  --ann-modal-close-hover: #E5E7EB;
+  --ann-modal-overlay: rgba(15, 23, 42, 0.6);
+  --ann-modal-blur: 12px;
+  --ann-modal-bg: #ffffff;
+  --ann-modal-border: #e5e7eb;
+  --ann-modal-shadow:
+    0px 24px 64px rgba(0, 0, 0, 0.18), 0px 8px 24px rgba(0, 0, 0, 0.1);
+  --ann-modal-title: #003ea6;
+  --ann-modal-body: #4a5565;
+  --ann-modal-meta: #8a94a6;
+  --ann-modal-divider: #f0f2f5;
+  --ann-modal-tag-bg: #eef4ff;
+  --ann-modal-tag-text: #2b72fb;
+  --ann-modal-close-bg: #f5f7fa;
+  --ann-modal-close-hover: #e5e7eb;
 }
 
-html, body {
+html,
+body {
   scrollbar-gutter: stable;
 }
 
 /* ── Page wrapper ──────────────────────────────────────────── */
 .ann-page {
   background: var(--ann-page-bg);
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
@@ -77,7 +80,7 @@ html, body {
   display: flex;
   min-height: 100vh;
   background: var(--ann-page-bg);
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
 }
 
 .announcements-main-content {
@@ -108,7 +111,7 @@ html, body {
 /* ── Header text ───────────────────────────────────────────── */
 .ann-heading {
   color: var(--ann-page-title);
-  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-family: "Montserrat", "Arimo", Arial, sans-serif;
   font-weight: 700;
   letter-spacing: -1px;
   font-size: clamp(28px, 3.2vw, 29px);
@@ -145,7 +148,9 @@ html, body {
   transition: opacity 0.15s ease;
 }
 
-.ann-back:hover { opacity: 0.7; }
+.ann-back:hover {
+  opacity: 0.7;
+}
 
 .ann-hdr {
   flex-shrink: 0;
@@ -154,16 +159,15 @@ html, body {
 }
 
 .ann-back span {
-  font-family: 'Montserrat', sans-serif;
+  font-family: "Montserrat", sans-serif;
   font-weight: 600;
   font-size: clamp(13px, 0.9vw, 15px);
   color: #002263;
 }
 
-
 /* ── Featured banner ───────────────────────────────────────── */
 .ann-banner {
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   margin-right: clamp(30px, 4vw, 70px) !important;
 }
 
@@ -248,7 +252,10 @@ html, body {
   display: flex;
   flex-direction: column;
   transform: translateY(0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   max-width: 95%;
   margin-left: auto;
   margin-right: auto;
@@ -293,7 +300,7 @@ html, body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   border: none;
   cursor: pointer;
   display: flex;
@@ -321,7 +328,7 @@ html, body {
   gap: 6px;
   padding: 6px 8px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.38);
+  background: rgba(0, 0, 0, 0.38);
   backdrop-filter: blur(6px);
   z-index: 10;
 }
@@ -331,7 +338,7 @@ html, body {
   height: 6px;
   border: none;
   border-radius: 999px;
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   padding: 0;
   transition: all 0.2s;
@@ -346,14 +353,14 @@ html, body {
   position: absolute;
   bottom: 19px;
   left: 12px;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 20px;
   padding: 4px 10px;
   transform: translateY(-4px);
 }
 
 .announcement-category-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   font-weight: 600;
   font-size: 11px;
   color: #1e3a5f;
@@ -383,7 +390,7 @@ html, body {
 }
 
 .announcement-card-title {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 15px;
   line-height: 1.45;
@@ -393,7 +400,7 @@ html, body {
 }
 
 .announcement-card-description {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 1.65;
@@ -406,7 +413,7 @@ html, body {
 .announcement-card-divider {
   width: 100%;
   height: 1px;
-  background: rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
   flex-shrink: 0;
 }
@@ -414,8 +421,9 @@ html, body {
 .announcement-card-details {
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .announcement-card-details.expanded {
@@ -441,7 +449,7 @@ html, body {
 }
 
 .announcement-card-detail-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 12px;
   line-height: 1.6;
@@ -464,12 +472,15 @@ html, body {
   background: #003ea6;
   border: none;
   border-radius: 10px;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   font-weight: 700;
   font-size: 13px;
   color: #ffffff;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -498,7 +509,9 @@ html, body {
   /* Aligned to Dashboard: relative container for the notif badge */
   position: relative;
   margin-top: 2px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .ann-card:hover .ann-card__icon-box {
@@ -531,9 +544,9 @@ html, body {
   box-sizing: border-box;
 
   /* Visual — matches Dashboard .bell-badge */
-  background: #E53935;
+  background: #e53935;
   border-radius: 10px;
-  border: 2px solid #DAE5F1;   /* matches page-bg border treatment in Dashboard */
+  border: 2px solid #dae5f1; /* matches page-bg border treatment in Dashboard */
   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.35);
 
   /* Layout */
@@ -553,10 +566,10 @@ html, body {
   justify-content: center;
 
   /* Typography — matches Dashboard badge span */
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-size: 9px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1;
 
   /* Remove the legacy filled-circle look; the ring itself is the badge */
@@ -612,11 +625,11 @@ html, body {
 }
 
 .ann-card__title {
-  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-family: "Montserrat", "Arimo", Arial, sans-serif;
   font-weight: 700;
   font-size: 13px;
   line-height: 1.4;
-  color: #0A0A0A;
+  color: #0a0a0a;
   margin: 0;
   flex: 1;
   min-width: 0;
@@ -631,7 +644,7 @@ html, body {
 }
 
 .ann-card__timestamp span {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: "Arimo", Arial, sans-serif;
   font-size: 11px;
   letter-spacing: 0.1px;
   color: rgba(0, 0, 0, 0.35);
@@ -639,11 +652,11 @@ html, body {
 }
 
 .ann-card__preview {
-  font-family: 'Montserrat', Arimo, sans-serif;
+  font-family: "Montserrat", Arimo, sans-serif;
   font-weight: 400;
   font-size: 13.5px;
   line-height: 1.65;
-  color: #4A5565;
+  color: #4a5565;
   margin: 0 0 4px 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -656,10 +669,10 @@ html, body {
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-size: 12px;
   font-weight: 700;
-  color: #2B72FB;
+  color: #2b72fb;
   cursor: pointer;
   display: inline;
   line-height: inherit;
@@ -667,7 +680,7 @@ html, body {
 }
 
 .ann-card__see-more-inline:hover {
-  color: #003EA6;
+  color: #003ea6;
   text-decoration: underline;
 }
 
@@ -696,8 +709,12 @@ html, body {
 }
 
 @keyframes ann-overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ── Modal panel ───────────────────────────────────────────── */
@@ -714,16 +731,29 @@ html, body {
   flex-direction: column;
   animation: ann-modal-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   scrollbar-width: thin;
-  scrollbar-color: #D1D5DB transparent;
+  scrollbar-color: #d1d5db transparent;
 }
 
-.ann-modal::-webkit-scrollbar        { width: 6px; }
-.ann-modal::-webkit-scrollbar-track  { background: transparent; }
-.ann-modal::-webkit-scrollbar-thumb  { background: #D1D5DB; border-radius: 3px; }
+.ann-modal::-webkit-scrollbar {
+  width: 6px;
+}
+.ann-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ann-modal::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
 
 @keyframes ann-modal-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .ann-modal__header {
@@ -752,7 +782,7 @@ html, body {
 }
 
 .ann-modal__title {
-  font-family: 'Montserrat', 'Arimo', Arial, sans-serif;
+  font-family: "Montserrat", "Arimo", Arial, sans-serif;
   font-weight: 700;
   font-size: 22px;
   line-height: 1.3;
@@ -772,14 +802,14 @@ html, body {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: "Arimo", Arial, sans-serif;
   font-size: 12px;
   color: var(--ann-modal-meta);
 }
 
 .ann-modal__tag {
   display: inline-block;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: "Arimo", Arial, sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -805,12 +835,14 @@ html, body {
   color: var(--ann-modal-meta);
   font-size: 16px;
   line-height: 1;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .ann-modal__close:hover {
   background: var(--ann-modal-close-hover);
-  border-color: #D1D5DB;
+  border-color: #d1d5db;
   color: var(--ann-modal-title);
 }
 
@@ -826,18 +858,30 @@ html, body {
 }
 
 .ann-modal__body .announcement-full-content {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: "Arimo", Arial, sans-serif;
   font-size: 15px;
   line-height: 1.75;
   color: var(--ann-modal-body);
 }
 
-.ann-modal__body .announcement-full-content p  { margin: 0 0 14px 0; }
+.ann-modal__body .announcement-full-content p {
+  margin: 0 0 14px 0;
+}
 .ann-modal__body .announcement-full-content ul,
-.ann-modal__body .announcement-full-content ol { padding-left: 20px; margin: 0 0 14px 0; }
-.ann-modal__body .announcement-full-content li { margin-bottom: 6px; }
-.ann-modal__body .announcement-full-content a  { color: var(--ann-accent); }
-.ann-modal__body .announcement-full-content strong { color: var(--ann-modal-title); font-weight: 700; }
+.ann-modal__body .announcement-full-content ol {
+  padding-left: 20px;
+  margin: 0 0 14px 0;
+}
+.ann-modal__body .announcement-full-content li {
+  margin-bottom: 6px;
+}
+.ann-modal__body .announcement-full-content a {
+  color: var(--ann-accent);
+}
+.ann-modal__body .announcement-full-content strong {
+  color: var(--ann-modal-title);
+  font-weight: 700;
+}
 
 .ann-modal__footer {
   padding: 20px 28px 28px;
@@ -851,18 +895,20 @@ html, body {
   padding: 0 22px;
   border-radius: 12px;
   border: 1px solid var(--ann-card-border);
-  background: #FFFFFF;
-  font-family: 'Arimo', Arial, sans-serif;
+  background: #ffffff;
+  font-family: "Arimo", Arial, sans-serif;
   font-weight: 600;
   font-size: 14px;
   color: var(--ann-body-color);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .ann-modal__close-btn:hover {
-  background: #F5F7FA;
-  border-color: #CBD5E1;
+  background: #f5f7fa;
+  border-color: #cbd5e1;
 }
 
 body.ann-modal-open {
@@ -909,22 +955,37 @@ body.ann-modal-open {
 }
 
 @keyframes ann-expand-in {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ann-card__full-content .announcement-full-content {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-size: 12px;
   line-height: 1.75;
   color: var(--ann-body-color);
 }
 
-.ann-card__full-content .announcement-full-content p  { margin: 0 0 10px 0; }
+.ann-card__full-content .announcement-full-content p {
+  margin: 0 0 10px 0;
+}
 .ann-card__full-content .announcement-full-content ul,
-.ann-card__full-content .announcement-full-content ol { padding-left: 20px; margin: 0 0 10px 0; }
-.ann-card__full-content .announcement-full-content li { margin-bottom: 5px; }
-.ann-card__full-content .announcement-full-content a  { color: var(--ann-accent); }
+.ann-card__full-content .announcement-full-content ol {
+  padding-left: 20px;
+  margin: 0 0 10px 0;
+}
+.ann-card__full-content .announcement-full-content li {
+  margin-bottom: 5px;
+}
+.ann-card__full-content .announcement-full-content a {
+  color: var(--ann-accent);
+}
 .ann-card__full-content .announcement-full-content strong {
   color: var(--ann-title-color);
   font-weight: 700;
@@ -938,5 +999,24 @@ body.ann-modal-open {
 @media (max-width: 768px) {
   .ann-card__full-content .announcement-full-content {
     font-size: 12.5px;
+  }
+}
+
+/* ── Responsive fix: AnnouncementCard inline-styled elements ── */
+@media (max-width: 768px) {
+  .ann-cards-list > div {
+    max-width: 100% !important;
+  }
+  .ann-cards-list > div > div:first-child {
+    height: clamp(200px, 55vw, 280px) !important;
+  }
+  .ann-cards-list > div p {
+    font-size: clamp(12px, 3.4vw, 14px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ann-cards-list > div > div:first-child {
+    height: clamp(180px, 60vw, 220px) !important;
   }
 }
