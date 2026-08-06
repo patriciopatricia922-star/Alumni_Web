@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import '../styles/About.css';
 import Sidebar      from '../components/Sidebar';
-import AlumnAILogo  from '../assets/alumnai_logo_new.svg';
+// import AlumnAILogo  from '../assets/alumnai_logo_new.svg';
 import FooterLogo   from '../assets/footer_logo.png';
 import TargetIcon   from '../assets/target_icn.png';
 import MagnifyIcon  from '../assets/magnifying_icn.png';
@@ -559,8 +559,7 @@ const AboutView = ({
             <div className="ab-circ ab-c3"/>
 
             <div className="ab-logo-row">
-              <img src={AlumnAILogo} alt="AlumnAI" className="ab-logo-desktop" />
-              <img src={FooterLogo} alt="AlumnAI" className="ab-logo-mobile" />
+              <img src={FooterLogo} alt="AlumnAI" className="ab-logo" />
             </div>
 
             <p className="ab-desc">
