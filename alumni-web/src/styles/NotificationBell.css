@@ -1,4 +1,6 @@
 /* src/styles/NotificationBell.css */
+/* Visual Reference: Discounts.css */
+/* Logic Reference: AlumniDashboard.jsx */
 
 /* ============================ BELL BUTTON ============================ */
 .notification-bell-wrapper {
@@ -9,7 +11,7 @@
 .notification-bell-btn {
   width: 52px;
   height: 52px;
-  background: #003EA6;
+  background: #003ea6;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
   border-radius: 14px;
@@ -31,6 +33,7 @@
   width: 22px;
   height: 22px;
   object-fit: contain;
+  /* If your PNG is black/dark, uncomment below to make it white */
   /* filter: brightness(0) invert(1); */
 }
 
@@ -40,9 +43,9 @@
   right: -7px;
   min-width: 20px;
   height: 20px;
-  background: #E53935;
+  background: #e53935;
   border-radius: 10px;
-  border: 2px solid #DAE5F1;
+  border: 2px solid #dae5f1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,7 +57,7 @@
   font-family: Montserrat, Arial, sans-serif;
   font-size: 10px;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
   line-height: 1;
 }
 
@@ -66,8 +69,8 @@
   right: 0;
   width: 380px;
   max-height: 520px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -77,10 +80,9 @@
 }
 
 /* ============================ DROPDOWN HEADER ============================ */
-/* Matched to .dropdown-header in Discounts.css */
 .dropdown-header {
   padding: 16px 18px 12px;
-  border-bottom: 1px solid #F0F2F5;
+  border-bottom: 1px solid #f0f2f5;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -91,7 +93,7 @@
   font-family: Montserrat, Arial, sans-serif;
   font-weight: 700;
   font-size: 16px;
-  color: #003EA6;
+  color: #003ea6;
 }
 
 .mark-all-read-btn {
@@ -100,13 +102,12 @@
   font-family: Montserrat, Arial, sans-serif;
   font-size: 12px;
   font-weight: 600;
-  color: #2B72FB;
+  color: #2b72fb;
   cursor: pointer;
   padding: 0;
 }
 
 /* ============================ DROPDOWN TABS ============================ */
-/* Matched to .dropdown-tabs / .dropdown-tab in Discounts.css */
 .dropdown-tabs {
   display: flex;
   padding: 10px 18px 0;
@@ -118,21 +119,21 @@
   height: 30px;
   padding: 0 14px;
   background: transparent;
-  border: 1px solid #D1D5DC;
+  border: 1px solid #d1d5dc;
   border-radius: 20px;
   cursor: pointer;
   font-family: Montserrat, Arial, sans-serif;
   font-size: 12px;
   font-weight: 400;
-  color: #4A5565;
+  color: #4a5565;
   transition: all 0.15s;
 }
 
 .dropdown-tab.active {
-  background: #003EA6;
+  background: #003ea6;
   border: none;
   font-weight: 700;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 /* ============================ DROPDOWN BODY ============================ */
@@ -169,7 +170,6 @@
 }
 
 /* ============================ NOTIFICATION ITEM ============================ */
-/* Matched to .notification-item in Discounts.css */
 .notification-item {
   display: flex;
   align-items: flex-start;
@@ -182,7 +182,7 @@
 
 .notification-item.unread {
   background: rgba(0, 62, 166, 0.05);
-  border-left-color: #003EA6;
+  border-left-color: #003ea6;
 }
 
 .notification-item.read {
@@ -216,7 +216,7 @@
   font-family: Montserrat, Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
-  color: #0A0A0A;
+  color: #0a0a0a;
   margin: 0 0 2px 0;
   line-height: 1.5;
 }
@@ -228,7 +228,7 @@
 .notification-body {
   font-family: Montserrat, Arial, sans-serif;
   font-size: 12px;
-  color: #4A5565;
+  color: #4a5565;
   margin: 0 0 4px 0;
   line-height: 1.5;
   display: -webkit-box;
@@ -247,39 +247,40 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #003EA6;
+  background: #003ea6;
   flex-shrink: 0;
   margin-top: 6px;
 }
 
 /* ============================ DROPDOWN FOOTER ============================ */
-/* Matched to .dropdown-footer / .see-all-btn in Discounts.css */
 .dropdown-footer {
   padding: 10px 18px;
-  border-top: 1px solid #F0F2F5;
+  border-top: 1px solid #f0f2f5;
   flex-shrink: 0;
 }
 
 .see-all-btn {
   width: 100%;
   height: 36px;
-  background: #F9FAFB;
-  border: 1px solid #D1D5DC;
+  background: #f9fafb;
+  border: 1px solid #d1d5dc;
   border-radius: 10px;
   font-family: Montserrat, Arial, sans-serif;
   font-size: 13px;
-  color: #4A5565;
+  color: #4a5565;
   cursor: pointer;
   transition: background 0.15s;
 }
 
 .see-all-btn:hover {
-  background: #F0F4FB;
+  background: #f0f4fb;
 }
 
 /* ============================ MOBILE RESPONSIVE ============================ */
-/* Positioning logic preserved from previous step; 
-   visual styles above now match Discounts reference. */
+/* Reference: Discounts.css mobile positioning logic.
+   Uses absolute positioning relative to the wrapper, with viewport-safe
+   width constraints (max-width: calc(100vw - 24px)) to prevent overflow. */
+
 @media (max-width: 767px) {
   .notification-bell-btn {
     width: 44px;
@@ -287,19 +288,25 @@
   }
 
   .notification-dropdown.mobile {
-    position: fixed;
-    top: 70px;
-    left: 16px;
-    right: 16px;
-    width: auto;
-    max-width: none;
-    max-height: calc(100vh - 140px);
-    margin: 0;
-    transform: none;
+    position: absolute;
+    /* Anchor to the bell button's bottom edge + gap */
+    top: calc(44px + 10px);
+    right: 0;
+    left: auto;
+    /* Viewport-safe width: never exceed screen width minus margins */
+    width: min(92vw, 380px);
+    min-width: 260px;
+    max-width: calc(100vw - 24px);
+    max-height: min(70vh, 520px);
+    overflow: hidden;
+    /* Ensure smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
-  
+
+  /* Allow the body to scroll internally if content exceeds max-height */
   .notification-dropdown.mobile .dropdown-body {
     max-height: none;
+    overflow-y: auto;
   }
 }
 
