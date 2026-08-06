@@ -941,16 +941,6 @@ body.ann-modal-open {
   }
 }
 
-@media (max-width: 767px) {
-  .ab-bell {
-    position: fixed !important;
-    top: clamp(12px, 2vh, 18px) !important;
-    right: clamp(12px, 4vw, 18px) !important;
-    left: auto !important;
-    transform: none !important;
-  }
-}
-
 /* ── Expanded card state ───────────────────────────────────── */
 .ann-card--expanded {
   border-color: var(--ann-card-border-hover);
@@ -1009,6 +999,16 @@ body.ann-modal-open {
 @media (max-width: 768px) {
   .ann-card__full-content .announcement-full-content {
     font-size: 12.5px;
+  }
+}
+
+@media (max-width: 767px) {
+  .ann-page .ab-bell {
+    position: fixed !important;
+    top: clamp(12px, 2vh, 18px) !important;
+    right: clamp(12px, 4vw, 18px) !important;
+    left: auto !important;
+    transform: none !important;
   }
 }
 

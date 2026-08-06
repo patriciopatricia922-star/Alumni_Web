@@ -9,7 +9,7 @@ import clockIcon from '../assets/clock_icn.svg';
 import { getResumeRoute, getSurveySections, isSurveyComplete } from '../lib/surveyProgress';
 import { truncateHtml, createMarkup } from '../utils/textHelpers';
 import '../styles/Announcements.css';
-import '../styles/About.css';
+// import '../styles/About.css';
 
 const CATEGORY_ICONS = {
   'News':       megaphoneIcon,
@@ -607,7 +607,7 @@ const AnnouncementsView = ({
         position:   'relative',
       }}>
 
-        <div ref={bellRef} className="ab-bell" style={!isMobile ? { transform: 'translateX(16px)' } : undefined}>
+        <div ref={bellRef} className="ab-bell" style={{ transform: 'translateX(16px)' }}>
           <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
@@ -677,10 +677,9 @@ const AnnouncementsView = ({
         </div>
 
         <button
-            className="ann-back"
-            onClick={() => navigate(-1)}
-            style={{ marginLeft: isMobile ? 0 : undefined }}
-          >
+          className="ann-back"
+          onClick={() => navigate(-1)}
+        >
           <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
             <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
               stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -919,8 +918,7 @@ const AnnouncementsView = ({
                 borderRadius:'12px',
                 overflow:  'hidden',
                 zIndex:    300,
-                minWidth:  isMobile ? '160px' : '236px',
-                width:     isMobile ? 'clamp(160px, 57vw, 200px)' : undefined,
+                minWidth:  '236px',
                 boxShadow: '0px 10px 30px rgba(0,0,0,0.15)',
               }}>
                 {categories.map((cat, i) => (
