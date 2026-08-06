@@ -920,7 +920,7 @@ const AnnouncementsView = ({
                 overflow:  'hidden',
                 zIndex:    300,
                 minWidth:  isMobile ? '160px' : '236px',
-                width:     isMobile ? 'clamp(160px, 50vw, 200px)' : undefined,
+                width:     isMobile ? 'clamp(160px, 57vw, 200px)' : undefined,
                 boxShadow: '0px 10px 30px rgba(0,0,0,0.15)',
               }}>
                 {categories.map((cat, i) => (
