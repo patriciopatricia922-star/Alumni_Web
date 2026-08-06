@@ -158,24 +158,69 @@ body {
   opacity: 0.7;
 }
 
-.ann-bell {
-  position: fixed;
-  top: 37px;
-  right: 51px;
+/* ── Notification Bell Wrapper ───────────────────────────────── */
+.ann-bell-wrapper {
+  position: absolute;
+  top: 45px;
+  right: 84px;
   z-index: 200;
 }
-
-@media (min-width: 768px) and (max-width: 1024px) {
-  .ann-bell {
-    right: 32px;
+@media (max-width: 1024px) and (min-width: 769px) {
+  .ann-bell-wrapper {
+    right: 65px;
+  }
+}
+@media (max-width: 768px) {
+  .ann-bell-wrapper {
+    top: 24px;
+    right: 16px;
   }
 }
 
-@media (max-width: 767px) {
-  .ann-bell {
-    top: clamp(12px, 2vh, 18px);
-    right: clamp(12px, 4vw, 18px);
+/* ── Notification Bell Button ────────────────────────────────── */
+.ann-bell-btn {
+  width: 52px;
+  height: 52px;
+  background: #003ea6;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease;
+}
+@media (max-width: 768px) {
+  .ann-bell-btn {
+    width: 44px;
+    height: 44px;
   }
+}
+
+/* ── Notification Dropdown ───────────────────────────────────── */
+.ann-notif-dropdown {
+  position: absolute;
+  top: calc(52px + 10px);
+  right: 0;
+  width: 380px;
+  max-height: 520px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 300;
+}
+.ann-notif-dropdown.mobile {
+  width: calc(100vw - 32px);
+  min-width: 280px;
+  max-width: 380px;
+  top: calc(44px + 10px);
+  right: 0;
 }
 
 .ann-hdr {
@@ -1106,25 +1151,18 @@ body.ann-modal-open {
     font-size: clamp(13px, 3.6vw, 15px);
   }
 
-  /* ── 2. Notification bell + dropdown: viewport-safe,
-     positioning kept via .ann-bell (already clamp-based);
-     ensure the dropdown itself (rendered inline, no class hook
-     beyond inline styles) stays on-screen. Since AnnouncementsView
-     renders the bell dropdown using the CSS-based .ab-ndrop
-     classes, constrain those to the viewport here. ── */
-  .ann-bell {
-    position: fixed;
-    top: clamp(12px, 2vh, 18px);
+   /* ── 2. Notification bell + dropdown: viewport-safe ────────── */
+  .ann-bell-wrapper.mobile {
+    position: absolute;
+    top: clamp(20px, 5vw, 28px);
     right: clamp(12px, 4vw, 18px);
     z-index: 200;
   }
-
-  .ab-bell-btn {
+  .ann-bell-btn.mobile {
     width: clamp(40px, 11vw, 44px) !important;
     height: clamp(40px, 11vw, 44px) !important;
   }
-
-  .ab-ndrop {
+  .ann-notif-dropdown.mobile {
     position: absolute;
     top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
     right: 0 !important;
@@ -1135,8 +1173,7 @@ body.ann-modal-open {
     max-height: min(70vh, 520px) !important;
     overflow: hidden;
   }
-
-  .ab-ndrop-list {
+  .ann-notif-dropdown.mobile > div[style*="overflowY"] {
     max-height: none;
   }
 
@@ -1222,12 +1259,11 @@ body.ann-modal-open {
 
 /* ── Small phones (<= 380px) ─────────────────────────────── */
 @media (max-width: 380px) {
-  .ab-bell-btn {
+  .ann-bell-btn.mobile {
     width: 40px !important;
     height: 40px !important;
   }
-
-  .ab-ndrop {
+  .ann-notif-dropdown.mobile {
     width: calc(100vw - 20px) !important;
     min-width: 240px;
   }
