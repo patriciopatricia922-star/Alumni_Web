@@ -7,8 +7,8 @@
 }
 
 .notification-bell-btn {
-  width: clamp(44px, 4vw, 52px);
-  height: clamp(44px, 4vw, 52px);
+  width: 52px;
+  height: 52px;
   background: #003EA6;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
@@ -31,7 +31,6 @@
   width: 22px;
   height: 22px;
   object-fit: contain;
-  /* If your PNG is black/dark, you might need a filter to make it white like the old SVG */
   /* filter: brightness(0) invert(1); */
 }
 
@@ -60,15 +59,14 @@
 }
 
 /* ============================ DROPDOWN PANEL ============================ */
+/* Matched to .notification-dropdown in Discounts.css */
 .notification-dropdown {
   position: absolute;
-  top: calc(clamp(44px, 4vw, 52px) + 10px);
+  top: calc(52px + 10px);
   right: 0;
-  width: clamp(280px, 38vw, 380px);
-  max-width: calc(100vw - 24px);
+  width: 380px;
   max-height: 520px;
   background: #FFFFFF;
-  backdrop-filter: blur(16px);
   border: 1px solid #E5E7EB;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
@@ -79,6 +77,7 @@
 }
 
 /* ============================ DROPDOWN HEADER ============================ */
+/* Matched to .dropdown-header in Discounts.css */
 .dropdown-header {
   padding: 16px 18px 12px;
   border-bottom: 1px solid #F0F2F5;
@@ -107,6 +106,7 @@
 }
 
 /* ============================ DROPDOWN TABS ============================ */
+/* Matched to .dropdown-tabs / .dropdown-tab in Discounts.css */
 .dropdown-tabs {
   display: flex;
   padding: 10px 18px 0;
@@ -168,6 +168,8 @@
   margin: 10px 18px 4px;
 }
 
+/* ============================ NOTIFICATION ITEM ============================ */
+/* Matched to .notification-item in Discounts.css */
 .notification-item {
   display: flex;
   align-items: flex-start;
@@ -251,6 +253,7 @@
 }
 
 /* ============================ DROPDOWN FOOTER ============================ */
+/* Matched to .dropdown-footer / .see-all-btn in Discounts.css */
 .dropdown-footer {
   padding: 10px 18px;
   border-top: 1px solid #F0F2F5;
@@ -275,36 +278,28 @@
 }
 
 /* ============================ MOBILE RESPONSIVE ============================ */
-/* Reference: Discounts.css mobile positioning logic.
-   Uses absolute positioning relative to the wrapper, with viewport-safe
-   width constraints (max-width: calc(100vw - 24px)) to prevent overflow. */
-
+/* Positioning logic preserved from previous step; 
+   visual styles above now match Discounts reference. */
 @media (max-width: 767px) {
   .notification-bell-btn {
-    width: clamp(40px, 11vw, 44px);
-    height: clamp(40px, 11vw, 44px);
+    width: 44px;
+    height: 44px;
   }
 
   .notification-dropdown.mobile {
-    position: absolute;
-    /* Anchor to the bell button's bottom edge + gap */
-    top: calc(clamp(40px, 11vw, 44px) + 10px);
-    right: 0;
-    left: auto;
-    /* Viewport-safe width: never exceed screen width minus margins */
-    width: min(92vw, 380px);
-    min-width: 260px;
-    max-width: calc(100vw - 24px);
-    max-height: min(70vh, 520px);
-    overflow: hidden;
-    /* Ensure smooth scrolling on iOS */
-    -webkit-overflow-scrolling: touch;
+    position: fixed;
+    top: 70px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100vh - 140px);
+    margin: 0;
+    transform: none;
   }
-
-  /* Allow the body to scroll internally if content exceeds max-height */
+  
   .notification-dropdown.mobile .dropdown-body {
     max-height: none;
-    overflow-y: auto;
   }
 }
 
