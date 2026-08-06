@@ -207,6 +207,14 @@ body {
   color: var(--ann-filter-text) !important;
 }
 
+/* Mobile: keep filter trigger width fixed to the "All Announcements"
+   baseline so switching to "News"/"Activities" doesn't shrink it */
+@media (max-width: 767px) {
+  .ann-filter-display {
+    min-width: 210px !important;
+  }
+}
+
 /* ── Cards list ───────────────────────────────────────────── */
 .ann-cards-list {
   display: grid;
