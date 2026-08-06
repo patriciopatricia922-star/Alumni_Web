@@ -158,18 +158,17 @@ body {
   opacity: 0.7;
 }
 
-.ab-bell {
-  position: absolute;
+.ann-bell {
+  position: fixed;
+  top: 37px;
+  right: 51px;
   z-index: 200;
 }
 
 @media (max-width: 767px) {
-  .ab-bell {
-    position: fixed !important;
-    top: clamp(12px, 2vh, 18px) !important;
-    right: clamp(12px, 4vw, 18px) !important;
-    left: auto !important;
-    transform: none !important;
+  .ann-bell {
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
   }
 }
 
@@ -1024,7 +1023,7 @@ body.ann-modal-open {
 }
 
 @media (max-width: 767px) {
-  .ann-page .ab-bell {
+  .ann-page .ann-bell {
     position: fixed !important;
     top: clamp(12px, 2vh, 18px) !important;
     right: clamp(12px, 4vw, 18px) !important;
