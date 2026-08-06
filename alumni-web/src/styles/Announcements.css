@@ -165,6 +165,12 @@ body {
   z-index: 200;
 }
 
+@media (min-width: 768px) and (max-width: 1024px) {
+  .ann-bell {
+    right: 32px;
+  }
+}
+
 @media (max-width: 767px) {
   .ann-bell {
     top: clamp(12px, 2vh, 18px);
@@ -540,17 +546,7 @@ body {
 }
 
 /* ── Notification ring — aligned to Dashboard .bell-badge ─── */
-/*
-   Dashboard reference:
-     position: absolute; top: -7px; right: -7px;
-     min-width: 20px; height: 20px;
-     background: #E53935; border-radius: 10px;
-     border: 2px solid #DAE5F1;
-     box-shadow: 0px 4px 12px rgba(0,0,0,0.35);  (inherited from .bell-button)
 
-   Announcements icon-box is 40px (vs 44–52px bell-button), so we scale
-   the offset inward by 2px to keep the badge optically anchored the same way.
-*/
 .ann-card__notif-ring {
   /* Position — mirrored from Dashboard badge offsets */
   position: absolute;
@@ -1019,16 +1015,6 @@ body.ann-modal-open {
 @media (max-width: 768px) {
   .ann-card__full-content .announcement-full-content {
     font-size: 12.5px;
-  }
-}
-
-@media (max-width: 767px) {
-  .ann-page .ann-bell {
-    position: fixed !important;
-    top: clamp(12px, 2vh, 18px) !important;
-    right: clamp(12px, 4vw, 18px) !important;
-    left: auto !important;
-    transform: none !important;
   }
 }
 
