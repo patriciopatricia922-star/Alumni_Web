@@ -1,16 +1,17 @@
 /* src/styles/NotificationBell.css */
-/* Bell button */
+
+/* ============================ BELL BUTTON ============================ */
 .notification-bell-wrapper {
   position: relative;
   z-index: 200;
 }
 
 .notification-bell-btn {
-  width: 52px;
-  height: 52px;
+  width: clamp(44px, 4vw, 52px);
+  height: clamp(44px, 4vw, 52px);
   background: #003EA6;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
   border-radius: 14px;
   cursor: pointer;
   display: flex;
@@ -21,8 +22,8 @@
 }
 
 .notification-bell-btn.active {
-  background: rgba(43,114,251,0.25);
-  border: 1px solid rgba(43,114,251,0.5);
+  background: rgba(43, 114, 251, 0.25);
+  border: 1px solid rgba(43, 114, 251, 0.5);
 }
 
 .notification-badge {
@@ -49,23 +50,26 @@
   line-height: 1;
 }
 
-/* Dropdown panel */
+/* ============================ DROPDOWN PANEL ============================ */
 .notification-dropdown {
   position: absolute;
-  top: calc(52px + 10px);
+  top: calc(clamp(44px, 4vw, 52px) + 10px);
   right: 0;
-  width: 380px;
+  width: clamp(280px, 38vw, 380px);
+  max-width: calc(100vw - 24px);
   max-height: 520px;
   background: #FFFFFF;
+  backdrop-filter: blur(16px);
   border: 1px solid #E5E7EB;
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 300;
 }
 
+/* ============================ DROPDOWN HEADER ============================ */
 .dropdown-header {
   padding: 16px 18px 12px;
   border-bottom: 1px solid #F0F2F5;
@@ -93,6 +97,7 @@
   padding: 0;
 }
 
+/* ============================ DROPDOWN TABS ============================ */
 .dropdown-tabs {
   display: flex;
   padding: 10px 18px 0;
@@ -121,6 +126,7 @@
   color: #FFFFFF;
 }
 
+/* ============================ DROPDOWN BODY ============================ */
 .dropdown-body {
   overflow-y: auto;
   flex: 1;
@@ -139,7 +145,7 @@
 .empty-text {
   font-family: Montserrat, Arial, sans-serif;
   font-size: 13px;
-  color: rgba(0,0,0,0.3);
+  color: rgba(0, 0, 0, 0.3);
   margin: 0;
 }
 
@@ -147,7 +153,7 @@
   font-family: Montserrat, Arial, sans-serif;
   font-weight: 700;
   font-size: 10px;
-  color: rgba(0,0,0,0.35);
+  color: rgba(0, 0, 0, 0.35);
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin: 10px 18px 4px;
@@ -160,28 +166,29 @@
   padding: 10px 18px;
   cursor: pointer;
   transition: background 0.12s;
+  border-left: 3px solid transparent;
 }
 
 .notification-item.unread {
-  background: rgba(0,62,166,0.05);
-  border-left: 3px solid #003EA6;
+  background: rgba(0, 62, 166, 0.05);
+  border-left-color: #003EA6;
 }
 
 .notification-item.read {
   background: transparent;
-  border-left: 3px solid transparent;
+  border-left-color: transparent;
 }
 
 .notification-item:hover {
-  background: rgba(0,0,0,0.03);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .notification-icon {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(0,62,166,0.08);
-  border: 1px solid rgba(0,62,166,0.15);
+  background: rgba(0, 62, 166, 0.08);
+  border: 1px solid rgba(0, 62, 166, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,7 +229,7 @@
 .notification-time {
   font-family: Montserrat, Arial, sans-serif;
   font-size: 11px;
-  color: rgba(0,0,0,0.35);
+  color: rgba(0, 0, 0, 0.35);
 }
 
 .notification-unread-dot {
@@ -234,6 +241,7 @@
   margin-top: 6px;
 }
 
+/* ============================ DROPDOWN FOOTER ============================ */
 .dropdown-footer {
   padding: 10px 18px;
   border-top: 1px solid #F0F2F5;
@@ -257,16 +265,55 @@
   background: #F0F4FB;
 }
 
-/* Mobile responsive */
+/* ============================ MOBILE RESPONSIVE ============================ */
+/* Restored from AlumniDashboard.css original mobile rules.
+   The .mobile class is applied by NotificationBell when className="mobile"
+   is passed from Alumnidashboardview.jsx on small screens. */
+
 @media (max-width: 767px) {
   .notification-bell-btn {
-    width: 44px;
-    height: 44px;
+    width: clamp(40px, 11vw, 44px);
+    height: clamp(40px, 11vw, 44px);
   }
 
-  .notification-dropdown {
+  .notification-dropdown.mobile {
+    right: 0;
+    left: auto;
     width: min(92vw, 380px);
-    max-width: calc(100vw - 24px);
-    max-height: min(70vh, 520px);
+    max-width: calc(100vw - 16px);
+    max-height: min(520px, calc(100vh - clamp(20px, 3vh, 32px) - clamp(44px, 4vw, 52px) - 40px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .notification-dropdown.mobile .dropdown-body {
+    max-height: none;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .notification-bell-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .notification-dropdown.mobile {
+    width: calc(100vw - 20px);
+    min-width: 240px;
+  }
+}
+
+/* Large phones */
+@media (min-width: 480px) and (max-width: 767px) {
+  .notification-dropdown.mobile {
+    width: min(92vw, 380px);
+  }
+}
+
+/* Tablet adjustment */
+@media (max-width: 1100px) and (min-width: 768px) {
+  .notification-dropdown {
+    width: clamp(280px, 38vw, 380px);
   }
 }
