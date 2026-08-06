@@ -424,6 +424,9 @@ const handleAwardPoints = async (userIds, points) => {
         image_urls,
         published_at: new Date().toISOString(),
         is_active:    true,
+        target_user_ids: formData.audience === 'Specific User' && formData.target_user_id
+        ? [formData.target_user_id]
+        : null,
       };
 
       const { data, error } = await supabase.from('announcements').insert([newAnnouncement]).select();
@@ -638,6 +641,9 @@ const handleAwardPoints = async (userIds, points) => {
         image_url,
         image_urls,
         updated_at: new Date().toISOString(),
+        target_user_ids: formData.audience === 'Specific User' && formData.target_user_id
+        ? [formData.target_user_id]
+        : null,
       };
 
 

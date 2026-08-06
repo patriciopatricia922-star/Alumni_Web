@@ -99,12 +99,16 @@ const Announcements = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+
       const { data, error } = await supabase
         .from("announcements")
         .select(
           "id, title, content, published_at, is_active, category, image_url, image_urls",
         )
         .eq("is_active", true)
+        .or(`target_user_ids.is.null,target_user_ids.cs.{${user?.id}}`)
         .order("published_at", { ascending: false });
 
       if (!error && data) {
@@ -153,10 +157,12 @@ const Announcements = () => {
   // viewing the content, so the red indicator should clear immediately.
   useEffect(() => {
     const fetchNotifs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from("announcements")
         .select("id, title, content, published_at, is_active")
         .eq("is_active", true)
+        .or(`target_user_ids.is.null,target_user_ids.cs.{${user?.id}}`)
         .order("published_at", { ascending: false })
         .limit(20);
       if (error || !data) return;
