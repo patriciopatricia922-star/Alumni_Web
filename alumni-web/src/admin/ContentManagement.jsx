@@ -310,11 +310,29 @@ const handleAwardPoints = async (userIds, points) => {
   try {
     const awardAmount = (typeof points === 'number' && points > 0) ? points : randomPoints();
 
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/award-points`, {
+    const apiUrl = import.meta.env.VITE_API_BASE_URL;
+    if (!apiUrl) {
+      throw new Error('VITE_API_BASE_URL is not configured — cannot reach the backend.');
+    }
+
+    const response = await fetch(`${apiUrl}/api/admin/award-points`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_ids: userIds, points: awardAmount }),
     });
+
+    // Guard against non-JSON responses (e.g. Vite serving index.html when
+    // the request was misrouted) instead of letting response.json() throw
+    // an opaque "Unexpected token '<'" SyntaxError.
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const rawText = await response.text();
+      throw new Error(
+        `Expected JSON but received "${contentType || 'unknown content-type'}". ` +
+        `This usually means the request hit the frontend dev server instead of the backend API. ` +
+        `Response start: ${rawText.slice(0, 120)}`
+      );
+    }
 
     const result = await response.json();
     if (!response.ok) {
