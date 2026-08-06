@@ -607,7 +607,15 @@ const AnnouncementsView = ({
         position:   'relative',
       }}>
 
-        <div ref={bellRef} className="ab-bell" style={!isMobile ? { transform: 'translateX(16px)' } : undefined}>
+          <div
+            ref={bellRef}
+            className="ab-bell"
+            style={
+              isMobile
+                ? { position: 'fixed', top: 'clamp(12px, 2vh, 18px)', right: 'clamp(12px, 4vw, 18px)', left: 'auto', transform: 'none' }
+                : { transform: 'translateX(16px)' }
+            }
+          >
           <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
