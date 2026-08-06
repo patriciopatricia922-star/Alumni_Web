@@ -326,13 +326,6 @@ const handleAwardPoints = async (userIds, points) => {
         .eq('id', userId);
       if (updateErr) throw updateErr;
 
-      await supabase.from('point_transactions').insert([{
-        user_id: userId,
-        points: awardAmount,
-        reason: 'Admin awarded points',
-        created_at: new Date().toISOString(),
-      }]);
-
       await logAction({
         action: 'Update',
         module: 'Rewards',
