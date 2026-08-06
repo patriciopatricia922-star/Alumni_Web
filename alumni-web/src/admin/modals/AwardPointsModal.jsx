@@ -16,36 +16,79 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch alumni who have attended at least one event.
+  //
+  // FIX: the previous version used a single embedded/nested select
+  // (event_attendees -> events(title), event_attendees -> users(...)).
+  // Nested selects like that only resolve if PostgREST can find exactly
+  // one unambiguous FK path for each embed; if that's not the case, or if
+  // any relevant relationship isn't set up the way PostgREST expects, the
+  // whole query throws and we fell into the catch block, leaving `alumni`
+  // empty ("No eligible alumni found") with no obvious error visible.
+  //
+  // Fix: fetch the join table and the two related tables separately,
+  // then assemble the same `alumni` shape in JS. This avoids depending on
+  // embedded-relationship resolution entirely.
   useEffect(() => {
     if (!open) return;
     const fetchAttendees = async () => {
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
+        // Step 1: raw attendee rows — just the FK ids, no embedding.
+        const { data: attendeeRows, error: attendeeErr } = await supabase
           .from('event_attendees')
-          .select(`
-            user_id,
-            events ( title ),
-            users ( id, full_name, email, avatar_url )
-          `);
+          .select('user_id, event_id');
 
-        if (error) throw error;
+        if (attendeeErr) throw attendeeErr;
 
+        const rows = attendeeRows || [];
+        const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+        const eventIds = [...new Set(rows.map(r => r.event_id).filter(Boolean))];
+
+        if (userIds.length === 0) {
+          setAlumni([]);
+          return;
+        }
+
+        // Step 2: fetch the actual user + event records in parallel.
+        const [
+          { data: usersData, error: usersErr },
+          { data: eventsData, error: eventsErr },
+        ] = await Promise.all([
+          supabase
+            .from('users')
+            .select('id, full_name, email, avatar_url')
+            .in('id', userIds),
+          eventIds.length > 0
+            ? supabase.from('events').select('id, title').in('id', eventIds)
+            : Promise.resolve({ data: [], error: null }),
+        ]);
+
+        if (usersErr) throw usersErr;
+        if (eventsErr) throw eventsErr;
+
+        const eventTitleById = {};
+        (eventsData || []).forEach(e => {
+          eventTitleById[e.id] = e.title;
+        });
+
+        // Step 3: rebuild the same byUser shape the rest of the component relies on.
         const byUser = {};
-        (data || []).forEach(row => {
-          const u = row.users;
+        (usersData || []).forEach(u => {
+          byUser[u.id] = {
+            id: u.id,
+            name: u.full_name || 'Unnamed Alumni',
+            email: u.email,
+            avatar_url: u.avatar_url,
+            eventTitles: [],
+          };
+        });
+
+        rows.forEach(row => {
+          const u = byUser[row.user_id];
           if (!u) return;
-          if (!byUser[u.id]) {
-            byUser[u.id] = {
-              id: u.id,
-              name: u.full_name || 'Unnamed Alumni',
-              email: u.email,
-              avatar_url: u.avatar_url,
-              eventTitles: [],
-            };
-          }
-          if (row.events?.title) byUser[u.id].eventTitles.push(row.events.title);
+          const title = eventTitleById[row.event_id];
+          if (title) u.eventTitles.push(title);
         });
 
         setAlumni(Object.values(byUser));
