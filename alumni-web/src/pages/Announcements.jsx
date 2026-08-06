@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import AnnouncementsView from "../Views/AnnouncementsView";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 import PointsToast from "../modals/PointsToast";
+import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import {
   getResumeRoute,
   getSurveySections,
@@ -67,6 +68,32 @@ const Announcements = () => {
   const [surveyRoute, setSurveyRoute] = useState(null);
   const { showModal, requestNavigation, handleAccept, handleDecline } =
     useDpaGate(navigate);
+
+    const rewardChannelRef = useRef(null);
+      useEffect(() => {
+        let mounted = true;
+        subscribeToRewardPoints(
+          () => {},
+          ({ points, newBalance }) => {
+            if (!mounted) return;
+            setToast({
+              visible: true,
+              points,
+              newBalance,
+              label: "Points awarded",
+            });
+          },
+        ).then((channel) => {
+          if (mounted) rewardChannelRef.current = channel;
+          else channel?.unsubscribe();
+        });
+
+        return () => {
+          mounted = false;
+          rewardChannelRef.current?.unsubscribe();
+          rewardChannelRef.current = null;
+        };
+      }, []);
 
   // Fetch announcements from Supabase
   useEffect(() => {

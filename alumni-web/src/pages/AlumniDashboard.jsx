@@ -363,21 +363,32 @@ const AlumniDashboard = () => {
   // ============================ REAL-TIME REWARD SYNC (Dashboard) ============================
   const rewardChannelRef = useRef(null);
   useEffect(() => {
-    let mounted = true;
-    subscribeToRewardPoints((newPoints) => {
+  let mounted = true;
+  subscribeToRewardPoints(
+    (newPoints) => {
       console.log("[AlumniDashboard] realtime reward update:", newPoints);
       if (mounted) setRewardPoints(newPoints);
-    }).then((channel) => {
-      if (mounted) rewardChannelRef.current = channel;
-      else channel?.unsubscribe();
-    });
+    },
+    ({ points, newBalance }) => {
+      if (!mounted) return;
+      setToast({
+        visible: true,
+        points,
+        newBalance,
+        label: "Points awarded",
+      });
+    },
+  ).then((channel) => {
+    if (mounted) rewardChannelRef.current = channel;
+    else channel?.unsubscribe();
+  });
 
-    return () => {
-      mounted = false;
-      rewardChannelRef.current?.unsubscribe();
-      rewardChannelRef.current = null;
-    };
-  }, []);
+  return () => {
+    mounted = false;
+    rewardChannelRef.current?.unsubscribe();
+    rewardChannelRef.current = null;
+  };
+}, []);
 
   // ============================ NOTIFICATION HANDLERS ============================
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
@@ -16,6 +16,8 @@ import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 import PointsToast from "../modals/PointsToast";
+import { subscribeToRewardPoints } from "../lib/rewardPoints";
+
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -44,6 +46,32 @@ const Sidebar = () => {
   const width = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
+
+  const rewardChannelRef = useRef(null);
+    useEffect(() => {
+      let mounted = true;
+      subscribeToRewardPoints(
+        () => {},
+        ({ points, newBalance }) => {
+          if (!mounted) return;
+          setToast({
+            visible: true,
+            points,
+            newBalance,
+            label: "Points awarded",
+          });
+        },
+      ).then((channel) => {
+        if (mounted) rewardChannelRef.current = channel;
+        else channel?.unsubscribe();
+      });
+
+      return () => {
+        mounted = false;
+        rewardChannelRef.current?.unsubscribe();
+        rewardChannelRef.current = null;
+      };
+    }, []);
 
   // ── DPA gate ──────────────────────────────────────────────────────────────
   const { showModal, requestNavigation, handleAccept, handleDecline } =

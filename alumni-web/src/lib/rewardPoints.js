@@ -110,7 +110,7 @@ export const claimSurveyReward = async (pointsToAward = 50) => {
 // ─── realtime subscription ────────────────────────────────────────────────────
 // Returns Promise<RealtimeChannel | null>.
 // Caller must await and store the channel, then call channel.unsubscribe() on cleanup.
-export const subscribeToRewardPoints = async (onChange) => {
+export const subscribeToRewardPoints = async (onChange, onAwarded) => {
   const user = await resolveUser();
   if (!user) {
     console.error('[rewardPoints] subscribeToRewardPoints: no authenticated user');
@@ -125,6 +125,13 @@ export const subscribeToRewardPoints = async (onChange) => {
   } catch {
     // channel may not exist yet — ignore
   }
+
+  const { data: initial } = await supabase
+    .from('users')
+    .select('reward_points')
+    .eq('id', user.id)
+    .single();
+  let lastKnown = initial?.reward_points ?? 0;
 
   const channel = supabase
     .channel(channelName)
@@ -143,7 +150,15 @@ export const subscribeToRewardPoints = async (onChange) => {
           newPoints,
           fullPayload: payload.new,
         });
-        if (typeof newPoints === 'number') onChange(newPoints);
+        if (typeof newPoints === 'number') {
+          onChange(newPoints);
+
+          const delta = newPoints - lastKnown;
+          lastKnown = newPoints;
+          if (delta > 0 && typeof onAwarded === 'function') {
+            onAwarded({ points: delta, newBalance: newPoints });
+          }
+        }
       }
     )
     .subscribe((status, err) => {

@@ -310,22 +310,18 @@ const handleAwardPoints = async (userIds, points) => {
   try {
     const awardAmount = (typeof points === 'number' && points > 0) ? points : randomPoints();
 
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/award-points`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_ids: userIds, points: awardAmount }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result?.detail?.message || result?.detail || 'Failed to award points.');
+    }
+
     for (const userId of userIds) {
-      const { data: userRow, error: fetchErr } = await supabase
-        .from('users')
-        .select('reward_points')
-        .eq('id', userId)
-        .single();
-      if (fetchErr) throw fetchErr;
-
-      const newBalance = (userRow?.reward_points || 0) + awardAmount;
-
-      const { error: updateErr } = await supabase
-        .from('users')
-        .update({ reward_points: newBalance })
-        .eq('id', userId);
-      if (updateErr) throw updateErr;
-
       await logAction({
         action: 'Update',
         module: 'Rewards',
@@ -334,6 +330,7 @@ const handleAwardPoints = async (userIds, points) => {
         status: 'Success',
       });
     }
+
     showToastMessage('Points awarded successfully!', 'success');
   } catch (error) {
     showToastMessage('Failed to award points: ' + error.message, 'error');
