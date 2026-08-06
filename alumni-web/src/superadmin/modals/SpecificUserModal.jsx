@@ -1,20 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { FiX, FiSearch } from 'react-icons/fi';
-import { supabase } from '../../lib/supabase'; // adjust path to match your project
+import { supabase } from '../../lib/supabase';
 
-// NOTE: assumes your `users` table has `full_name` and `email` columns.
-// You already query `users` with `id, role` in ContentManagement.js —
-// adjust the column names below (e.g. `name` instead of `full_name`)
-// if your schema differs.
-
-const useDebouncedValue = (value, delay = 300) => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
-};
+// NOTE: This implementation now mirrors AwardPointsModal's fetching logic
+// to ensure consistent user loading and "Last, First Middle" formatting.
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -23,46 +12,66 @@ const getInitials = (name) => {
 
 const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState([]);
+  const [alumni, setAlumni] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const debouncedSearch = useDebouncedValue(search, 300);
   const inputRef = useRef(null);
 
-  // Alphabetical by default; switches to a name/email search once the
-  // admin types. Limit(50) keeps this snappy — raise if your alumni
-  // base is small enough that it doesn't matter.
-  const fetchUsers = useCallback(async (term) => {
-    setLoading(true);
-    setError(null);
-    try {
-      let query = supabase
-        .from('users')
-        .select('id, full_name, email, avatar_url')
-        .order('full_name', { ascending: true })
-        .limit(50);
-
-      if (term?.trim()) {
-        const escaped = term.trim().replace(/[%,]/g, '');
-        query = query.or(`full_name.ilike.%${escaped}%,email.ilike.%${escaped}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (err) {
-      console.error('[SpecificUserModal] fetch error:', err);
-      setError('Failed to load users.');
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // Replicated from AwardPointsModal: Fetches all eligible users and formats names
   useEffect(() => {
     if (!open) return;
-    fetchUsers(debouncedSearch);
-  }, [open, debouncedSearch, fetchUsers]);
+
+    const fetchAttendees = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data: usersData, error: usersErr } = await supabase
+          .from('users')
+          .select('id, last_name, first_name, middle_name, email, avatar_url')
+          .not('email', 'is', null);
+
+        if (usersErr) throw usersErr;
+
+        const formattedUsers = (usersData || []).map(u => {
+          const last = u.last_name?.trim() || '';
+          const first = u.first_name?.trim() || '';
+          const middle = u.middle_name?.trim() || '';
+          
+          // Format: Last Name, First Name Middle Name
+          const displayName = last
+            ? `${last}, ${[first, middle].filter(Boolean).join(' ')}`.trim()
+            : ([first, middle].filter(Boolean).join(' ') || 'Unnamed Alumni');
+
+          return {
+            id: u.id,
+            full_name: displayName, // Mapped to full_name for UI compatibility
+            email: u.email,
+            avatar_url: u.avatar_url,
+          };
+        });
+
+        setAlumni(formattedUsers);
+      } catch (err) {
+        console.error('[SpecificUserModal] fetch error:', err);
+        setError('Failed to load users.');
+        setAlumni([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendees();
+  }, [open]);
+
+  // Client-side filtering for instant search experience
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return alumni;
+    return alumni.filter(a =>
+      a.full_name.toLowerCase().includes(q) || 
+      a.email?.toLowerCase().includes(q)
+    );
+  }, [alumni, search]);
 
   useEffect(() => {
     if (open) {
@@ -81,7 +90,7 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
         </button>
         <h2 className="cm-modal-title">Select User</h2>
         <p className="cm-modal-subtitle">Search by name or email to target a specific alumni.</p>
-
+        
         <div className="cm-user-search-wrap">
           <FiSearch size={14} className="cm-user-search-icon" />
           <input
@@ -94,14 +103,14 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
         </div>
 
         <div className="cm-user-list">
-          {loading && <div className="cm-user-list-status">Searching…</div>}
+          {loading && <div className="cm-user-list-status">Loading alumni…</div>}
           {!loading && error && (
             <div className="cm-user-list-status cm-user-list-error">{error}</div>
           )}
-          {!loading && !error && users.length === 0 && (
+          {!loading && !error && filteredUsers.length === 0 && (
             <div className="cm-user-list-status">No users found.</div>
           )}
-          {!loading && !error && users.map((u) => (
+          {!loading && !error && filteredUsers.map((u) => (
             <button
               key={u.id}
               type="button"
