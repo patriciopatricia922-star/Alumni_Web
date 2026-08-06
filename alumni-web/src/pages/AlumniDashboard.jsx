@@ -36,6 +36,7 @@ import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
 import PointsToast from "../modals/PointsToast";
+import { useNotifications } from "../hooks/useNotifications";
 import NotificationBell from '../components/notifications/NotificationBell';
 import '../styles/NotificationBell.css';
 
