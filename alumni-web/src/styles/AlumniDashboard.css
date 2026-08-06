@@ -1024,6 +1024,15 @@
     height: auto;
     min-height: clamp(130px, 22vh, 200px);
   }
+  .hello-card-inner {
+    justify-content: flex-start !important;
+    gap: clamp(6px, 1.5vh, 12px);
+  }
+  .hello-notification-text {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+}
 }
   .notification-dropdown.mobile {
     right: 0;
