@@ -1006,6 +1006,8 @@ body.ann-modal-open {
 @media (max-width: 768px) {
   .ann-cards-list > div {
     max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
   .ann-cards-list > div > div:first-child {
     height: clamp(200px, 55vw, 280px) !important;

@@ -687,7 +687,7 @@ const AnnouncementsView = ({
           <span>Back</span>
         </button>
 
-        <div className="ann-hdr" style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px', marginLeft: '40px', marginTop: '10px' }}>
+        <div className="ann-hdr" style={{ paddingRight: isMobile ? '60px' : '90px', marginBottom: isMobile ? '20px' : '28px', marginLeft: isMobile ? '4px' : '40px', marginTop: '10px' }}>
           <h1 className="ann-heading">
             Announcements
           </h1>
@@ -698,9 +698,9 @@ const AnnouncementsView = ({
               fontFamily: 'Montserrat, Arial',
               fontWeight: 400,
               fontSize:   isMobile ? '12px' : '13.5px',
-              lineHeight: '0.3',
+              lineHeight: isMobile ? '1.5' : '0.3',
               margin:     0,
-              marginLeft: '-4px',
+              marginLeft: isMobile ? 0 : '-4px',
               marginTop:  '12px',
             }}
           >
@@ -821,15 +821,15 @@ const AnnouncementsView = ({
         )}
 
         <div style={{
-          display:       'flex',
-          justifyContent:'flex-end',
-          alignItems:    'center',
-          marginBottom:  isMobile ? '16px' : '24px',
-          marginLeft:    '28px',
-          marginRight:   '15px',
-          paddingRight:  '15px',
-          gap:           '2px',
-        }}>
+            display:       'flex',
+            justifyContent:'flex-end',
+            alignItems:    'center',
+            marginBottom:  isMobile ? '16px' : '24px',
+            marginLeft:    isMobile ? '8px' : '28px',
+            marginRight:   isMobile ? '8px' : '15px',
+            paddingRight:  isMobile ? 0 : '15px',
+            gap:           '2px',
+          }}>
           <div ref={filterRef} style={{ display: 'flex', alignItems: 'center', gap: '2px', position: 'relative' }}>
 
             <div
@@ -884,7 +884,7 @@ const AnnouncementsView = ({
               style={{
                 height:         '37px',
                 padding:        '0 18px',
-                transform:      'translateX(12px)',
+                transform:      isMobile ? 'none' : 'translateX(12px)',
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
@@ -978,17 +978,17 @@ const AnnouncementsView = ({
           </div>
         ) : (
           <div
-            className="ann-cards-list"
-            style={{
-              display:             'grid',
-              gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-              gap:                 isMobile ? '16px' : '14px',
-              alignItems:          'start',
-              marginLeft:          '24px',
-              marginRight:         '-10px',
-              paddingRight:        '10px',
-            }}
-          >
+              className="ann-cards-list"
+              style={{
+                display:             'grid',
+                gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                gap:                 isMobile ? '16px' : '14px',
+                alignItems:          'start',
+                marginLeft:          isMobile ? '8px' : '24px',
+                marginRight:         isMobile ? '8px' : '-10px',
+                paddingRight:        isMobile ? 0 : '10px',
+              }}
+            >
             {filtered.map(a => (
               <AnnouncementCard
                 key={a.id}
