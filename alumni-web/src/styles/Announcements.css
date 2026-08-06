@@ -148,8 +148,29 @@ body {
   transition: opacity 0.15s ease;
 }
 
+@media (max-width: 767px) {
+  .ann-back {
+    margin-left: 0;
+  }
+}
+
 .ann-back:hover {
   opacity: 0.7;
+}
+
+.ab-bell {
+  position: absolute;
+  z-index: 200;
+}
+
+@media (max-width: 767px) {
+  .ab-bell {
+    position: fixed !important;
+    top: clamp(12px, 2vh, 18px) !important;
+    right: clamp(12px, 4vw, 18px) !important;
+    left: auto !important;
+    transform: none !important;
+  }
 }
 
 .ann-hdr {
@@ -1030,5 +1051,25 @@ body.ann-modal-open {
 @media (max-width: 480px) {
   .ann-cards-list > div > div:first-child {
     height: clamp(180px, 60vw, 220px) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .ann-cards-list {
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .ann-cards-list > div button {
+    font-size: clamp(11px, 3.2vw, 13px) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .ann-cards-list > div > div:first-child {
+    height: clamp(160px, 58vw, 200px) !important;
+  }
+  .ann-cards-list > div p {
+    font-size: clamp(11px, 3.6vw, 13px) !important;
   }
 }
