@@ -913,8 +913,7 @@ const AnnouncementsView = ({
               <div style={{
                 position:  'absolute',
                 top:       'calc(100% + 8px)',
-                left:      isMobile ? 'auto' : 0,
-                right:     isMobile ? 0 : 'auto',
+                left:      0,
                 background:'#FFFFFF',
                 border:    '1px solid var(--ann-card-border)',
                 borderRadius:'12px',
