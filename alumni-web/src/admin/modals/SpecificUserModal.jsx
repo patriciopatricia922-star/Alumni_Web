@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { FiX, FiSearch } from 'react-icons/fi';
-import { supabase } from '../../lib/supabase'; // adjust path to match your project
+import { supabase } from '../../lib/supabase';
 
-// NOTE: This implementation now mirrors AwardPointsModal's fetching logic
-// to ensure consistent user loading and "Last, First Middle" formatting.
+// Replicated from AwardPointsModal: fetches ALL eligible users,
+// formats as "Last, First Middle", and filters client-side.
+// This modal is for ADMIN selection — no audience filtering applied here.
 
 const getInitials = (name) => {
   if (!name) return '?';
@@ -17,7 +18,7 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
 
-  // Replicated from AwardPointsModal: Fetches all eligible users and formats names
+  // Fetch ALL eligible users on open — identical to AwardPointsModal
   useEffect(() => {
     if (!open) return;
 
@@ -36,15 +37,14 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
           const last = u.last_name?.trim() || '';
           const first = u.first_name?.trim() || '';
           const middle = u.middle_name?.trim() || '';
-          
-          // Format: Last Name, First Name Middle Name
+
           const displayName = last
             ? `${last}, ${[first, middle].filter(Boolean).join(' ')}`.trim()
             : ([first, middle].filter(Boolean).join(' ') || 'Unnamed Alumni');
 
           return {
             id: u.id,
-            full_name: displayName, // Mapped to full_name for UI compatibility
+            full_name: displayName,
             email: u.email,
             avatar_url: u.avatar_url,
           };
@@ -63,12 +63,12 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
     fetchAttendees();
   }, [open]);
 
-  // Client-side filtering for instant search experience
+  //  Client-side filtering for instant search
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return alumni;
     return alumni.filter(a =>
-      a.full_name.toLowerCase().includes(q) || 
+      a.full_name.toLowerCase().includes(q) ||
       a.email?.toLowerCase().includes(q)
     );
   }, [alumni, search]);
@@ -90,7 +90,7 @@ const SpecificUserModal = ({ open, onClose, onSelect, selectedUserId }) => {
         </button>
         <h2 className="cm-modal-title">Select User</h2>
         <p className="cm-modal-subtitle">Search by name or email to target a specific alumni.</p>
-        
+
         <div className="cm-user-search-wrap">
           <FiSearch size={14} className="cm-user-search-icon" />
           <input
