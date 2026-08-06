@@ -15,64 +15,24 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
   const [selectedMap, setSelectedMap] = useState({}); // { [userId]: userObject }
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch alumni who have attended at least one event.
-  //
-  // FIX: the previous version used a single embedded/nested select
-  // (event_attendees -> events(title), event_attendees -> users(...)).
-  // Nested selects like that only resolve if PostgREST can find exactly
-  // one unambiguous FK path for each embed; if that's not the case, or if
-  // any relevant relationship isn't set up the way PostgREST expects, the
-  // whole query throws and we fell into the catch block, leaving `alumni`
-  // empty ("No eligible alumni found") with no obvious error visible.
-  //
-  // Fix: fetch the join table and the two related tables separately,
-  // then assemble the same `alumni` shape in JS. This avoids depending on
-  // embedded-relationship resolution entirely.
+  // FIX (root cause): there is no `event_attendees` table in this project —
+  // that endpoint 404'd because PostgREST had no such relation to serve.
+  // Eligibility/identification of alumni is tracked solely via the `users`
+  // table (matched by email), so we fetch directly from there instead of
+  // trying to join through a non-existent attendance table.
   useEffect(() => {
     if (!open) return;
     const fetchAttendees = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Step 1: raw attendee rows — just the FK ids, no embedding.
-        const { data: attendeeRows, error: attendeeErr } = await supabase
-          .from('event_attendees')
-          .select('user_id, event_id');
-
-        if (attendeeErr) throw attendeeErr;
-
-        const rows = attendeeRows || [];
-        const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
-        const eventIds = [...new Set(rows.map(r => r.event_id).filter(Boolean))];
-
-        if (userIds.length === 0) {
-          setAlumni([]);
-          return;
-        }
-
-        // Step 2: fetch the actual user + event records in parallel.
-        const [
-          { data: usersData, error: usersErr },
-          { data: eventsData, error: eventsErr },
-        ] = await Promise.all([
-          supabase
-            .from('users')
-            .select('id, full_name, email, avatar_url')
-            .in('id', userIds),
-          eventIds.length > 0
-            ? supabase.from('events').select('id, title').in('id', eventIds)
-            : Promise.resolve({ data: [], error: null }),
-        ]);
+        const { data: usersData, error: usersErr } = await supabase
+          .from('users')
+          .select('id, full_name, email, avatar_url')
+          .not('email', 'is', null);
 
         if (usersErr) throw usersErr;
-        if (eventsErr) throw eventsErr;
 
-        const eventTitleById = {};
-        (eventsData || []).forEach(e => {
-          eventTitleById[e.id] = e.title;
-        });
-
-        // Step 3: rebuild the same byUser shape the rest of the component relies on.
         const byUser = {};
         (usersData || []).forEach(u => {
           byUser[u.id] = {
@@ -80,15 +40,8 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
             name: u.full_name || 'Unnamed Alumni',
             email: u.email,
             avatar_url: u.avatar_url,
-            eventTitles: [],
+            eventTitles: [], // no attendance table to source this from
           };
-        });
-
-        rows.forEach(row => {
-          const u = byUser[row.user_id];
-          if (!u) return;
-          const title = eventTitleById[row.event_id];
-          if (title) u.eventTitles.push(title);
         });
 
         setAlumni(Object.values(byUser));
@@ -177,7 +130,6 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
             />
           </div>
 
-          {/* Search results list — click a row to add/remove from selection */}
           <div
             style={{
               border: '1px solid #E2E8F0',
@@ -237,7 +189,6 @@ const AwardPointsModal = ({ open, onClose, onAward }) => {
             })}
           </div>
 
-          {/* Selected users review list */}
           <div style={{ marginTop: 16 }}>
             <label className="cm-label">
               Selected Alumni ({selectedList.length})
