@@ -26,6 +26,15 @@
   border: 1px solid rgba(43, 114, 251, 0.5);
 }
 
+/* NEW: Image Icon Styles */
+.notification-bell-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  /* If your PNG is black/dark, you might need a filter to make it white like the old SVG */
+  /* filter: brightness(0) invert(1); */ 
+}
+
 .notification-badge {
   position: absolute;
   top: -7px;
@@ -272,19 +281,22 @@
 
 @media (max-width: 767px) {
   .notification-bell-btn {
-    width: clamp(40px, 11vw, 44px);
-    height: clamp(40px, 11vw, 44px);
+    width: 44px;
+    height: 44px;
   }
 
   .notification-dropdown.mobile {
-    right: 0;
-    left: auto;
-    width: min(92vw, 380px);
-    max-width: calc(100vw - 16px);
-    max-height: min(520px, calc(100vh - clamp(20px, 3vh, 32px) - clamp(44px, 4vw, 52px) - 40px));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    position: fixed;
+    top: 70px; 
+    left: 16px; 
+    right: 16px; 
+    width: auto; 
+    max-width: none; 
+    max-height: calc(100vh - 140px);
+    margin: 0;
+    transform: none; /* Reset any transform that might shift it off-screen */
   }
+}
 
   .notification-dropdown.mobile .dropdown-body {
     max-height: none;

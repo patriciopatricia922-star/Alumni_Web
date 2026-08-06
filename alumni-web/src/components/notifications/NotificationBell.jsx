@@ -3,6 +3,7 @@ import React from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { groupByDate, formatTime } from '../../lib/notificationService';
 import { truncateHtml } from '../../utils/textHelpers';
+import notifIcon from '../../assets/notif_icn.png';
 
 const NotificationBell = ({
   autoMarkReadOnMount = false,
@@ -27,6 +28,7 @@ const NotificationBell = ({
 
   const filteredList = notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs;
   const grouped = groupByDate(filteredList);
+  const isMobile = className.includes('mobile');
 
   return (
     <div ref={bellRef} className={`notification-bell-wrapper ${className}`}>
@@ -35,15 +37,11 @@ const NotificationBell = ({
         className={`notification-bell-btn ${showDropdown ? 'active' : ''} ${bellClassName}`}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-            stroke="#FFFFFF"
-            strokeWidth="1.67"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img 
+          src={notifIcon} 
+          alt="Notifications" 
+          className="notification-bell-icon" 
+        />
         {unreadCount > 0 && (
           <div className="notification-badge">
             <span className="notification-badge-text">
