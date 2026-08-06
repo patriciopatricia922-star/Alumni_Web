@@ -944,9 +944,10 @@ body.ann-modal-open {
 @media (max-width: 767px) {
   .ab-bell {
     position: fixed !important;
-    top: clamp(12px, 2vh, 18px);
-    right: clamp(12px, 4vw, 18px);
+    top: clamp(12px, 2vh, 18px) !important;
+    right: clamp(12px, 4vw, 18px) !important;
     left: auto !important;
+    transform: none !important;
   }
 }
 

@@ -607,7 +607,7 @@ const AnnouncementsView = ({
         position:   'relative',
       }}>
 
-        <div ref={bellRef} className="ab-bell" style={{ transform: isMobile ? 'none' : 'translateX(16px)' }}>
+        <div ref={bellRef} className="ab-bell" style={!isMobile ? { transform: 'translateX(16px)' } : undefined}>
           <button className="ab-bell-btn" onClick={() => setShowDropdown(v => !v)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
@@ -919,7 +919,8 @@ const AnnouncementsView = ({
                 borderRadius:'12px',
                 overflow:  'hidden',
                 zIndex:    300,
-                minWidth:  '236px',
+                minWidth:  isMobile ? '160px' : '236px',
+                width:     isMobile ? 'clamp(160px, 45vw, 200px)' : undefined,
                 boxShadow: '0px 10px 30px rgba(0,0,0,0.15)',
               }}>
                 {categories.map((cat, i) => (
