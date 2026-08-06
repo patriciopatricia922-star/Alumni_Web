@@ -45,6 +45,87 @@
   --ab-radius-sm: 14px;
 }
 
+.ab-bell-wrapper {
+  position: absolute;
+  top: 37px;
+  right: 51px;
+  z-index: 200;
+}
+
+.ab-bell-btn {
+  width: 52px;
+  height: 52px;
+  background: #003EA6;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.35);
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.ab-notif-dropdown {
+  position: absolute;
+  top: calc(52px + 10px);
+  right: 0;
+  width: 380px;
+  max-height: 520px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 300;
+}
+
+@media (max-width: 767px) {
+  .ab-bell-wrapper.mobile {
+    position: absolute;
+    top: clamp(20px, 5vw, 28px);
+    right: clamp(12px, 4vw, 18px);
+    z-index: 200;
+  }
+
+  .ab-bell-btn.mobile {
+    width: clamp(40px, 11vw, 44px) !important;
+    height: clamp(40px, 11vw, 44px) !important;
+  }
+
+  .ab-notif-dropdown.mobile {
+    position: absolute;
+    top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
+    right: 0 !important;
+    left: auto !important;
+    width: min(92vw, 380px) !important;
+    min-width: 260px;
+    max-width: calc(100vw - 24px);
+    max-height: min(70vh, 520px) !important;
+    overflow: hidden;
+  }
+
+  .ab-notif-dropdown.mobile > div[style*="overflowY"] {
+    max-height: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .ab-bell-btn.mobile {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .ab-notif-dropdown.mobile {
+    width: calc(100vw - 20px) !important;
+    min-width: 240px;
+  }
+}
+
+
 /* ============================================
    RESET
    ============================================ */
@@ -85,7 +166,7 @@
 /* ============================================
    NOTIFICATION BELL
    ============================================ */
-.ab-bell {
+/* .ab-bell {
   position: absolute;
   top:   clamp(28px, 4vh,  52px);
   right: clamp(24px, 3.2vw, 56px);
@@ -132,7 +213,7 @@
 }
 
 /* Notification Dropdown */
-.ab-ndrop {
+/* .ab-ndrop {
   position: absolute;
   top: calc(clamp(44px, 4vw, 52px) + 10px);
   right: 0;
@@ -146,7 +227,7 @@
   flex-direction: column;
   overflow: hidden;
   z-index: 600;
-}
+} */
 
 /* ============================================
    ENHANCED NOTIFICATION UI DESIGN SYSTEM
@@ -1037,10 +1118,10 @@
              clamp(20px, 2.8vw, 36px);
   }
 
-  .ab-bell {
+  /* .ab-bell {
     top:   clamp(22px, 3.2vh, 38px);
     right: clamp(14px, 2.2vw, 24px);
-  }
+  } */
 
   .ab-hdr {
     padding-right: calc(clamp(44px, 4vw, 52px) + clamp(12px, 1.5vw, 20px));
@@ -1088,7 +1169,7 @@
   /* Fix 5: reinforce stacking so the bell is always the click target above
     the fixed mobile Sidebar bottom nav / any sibling content — behavior
     and dropdown JSX are unchanged, this only guarantees it's clickable. */
-  .ab-bell {
+  /* .ab-bell {
     position: fixed;
     top:   clamp(12px, 2vh, 18px);
     right: clamp(12px, 4vw, 18px);
@@ -1098,7 +1179,7 @@
   .ab-bell-btn {
     position: relative;
     z-index: 901;
-  }
+  } */
 
   .ab-back {
     margin-left: 0;
@@ -1218,10 +1299,6 @@
     margin-left: -2px;
   }
 
-  .ab-ndrop {
-    width: 92vw;
-    right: 0;
-  }
 }
 
 /* Small mobile — mirrors @media (max-width: 479px) */
@@ -1272,8 +1349,8 @@
     padding: 36px 56px 29px 97.1px;
   }
 
-  .ab-bell {
+  /* .ab-bell {
     top: 36px;
     right: 56px;
-  }
+  } */
 }
