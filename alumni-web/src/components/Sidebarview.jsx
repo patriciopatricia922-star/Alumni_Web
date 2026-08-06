@@ -26,6 +26,13 @@ const SidebarView = ({
 
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
   if (isMobile) {
+    // Combine menu items with help items (e.g. About) for the mobile bottom nav,
+    // matching the desktop sidebar which shows both MENU and HELP sections.
+    const mobileNavItems = [
+      ...menuItems,
+      ...helpItems.map((item) => ({ ...item, navPath: item.path, loading: false })),
+    ];
+
     return (
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -38,7 +45,7 @@ const SidebarView = ({
         paddingBottom: 'env(safe-area-inset-bottom)',
         border: '1px solid rgba(255,255,255,0.15)',
       }}>
-        {menuItems.map((item) => {
+        {mobileNavItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path === '/survey' && location.pathname.startsWith('/survey'));
           return (
@@ -53,7 +60,8 @@ const SidebarView = ({
                 alignItems: 'center', justifyContent: 'center',
                 gap: '3px', flex: 1, height: '100%',
                 background: 'none', border: 'none', cursor: item.loading ? 'not-allowed' : 'pointer',
-                padding: 0, position: 'relative',
+                padding: '0 2px', position: 'relative',
+                minWidth: 0,
               }}
             >
               {isActive && (
@@ -72,11 +80,15 @@ const SidebarView = ({
                   : 'brightness(0) invert(1) opacity(0.5)',
               }} />
               <span style={{
-                fontFamily: 'Montserrat', fontSize: '10px',
+                fontFamily: 'Montserrat',
+                fontSize: 'clamp(7.5px, 2.6vw, 10px)',
                 fontWeight: isActive ? 700 : 400,
                 color: isActive ? '#FFEC8E' : 'rgba(255,255,255,0.45)',
-                maxWidth: '60px', textAlign: 'center',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                width: '100%',
+                textAlign: 'center',
+                overflow: 'visible',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.2',
               }}>
                 {item.label}
               </span>
@@ -92,7 +104,7 @@ const SidebarView = ({
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}>
           <LogoutIcon />
-          <span style={{ fontFamily: 'Montserrat', fontSize: '10px', color: 'rgba(255,255,255,0.45)' }}>Logout</span>
+          <span style={{ fontFamily: 'Montserrat', fontSize: 'clamp(7.5px, 2.6vw, 10px)', color: 'rgba(255,255,255,0.45)' }}>Logout</span>
         </button>
       </nav>
     );
