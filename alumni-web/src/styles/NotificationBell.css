@@ -26,13 +26,13 @@
   border: 1px solid rgba(43, 114, 251, 0.5);
 }
 
-/* NEW: Image Icon Styles */
+/* Image Icon Styles */
 .notification-bell-icon {
   width: 22px;
   height: 22px;
   object-fit: contain;
   /* If your PNG is black/dark, you might need a filter to make it white like the old SVG */
-  /* filter: brightness(0) invert(1); */ 
+  /* filter: brightness(0) invert(1); */
 }
 
 .notification-badge {
@@ -275,31 +275,36 @@
 }
 
 /* ============================ MOBILE RESPONSIVE ============================ */
-/* Restored from AlumniDashboard.css original mobile rules.
-   The .mobile class is applied by NotificationBell when className="mobile"
-   is passed from Alumnidashboardview.jsx on small screens. */
+/* Reference: Discounts.css mobile positioning logic.
+   Uses absolute positioning relative to the wrapper, with viewport-safe
+   width constraints (max-width: calc(100vw - 24px)) to prevent overflow. */
 
 @media (max-width: 767px) {
   .notification-bell-btn {
-    width: 44px;
-    height: 44px;
+    width: clamp(40px, 11vw, 44px);
+    height: clamp(40px, 11vw, 44px);
   }
 
   .notification-dropdown.mobile {
-    position: fixed;
-    top: 70px; 
-    left: 16px; 
-    right: 16px; 
-    width: auto; 
-    max-width: none; 
-    max-height: calc(100vh - 140px);
-    margin: 0;
-    transform: none; /* Reset any transform that might shift it off-screen */
+    position: absolute;
+    /* Anchor to the bell button's bottom edge + gap */
+    top: calc(clamp(40px, 11vw, 44px) + 10px);
+    right: 0;
+    left: auto;
+    /* Viewport-safe width: never exceed screen width minus margins */
+    width: min(92vw, 380px);
+    min-width: 260px;
+    max-width: calc(100vw - 24px);
+    max-height: min(70vh, 520px);
+    overflow: hidden;
+    /* Ensure smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
   }
-}
 
+  /* Allow the body to scroll internally if content exceeds max-height */
   .notification-dropdown.mobile .dropdown-body {
     max-height: none;
+    overflow-y: auto;
   }
 }
 
