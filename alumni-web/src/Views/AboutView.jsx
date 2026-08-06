@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import '../styles/About.css';
 import Sidebar      from '../components/Sidebar';
 import AlumnAILogo  from '../assets/alumnai_logo_new.svg';
+import FooterLogo   from '../assets/footer_logo.png';
 import TargetIcon   from '../assets/target_icn.png';
 import MagnifyIcon  from '../assets/magnifying_icn.png';
 import MessageIcon  from '../assets/message_icn.svg';
@@ -21,7 +22,6 @@ import ProtectIcon  from '../assets/protect_icn.svg';
 import Missionicon  from '../assets/mission_icn.svg';
 import useDisclosure from '../hooks/Usedisclosure';
 import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
-
 /* ─────────────────────────────────────────────────────────────
    STATIC CONTENT (migrated from the former separate-page routes)
 ───────────────────────────────────────────────────────────── */
@@ -417,7 +417,8 @@ const AboutView = ({
             <div className="ab-circ ab-c3"/>
 
             <div className="ab-logo-row">
-              <img src={AlumnAILogo} alt="AlumnAI"/>
+              <img src={AlumnAILogo} alt="AlumnAI" className="ab-logo-desktop" />
+              <img src={FooterLogo} alt="AlumnAI" className="ab-logo-mobile" />
             </div>
 
             <p className="ab-desc">
