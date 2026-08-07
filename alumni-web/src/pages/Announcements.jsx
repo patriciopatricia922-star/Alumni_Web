@@ -174,48 +174,6 @@ const Announcements = () => {
     }
   }, [surveyRoute, requestNavigation, navigate]);
 
-  // markAllRead is kept for the dropdown's "Mark all read" button;
-  // on this page it is effectively a no-op since all are already read,
-  // but we preserve the handler so the view contract is unchanged.
-  const markAllRead = useCallback(() => {
-    const allIds = notifs.map((n) => n.id);
-    localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(allIds));
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }, [notifs]);
-
-  const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(
-      localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS) || "[]",
-    );
-    if (!readIds.includes(id)) {
-      readIds.push(id);
-      localStorage.setItem(STORAGE_KEY_ANNOUNCEMENTS, JSON.stringify(readIds));
-    }
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  }, []);
-
-  const groupByDate = (list) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
-    list.forEach((n) => {
-      const d = new Date(n.time);
-      d.setHours(0, 0, 0, 0);
-      if (d >= today) groups["Today"].push(n);
-      else if (d >= yesterday) groups["Yesterday"].push(n);
-      else if (d >= weekAgo) groups["This Week"].push(n);
-      else groups["Earlier"].push(n);
-    });
-    return groups;
-  };
 
   const filtered =
     activeCategory === "All Announcements"
