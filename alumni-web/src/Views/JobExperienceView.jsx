@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import NotificationBell from '../components/notifications/NotificationBell'; // NEW IMPORT
+import '../styles/NotificationBell.css';
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
@@ -54,17 +56,24 @@ const STYLES = `
 `;
 
 const JobExperienceView = ({
-  form, set, toggleFactor,
-  errors, saveToast, cardRef,
-  formPct, currentSection, totalSections,
-  timeToFindJobOptions, employmentDurationOptions,
-  firstJobOptions, factorsOptions,
-  getLabel, getPlaceholder,
-  handleSave, handleNext,
+  form,
+  set,
+  toggleFactor,
+  errors,
+  saveToast,
+  cardRef,
+  formPct,
+  currentSection,
+  totalSections,
+  timeToFindJobOptions,
+  employmentDurationOptions,
+  firstJobOptions,
+  factorsOptions,
+  getLabel,
+  getPlaceholder,
+  handleSave,
+  handleNext,
   onBack,
-  bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
-  notifTab, setNotifTab, markAllRead, markOneRead,
-  groupByDate, formatTime,
   navigate,
 }) => (
   <>
@@ -72,106 +81,46 @@ const JobExperienceView = ({
     <div className="je-root">
       <Sidebar />
       <div className="je-content">
-
         <div className="je-header">
           <div className="je-topbar">
             <button className="je-back-btn" onClick={onBack}>
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5"
+                  stroke="#002263"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               Back
             </button>
-           
 
-            <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
-              <button
-                className={`je-bell${showDropdown ? ' active' : ''}`}
-                onClick={() => setShowDropdown(v => !v)}
-              >
-                <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
-                  <path d="M10.8 22.75H15.2M20.8 9.75C20.8 6.215 17.206 3.25 13 3.25C8.794 3.25 5.2 6.215 5.2 9.75C5.2 14.625 3.25 16.9 3.25 16.9H22.75C22.75 16.9 20.8 14.625 20.8 9.75Z" stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                {unreadCount > 0 && (
-                  <>
-                    <div className="je-bell-dot" />
-                    <div className="je-bell-count">{unreadCount > 99 ? '99+' : unreadCount}</div>
-                  </>
-                )}
-              </button>
-
-              {showDropdown && (
-                <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: '#FFFFFF', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
-                  <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#003EA6' }}>Notifications</span>
-                    {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#003EA6', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
-                  </div>
-                  <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
-                    {['all', 'unread'].map(t => (
-                      <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab === t ? '#003EA6' : 'transparent', border: notifTab === t ? 'none' : '1px solid #D1D5DC', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400, color: notifTab === t ? '#FFFFFF' : '#4A5565', transition: 'all 0.15s', textTransform: 'capitalize' }}>
-                        {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
-                    {(() => {
-                      const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
-                      if (!list.length) return (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                          <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(0,0,0,0.3)', margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-                        </div>
-                      );
-                      return Object.entries(groupByDate(list)).map(([label, items]) => {
-                        if (!items.length) return null;
-                        return (
-                          <div key={label}>
-                            <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
-                            {items.map(n => (
-                              <div key={n.id} onClick={() => markOneRead(n.id)}
-                                style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                                onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
-                              >
-                                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(0,62,166,0.08)', border: '1px solid rgba(0,62,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/></svg>
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#0A0A0A', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                                  <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: '#4A5565', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                                  <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(0,0,0,0.35)' }}>{formatTime(n.time)}</span>
-                                </div>
-                                {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003EA6', flexShrink: 0, marginTop: '6px' }} />}
-                              </div>
-                            ))}
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                  <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-                    <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                      style={{ width: '100%', height: '36px', background: '#F9FAFB', border: '1px solid #D1D5DC', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: '#4A5565', cursor: 'pointer' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
-                      onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
-                    >
-                      See all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
+            {/* ── Bell ─────────────────────────────────────────────────────── */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <NotificationBell onSeeAll={() => navigate("/notifications")} />
             </div>
           </div>
 
           <h1 className="je-title">Alumni Tracer Survey</h1>
-          <p className="je-subtitle">Please complete all sections to update your alumni status.</p>
+          <p className="je-subtitle">
+            Please complete all sections to update your alumni status.
+          </p>
 
           <div className="je-progress">
             <div className="je-progress-row">
-              <span>Section {currentSection} of {totalSections}</span>
-              <span style={{ color: '#003EA6', fontWeight: 700 }}>{formPct}% Complete</span>
+              <span>
+                Section {currentSection} of {totalSections}
+              </span>
+              <span style={{ color: "#003EA6", fontWeight: 700 }}>
+                {formPct}% Complete
+              </span>
             </div>
             <div className="je-progress-track">
-              <div className="je-progress-fill" style={{ width: `${formPct}%` }} />
+              <div
+                className="je-progress-fill"
+                style={{ width: `${formPct}%` }}
+              />
             </div>
             <span className="je-progress-label">Work Experience</span>
           </div>
@@ -185,18 +134,25 @@ const JobExperienceView = ({
             </div>
 
             <div className="je-questions">
-
               <div className="je-field">
                 <span className="je-label">
-                  {getLabel('time_to_find_job')} <span className="je-req">*</span>
-                  {errors.has('time_to_find_job') && <span className="je-field-error">Required</span>}
+                  {getLabel("time_to_find_job")}{" "}
+                  <span className="je-req">*</span>
+                  {errors.has("time_to_find_job") && (
+                    <span className="je-field-error">Required</span>
+                  )}
                 </span>
                 <div className="je-radio-group">
-                  {timeToFindJobOptions.map(opt => (
+                  {timeToFindJobOptions.map((opt) => (
                     <label key={opt} className="je-radio-label">
-                      <input type="radio" name="time_to_find_job" value={opt}
+                      <input
+                        type="radio"
+                        name="time_to_find_job"
+                        value={opt}
                         checked={form.time_to_find_job === opt}
-                        onChange={() => set('time_to_find_job', opt)} />{opt}
+                        onChange={() => set("time_to_find_job", opt)}
+                      />
+                      {opt}
                     </label>
                   ))}
                 </div>
@@ -204,91 +160,163 @@ const JobExperienceView = ({
 
               <div className="je-field">
                 <span className="je-label">
-                  {getLabel('employment_duration')} <span className="je-req">*</span>
-                  {errors.has('employment_duration') && <span className="je-field-error">Required</span>}
+                  {getLabel("employment_duration")}{" "}
+                  <span className="je-req">*</span>
+                  {errors.has("employment_duration") && (
+                    <span className="je-field-error">Required</span>
+                  )}
                 </span>
                 <div className="je-radio-group">
-                  {employmentDurationOptions.map(opt => (
+                  {employmentDurationOptions.map((opt) => (
                     <label key={opt} className="je-radio-label">
-                      <input type="radio" name="employment_duration" value={opt}
+                      <input
+                        type="radio"
+                        name="employment_duration"
+                        value={opt}
                         checked={form.employment_duration === opt}
-                        onChange={() => set('employment_duration', opt)} />{opt}
+                        onChange={() => set("employment_duration", opt)}
+                      />
+                      {opt}
                     </label>
                   ))}
                 </div>
-                {form.employment_duration === 'Other' && (
-                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_employment_duration') || 'Please specify'}
+                {form.employment_duration === "Other" && (
+                  <input
+                    className="je-other-input"
+                    type="text"
+                    placeholder={
+                      getPlaceholder("other_employment_duration") ||
+                      "Please specify"
+                    }
                     value={form.other_employment_duration}
-                    onChange={e => set('other_employment_duration', e.target.value)}
-                    onFocus={e => e.target.style.borderColor = '#003EA6'}
-                    onBlur={e => e.target.style.borderColor = '#D1D5DC'}
-                    style={{ borderColor: errors.has('other_employment_duration') ? '#F87171' : undefined }} />
+                    onChange={(e) =>
+                      set("other_employment_duration", e.target.value)
+                    }
+                    onFocus={(e) => (e.target.style.borderColor = "#003EA6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#D1D5DC")}
+                    style={{
+                      borderColor: errors.has("other_employment_duration")
+                        ? "#F87171"
+                        : undefined,
+                    }}
+                  />
                 )}
               </div>
 
               <div className="je-field">
                 <span className="je-label">
-                  {getLabel('first_job_source')} <span className="je-req">*</span>
-                  {errors.has('first_job_source') && <span className="je-field-error">Required</span>}
+                  {getLabel("first_job_source")}{" "}
+                  <span className="je-req">*</span>
+                  {errors.has("first_job_source") && (
+                    <span className="je-field-error">Required</span>
+                  )}
                 </span>
                 <div className="je-radio-group">
-                  {firstJobOptions.map(opt => (
+                  {firstJobOptions.map((opt) => (
                     <label key={opt} className="je-radio-label">
-                      <input type="radio" name="first_job_source" value={opt}
+                      <input
+                        type="radio"
+                        name="first_job_source"
+                        value={opt}
                         checked={form.first_job_source === opt}
-                        onChange={() => set('first_job_source', opt)} />{opt}
+                        onChange={() => set("first_job_source", opt)}
+                      />
+                      {opt}
                     </label>
                   ))}
                 </div>
-                {form.first_job_source === 'Other' && (
-                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_first_job_source') || 'Please specify'}
+                {form.first_job_source === "Other" && (
+                  <input
+                    className="je-other-input"
+                    type="text"
+                    placeholder={
+                      getPlaceholder("other_first_job_source") ||
+                      "Please specify"
+                    }
                     value={form.other_first_job_source}
-                    onChange={e => set('other_first_job_source', e.target.value)}
-                    onFocus={e => e.target.style.borderColor = '#003EA6'}
-                    onBlur={e => e.target.style.borderColor = '#D1D5DC'}
-                    style={{ borderColor: errors.has('other_first_job_source') ? '#F87171' : undefined }} />
+                    onChange={(e) =>
+                      set("other_first_job_source", e.target.value)
+                    }
+                    onFocus={(e) => (e.target.style.borderColor = "#003EA6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#D1D5DC")}
+                    style={{
+                      borderColor: errors.has("other_first_job_source")
+                        ? "#F87171"
+                        : undefined,
+                    }}
+                  />
                 )}
               </div>
 
               <div className="je-field">
                 <span className="je-label">
-                  {getLabel('first_job_factors')} <span className="je-req">*</span>
-                  {errors.has('first_job_factors') && <span className="je-field-error">Required</span>}
+                  {getLabel("first_job_factors")}{" "}
+                  <span className="je-req">*</span>
+                  {errors.has("first_job_factors") && (
+                    <span className="je-field-error">Required</span>
+                  )}
                 </span>
                 <span className="je-hint">(Check all that apply)</span>
                 <div className="je-radio-group">
-                  {factorsOptions.map(opt => (
+                  {factorsOptions.map((opt) => (
                     <label key={opt} className="je-checkbox-label">
-                      <input type="checkbox" value={opt}
+                      <input
+                        type="checkbox"
+                        value={opt}
                         checked={form.first_job_factors.includes(opt)}
-                        onChange={() => toggleFactor(opt)} />{opt}
+                        onChange={() => toggleFactor(opt)}
+                      />
+                      {opt}
                     </label>
                   ))}
                 </div>
-                {form.first_job_factors.includes('Other') && (
-                  <input className="je-other-input" type="text" placeholder={getPlaceholder('other_job_factors') || 'Please specify'}
+                {form.first_job_factors.includes("Other") && (
+                  <input
+                    className="je-other-input"
+                    type="text"
+                    placeholder={
+                      getPlaceholder("other_job_factors") || "Please specify"
+                    }
                     value={form.other_job_factors}
-                    onChange={e => set('other_job_factors', e.target.value)}
-                    onFocus={e => e.target.style.borderColor = '#003EA6'}
-                    onBlur={e => e.target.style.borderColor = '#D1D5DC'}
-                    style={{ borderColor: errors.has('other_job_factors') ? '#F87171' : undefined }} />
+                    onChange={(e) => set("other_job_factors", e.target.value)}
+                    onFocus={(e) => (e.target.style.borderColor = "#003EA6")}
+                    onBlur={(e) => (e.target.style.borderColor = "#D1D5DC")}
+                    style={{
+                      borderColor: errors.has("other_job_factors")
+                        ? "#F87171"
+                        : undefined,
+                    }}
+                  />
                 )}
               </div>
-
             </div>
 
             <div className="je-footer">
-              <button className="je-btn-prev" onClick={() => navigate('/survey/employment-information')}>Previous</button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                className="je-btn-prev"
+                onClick={() => navigate("/survey/employment-information")}
+              >
+                Previous
+              </button>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
                 {saveToast && (
-                  <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#15803d' }}>
+                  <span
+                    style={{
+                      fontFamily: "Arimo, Arial",
+                      fontSize: "13px",
+                      color: "#15803d",
+                    }}
+                  >
                     Progress saved
                   </span>
                 )}
-                <button className="je-btn-next" onClick={handleNext}>Next</button>
+                <button className="je-btn-next" onClick={handleNext}>
+                  Next
+                </button>
               </div>
             </div>
-
           </div>
         </div>
       </div>
