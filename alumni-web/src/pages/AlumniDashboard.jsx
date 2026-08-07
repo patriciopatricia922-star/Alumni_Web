@@ -30,15 +30,15 @@ import eventsIcon from "../assets/events_ic.svg";
 import jobsIcon from "../assets/jobs_ic.svg";
 import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
 
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css';
 import AlumniDashboardView from "../Views/Alumnidashboardview";
 import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
-import PointsToast from "../modals/PointsToast";
 import { useNotifications } from "../hooks/useNotifications";
-import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css';
+import PointsToast from "../modals/PointsToast";
 
 // ============================ STORAGE KEYS ============================
 // Centralised localStorage keys for all four badge categories.
