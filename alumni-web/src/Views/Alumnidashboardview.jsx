@@ -437,80 +437,12 @@ const AlumniDashboardView = ({
             <h1>Welcome Bark!</h1>
             <p>Let's see what's new in your alumni network.</p>
           </div>
-
-          {/* <div
-            ref={bellRef}
-            className={`notification-bell ${isMobile ? 'mobile' : ''}`}
-            style={{ marginLeft: 'auto', alignSelf: 'flex-start', paddingTop: '15px', marginRight: '35px' }}
-          >
-            <button
-              className={`bell-button ${showDropdown ? 'active' : ''}`}
-              onClick={() => setShowDropdown(v => !v)}
-              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-                  stroke="#FFFFFF"
-                  strokeWidth="1.67"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {unreadCount > 0 && (
-                <div className="bell-badge">
-                  <span>{unreadCount > 99 ? '99+' : unreadCount}</span>
-                </div>
-              )}
-            </button>
-
-            {showDropdown && (
-              <div className={`notification-dropdown ${isMobile ? 'mobile' : ''}`}>
-                <div className="dropdown-header">
-                  <span>Notifications</span>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="mark-all-read">
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="dropdown-tabs">
-                  {['all', 'unread'].map(t => (
-                    <button
-                      key={t}
-                      className={`tab-btn ${notifTab === t ? 'active' : ''}`}
-                      onClick={() => setNotifTab(t)}
-                    >
-                      {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                    </button>
-                  ))}
-                </div>
-                <div className="dropdown-body">
-                  <NotificationDropdown
-                    notifs={notifs}
-                    unreadCount={unreadCount}
-                    notifTab={notifTab}
-                    setNotifTab={setNotifTab}
-                    markAllRead={markAllRead}
-                    markOneRead={markOneRead}
-                    groupByDate={groupByDate}
-                    formatTime={formatTime}
-                    onSeeAllNotifs={onSeeAllNotifs}
-                  />
-                </div>
-                <div className="dropdown-footer">
-                  <button onClick={onSeeAllNotifs} className="see-all-btn">
-                    See all notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div> */}
-            <NotificationBell
-              onSeeAll={() => onNavigate('/notifications')}
-              className={isMobile ? 'mobile' : ''}
-            />
-        </div>
+            <div className={`notification-bell ${isMobile ? 'mobile' : ''}`}>
+              <NotificationBell
+                onSeeAll={() => onNavigate('/notifications')}
+              />
+            </div>
+          </div>
 
         {/* ── Reward Points Banner (Slider) — friend's new feature ── */}
         {/* <div className="reward-banner reward-banner-slider" style={{ minHeight: 120 }}> */}

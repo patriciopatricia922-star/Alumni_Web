@@ -30,7 +30,7 @@
     /* IE/Edge Legacy */
     -ms-overflow-style: none;
   }
-  
+
   /* Chrome, Safari, Opera */
   .dashboard-content::-webkit-scrollbar {
     display: none;
@@ -51,6 +51,8 @@
   width: 100%;
   box-sizing: border-box;
   padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
+  position: relative;
+  /* Ensure absolute children anchor here */
 }
 
 .dashboard-header-text {
@@ -59,7 +61,6 @@
   flex: 1;
   min-width: 0;
 }
-
 
 .dashboard-subtitle {
   font-family: 'Montserrat', Arial, sans-serif;
@@ -70,7 +71,54 @@
   margin: 0;
 }
 
-/* ============================ NOTIFICATION BELL ============================ */
+/* ============================ NOTIFICATION BELL (REUSABLE COMPONENT OVERRIDE) ============================ */
+/* 
+   The reusable NotificationBell component renders .notification-bell-wrapper.
+   We override its positioning here to match the original AlumniDashboard layout.
+   Original behavior: Absolute positioning relative to .dashboard-header.
+*/
+.dashboard-header .notification-bell-wrapper {
+  position: absolute;
+  top: clamp(28px, 4vh, 52px);
+  right: clamp(24px, 3.2vw, 56px);
+  z-index: 200;
+  /* Reset any margins/padding from the global NotificationBell.css if needed */
+  margin: 0;
+  padding: 0;
+}
+
+/* Tablet breakpoint — mirrors original Dashboard @1100px rule */
+@media (max-width: 1100px) {
+  .dashboard-header .notification-bell-wrapper {
+    top: clamp(14px, 2.2vh, 24px);
+    right: clamp(14px, 2.2vw, 24px);
+  }
+}
+
+/* Mobile breakpoint — mirrors original Dashboard @767px rule */
+@media (max-width: 767px) {
+  .dashboard-header .notification-bell-wrapper {
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
+    margin-right: 0 !important;
+  }
+
+  .dashboard-header {
+    padding-right: 0;
+  }
+}
+
+.dashboard-header .notification-dropdown {
+  /* Example: Adjust top offset if the global one is slightly off due to header height differences */
+  /* top: calc(clamp(44px, 4vw, 52px) + 10px); */
+}
+
+/* ============================ LEGACY CLASSES (KEPT FOR SAFETY / OTHER COMPONENTS) ============================ */
+/* 
+   These classes (.notification-bell, .bell-button, etc.) were used by the old inline implementation.
+   They are kept here in case other parts of the dashboard or legacy code still reference them,
+   but the primary bell now uses .notification-bell-wrapper from the reusable component.
+*/
 .notification-bell {
   position: absolute;
   top: clamp(28px, 4vh, 52px);
@@ -84,6 +132,7 @@
     right: clamp(12px, 4vw, 18px);
     margin-right: 0 !important;
   }
+
   .dashboard-header {
     padding-right: 0;
   }
@@ -140,7 +189,7 @@
   line-height: 1;
 }
 
-/* ============================ NOTIFICATION DROPDOWN — WHITE THEME ============================ */
+/* ============================ NOTIFICATION DROPDOWN — WHITE THEME (LEGACY / GLOBAL FALLBACK) ============================ */
 .notification-dropdown {
   position: absolute;
   top: calc(clamp(44px, 4vw, 52px) + 10px);
@@ -266,7 +315,9 @@
   border-left-color: #003EA6;
 }
 
-.notification-item:hover { background: rgba(0, 0, 0, 0.03); }
+.notification-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
 
 .notification-icon {
   width: 36px;
@@ -281,7 +332,10 @@
   margin-top: 2px;
 }
 
-.notification-content { flex: 1; min-width: 0; }
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
 
 .notification-title {
   font-family: 'Montserrat', Arial, sans-serif;
@@ -292,7 +346,9 @@
   line-height: 1.4;
 }
 
-.notification-item:not(.unread) .notification-title { font-weight: 400; }
+.notification-item:not(.unread) .notification-title {
+  font-weight: 400;
+}
 
 .notification-body {
   font-family: 'Montserrat', Arial, sans-serif;
@@ -340,7 +396,9 @@
   transition: background 0.15s ease;
 }
 
-.see-all-btn:hover { background: #F0F4FB; }
+.see-all-btn:hover {
+  background: #F0F4FB;
+}
 
 /* ============================ REWARD BANNER ============================ */
 .reward-banner {
@@ -499,7 +557,7 @@
 
 /* ────────────────────────────────────────────────────────────────
    HELLO CARD
-──────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────── */
 .hello-card {
   position: relative;
   flex: 1;
@@ -521,14 +579,23 @@
   border-radius: 50%;
   pointer-events: none;
 }
+
 .hello-deco-circle--tr {
-  width: 220px; height: 220px;
-  left: auto; right: -50px; top: -120px;
+  width: 220px;
+  height: 220px;
+  left: auto;
+  right: -50px;
+  top: -120px;
 }
+
 .hello-deco-circle--bl {
-  width: 220px; height: 220px;
-  left: -50px; top: auto; bottom: -135px;
+  width: 220px;
+  height: 220px;
+  left: -50px;
+  top: auto;
+  bottom: -135px;
 }
+
 .hello-card-inner {
   position: relative;
   z-index: 1;
@@ -550,8 +617,8 @@
   margin-top: 6px;
 }
 
-.hello-name { 
-  color: #FFFFFF; 
+.hello-name {
+  color: #FFFFFF;
 }
 
 .hello-notification-text {
@@ -570,7 +637,7 @@
 
 /* ────────────────────────────────────────────────────────────────
    SURVEY PROGRESS CARD
-──────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────── */
 .survey-card {
   position: relative;
   flex: 1;
@@ -590,8 +657,10 @@
 
 .survey-blur {
   position: absolute;
-  width: 256px; height: 256px;
-  left: calc(100% - 30px); top: -127px;
+  width: 256px;
+  height: 256px;
+  left: calc(100% - 30px);
+  top: -127px;
   background: #2B72FB;
   opacity: 0.1;
   filter: blur(64px);
@@ -605,17 +674,24 @@
   border-radius: 50%;
   pointer-events: none;
 }
+
 /* MERGED: left offset adjusted from -2px to -12px — friend's decorative
    positioning refinement. Purely cosmetic (background circle placement),
    no behavior affected. */
 .survey-deco-circle--tl {
-  width: 220px; height: 220px;
-  top: -150px; left: -12px;
+  width: 220px;
+  height: 220px;
+  top: -150px;
+  left: -12px;
 }
+
 .survey-deco-circle--br {
-  width: 180px; height: 180px;
-  top: auto; bottom: -130px;
-  left: auto; right: 180px;
+  width: 180px;
+  height: 180px;
+  top: auto;
+  bottom: -130px;
+  left: auto;
+  right: 180px;
 }
 
 .survey-card-content {
@@ -690,24 +766,36 @@
 /* ============================ PROGRESS CIRCLE ============================ */
 .progress-circle {
   position: relative;
-  width:  clamp(50px, 20.10vh, 150px);
+  width: clamp(50px, 20.10vh, 150px);
   height: clamp(50px, 20.10vh, 150px);
   flex-shrink: 0;
 }
 
-.progress-svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
-.progress-bg  { fill: none; stroke: rgba(255, 255, 255, 0.25); stroke-linecap: round; }
+.progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: rotate(-90deg);
+}
+
+.progress-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-linecap: round;
+}
+
 .progress-fill {
   fill: none;
   stroke: #EFC600;
   stroke-linecap: round;
-  filter: drop-shadow(2px 0px 5px rgba(239,198,0,0.5));
+  filter: drop-shadow(2px 0px 5px rgba(239, 198, 0, 0.5));
   transition: stroke-dashoffset 0.6s ease;
 }
 
 .progress-percentage {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 710;
@@ -724,7 +812,7 @@
   min-height: -0.1px;
   display: flex;
   flex-direction: column;
-  width: 100%; 
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -757,7 +845,7 @@
   row-gap: clamp(20px, 2.4vh, 30px);
   flex: 1;
   min-height: 0;
-  height: auto; 
+  height: auto;
   width: 100%;
   align-content: start;
   box-sizing: border-box;
@@ -776,7 +864,6 @@
     row-gap: clamp(10px, 1.5vh, 16px);
   }
 }
-
 
 /* ============================ FOR YOU CARD ============================ */
 /* MERGED: min-height increased 145px -> 152px (friend's version) — gives
@@ -866,7 +953,6 @@
   max-height: 100%;
 }
 
-
 .for-you-icon.discount-icon {
   width: 80%;
   height: 80%;
@@ -904,7 +990,8 @@
 
 .for-you-text {
   flex: 1;
-  min-width: 0; /* Critical for text truncation/wrapping in flex containers */
+  min-width: 0;
+  /* Critical for text truncation/wrapping in flex containers */
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -958,7 +1045,9 @@
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 60px;
   background: #00226D;
   z-index: 100;
@@ -968,15 +1057,16 @@
 }
 
 /* ============================ RESPONSIVE BREAKPOINTS ============================ */
-
 @media (min-width: 2560px) {
   .dashboard-content {
     padding: 80px 72px 36px;
   }
+
   .notification-bell {
     top: 64px;
     right: 72px;
   }
+
   .top-banner-row {
     height: 249px;
   }
@@ -986,14 +1076,17 @@
   .dashboard-content {
     padding: clamp(32px, 4.4vh, 52px) clamp(14px, 2.2vw, 24px) clamp(12px, 1.8vh, 20px) clamp(20px, 2.8vw, 36px);
   }
+
   .notification-bell {
     top: clamp(32px, 4.4vh, 52px);
     right: clamp(14px, 2.2vw, 24px);
   }
+
   .dashboard-header {
     margin-bottom: clamp(10px, 1.4vh, 18px);
     padding-right: calc(clamp(44px, 4vw, 52px) + clamp(12px, 1.5vw, 20px));
   }
+
   .top-banner-row {
     margin-bottom: clamp(10px, 1.4vh, 16px);
   }
@@ -1004,38 +1097,48 @@
     margin-left: 0 !important;
     padding: clamp(30px, 4.2vh, 44px) clamp(12px, 4vw, 18px) 80px !important;
   }
+
   .notification-bell {
     top: clamp(20px, 3vh, 32px);
     right: clamp(12px, 4vw, 18px);
   }
+
   .dashboard-header {
     margin-bottom: clamp(10px, 1.4vh, 16px);
     padding-right: calc(clamp(44px, 4vw, 52px) + 12px);
   }
+
   .top-banner-row {
     flex-direction: column;
     height: auto;
     gap: clamp(10px, 1.4vh, 16px);
     margin-bottom: clamp(10px, 1.6vh, 18px);
   }
-  @media (max-width: 767px) {
+}
+
+@media (max-width: 767px) {
+
   .hello-card,
   .survey-card {
     height: auto;
     min-height: clamp(130px, 22vh, 200px);
   }
+
   .hello-card {
     min-height: clamp(100px, 16vh, 160px);
     padding-bottom: clamp(14px, 2vh, 20px);
   }
+
   .hello-card-inner {
     justify-content: flex-start !important;
     gap: clamp(6px, 1.5vh, 12px);
   }
+
   .hello-text {
     font-size: clamp(22px, 6.5vw, 32px) !important;
     margin-bottom: 0;
   }
+
   .hello-notification-text {
     font-size: clamp(13px, 3.6vw, 16px) !important;
     overflow-wrap: break-word;
@@ -1043,25 +1146,27 @@
     margin-bottom: 0;
   }
 }
-  .notification-dropdown.mobile {
-    right: 0;
-    left: auto;
-    width: min(92vw, 380px);
-    max-width: calc(100vw - 16px);
-    max-height: min(520px, calc(100vh - clamp(20px, 3vh, 32px) - clamp(44px, 4vw, 52px) - 40px));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .notification-dropdown.mobile .dropdown-body {
-    max-height: none;
-  }
 
+.notification-dropdown.mobile {
+  right: 0;
+  left: auto;
+  width: min(92vw, 380px);
+  max-width: calc(100vw - 16px);
+  max-height: min(520px, calc(100vh - clamp(20px, 3vh, 32px) - clamp(44px, 4vw, 52px) - 40px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.notification-dropdown.mobile .dropdown-body {
+  max-height: none;
+}
 
 @media (min-width: 480px) and (max-width: 767px) {
   .top-banner-row {
     flex-direction: row;
     height: clamp(120px, 20vh, 180px);
   }
+
   .hello-card,
   .survey-card {
     height: auto;
@@ -1075,20 +1180,24 @@
     height: auto;
     gap: clamp(8px, 1.2vh, 14px);
   }
+
   .hello-card,
   .survey-card {
     height: clamp(120px, 22vh, 180px);
   }
-   .for-you-grid {
+
+  .for-you-grid {
     grid-template-columns: 1fr;
     /* Auto rows instead of fixed repeat to accommodate variable content heights */
     grid-template-rows: auto;
   }
+
   .for-you-icon-box {
     width: 52px;
     height: 52px;
     min-width: 52px;
   }
+
   .for-you-card {
     min-height: clamp(110px, 25vw, 140px);
   }
@@ -1099,7 +1208,7 @@
     column-gap: 24px;
     row-gap: 30px;
   }
-  
+
   .for-you-card {
     padding: 18px;
     min-height: 152px;
@@ -1111,7 +1220,12 @@
     height: clamp(100px, 18vh, 160px);
     margin-bottom: 8px;
   }
-  .dashboard-header { margin-bottom: 6px; }
-  .for-you-section  { min-height: 0; }
-}
+
+  .dashboard-header {
+    margin-bottom: 6px;
+  }
+
+  .for-you-section {
+    min-height: 0;
+  }
 }
