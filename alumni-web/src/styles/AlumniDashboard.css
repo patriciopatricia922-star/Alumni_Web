@@ -102,7 +102,7 @@
     right: clamp(12px, 4vw, 18px);
     margin-right: 0 !important;
   }
-
+  
   .dashboard-header {
     padding-right: 0;
   }

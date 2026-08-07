@@ -437,10 +437,18 @@ const AlumniDashboardView = ({
             <h1>Welcome Bark!</h1>
             <p>Let's see what's new in your alumni network.</p>
           </div>
-            <div className={`notification-bell ${isMobile ? 'mobile' : ''}`}>
-              <NotificationBell
-                onSeeAll={() => onNavigate('/notifications')}
-              />
+            <div 
+          className={`notification-bell ${isMobile ? 'mobile' : ''}`}
+          style={{ 
+            marginLeft: 'auto', 
+            alignSelf: 'flex-start', 
+            paddingTop: '15px', 
+            marginRight: '35px' 
+          }}
+        >
+          <NotificationBell
+            onSeeAll={() => onNavigate('/notifications')}
+          />
             </div>
           </div>
 
