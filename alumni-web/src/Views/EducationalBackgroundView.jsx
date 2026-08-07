@@ -1,5 +1,7 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
+import NotificationBell from '../components/notifications/NotificationBell'; // NEW IMPORT
+import '../styles/NotificationBell.css';
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
@@ -149,26 +151,12 @@ const EducationalBackgroundView = ({
   handleSave, handleNext,
   onBack,
   lockedFields = {},
-  bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
-  notifTab, setNotifTab, markAllRead, markOneRead,
-  groupByDate, formatTime,
   navigate,
+  
   // ── BRANCHING PROPS ────────────────────────────────────────────────────────
-  // shouldShowField(fieldKey) → boolean
-  //   Returns false when an Admin branching rule hides this field given the
-  //   current form values. Returns true while config is loading (safe default).
-  // branchingReady → boolean
-  //   True once the branching config has been fetched. Not required by the
-  //   view directly, but forwarded so parent can delay navigation if needed.
-  shouldShowField = () => true,   // safe fallback if prop is omitted
+  shouldShowField = () => true,
   branchingReady  = true,
 }) => {
-  // ── Local display conditionals (hardcoded business logic) ─────────────────
-  // These control nested sub-question visibility based on current form values.
-  // They are INDEPENDENT of Admin branching rules — both must be satisfied for
-  // a field to render. A field is shown only when:
-  //   (a) the local conditional allows it, AND
-  //   (b) shouldShowField() allows it (Admin branching rule)
   const showPostGradCourse    = form.post_grad_plans === 'Yes';
   const showLicensureBranch   = form.licensure_reviewing === 'Yes';
   const showLicensureNoBranch = form.licensure_reviewing === 'No';
@@ -183,107 +171,46 @@ const EducationalBackgroundView = ({
       <div className="eb-root">
         <Sidebar />
         <div className="eb-content">
-
           {/* ── Header ── */}
           <div className="eb-header">
             <div className="eb-topbar">
               <button className="eb-back-btn" onClick={onBack}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <path d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path
+                    d="M13 7.5H2M2 7.5L7 2.5M2 7.5L7 12.5"
+                    stroke="#002263"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 Back
               </button>
-              
-              <div ref={bellRef} style={{ position: 'relative', flexShrink: 0 }}>
-                <button
-                  className={`eb-bell${showDropdown ? ' active' : ''}`}
-                  onClick={() => setShowDropdown(v => !v)}
-                  aria-label="Notifications"
-                >
-                  <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
-                    <path d="M10.8 22.75H15.2M20.8 9.75C20.8 6.215 17.206 3.25 13 3.25C8.794 3.25 5.2 6.215 5.2 9.75C5.2 14.625 3.25 16.9 3.25 16.9H22.75C22.75 16.9 20.8 14.625 20.8 9.75Z" stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  {unreadCount > 0 && (
-                    <>
-                      <div className="eb-bell-dot" />
-                      <div className="eb-bell-count">{unreadCount > 99 ? '99+' : unreadCount}</div>
-                    </>
-                  )}
-                </button>
 
-                {showDropdown && (
-                  <div style={{ position: 'absolute', top: '60px', right: 0, width: '380px', maxHeight: '520px', background: '#FFFFFF', backdropFilter: 'blur(16px)', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: 300 }}>
-                    <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                      <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', color: '#003EA6' }}>Notifications</span>
-                      {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontFamily: 'Arimo', fontSize: '12px', color: '#003EA6', cursor: 'pointer', padding: 0 }}>Mark all read</button>}
-                    </div>
-                    <div style={{ display: 'flex', padding: '10px 18px 0', gap: '4px', flexShrink: 0 }}>
-                      {['all', 'unread'].map(t => (
-                        <button key={t} onClick={() => setNotifTab(t)} style={{ height: '32px', padding: '0 16px', background: notifTab === t ? '#003EA6' : 'transparent', border: notifTab === t ? 'none' : '1px solid #D1D5DC', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Arimo', fontSize: '13px', fontWeight: notifTab === t ? 700 : 400, color: notifTab === t ? '#FFFFFF' : '#4A5565', transition: 'all 0.15s', textTransform: 'capitalize' }}>
-                          {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                        </button>
-                      ))}
-                    </div>
-                    <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
-                      {(() => {
-                        const list = notifs;
-                        if (!list.length) return (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/></svg>
-                            <p style={{ fontFamily: 'Arimo', fontSize: '13px', color: 'rgba(0,0,0,0.3)', margin: 0 }}>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-                          </div>
-                        );
-                        return Object.entries(groupByDate(list)).map(([label, items]) => {
-                          if (!items.length) return null;
-                          return (
-                            <div key={label}>
-                              <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '11px', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>{label}</p>
-                              {items.map(n => (
-                                <div key={n.id} onClick={() => markOneRead(n.id)}
-                                  style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '10px 18px', background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)', cursor: 'pointer', transition: 'background 0.12s', borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6' }}
-                                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                                  onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
-                                >
-                                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(0,62,166,0.08)', border: '1px solid rgba(0,62,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/></svg>
-                                  </div>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontFamily: 'Arimo', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#0A0A0A', margin: '0 0 2px 0', lineHeight: '1.4' }}>{n.title}</p>
-                                    <p style={{ fontFamily: 'Arimo', fontSize: '12px', color: '#4A5565', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{n.body}</p>
-                                    <span style={{ fontFamily: 'Arimo', fontSize: '11px', color: 'rgba(0,0,0,0.35)' }}>{formatTime(n.time)}</span>
-                                  </div>
-                                  {!n.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003EA6', flexShrink: 0, marginTop: '6px' }} />}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                    <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(0,0,0,0.07)', flexShrink: 0 }}>
-                      <button onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                        style={{ width: '100%', height: '36px', background: '#F9FAFB', border: '1px solid #D1D5DC', borderRadius: '10px', fontFamily: 'Arimo', fontSize: '13px', color: '#4A5565', cursor: 'pointer' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
-                        onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
-                      >
-                        See all notifications
-                      </button>
-                    </div>
-                  </div>
-                )}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <NotificationBell onSeeAll={() => navigate("/notifications")} />
               </div>
             </div>
 
             <h1 className="eb-title">Alumni Tracer Survey</h1>
-            <p className="eb-subtitle">Please complete all sections to update your alumni status.</p>
+            <p className="eb-subtitle">
+              Please complete all sections to update your alumni status.
+            </p>
 
             <div className="eb-progress">
               <div className="eb-progress-row">
-                <span>Section {currentSection} of {totalSections}</span>
-                <span style={{ color: '#003EA6', fontWeight: 700 }}>{formPct}% Complete</span>
+                <span>
+                  Section {currentSection} of {totalSections}
+                </span>
+                <span style={{ color: "#003EA6", fontWeight: 700 }}>
+                  {formPct}% Complete
+                </span>
               </div>
               <div className="eb-progress-track">
-                <div className="eb-progress-fill" style={{ width: `${formPct}%` }} />
+                <div
+                  className="eb-progress-fill"
+                  style={{ width: `${formPct}%` }}
+                />
               </div>
               <span className="eb-progress-label">Educational Background</span>
             </div>
@@ -298,17 +225,20 @@ const EducationalBackgroundView = ({
               </div>
 
               <div className="eb-fields">
-
                 {/* ── Degree Program ─────────────────────────────────────── */}
-                {shouldShowField('degree_program') && (
+                {shouldShowField("degree_program") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('degree_program')}
-                      {!isLocked('degree_program') && <span className="eb-req">*</span>}
-                      {errors.has('degree_program') && <span className="eb-field-error">Required</span>}
+                      {getLabel("degree_program")}
+                      {!isLocked("degree_program") && (
+                        <span className="eb-req">*</span>
+                      )}
+                      {errors.has("degree_program") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
 
-                    {isLocked('degree_program') ? (
+                    {isLocked("degree_program") ? (
                       <>
                         <LockedField value={form.degree_program} />
                         <LockedHint />
@@ -318,13 +248,30 @@ const EducationalBackgroundView = ({
                         <select
                           className="eb-input eb-select"
                           value={form.degree_program}
-                          onChange={e => set('degree_program', e.target.value)}
+                          onChange={(e) =>
+                            set("degree_program", e.target.value)
+                          }
                           onFocus={onFocus}
                           onBlur={onBlur}
                         >
-                          <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                          {degreeOptions.map(o => (
-                            <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
+                          <option
+                            value=""
+                            disabled
+                            style={{ color: "rgba(10,10,10,0.3)" }}
+                          >
+                            Select
+                          </option>
+                          {degreeOptions.map((o) => (
+                            <option
+                              key={o}
+                              value={o}
+                              style={{
+                                background: "#F9FAFB",
+                                color: "#0A0A0A",
+                              }}
+                            >
+                              {o}
+                            </option>
                           ))}
                         </select>
                         <SelectArrow />
@@ -334,35 +281,42 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Other Degree (conditional on local logic + branching) ─ */}
-                {form.degree_program === 'Other' && shouldShowField('other_degree') && (
-                  <div className="eb-field">
-                    <label className="eb-label">
-                      {getLabel('other_degree')} <span className="eb-req">*</span>
-                      {errors.has('other_degree') && <span className="eb-field-error">Required</span>}
-                    </label>
-                    <input
-                      className="eb-input"
-                      placeholder={getPlaceholder('other_degree')}
-                      value={form.other_degree}
-                      onChange={e => set('other_degree', e.target.value)}
-                      onFocus={onFocus}
-                      onBlur={onBlur}
-                    />
-                  </div>
-                )}
+                {form.degree_program === "Other" &&
+                  shouldShowField("other_degree") && (
+                    <div className="eb-field">
+                      <label className="eb-label">
+                        {getLabel("other_degree")}{" "}
+                        <span className="eb-req">*</span>
+                        {errors.has("other_degree") && (
+                          <span className="eb-field-error">Required</span>
+                        )}
+                      </label>
+                      <input
+                        className="eb-input"
+                        placeholder={getPlaceholder("other_degree")}
+                        value={form.other_degree}
+                        onChange={(e) => set("other_degree", e.target.value)}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                      />
+                    </div>
+                  )}
 
                 {/* ── Reason for course ──────────────────────────────────── */}
-                {shouldShowField('reason_for_course') && (
+                {shouldShowField("reason_for_course") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('reason_for_course')} <span className="eb-req">*</span>
-                      {errors.has('reason_for_course') && <span className="eb-field-error">Required</span>}
+                      {getLabel("reason_for_course")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("reason_for_course") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <textarea
                       className="eb-textarea"
-                      placeholder={getPlaceholder('reason_for_course')}
+                      placeholder={getPlaceholder("reason_for_course")}
                       value={form.reason_for_course}
-                      onChange={e => set('reason_for_course', e.target.value)}
+                      onChange={(e) => set("reason_for_course", e.target.value)}
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
@@ -370,15 +324,19 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Year Graduated ─────────────────────────────────────── */}
-                {shouldShowField('year_graduated') && (
+                {shouldShowField("year_graduated") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('year_graduated')}
-                      {!isLocked('year_graduated') && <span className="eb-req">*</span>}
-                      {errors.has('year_graduated') && <span className="eb-field-error">Required</span>}
+                      {getLabel("year_graduated")}
+                      {!isLocked("year_graduated") && (
+                        <span className="eb-req">*</span>
+                      )}
+                      {errors.has("year_graduated") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
 
-                    {isLocked('year_graduated') ? (
+                    {isLocked("year_graduated") ? (
                       <>
                         <LockedField value={form.year_graduated} />
                         <LockedHint />
@@ -388,13 +346,30 @@ const EducationalBackgroundView = ({
                         <select
                           className="eb-input eb-select"
                           value={form.year_graduated}
-                          onChange={e => set('year_graduated', e.target.value)}
+                          onChange={(e) =>
+                            set("year_graduated", e.target.value)
+                          }
                           onFocus={onFocus}
                           onBlur={onBlur}
                         >
-                          <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                          {yearOptions.map(y => (
-                            <option key={y} value={y} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{y}</option>
+                          <option
+                            value=""
+                            disabled
+                            style={{ color: "rgba(10,10,10,0.3)" }}
+                          >
+                            Select
+                          </option>
+                          {yearOptions.map((y) => (
+                            <option
+                              key={y}
+                              value={y}
+                              style={{
+                                background: "#F9FAFB",
+                                color: "#0A0A0A",
+                              }}
+                            >
+                              {y}
+                            </option>
                           ))}
                         </select>
                         <SelectArrow />
@@ -404,23 +379,38 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Distinction ────────────────────────────────────────── */}
-                {shouldShowField('distinction') && (
+                {shouldShowField("distinction") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('distinction')} <span className="eb-req">*</span>
-                      {errors.has('distinction') && <span className="eb-field-error">Required</span>}
+                      {getLabel("distinction")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("distinction") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <div className="eb-select-wrap">
                       <select
                         className="eb-input eb-select"
                         value={form.distinction}
-                        onChange={e => set('distinction', e.target.value)}
+                        onChange={(e) => set("distinction", e.target.value)}
                         onFocus={onFocus}
                         onBlur={onBlur}
                       >
-                        <option value="" disabled style={{ color: 'rgba(10,10,10,0.3)' }}>Select</option>
-                        {distinctionOptions.map(o => (
-                          <option key={o} value={o} style={{ background: '#F9FAFB', color: '#0A0A0A' }}>{o}</option>
+                        <option
+                          value=""
+                          disabled
+                          style={{ color: "rgba(10,10,10,0.3)" }}
+                        >
+                          Select
+                        </option>
+                        {distinctionOptions.map((o) => (
+                          <option
+                            key={o}
+                            value={o}
+                            style={{ background: "#F9FAFB", color: "#0A0A0A" }}
+                          >
+                            {o}
+                          </option>
                         ))}
                       </select>
                       <SelectArrow />
@@ -429,21 +419,24 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Post-grad plans ────────────────────────────────────── */}
-                {shouldShowField('post_grad_plans') && (
+                {shouldShowField("post_grad_plans") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('post_grad_plans')} <span className="eb-req">*</span>
-                      {errors.has('post_grad_plans') && <span className="eb-field-error">Required</span>}
+                      {getLabel("post_grad_plans")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("post_grad_plans") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <div className="eb-radio-group">
-                      {['Yes', 'No'].map(opt => (
+                      {["Yes", "No"].map((opt) => (
                         <label key={opt} className="eb-radio-label">
                           <input
                             type="radio"
                             name="post_grad_plans"
                             value={opt}
                             checked={form.post_grad_plans === opt}
-                            onChange={() => set('post_grad_plans', opt)}
+                            onChange={() => set("post_grad_plans", opt)}
                           />
                           {opt}
                         </label>
@@ -453,17 +446,20 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Post-grad course (local + branching gate) ──────────── */}
-                {showPostGradCourse && shouldShowField('post_grad_course') && (
+                {showPostGradCourse && shouldShowField("post_grad_course") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('post_grad_course')} <span className="eb-req">*</span>
-                      {errors.has('post_grad_course') && <span className="eb-field-error">Required</span>}
+                      {getLabel("post_grad_course")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("post_grad_course") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <textarea
                       className="eb-textarea"
-                      placeholder={getPlaceholder('post_grad_course')}
+                      placeholder={getPlaceholder("post_grad_course")}
                       value={form.post_grad_course}
-                      onChange={e => set('post_grad_course', e.target.value)}
+                      onChange={(e) => set("post_grad_course", e.target.value)}
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
@@ -471,14 +467,17 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Licensure reviewing ────────────────────────────────── */}
-                {shouldShowField('licensure_reviewing') && (
+                {shouldShowField("licensure_reviewing") && (
                   <div className="eb-field">
                     <label className="eb-label">
-                      {getLabel('licensure_reviewing')} <span className="eb-req">*</span>
-                      {errors.has('licensure_reviewing') && <span className="eb-field-error">Required</span>}
+                      {getLabel("licensure_reviewing")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("licensure_reviewing") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <div className="eb-radio-group">
-                      {licensureOptions.map(opt => (
+                      {licensureOptions.map((opt) => (
                         <label key={opt} className="eb-radio-label">
                           <input
                             type="radio"
@@ -495,14 +494,17 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── "Yes" branch — licensure plans ─────────────────────── */}
-                {showLicensureBranch && shouldShowField('licensure_plans') && (
+                {showLicensureBranch && shouldShowField("licensure_plans") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('licensure_plans')} <span className="eb-req">*</span>
-                      {errors.has('licensure_plans') && <span className="eb-field-error">Required</span>}
+                      {getLabel("licensure_plans")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("licensure_plans") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <div className="eb-radio-group">
-                      {licensurePlansOptions.map(opt => (
+                      {licensurePlansOptions.map((opt) => (
                         <label key={opt} className="eb-radio-label">
                           <input
                             type="radio"
@@ -519,17 +521,20 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── "Yes" branch — licensure reason ────────────────────── */}
-                {showLicensureBranch && shouldShowField('licensure_reason') && (
+                {showLicensureBranch && shouldShowField("licensure_reason") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('licensure_reason')} <span className="eb-req">*</span>
-                      {errors.has('licensure_reason') && <span className="eb-field-error">Required</span>}
+                      {getLabel("licensure_reason")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("licensure_reason") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <textarea
                       className="eb-textarea"
-                      placeholder={getPlaceholder('licensure_reason')}
+                      placeholder={getPlaceholder("licensure_reason")}
                       value={form.licensure_reason}
-                      onChange={e => set('licensure_reason', e.target.value)}
+                      onChange={(e) => set("licensure_reason", e.target.value)}
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
@@ -537,17 +542,20 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Board exam name ────────────────────────────────────── */}
-                {showBoardExam && shouldShowField('board_exam_name') && (
+                {showBoardExam && shouldShowField("board_exam_name") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('board_exam_name')} <span className="eb-req">*</span>
-                      {errors.has('board_exam_name') && <span className="eb-field-error">Required</span>}
+                      {getLabel("board_exam_name")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("board_exam_name") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <input
                       className="eb-input"
-                      placeholder={getPlaceholder('board_exam_name')}
+                      placeholder={getPlaceholder("board_exam_name")}
                       value={form.board_exam_name}
-                      onChange={e => set('board_exam_name', e.target.value)}
+                      onChange={(e) => set("board_exam_name", e.target.value)}
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
@@ -555,18 +563,21 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Board exam date ────────────────────────────────────── */}
-                {showBoardExam && shouldShowField('board_exam_date') && (
+                {showBoardExam && shouldShowField("board_exam_date") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('board_exam_date')} <span className="eb-req">*</span>
-                      {errors.has('board_exam_date') && <span className="eb-field-error">Required</span>}
+                      {getLabel("board_exam_date")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("board_exam_date") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <input
                       type="date"
                       className="eb-input"
                       value={form.board_exam_date}
-                      onChange={e => set('board_exam_date', e.target.value)}
-                      style={{ colorScheme: 'light' }}
+                      onChange={(e) => set("board_exam_date", e.target.value)}
+                      style={{ colorScheme: "light" }}
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
@@ -574,21 +585,24 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── Board exam result ──────────────────────────────────── */}
-                {showBoardExam && shouldShowField('board_exam_result') && (
+                {showBoardExam && shouldShowField("board_exam_result") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
-                      {getLabel('board_exam_result')} <span className="eb-req">*</span>
-                      {errors.has('board_exam_result') && <span className="eb-field-error">Required</span>}
+                      {getLabel("board_exam_result")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("board_exam_result") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
                     </label>
                     <div className="eb-radio-group">
-                      {boardResultOptions.map(opt => (
+                      {boardResultOptions.map((opt) => (
                         <label key={opt} className="eb-radio-label">
                           <input
                             type="radio"
                             name="board_exam_result"
                             value={opt}
                             checked={form.board_exam_result === opt}
-                            onChange={() => set('board_exam_result', opt)}
+                            onChange={() => set("board_exam_result", opt)}
                           />
                           {opt}
                         </label>
@@ -598,69 +612,86 @@ const EducationalBackgroundView = ({
                 )}
 
                 {/* ── "No" branch — future licensure plans ───────────────── */}
-                {showLicensureNoBranch && shouldShowField('licensure_no_plans') && (
-                  <div className="eb-field">
-                    <label className="eb-label-sub">
-                      Do you have any plans on taking the Licensure Examination?
-                      <span className="eb-req">*</span>
-                      {errors.has('licensure_no_plans') && (
-                        <span className="eb-field-error">Required</span>
-                      )}
-                    </label>
-                    <div className="eb-radio-group">
-                      {['Yes', 'No', 'Maybe', 'Not at all'].map(opt => (
-                        <label key={opt} className="eb-radio-label">
-                          <input
-                            type="radio"
-                            name="licensure_no_plans"
-                            value={opt}
-                            checked={form.licensure_no_plans === opt}
-                            onChange={() => setLicensureNoPlans(opt)}
-                          />
-                          {opt}
-                        </label>
-                      ))}
+                {showLicensureNoBranch &&
+                  shouldShowField("licensure_no_plans") && (
+                    <div className="eb-field">
+                      <label className="eb-label-sub">
+                        Do you have any plans on taking the Licensure
+                        Examination?
+                        <span className="eb-req">*</span>
+                        {errors.has("licensure_no_plans") && (
+                          <span className="eb-field-error">Required</span>
+                        )}
+                      </label>
+                      <div className="eb-radio-group">
+                        {["Yes", "No", "Maybe", "Not at all"].map((opt) => (
+                          <label key={opt} className="eb-radio-label">
+                            <input
+                              type="radio"
+                              name="licensure_no_plans"
+                              value={opt}
+                              checked={form.licensure_no_plans === opt}
+                              onChange={() => setLicensureNoPlans(opt)}
+                            />
+                            {opt}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {/* ── "No" branch — licensure no reason ─────────────────── */}
-                {showLicensureNoBranch && shouldShowField('licensure_no_reason') && (
-                  <div className="eb-field">
-                    <label className="eb-label-sub">
-                      {getLabel('licensure_reason')}
-                      <span className="eb-req">*</span>
-                      {errors.has('licensure_no_reason') && (
-                        <span className="eb-field-error">Required</span>
-                      )}
-                    </label>
-                    <textarea
-                      className="eb-textarea"
-                      placeholder={getPlaceholder('licensure_reason')}
-                      value={form.licensure_no_reason}
-                      onChange={e => set('licensure_no_reason', e.target.value)}
-                      onFocus={onFocus}
-                      onBlur={onBlur}
-                    />
-                  </div>
-                )}
-
-              </div>{/* /eb-fields */}
+                {showLicensureNoBranch &&
+                  shouldShowField("licensure_no_reason") && (
+                    <div className="eb-field">
+                      <label className="eb-label-sub">
+                        {getLabel("licensure_reason")}
+                        <span className="eb-req">*</span>
+                        {errors.has("licensure_no_reason") && (
+                          <span className="eb-field-error">Required</span>
+                        )}
+                      </label>
+                      <textarea
+                        className="eb-textarea"
+                        placeholder={getPlaceholder("licensure_reason")}
+                        value={form.licensure_no_reason}
+                        onChange={(e) =>
+                          set("licensure_no_reason", e.target.value)
+                        }
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                      />
+                    </div>
+                  )}
+              </div>
+              {/* /eb-fields */}
 
               <div className="eb-footer">
-                <button className="eb-btn-prev" onClick={() => navigate('/survey/personal-background')}>
+                <button
+                  className="eb-btn-prev"
+                  onClick={() => navigate("/survey/personal-background")}
+                >
                   Previous
                 </button>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                >
                   {saveToast && (
-                    <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#15803d' }}>
+                    <span
+                      style={{
+                        fontFamily: "Arimo, Arial",
+                        fontSize: "13px",
+                        color: "#15803d",
+                      }}
+                    >
                       Progress saved
                     </span>
                   )}
-                  <button className="eb-btn-next" onClick={handleNext}>Next</button>
+                  <button className="eb-btn-next" onClick={handleNext}>
+                    Next
+                  </button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>

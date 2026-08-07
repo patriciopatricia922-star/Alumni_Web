@@ -15,10 +15,10 @@ import { supabase } from '../lib/supabase';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../lib/surveyConfig';
 import useUserProfile from '../hooks/Useuserprofile';
 import EducationalBackgroundView from '../Views/EducationalBackgroundView';
-import { useSurveyBranching } from '../lib/useSurveyBranching'; // ← BRANCHING ADD 1/3
-import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
-import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
-
+import { useSurveyBranching } from '../lib/useSurveyBranching';
+import useSurveyBackGuard from '../hooks/useSurveyBackGuard';
+import SkeletonLoader from '../components/SkeletonLoader';
+import { useNotifications } from '../hooks/useNotifications';
 
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 2;
@@ -148,12 +148,7 @@ const EducationalBackground = () => {
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-  const bellRef = useRef(null);
-
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     refreshProfile();
@@ -263,53 +258,6 @@ const EducationalBackground = () => {
         setNotifs(mapped);
         setUnreadCount(mapped.filter(n => !n.read).length);
       });
-  }, []);
-
-  useEffect(() => {
-    const h = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target))
-        setShowDropdown(false);
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
-
-  const markAllRead = useCallback(() => {
-    localStorage.setItem('read_notifs', JSON.stringify(notifs.map(n => n.id)));
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }, [notifs]);
-
-  const markOneRead = useCallback((id) => {
-    const readIds = JSON.parse(localStorage.getItem('read_notifs') || '[]');
-    if (!readIds.includes(id)) { readIds.push(id); localStorage.setItem('read_notifs', JSON.stringify(readIds)); }
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  }, []);
-
-  const groupByDate = useCallback((list) => {
-    const today     = new Date(); today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
-    const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
-    list.forEach(n => {
-      const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-      if      (d >= today)     groups['Today'].push(n);
-      else if (d >= yesterday) groups['Yesterday'].push(n);
-      else if (d >= weekAgo)   groups['This Week'].push(n);
-      else                     groups['Earlier'].push(n);
-    });
-    return groups;
-  }, []);
-
-  const formatTime = useCallback((iso) => {
-    if (!iso) return '';
-    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-    if (diff < 60)     return 'Just now';
-    if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
   }, []);
 
   const set = useCallback((key, val) => {
@@ -445,17 +393,6 @@ const EducationalBackground = () => {
       handleNext={handleNext}
       onBack={handleBack}
       lockedFields={lockedFields}
-      bellRef={bellRef}
-      notifs={notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs}
-      unreadCount={unreadCount}
-      showDropdown={showDropdown}
-      setShowDropdown={setShowDropdown}
-      notifTab={notifTab}
-      setNotifTab={setNotifTab}
-      markAllRead={markAllRead}
-      markOneRead={markOneRead}
-      groupByDate={groupByDate}
-      formatTime={formatTime}
       navigate={navigate}
       shouldShowField={shouldShowField}
       branchingReady={branchingReady}
