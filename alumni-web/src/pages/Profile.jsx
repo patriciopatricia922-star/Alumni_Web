@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ProfileView from '../Views/ProfileView';
 import { classifyDepartment } from '../lib/departmentClassifier';
-import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
+import { useNotifications } from '../hooks/useNotifications'; 
 
 // ── Responsive hook ────────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -186,11 +186,7 @@ const Profile = () => {
   const [cpSuccess, setCpSuccess] = useState(false);
 
   // ── Notifications ─────────────────────────────────────────────────────────
-  const bellRef                         = useRef(null);
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const { unreadCount } = useNotifications();
 
   // ── Fetch user and survey data ─────────────────────────────────────────────
   const fetchUserAndSurvey = useCallback(async () => {
@@ -234,30 +230,8 @@ const Profile = () => {
     }
   }, []);
 
-  // ── Fetch notifications ────────────────────────────────────────────────────
-  const fetchNotifs = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('id, title, content, published_at, is_active')
-        .eq('is_active', true)
-        .order('published_at', { ascending: false })
-        .limit(20);
-      if (error || !data) return;
-      const readIds = getReadIds();
-      const mapped  = data.map((n) => ({
-        id: n.id, title: decodeHtmlEntities(n.title), body: stripHtml(n.content),
-        time: n.published_at, read: readIds.includes(n.id),
-      }));
-      setNotifs(mapped);
-      setUnreadCount(mapped.filter((n) => !n.read).length);
-    } catch (err) {
-      console.error('fetchNotifs error:', err);
-    }
-  }, []);
-
+  // ── Fetch User and Survey Data ────────────────────────────────────────────────
   useEffect(() => { fetchUserAndSurvey(); }, [fetchUserAndSurvey]);
-  useEffect(() => { fetchNotifs(); },        [fetchNotifs]);
 
   // Close bell dropdown on outside click
   useEffect(() => {
@@ -484,20 +458,6 @@ const Profile = () => {
     }
   }, [cpCurrent, cpNew, cpConfirm, handleCloseCPModal]);
 
-  // ── Notification actions ───────────────────────────────────────────────────
-  const markAllRead = useCallback(() => {
-    saveReadIds(notifs.map((n) => n.id));
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }, [notifs]);
-
-  const markOneRead = useCallback((id) => {
-    const ids = getReadIds();
-    if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  }, []);
-
   // ── Avatar upload ──────────────────────────────────────────────────────────
   const handleAvatarUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
@@ -561,17 +521,7 @@ const Profile = () => {
       cpSuccess={cpSuccess}
       onCPSave={handleCPSave}
       // notifications
-      bellRef={bellRef}
-      notifs={notifs}
       unreadCount={unreadCount}
-      showDropdown={showDropdown}
-      setShowDropdown={setShowDropdown}
-      notifTab={notifTab}
-      setNotifTab={setNotifTab}
-      markAllRead={markAllRead}
-      markOneRead={markOneRead}
-      groupByDate={groupByDate}
-      formatTime={formatTime}
     />
   );
 };

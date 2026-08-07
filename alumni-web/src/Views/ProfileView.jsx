@@ -10,8 +10,9 @@ import civilIcon        from '../assets/civil_icn.svg';
 import locationIcon     from '../assets/loc_icn.svg';
 import phoneIcon        from '../assets/ph_icn.svg';
 import emailIcon        from '../assets/mail_icn.svg';
+import NotificationBell from '../components/notifications/NotificationBell';
 import '../styles/Profile.css';
-import { truncateHtml } from '../utils/textHelpers';
+import '../styles/NotificationBell.css';
 
 const getStrengthLabel = (pct) => {
   if (pct >= 100) return 'Excellent';
@@ -500,105 +501,6 @@ const Toast = memo(({ message, type, onClose }) => {
     </div>
   );
 });
-
-const NotificationBell = memo(({
-  bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
-  notifTab, setNotifTab, markAllRead, markOneRead,
-  groupByDate, formatTime, isMobile, navigate,
-}) => (
-  <div ref={bellRef} className="prof-bell-wrap">
-    <button
-      className={`prof-bell-btn${showDropdown ? ' prof-bell-btn--active' : ''}`}
-      onClick={() => setShowDropdown(v => !v)}
-      aria-label="Notifications"
-    >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <path d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-          stroke="#FFFFFF" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-      {unreadCount > 0 && (
-        <span className="prof-bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
-      )}
-    </button>
-
-    {showDropdown && (
-      <div className={`prof-notif-panel${isMobile ? ' prof-notif-panel--mobile' : ''}`}>
-        <div className="prof-notif-header">
-          <span className="prof-notif-title">Notifications</span>
-          {unreadCount > 0 && (
-            <button className="prof-notif-mark-all" onClick={markAllRead}>Mark all read</button>
-          )}
-        </div>
-
-        <div className="prof-notif-tabs">
-          {['all', 'unread'].map(t => (
-            <button
-              key={t}
-              className={`prof-notif-tab${notifTab === t ? ' prof-notif-tab--active' : ''}`}
-              onClick={() => setNotifTab(t)}
-            >
-              {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-            </button>
-          ))}
-        </div>
-
-        <div className="prof-notif-list">
-          {(() => {
-            const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
-            if (!list.length) return (
-              <div className="prof-notif-empty">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                  <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                    stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-              </div>
-            );
-            return Object.entries(groupByDate(list)).map(([label, items]) => {
-              if (!items.length) return null;
-              return (
-                <div key={label}>
-                  <p className="prof-notif-group-label">{label}</p>
-                  {items.map(n => (
-                    <div
-                      key={n.id}
-                      className={`prof-notif-item${n.read ? '' : ' prof-notif-item--unread'}`}
-                      onClick={() => markOneRead(n.id)}
-                    >
-                      <div className="prof-notif-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                          <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                            stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round"/>
-                        </svg>
-                      </div>
-                      <div className="prof-notif-content">
-                        <p className={`prof-notif-item-title${n.read ? '' : ' prof-notif-item-title--unread'}`}>
-                          {n.title}
-                        </p>
-                        <p className="prof-notif-item-body">{truncateHtml(n.body, 100)}</p>
-                        <span className="prof-notif-time">{formatTime(n.time)}</span>
-                      </div>
-                      {!n.read && <div className="prof-notif-dot"/>}
-                    </div>
-                  ))}
-                </div>
-              );
-            });
-          })()}
-        </div>
-
-        <div className="prof-notif-footer">
-          <button
-            className="prof-notif-see-all"
-            onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-          >
-            See all notifications
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-));
 
 const PersonalInformationModal = memo(({
   isMobile, departmentType, piForm, setPiField, piFieldErrors,
@@ -1141,8 +1043,6 @@ const ProfileView = ({
   piLoading, piSaving, piSaveSuccess, piSaveError, onPISave,
   cpCurrent, setCpCurrent, cpNew, setCpNew, cpConfirm, setCpConfirm,
   cpLoading, cpError, cpSuccess, onCPSave,
-  bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
-  notifTab, setNotifTab, markAllRead, markOneRead, groupByDate, formatTime,
   setShowPIModal, setShowCPModal,
   toast = { show: false, message: '', type: 'success' },
   setToast,
@@ -1205,21 +1105,9 @@ const ProfileView = ({
                 Easily access and manage your information to ensure your profile stays complete and up to date.
               </p>
             </div>
-
             <NotificationBell
-              bellRef={bellRef}
-              notifs={notifs}
-              unreadCount={unreadCount}
-              showDropdown={showDropdown}
-              setShowDropdown={setShowDropdown}
-              notifTab={notifTab}
-              setNotifTab={setNotifTab}
-              markAllRead={markAllRead}
-              markOneRead={markOneRead}
-              groupByDate={groupByDate}
-              formatTime={formatTime}
-              isMobile={isMobile}
-              navigate={navigate}
+              onSeeAll={() => navigate('/notifications')}
+              className={isMobile ? 'mobile' : ''}
             />
           </div>
 
