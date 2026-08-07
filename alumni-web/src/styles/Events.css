@@ -62,22 +62,24 @@
 
 .events-main-content .notification-bell-wrapper {
   position: absolute;
-  top: clamp(28px, 4vh, 52px);
-  right: clamp(24px, 3.2vw, 56px);
+  top: 45px;
+  right: 84px;
   z-index: 200;
 }
 
+/* Tablet breakpoint - mirrors old EventsView.jsx inline rule (top unchanged, right tightens) */
 @media (max-width: 1024px) and (min-width: 769px) {
   .events-main-content .notification-bell-wrapper {
-    top: clamp(14px, 2.2vh, 24px);
-    right: clamp(14px, 2.2vw, 24px);
+    top: 45px;
+    right: 65px;
   }
 }
 
+/* Mobile breakpoint - mirrors old EventsView.jsx inline rule */
 @media (max-width: 768px) {
   .events-main-content .notification-bell-wrapper {
-    top: clamp(12px, 2vh, 18px);
-    right: clamp(12px, 4vw, 18px);
+    top: 32px;
+    right: 59px;
   }
 }
 

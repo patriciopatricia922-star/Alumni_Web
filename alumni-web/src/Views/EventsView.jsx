@@ -412,7 +412,7 @@ const EventsView = ({
       <Sidebar />
 
       <div
-        className={isMobile ? 'events-main-content mobile' : undefined}
+        className={`events-main-content ${isMobile ? 'mobile' : ''}`}
         style={{
           marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
           flex:       1,
@@ -425,6 +425,7 @@ const EventsView = ({
         <NotificationBell
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
+          dropdownClassName={isMobile ? 'mobile' : ''}
         />
 
         {/* ── Back Button ── */}
