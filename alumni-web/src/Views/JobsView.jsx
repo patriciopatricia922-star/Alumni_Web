@@ -10,6 +10,8 @@ import {
 import { HiOutlineLocationMarker, HiOutlineClock, HiOutlineBriefcase } from 'react-icons/hi';
 import { truncateHtml, stripHtml } from '../utils/textHelpers';
 import '../styles/Jobs.css';
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css'; 
 
 // ── Clock SVG ────────────────────────────────────────────────────────────────
 const ClockSVG = () => (
@@ -274,13 +276,8 @@ const JobsView = ({
   isMobile, isTablet,
   categories, activeCategory, setActiveCategory,
   showFilter, setShowFilter, filterRef, categoryCounts, filtered,
-  recommended,
-  bellRef, notifs, unreadCount, showDropdown, setShowDropdown,
-  notifTab, setNotifTab, markAllRead, markOneRead,
-  groupByDate, formatTime,
-  navigate,
+  recommended, navigate,
 }) => {
-  // Build the merged list: recommended IDs first (deduplicated), then the rest
   const recommendedIds = new Set(recommended.map(r => r.job.id));
   const recommendedJobs = recommended.map(r => ({ ...r.job, _isRecommended: true }));
   const regularJobs = filtered.filter(j => !recommendedIds.has(j.id)).map(j => ({ ...j, _isRecommended: false }));
@@ -293,217 +290,10 @@ const JobsView = ({
       <Sidebar />
 
       <div className={`jobs-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
-        {/* ── Notification Bell ── */}
-        <div
-          ref={bellRef}
-          className={isMobile ? 'jobs-bell-wrapper mobile' : 'jobs-bell-wrapper'}
-          style={{
-            position: 'absolute',
-            top:   isMobile ? undefined : '45px',
-            right: isMobile ? undefined : isTablet ? '65px' : '84px',
-            zIndex: 200,
-          }}
-        >
-          <button
-            onClick={() => setShowDropdown(v => !v)}
-            className={isMobile ? 'jobs-bell-btn mobile' : 'jobs-bell-btn'}
-            style={{
-              width:          isMobile ? undefined : '52px',
-              height:         isMobile ? undefined : '52px',
-              background:     showDropdown ? 'rgba(43,114,251,0.25)' : '#003EA6',
-              border:         showDropdown ? '1px solid rgba(43,114,251,0.5)' : '1px solid rgba(255,255,255,0.15)',
-              boxShadow:      '0px 4px 12px rgba(0,0,0,0.35)',
-              borderRadius:   '14px',
-              cursor:         'pointer',
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              position:       'relative',
-              transition:     'all 0.15s',
-              flexShrink:     0,
-            }}
-            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M10 21h4M18 9C18 5.686 15.314 3 12 3C8.686 3 6 5.686 6 9C6 13.5 4 15.5 4 15.5H20C20 15.5 18 13.5 18 9Z"
-                stroke="#FFFFFF"
-                strokeWidth="1.67"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {unreadCount > 0 && (
-              <div style={{
-                position:       'absolute',
-                top:            '-7px',
-                right:          '-7px',
-                minWidth:       '20px',
-                height:         '20px',
-                background:     '#E53935',
-                borderRadius:   '10px',
-                border:         '2px solid #DAE5F1',
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                padding:        '0 4px',
-                boxSizing:      'border-box',
-              }}>
-                <span style={{
-                  fontFamily: 'Montserrat, Arial, sans-serif',
-                  fontSize:   '10px',
-                  fontWeight: 700,
-                  color:      '#FFFFFF',
-                  lineHeight: 1,
-                }}>
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              </div>
-            )}
-          </button>
-
-          {showDropdown && (
-            <div
-              className={isMobile ? 'jobs-notif-dropdown mobile' : 'jobs-notif-dropdown'}
-              style={{
-                position:      'absolute',
-                top:           isMobile ? undefined : `calc(52px + 10px)`,
-                right:         isMobile ? undefined : 0,
-                width:         isMobile ? undefined : '380px',
-                maxHeight:     '520px',
-                background:    '#FFFFFF',
-                backdropFilter:'blur(16px)',
-                border:        '1px solid #E5E7EB',
-                borderRadius:  '16px',
-                boxShadow:     '0 20px 60px rgba(0,0,0,0.15)',
-                display:       'flex',
-                flexDirection: 'column',
-                overflow:      'hidden',
-                zIndex:        300,
-              }}
-            >
-              <div style={{
-                padding:        '16px 18px 12px',
-                borderBottom:   '1px solid #F0F2F5',
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'space-between',
-                flexShrink:     0,
-              }}>
-                <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '16px', color: '#003EA6' }}>
-                  Notifications
-                </span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllRead}
-                    style={{ background: 'none', border: 'none', fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '12px', color: '#2B72FB', cursor: 'pointer', padding: 0, fontWeight: 600 }}
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', padding: '10px 18px 0', gap: '6px', flexShrink: 0 }}>
-                {['all', 'unread'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setNotifTab(t)}
-                    style={{
-                      height:       '30px',
-                      padding:      '0 14px',
-                      background:   notifTab === t ? '#003EA6' : 'transparent',
-                      border:       notifTab === t ? 'none' : '1px solid #D1D5DC',
-                      borderRadius: '20px',
-                      cursor:       'pointer',
-                      fontFamily:   'Montserrat, Arial, sans-serif',
-                      fontSize:     '12px',
-                      fontWeight:   notifTab === t ? 700 : 400,
-                      color:        notifTab === t ? '#FFFFFF' : '#4A5565',
-                      transition:   'all 0.15s',
-                    }}
-                  >
-                    {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ overflowY: 'auto', flex: 1, padding: '8px 0' }}>
-                {(() => {
-                  const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
-                  if (!list.length) return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
-                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-                        <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                      <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '13px', color: 'rgba(0,0,0,0.3)', margin: 0 }}>
-                        {notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
-                      </p>
-                    </div>
-                  );
-                  return Object.entries(groupByDate(list)).map(([label, items]) => {
-                    if (!items.length) return null;
-                    return (
-                      <div key={label}>
-                        <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: 700, fontSize: '10px', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '10px 18px 4px' }}>
-                          {label}
-                        </p>
-                        {items.map(n => (
-                          <div
-                            key={n.id}
-                            onClick={() => markOneRead(n.id)}
-                            style={{
-                              display:    'flex',
-                              alignItems: 'flex-start',
-                              gap:        '12px',
-                              padding:    '10px 18px',
-                              background: n.read ? 'transparent' : 'rgba(0,62,166,0.05)',
-                              cursor:     'pointer',
-                              transition: 'background 0.12s',
-                              borderLeft: n.read ? '3px solid transparent' : '3px solid #003EA6',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.03)'}
-                            onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'rgba(0,62,166,0.05)'}
-                          >
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0,62,166,0.08)', border: '1px solid rgba(0,62,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#003EA6" strokeWidth="1.67" strokeLinecap="round" />
-                              </svg>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontWeight: n.read ? 400 : 700, fontSize: '13px', color: '#0A0A0A', margin: '0 0 2px 0', lineHeight: '1.4' }}>
-                                {n.title}
-                              </p>
-                              <p style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '12px', color: '#4A5565', margin: '0 0 4px 0', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                {n.body}
-                              </p>
-                              <span style={{ fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '11px', color: 'rgba(0,0,0,0.35)' }}>
-                                {formatTime(n.time)}
-                              </span>
-                            </div>
-                            {!n.read && (
-                              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#003EA6', flexShrink: 0, marginTop: '6px' }} />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-
-              <div style={{ padding: '10px 18px', borderTop: '1px solid #F0F2F5', flexShrink: 0 }}>
-                <button
-                  onClick={() => { setShowDropdown(false); navigate('/notifications'); }}
-                  style={{ width: '100%', height: '36px', background: '#F9FAFB', border: '1px solid #D1D5DC', borderRadius: '10px', fontFamily: 'Montserrat, Arial, sans-serif', fontSize: '13px', color: '#4A5565', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F0F4FB'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#F9FAFB'}
-                >
-                  See all notifications
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <NotificationBell
+          onSeeAll={() => navigate('/notifications')}
+          className={isMobile ? 'mobile' : ''}
+        />
 
         {/* ── Back Button ── */}
         <button

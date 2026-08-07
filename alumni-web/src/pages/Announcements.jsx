@@ -12,6 +12,7 @@ import {
 } from "../lib/surveyProgress";
 import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
+import { useNotifications } from "../hooks/useNotifications";
 
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -46,19 +47,13 @@ const Announcements = () => {
   const width = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
-
-  const bellRef = useRef(null);
   const filterRef = useRef(null);
 
   const [activeCategory, setActiveCategory] = useState("All Announcements");
   const [showFilter, setShowFilter] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [notifs, setNotifs] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab, setNotifTab] = useState("all");
+  const { unreadCount } = useNotifications({ autoMarkReadOnMount: true });
   const [toast, setToast] = useState({
     visible: false,
     points: 0,
@@ -69,38 +64,40 @@ const Announcements = () => {
   const { showModal, requestNavigation, handleAccept, handleDecline } =
     useDpaGate(navigate);
 
-    const rewardChannelRef = useRef(null);
-      useEffect(() => {
-        let mounted = true;
-        subscribeToRewardPoints(
-          () => {},
-          ({ points, newBalance }) => {
-            if (!mounted) return;
-            setToast({
-              visible: true,
-              points,
-              newBalance,
-              label: "Points awarded",
-            });
-          },
-        ).then((channel) => {
-          if (mounted) rewardChannelRef.current = channel;
-          else channel?.unsubscribe();
+  const rewardChannelRef = useRef(null);
+  useEffect(() => {
+    let mounted = true;
+    subscribeToRewardPoints(
+      () => {},
+      ({ points, newBalance }) => {
+        if (!mounted) return;
+        setToast({
+          visible: true,
+          points,
+          newBalance,
+          label: "Points awarded",
         });
+      },
+    ).then((channel) => {
+      if (mounted) rewardChannelRef.current = channel;
+      else channel?.unsubscribe();
+    });
 
-        return () => {
-          mounted = false;
-          rewardChannelRef.current?.unsubscribe();
-          rewardChannelRef.current = null;
-        };
-      }, []);
+    return () => {
+      mounted = false;
+      rewardChannelRef.current?.unsubscribe();
+      rewardChannelRef.current = null;
+    };
+  }, []);
 
   // Fetch announcements from Supabase
   useEffect(() => {
     const fetchAnnouncements = async () => {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       const { data, error } = await supabase
         .from("announcements")
@@ -152,55 +149,8 @@ const Announcements = () => {
     };
   }, []);
 
-  // Fetch notifications for the bell dropdown AND auto-mark all as read
-  // because the user is on the Announcements page — they are actively
-  // viewing the content, so the red indicator should clear immediately.
-  useEffect(() => {
-    const fetchNotifs = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("id, title, content, published_at, is_active")
-        .eq("is_active", true)
-        .or(`target_user_ids.is.null,target_user_ids.cs.{${user?.id}}`)
-        .order("published_at", { ascending: false })
-        .limit(20);
-      if (error || !data) return;
-
-      // Auto-mark every fetched announcement as read in localStorage.
-      // This mirrors the exact same key used by AlumniDashboard so the
-      // dashboard bell badge clears the next time it mounts/re-renders.
-      const allIds = data.map((n) => n.id);
-      const existingReadIds = JSON.parse(
-        localStorage.getItem(STORAGE_KEY_ANNOUNCEMENTS) || "[]",
-      );
-      const mergedReadIds = Array.from(
-        new Set([...existingReadIds, ...allIds]),
-      );
-      localStorage.setItem(
-        STORAGE_KEY_ANNOUNCEMENTS,
-        JSON.stringify(mergedReadIds),
-      );
-
-      // Build notif list with every item pre-marked read so the bell
-      // dropdown also reflects the cleared state instantly.
-      const mapped = data.map((n) => ({
-        id: n.id,
-        title: n.title,
-        body: n.content,
-        time: n.published_at,
-        read: true, // all read — user is on this page
-      }));
-      setNotifs(mapped);
-      setUnreadCount(0); // clear the red badge on the bell immediately
-    };
-    fetchNotifs();
-  }, []);
-
   useEffect(() => {
     const handler = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target))
-        setShowDropdown(false);
       if (filterRef.current && !filterRef.current.contains(e.target))
         setShowFilter(false);
     };
@@ -213,7 +163,6 @@ const Announcements = () => {
     onClaimedStatus: () => {},
     onToast: setToast,
   });
-  
 
   const handleSurveyNavigate = useCallback(() => {
     if (!surveyRoute) return;
@@ -309,17 +258,7 @@ const Announcements = () => {
         setShowFilter={setShowFilter}
         filterRef={filterRef}
         // notifications
-        bellRef={bellRef}
-        notifs={notifs}
-        unreadCount={unreadCount}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        notifTab={notifTab}
-        setNotifTab={setNotifTab}
-        markAllRead={markAllRead}
-        markOneRead={markOneRead}
-        groupByDate={groupByDate}
-        formatTime={formatTime}
+        // unreadCount={unreadCount}
         // navigation
         navigate={navigate}
       />

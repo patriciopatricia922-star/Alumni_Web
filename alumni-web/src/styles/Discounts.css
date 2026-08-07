@@ -2,16 +2,16 @@
 :root {
   --page-bg: #DAE5F1;
   --card-bg: #ffffff;
-  --card-border: rgba(0,0,0,0.07);
-  --card-border-hover: rgba(0,62,166,0.25);
-  --card-shadow: 0px 4px 16px rgba(0,0,0,0.07);
-  --card-shadow-hover: 0px 12px 32px rgba(0,62,166,0.15), 0px 4px 16px rgba(0,0,0,0.08);
+  --card-border: rgba(0, 0, 0, 0.07);
+  --card-border-hover: rgba(0, 62, 166, 0.25);
+  --card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
+  --card-shadow-hover: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
   --title-color: #1e3a5f;
   --body-color: #4a5565;
   --accent: #003ea6;
   --discount-badge: #ef4444;
   --filter-bg: #ffffff;
-  --filter-border: rgba(0,62,166,0.2);
+  --filter-border: rgba(0, 62, 166, 0.2);
   --sidebar-width-desktop: 229px;
   --sidebar-width-tablet: 200px;
 }
@@ -63,289 +63,28 @@
   .filter-dropdown {
     left: 0;
     right: auto;
-  } 
+  }
 }
 
-/* Notification Bell */
-.notification-bell-wrapper {
+.discounts-main-content .notification-bell-wrapper {
   position: absolute;
   top: 37px;
   right: 51px;
   z-index: 200;
 }
 
-@media (max-width: 768px) {
-  .notification-bell-wrapper {
+@media (max-width: 1024px) and (min-width: 769px) {
+  .discounts-main-content .notification-bell-wrapper {
+    right: 28px;
+    /* Adjust based on tablet padding in Discounts.css */
+  }
+}
+
+@media (max-width: 767px) {
+  .discounts-main-content .notification-bell-wrapper {
     top: 24px;
     right: 16px;
   }
-}
-
-.notification-bell-btn {
-  width: 52px;
-  height: 52px;
-  background: #003EA6;
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0px 4px 12px rgba(0,0,0,0.35);
-  border-radius: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.15s ease;
-}
-
-.notification-bell-btn.active {
-  background: rgba(43,114,251,0.25);
-  border: 1px solid rgba(43,114,251,0.5);
-}
-
-@media (max-width: 768px) {
-  .notification-bell-btn {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-.notification-badge {
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  min-width: 20px;
-  height: 20px;
-  background: #E53935;
-  border-radius: 10px;
-  border: 2px solid #DAE5F1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  box-sizing: border-box;
-}
-
-.notification-badge-text {
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  color: #FFFFFF;
-  line-height: 1;
-}
-
-/* Notification Dropdown */
-.notification-dropdown {
-  position: absolute;
-  top: calc(52px + 10px);
-  right: 0;
-  width: 380px;
-  max-height: 520px;
-  background: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 300;
-}
-
-.notification-dropdown.mobile {
-  width: calc(100vw - 32px);
-  min-width: 280px;
-  max-width: 380px;
-  top: calc(44px + 10px);
-  right: 0;
-}
-
-.dropdown-header {
-  padding: 16px 18px 12px;
-  border-bottom: 1px solid #F0F2F5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.dropdown-title {
-  font-family: Montserrat, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  color: #003EA6;
-}
-
-.mark-all-read-btn {
-  background: none;
-  border: none;
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: #2B72FB;
-  cursor: pointer;
-  padding: 0;
-}
-
-.dropdown-tabs {
-  display: flex;
-  padding: 10px 18px 0;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.dropdown-tab {
-  height: 30px;
-  padding: 0 14px;
-  background: transparent;
-  border: 1px solid #D1D5DC;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  color: #4A5565;
-  transition: all 0.15s;
-}
-
-.dropdown-tab.active {
-  background: #003EA6;
-  border: none;
-  font-weight: 700;
-  color: #FFFFFF;
-}
-
-.dropdown-body {
-  overflow-y: auto;
-  flex: 1;
-  padding: 8px 0;
-}
-
-.empty-notifications {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  gap: 10px;
-}
-
-.empty-text {
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 13px;
-  color: rgba(0,0,0,0.3);
-  margin: 0;
-}
-
-.notification-date-label {
-  font-family: Montserrat, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 10px;
-  color: rgba(0,0,0,0.35);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin: 10px 18px 4px;
-}
-
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 18px;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-.notification-item.unread {
-  background: rgba(0,62,166,0.05);
-  border-left: 3px solid #003EA6;
-}
-
-.notification-item.read {
-  background: transparent;
-  border-left: 3px solid transparent;
-}
-
-.notification-item:hover {
-  background: rgba(0,0,0,0.03);
-}
-
-.notification-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(0,62,166,0.08);
-  border: 1px solid rgba(0,62,166,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-title {
-  font-family: Montserrat, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 13px;
-  color: #0A0A0A;
-  margin: 0 0 2px 0;
-  line-height: 1.5;
-}
-
-.notification-item.unread .notification-title {
-  font-weight: 700;
-}
-
-.notification-body {
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 12px;
-  color: #4A5565;
-  margin: 0 0 4px 0;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.notification-time {
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 11px;
-  color: rgba(0,0,0,0.35);
-}
-
-.notification-unread-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #003EA6;
-  flex-shrink: 0;
-  margin-top: 6px;
-}
-
-.dropdown-footer {
-  padding: 10px 18px;
-  border-top: 1px solid #F0F2F5;
-  flex-shrink: 0;
-}
-
-.see-all-btn {
-  width: 100%;
-  height: 36px;
-  background: #F9FAFB;
-  border: 1px solid #D1D5DC;
-  border-radius: 10px;
-  font-family: Montserrat, Arial, sans-serif;
-  font-size: 13px;
-  color: #4A5565;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.see-all-btn:hover {
-  background: #F0F4FB;
 }
 
 /* Back Button */
@@ -370,7 +109,9 @@
   }
 }
 
-.back-button:hover { opacity: 0.7; }
+.back-button:hover {
+  opacity: 0.7;
+}
 
 .back-button span {
   font-family: 'Montserrat', sans-serif;
@@ -459,7 +200,7 @@
   background: var(--filter-bg);
   border: 1px solid var(--filter-border);
   border-radius: 10px;
-  box-shadow: 0px 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
   min-width: 200px;
 }
 
@@ -511,7 +252,7 @@
   border-radius: 10px;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: 0px 4px 6px -4px rgba(0,0,0,0.1), 0px 10px 15px -3px rgba(0,0,0,0.1);
+  box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
   transition: opacity 0.15s;
 }
 
@@ -533,12 +274,12 @@
   left: 0;
   right: auto;
   background: #ffffff;
-  border: 1px solid rgba(0,62,166,0.15);
+  border: 1px solid rgba(0, 62, 166, 0.15);
   border-radius: 12px;
   overflow: hidden;
   z-index: 300;
   min-width: 220px;
-  box-shadow: 0px 10px 30px rgba(0,0,0,0.15);
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 .filter-option {
@@ -695,7 +436,7 @@
   position: absolute;
   bottom: 19px;
   left: 12px;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 20px;
   padding: 4px 10px;
 }
@@ -752,7 +493,7 @@
 .discount-card-divider {
   width: 100%;
   height: 1px;
-  background: rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
   flex-shrink: 0;
 }
@@ -762,7 +503,7 @@
   overflow: hidden;
   max-height: 0;
   transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .discount-card-details.expanded {
@@ -847,18 +588,13 @@
 
 /* ============================================================
    MOBILE-ONLY RESPONSIVE ADDITIONS
-   Scope: phones only (<= 767px), split into small/medium/large
-   tiers. Desktop and tablet rules above are untouched.
-   These rules use the Discounts page's own classes/variables
-   only (.discounts-*, .discount-card-*, .back-button, etc.)
-   and add ".mobile" state classes already wired up in JSX for
-   the inline-styled bell / dropdown / filter pieces.
    ============================================================ */
 
 @media (max-width: 767px) {
 
   /* ── Global overflow guard ─────────────────────────────── */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 
@@ -914,7 +650,7 @@
     overflow: hidden;
   }
 
-  .discounts-notif-dropdown.mobile > div[style*="overflowY"] {
+  .discounts-notif-dropdown.mobile>div[style*="overflowY"] {
     max-height: none;
   }
 

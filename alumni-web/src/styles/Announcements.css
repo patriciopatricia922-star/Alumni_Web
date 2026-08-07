@@ -1,14 +1,8 @@
-/* ============================================================
-   Announcements.css — Light-theme visual refresh
-   Palette sourced from Figma spec (Announcements 2.2)
-   ============================================================ */
-
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {
   --ann-page-bg: #dae5f1;
   --ann-sidebar-bg: #00226d;
   --ann-banner-bg: linear-gradient(180deg, #2b72fb 0%, #1e2555 100%);
-
   --ann-card-bg: #ffffff;
   --ann-card-border: #e5e7eb;
   --ann-card-shadow:
@@ -16,36 +10,29 @@
   --ann-card-shadow-hover:
     0px 8px 24px rgba(43, 114, 251, 0.14), 0px 2px 8px rgba(0, 0, 0, 0.08);
   --ann-card-border-hover: #2b72fb;
-
   --ann-title-color: #003ea6;
   --ann-body-color: #4a5565;
   --ann-meta-color: #8a94a6;
   --ann-timestamp-color: rgba(74, 85, 101, 0.65);
   --ann-clock-stroke: rgba(74, 85, 101, 0.45);
-
   --ann-accent: #003ea6;
   --ann-accent-btn: #003ea6;
   --ann-badge-bg: #2b72fb;
-
   --ann-page-title: #324d87;
   --ann-page-subtitle: #545454;
   --ann-back-color: #003ea6;
   --ann-content-left-pad: 40px;
   --ann-content-right-pad: 24px;
-
   --ann-icon-box-bg: linear-gradient(180deg, #2b7fff 0%, #155dfc 100%);
   --ann-icon-box-shadow: 0px 4px 10px rgba(43, 114, 251, 0.35);
-
   /* Aligned to Dashboard .bell-badge treatment */
   --ann-notif-dot-outer: rgba(255, 0, 0, 0.35);
   --ann-notif-dot-inner: #e53935;
-
   --ann-footer-border: #f0f2f5;
   --ann-filter-bg: #ffffff;
   --ann-filter-border: #e5e7eb;
   --ann-filter-text: #1e3a5f;
   --ann-chevron: #8a94a6;
-
   --ann-modal-overlay: rgba(15, 23, 42, 0.6);
   --ann-modal-blur: 12px;
   --ann-modal-bg: #ffffff;
@@ -158,82 +145,34 @@ body {
   opacity: 0.7;
 }
 
-/* ── Notification Bell Wrapper ───────────────────────────────── */
-.ann-bell-wrapper {
-  position: absolute;
-  top: 45px;
-  right: 84px;
-  z-index: 200;
-}
-@media (max-width: 1024px) and (min-width: 769px) {
-  .ann-bell-wrapper {
-    right: 65px;
-  }
-}
-@media (max-width: 768px) {
-  .ann-bell-wrapper {
-    top: 24px;
-    right: 16px;
-  }
-}
-
-/* ── Notification Bell Button ────────────────────────────────── */
-.ann-bell-btn {
-  width: 52px;
-  height: 52px;
-  background: #003ea6;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.35);
-  border-radius: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: all 0.15s ease;
-}
-@media (max-width: 768px) {
-  .ann-bell-btn {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-/* ── Notification Dropdown ───────────────────────────────────── */
-.ann-notif-dropdown {
-  position: absolute;
-  top: calc(52px + 10px);
-  right: 0;
-  width: 380px;
-  max-height: 520px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 300;
-}
-.ann-notif-dropdown.mobile {
-  width: calc(100vw - 32px);
-  min-width: 280px;
-  max-width: 380px;
-  top: calc(44px + 10px);
-  right: 0;
-}
-
-.ann-hdr {
-  flex-shrink: 0;
-  margin-bottom: clamp(10px, 1.4vh, 16px);
-  padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
-}
-
 .ann-back span {
   font-family: "Montserrat", sans-serif;
   font-weight: 600;
   font-size: clamp(13px, 0.9vw, 15px);
   color: #002263;
+}
+
+/* ============================ NOTIFICATION BELL OVERRIDE ============================ */
+/* Scopes the reusable NotificationBell component to the Announcements page layout.
+   This preserves the original absolute positioning without modifying the shared component. */
+.announcements-main-content .notification-bell-wrapper {
+  position: absolute;
+  top: 45px;
+  right: 84px;
+  z-index: 200;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .announcements-main-content .notification-bell-wrapper {
+    right: 65px;
+  }
+}
+
+@media (max-width: 767px) {
+  .announcements-main-content .notification-bell-wrapper {
+    top: 24px;
+    right: 16px;
+  }
 }
 
 /* ── Featured banner ───────────────────────────────────────── */
@@ -248,7 +187,7 @@ body {
   border: 1px solid var(--ann-filter-border) !important;
 }
 
-.ann-filter-display > span {
+.ann-filter-display>span {
   color: var(--ann-filter-text) !important;
 }
 
@@ -584,8 +523,6 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  /* Aligned to Dashboard: relative container for the notif badge */
   position: relative;
   margin-top: 2px;
   transition:
@@ -599,49 +536,37 @@ body {
 }
 
 /* ── Notification ring — aligned to Dashboard .bell-badge ─── */
-
 .ann-card__notif-ring {
-  /* Position — mirrored from Dashboard badge offsets */
   position: absolute;
   top: -7px;
   right: -7px;
-
-  /* Size — matches Dashboard .bell-badge */
   min-width: 14px;
   height: 14px;
   padding: 0 3px;
   box-sizing: border-box;
-
-  /* Visual — matches Dashboard .bell-badge */
   background: #e53935;
   border-radius: 10px;
-  border: 2px solid #dae5f1; /* matches page-bg border treatment in Dashboard */
+  border: 2px solid #dae5f1;
   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.35);
-
   /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
-
   /* Layering */
   z-index: 2;
 }
 
 /* ── Notification dot — inner count text, aligned to Dashboard .bell-badge span */
 .ann-card__notif-dot {
-  /* Kept visible (Dashboard badge always shows its span) */
   display: flex;
   align-items: center;
   justify-content: center;
-
   /* Typography — matches Dashboard badge span */
   font-family: "Montserrat", Arial, sans-serif;
   font-size: 9px;
   font-weight: 700;
   color: #ffffff;
   line-height: 1;
-
-  /* Remove the legacy filled-circle look; the ring itself is the badge */
   width: auto;
   height: auto;
   background: transparent;
@@ -650,7 +575,7 @@ body {
 
 /* ── Responsive: tablet / mobile — scale badge with icon-box ── */
 @media (max-width: 768px) {
-  /* Icon-box shrinks to 36px on mobile, nudge badge offsets slightly */
+
   .ann-card__notif-ring {
     top: -6px;
     right: -6px;
@@ -664,6 +589,7 @@ body {
 }
 
 @media (max-width: 479px) {
+
   /* Smallest breakpoint — keep badge visible and tight */
   .ann-card__notif-ring {
     top: -5px;
@@ -781,6 +707,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -806,9 +733,11 @@ body {
 .ann-modal::-webkit-scrollbar {
   width: 6px;
 }
+
 .ann-modal::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .ann-modal::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 3px;
@@ -819,6 +748,7 @@ body {
     opacity: 0;
     transform: translateY(16px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -936,17 +866,21 @@ body {
 .ann-modal__body .announcement-full-content p {
   margin: 0 0 14px 0;
 }
+
 .ann-modal__body .announcement-full-content ul,
 .ann-modal__body .announcement-full-content ol {
   padding-left: 20px;
   margin: 0 0 14px 0;
 }
+
 .ann-modal__body .announcement-full-content li {
   margin-bottom: 6px;
 }
+
 .ann-modal__body .announcement-full-content a {
   color: var(--ann-accent);
 }
+
 .ann-modal__body .announcement-full-content strong {
   color: var(--ann-modal-title);
   font-weight: 700;
@@ -1028,6 +962,7 @@ body.ann-modal-open {
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1044,17 +979,21 @@ body.ann-modal-open {
 .ann-card__full-content .announcement-full-content p {
   margin: 0 0 10px 0;
 }
+
 .ann-card__full-content .announcement-full-content ul,
 .ann-card__full-content .announcement-full-content ol {
   padding-left: 20px;
   margin: 0 0 10px 0;
 }
+
 .ann-card__full-content .announcement-full-content li {
   margin-bottom: 5px;
 }
+
 .ann-card__full-content .announcement-full-content a {
   color: var(--ann-accent);
 }
+
 .ann-card__full-content .announcement-full-content strong {
   color: var(--ann-title-color);
   font-weight: 700;
@@ -1073,21 +1012,23 @@ body.ann-modal-open {
 
 /* ── Responsive fix: AnnouncementCard inline-styled elements ── */
 @media (max-width: 768px) {
-  .ann-cards-list > div {
+  .ann-cards-list>div {
     max-width: 100% !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
   }
-  .ann-cards-list > div > div:first-child {
+
+  .ann-cards-list>div>div:first-child {
     height: clamp(200px, 55vw, 280px) !important;
   }
-  .ann-cards-list > div p {
+
+  .ann-cards-list>div p {
     font-size: clamp(12px, 3.4vw, 14px) !important;
   }
 }
 
 @media (max-width: 480px) {
-  .ann-cards-list > div > div:first-child {
+  .ann-cards-list>div>div:first-child {
     height: clamp(180px, 60vw, 220px) !important;
   }
 }
@@ -1098,16 +1039,18 @@ body.ann-modal-open {
     width: 100%;
     box-sizing: border-box;
   }
-  .ann-cards-list > div button {
+
+  .ann-cards-list>div button {
     font-size: clamp(11px, 3.2vw, 13px) !important;
   }
 }
 
 @media (max-width: 380px) {
-  .ann-cards-list > div > div:first-child {
+  .ann-cards-list>div>div:first-child {
     height: clamp(160px, 58vw, 200px) !important;
   }
-  .ann-cards-list > div p {
+
+  .ann-cards-list>div p {
     font-size: clamp(11px, 3.6vw, 13px) !important;
   }
 }
@@ -1116,14 +1059,14 @@ body.ann-modal-open {
    MOBILE-ONLY RESPONSIVE ADDITIONS
    Scope: phones only (<= 767px), small/medium/large tiers.
    Desktop and tablet rules above are untouched. Uses only the
-   Announcements page's own classes (.ann-*, .announcement-card-*),
+   Announcements page's own classes (.ann-, .announcement-card-),
    mirroring the approach already implemented on Discounts/Jobs.
    ============================================================ */
-
 @media (max-width: 767px) {
 
   /* ── Global overflow guard ─────────────────────────────── */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 
@@ -1151,32 +1094,6 @@ body.ann-modal-open {
     font-size: clamp(13px, 3.6vw, 15px);
   }
 
-   /* ── 2. Notification bell + dropdown: viewport-safe ────────── */
-  .ann-bell-wrapper.mobile {
-    position: absolute;
-    top: clamp(20px, 5vw, 28px);
-    right: clamp(12px, 4vw, 18px);
-    z-index: 200;
-  }
-  .ann-bell-btn.mobile {
-    width: clamp(40px, 11vw, 44px) !important;
-    height: clamp(40px, 11vw, 44px) !important;
-  }
-  .ann-notif-dropdown.mobile {
-    position: absolute;
-    top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
-    right: 0 !important;
-    left: auto !important;
-    width: min(92vw, 380px) !important;
-    min-width: 260px;
-    max-width: calc(100vw - 24px);
-    max-height: min(70vh, 520px) !important;
-    overflow: hidden;
-  }
-  .ann-notif-dropdown.mobile > div[style*="overflowY"] {
-    max-height: none;
-  }
-
   /* ── 3. Filter: consistent width, viewport-safe dropdown ── */
   .ann-filter-row {
     width: 100%;
@@ -1185,7 +1102,7 @@ body.ann-modal-open {
     margin-right: 0;
   }
 
-  .ann-filter-row > div[style*="position: relative"] {
+  .ann-filter-row>div[style*="position: relative"] {
     width: 100%;
   }
 
@@ -1259,15 +1176,6 @@ body.ann-modal-open {
 
 /* ── Small phones (<= 380px) ─────────────────────────────── */
 @media (max-width: 380px) {
-  .ann-bell-btn.mobile {
-    width: 40px !important;
-    height: 40px !important;
-  }
-  .ann-notif-dropdown.mobile {
-    width: calc(100vw - 20px) !important;
-    min-width: 240px;
-  }
-
   .ann-heading {
     font-size: clamp(20px, 6.8vw, 24px);
   }
