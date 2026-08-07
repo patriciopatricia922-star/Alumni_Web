@@ -114,25 +114,35 @@
 }
 
 /* ============================ LEGACY CLASSES (KEPT FOR SAFETY / OTHER COMPONENTS) ============================ */
-/* 
-   These classes (.notification-bell, .bell-button, etc.) were used by the old inline implementation.
-   They are kept here in case other parts of the dashboard or legacy code still reference them,
-   but the primary bell now uses .notification-bell-wrapper from the reusable component.
-*/
+
 .notification-bell {
   position: absolute;
   top: clamp(28px, 4vh, 52px);
   right: clamp(24px, 3.2vw, 56px);
   z-index: 200;
+  
+  /* Flex helpers to align the inner component if needed */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
+.notification-bell .notification-bell-wrapper {
+  position: static; /* Override 'relative' from NotificationBell.css */
+  z-index: auto;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  height: auto;
+}
+
+/* Keep original mobile overrides for the wrapper */
 @media (max-width: 767px) {
   .notification-bell {
     top: clamp(12px, 2vh, 18px);
     right: clamp(12px, 4vw, 18px);
     margin-right: 0 !important;
   }
-
   .dashboard-header {
     padding-right: 0;
   }

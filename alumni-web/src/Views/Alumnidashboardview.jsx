@@ -437,33 +437,61 @@ const AlumniDashboardView = ({
             <h1>Welcome Bark!</h1>
             <p>Let's see what's new in your alumni network.</p>
           </div>
-            <div 
-          className={`notification-bell ${isMobile ? 'mobile' : ''}`}
-          style={{ 
-            marginLeft: 'auto', 
-            alignSelf: 'flex-start', 
-            paddingTop: '15px', 
-            marginRight: '35px' 
-          }}
-        >
-          <NotificationBell
-            onSeeAll={() => onNavigate('/notifications')}
-          />
-            </div>
+          <div
+            className={`notification-bell ${isMobile ? "mobile" : ""}`}
+            style={{
+              marginLeft: "auto",
+              alignSelf: "flex-start",
+              paddingTop: "15px",
+              marginRight: "35px",
+            }}
+          >
+            {/* NEW COMPONENT: Kept intact inside the old wrapper */}
+            <NotificationBell
+              onSeeAll={() => onNavigate("/notifications")}
+            />
           </div>
+        </div>
 
         {/* ── Reward Points Banner (Slider) — friend's new feature ── */}
         {/* <div className="reward-banner reward-banner-slider" style={{ minHeight: 120 }}> */}
         <div className="reward-banner reward-banner-slider">
-
-          <button className="reward-nav reward-nav--left" onClick={prevSlide} aria-label="Previous" style={{ zIndex: 10 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            className="reward-nav reward-nav--left"
+            onClick={prevSlide}
+            aria-label="Previous"
+            style={{ zIndex: 10 }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
 
-          <button className="reward-nav reward-nav--right" onClick={nextSlide} aria-label="Next" style={{ zIndex: 10 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            className="reward-nav reward-nav--right"
+            onClick={nextSlide}
+            aria-label="Next"
+            style={{ zIndex: 10 }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -473,36 +501,50 @@ const AlumniDashboardView = ({
             {rewardSlides.map((_, idx) => (
               <button
                 key={idx}
-                className={`slide-dot${idx === slideIndex ? ' slide-dot--active' : ''}`}
-                onClick={(e) => { e.stopPropagation(); goToSlideRef.current(idx); resetAutoPlay(true); }}
+                className={`slide-dot${idx === slideIndex ? " slide-dot--active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToSlideRef.current(idx);
+                  resetAutoPlay(true);
+                }}
                 aria-label={`Go to slide ${idx + 1}`}
               />
             ))}
           </div>
 
           {rewardSlides.map((slide, idx) => {
-            const isActive  = idx === slideIndex;
+            const isActive = idx === slideIndex;
             const isExiting = idx === prevIndex;
             if (!isActive && !isExiting) return null;
             return (
               <div
                 key={idx}
                 className={getSlideClass(idx)}
-                style={{ background: slide.bgImage ? 'transparent' : slide.gradient }}
+                style={{
+                  background: slide.bgImage ? "transparent" : slide.gradient,
+                }}
               >
                 {slide.bgImage && (
                   <>
-                    <div style={{
-                      position: 'absolute', inset: 0, borderRadius: 20,
-                      backgroundImage: `url(${slide.bgImage})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      imageRendering: 'high-quality',
-                    }} />
-                    <div style={{
-                      position: 'absolute', inset: 0, borderRadius: 20,
-                      background: 'rgba(0,0,0,0.55)',
-                    }} />
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: 20,
+                        backgroundImage: `url(${slide.bgImage})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        imageRendering: "high-quality",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: 20,
+                        background: "rgba(0,0,0,0.55)",
+                      }}
+                    />
                   </>
                 )}
                 {renderSlideContent(slide)}
@@ -513,24 +555,25 @@ const AlumniDashboardView = ({
 
         {/* ── Top Banner Row ── */}
         <div className="top-banner-row">
-
           {/* Hello Card */}
           <div className="hello-card">
             <div className="hello-deco-circle hello-deco-circle--tr" />
             <div className="hello-deco-circle hello-deco-circle--bl" />
             <div className="hello-card-inner">
               <h2 className="hello-text">
-                Hello,<br />
+                Hello,
+                <br />
                 <span className="hello-name">{firstName}!</span>
               </h2>
               <p className="hello-notification-text">
                 {unreadCount > 0 ? (
                   <>
-                    You have{' '}
+                    You have{" "}
                     <span className="hello-notif-highlight">
-                      {unreadCount} new notification{unreadCount !== 1 ? 's' : ''}.
-                    </span>
-                    {' '}Check it now!
+                      {unreadCount} new notification
+                      {unreadCount !== 1 ? "s" : ""}.
+                    </span>{" "}
+                    Check it now!
                   </>
                 ) : (
                   "You're all caught up. No new notifications."
@@ -547,7 +590,9 @@ const AlumniDashboardView = ({
 
             <div className="survey-card-content">
               <p className="survey-label">TRACER SURVEY</p>
-              <p className="survey-message">Your alumni tracer survey progress!</p>
+              <p className="survey-message">
+                Your alumni tracer survey progress!
+              </p>
 
               <button
                 className="continue-button"
@@ -555,7 +600,7 @@ const AlumniDashboardView = ({
                 disabled={!surveyRoute}
                 style={{
                   opacity: surveyRoute ? 1 : 0.5,
-                  cursor:  surveyRoute ? 'pointer' : 'not-allowed',
+                  cursor: surveyRoute ? "pointer" : "not-allowed",
                 }}
               >
                 Proceed
@@ -591,7 +636,6 @@ const AlumniDashboardView = ({
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
