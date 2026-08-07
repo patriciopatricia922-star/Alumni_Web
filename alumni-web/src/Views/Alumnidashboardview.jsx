@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/AlumniDashboard.css';
 import '../styles/NotificationBell.css';
+import '../styles/AlumniDashboard.css';
 import '../styles/RewardsCard.css';
 import { truncateHtml } from "../utils/textHelpers";
 
