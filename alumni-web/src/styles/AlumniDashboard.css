@@ -51,8 +51,12 @@
   width: 100%;
   box-sizing: border-box;
   padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
-  position: relative;
-  /* Ensure absolute children anchor here */
+  /* NOTE: intentionally no position:relative here — the notification bell
+     is anchored to .dashboard-content (the nearest positioned ancestor)
+     so its top/right offsets are measured from the page's padding box,
+     matching the bell's original on-screen position. Adding position:relative
+     back here would make the bell anchor to this row instead, shifting it
+     down/left by this element's own top margin and inset from the page edge. */
 }
 
 .dashboard-header-text {
@@ -75,7 +79,10 @@
 /* 
    The reusable NotificationBell component renders .notification-bell-wrapper.
    We override its positioning here to match the original AlumniDashboard layout.
-   Original behavior: Absolute positioning relative to .dashboard-header.
+   Positioning: absolute, anchored to .dashboard-content's padding box
+   (the nearest positioned ancestor now that .dashboard-header no longer
+   sets position:relative), so the bell sits at the page's top-right corner
+   rather than being pushed down/inward by the header row's own spacing.
 */
 .dashboard-header .notification-bell-wrapper {
   position: absolute;
