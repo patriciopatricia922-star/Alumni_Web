@@ -25,6 +25,7 @@ import useUserProfile from '../hooks/Useuserprofile';
 import useSurveyBackGuard from '../hooks/useSurveyBackGuard'; // ← NEW
 import PersonalBackgroundView from '../Views/PersonalBackgroundView';
 import SkeletonLoader from '../components/SkeletonLoader'; // ← NEW
+import { useNotifications } from '../hooks/useNotifications';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
@@ -179,12 +180,8 @@ const PersonalBackground = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef                    = useRef(null);
 
-  // ── Notifications ─────────────────────────────────────────────────────────
-  const bellRef                         = useRef(null);
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const { unreadCount } = useNotifications();
+
 
   // ── Force a fresh profile fetch on mount ──────────────────────────────────
   useEffect(() => {
@@ -453,17 +450,6 @@ const PersonalBackground = () => {
         getLabel={getLabel}
         getPlaceholder={getPlaceholder}
         questionOptions={questionOptions}
-        bellRef={bellRef}
-        notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
-        unreadCount={unreadCount}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        notifTab={notifTab}
-        setNotifTab={setNotifTab}
-        markAllRead={markAllRead}
-        markOneRead={markOneRead}
-        groupByDate={groupByDate}
-        formatTime={formatTime}
         navigate={navigate}
       />
       <BackGuardModal />
