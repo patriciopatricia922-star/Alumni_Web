@@ -1088,7 +1088,7 @@
   }
 
   .notification-bell {
-    top: clamp(32px, 4.4vh, 52px);
+    top: clamp(14px, 2.2vh, 24px);
     right: clamp(14px, 2.2vw, 24px);
   }
 
@@ -1109,7 +1109,7 @@
   }
 
   .notification-bell {
-    top: clamp(20px, 3vh, 32px);
+    top: clamp(12px, 2vh, 18px);
     right: clamp(12px, 4vw, 18px);
   }
 
