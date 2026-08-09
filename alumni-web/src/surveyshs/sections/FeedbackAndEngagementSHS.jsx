@@ -28,6 +28,7 @@ import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { logAction } from '../../lib/auditLogger';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import FeedbackAndEngagementViewSHS from '../views/FeedbackAndEngagementViewSHS';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 6;
@@ -82,42 +83,9 @@ const computeFormPct = (form) => {
   return Math.min(parseFloat((base + contrib).toFixed(2)), 100);
 };
 
-const NOTIF_KEY   = 'alumnai_read_notifs';
-const getReadIds  = () => { try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch { return []; } };
-const saveReadIds = (ids) => { try { localStorage.setItem(NOTIF_KEY, JSON.stringify(ids)); } catch {} };
-
-const groupByDate = (list) => {
-  const now       = new Date();
-  const today     = new Date(now); today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  const weekAgo   = new Date(today); weekAgo.setDate(today.getDate() - 7);
-  const groups    = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
-  list.forEach((n) => {
-    const d = new Date(n.time); d.setHours(0, 0, 0, 0);
-    if      (d >= today)     groups['Today'].push(n);
-    else if (d >= yesterday) groups['Yesterday'].push(n);
-    else if (d >= weekAgo)   groups['This Week'].push(n);
-    else                     groups['Earlier'].push(n);
-  });
-  return groups;
-};
-
-const formatTime = (iso) => {
-  if (!iso) return '';
-  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (diff < 60)     return 'Just now';
-  if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-};
-
 const FeedbackAndEngagementSHS = () => {
   const navigate = useNavigate();
 
-  // ── Resolve prevRoute from sessionStorage on mount ──────────────────────
-  // Written by EducationalBackgroundSHS (skip path) and
-  // SkillsAndCompetenciesSHS (Working path) before navigating here.
   const [prevRoute] = useState(() => {
     try {
       return sessionStorage.getItem('shs_feedback_prev_route') || PREV_ROUTE_FALLBACK;
@@ -134,25 +102,21 @@ const FeedbackAndEngagementSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  const bellRef                         = useRef(null);
-  const [notifs,       setNotifs]       = useState([]);
-  const [unreadCount,  setUnreadCount]  = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifTab,     setNotifTab]     = useState('all');
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED: was loadSurveyConfig(true) — defaulted to 'college'
+        await loadSurveyConfig(true, DEPARTMENT_TYPE); 
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
     };
     init();
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true, DEPARTMENT_TYPE); // FIXED
+      await loadSurveyConfig(true, DEPARTMENT_TYPE);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
   }, []);
@@ -201,28 +165,6 @@ const FeedbackAndEngagementSHS = () => {
         setNotifs(mapped);
         setUnreadCount(mapped.filter((n) => !n.read).length);
       });
-  }, []);
-
-  useEffect(() => {
-    const h = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target))
-        setShowDropdown(false);
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
-
-  const markAllRead = useCallback(() => {
-    saveReadIds(notifs.map((n) => n.id));
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }, [notifs]);
-
-  const markOneRead = useCallback((id) => {
-    const ids = getReadIds();
-    if (!ids.includes(id)) { ids.push(id); saveReadIds(ids); }
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
 
   const set = useCallback((key, val) => {
@@ -307,8 +249,6 @@ const FeedbackAndEngagementSHS = () => {
         status:      'Success',
       });
 
-      // Clean up — no longer needed after submission
-      // Clean up — no longer needed after submission
       try { sessionStorage.removeItem('shs_feedback_prev_route'); } catch (_) {}
 
       const originRoute = sessionStorage.getItem('survey_origin_route') || '/dashboard';
@@ -355,17 +295,6 @@ const FeedbackAndEngagementSHS = () => {
       totalSections={TOTAL_SECTIONS}
       handleSave={handleSave}
       handleSubmit={handleSubmit}
-      bellRef={bellRef}
-      notifs={notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs}
-      unreadCount={unreadCount}
-      showDropdown={showDropdown}
-      setShowDropdown={setShowDropdown}
-      notifTab={notifTab}
-      setNotifTab={setNotifTab}
-      markAllRead={markAllRead}
-      markOneRead={markOneRead}
-      groupByDate={groupByDate}
-      formatTime={formatTime}
       navigate={navigate}
       prevRoute={prevRoute}
     />
