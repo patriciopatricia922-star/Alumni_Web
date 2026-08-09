@@ -6,7 +6,7 @@
 import React from 'react';
 import Sidebar from '../../components/Sidebar';
 import NotificationBell from '../../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css';
+import '../../styles/NotificationBell.css';
 import '../styles/PersonalBackgroundSHS.css';
 
 const BackArrow = () => (
