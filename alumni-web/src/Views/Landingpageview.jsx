@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
+import mcapBg from '../assets/mcap_bg.png'; // <-- 1. Import the new mobile asset
 import '../styles/Landingpage.css';
 import {
   HiOutlineCalendarDays,
@@ -139,7 +140,15 @@ const LandingPageView = ({
     <Navbar isScrolled={isScrolled} onOpenRegister={onOpenRegister} onOpenLogin={onOpenLogin} />
 
     {/* ══ HERO ══════════════════════════════════════════════════════════════ */}
-    <section className="lp-hero" style={{ backgroundImage: `url(${heroSection?.image_url || capBg})` }}>
+    <section 
+      className="lp-hero" 
+      style={{ 
+        // 2. Pass both images as CSS variables so CSS can swap them responsively
+        '--hero-bg-desktop': `url(${heroSection?.image_url || capBg})`,
+        '--hero-bg-mobile': `url(${mcapBg})`,
+        backgroundImage: `var(--hero-bg-desktop)` 
+      }}
+    >
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(70.71% 70.71% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.7) 100%)' }} />
       <div className="lp-hero-content" style={{ zIndex: 1 }}>
         <div className="lp-hero-title-block">
@@ -178,7 +187,7 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ EVENTS ════════════════════════════════════════════════════════════ */}
+    {/* ══ EVENTS ═══════════════════════════════════════════════════════════ */}
     <section id="events" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ marginBottom: '48px', textAlign: 'center' }}>

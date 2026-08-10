@@ -212,6 +212,10 @@ body {
   min-height: 500px;
   max-height: 900px;
   position: relative;
+  
+  /* Use the desktop CSS variable passed from JSX */
+  background-image: var(--hero-bg-desktop); 
+  
   background-size: cover;
   background-position: center;
   overflow: hidden;
@@ -298,9 +302,8 @@ body {
 }
 
 /* ============================
-   STATS SECTION 
+   STATS SECTION
    ============================ */
-
 /* HEIGHT ADJUSTMENT: Reduce bottom padding only, keep top at 64px */
 #stats {
   padding-bottom: 32px !important; 
@@ -679,6 +682,12 @@ body {
 
 /* --- Large Mobile / Small Tablet (max-width: 767px) --- */
 @media (max-width: 767px) {
+  
+  /* BACKGROUND SWAP: Use mobile asset on all mobile devices */
+  .lp-hero {
+    background-image: var(--hero-bg-mobile);
+  }
+
   /* Scrollbar Hiding */
   html, body {
     scrollbar-width: none;
