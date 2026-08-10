@@ -315,8 +315,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* margin-left: 40px; */
-  margin: 0 auto;
+  margin-left: 40px;
 }
 .lp-footer-contact {
   flex: 1 1 280px;
@@ -413,16 +412,12 @@ body {
     padding: 36px 24px 28px;
   }
   .lp-footer-logo {
-    /* margin-left: auto !important;
+    margin-left: auto !important;
     margin-right: auto !important;
     align-self: center !important;
     width: clamp(160px, 40vw, 220px) !important;
     height: clamp(160px, 40vw, 220px) !important;
-    transform: translateX(-15px); */
-    margin: 0 auto !important;
-    align-self: center !important;
-    width: clamp(160px, 40vw, 220px) !important;
-    height: clamp(160px, 40vw, 220px) !important;
+    transform: translateX(-15px);
   }
   .lp-footer-inner {
     padding-bottom: 12px !important;
