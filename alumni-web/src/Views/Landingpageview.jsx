@@ -240,10 +240,10 @@ const LandingPageView = ({
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <h2 className="lp-section-title">
             {whyJoinSection?.title?.split(' ').slice(0, 2).join(' ') || 'Why Join'}{' '}
-            <span style={{ color: '#002263' }}>
+            <span style={{ color: '#003EA6' }}>
               {whyJoinSection?.title?.split(' ')[2]?.slice(0, 5) || 'Alumn'}
             </span>
-            <span style={{ color: 'rgba(201,167,0,0.85)' }}>
+            <span style={{ color: '#003EA6' }}>
               {whyJoinSection?.title?.split(' ')[2]?.slice(5) || 'AI'}
             </span>
           </h2>
