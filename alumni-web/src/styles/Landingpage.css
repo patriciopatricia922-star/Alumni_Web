@@ -1,46 +1,38 @@
 /* =========================================================
    LANDING PAGE STYLES
-   Organized: Imports -> Base/Reset -> Components -> Layout 
-   -> Utilities -> Media Queries (Mobile Last)
+   Organized: Imports → Reset → Nav → Hero → Stats → Cards
+              → Why/Join → Footer → Media Queries
    ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Arimo:wght@400;700&display=swap");
 
 /* ============================
-   1. RESET & BASE
+   RESET & BASE
    ============================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body {
   max-width: 100%;
   overflow-x: hidden;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 @keyframes bounceDown {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
-}
-
-/* ============================
-   MOBILE SCROLLBAR HIDING
-   ============================ */
-@media (max-width: 767px) {
-  html, body {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  html::-webkit-scrollbar, body::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
+  50% {
+    transform: translateY(8px);
   }
 }
 
 /* ============================
-   2. NAVIGATION
+   NAVIGATION
    ============================ */
 .lp-nav {
   position: fixed;
@@ -48,7 +40,9 @@ body {
   left: 0;
   width: 100%;
   z-index: 50;
-  transition: background 0.3s, border-color 0.3s;
+  transition:
+    background 0.3s,
+    border-color 0.3s;
 }
 
 .lp-nav.scrolled {
@@ -83,14 +77,14 @@ body {
 }
 
 .lp-logo-text .white {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: clamp(18px, 2.5vw, 24px);
   color: #ffffff;
 }
 
 .lp-logo-text .gold {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: clamp(18px, 2.5vw, 24px);
   color: #d9ca81;
@@ -107,7 +101,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 16px;
   font-weight: 400;
   letter-spacing: 0.4px;
@@ -132,7 +126,7 @@ body {
   background: #002263;
   border: 0.8px solid rgba(255, 255, 255, 0.55);
   border-radius: 8px;
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: 0.35px;
@@ -151,7 +145,7 @@ body {
   background: #daa520;
   border: none;
   border-radius: 8px;
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 14px;
   font-weight: 400;
   letter-spacing: 0.35px;
@@ -167,7 +161,7 @@ body {
 
 /* Hamburger Menu */
 .lp-hamburger {
-  display: none; /* Hidden on desktop */
+  display: none;
   flex-direction: column;
   gap: 5px;
   background: none;
@@ -202,7 +196,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 16px;
   color: #ffffff;
   text-align: left;
@@ -217,7 +211,7 @@ body {
 }
 
 /* ============================
-   3. HERO SECTION (HEADER)
+   HERO SECTION
    ============================ */
 .lp-hero {
   width: 100%;
@@ -252,7 +246,6 @@ body {
   max-width: 100%;
 }
 
-/* Base Desktop Styles for Hero Text */
 .lp-hero-subtitle {
   font-size: clamp(13px, 1.8vw, 24px) !important;
   line-height: 1.4 !important;
@@ -280,7 +273,7 @@ body {
 }
 
 .lp-explore-more p {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   font-size: clamp(13px, 1.2vw, 16px);
   color: #ffffff;
   margin: 0;
@@ -288,10 +281,10 @@ body {
 }
 
 /* ============================
-   4. CONTENT SECTIONS
+   SECTION TITLES
    ============================ */
 .lp-section-title {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: clamp(28px, 4.5vw, 48px);
   line-height: 1.15;
@@ -301,7 +294,7 @@ body {
 }
 
 .lp-section-subtitle {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: clamp(15px, 1.8vw, 20px);
   line-height: 1.5;
   color: #4a5565;
@@ -311,8 +304,9 @@ body {
   padding: 0 8px;
 }
 
-/* --- STATS SECTION REDESIGN --- */
-/* Desktop: Flex row with vertical dividers */
+/* ============================
+   STATS SECTION
+   ============================ */
 .lp-stats-grid {
   display: flex;
   flex-direction: row;
@@ -326,18 +320,10 @@ body {
 .lp-stat-item {
   flex: 1;
   display: flex;
-  flex-direction: column; /* Icon on top */
+  flex-direction: column;
   align-items: center;
   text-align: center;
   padding: 0 24px;
-}
-
-.lp-stat-icon {
-  margin-bottom: 16px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .lp-stat-text {
@@ -346,7 +332,6 @@ body {
   align-items: center;
 }
 
-/* Desktop Divider Element */
 .lp-stat-divider-desktop {
   width: 1px;
   height: 60px;
@@ -354,9 +339,8 @@ body {
   flex-shrink: 0;
 }
 
-/* Stat Typography */
 .lp-stat-number {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: 45px;
   line-height: 48px;
@@ -365,14 +349,16 @@ body {
 }
 
 .lp-stat-label {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 16px;
   line-height: 24px;
-  color: #0B3D91;
+  color: #0b3d91;
   margin: 0;
 }
 
-/* --- CARDS GRID --- */
+/* ============================
+   CARDS GRID
+   ============================ */
 .lp-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -394,7 +380,7 @@ body {
 }
 
 .lp-card h3 {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: 20px;
   line-height: 28px;
@@ -403,7 +389,7 @@ body {
 }
 
 .lp-card p {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 16px;
   line-height: 24px;
   color: #4a5565;
@@ -411,7 +397,7 @@ body {
 }
 
 .lp-card .date {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-size: 14px;
   line-height: 20px;
   color: #35408e;
@@ -425,7 +411,7 @@ body {
   border: none;
   border-radius: 8px;
   color: #ffffff;
-  font-family: "Lexend", Arial;
+  font-family: "Lexend", Arial, sans-serif;
   font-size: 16px;
   font-weight: 400;
   cursor: pointer;
@@ -444,7 +430,10 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -454,10 +443,11 @@ body {
 .lp-content-card:hover {
   transform: translateY(-4px);
   border-color: rgba(0, 62, 166, 0.25);
-  box-shadow: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0px 12px 32px rgba(0, 62, 166, 0.15),
+    0px 4px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Card Image — 1:1 Aspect Ratio */
 .lp-card-image {
   position: relative;
   width: 100%;
@@ -502,7 +492,7 @@ body {
 }
 
 .lp-card-title {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 700;
   font-size: clamp(15px, 1.6vw, 18px);
   line-height: 1.45;
@@ -516,7 +506,7 @@ body {
 }
 
 .lp-card-description {
-  font-family: "Arial";
+  font-family: "Arial", sans-serif;
   font-weight: 400;
   font-size: clamp(13px, 1.3vw, 14px);
   line-height: 1.65;
@@ -572,6 +562,7 @@ body {
   gap: 4px;
 }
 
+/* Empty / Loading States */
 .lp-empty-state {
   text-align: center;
   padding: clamp(32px, 8vw, 60px) clamp(20px, 6vw, 40px);
@@ -602,6 +593,7 @@ body {
   font-size: 14px;
 }
 
+/* Why Join Grid */
 .lp-why-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -610,7 +602,7 @@ body {
 }
 
 /* ============================
-   5. FOOTER
+   FOOTER
    ============================ */
 .lp-footer-inner {
   max-width: 1280px;
@@ -650,7 +642,7 @@ body {
 }
 
 /* =========================================================
-   6. MEDIA QUERIES (RESPONSIVE)
+   MEDIA QUERIES (Mobile Last)
    ========================================================= */
 
 /* --- Large Desktop (1440px+) --- */
@@ -659,6 +651,7 @@ body {
   .lp-footer-inner {
     max-width: 1400px;
   }
+
   .lp-cards-grid,
   .lp-stats-grid {
     max-width: 1320px;
@@ -672,25 +665,25 @@ body {
   .lp-nav-inner {
     padding: 0 24px;
   }
+
   .lp-cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
+
   .lp-stats-grid {
-    /* Keep flex row but reduce padding */
     gap: 0;
   }
+
   .lp-stat-item {
     padding: 0 16px;
   }
-  .lp-stat-icon svg {
-    width: 40px;
-    height: 40px;
-  }
+
   .lp-why-grid {
     grid-template-columns: 1fr;
     gap: 32px;
   }
+
   .lp-footer-inner {
     padding: 36px 32px 28px;
     gap: 48px;
@@ -699,17 +692,37 @@ body {
 
 /* --- Large Mobile / Small Tablet (max-width: 767px) --- */
 @media (max-width: 767px) {
-  /* Nav */
-  .lp-nav-links { display: none; }
-  .lp-nav-actions { display: none; }
-  .lp-hamburger { display: flex; }
+  /* Scrollbar Hiding */
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 
-  /* HERO TEXT FIX - LARGE MOBILE */
+  /* Nav */
+  .lp-nav-links {
+    display: none;
+  }
+  .lp-nav-actions {
+    display: none;
+  }
+  .lp-hamburger {
+    display: flex;
+  }
+
+  /* Hero Text */
   .lp-hero-subtitle {
     font-size: clamp(14px, 3.5vw, 22px) !important;
     line-height: 1.5 !important;
     letter-spacing: 0.08em !important;
   }
+
   .lp-hero-title {
     font-size: clamp(36px, 9vw, 64px) !important;
     line-height: 1.3 !important;
@@ -717,125 +730,96 @@ body {
     word-break: break-word !important;
   }
 
-  /* --- STATS MOBILE LAYOUT (2x2 Grid Refined) --- */
+  /* Stats: 2×2 Grid with + Divider */
   .lp-stats-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Two equal columns */
+    grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    gap: 0; /* CRITICAL: No gap, so borders touch perfectly */
+    gap: 0;
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
   }
 
   .lp-stat-item {
-    display: flex;
-    flex-direction: row; /* Icon LEFT, Text RIGHT */
-    align-items: center; 
-    /* CHANGE: Use flex-start to prevent centering shifts when text length varies */
-    justify-content: flex-start; 
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
     text-align: left;
-    padding: 32px 16px; /* Generous padding */
+    padding: 32px 16px;
     width: 100%;
     box-sizing: border-box;
   }
 
-  /* Icon Styling - Mobile */
-  .lp-stat-icon {
-    margin-bottom: 0;
-    margin-right: 16px;
-    height: auto;
-    flex-shrink: 0; 
-    width: 48px; /* Fixed width ensures column alignment */
-    display: flex;
-    justify-content: center;
-  }
-  
-  .lp-stat-icon svg {
-    width: 44px; /* INCREASED from 36px/40px */
-    height: 44px;
-  }
-
-  /* Text Container - Mobile */
   .lp-stat-text {
-    display: flex;
-    flex-direction: column;
     align-items: flex-start;
     justify-content: center;
-    flex: 1; /* Allow text to take remaining space */
+    flex: 1;
   }
 
-  /* Typography - Mobile (Increased Readability & Weight) */
   .lp-stat-number {
-    font-size: 36px !important; /* INCREASED from 28px/32px */
+    font-size: 36px !important;
     line-height: 1.1 !important;
     margin-bottom: 6px !important;
-    font-weight: 800 !important; /* THICKER */
-    color: #002263;
+    font-weight: 800 !important;
   }
-  
+
   .lp-stat-label {
-    font-size: 14px !important; /* INCREASED from 12px/13px */
+    font-size: 14px !important;
     line-height: 1.3 !important;
-    font-weight: 600 !important; /* BOLDER label */
-    color: #0B3D91;
+    font-weight: 600 !important;
   }
 
-
-  /* --- THE PLUS (+) DIVIDER LOGIC --- */
-  
-  /* Hide the desktop vertical divider element completely */
+  /* Hide desktop divider on mobile */
   .lp-stat-divider-desktop {
     display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    border: none !important;
   }
 
-  /* 2. Vertical Line: Right border on the Left Column (Items 1 & 3) */
-  /* This creates the vertical bar of the + */
+  /* + Divider Logic */
   .lp-stat-item:nth-child(odd) {
     border-right: 1px solid rgba(0, 34, 99, 0.25);
   }
 
-  /* 3. Horizontal Line: Bottom border on the Top Row (Items 1 & 2) */
-  /* This creates the horizontal bar of the + */
   .lp-stat-item:nth-child(1),
   .lp-stat-item:nth-child(2) {
     border-bottom: 1px solid rgba(0, 34, 99, 0.25);
   }
 
-  /* 4. CLEANUP: Ensure NO border on the right-most column (Items 2 & 4) */
-  /* This fixes the RED BOX issue (extra divider on far right) */
   .lp-stat-item:nth-child(even) {
     border-right: none !important;
   }
-  
-  /* Ensure NO border on the bottom row (Items 3 & 4) */
+
   .lp-stat-item:nth-child(3),
   .lp-stat-item:nth-child(4) {
     border-bottom: none !important;
   }
 
-  /* Cards Grid */
+  /* Cards */
   .lp-cards-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
+
   .lp-why-cards-grid {
     grid-template-columns: 1fr !important;
   }
+
   .lp-card-meta {
     font-size: 11px;
   }
 
   /* Explore More */
   .lp-explore-more {
-    margin-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + clamp(50px, 14vw, 96px))) !important;
+    margin-bottom: max(
+      16px,
+      calc(env(safe-area-inset-bottom, 0px) + clamp(50px, 14vw, 96px))
+    ) !important;
   }
+
   .lp-explore-more p {
     font-size: clamp(12px, 3vw, 16px) !important;
   }
+
   .lp-explore-more svg {
     width: clamp(18px, 5vw, 24px) !important;
     height: clamp(18px, 5vw, 24px) !important;
@@ -846,10 +830,10 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: 32px;
-    padding: 36px 24px 28px;
-    padding-bottom: 12px !important;
+    padding: 36px 24px 12px;
     min-height: auto !important;
   }
+
   .lp-footer-logo {
     margin-left: auto !important;
     margin-right: auto !important;
@@ -858,12 +842,15 @@ body {
     height: clamp(160px, 40vw, 220px) !important;
     transform: translateX(-15px);
   }
+
   .lp-footer-contact h3 {
     margin-bottom: 16px !important;
   }
+
   .lp-footer-contact {
     margin-bottom: -16px !important;
   }
+
   .lp-section-title {
     line-height: 1.2;
   }
@@ -875,12 +862,13 @@ body {
     padding: 0 16px;
   }
 
-  /* HERO TEXT FIX - SMALL MOBILE */
+  /* Hero Text */
   .lp-hero-subtitle {
     font-size: clamp(11px, 3.2vw, 14px) !important;
     letter-spacing: 0.06em !important;
     margin-bottom: clamp(-4px, calc(8px - 2vw), 6px) !important;
   }
+
   .lp-hero-title {
     font-size: clamp(26px, 8.5vw, 36px) !important;
     line-height: 1.25 !important;
@@ -888,45 +876,36 @@ body {
     word-break: break-word !important;
   }
 
-  /* Stats Small Mobile Adjustments */
+  /* Stats */
   .lp-stat-item {
-    padding: 24px 12px; /* Slightly tighter padding for very small screens */
-  }
-  
-  .lp-stat-icon {
-    margin-right: 12px;
-    width: 40px;
-  }
-
-  .lp-stat-icon svg {
-    width: 36px; /* Scaled down slightly for 320px screens, but still larger than before */
-    height: 36px;
+    padding: 24px 12px;
   }
 
   .lp-stat-number {
-    font-size: 32px !important; /* Still very bold and large */
+    font-size: 32px !important;
   }
-  
+
   .lp-stat-label {
     font-size: 13px !important;
   }
 
   /* Footer */
   .lp-footer-inner {
-    padding: 28px 16px 24px;
+    padding: 28px 16px 8px;
     gap: 24px;
-    padding-bottom: 8px !important;
     min-height: auto !important;
   }
 
-  /* General Section Padding */
+  /* General */
   section {
     padding-left: 16px !important;
     padding-right: 16px !important;
   }
+
   .lp-view-all {
     width: 100%;
   }
+
   .lp-card-body {
     padding: 16px;
   }
