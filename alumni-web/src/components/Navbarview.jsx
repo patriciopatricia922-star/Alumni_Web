@@ -8,7 +8,6 @@ const NavbarView = ({
   menuOpen,
   setMenuOpen,
   navLinks,
-  // Optional — provided by LandingPage to open modals instead of navigating
   onOpenRegister,
   onOpenLogin,
 }) => (
