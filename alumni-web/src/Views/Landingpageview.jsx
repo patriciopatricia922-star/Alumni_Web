@@ -27,6 +27,9 @@ const FALLBACKS = {
 };
 
 // ── Resolve image URL from raw Supabase row ───────────────────────────────────
+// Mirrors the pattern in Discounts.jsx:
+//   image: discount.image_url || fallback
+// Each table uses image_url as the canonical column name.
 const resolveImage = (item, type) =>
   item.image_url || item.image || item.cover_image || item.banner_url || FALLBACKS[type] || null;
 
@@ -51,6 +54,7 @@ const ContentCard = ({ item, type }) => {
           alt={item.title || type}
           loading="lazy"
           onError={(e) => {
+            // Prevent infinite error loop; degrade to per-type fallback
             const fallback = FALLBACKS[type];
             if (e.currentTarget.src !== fallback) {
               e.currentTarget.src = fallback;
@@ -91,6 +95,19 @@ const ContentCard = ({ item, type }) => {
       </div>
     </div>
   );
+};
+
+// ── Map a stat's label to a stable key used for mobile-only reordering ──────
+// (Mobile pairs Employment Rate with Alumni Statistics, and Asia University
+// Ranking with Undergraduate & Postgraduate Programmes — see CSS `order`
+// rules inside the max-width: 767px media query.)
+const getStatKey = (label = '') => {
+  const l = label.toLowerCase();
+  if (l.includes('employment')) return 'employment';
+  if (l.includes('alumni')) return 'alumni';
+  if (l.includes('asia') || l.includes('ranking')) return 'ranking';
+  if (l.includes('undergraduate') || l.includes('postgraduate') || l.includes('program')) return 'programmes';
+  return 'other';
 };
 
 const LandingPageView = ({
@@ -146,12 +163,17 @@ const LandingPageView = ({
     <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
       <div className="lp-stats-grid">
         {stats.map((stat, i) => (
-          <div key={i} className="lp-stat-item">
-            <div className="lp-stat-text">
-              <h2 className="lp-stat-number">{stat.number}</h2>
-              <p className="lp-stat-label">{stat.label}</p>
+          <React.Fragment key={i}>
+            <div className="lp-stat-item" data-stat={getStatKey(stat.label)}>
+              {/* Text Container */}
+              <div className="lp-stat-text">
+                <h2 className="lp-stat-number">{stat.number}</h2>
+                <p className="lp-stat-label">{stat.label}</p>
+              </div>
             </div>
-          </div>
+            {/* Divider for Desktop (Vertical) */}
+            {i < stats.length - 1 && <div className="lp-stat-divider-desktop" />}
+          </React.Fragment>
         ))}
       </div>
     </section>
