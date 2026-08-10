@@ -721,20 +721,21 @@ body {
   .lp-stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two equal columns */
-    grid-template-rows: auto auto;  /* Two rows based on content */
-    gap: 0; /* Remove gap, use padding/borders for spacing */
+    grid-template-rows: auto auto;
+    gap: 0; /* CRITICAL: No gap, so borders touch perfectly */
     width: 100%;
-    max-width: 600px; /* Constrain width so it doesn't stretch too wide on tablets */
+    max-width: 600px;
     margin: 0 auto;
   }
 
   .lp-stat-item {
     display: flex;
     flex-direction: row; /* Icon LEFT, Text RIGHT */
-    align-items: center; /* Vertically center icon with text block */
-    justify-content: center; /* Center the whole group in the quadrant */
+    align-items: center; 
+    /* CHANGE: Use flex-start to prevent centering shifts when text length varies */
+    justify-content: flex-start; 
     text-align: left;
-    padding: 32px 16px; /* Generous padding to create space around the + divider */
+    padding: 32px 16px; /* Generous padding */
     width: 100%;
     box-sizing: border-box;
   }
@@ -742,57 +743,78 @@ body {
   /* Icon Styling - Mobile */
   .lp-stat-icon {
     margin-bottom: 0;
-    margin-right: 16px; /* Space between icon and text */
+    margin-right: 16px;
     height: auto;
-    flex-shrink: 0; /* Prevent icon from squishing */
-    width: 48px; /* Fixed width to ensure column alignment */
+    flex-shrink: 0; 
+    width: 48px; /* Fixed width ensures column alignment */
     display: flex;
     justify-content: center;
   }
   
   .lp-stat-icon svg {
-    width: 40px; /* Larger icons for mobile readability */
-    height: 40px;
+    width: 44px; /* INCREASED from 36px/40px */
+    height: 44px;
   }
 
   /* Text Container - Mobile */
   .lp-stat-text {
     display: flex;
     flex-direction: column;
-    align-items: flex-start; /* Align text to left */
+    align-items: flex-start;
     justify-content: center;
+    flex: 1; /* Allow text to take remaining space */
   }
 
-  /* Typography - Mobile (Increased Readability) */
+  /* Typography - Mobile (Increased Readability & Weight) */
   .lp-stat-number {
-    font-size: 32px !important; /* Significantly larger */
+    font-size: 36px !important; /* INCREASED from 28px/32px */
     line-height: 1.1 !important;
-    margin-bottom: 4px !important;
-    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+    font-weight: 800 !important; /* THICKER */
+    color: #002263;
   }
   
   .lp-stat-label {
-    font-size: 13px !important; /* Readable label size */
+    font-size: 14px !important; /* INCREASED from 12px/13px */
     line-height: 1.3 !important;
+    font-weight: 600 !important; /* BOLDER label */
     color: #0B3D91;
   }
+
 
   /* --- THE PLUS (+) DIVIDER LOGIC --- */
   
   /* Hide the desktop vertical divider element completely */
   .lp-stat-divider-desktop {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    border: none !important;
   }
 
-  /* 1. Vertical Line: Right border on the Left Column (Items 1 & 3) */
+  /* 2. Vertical Line: Right border on the Left Column (Items 1 & 3) */
+  /* This creates the vertical bar of the + */
   .lp-stat-item:nth-child(odd) {
     border-right: 1px solid rgba(0, 34, 99, 0.25);
   }
 
-  /* 2. Horizontal Line: Bottom border on the Top Row (Items 1 & 2) */
+  /* 3. Horizontal Line: Bottom border on the Top Row (Items 1 & 2) */
+  /* This creates the horizontal bar of the + */
   .lp-stat-item:nth-child(1),
   .lp-stat-item:nth-child(2) {
     border-bottom: 1px solid rgba(0, 34, 99, 0.25);
+  }
+
+  /* 4. CLEANUP: Ensure NO border on the right-most column (Items 2 & 4) */
+  /* This fixes the RED BOX issue (extra divider on far right) */
+  .lp-stat-item:nth-child(even) {
+    border-right: none !important;
+  }
+  
+  /* Ensure NO border on the bottom row (Items 3 & 4) */
+  .lp-stat-item:nth-child(3),
+  .lp-stat-item:nth-child(4) {
+    border-bottom: none !important;
   }
 
   /* Cards Grid */
@@ -868,25 +890,25 @@ body {
 
   /* Stats Small Mobile Adjustments */
   .lp-stat-item {
-    padding: 24px 12px; /* Slightly tighter padding for small screens */
+    padding: 24px 12px; /* Slightly tighter padding for very small screens */
   }
   
   .lp-stat-icon {
     margin-right: 12px;
-    width: 36px;
+    width: 40px;
   }
 
   .lp-stat-icon svg {
-    width: 32px;
-    height: 32px;
+    width: 36px; /* Scaled down slightly for 320px screens, but still larger than before */
+    height: 36px;
   }
 
   .lp-stat-number {
-    font-size: 28px !important; /* Still bold and large, but fits better */
+    font-size: 32px !important; /* Still very bold and large */
   }
   
   .lp-stat-label {
-    font-size: 12px !important;
+    font-size: 13px !important;
   }
 
   /* Footer */
