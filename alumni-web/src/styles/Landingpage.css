@@ -298,8 +298,14 @@ body {
 }
 
 /* ============================
-   STATS SECTION (Desktop/Tablet Base)
+   STATS SECTION 
    ============================ */
+
+/* HEIGHT ADJUSTMENT: Reduce bottom padding only, keep top at 64px */
+#stats {
+  padding-bottom: 32px !important; 
+}
+
 .lp-stats-grid {
   display: flex;
   flex-direction: row;
@@ -703,6 +709,11 @@ body {
     word-break: break-word !important;
   }
 
+  /* HEIGHT ADJUSTMENT (MOBILE): Reduce bottom padding further for mobile */
+  #stats {
+    padding-bottom: 24px !important;
+  }
+
   /* ──────────────────────────────────────────────
      STATS: Mobile Column-Major Layout + Typography Boost
      ────────────────────────────────────────────── */
@@ -733,27 +744,27 @@ body {
     width: 100%;
   }
 
-  /* TYPOGRAPHY BOOST: Significantly larger and bolder for mobile readability */
-  .lp-stat-number {
-    font-size: clamp(36px, 9vw, 48px) !important; /* Increased from ~28-36px */
-    line-height: 1.1 !important;
-    margin-bottom: 8px !important;
-    font-weight: 900 !important; /* Max boldness */
-    color: #002263;
-  }
-
-  .lp-stat-label {
-    font-size: clamp(16px, 4vw, 20px) !important; /* Increased from ~12-14px */
-    line-height: 1.3 !important;
-    font-weight: 700 !important; /* Bolder label */
-    color: #0B3D91;
-  }
-
-  /* Explicit Grid Placement (Preserving previous logic) */
+  /* Explicit Grid Placement */
   .lp-stat-item[data-stat="alumni"] { grid-area: 1 / 1; }
   .lp-stat-item[data-stat="employment"] { grid-area: 2 / 1; }
   .lp-stat-item[data-stat="programmes"] { grid-area: 1 / 2; }
   .lp-stat-item[data-stat="ranking"] { grid-area: 2 / 2; }
+
+  /* TYPOGRAPHY BOOST */
+  .lp-stat-number {
+    font-size: clamp(36px, 9vw, 48px) !important; 
+    line-height: 1.1 !important;
+    margin-bottom: 8px !important;
+    font-weight: 900 !important; 
+    color: #002263;
+  }
+
+  .lp-stat-label {
+    font-size: clamp(16px, 4vw, 20px) !important; 
+    line-height: 1.3 !important;
+    font-weight: 700 !important; 
+    color: #0B3D91;
+  }
 
   /* Cards */
   .lp-cards-grid {
@@ -834,7 +845,7 @@ body {
     word-break: break-word !important;
   }
 
-  /* Stats: Tighter adjustments for very small screens, but keeping text large */
+  /* Stats: Tighter adjustments for very small screens */
   .lp-stats-grid {
     gap: 32px 12px;
   }
@@ -843,7 +854,6 @@ body {
     padding: 0 4px;
   }
 
-  /* Keep typography boosted even on smallest screens */
   .lp-stat-number {
     font-size: clamp(32px, 8.5vw, 40px) !important; 
   }
