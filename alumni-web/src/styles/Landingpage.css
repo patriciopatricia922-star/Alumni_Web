@@ -22,13 +22,8 @@ body {
 }
 
 @keyframes bounceDown {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(8px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
 }
 
 /* ============================
@@ -40,9 +35,7 @@ body {
   left: 0;
   width: 100%;
   z-index: 50;
-  transition:
-    background 0.3s,
-    border-color 0.3s;
+  transition: background 0.3s, border-color 0.3s;
 }
 
 .lp-nav.scrolled {
@@ -352,7 +345,7 @@ body {
   font-family: "Arial", sans-serif;
   font-size: 16px;
   line-height: 24px;
-  color: #0b3d91;
+  color: #0B3D91;
   margin: 0;
 }
 
@@ -430,10 +423,7 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -443,9 +433,7 @@ body {
 .lp-content-card:hover {
   transform: translateY(-4px);
   border-color: rgba(0, 62, 166, 0.25);
-  box-shadow:
-    0px 12px 32px rgba(0, 62, 166, 0.15),
-    0px 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .lp-card-image {
@@ -693,28 +681,20 @@ body {
 /* --- Large Mobile / Small Tablet (max-width: 767px) --- */
 @media (max-width: 767px) {
   /* Scrollbar Hiding */
-  html,
-  body {
+  html, body {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar {
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
   }
 
   /* Nav */
-  .lp-nav-links {
-    display: none;
-  }
-  .lp-nav-actions {
-    display: none;
-  }
-  .lp-hamburger {
-    display: flex;
-  }
+  .lp-nav-links { display: none; }
+  .lp-nav-actions { display: none; }
+  .lp-hamburger { display: flex; }
 
   /* Hero Text */
   .lp-hero-subtitle {
@@ -770,9 +750,20 @@ body {
     font-weight: 600 !important;
   }
 
-  /* Hide desktop divider on mobile */
+  /* CRITICAL FIX: Fully hide desktop divider on mobile */
   .lp-stat-divider-desktop {
     display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    overflow: hidden !important;
   }
 
   /* + Divider Logic */
@@ -810,10 +801,7 @@ body {
 
   /* Explore More */
   .lp-explore-more {
-    margin-bottom: max(
-      16px,
-      calc(env(safe-area-inset-bottom, 0px) + clamp(50px, 14vw, 96px))
-    ) !important;
+    margin-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + clamp(50px, 14vw, 96px))) !important;
   }
 
   .lp-explore-more p {
