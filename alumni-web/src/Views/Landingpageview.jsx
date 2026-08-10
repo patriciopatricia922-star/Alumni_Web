@@ -159,56 +159,61 @@ const LandingPageView = ({
       </div>
     </section> */}
 
-    {/* ══ STATS ════════════════════════════════════════════════════════════ */}
-    <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
-      <div className="lp-stats-grid">
-        {stats.map((stat, i) => (
-          <React.Fragment key={i}>
-            <div className="lp-stat-item">
-              {/* Placeholder Icons based on index */}
-              <div className="lp-stat-icon">
-                {i === 0 && (
-                  // Alumni Icon (Users)
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
-                )}
-                {i === 1 && (
-                  // Programs Icon (Book/Open)
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                  </svg>
-                )}
-                {i === 2 && (
-                  // Employment Icon (Briefcase)
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                  </svg>
-                )}
-                {i === 3 && (
-                  // Ranking Icon (Award/Trophy)
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="8" r="7"></circle>
-                    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-                  </svg>
-                )}
+    {/* ══ STATS ═════════════════════════════════════════════════════════════ */}
+      <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
+        <div className="lp-stats-grid">
+          {stats.map((stat, i) => (
+            <React.Fragment key={i}>
+              <div className="lp-stat-item">
+                {/* Icon Container */}
+                <div className="lp-stat-icon">
+                  {i === 0 && (
+                    // Graduation Cap
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                    </svg>
+                  )}
+                  {i === 1 && (
+                    // Book / Compass
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                      <circle cx="12" cy="10" r="2"></circle>
+                      <path d="M12 12v4"></path>
+                    </svg>
+                  )}
+                  {i === 2 && (
+                    // Chart / Briefcase
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      <path d="M6 12h.01M10 12h.01M14 12h.01"></path>
+                      <path d="M6 16h8"></path>
+                    </svg>
+                  )}
+                  {i === 3 && (
+                    // Trophy
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
+                      <path d="M17 4h3v2a3 3 0 0 1-3 3M7 4H4v2a3 3 0 0 0 3 3"></path>
+                    </svg>
+                  )}
+                </div>
+                
+                {/* Text Container */}
+                <div className="lp-stat-text">
+                  <h2 className="lp-stat-number">{stat.number}</h2>
+                  <p className="lp-stat-label">{stat.label}</p>
+                </div>
               </div>
-              
-              <h2 className="lp-stat-number">{stat.number}</h2>
-              <p className="lp-stat-label">{stat.label}</p>
-            </div>
 
-            {/* Add divider after every item except the last one */}
-            {i < stats.length - 1 && <div className="lp-stat-divider" />}
-          </React.Fragment>
-        ))}
-      </div>
-    </section>
+              {/* Divider for Desktop (Vertical) */}
+              {i < stats.length - 1 && <div className="lp-stat-divider-desktop" />}
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
 
     {/* ══ EVENTS ════════════════════════════════════════════════════════════ */}
     <section id="events" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
