@@ -393,7 +393,7 @@ body {
 .lp-card-image {
   position: relative;
   width: 100%;
-  aspect-ratio: 7 / 6;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   background: #f1f5f9;
   flex-shrink: 0;
