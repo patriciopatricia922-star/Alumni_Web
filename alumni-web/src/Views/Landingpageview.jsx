@@ -63,9 +63,9 @@ const ContentCard = ({ item, type }) => {
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
         <div className="lp-card-category" style={{ background: getTypeColor() }}>
-          {type === 'events'    && 'Event'}
-          {type === 'jobs'      && 'Job'}
-          {type === 'discounts' && 'Discount'}
+          {type === 'events'     && 'Event'}
+          {type === 'jobs'       && 'Job'}
+          {type === 'discounts'  && 'Discount'}
         </div>
       </div>
       <div className="lp-card-body">
@@ -82,13 +82,13 @@ const ContentCard = ({ item, type }) => {
         )}
         {type === 'jobs' && (
           <div className="lp-card-meta">
-            {item.company  && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
+            {item.company && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
             {item.location && <span><HiOutlineMapPin size={13} />{item.location}</span>}
           </div>
         )}
         {type === 'discounts' && (
           <div className="lp-card-meta">
-            {item.company       && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
+            {item.company && <span><HiOutlineBuildingOffice2 size={13} />{item.company}</span>}
             {item.discount_code && <span><HiOutlineTicket size={13} />{item.discount_code}</span>}
           </div>
         )}
@@ -122,7 +122,6 @@ const LandingPageView = ({
   loadingDiscounts,
 }) => (
   <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#FFFFFF', fontFamily: 'Arial, sans-serif' }}>
-
     {/* Pass modal openers to Navbar */}
     <Navbar isScrolled={isScrolled} onOpenRegister={onOpenRegister} onOpenLogin={onOpenLogin} />
 
@@ -147,73 +146,24 @@ const LandingPageView = ({
       </div>
     </section>
 
-    {/* ══ STATS ═════════════════════════════════════════════════════════════
+    {/* ══ STATS ═════════════════════════════════════════════════════════════ */}
     <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
       <div className="lp-stats-grid">
         {stats.map((stat, i) => (
-          <div key={i} style={{ textAlign: 'center' }}>
-            <h2 className="lp-stat-number" style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '45px', lineHeight: '48px', color: '#002263', margin: '0 0 8px' }}>{stat.number}</h2>
-            <p className="lp-stat-label"   style={{ fontFamily: 'Arial', fontSize: '16px', lineHeight: '24px', color: '#0B3D91', margin: 0 }}>{stat.label}</p>
-          </div>
+          <React.Fragment key={i}>
+            <div className="lp-stat-item">
+              {/* Text Container */}
+              <div className="lp-stat-text">
+                <h2 className="lp-stat-number">{stat.number}</h2>
+                <p className="lp-stat-label">{stat.label}</p>
+              </div>
+            </div>
+            {/* Divider for Desktop (Vertical) */}
+            {i < stats.length - 1 && <div className="lp-stat-divider-desktop" />}
+          </React.Fragment>
         ))}
       </div>
-    </section> */}
-
-    {/* ══ STATS ═════════════════════════════════════════════════════════════ */}
-      <section id="stats" style={{ width: '100%', background: '#DAA520', padding: '64px 32px' }}>
-        <div className="lp-stats-grid">
-          {stats.map((stat, i) => (
-            <React.Fragment key={i}>
-              <div className="lp-stat-item">
-                {/* Icon Container */}
-                <div className="lp-stat-icon">
-                  {i === 0 && (
-                    // Graduation Cap
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-                      <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-                    </svg>
-                  )}
-                  {i === 1 && (
-                    // Book / Compass
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                      <circle cx="12" cy="10" r="2"></circle>
-                      <path d="M12 12v4"></path>
-                    </svg>
-                  )}
-                  {i === 2 && (
-                    // Chart / Briefcase
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                      <path d="M6 12h.01M10 12h.01M14 12h.01"></path>
-                      <path d="M6 16h8"></path>
-                    </svg>
-                  )}
-                  {i === 3 && (
-                    // Trophy
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#002263" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"></path>
-                      <path d="M17 4h3v2a3 3 0 0 1-3 3M7 4H4v2a3 3 0 0 0 3 3"></path>
-                    </svg>
-                  )}
-                </div>
-                
-                {/* Text Container */}
-                <div className="lp-stat-text">
-                  <h2 className="lp-stat-number">{stat.number}</h2>
-                  <p className="lp-stat-label">{stat.label}</p>
-                </div>
-              </div>
-
-              {/* Divider for Desktop (Vertical) */}
-              {i < stats.length - 1 && <div className="lp-stat-divider-desktop" />}
-            </React.Fragment>
-          ))}
-        </div>
-      </section>
+    </section>
 
     {/* ══ EVENTS ════════════════════════════════════════════════════════════ */}
     <section id="events" style={{ width: '100%', background: '#FFFFFF', padding: '96px 32px 64px' }}>
@@ -305,7 +255,6 @@ const LandingPageView = ({
           </h2>
           <p className="lp-section-subtitle">{whyJoinSection?.description || 'Connecting National University—Dasmariñas alumni through innovative technology and community engagement.'}</p>
         </div>
-
         <div style={{ marginBottom: '56px' }}>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
@@ -319,7 +268,6 @@ const LandingPageView = ({
             </p>
           ))}
         </div>
-
         <div>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Vision</h2>
           <div style={{ width: '100%', height: '2px', background: '#002263', marginBottom: '32px', borderRadius: '2px' }} />
