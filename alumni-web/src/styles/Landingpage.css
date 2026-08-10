@@ -298,7 +298,7 @@ body {
 }
 
 /* ============================
-   STATS SECTION (Desktop/Tablet — Unchanged)
+   STATS SECTION (Desktop/Tablet Base)
    ============================ */
 .lp-stats-grid {
   display: flex;
@@ -704,24 +704,29 @@ body {
   }
 
   /* ──────────────────────────────────────────────
-     STATS: Mobile Two-Column Centered Layout
-     Row 1: Alumni Statistics | Employment Rate
-     Row 2: Undergraduate...  | Asia University Ranking
+     STATS: Mobile Column-Major Layout
+     Logic: Fill Column 1 (Items 1, 2), then Column 2 (Items 3, 4)
      ────────────────────────────────────────────── */
   .lp-stats-grid {
     display: grid;
+    /* Define 2 equal columns */
     grid-template-columns: 1fr 1fr;
+    /* Define exactly 2 rows */
     grid-template-rows: auto auto;
-    gap: 32px 16px;
+    /* CRITICAL: Flow items down columns first, not across rows */
+    grid-auto-flow: column;
+    
+    gap: 40px 16px; /* Row gap 40px, Column gap 16px */
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
   }
 
   .lp-stat-item {
+    /* Reset to column layout for centered text */
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
     padding: 0 8px;
     width: 100%;
@@ -731,13 +736,13 @@ body {
   .lp-stat-text {
     align-items: center;
     justify-content: center;
-    flex: none;
+    width: 100%;
   }
 
   .lp-stat-number {
     font-size: clamp(28px, 7vw, 36px) !important;
     line-height: 1.1 !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 8px !important;
     font-weight: 800 !important;
   }
 
@@ -826,7 +831,11 @@ body {
     word-break: break-word !important;
   }
 
-  /* Stats: Tighter padding on very small screens */
+  /* Stats: Tighter adjustments for very small screens */
+  .lp-stats-grid {
+    gap: 32px 12px; /* Slightly tighter gaps */
+  }
+
   .lp-stat-item {
     padding: 0 4px;
   }
