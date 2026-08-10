@@ -704,144 +704,26 @@ body {
   }
 
   /* ──────────────────────────────────────────────
-     STATS: Mobile Column-Major Layout
-     Logic: 
-     1. Grid has 2 columns and 2 rows.
-     2. grid-auto-flow: column forces items to fill 
-        Column 1 (rows 1, 2) THEN Column 2 (rows 1, 2).
-     3. This achieves:
-        Col 1: Item 1 (Alumni), Item 2 (Programs) -> Wait, looking at your data order.
-        
-        CORRECTION BASED ON SCREENSHOT:
-        Your data order seems to be: [Alumni, Programs, Employment, Ranking] based on the screenshot positions?
-        OR [Alumni, Employment, Programs, Ranking]?
-        
-        If Data Order is [Alumni, Programs, Employment, Ranking]:
-        - Flow Column: 
-          Col 1 gets Item 1 (Alumni), Item 2 (Programs).
-          Col 2 gets Item 3 (Employment), Item 4 (Ranking).
-        - Result: 
-          Col 1: Alumni, Programs
-          Col 2: Employment, Ranking
-        
-        BUT YOU WANT:
-        Col 1: Alumni, Employment
-        Col 2: Programs, Ranking
-        
-        This implies your Data Order is actually: [Alumni, Employment, Programs, Ranking] ??
-        OR we need to use explicit Grid Areas.
-        
-        Let's assume standard DOM order is [Alumni, Programs, Employment, Ranking] based on typical JSON.
-        If DOM is [1, 2, 3, 4] and we want:
-        1  2
-        3  4
-        That is ROW major (default).
-        
-        If DOM is [1, 2, 3, 4] and we want:
-        1  3
-        2  4
-        That is COLUMN major.
-        
-        YOUR REQUEST:
-        Col 1: Alumni (1), Employment (3??)
-        Col 2: Programs (2??), Ranking (4)
-        
-        If your array is [Alumni, Employment, Programs, Ranking], then Row Major works.
-        If your array is [Alumni, Programs, Employment, Ranking], then Column Major works.
-        
-        Looking at your screenshot: 
-        Top Left: 51 (Alumni)
-        Top Mid/Right: 44 (Programs) -- Wait, 44 is next to 51?
-        Bottom Left: 82.4% (Employment) -- Wait, no.
-        
-        Let's look at the screenshot again carefully.
-        Left: 51 Alumni.
-        Middle-ish: 44 Programs.
-        Right-ish: 82.4% Employment.
-        Far Right: #1201 Ranking.
-        
-        It looks like they are currently in ONE ROW or wrapping weirdly.
-        
-        Let's force the specific layout using Grid Areas to be 100% safe regardless of DOM order,
-        assuming the DOM order matches the visual "reading order" of the desktop:
-        1. Alumni
-        2. Programs (or Employment?)
-        3. Employment (or Programs?)
-        4. Ranking
-        
-        Actually, the safest bet for "Column 1: Alumni, Employment" and "Column 2: Programs, Ranking"
-        is to assume the DOM order is [Alumni, Programs, Employment, Ranking] (Standard)
-        and use `grid-template-areas`.
+     STATS: Mobile Column-Major Layout + Typography Boost
      ────────────────────────────────────────────── */
-  
   .lp-stats-grid {
     display: grid;
-    /* Define the grid structure */
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
-    
-    /* Explicitly place items by their data-stat attribute if available, 
-       otherwise rely on nth-child assuming standard order:
-       1: Alumni, 2: Programs, 3: Employment, 4: Ranking 
-       
-       WAIT: If standard order is 1,2,3,4 and you want:
-       Col 1: 1, 3
-       Col 2: 2, 4
-       
-       Then we use grid-auto-flow: column with 2 rows.
-    */
-    grid-auto-flow: column; 
-    grid-template-rows: 1fr 1fr; /* Force 2 rows */
-    
-    gap: 40px 16px; /* Row gap 40px, Col gap 16px */
+    grid-auto-flow: column;
+    gap: 40px 16px;
     width: 100%;
-    max-width: 500px; /* Constrain width to keep it tight like the purple box */
+    max-width: 600px;
     margin: 0 auto;
   }
 
-  /* 
-     If the DOM order is actually [Alumni, Employment, Programs, Ranking], 
-     then grid-auto-flow: column would put Alumni/Employment in Col 1.
-     
-     If the DOM order is [Alumni, Programs, Employment, Ranking],
-     then grid-auto-flow: column puts Alumni/Programs in Col 1.
-     
-     To be absolutely sure based on your text description:
-     "Move Employment Rate directly UNDER Alumni Statistics"
-     "Move Asia University Ranking directly UNDER Undergraduate..."
-     
-     We will target the specific items using the data-stat attribute added in your JSX 
-     (if you applied the previous JSX change) OR nth-child.
-     
-     Since I cannot see the live DOM order, I will provide the CSS that assumes 
-     the standard order [Alumni, Programs, Employment, Ranking] and uses 
-     Grid Areas to force the requested layout.
-  */
-  
-  /* Fallback to nth-child if data-stat isn't used, assuming order: 
-     1=Alumni, 2=Programs, 3=Employment, 4=Ranking */
-  .lp-stat-item:nth-child(1) { grid-area: 1 / 1; } /* Alumni -> Row 1, Col 1 */
-  .lp-stat-item:nth-child(3) { grid-area: 2 / 1; } /* Employment -> Row 2, Col 1 */
-  .lp-stat-item:nth-child(2) { grid-area: 1 / 2; } /* Programs -> Row 1, Col 2 */
-  .lp-stat-item:nth-child(4) { grid-area: 2 / 2; } /* Ranking -> Row 2, Col 2 */
-
-  /* If you ARE using the data-stat attributes from the previous JSX snippet: */
-  .lp-stat-item[data-stat="alumni"] { grid-area: 1 / 1; }
-  .lp-stat-item[data-stat="employment"] { grid-area: 2 / 1; }
-  .lp-stat-item[data-stat="programmes"] { grid-area: 1 / 2; }
-  .lp-stat-item[data-stat="ranking"] { grid-area: 2 / 2; }
-
-
   .lp-stat-item {
-    /* Reset flex for centering content within the grid cell */
-    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     text-align: center;
     padding: 0 8px;
     width: 100%;
-    height: 100%; /* Fill the grid cell */
     box-sizing: border-box;
   }
 
@@ -851,18 +733,27 @@ body {
     width: 100%;
   }
 
+  /* TYPOGRAPHY BOOST: Significantly larger and bolder for mobile readability */
   .lp-stat-number {
-    font-size: clamp(28px, 7vw, 36px) !important;
+    font-size: clamp(36px, 9vw, 48px) !important; /* Increased from ~28-36px */
     line-height: 1.1 !important;
     margin-bottom: 8px !important;
-    font-weight: 800 !important;
+    font-weight: 900 !important; /* Max boldness */
+    color: #002263;
   }
 
   .lp-stat-label {
-    font-size: clamp(12px, 3vw, 14px) !important;
+    font-size: clamp(16px, 4vw, 20px) !important; /* Increased from ~12-14px */
     line-height: 1.3 !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important; /* Bolder label */
+    color: #0B3D91;
   }
+
+  /* Explicit Grid Placement (Preserving previous logic) */
+  .lp-stat-item[data-stat="alumni"] { grid-area: 1 / 1; }
+  .lp-stat-item[data-stat="employment"] { grid-area: 2 / 1; }
+  .lp-stat-item[data-stat="programmes"] { grid-area: 1 / 2; }
+  .lp-stat-item[data-stat="ranking"] { grid-area: 2 / 2; }
 
   /* Cards */
   .lp-cards-grid {
@@ -943,22 +834,22 @@ body {
     word-break: break-word !important;
   }
 
-  /* Stats: Tighter adjustments for very small screens */
+  /* Stats: Tighter adjustments for very small screens, but keeping text large */
   .lp-stats-grid {
     gap: 32px 12px;
-    max-width: 100%; /* Allow full width on very small screens */
   }
 
   .lp-stat-item {
     padding: 0 4px;
   }
 
+  /* Keep typography boosted even on smallest screens */
   .lp-stat-number {
-    font-size: clamp(24px, 6.5vw, 32px) !important;
+    font-size: clamp(32px, 8.5vw, 40px) !important; 
   }
 
   .lp-stat-label {
-    font-size: clamp(11px, 2.8vw, 13px) !important;
+    font-size: clamp(14px, 3.8vw, 18px) !important;
   }
 
   /* Footer */
