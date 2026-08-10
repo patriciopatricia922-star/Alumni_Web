@@ -335,7 +335,7 @@ const LandingPageView = ({
       <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '36px', lineHeight: '44px', color: '#101828', margin: '0 0 12px' }}>
-            {(benefitsSection?.title || 'What You Get as an Alumni').split(' ').map((word, index, arr) => {
+            {(benefitsSection?.title || 'What You Get as an Alumni?').split(' ').map((word, index, arr) => {
               if (word.toLowerCase() === 'alumni') {
                 return <span key={index} style={{ color: '#003EA6' }}>{word}</span>;
               }
