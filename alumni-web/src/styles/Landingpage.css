@@ -304,8 +304,9 @@ body {
 /* ============================
    STATS SECTION
    ============================ */
-/* HEIGHT ADJUSTMENT: Reduce bottom padding only, keep top at 64px */
+/* HEIGHT ADJUSTMENT: Reduce top and bottom padding for Desktop/Tablet */
 #stats {
+  padding-top: 40px !important; /* 👈 Reduced from 64px to move content up */
   padding-bottom: 32px !important; 
 }
 
