@@ -733,9 +733,6 @@
   pointer-events: none;
 }
 
-/* MERGED: left offset adjusted from -2px to -12px — friend's decorative
-   positioning refinement. Purely cosmetic (background circle placement),
-   no behavior affected. */
 .survey-deco-circle--tl {
   width: 220px;
   height: 220px;
@@ -787,10 +784,6 @@
   align-items: center;
 }
 
-/* MERGED: richer hover/active feedback from friend's version — adds a subtle
-   background tint, shadow, and lift on hover, plus a defined pressed state.
-   Purely visual (transition/box-shadow/transform); onClick handler, disabled
-   logic, and button text are untouched. */
 .continue-button {
   display: inline-flex;
   align-items: center;
@@ -922,52 +915,42 @@
     row-gap: clamp(10px, 1.5vh, 16px);
   }
 
-  /* Mobile "For You" cards: switch from the desktop's stacked/centered
-     layout to a horizontal row — icon on the left, title+description
-     stacked to its right. Only the internal arrangement (flex-direction,
-     alignment, text-align, and the small margins those two elements used
-     for centering) changes; icon size, fonts, colors, card size/shadow/
-     radius/padding are untouched. Scoped to max-width:767px only, so
-     desktop and the >767px tablet layout keep the original centered
-     structure. */
+  /* [icon] Header / [icon] Subtitle layout for mobile "For You" cards */
   .for-you-card {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: flex-start;
     text-align: left;
   }
 
   .for-you-icon-box {
     margin-bottom: 0;
-    margin-right: clamp(10px, 3vw, 14px);
+    margin-right: clamp(8px, 2.5vw, 12px);
   }
 
   .for-you-text {
     align-items: flex-start;
     text-align: left;
     width: auto;
-    flex: 1;
     min-width: 0;
+    flex: 1;
+  }
+
+  .card-title,
+  .card-description {
+    text-align: left;
   }
 
   .card-title {
-    text-align: left;
     margin-top: 0;
-  }
-
-  .card-description {
-    text-align: left;
   }
 }
 
 /* ============================ FOR YOU CARD ============================ */
-/* MERGED: min-height increased 145px -> 152px (friend's version) — gives
-   card content slightly more breathing room. Layout-only, no functional
-   change. */
 .for-you-card {
   background: #FFFFFF;
   border-radius: 16px;
   cursor: pointer;
-  /* Fluid padding that scales down gracefully on tiny screens */
   padding: clamp(12px, 2vw, 18px);
   display: flex;
   flex-direction: column;
@@ -975,10 +958,8 @@
   position: relative;
   transition: all 0.2s ease;
   box-shadow: 1px 7px 15px rgba(0, 0, 0, 0.25);
-  /* Use min-height with clamp instead of fixed px for better mobile fit */
   min-height: clamp(130px, 20vw, 152px);
   justify-content: flex-start;
-  /* Critical: Prevent card from overflowing its grid cell */
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -1001,7 +982,6 @@
 }
 
 .for-you-icon-box {
-  /* Scale icon box proportionally on smaller screens */
   width: clamp(48px, 8vw, 64px);
   height: clamp(48px, 8vw, 64px);
   background: linear-gradient(180deg, #1E3A8A 0%, #1E40AF 100%);
@@ -1042,7 +1022,6 @@
   height: 100%;
   object-fit: contain;
   filter: drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.38));
-  /* Ensure icons never exceed their container */
   max-width: 100%;
   max-height: 100%;
 }
@@ -1085,22 +1064,15 @@
 .for-you-text {
   flex: 1;
   min-width: 0;
-  /* Critical for text truncation/wrapping in flex containers */
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  /* Prevent text block from forcing card wider than grid cell */
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
-/* KEPT (mine): friend's version changed color to #324D87, line-height to 2.3,
-   and font-size cap to 15px. Rejected — #FFED97 is an intentional accent
-   color for contrast against the icon-box gradient backgrounds, and
-   friend's change risked reducing legibility. No clear improvement, so
-   original preserved per "keep mine when uncertain." */
 .card-title {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
@@ -1110,17 +1082,11 @@
   margin: 0 0 6px 0;
   text-align: center;
   margin-top: clamp(6px, 1vw, 10.5px);
-  /* Ensure title wraps instead of overflowing */
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
-/* ── FIX: Was rgba(255,255,255,0.9) — near-invisible on white card bg ── */
-/* KEPT (mine): friend's version set line-height: 0.1, which would cause
-   the description text to visually overlap/clip on any multi-line content.
-   That reads as a bug, not an improvement, so original line-height (1.4)
-   is preserved. */
 .card-description {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
@@ -1129,7 +1095,6 @@
   color: #5A6A8A;
   margin: 0;
   text-align: center;
-  /* Allow description to wrap naturally within card bounds */
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -1282,7 +1247,6 @@
 
   .for-you-grid {
     grid-template-columns: 1fr;
-    /* Auto rows instead of fixed repeat to accommodate variable content heights */
     grid-template-rows: auto;
   }
 
