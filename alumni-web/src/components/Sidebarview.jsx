@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const LogoutIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+const LogoutIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M16 17l5-5-5-5" stroke="#D1D5DC" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M21 12H9"       stroke="#D1D5DC" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="#D1D5DC" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round"/>
@@ -74,7 +74,7 @@ const SidebarView = ({
               )}
               <img src={item.icon} alt={item.label}
               style={{
-                width: '21px', height: '21px',
+                width: '18px', height: '18px',
                 filter: isActive
                   ? 'brightness(0) saturate(100%) invert(77%) sepia(37%) saturate(466%) hue-rotate(6deg) brightness(95%) contrast(89%)'
                   : 'brightness(0) invert(1) opacity(0.5)',
@@ -103,7 +103,7 @@ const SidebarView = ({
           gap: '6px', flex: 1, height: '100%',
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}>
-          <LogoutIcon />
+          <LogoutIcon size={14} />
           <span style={{ fontFamily: 'Montserrat', fontSize: 'clamp(7.5px, 2.6vw, 10px)', color: 'rgba(255,255,255,0.45)' }}>Logout</span>
         </button>
       </nav>
