@@ -174,9 +174,13 @@ If vertical alignment differs from the original design, adjust margin-top below.
 
 @media (max-width: 767px) {
 
+  .prof-back {
+    display: none;
+  }
+
   .prof-page-header {
     padding-right: calc(clamp(44px, 4vw, 52px) + 12px);
-    margin-top: clamp(38px, 7vh, 56px);
+    margin-top: clamp(8px, 1.6vh, 14px);
   }
 
   .prof-page-title,
