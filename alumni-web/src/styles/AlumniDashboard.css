@@ -154,16 +154,45 @@
     padding-right: 0;
   }
 
-  /* Neutralize the inline marginRight/paddingTop applied in JSX
-     (style={{ paddingTop: '15px', marginRight: '35px' }}) so the bell's
-     right edge lines up with the same right boundary as the "Welcome"
-     header text/subtitle instead of sitting inset an extra ~35px,
-     and isn't nudged down an extra ~15px. Desktop/tablet keep the
-     original inline values untouched since this rule only applies
-     under 767px. */
+  /* ROOT-CAUSE FIX for mobile alignment:
+     The bell is actually TWO nested positioned boxes — this outer JSX
+     wrapper (.notification-bell.mobile) AND the .notification-bell-wrapper
+     that <NotificationBell /> renders inside it. The inline JSX styles
+     (paddingTop/marginRight) plus a possible position:absolute coming from
+     NotificationBell's own stylesheet (which may load after this file and
+     win the cascade) can make BOTH boxes offset from the page edge at once,
+     stacking their insets instead of using a single anchor point. That
+     compounding is what pushes the bell further down/left than the
+     "Welcome Bark!" header row's right edge.
+
+     Fix: force the OUTER box to be the single absolutely-positioned anchor
+     (clamp-based, matching the same right/top inset used by
+     .dashboard-content's own mobile padding, so it lines up with the
+     "Welcome"/subtitle text block), and force the INNER wrapper back to
+     plain static/in-flow with zero offsets — all with !important so it
+     can't be re-introduced by NotificationBell.css load order. Scoped to
+     max-width:767px only, so desktop/tablet are untouched. */
   .notification-bell.mobile {
-    margin-right: 0 !important;
-    padding-top: 0 !important;
+    position: absolute !important;
+    top: clamp(12px, 2vh, 18px) !important;
+    right: clamp(12px, 4vw, 18px) !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  .notification-bell.mobile .notification-bell-wrapper {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
 
