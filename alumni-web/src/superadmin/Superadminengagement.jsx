@@ -53,6 +53,8 @@ function useContentManagement() {
   const [disclosureInitialEditing, setDisclosureInitialEditing] =
     useState(null);
 
+  const [awardModalOpen, setAwardModalOpen] = useState(false);
+
   const showToastMessage = (message, type = "success") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: "", type: "" }), 3000);
@@ -254,6 +256,68 @@ const resolveImages = (formData, existingUrls = []) => {
     setDisclosureInitialEditing(null);
   };
 
+  const openAwardPoints = () => setAwardModalOpen(true);
+  const closeAwardPoints = () => setAwardModalOpen(false);
+
+  const randomPoints = (min = 10, max = 50) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
+
+  // userIds: string[], points: number — falls back to randomPoints() when
+  // points isn't provided.
+  const handleAwardPoints = async (userIds, points) => {
+    try {
+      const awardAmount =
+        typeof points === "number" && points > 0 ? points : randomPoints();
+
+      const apiUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiUrl) {
+        throw new Error(
+          "VITE_API_BASE_URL is not configured — cannot reach the backend.",
+        );
+      }
+
+      const response = await fetch(`${apiUrl}/api/admin/award-points`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_ids: userIds, points: awardAmount }),
+      });
+
+      // Guard against non-JSON responses instead of letting response.json()
+      // throw an opaque "Unexpected token '<'" SyntaxError.
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const rawText = await response.text();
+        throw new Error(
+          `Expected JSON but received "${contentType || "unknown content-type"}". ` +
+            `This usually means the request hit the frontend dev server instead of the backend API. ` +
+            `Response start: ${rawText.slice(0, 120)}`,
+        );
+      }
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          result?.detail?.message || result?.detail || "Failed to award points.",
+        );
+      }
+
+      for (const userId of userIds) {
+        await logAction({
+          action: "Update",
+          module: "Rewards",
+          description: `Awarded ${awardAmount} points to user ${userId}`,
+          recordId: userId,
+          status: "Success",
+        });
+      }
+
+      showToastMessage("Points awarded successfully!", "success");
+    } catch (err) {
+      showToastMessage("Failed to award points: " + err.message, "error");
+      throw err;
+    }
+  };
+
   const handleDisclosureUpdate = async ({ tos_content, pp_content }) => {
     if (!stripHtml(tos_content)) {
       showToastMessage("Terms of Service content cannot be empty.", "error");
@@ -392,6 +456,9 @@ const resolveImages = (formData, existingUrls = []) => {
         image_urls,
         published_at: new Date().toISOString(),
         is_active: true,
+        target_user_ids: formData.audience === "Specific User" && formData.target_user_id
+          ? [formData.target_user_id]
+          : null,
       };
 
       if (!newAnnouncement.title) {
@@ -730,6 +797,9 @@ const handleUpdateEvent = async (id, formData) => {
         image_url,
         image_urls,
         updated_at: new Date().toISOString(),
+        target_user_ids: formData.audience === "Specific User" && formData.target_user_id
+          ? [formData.target_user_id]
+          : null,
       };
       if (!updates.title) {
         showToastMessage("Announcement title is required", "error");
@@ -1207,6 +1277,7 @@ const handleUpdateEvent = async (id, formData) => {
     disclosure,
     disclosureModalOpen,
     disclosureInitialEditing,
+    awardModalOpen,
     openCreate,
     openEdit,
     openEditSection,
@@ -1214,6 +1285,9 @@ const handleUpdateEvent = async (id, formData) => {
     openDisclosureModal,
     closeDisclosureModal,
     handleDisclosureUpdate,
+    openAwardPoints,
+    closeAwardPoints,
+    handleAwardPoints,
     showConfirm,
     closeConfirm,
     handleCreateEvent,
@@ -1284,6 +1358,10 @@ onUpdateReward={cm.handleUpdateReward}
       onToggleActive={cm.handleToggleActive}
       onShowConfirm={cm.showConfirm}
       sidebar={<SuperAdSidebar />}
+      awardModalOpen={cm.awardModalOpen}
+      onOpenAwardPoints={cm.openAwardPoints}
+      onCloseAwardPoints={cm.closeAwardPoints}
+      onAwardPoints={cm.handleAwardPoints}
     />
   );
 }

@@ -1,7 +1,6 @@
 //SuperAdmin Contentmgmtview.jsx
 import React, { useEffect, useCallback } from 'react';
 import '../styles/Contentmgmt.css';
-
 import EventModal        from '../modals/EventModal';
 import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal          from '../modals/JobModal';
@@ -9,6 +8,7 @@ import DiscountModal     from '../modals/DiscountModal';
 import LandingModal      from '../modals/LandingModal';
 import RewardsModal      from '../modals/RewardsModal';
 import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
+import AwardPointsModal  from '../modals/AwardPointsModal';
 
 const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
 
@@ -41,7 +41,7 @@ const TabIcon = ({ type, active }) => {
   );
   if (type === 'rewards') return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
     </svg>
   );
   if (type === 'landingpage') return (
@@ -74,7 +74,6 @@ const LandingSectionCard = ({ section, onEdit }) => {
     const s = strip(v);
     return s.length > n ? s.slice(0, n) + '…' : s;
   };
-
   return (
     <div className="cm-lp-card">
       <div className="cm-lp-card-header">
@@ -124,10 +123,8 @@ const DisclosureTabContent = ({ disclosure, onEditClick }) => {
     const s = stripHtml(val);
     return s.length > max ? s.slice(0, max) + '…' : s;
   };
-
   const tosText = disclosure?.tos_content || DEFAULT_TOS;
   const ppText  = disclosure?.pp_content  || DEFAULT_PP;
-
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -145,7 +142,6 @@ const DisclosureTabContent = ({ disclosure, onEditClick }) => {
           </div>
           <p className="cm-disclosure-card-preview">{trunc(tosText)}</p>
         </div>
-
         <div className="cm-disclosure-card">
           <div className="cm-disclosure-card-header">
             <h3 className="cm-disclosure-card-title">Privacy Policy</h3>
@@ -172,12 +168,10 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
     d.innerHTML = html;
     return d.textContent || d.innerText || '';
   };
-
   const typeColor = {
-     events: '#155DFC', announcements: '#F59E0B', jobs: '#10B981', discounts: '#8B5CF6',
-     rewards: '#F97316',  
-    }[type] || '#6A7282';
-
+    events: '#155DFC', announcements: '#F59E0B', jobs: '#10B981', discounts: '#8B5CF6',
+    rewards: '#F97316',
+  }[type] || '#6A7282';
   const typeIcon = () => {
     if (type === 'events') return (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -211,9 +205,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
     );
     return null;
   };
-
   const showImage = ['events', 'jobs', 'discounts', 'rewards', 'announcements'].includes(type) && item.image_url;
-
   return (
     <div className="content-item-card">
       {showImage && (
@@ -221,7 +213,6 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
           <img src={item.image_url} alt={item.title} onError={(e) => { e.target.style.display = 'none'; }} />
         </div>
       )}
-
       <div className="content-item-header">
         <div className="content-item-icon" style={{ background: typeColor }}>{typeIcon()}</div>
         <div className="content-item-actions">
@@ -241,13 +232,11 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
           </button>
         </div>
       </div>
-
       <h4 className="content-item-title">{item.title}</h4>
       <p className="content-item-description">
         {strip(item.description)?.substring(0, 120)}
         {strip(item.description)?.length > 120 ? '...' : ''}
       </p>
-
       {type === 'events' && item.event_date && (
         <div className="content-item-meta">
           <span>
@@ -364,7 +353,6 @@ const ToastNotification = ({ toast, onClose }) => {
     const id = setTimeout(onClose, 3000);
     return () => clearTimeout(id);
   }, [toast.show, onClose]);
-
   if (!toast.show) return null;
   return (
     <div className={`toast-notification toast-${toast.type}`}>
@@ -418,9 +406,12 @@ const ContentManagementView = ({
   onShowConfirm,
   sidebar,
   alumniType,
+  awardModalOpen,
+  onOpenAwardPoints,
+  onCloseAwardPoints,
+  onAwardPoints,
 }) => {
   const handleToastClose = useCallback(() => {}, []);
-
   const [rewardFilter, setRewardFilter] = React.useState('All');
   const REWARD_FILTERS = ['All', 'Apparel', 'Drinkware', 'Accessories', 'Others'];
 
@@ -482,7 +473,6 @@ const ContentManagementView = ({
           <div className="cm-create-desc">Add a new section to the landing page.</div>
         </div>
       );
-
       return (
         <div className="cm-board">
           {createCard}
@@ -552,9 +542,7 @@ const ContentManagementView = ({
     <>
       <ToastNotification toast={toast} onClose={handleToastClose} />
       <ConfirmDialog action={confirmAction} onClose={onCloseConfirm} />
-
       {sidebar}
-
       <div className="cm-page">
         <div className="cm-header">
           <div>
@@ -570,24 +558,35 @@ const ContentManagementView = ({
             Archive ({archivedItems.length})
           </button>
         </div>
-
         <div className="cm-card">
           <div className="cm-tabs">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                className={`cm-tab ${activeTab === tab.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <TabIcon type={tab.id} active={activeTab === tab.id} />
-                {tab.label}
-              </button>
+            {TABS.map((tab, i) => (
+              <React.Fragment key={tab.id}>
+                {tab.rightGroup && !TABS[i - 1]?.rightGroup && (
+                  <span className="cm-tab-divider" aria-hidden="true" />
+                )}
+                <button
+                  className={`cm-tab ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <TabIcon type={tab.id} active={activeTab === tab.id} />
+                  {tab.label}
+                </button>
+              </React.Fragment>
             ))}
           </div>
-
-          {/* <div className="cm-board-title">{boardTitle}</div> */}
           <div className="cm-board-header">
-            <div className="cm-board-title">{boardTitle}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="cm-board-title">{boardTitle}</div>
+              {activeTab === 'rewards' && (
+                <button className="cm-award-points-btn" onClick={onOpenAwardPoints}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  Add Points
+                </button>
+              )}
+            </div>
             {activeTab === 'rewards' && (
               <div className="cm-reward-filters">
                 {REWARD_FILTERS.map(f => (
@@ -602,15 +601,12 @@ const ContentManagementView = ({
               </div>
             )}
           </div>
-
           {renderContent()}
         </div>
       </div>
-
       {showArchive && (
         <ArchivePanel archivedItems={archivedItems} onClose={() => setShowArchive(false)} onRestore={onRestore} />
       )}
-
       {modalOpen && !showArchive && activeTab === 'events' && (
         <EventModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           event={editingItem} onCreate={onCreateEvent} onUpdate={onUpdateEvent} />
@@ -629,20 +625,24 @@ const ContentManagementView = ({
       )}
       {modalOpen && !showArchive && activeTab === 'rewards' && (
         <RewardsModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
-        reward={editingItem} onCreate={onCreateReward} onUpdate={onUpdateReward}/>
+          reward={editingItem} onCreate={onCreateReward} onUpdate={onUpdateReward}/>
       )}
       {modalOpen && !showArchive && activeTab === 'landingpage' && (
         <LandingModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           section={editingSection || editingItem}
           onCreate={onCreateLandingSection} onUpdate={onUpdateLandingSection} />
       )}
-
       <DisclosureModal
         open={disclosureModalOpen}
         onClose={onCloseDisclosureModal}
         disclosure={disclosure}
         onUpdate={onDisclosureUpdate}
         initialEditing={disclosureInitialEditing}
+      />
+      <AwardPointsModal
+        open={awardModalOpen}
+        onClose={onCloseAwardPoints}
+        onAward={onAwardPoints}
       />
     </>
   );

@@ -1,9 +1,8 @@
 /* ============================================================================
-   CONTENT MANAGEMENT — FULL STYLESHEET FOR Super ADMIN
-   Covers: page layout, tabs, board cards, modals, archive panel,
-   toast, confirm dialog, image upload, rich text editor.
-   ============================================================================ */
-
+CONTENT MANAGEMENT — FULL STYLESHEET FOR Super ADMIN
+Covers: page layout, tabs, board cards, modals, archive panel,
+toast, confirm dialog, image upload, rich text editor.
+============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
 
 /* ── Reset / base ─────────────────────────────────────────────────────────── */
@@ -67,6 +66,7 @@ body {
   white-space: nowrap;
   transition: background 0.15s;
 }
+
 .cm-archive-btn:hover { background: #28303b; }
 
 /* ── Main card ────────────────────────────────────────────────────────────── */
@@ -90,10 +90,15 @@ body {
   overflow-x: visible;
 }
 
-/* .cm-tab:nth-child(3),
-.cm-tab:nth-child(6) {
-  margin-left: 16px;
-} */
+/* Tab divider — separates logical tab groups (from Admin reference) */
+.cm-tab-divider {
+  width: 1.5px;
+  height: 24px;
+  background: #94A3B8;
+  align-self: center;
+  flex-shrink: 0;
+  margin: 0 8px;
+}
 
 .cm-tab:nth-child(3),
 .cm-tab:nth-child(6) {
@@ -132,7 +137,9 @@ body {
   position: static;
   bottom: auto;
 }
+
 .cm-tab:hover { background: #F1F5F9; color: #1E293B; }
+
 .cm-tab.active {
   background: #1E293B;
   color: #fff;
@@ -156,6 +163,25 @@ body {
   margin: 0;
   letter-spacing: -0.2px;
 }
+
+/* Award Points button — Rewards tab board header (from Admin reference) */
+.cm-award-points-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.cm-award-points-btn:hover { background: #0f172a; }
 
 .cm-reward-filters {
   display: flex;
@@ -205,6 +231,7 @@ body {
   padding: 24px;
   text-align: center;
 }
+
 .cm-create-card:hover { border-color: #3B82F6; background: #F8FAFF; }
 
 .cm-create-plus {
@@ -220,6 +247,7 @@ body {
   margin-bottom: 12px;
   transition: background 0.15s;
 }
+
 .cm-create-card:hover .cm-create-plus { background: #DBEAFE; }
 
 .cm-create-label {
@@ -264,16 +292,16 @@ body {
   width: 100%;
   height: 140px;
   overflow: hidden;
-  /* border-radius: 8px;
-  margin-bottom: 12px; */
   background: #F1F5F9;
 }
+
 .content-item-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
+
 .content-item-card:hover .content-item-image img {
   transform: scale(1.05);
 }
@@ -312,15 +340,19 @@ body {
   transition: all 0.2s;
   border: none;
 }
+
 .content-edit-btn {
   background: #EFF6FF;
   color: #155DFC;
 }
+
 .content-edit-btn:hover { background: #DBEAFE; }
+
 .content-archive-btn {
   background: #FEF2F2;
   color: #EF4444;
 }
+
 .content-archive-btn:hover { background: #FEE2E2; }
 
 .content-item-title {
@@ -347,6 +379,7 @@ body {
   font-size: 12px;
   color: #94A3B8;
 }
+
 .content-item-meta span {
   display: flex;
   align-items: center;
@@ -369,6 +402,7 @@ body {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
+
 .cm-lp-edit-btn:hover {
   background: #1e293b;
   color: #ffffff;
@@ -390,6 +424,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .cm-add-section-btn:hover { background: #0f172a; }
 
 /* "Edit Content" button on disclosure tab */
@@ -407,6 +442,7 @@ body {
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
+
 .cm-disclosure-edit-btn:hover {
   background: #1e293b;
   color: #ffffff;
@@ -421,6 +457,7 @@ body {
   padding: 20px 22px;
   transition: box-shadow 0.15s;
 }
+
 .cm-disclosure-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
 
 .cm-disclosure-card-header {
@@ -429,6 +466,7 @@ body {
   justify-content: space-between;
   margin-bottom: 12px;
 }
+
 .cm-disclosure-card-title {
   font-size: 15px;
   font-weight: 700;
@@ -459,6 +497,7 @@ body {
   background: #fff;
   height: 100%;
 }
+
 .cm-lp-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
@@ -561,9 +600,8 @@ body {
 }
 
 /* ============================================================================
-   MODAL — Complete modal styling
-   ============================================================================ */
-
+MODAL — Complete modal styling
+============================================================================ */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -611,6 +649,7 @@ body {
   transition: background 0.15s, border-color 0.15s;
   z-index: 1;
 }
+
 .modal-close:hover { background: #F1F5F9; border-color: #CBD5E1; }
 
 .modal-title {
@@ -667,6 +706,7 @@ body {
   font-family: inherit;
   outline: none;
 }
+
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
@@ -674,6 +714,7 @@ body {
   box-shadow: 0 0 0 3px rgba(21, 93, 252, 0.1);
   background: #FFFFFF;
 }
+
 .field-input::placeholder,
 .field-textarea::placeholder { color: #94A3B8; }
 
@@ -724,6 +765,7 @@ body {
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
+
 .btn-cancel:hover { background: #F8FAFC; border-color: #CBD5E1; }
 
 .btn-create {
@@ -737,7 +779,9 @@ body {
   cursor: pointer;
   transition: background 0.15s, opacity 0.15s;
 }
+
 .btn-create:hover { background: #1248CC; }
+
 .btn-create:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Rich text editor ─────────────────────────────────────────────────────── */
@@ -748,6 +792,7 @@ body {
   background: #FAFBFC;
   transition: border-color 0.15s;
 }
+
 .rich-text-editor:focus-within {
   border-color: #155DFC;
   box-shadow: 0 0 0 3px rgba(21, 93, 252, 0.1);
@@ -776,6 +821,7 @@ body {
   transition: background 0.12s, color 0.12s;
   font-size: 13px;
 }
+
 .toolbar-btn:hover { background: #E2E8F0; color: #1E293B; }
 .toolbar-btn:active { background: #CBD5E1; }
 
@@ -787,6 +833,7 @@ body {
   min-height: 100px;
   outline: none;
 }
+
 .rich-text-content:empty::before {
   content: attr(data-placeholder);
   color: #94A3B8;
@@ -808,6 +855,7 @@ body {
   overflow: hidden;
   border: 1.5px solid #E2E8F0;
 }
+
 .image-preview img {
   width: 100%;
   height: 120px;
@@ -831,6 +879,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .remove-image-btn:hover { background: rgba(0,0,0,.75); }
 
 .image-upload-area {
@@ -844,7 +893,9 @@ body {
   background: #FAFBFC;
   transition: border-color 0.15s, background 0.15s;
 }
+
 .image-upload-area:hover { border-color: #155DFC; background: #F0F5FF; }
+
 .image-upload-area span { font-size: 13px; color: #155DFC; font-weight: 500; }
 
 .uploading-spinner {
@@ -856,11 +907,14 @@ body {
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Stats form helpers ───────────────────────────────────────────────────── */
 .auto-field { position: relative; }
+
 .auto-value { padding-right: 80px !important; }
+
 .auto-badge {
   position: absolute;
   right: 10px;
@@ -901,7 +955,7 @@ body {
 
 @keyframes slideIn {
   from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  to   { transform: translateX(0); }
 }
 
 .cm-archive-header {
@@ -911,6 +965,7 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+
 .cm-archive-header h2 {
   font-family: 'Lexend', sans-serif;
   font-size: 18px;
@@ -933,6 +988,7 @@ body {
   justify-content: center;
   transition: background 0.15s;
 }
+
 .cm-archive-close:hover { background: #E2E8F0; }
 
 .cm-archive-body {
@@ -993,12 +1049,14 @@ body {
   color: #94A3B8;
   margin-bottom: 6px;
 }
+
 .cm-archive-item-desc {
   font-size: 13px;
   color: #475569;
   margin-bottom: 8px;
   line-height: 1.5;
 }
+
 .cm-archive-item-creator {
   font-size: 11px;
   color: #94A3B8;
@@ -1019,6 +1077,7 @@ body {
   transition: all 0.15s;
   flex-shrink: 0;
 }
+
 .cm-restore-btn:hover {
   background: #F8FAFF;
   border-color: #3B82F6;
@@ -1049,7 +1108,7 @@ body {
 
 @keyframes cmFade {
   from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .cm-confirm-title {
@@ -1084,6 +1143,7 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .cm-btn-cancel:hover { background: #F1F5F9; }
 
 .cm-btn-submit {
@@ -1098,6 +1158,7 @@ body {
   cursor: pointer;
   transition: opacity 0.15s;
 }
+
 .cm-btn-submit:hover { opacity: 0.88; }
 
 /* ── Toast notification ───────────────────────────────────────────────────── */
@@ -1119,7 +1180,7 @@ body {
 
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
 .toast-success {
@@ -1140,15 +1201,15 @@ body {
     margin-left: 0;
     padding: 20px 16px 48px;
   }
-  
+
   .cm-board {
     grid-template-columns: 1fr;
   }
-  
+
   .cm-archive-panel {
     width: 100%;
   }
-  
+
   .cm-confirm-box {
     width: 90%;
   }
@@ -1159,28 +1220,28 @@ body {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .cm-archive-btn {
     align-self: flex-start;
   }
-  
+
   .cm-tabs {
     gap: 8px;
   }
-  
+
   .cm-tab {
     padding: 6px 12px;
     font-size: 12px;
   }
-  
+
   .cm-card {
     padding: 20px;
   }
-  
+
   .content-items-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .field-grid {
     grid-template-columns: 1fr;
   }
