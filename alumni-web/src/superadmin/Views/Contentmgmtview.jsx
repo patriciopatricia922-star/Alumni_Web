@@ -1,6 +1,5 @@
 //SuperAdmin Contentmgmtview.jsx
 import React, { useEffect, useCallback } from 'react';
-import '../styles/ContentMgmt.css';
 import EventModal        from '../modals/EventModal';
 import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal          from '../modals/JobModal';
@@ -9,6 +8,7 @@ import LandingModal      from '../modals/LandingModal';
 import RewardsModal      from '../modals/RewardsModal';
 import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
 import AwardPointsModal  from '../modals/AwardPointsModal';
+import '../styles/Contentmgmt.css';
 
 const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
 
