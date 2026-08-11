@@ -116,7 +116,8 @@
 /* --- Mobile: ≤ 768px --- */
 @media (max-width: 768px) {
   .nb-inner {
-    padding: 0 20px 0 clamp(9px, 3vw, 10px) !important;
+    /* padding: 0 20px 0 clamp(9px, 3vw, 10px) !important; */
+    padding: 0 20px 0 4px !important; 
   }
 
   .nb-links {
