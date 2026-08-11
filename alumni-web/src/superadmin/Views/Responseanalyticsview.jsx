@@ -23,34 +23,25 @@ const IconExport = ({ color = "#314158" }) => (
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 // ============================ EXPORT UTILITIES ============================
-
-/**
- * CSV Export — converts respondents array to CSV and triggers browser download.
- * Preserved from original implementation.
- */
 const exportToCSV = (data, filename = 'survey-responses') => {
   if (!data || data.length === 0) return;
-
   const headers = Array.from(
     data.reduce((set, row) => {
       Object.keys(row).forEach((k) => set.add(k));
       return set;
     }, new Set())
   );
-
   const escapeCell = (value) => {
     if (value === null || value === undefined) return '""';
     const str = Array.isArray(value) ? value.join('; ') : String(value);
     return `"${str.replace(/"/g, '""')}"`;
   };
-
   const csvRows = [
     headers.map(escapeCell).join(','),
     ...data.map((row) =>
       headers.map((h) => escapeCell(row[h])).join(',')
     ),
   ];
-
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -63,48 +54,32 @@ const exportToCSV = (data, filename = 'survey-responses') => {
 };
 
 // ============================ CHART WITH RESIZE OBSERVER ============================
-// FIX: Guards against negative/zero container dimensions during DOM transitions
-// (e.g., export modal open/close, tab switches). Prevents Recharts from receiving
-// width=-1 / height=-1 which triggers console warnings and unnecessary re-renders.
 const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
   const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     const updateWidth = () => {
       if (containerRef.current) {
         const w = containerRef.current.clientWidth;
-        // Only accept valid positive widths — reject -1, 0, or NaN
-        // that occur during layout shifts (export modal, tab changes).
         if (w > 0) {
           setContainerWidth(w);
         }
       }
     };
-
-    // Initial update
     updateWidth();
-
-    // Use ResizeObserver to detect size changes
     const resizeObserver = new ResizeObserver(() => {
       updateWidth();
     });
     resizeObserver.observe(containerRef.current);
-
-    // Also listen for window resize
     window.addEventListener('resize', updateWidth);
-
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateWidth);
     };
   }, []);
 
-  // Show placeholder while width is unavailable or invalid.
-  // Changed from `=== 0` to `<= 0` to catch all invalid states
-  // including the transient -1 that occurs during export modal rendering.
   if (containerWidth <= 0) {
     return (
       <div ref={containerRef} style={{ height: `${height}px`, width: '100%' }}>
@@ -125,8 +100,6 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
 };
 
 // ============================ RESPONSE MODAL ============================
-// INTEGRATION: Merged friend's expanded modal with all 7 sections including
-// Section 5 (Job Experience) and Section 7 (Feedback & Alumni Engagement).
 const ResponseModal = ({ data, onClose, alumniType }) => {
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -192,6 +165,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
     .filter(Boolean)
     .join(", ");
 
+  const isShs = alumniType === 'shs';
+
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
       <div className="ra-modal-card wide" onClick={(e) => e.stopPropagation()}>
@@ -209,6 +184,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
         </div>
 
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24, overflowY: "auto", flex: 1 }}>
+          
           {/* Section 1: Personal Information */}
           <div>
             <SectionHeader title="Section 1 — Personal Information" color="#3B82F6" />
@@ -216,9 +192,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               <Field label="Student Number" value={data.studentNumber} />
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
-              {!alumniType || alumniType !== 'shs' ? (
-              <Field label="Civil Status" value={data.civilStatus} />
-              ) : null }
+              {!isShs && <Field label="Civil Status" value={data.civilStatus} />}
               <Field label="Contact Number" value={data.contact} />
               <Field label="Personal Email Address" value={data.email} />
             </div>
@@ -231,79 +205,158 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
           <div>
             <SectionHeader title="Section 2 — Educational Background" color="#10B981" />
             <div style={{ marginBottom: 10 }}>
-              <FullBlock label="Degree Program Completed">
-              <strong>{data.program}</strong>
-              {data.programOther && <span style={{ display: "block", marginTop: 4, color: "#6b7280", fontSize: 12 }}>Specified: {data.programOther}</span>}
+              <FullBlock label={isShs ? "Track/Strand Completed" : "Degree Program Completed"}>
+                <strong>{data.program}</strong>
+                {data.programOther && <span style={{ display: "block", marginTop: 4, color: "#6b7280", fontSize: 12 }}>Specified: {data.programOther}</span>}
               </FullBlock>
             </div>
             <div style={{ marginBottom: 10 }}>
-              <FullBlock label="Reason(s) for Taking the Course">
-              <span style={{ color: "#374151", lineHeight: 1.6 }}>{data.reasonTakingCourse || "N/A"}</span>
-            </FullBlock>
+              <FullBlock label={isShs ? "Reason(s) why did you choose NU" : "Reason(s) for Taking the Course"}>
+                <span style={{ color: "#374151", lineHeight: 1.6 }}>{data.reasonTakingCourse || "N/A"}</span>
+              </FullBlock>
             </div>
             <div className="ra-grid" style={{ marginBottom: 10 }}>
               <Field label="Year Graduated" value={data.batch} />
-              {!alumniType || alumniType !== 'shs' ? (
-              <Field label="Distinction Received" value={data.distinction} />
-              ) : null }
-              <Field label="Plans for Post-Graduate Studies" value={data.postGradPlans} />
-              {data.postGradPlans === "Yes" && <Field label="Post-Graduate Course" value={data.postGradCourse} />}
+              {!isShs && <Field label="Distinction Received" value={data.distinction} />}
+              <Field 
+                label={isShs ? "Did you pursue further studies to any NU Branch after SHS?" : "Plans for Post-Graduate Studies"} 
+                value={data.postGradPlans} 
+              />
+              {data.postGradPlans === "Yes" && (
+                <Field 
+                  label={isShs ? "Course/Program" : "Post-Graduate Course"} 
+                  value={data.postGradCourse} 
+                />
+              )}
             </div>
+
+            {/* SHS Educational Background Branching Logic */}
+            {isShs && (
+              <>
+                {data.eduStatus === "Stopped" && (
+                  <div className="ra-grid" style={{ marginTop: 10 }}>
+                    <Field 
+                      label="What is the main reason you did not pursue further studies?" 
+                      value={data.stoppedReason === "Other" ? data.stoppedReasonOther : data.stoppedReason}
+                    />
+                  </div>
+                )}
+                {(data.eduStatus === "Currently Studying" || data.eduStatus === "Graduated") && (
+                  <>
+                    <div className="ra-grid" style={{ marginTop: 10 }}>
+                      <Field label="Did you pursue further studies to any NU Branch after SHS?" value={data.pursuedNuBranch} />
+                    </div>
+                    {data.pursuedNuBranch === "Yes" && (
+                      <div className="ra-grid" style={{ marginTop: 10 }}>
+                        <Field label="What branch of NU?" value={data.nuBranch} />
+                        <Field 
+                          label="What level of education are you currently in or have completed?" 
+                          value={data.educationLevel === "Other" ? data.educationLevelOther : data.educationLevel}
+                        />
+                        <Field label="Course/Program" value={data.courseProgram} />
+                        <Field label="Year Level" value={data.yearLevel} />
+                      </div>
+                    )}
+                    {data.pursuedNuBranch === "No" && (
+                      <>
+                        <div className="ra-grid" style={{ marginTop: 10 }}>
+                          <Field label="Did you pursue further studies to any school after SHS?" value={data.pursuedOtherSchool} />
+                        </div>
+                        {data.pursuedOtherSchool === "Yes" && (
+                          <div className="ra-grid" style={{ marginTop: 10 }}>
+                            <Field label="Reason(s) why did you not choose NU" value={data.reasonNotNu} />
+                            <Field label="Name of School/University" value={data.schoolName} />
+                            <Field 
+                              label="What level of education are you currently in or have completed?" 
+                              value={data.educationLevel === "Other" ? data.educationLevelOther : data.educationLevel}
+                            />
+                            <Field label="Course/Program" value={data.courseProgram} />
+                            <Field label="Year Level" value={data.yearLevel} />
+                          </div>
+                        )}
+                        {data.pursuedOtherSchool === "No" && (
+                          <div className="ra-grid" style={{ marginTop: 10 }}>
+                            <Field label="What branch of NU?" value={data.nuBranch} />
+                            <Field 
+                              label="What level of education are you currently in or have completed?" 
+                              value={data.educationLevel === "Other" ? data.educationLevelOther : data.educationLevel}
+                            />
+                            <Field label="Course/Program" value={data.courseProgram} />
+                            <Field label="Year Level" value={data.yearLevel} />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           {/* Section 3: Certification Achievements */}
-          {!alumniType || alumniType !== 'shs' ? (
-          <div>
-            <SectionHeader title="Section 3 — Certification Achievements" color="#F59E0B" />
-            <div className="ra-grid" style={{ marginBottom: 10 }}>
-              <Field label="Certiport Passer" value={data.certiportPasser} />
-              <Field label="Certifications Helped in Career" value={data.certificationUseful || "N/A"} />
+          {!isShs && (
+            <div>
+              <SectionHeader title="Section 3 — Certification Achievements" color="#F59E0B" />
+              <div className="ra-grid" style={{ marginBottom: 10 }}>
+                <Field label="Certiport Passer" value={data.certiportPasser} />
+                <Field label="Certifications Helped in Career" value={data.certificationUseful || "N/A"} />
+              </div>
+              <FullBlock label="Certiport Certifications Earned">
+                {data.certifications && data.certifications.length > 0 ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {data.certifications.map((c, i) => <Badge key={i} text={c} color="blue" />)}
+                  </div>
+                ) : <span style={{ color: "#9ca3af" }}>None</span>}
+              </FullBlock>
             </div>
-            <FullBlock label="Certiport Certifications Earned">
-              {data.certifications && data.certifications.length > 0 ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {data.certifications.map((c, i) => <Badge key={i} text={c} color="blue" />)}
-                </div>
-              ) : <span style={{ color: "#9ca3af" }}>None</span>}
-            </FullBlock>
-          </div>
-          ) : null}
+          )}
 
           {/* Section 4: Employment Information */}
           <div>
             <SectionHeader title="Section 4 — Employment Information" color="#EF4444" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              <Field label="Job Related to Degree" value={data.jobRelatedToDegree} />
+              <Field 
+                label={isShs ? "Is your current job related to your strand?" : "Job Related to Degree"} 
+                value={data.jobRelatedToDegree} 
+              />
               <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
-                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>Employment Status</span>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
+                  {isShs ? "Current Employment Status" : "Employment Status"}
+                </span>
                 <span className={`ra-status ${data.status?.toLowerCase().replace(/ /g, '-') || ''}`}>{data.status}</span>
               </div>
             </div>
             {data.status === "Employed" && (
               <div className="ra-grid" style={{ marginBottom: 10 }}>
-                <Field label="Job Title / Position" value={data.jobTitle} />
-                <Field label="Company / Employer" value={data.company} />
+                <Field label={isShs ? "Job Position" : "Job Title / Position"} value={data.jobTitle} />
+                <Field label={isShs ? "Name of Company / Employer" : "Company / Employer"} value={data.company} />
                 <Field label="Type of Industry" value={data.industry} />
                 <Field label="Monthly Income Range" value={data.salary} />
               </div>
             )}
           </div>
 
-          {/* Section 5: Job Experience (INTEGRATION: from friend's modal) */}
+          {/* Section 5: Job Experience */}
           <div>
             <SectionHeader title="Section 5 — Job Experience" color="#06B6D4" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              <Field label="Time to Find First Job After Graduation" value={data.timeToJob} />
+              <Field 
+                label={isShs ? "How long did it take you to find your first job after graduation?" : "Time to Find First Job After Graduation"} 
+                value={data.timeToJob} 
+              />
               <Field label="Duration in Current Job" value={data.employmentDuration} />
               {data.employmentDurationOther && (
                 <Field label="Duration (Specified)" value={data.employmentDurationOther} />
               )}
-              <Field label="How First Job Was Found" value={data.howFoundJob} />
+              <Field 
+                label={isShs ? "How did you find your first job?" : "How First Job Was Found"} 
+                value={data.howFoundJob} 
+              />
               {data.howFoundJobOther && (
                 <Field label="Other Source (Specified)" value={data.howFoundJobOther} />
               )}
             </div>
-            <FullBlock label="Factors That Helped in Getting First Job">
+            <FullBlock label={isShs ? "What factors helped you most in getting your first job?" : "Factors That Helped in Getting First Job"}>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {(data.factorsForJob || []).map((f, i) => <Badge key={i} text={f} color="cyan" />)}
               </div>
@@ -314,17 +367,19 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               )}
             </FullBlock>
           </div>
-    
+
           {/* Section 6: Skills & Competencies */}
           <div>
             <SectionHeader title="Section 6 — Skills & Competencies" color="#8B5CF6" />
-            <div style={{ marginBottom: 10 }}>
-              <FullBlock label="Competencies Learned in College That Are Very Useful">
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {(data.usefulCompetencies || []).map((s, i) => <Badge key={i} text={s} color="purple" />)}
-                </div>
-              </FullBlock>
-            </div>
+            {!isShs && (
+              <div style={{ marginBottom: 10 }}>
+                <FullBlock label="Competencies Learned in College That Are Very Useful">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {(data.usefulCompetencies || []).map((s, i) => <Badge key={i} text={s} color="purple" />)}
+                  </div>
+                </FullBlock>
+              </div>
+            )}
             <div style={{ marginBottom: 10 }}>
               <div style={{ background: "#fff5e7", borderRadius: 8, padding: "12px", fontSize: 13 }}>
                 <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
@@ -333,9 +388,9 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {[
                     ["Communication Skills", data.commSkillRating],
-                    ["Information & Technology Skills", data.itSkillRating],
+                    [isShs ? "Technical Knowledge in your field" : "Information & Technology Skills", data.itSkillRating],
                     ["Leadership Skills", data.leadershipRating],
-                    ["Critical & Problem-Solving Skills", data.criticalRating],
+                    [isShs ? "Critical Thinking & Problem Solving" : "Critical & Problem-Solving Skills", data.criticalRating],
                     ["Work Ethics / Professionalism", data.workEthicsRating],
                   ].map(([label, val], i) => (
                     <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -346,18 +401,54 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 </div>
               </div>
             </div>
+            {/* SHS Skills Suggestion Field */}
+            <div style={{ marginTop: 10 }}>
+              <FullBlock label="What other skills should NU Dasma develop in students to make them more employable?">
+                <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>
+                  {data.suggestedSkills || "N/A"}
+                </p>
+              </FullBlock>
+            </div>
           </div>
 
-          {/* Section 7: Feedback & Alumni Engagement (INTEGRATION: from friend's modal) */}
+          {/* Section 7: Feedback & Alumni Engagement */}
           <div>
             <SectionHeader title="Section 7 — Feedback & Alumni Engagement" color="#F97316" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              <Field label="Satisfaction with NU Dasma Education" value={data.satisfaction} />
-              <Field label="Would Recommend NU Dasma to Others" value={data.wouldRecommend} />
+              <Field 
+                label={isShs ? "How satisfied are you with your education at NU Dasma?" : "Satisfaction with NU Dasma Education"} 
+                value={data.satisfaction} 
+              />
+              <Field 
+                label={isShs ? "Would you recommend NU Dasma to others?" : "Would Recommend NU Dasma to Others"} 
+                value={data.wouldRecommend} 
+              />
             </div>
-            <FullBlock label="Suggestions for Improving Academic Programs">
+            <FullBlock label={isShs ? "Suggestions for improving academic programs/strands?" : "Suggestions for Improving Academic Programs"}>
               <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
             </FullBlock>
+            
+            {/* SHS-only engagement questions */}
+            {isShs && (
+              <>
+                <div className="ra-grid" style={{ marginTop: 10 }}>
+                  <Field 
+                    label="Would you like to be informed about upcoming alumni events and activities?" 
+                    value={data.informedAboutEvents} 
+                  />
+                </div>
+                <FullBlock label="Would you be willing to participate in?">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {(data.willingToParticipate || []).map((s, i) => <Badge key={i} text={s} color="green" />)}
+                  </div>
+                  {data.willingToParticipateOther && (
+                    <span style={{ display: "block", marginTop: 6, color: "#6b7280", fontSize: 12 }}>
+                      Other: {data.willingToParticipateOther}
+                    </span>
+                  )}
+                </FullBlock>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -380,14 +471,11 @@ const ResponseAnalyticsView = ({
   isSectionVisible,
   renderStars,
   sidebar,
-  alumniType={alumniType}
+  alumniType
 }) => {
   const filterRef = useRef(null);
-
-  // ── Pagination state (preserved from original) ──
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset to page 1 on tab switch
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab]);
@@ -399,9 +487,8 @@ const ResponseAnalyticsView = ({
   const firstEntry   = respondents?.length ? pageStart + 1 : 0;
   const lastEntry    = Math.min(pageEnd, respondents?.length ?? 0);
 
-  // ── Export modal state (INTEGRATION: from friend's implementation) ──
   const [exportOpen, setExportOpen] = useState(false);
-  const [exportFormat, setExportFormat] = useState(null); // 'csv' | 'pdf'
+  const [exportFormat, setExportFormat] = useState(null);
   const [exportFilterType, setExportFilterType] = useState(null);
   const [exportSubOpen, setExportSubOpen] = useState(false);
   const [exportSelected, setExportSelected] = useState(null);
@@ -421,7 +508,6 @@ const ResponseAnalyticsView = ({
 
   const canExport = exportFormat && exportFilterType && exportSelected;
 
-  // ── Click outside handler for section filter ──
   useEffect(() => {
     function handleClickOutside(event) {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -432,35 +518,26 @@ const ResponseAnalyticsView = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setShowFilter]);
 
-  // ── Chart data guards ──
-  const hasGenderData      = stats.genderDistribution?.length  > 0;
-  const hasAgeData         = stats.ageDistribution?.length     > 0;
-  const hasBoardExamData   = stats.boardExam?.length           > 0;
-  const hasCertData        = stats.certification?.length       > 0;
-  const hasEmploymentData  = stats.employment?.length          > 0;
-  const hasSalaryData      = stats.salary?.length              > 0;
-  const hasTimeToJobData   = stats.timeToJob?.length           > 0;
-  const hasSkillsData      = stats.skills?.length              > 0;
-  const hasSatisfactionData = stats.satisfactionScores?.length > 0;
+  const hasGenderData       = stats.genderDistribution?.length  > 0;
+  const hasAgeData          = stats.ageDistribution?.length     > 0;
+  const hasBoardExamData    = stats.boardExam?.length           > 0;
+  const hasCertData         = stats.certification?.length       > 0;
+  const hasEmploymentData   = stats.employment?.length          > 0;
+  const hasSalaryData       = stats.salary?.length              > 0;
+  const hasTimeToJobData    = stats.timeToJob?.length           > 0;
+  const hasSkillsData       = stats.skills?.length              > 0;
+  const hasSatisfactionData = stats.satisfactionScores?.length  > 0;
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #E5ECF7F2; }
-      `}</style>
-
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap'); * { box-sizing: border-box; } body { margin: 0; background: #E5ECF7F2; }`}</style>
       {sidebar}
-
       <div className="ra-page">
-        {/* HEADER */}
         <div className="ra-header">
           <h1 className="ra-title">Response & Analytics</h1>
           <p className="ra-subtitle">View and analyze alumni survey responses and insights.</p>
         </div>
 
-        {/* TABS */}
         <div className="ra-tabs-container">
           <div className="ra-tabs">
             <button className={`ra-tab ${activeTab === "overview" ? "active" : ""}`} onClick={() => setActiveTab("overview")}>Survey Overview</button>
@@ -468,7 +545,6 @@ const ResponseAnalyticsView = ({
           </div>
         </div>
 
-        {/* CONTROLS BAR */}
         <div className="ra-controls">
           {activeTab === "overview" && (
             <div className="ra-controls-left">
@@ -489,12 +565,12 @@ const ResponseAnalyticsView = ({
                       "All Sections",
                       "Personal Information",
                       "Educational Information",
-                      (alumniType !== 'shs' ? ["Certification Achievements"] : []),
+                      ...(alumniType !== 'shs' ? ["Certification Achievements"] : []),
                       "Employment Information",
                       "Job Experience",
                       "Skills & Competencies",
                       "Feedback & Engagement"
-                    ].map((section) => (
+                    ].flat().map((section) => (
                       <div key={section} className="ra-filter-option" onClick={() => { setSelectedSection(section); setShowFilter(false); }}>
                         {section}
                       </div>
@@ -506,7 +582,6 @@ const ResponseAnalyticsView = ({
           </div>
         </div>
 
-        {/* CHARTS / RESPONSES */}
         <div className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}>
           {activeTab === "overview" && (
             <div className="ra-charts-container">
@@ -529,7 +604,6 @@ const ResponseAnalyticsView = ({
                       </PieChart>
                     </ChartWithResponsiveContainer>
                   </div>
-
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Age Distribution</h3>
                     <ChartWithResponsiveContainer height={190}>
@@ -598,7 +672,6 @@ const ResponseAnalyticsView = ({
                       </PieChart>
                     </ChartWithResponsiveContainer>
                   </div>
-
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Salary Range</h3>
                     <ChartWithResponsiveContainer height={190}>
@@ -662,7 +735,6 @@ const ResponseAnalyticsView = ({
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
-
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Overall Sentiment</h3>
                     <div style={{ height: 190, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -683,8 +755,6 @@ const ResponseAnalyticsView = ({
 
           {activeTab === "responses" && (
             <div className="ra-table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              
-              {/* Fixed header — never scrolls (INTEGRATION: improved layout from friend) */}
               <div className="ra-table-header" style={{ flexShrink: 0, paddingBottom: '12px' }}>
                 <span><strong>No of Respondents:</strong> {respondents.length} people</span>
                 <button
@@ -696,7 +766,6 @@ const ResponseAnalyticsView = ({
                 </button>
               </div>
 
-              {/* Fixed column headers — never scrolls */}
               <table className="ra-table" style={{ flexShrink: 0, tableLayout: 'fixed' }}>
                 <thead>
                   <tr>
@@ -708,7 +777,6 @@ const ResponseAnalyticsView = ({
                 </thead>
               </table>
 
-              {/* Scrollable tbody (INTEGRATION: from friend's implementation) */}
               <div style={{ overflowY: 'auto', flex: 1 }}>
                 <table className="ra-table" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
@@ -747,7 +815,6 @@ const ResponseAnalyticsView = ({
                 </table>
               </div>
 
-              {/* Fixed pagination — never scrolls, functional (preserved from original) */}
               <div className="ra-pagination" style={{ flexShrink: 0, marginTop: '12px' }}>
                 <span>
                   Showing {firstEntry} to {lastEntry} of {respondents.length} entries
@@ -798,7 +865,7 @@ const ResponseAnalyticsView = ({
         </div>
       </div>
 
-      {/* ── EXPORT FORMAT SELECTION MODAL (INTEGRATION: from friend, extended for CSV+PDF) ── */}
+      {/* EXPORT FORMAT SELECTION MODAL */}
       {exportOpen && (
         <div
           style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}
@@ -810,7 +877,6 @@ const ResponseAnalyticsView = ({
               <p style={{ margin:'4px 0 0', fontSize:12, color:'#6A7282' }}>Choose export format and filter.</p>
             </div>
             <div style={{ padding:'20px 22px', display:'flex', flexDirection:'column', gap:14 }}>
-              {/* Format selection */}
               <p style={{ margin:0, fontSize:12, fontWeight:700, color:'#62748E', textTransform:'uppercase', letterSpacing:'.5px' }}>Export Format</p>
               <div style={{ display:'flex', gap:10 }}>
                 <label style={{ flex:1, display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'10px 14px', borderRadius:8, border:`1px solid ${exportFormat === 'csv' ? '#4FA3F7' : '#E2E8F0'}`, background: exportFormat === 'csv' ? '#EFF6FF' : '#fff' }}>
@@ -819,11 +885,12 @@ const ResponseAnalyticsView = ({
                 </label>
                 <label style={{ flex:1, display:'flex', alignItems:'center', gap:8, cursor:'pointer', padding:'10px 14px', borderRadius:8, border:`1px solid ${exportFormat === 'pdf' ? '#4FA3F7' : '#E2E8F0'}`, background: exportFormat === 'pdf' ? '#EFF6FF' : '#fff' }}>
                   <input type="radio" name="exportFormat" checked={exportFormat === 'pdf'} onChange={() => { setExportFormat('pdf'); setExportFilterType(null); setExportSelected(null); }} style={{ accentColor:'#155DFC' }} />
-                  <span style={{ fontSize:13, fontWeight:600, color:'#1E293B' }}>PDF (Filtered)</span>
+                  <span style={{ fontSize:13, fontWeight:600, color:'#1E293B' }}>
+                    {alumniType === 'shs' ? 'PDF (SHS)' : 'PDF (College)'}
+                  </span>
                 </label>
               </div>
 
-              {/* Filter options (PDF only) */}
               {exportFormat === 'pdf' && (
                 <>
                   <p style={{ margin:0, fontSize:12, fontWeight:700, color:'#62748E', textTransform:'uppercase', letterSpacing:'.5px' }}>Download by…</p>
@@ -848,7 +915,7 @@ const ResponseAnalyticsView = ({
                   )}
                 </>
               )}
-              {/* CSV: no filter — export all */}
+
               {exportFormat === 'csv' && (
                 <p style={{ margin:0, fontSize:12, color:'#6A7282' }}>Will export all {respondents.length} respondents as CSV.</p>
               )}
@@ -887,7 +954,7 @@ const ResponseAnalyticsView = ({
         </div>
       )}
 
-      {/* ── SUB-PICKER MODAL (from friend) ── */}
+      {/* SUB-PICKER MODAL */}
       {exportSubOpen && (
         <div
           style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1100 }}

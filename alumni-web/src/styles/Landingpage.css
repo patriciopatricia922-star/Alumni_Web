@@ -311,7 +311,16 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: center;
+  /* Top-align items instead of centering them on the cross-axis.
+     "Undergraduate and Postgraduate Programmes" wraps to 2 lines and is
+     therefore the tallest item; with align-items: center the shorter
+     (single-line-label) items were vertically centered against it and
+     pushed their numbers down out of alignment. flex-start pins every
+     item's number/label block to the same top line, using the Programmes
+     item as the alignment reference. (Desktop/tablet only — mobile
+     switches to a grid layout below and restores align-items: center
+     explicitly in its own media query.) */
+  align-items: flex-start;
   max-width: 1216px;
   margin: 0 auto;
   width: 100%;
@@ -744,6 +753,10 @@ body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
     grid-auto-flow: column;
+    /* Explicitly restore the original mobile alignment (previously
+       inherited from the base .lp-stats-grid rule) now that the base
+       rule uses flex-start for desktop/tablet — keeps mobile unchanged. */
+    align-items: center;
     /* position: relative ensures the negative margin forces a visual shift */
     position: relative;
     margin-top: -16px !important; /* Adjust this value (-10px, -24px, etc.) to move content UP/DOWN */

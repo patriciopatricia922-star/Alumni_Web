@@ -1,10 +1,8 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES. 
-   ============================================================================
-   Purpose: Contains all CSS styles for the Response & Analytics component.
-            Uses friend's exact design with proper responsive breakpoints.
-   ============================================================================ */
-
+THIS IS FOR INLINE STYLES.
+Purpose: Contains all CSS styles for the Response & Analytics component.
+Uses friend's exact design with proper responsive breakpoints.
+============================================================================ */
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
 
 * {
@@ -240,13 +238,17 @@ body {
   .ra-content {
     padding: 24px 20px;
   }
+
   .ra-chart-row {
     grid-template-columns: 1fr;
     gap: 24px;
   }
-  .chart-container, .chart-container-big {
+
+  .chart-container,
+  .chart-container-big {
     height: 260px;
   }
+
   .ra-charts-container {
     gap: 24px;
   }
@@ -435,7 +437,7 @@ body {
 
 @keyframes raFade {
   from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .ra-modal-close {
@@ -461,18 +463,18 @@ body {
   .ra-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .ra-table th,
   .ra-table td {
     font-size: 11px;
     padding: 6px;
   }
-  
+
   .ra-name-cell {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .ra-pagination {
     flex-direction: column;
     gap: 10px;
@@ -484,20 +486,20 @@ body {
   .ra-page {
     padding: 20px 16px 40px;
   }
-  
+
   .ra-title {
     font-size: 22px;
   }
-  
+
   .ra-tab {
     padding: 6px 10px;
     font-size: 11px;
   }
-  
+
   .ra-chart-inner {
     padding: 16px;
   }
-  
+
   .ra-chart-title {
     font-size: 15px;
   }

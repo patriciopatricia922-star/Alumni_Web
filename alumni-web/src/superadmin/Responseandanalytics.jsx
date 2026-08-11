@@ -11,7 +11,6 @@
 //   Super Admin-specific structure preserved: sidebar import (SuperAdsidebar), component
 //   name (ResponseandAnalytics), file/folder location, and export are UNCHANGED.
 // ============================================================================
-
 import React, { useState, useEffect } from 'react';
 import SuperAdSidebar from "./SuperAdSidebar";
 import ResponseAnalyticsView from './Views/Responseanalyticsview';
@@ -100,18 +99,14 @@ const extractYear = (value) => {
 // ============================ EMPLOYMENT STATUS NORMALIZATION ============================
 const resolveEmploymentStatus = (empData) => {
   if (!empData) return 'Not specified';
-
   const rawStatus = empData.employment_status
     || empData.current_employment_status
     || empData.employmentStatus
     || '';
-
   if (rawStatus && STATUS_MAPPING[rawStatus]) {
     return STATUS_MAPPING[rawStatus];
   }
-
   const statusLower = rawStatus.toLowerCase();
-
   if (statusLower.includes('regular') || statusLower.includes('permanent')) return 'Employed';
   if (statusLower.includes('self'))                                          return 'Self-Employed';
   if (statusLower.includes('student') || statusLower.includes('studying'))  return 'Student';
@@ -121,9 +116,7 @@ const resolveEmploymentStatus = (empData) => {
     return 'Unemployed';
   }
   if (statusLower.includes('full-time') || statusLower.includes('part-time')) return 'Employed';
-
   if (empData.job_position || empData.company_name) return 'Employed';
-
   return rawStatus || 'Not specified';
 };
 
@@ -187,26 +180,43 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     batch,
     program,
     status: employmentStatus,
-    studentNumber:            safeText(personal.student_number)   || safeText(personal.student_id) || '',
+    studentNumber:            safeText(personal.student_number)   || safeText(personal.student_id)  || '',
     gender:                   safeText(personal.gender)           || '',
     birthday:                 safeText(personal.birthday)         || '',
     civilStatus:              safeText(personal.civil_status)     || '',
     contact:                  safeText(personal.contact_number)   || safeText(personal.phone) || '',
     streetAddress:            safeText(personal.street_address)   || safeText(personal.address) || '',
     city:                     safeText(personal.city)             || '',
-    province:                 safeText(personal.province)         || '',
+    province:                 safeText(personal.province)          || '',
     zipCode:                  safeText(personal.zip_code)         || safeText(personal.postal_code) || '',
     country:                  safeText(personal.country)          || 'Philippines',
-    reasonTakingCourse:       safeText(educational.reason_for_course)    || '',
+    // ← SYNCED: SHS uses reason_nu instead of reason_for_course
+    reasonTakingCourse:       isShs
+      ? safeText(educational.reason_nu)
+      : safeText(educational.reason_for_course) || '',
     distinction:              safeText(educational.distinction)          || '',
-    postGradPlans:            safeText(educational.post_grad_plans)      || '',
+    postGradPlans:             safeText(educational.post_grad_plans)      || '',
     postGradCourse:           safeText(educational.post_grad_course)     || '',
+    // ← SYNCED: SHS Educational Background branching fields
+    eduStatus:                safeText(educational.status)               || '',
+    pursuedNuBranch:          safeText(educational.pursued_nu_branch)    || '',
+    pursuedOtherSchool:       safeText(educational.pursued_other_school) || '',
+    nuBranch:                 safeText(educational.nu_branch)            || '',
+    reasonNu:                 safeText(educational.reason_nu)            || '',
+    reasonNotNu:              safeText(educational.reason_not_nu)        || '',
+    schoolName:               safeText(educational.school_name)          || '',
+    educationLevel:           safeText(educational.education_level)      || '',
+    educationLevelOther:      safeText(educational.education_level_other)|| '',
+    courseProgram:            safeText(educational.course_program)       || '',
+    yearLevel:                safeText(educational.year_level)           || '',
+    stoppedReason:            safeText(educational.stopped_reason)       || '',
+    stoppedReasonOther:       safeText(educational.stopped_reason_other) || '',
     programOther:             safeText(educational.degree_program_other) || '',
     boardExamName:            safeText(educational.board_exam_name)      || '',
     boardExamDate:            safeText(educational.board_exam_date)      || '',
     boardExamResult:          safeText(educational.board_exam_result)    || '',
     licensureReason:          safeText(educational.licensure_reason)     || '',
-    licensureReviewing:       safeText(educational.licensure_reviewing)  || '',
+    licensureReviewing:        safeText(educational.licensure_reviewing)  || '',
     licensurePlans:           safeText(educational.licensure_plans)      || '',
     certiportPasser:          safeText(certificationData.certiport_passer) || '',
     certifications:           toArray(certificationData.certifications),
@@ -230,10 +240,10 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     employmentDurationOther:  safeText(jobExperience.other_employment_duration)   || '',
     // SHS Job Experience uses factors_first_job / other_factors / other_how_found_job
     factorsForJob: isShs ? toArray(jobExperience.factors_first_job) : toArray(jobExperience.first_job_factors),
-    factorsForJobOther: isShs ? safeText(jobExperience.other_factors) : safeText(jobExperience.other_job_factors) || '',
+    factorsForJobOther: isShs ? safeText(jobExperience.other_factors)  : safeText(jobExperience.other_job_factors) || '',
     howFoundJob: isShs ? safeText(jobExperience.how_found_job) : safeText(jobExperience.first_job_source) || '',
     howFoundJobOther: isShs ? safeText(jobExperience.other_how_found_job) : safeText(jobExperience.other_first_job_source) || '',
-    timeToJob:                safeText(jobExperience.time_to_find_job)            || '',
+    timeToJob:                safeText(jobExperience.time_to_find_job)             || '',
     usefulCompetencies: isShs ? [] : toArray(skillsData.useful_competencies), // SHS has no competencies checklist
     suggestedSkills: isShs
       ? safeText(skillsData.other_skills_suggestion)   // ← SHS key
@@ -245,7 +255,7 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     workEthicsRating:         Number(workEthicsRating)    || 0,
     satisfaction:             safeText(feedback.satisfaction)          || '',
     wouldRecommend:           safeText(feedback.recommend)             || '',
-    suggestions:              safeText(feedback.suggestions)           || '',
+    suggestions:               safeText(feedback.suggestions)           || '',
     informedAboutEvents:      safeText(engagement.informed_about_events)        || '',
     willingToParticipate:     toArray(engagement.participate_in),
     willingToParticipateOther: isShs
@@ -260,7 +270,6 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
   let totalResponses   = 0;
   let satisfactionSum  = 0;
   let satisfactionCount = 0;
-
   const satisfactionScores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   const genderDistribution = { Male: 0, Female: 0, Other: 0 };
   const ageDistribution    = { '18-24': 0, '25-34': 0, '35-44': 0, '45+': 0 };
@@ -329,7 +338,19 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     else if (timeToFind.includes('3–6'))                                 timeToJob['3–6 months']++;
     else if (timeToFind.includes('6 +') || timeToFind.includes('6+'))   timeToJob['6 + months']++;
 
-    const competencies = toArray(skillsData.useful_competencies);
+    // ← SYNCED: SHS skills aggregation maps numeric skill keys to readable labels
+    const competencies = isShs
+      ? ['communication_skills', 'technical_knowledge', 'leadership_skills', 'critical_thinking', 'work_ethics']
+          .filter(key => Number(skillsData[key]) > 0)
+          .map(key => ({
+            work_ethics: 'Work Ethics',
+            critical_thinking: 'Critical Thinking',
+            leadership_skills: 'Leadership Skills',
+            technical_knowledge: 'Technical Knowledge',
+            communication_skills: 'Communication Skills',
+          }[key]))
+      : toArray(skillsData.useful_competencies);
+
     competencies.forEach(skill => {
       const normalized = skill.trim();
       if (normalized) skills.set(normalized, (skills.get(normalized) || 0) + 1);
@@ -358,14 +379,12 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
 // ← SYNCED: LoadingScreen is now used for the error state only, matching Admin.
 const LoadingScreen = ({ message, isError = false }) => {
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
   return (
     <>
       <SuperAdSidebar />
@@ -424,7 +443,6 @@ const ResponseandAnalytics = () => {
     const fetchSurveyData = async () => {
       setLoading(true);
       setError(null);
-
       try {
         const { data: usersData } = await supabase
           .from('users')
@@ -459,7 +477,7 @@ const ResponseandAnalytics = () => {
             shs_skills_and_competencies_data,
             shs_feedback_and_engagement_data
           `);
-          // ← SYNCED: added shs_* columns to select
+        // ← SYNCED: added shs_* columns to select
 
         if (fetchError) throw fetchError;
 
@@ -483,6 +501,7 @@ const ResponseandAnalytics = () => {
         }
 
         const processed = processSurveyData(completedSurveys, userEmails, alumniType);
+
         setStats({
           totalResponses:    processed.totalResponses,
           avgSatisfaction:   processed.avgSatisfaction,
@@ -497,7 +516,6 @@ const ResponseandAnalytics = () => {
           skills:            processed.skills,
         });
         setRespondents(processed.respondents);
-
       } catch (err) {
         console.error('Error fetching survey data:', err);
         setError(err.message || 'Failed to load survey data.');
@@ -505,7 +523,6 @@ const ResponseandAnalytics = () => {
         setLoading(false);
       }
     };
-
     fetchSurveyData();
   }, [alumniType]); // ← SYNCED: refetch when department switches
 
