@@ -302,9 +302,8 @@ body {
 /* ============================
    STATS SECTION
    ============================ */
-/* HEIGHT ADJUSTMENT: Reduce top and bottom padding for Desktop/Tablet */
+/* HEIGHT ADJUSTMENT: Reduce bottom padding only, keep top at 64px */
 #stats {
-  padding-top: 40px !important; 
   padding-bottom: 32px !important;
 }
 
@@ -312,8 +311,7 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  /* Align all items to the top to prevent the "wave" effect */
-  align-items: flex-start;
+  align-items: center;
   max-width: 1216px;
   margin: 0 auto;
   width: 100%;
@@ -324,8 +322,6 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Ensure content starts at the top of the item */
-  justify-content: flex-start;
   text-align: center;
   padding: 0 24px;
 }
@@ -599,12 +595,15 @@ body {
 .lp-footer-inner {
   max-width: 1280px;
   margin: 0 auto;
-  /*  ADJUSTMENT: Increased padding-left to move contents RIGHT on Desktop/Tablet */
-  padding: 48px 64px 32px 120px; 
+  padding: 48px 64px 32px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center; /* Assuming centered based on previous context, or space-between */
+  
+  /* 👇 ADJUSTMENT: Center the group, then shift right with padding-left */
+  justify-content: center; 
+  padding-left: 15%; /* Shifts the centered content to the right */
+  
   gap: 80px;
   flex-wrap: wrap;
 }
@@ -626,7 +625,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: 0; /* Reset margin since we used padding on container */
+  
+  /* 👇 ADJUSTMENT: Reset margin-left since we are using padding-left on container */
+  margin-left: 0; 
 }
 
 .lp-footer-contact {
@@ -678,9 +679,16 @@ body {
   }
 
   .lp-footer-inner {
-    /*  ADJUSTMENT: Keep padding-left increased for Tablet too, but slightly less than desktop */
-    padding: 36px 32px 28px 80px; 
+    padding: 36px 32px 28px;
     gap: 48px;
+    
+    /* 👇 ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
+    padding-left: 10%; 
+    justify-content: center;
+  }
+  
+  .lp-footer-logo {
+      margin-left: 0;
   }
 }
 
@@ -812,14 +820,18 @@ body {
     height: clamp(18px, 5vw, 24px) !important;
   }
 
-  /* Footer - MOBILE RESET */
+  /* Footer - MOBILE OVERRIDES */
   .lp-footer-inner {
     flex-direction: column;
     align-items: flex-start;
     gap: 32px;
-    /*  RESET: Restore original mobile padding (no extra left padding) */
+    
+    /* 👇 RESET: Remove the desktop padding-left shift for mobile */
     padding: 16px 24px 12px; 
+    padding-left: 24px; /* Standard mobile padding */
+    
     min-height: auto !important;
+    justify-content: flex-start; /* Override desktop center */
   }
 
   .lp-footer-logo {
@@ -885,10 +897,12 @@ body {
 
   /* Footer */
   .lp-footer-inner {
-    /* RESET: Restore original small mobile padding */
+    /* Reduced padding-top from 28px to 12px */
     padding: 12px 16px 8px;
+    padding-left: 16px; /* Standard small mobile padding */
     gap: 24px;
     min-height: auto !important;
+    justify-content: flex-start;
   }
 
   /* General */
