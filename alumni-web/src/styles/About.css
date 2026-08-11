@@ -99,7 +99,7 @@
 @media (max-width: 767px) {
   .ab-main .notification-bell-wrapper.mobile {
     position: absolute;
-    top: clamp(20px, 5vw, 28px);
+    top: clamp(24px, 5vw, 32px);
     right: clamp(12px, 4vw, 18px);
     z-index: 200;
   }
@@ -828,7 +828,7 @@
   }
 
   .ab-hdr {
-    padding-right: clamp(12px, 4vw, 18px);
+    padding-right: calc(clamp(44px, 4vw, 52px) + 14px);
     margin-top: clamp(8px, 1.6vh, 14px);
   }
 
