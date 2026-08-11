@@ -731,10 +731,15 @@ body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
     grid-auto-flow: column;
+    
+    /* MOBILE POSITIONING ADJUSTMENT: Pull contents upward visually */
+    margin-top: -24px !important; 
+    
     gap: 40px 16px;
     width: 100%;
     max-width: 600px;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .lp-stat-item {
@@ -857,6 +862,8 @@ body {
   /* Stats: Tighter adjustments for very small screens */
   .lp-stats-grid {
     gap: 32px 12px;
+    /* Slightly less negative margin on very small screens to prevent clipping */
+    margin-top: -16px !important; 
   }
 
   .lp-stat-item {
