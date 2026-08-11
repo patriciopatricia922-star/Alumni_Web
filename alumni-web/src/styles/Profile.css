@@ -3,7 +3,7 @@
 :root {
   --prof-sidebar-w: clamp(12.5rem, 15vw, 14.3125rem);
   --prof-sidebar-w-tablet: 12.5rem;
-  --prof-bottom-nav-h: 4rem;
+  --prof-bottom-nav-h: 4.25rem;
   --prof-bg: #DAE5F1;
   --prof-primary: #2B72FB;
   --prof-navy: #00226D;

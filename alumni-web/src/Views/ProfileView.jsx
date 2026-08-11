@@ -1085,7 +1085,7 @@ const ProfileView = ({
 
   return (
     <div className="prof-root">
-      {!isMobile && <Sidebar />}
+      <Sidebar />
 
       <div className="prof-content-wrapper">
         <main className={`prof-main${isMobile ? ' prof-main--mobile' : ''}`}>
@@ -1264,50 +1264,6 @@ const ProfileView = ({
           </div>
         </main>
       </div>
-
-      {isMobile && (
-        <nav className="prof-bottom-nav" aria-label="Main navigation">
-          <div className="prof-bottom-nav-divider"/>
-          <div className="prof-bottom-nav-items">
-            {[
-              { label: 'Home',          icon: 'home',    route: '/dashboard' },
-              { label: 'Tracer Survey', icon: 'survey',  route: '/survey' },
-              { label: 'Profile',       icon: 'profile', route: '/profile', active: true },
-            ].map(({ label, icon, route, active }) => (
-              <button
-                key={label}
-                className={`prof-nav-item${active ? ' prof-nav-item--active' : ''}`}
-                onClick={() => navigate(route)}
-                aria-label={label}
-              >
-                <span className="prof-nav-icon-wrap">
-                  {icon === 'home' && (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                  {icon === 'survey' && (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 5H7C5.895 5 5 5.895 5 7V19C5 20.105 5.895 21 7 21H17C18.105 21 19 20.105 19 19V7C19 5.895 18.105 5 17 5H15M9 5C9 5.552 9.448 6 10 6H14C14.552 6 15 5.448 15 5M9 5C9 4.448 9.448 4 10 4H14C14.552 4 15 4.448 15 5"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M9 12H15M9 16H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  )}
-                  {icon === 'profile' && (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5"/>
-                      <path d="M4 20C4 17.239 7.582 15 12 15C16.418 15 20 17.239 20 20"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  )}
-                </span>
-                <span className="prof-nav-label">{label}</span>
-              </button>
-            ))}
-          </div>
-        </nav>
-      )}
 
       {showPIModal && (
         <PersonalInformationModal
