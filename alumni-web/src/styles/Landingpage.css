@@ -313,7 +313,10 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: center;
+  
+  /* Align all items to the top to prevent the "wave" effect */
+  align-items: flex-start; 
+  
   max-width: 1216px;
   margin: 0 auto;
   width: 100%;
@@ -324,6 +327,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  
+  /* Ensure content starts at the top of the item */
+  justify-content: flex-start; 
+  
   text-align: center;
   padding: 0 24px;
 }
@@ -734,6 +741,7 @@ body {
     grid-template-rows: auto auto;
     grid-auto-flow: column;
     
+    /* position: relative ensures the negative margin forces a visual shift */
     position: relative;
     margin-top: -16px !important; /* Adjust this value (-10px, -24px, etc.) to move content UP/DOWN */
     
@@ -817,7 +825,7 @@ body {
     gap: 32px;
     
     /* Reduced padding-top from 36px to 16px to decrease height from the top only */
-    padding: 5px 24px 12px; 
+    padding: 16px 24px 12px; 
     
     min-height: auto !important;
   }
@@ -885,7 +893,8 @@ body {
 
   /* Footer */
   .lp-footer-inner {
-    padding: 5px 16px 8px; 
+    /* Reduced padding-top from 28px to 12px */
+    padding: 12px 16px 8px; 
     gap: 24px;
     min-height: auto !important;
   }
