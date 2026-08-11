@@ -1,6 +1,6 @@
 //SuperAdmin Contentmgmtview.jsx
 import React, { useEffect, useCallback } from 'react';
-import '../styles/Contentmgmt.css';
+import '../styles/ContentMgmt.css';
 import EventModal        from '../modals/EventModal';
 import AnnouncementModal from '../modals/AnnouncementModal';
 import JobModal          from '../modals/JobModal';
