@@ -299,7 +299,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
             <input className="cm-input" placeholder="e.g. ₱30,000 - ₱50,000" value={form.salary_range} onChange={(e) => s('salary_range', e.target.value)} />
           </Field>
 
-          <Field label="Requirements/Tags (comma-separated)">
+          <Field label="Requirements/Tags">
             <input className="cm-input" placeholder="e.g. Graphic Design, Multimedia Arts, Fine Arts" value={form.tags} onChange={(e) => s('tags', e.target.value)} />
           </Field>
         </div>
