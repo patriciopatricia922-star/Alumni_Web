@@ -58,7 +58,7 @@ const SidebarView = ({
               style={{
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                gap: '3px', flex: 1, height: '100%',
+                gap: '6px', flex: 1, height: '100%',
                 background: 'none', border: 'none', cursor: item.loading ? 'not-allowed' : 'pointer',
                 padding: '0 2px', position: 'relative',
                 minWidth: 0,
@@ -100,7 +100,7 @@ const SidebarView = ({
         <button onClick={handleLogout} style={{
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: '3px', flex: 1, height: '100%',
+          gap: '6px', flex: 1, height: '100%',
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
         }}>
           <LogoutIcon />
