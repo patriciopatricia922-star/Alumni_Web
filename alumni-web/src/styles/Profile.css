@@ -204,7 +204,7 @@ If vertical alignment differs from the original design, adjust margin-top below.
      existing in-flow flex positioning above untouched. */
   .prof-page-header .notification-bell-wrapper {
     position: absolute !important;
-    top: clamp(24px, 2vh, 22px);
+    top: clamp(28px, 2vh, 22px);
     right: clamp(12px, 4vw, 18px);
     left: auto;
     bottom: auto;
