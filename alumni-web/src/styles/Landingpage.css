@@ -599,14 +599,12 @@ body {
 .lp-footer-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 48px 64px 32px;
+  /*  ADJUSTMENT: Increased padding-left to move contents RIGHT on Desktop/Tablet */
+  padding: 48px 64px 32px 120px; 
   display: flex;
   flex-direction: row;
   align-items: center;
-  
-  /* 👇 CHANGE: Center the contents horizontally */
-  justify-content: center; 
-  
+  justify-content: center; /* Assuming centered based on previous context, or space-between */
   gap: 80px;
   flex-wrap: wrap;
 }
@@ -628,9 +626,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  /* 👇 CHANGE: Remove margin-left to ensure perfect centering */
-  margin-left: 0; 
+  margin-left: 0; /* Reset margin since we used padding on container */
 }
 
 .lp-footer-contact {
@@ -682,14 +678,9 @@ body {
   }
 
   .lp-footer-inner {
-    padding: 36px 32px 28px;
+    /*  ADJUSTMENT: Keep padding-left increased for Tablet too, but slightly less than desktop */
+    padding: 36px 32px 28px 80px; 
     gap: 48px;
-    /* Ensure centering persists on tablet */
-    justify-content: center; 
-  }
-  
-  .lp-footer-logo {
-      margin-left: 0;
   }
 }
 
@@ -821,12 +812,12 @@ body {
     height: clamp(18px, 5vw, 24px) !important;
   }
 
-  /* Footer */
+  /* Footer - MOBILE RESET */
   .lp-footer-inner {
     flex-direction: column;
     align-items: flex-start;
     gap: 32px;
-    /* Reduced padding-top from 36px to 16px to decrease height from the top only */
+    /*  RESET: Restore original mobile padding (no extra left padding) */
     padding: 16px 24px 12px; 
     min-height: auto !important;
   }
@@ -894,7 +885,7 @@ body {
 
   /* Footer */
   .lp-footer-inner {
-    /* Reduced padding-top from 28px to 12px */
+    /* RESET: Restore original small mobile padding */
     padding: 12px 16px 8px;
     gap: 24px;
     min-height: auto !important;
