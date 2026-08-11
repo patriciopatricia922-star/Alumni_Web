@@ -153,6 +153,18 @@
   .dashboard-header {
     padding-right: 0;
   }
+
+  /* Neutralize the inline marginRight/paddingTop applied in JSX
+     (style={{ paddingTop: '15px', marginRight: '35px' }}) so the bell's
+     right edge lines up with the same right boundary as the "Welcome"
+     header text/subtitle instead of sitting inset an extra ~35px,
+     and isn't nudged down an extra ~15px. Desktop/tablet keep the
+     original inline values untouched since this rule only applies
+     under 767px. */
+  .notification-bell.mobile {
+    margin-right: 0 !important;
+    padding-top: 0 !important;
+  }
 }
 
 @media (max-width: 1100px) {
