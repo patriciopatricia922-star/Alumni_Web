@@ -1085,6 +1085,9 @@
   }
 
   .for-you-icon-box {
+    width: clamp(56px, 15vw, 72px) !important;
+    height: clamp(56px, 15vw, 72px) !important;
+    min-width: clamp(56px, 15vw, 72px) !important;
     margin-bottom: 0 !important;
     margin-right: clamp(12px, 3.5vw, 18px) !important;
   }
@@ -1105,6 +1108,12 @@
 
   .card-title {
     margin-top: 0 !important;
+    font-size: clamp(16px, 4.4vw, 19px) !important;
+  }
+
+  .card-description {
+    font-size: clamp(13px, 3.4vw, 15px) !important;
+    line-height: 1.35 !important;
   }
 }
 
@@ -1256,12 +1265,6 @@
   .for-you-grid {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
-  }
-
-  .for-you-icon-box {
-    width: 52px;
-    height: 52px;
-    min-width: 52px;
   }
 
   .for-you-card {
