@@ -718,9 +718,11 @@ body {
     word-break: break-word !important;
   }
 
-  /* HEIGHT ADJUSTMENT (MOBILE): Reduce bottom padding further for mobile */
+  /* HEIGHT & POSITION ADJUSTMENT (MOBILE) */
   #stats {
     padding-bottom: 24px !important;
+    /* Reduce top padding so negative margins on the grid actually move content up visibly */
+    padding-top: 32px !important; 
   }
 
   /* ──────────────────────────────────────────────
@@ -732,8 +734,9 @@ body {
     grid-template-rows: auto auto;
     grid-auto-flow: column;
     
-    /* MOBILE POSITIONING ADJUSTMENT: Pull contents upward visually */
-    margin-top: -29px !important; 
+    /* 👇 THE FIX: position: relative ensures the negative margin forces a visual shift */
+    position: relative;
+    margin-top: -16px !important; /* Adjust this value (-10px, -24px, etc.) to move content UP/DOWN */
     
     gap: 40px 16px;
     width: 100%;
@@ -863,7 +866,7 @@ body {
   .lp-stats-grid {
     gap: 32px 12px;
     /* Slightly less negative margin on very small screens to prevent clipping */
-    margin-top: -16px !important; 
+    margin-top: -12px !important; 
   }
 
   .lp-stat-item {
