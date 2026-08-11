@@ -764,6 +764,13 @@ body {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    /* Inset the grid symmetrically so the numbers/labels sit more toward
+       the center of the yellow stat area (per reference), instead of the
+       left column hugging the true left edge. Column-to-column alignment
+       (Alumni ↔ Programmes, Employment ↔ Ranking) is preserved since both
+       columns shift together. */
+    padding: 0 20px;
+    box-sizing: border-box;
   }
 
   .lp-stat-item {
