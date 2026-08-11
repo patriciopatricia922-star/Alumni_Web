@@ -77,8 +77,7 @@ body,
 
 .prof-main {
   display: grid;
-  grid-template-rows:
-    auto auto var(--prof-top-h) auto;
+  grid-template-rows: auto auto var(--prof-top-h) auto;
   flex: 1;
   min-height: 0;
   overflow: visible;
@@ -159,18 +158,11 @@ body,
 }
 
 /* ============================ NOTIFICATION BELL OVERRIDE ============================ */
-/* The reusable NotificationBell uses .notification-bell-wrapper.
-We scope it here to ensure it aligns correctly within the Profile header flex layout.
-The original used absolute positioning; the new one is a flex item.
-If vertical alignment differs from the original design, adjust margin-top below. */
-
 .prof-page-header .notification-bell-wrapper {
   position: relative;
   top: auto;
   right: auto;
   margin-top: 0;
-  /* If the bell needs to be higher/lower relative to the title text: */
-  /* transform: translateY(-5px); */
 }
 
 @media (max-width: 1100px) {
@@ -180,7 +172,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
 }
 
 @media (max-width: 767px) {
-
   .prof-back {
     display: none;
   }
@@ -198,10 +189,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
     white-space: normal;
   }
 
-  /* Mobile-only: match the reference bell positioning from AlumniDashboard —
-     absolute, anchored to .prof-content-wrapper (nearest position:relative
-     ancestor), same clamp-based top/right insets. Desktop/tablet keep the
-     existing in-flow flex positioning above untouched. */
   .prof-page-header .notification-bell-wrapper {
     position: absolute !important;
     top: clamp(34px, 2vh, 42px);
@@ -213,7 +200,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
     z-index: 200;
   }
 }
-
 /* ============================ END NOTIFICATION BELL OVERRIDE ============================ */
 
 .prof-top-row {
@@ -725,7 +711,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
@@ -751,7 +736,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
     opacity: 0;
     transform: scale(0.97);
   }
-
   to {
     opacity: 1;
     transform: scale(1);
@@ -890,7 +874,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
     transform: translateX(100%);
     opacity: 0;
   }
-
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1247,7 +1230,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
   0% {
     background-position: 200% 0;
   }
-
   100% {
     background-position: -200% 0;
   }
@@ -1492,9 +1474,7 @@ If vertical alignment differs from the original design, adjust margin-top below.
     min-height: 120px;
   }
 
-  /* Mobile-only text scaling for the Name/Profile Information card and
-     Profile Strength card — font-size only, everything else (layout,
-     spacing, colors, icons) is untouched. */
+  /* Mobile-only text scaling */
   .prof-hero-name {
     font-size: clamp(24px, 7.5vw, 30px);
   }
@@ -1521,12 +1501,6 @@ If vertical alignment differs from the original design, adjust margin-top below.
 
   .prof-info-card,
   .prof-cp-card {
-    height: auto;
-    overflow: visible;
-  }
-
-  /* ── On mobile the card is naturally tall; remove fixed height ── */
-  .prof-info-card {
     height: auto;
     overflow: visible;
   }
@@ -1566,14 +1540,40 @@ If vertical alignment differs from the original design, adjust margin-top below.
   .prof-country-code-select {
     width: 100%;
   }
-}
 
-@media (max-width: 480px) {
+  /* --- MOBILE MODAL BUTTON FIX --- */
+  .prof-pi-cancel-btn,
+  .prof-cp-cancel-btn,
+  .prof-pi-save-btn,
+  .prof-cp-save-btn {
+    height: 48px;
+    min-height: 48px;
+    font-size: 14px;
+  }
 
   .prof-pi-modal-footer,
   .prof-cp-modal-footer {
-    flex-direction: column;
+    padding: 16px clamp(20px, 4vw, 32px);
+    gap: 12px;
   }
+  /* ------------------------------- */
+}
+
+@media (max-width: 480px) {
+  .prof-pi-modal-footer,
+  .prof-cp-modal-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* --- MOBILE MODAL BUTTON FIX (STACKED) --- */
+  .prof-pi-cancel-btn,
+  .prof-cp-cancel-btn,
+  .prof-pi-save-btn,
+  .prof-cp-save-btn {
+    width: 100%;
+  }
+  /* ----------------------------------------- */
 
   .prof-pi-row {
     grid-template-columns: 1fr;
