@@ -733,7 +733,7 @@ body {
     grid-auto-flow: column;
     
     /* MOBILE POSITIONING ADJUSTMENT: Pull contents upward visually */
-    margin-top: -24px !important; 
+    margin-top: -29px !important; 
     
     gap: 40px 16px;
     width: 100%;
