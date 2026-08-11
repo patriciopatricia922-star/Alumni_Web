@@ -392,6 +392,7 @@
   .lgn-card-header     { padding: 16px 18px; border-radius: 16px 16px 0 0; }
   .lgn-header-title    { font-size: 14px; }
   .lgn-card-body       { padding: 16px 16px 20px; gap: 12px; }
-  .lgn-submit-btn      { height: 40px; min-height: 40px; font-size: 13px; }
+  .lgn-submit-btn      { height: 40px; min-height: 40px; font-size: 13px; margin-top: 12px; }
   .lgn-google-btn      { height: 40px; }
+  .lgn-footer-text     { margin-top: 12px; }
 }
