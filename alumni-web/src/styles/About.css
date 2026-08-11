@@ -824,16 +824,12 @@
   }
 
   .ab-back {
-    margin-left: 0;
+    display: none;
   }
 
-  /* Fix 2: heading + subtext were overflowing/misaligned on mobile because
-     they inherited desktop's negative left margin and fixed letter-spacing.
-     Reset margin, tighten padding-right so both stay inside the viewport
-     at every mobile width, and let letter-spacing ease off on small screens. */
   .ab-hdr {
     padding-right: clamp(12px, 4vw, 18px);
-    margin-top: clamp(38px, 7vh, 56px);
+    margin-top: clamp(8px, 1.6vh, 14px);
   }
 
   .ab-title {
