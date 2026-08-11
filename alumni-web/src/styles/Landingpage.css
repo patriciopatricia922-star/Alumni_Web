@@ -302,8 +302,9 @@ body {
 /* ============================
    STATS SECTION
    ============================ */
-/* HEIGHT ADJUSTMENT: Reduce bottom padding only, keep top at 64px */
+/* HEIGHT ADJUSTMENT: Reduce top and bottom padding for Desktop/Tablet */
 #stats {
+  padding-top: 40px !important; 
   padding-bottom: 32px !important;
 }
 
@@ -311,7 +312,8 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: center;
+  /* Align all items to the top to prevent the "wave" effect */
+  align-items: flex-start;
   max-width: 1216px;
   margin: 0 auto;
   width: 100%;
@@ -322,6 +324,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Ensure content starts at the top of the item */
+  justify-content: flex-start;
   text-align: center;
   padding: 0 24px;
 }
@@ -600,9 +604,8 @@ body {
   flex-direction: row;
   align-items: center;
   
-  /* 👇 ADJUSTMENT: Center the group, then shift right with padding-left */
+  /* 👇 CHANGE: Center the group (Logo + Contact) for Desktop/Tablet */
   justify-content: center; 
-  padding-left: 15%; /* Shifts the centered content to the right */
   
   gap: 80px;
   flex-wrap: wrap;
@@ -626,7 +629,7 @@ body {
   align-items: center;
   justify-content: center;
   
-  /* 👇 ADJUSTMENT: Reset margin-left since we are using padding-left on container */
+  /* 👇 CHANGE: Removed margin-left: 40px to allow natural centering */
   margin-left: 0; 
 }
 
@@ -681,10 +684,8 @@ body {
   .lp-footer-inner {
     padding: 36px 32px 28px;
     gap: 48px;
-    
-    /* 👇 ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
-    padding-left: 10%; 
-    justify-content: center;
+    /* Ensure centering persists on tablet */
+    justify-content: center; 
   }
   
   .lp-footer-logo {
@@ -820,18 +821,17 @@ body {
     height: clamp(18px, 5vw, 24px) !important;
   }
 
-  /* Footer - MOBILE OVERRIDES */
+  /* Footer - MOBILE OVERRIDES (Preserved exactly as before) */
   .lp-footer-inner {
     flex-direction: column;
     align-items: flex-start;
     gap: 32px;
-    
-    /* 👇 RESET: Remove the desktop padding-left shift for mobile */
+    /* Reduced padding-top from 36px to 16px to decrease height from the top only */
     padding: 16px 24px 12px; 
-    padding-left: 24px; /* Standard mobile padding */
-    
     min-height: auto !important;
-    justify-content: flex-start; /* Override desktop center */
+    
+    /* Reset justify-content for mobile column layout */
+    justify-content: flex-start; 
   }
 
   .lp-footer-logo {
@@ -895,11 +895,10 @@ body {
     font-size: clamp(14px, 3.8vw, 18px) !important;
   }
 
-  /* Footer */
+  /* Footer - SMALL MOBILE OVERRIDES (Preserved exactly as before) */
   .lp-footer-inner {
     /* Reduced padding-top from 28px to 12px */
     padding: 12px 16px 8px;
-    padding-left: 16px; /* Standard small mobile padding */
     gap: 24px;
     min-height: auto !important;
     justify-content: flex-start;
