@@ -753,10 +753,9 @@ body {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto;
     grid-auto-flow: column;
-    /* Explicitly restore the original mobile alignment (previously
-       inherited from the base .lp-stats-grid rule) now that the base
-       rule uses flex-start for desktop/tablet — keeps mobile unchanged. */
-    align-items: center;
+    /* Align items to the top of each row so the number/label blocks share
+       a consistent baseline within each column (matches reference photo). */
+    align-items: flex-start;
     /* position: relative ensures the negative margin forces a visual shift */
     position: relative;
     margin-top: -16px !important; /* Adjust this value (-10px, -24px, etc.) to move content UP/DOWN */
@@ -769,16 +768,21 @@ body {
 
   .lp-stat-item {
     flex-direction: column;
-    align-items: center;
+    /* Left-align each stat's content within its grid column so that
+       "Alumni" lines up with "Undergraduate and Postgraduate Programmes"
+       (row 1) and "Employment Rate" lines up with "Asia University
+       Ranking" (row 2), matching the shared left edges shown in the
+       reference photo, instead of each item being independently centered. */
+    align-items: flex-start;
     justify-content: flex-start;
-    text-align: center;
+    text-align: left;
     padding: 0 8px;
     width: 100%;
     box-sizing: border-box;
   }
 
   .lp-stat-text {
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     width: 100%;
   }
