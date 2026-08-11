@@ -910,39 +910,9 @@
 
 @media (max-width: 767px) {
   .for-you-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     column-gap: clamp(8px, 1.5vw, 12px);
     row-gap: clamp(10px, 1.5vh, 16px);
-  }
-
-  /* [icon] Header / [icon] Subtitle layout for mobile "For You" cards */
-  .for-you-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    text-align: left;
-  }
-
-  .for-you-icon-box {
-    margin-bottom: 0;
-    margin-right: clamp(8px, 2.5vw, 12px);
-  }
-
-  .for-you-text {
-    align-items: flex-start;
-    text-align: left;
-    width: auto;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .card-title,
-  .card-description {
-    text-align: left;
-  }
-
-  .card-title {
-    margin-top: 0;
   }
 }
 
@@ -1098,6 +1068,44 @@
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+/* ============================ FOR YOU CARD — MOBILE WEB LAYOUT ============================
+   [icon]  Header
+   [icon]  Subtitle
+   Placed AFTER the base .for-you-card / .for-you-icon-box / .for-you-text / .card-title /
+   .card-description rules above so it wins the cascade at equal specificity on mobile
+   widths (a @media block earlier in the file loses a tie to a later unconditional rule). */
+@media (max-width: 767px) {
+  .for-you-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .for-you-icon-box {
+    margin-bottom: 0 !important;
+    margin-right: clamp(12px, 3.5vw, 18px) !important;
+  }
+
+  .for-you-text {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    width: auto !important;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .card-title,
+  .card-description {
+    text-align: left !important;
+  }
+
+  .card-title {
+    margin-top: 0 !important;
+  }
 }
 
 /* ============================ MOBILE BOTTOM NAV ============================ */
