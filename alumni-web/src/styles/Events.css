@@ -78,8 +78,8 @@
 /* Mobile breakpoint - mirrors old EventsView.jsx inline rule */
 @media (max-width: 768px) {
   .events-main-content .notification-bell-wrapper {
-    top: 32px;
-    right: 59px;
+    top: clamp(24px, 5vw, 32px);
+    right: clamp(12px, 4vw, 18px);
   }
 }
 
