@@ -179,7 +179,7 @@ If vertical alignment differs from the original design, adjust margin-top below.
   }
 
   .prof-page-header {
-    padding-right: calc(clamp(44px, 4vw, 52px) + 12px);
+    padding-right: 0;
     margin-top: clamp(8px, 1.6vh, 14px);
   }
 
@@ -188,8 +188,19 @@ If vertical alignment differs from the original design, adjust margin-top below.
     margin-left: 0;
   }
 
+  /* Mobile-only: match the reference bell positioning from AlumniDashboard —
+     absolute, anchored to .prof-content-wrapper (nearest position:relative
+     ancestor), same clamp-based top/right insets. Desktop/tablet keep the
+     existing in-flow flex positioning above untouched. */
   .prof-page-header .notification-bell-wrapper {
-    /* Adjust if needed for mobile */
+    position: absolute !important;
+    top: clamp(12px, 2vh, 18px);
+    right: clamp(12px, 4vw, 18px);
+    left: auto;
+    bottom: auto;
+    margin: 0 !important;
+    padding: 0;
+    z-index: 200;
   }
 }
 

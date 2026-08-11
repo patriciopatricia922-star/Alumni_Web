@@ -1171,7 +1171,7 @@
 @media (max-width: 767px) {
   .dashboard-content {
     margin-left: 0 !important;
-    padding: clamp(30px, 4.2vh, 44px) clamp(12px, 4vw, 18px) 80px !important;
+    padding: clamp(16px, 2.2vh, 24px) clamp(12px, 4vw, 18px) 80px !important;
   }
 
   .notification-bell {
