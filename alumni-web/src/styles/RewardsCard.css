@@ -1,3 +1,17 @@
+/* .reward-banner {
+position: relative;
+overflow: hidden;
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%);
+border-radius: 20px;
+font-family: 'Montserrat', Arial, sans-serif;
+padding: 10px 60px;
+margin-bottom: 15px;
+box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 12px 48px rgba(0, 62, 166, 0.18);
+min-height: 100px;
+} */
 .reward-banner {
   position: relative;
   overflow: hidden;
@@ -247,8 +261,30 @@ the visible 36px circle — uses an invisible ::before overlay. */
   }
 
   /* MOBILE ICON SIZE ADJUSTMENT: Scale up icons visually without changing container size */
+  /* Base scale for all icons */
   .reward-banner-icon-box img {
     transform: scale(1.4);
+  }
+
+  /* SPECIFIC ADJUSTMENTS: Increase scale for Rewards, Announcements, and Events to match Jobs/Discounts visual size */
+  /* These icons likely have more internal whitespace or smaller intrinsic dimensions relative to their canvas */
+  .slide-rewards .reward-banner-icon-box img,
+  .slide-announcements .reward-banner-icon-box img,
+  .slide-events .reward-banner-icon-box img {
+    transform: scale(1.85) !important;
+  }
+
+  /* Preserve specific transforms if they existed (like translateY for events) while scaling */
+  /* Note: The inline style for events had translateY(1.5px). We need to combine it. */
+  /* Since inline styles have high specificity, we used !important above. 
+   But we lost the translateY. Let's re-add it for events specifically. */
+  .slide-events .reward-banner-icon-box img {
+    transform: scale(1.85) translateY(1.5px) !important;
+  }
+
+  /* Rewards had translateY(2px) in inline logic (isReward check) */
+  .slide-rewards .reward-banner-icon-box img {
+    transform: scale(1.85) translateY(2px) !important;
   }
 }
 @media (max-width: 400px) {
