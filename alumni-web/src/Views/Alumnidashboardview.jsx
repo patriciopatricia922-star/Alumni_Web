@@ -25,7 +25,6 @@ const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
         <div className="notification-dot" />
       )}
     </div>
-
     <div className="for-you-text">
       <p className="card-title">{item.title}</p>
       <p className="card-description">{item.description}</p>
@@ -69,74 +68,6 @@ const ProgressCircle = ({ animatedPercentage }) => {
   );
 };
 
-// ============================ NOTIFICATION DROPDOWN ============================
-// const NotificationDropdown = ({
-//   notifs,
-//   unreadCount,
-//   notifTab,
-//   setNotifTab,
-//   markAllRead,
-//   markOneRead,
-//   groupByDate,
-//   formatTime,
-//   onSeeAllNotifs,
-// }) => {
-//   const list = notifTab === 'unread' ? notifs.filter(n => !n.read) : notifs;
-
-//   if (!list.length) {
-//     return (
-//       <div className="notification-empty">
-//         <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-//           <path
-//             d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-//             stroke="rgba(0,0,0,0.2)"
-//             strokeWidth="1.5"
-//             strokeLinecap="round"
-//           />
-//         </svg>
-//         <p>{notifTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="notification-list">
-//       {Object.entries(groupByDate(list)).map(([label, items]) => {
-//         if (!items.length) return null;
-//         return (
-//           <div key={label}>
-//             <p className="notification-group-label">{label}</p>
-//             {items.map(n => (
-//               <div
-//                 key={n.id}
-//                 className={`notification-item ${!n.read ? 'unread' : ''}`}
-//                 onClick={() => markOneRead(n.id)}
-//               >
-//                 <div className="notification-icon">
-//                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-//                     <path
-//                       d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-//                       stroke="#003EA6"
-//                       strokeWidth="1.67"
-//                       strokeLinecap="round"
-//                     />
-//                   </svg>
-//                 </div>
-//                 <div className="notification-content">
-//                   <p className="notification-title">{n.title}</p>
-//                   <p className="notification-body">{truncateHtml(n.body, 100)}</p>
-//                   <span className="notification-time">{formatTime(n.time)}</span>
-//                 </div>
-//                 {!n.read && <div className="notification-unread-dot" />}
-//               </div>
-//             ))}
-//           </div>
-//         );
-//       })}
-//     </div>
-//   );
-// };
-
 // ============================ SLIDE TRANSITION STYLES ============================
 const slideTransitionStyles = `
   .reward-banner-slider {
@@ -168,12 +99,11 @@ const slideTransitionStyles = `
   .reward-slide--enter-prev { transform: translateX(-100%); }
   .reward-slide--exit-next  { transform: translateX(-100%); opacity: 0; }
   .reward-slide--exit-prev  { transform: translateX(100%);  opacity: 0; }
-
+  
   @media (max-width: 767px) {
     .reward-slide { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
     .reward-banner-slider { min-height: clamp(200px, 56vw, 260px); }
   }
-  
   @media (max-width: 380px) {
     .reward-banner-slider { min-height: clamp(220px, 64vw, 260px); }
   }
@@ -214,18 +144,7 @@ const AlumniDashboardView = ({
   isTablet,
   sidebarWidth,
   firstName,
-  // bellRef,
-  // notifs,
   unreadCount,
-  // showDropdown,
-  // notifTab,
-  // setShowDropdown,
-  // setNotifTab,
-  // markAllRead,
-  // markOneRead,
-  // groupByDate,
-  // formatTime,
-  // onSeeAllNotifs,
   animatedPercentage,
   forYouItems,
   onNavigate,
@@ -240,16 +159,16 @@ const AlumniDashboardView = ({
   jobsIcon,
   grandWestsideHotel,
 }) => {
-
-  // ── Slider state (friend's feature) ──────────────────────────────────────────
+  // ── Slider state ──────────────────────────────────────────
   const [slideIndex, setSlideIndex] = useState(0);
   const [prevIndex,  setPrevIndex]  = useState(null);
   const [animating,  setAnimating]  = useState(false);
+  
   const autoPlayRef   = useRef(null);
   const slideLenRef   = useRef(5);
   const interactedRef = useRef(false);
-
   const goToSlideRef = useRef(null);
+
   goToSlideRef.current = (nextIdx) => {
     if (animating) return;
     setAnimating(true);
@@ -271,7 +190,6 @@ const AlumniDashboardView = ({
   useEffect(() => {
     resetAutoPlay();
     return () => clearInterval(autoPlayRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const rewardSlides = [
@@ -325,7 +243,8 @@ const AlumniDashboardView = ({
       icon: eventsIcon,
       iconSize: 137,
       iconTransform: 'translateY(1.5px)',
-      iconBg: 'linear-gradient(180deg, #e8d2ff 0%, #dcc4ff 100%)',
+      // CHANGE: Removed background gradient for Events icon
+      iconBg: 'transparent', 
       title: 'Event',
       description: 'Connect with fellow alumni — check out the latest events and activities happening near you.',
       buttonLabel: 'View Events',
@@ -340,7 +259,8 @@ const AlumniDashboardView = ({
       gradient: 'linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)',
       icon: jobsIcon,
       iconSize: 110,
-      iconBg: 'linear-gradient(180deg, #bdffde 0%, #acffcf 100%)',
+      // CHANGE: Removed background gradient for Jobs icon
+      iconBg: 'transparent',
       title: 'Job',
       description: 'Advance your career — explore job listings tailored for our growing alumni network.',
       buttonLabel: 'View Jobs',
@@ -409,7 +329,6 @@ const AlumniDashboardView = ({
             </p>
           </div>
         </div>
-
         <button
           className="redeem-button"
           style={slide.buttonColor ? { color: slide.buttonColor, boxShadow: slide.buttonShadow } : undefined}
@@ -420,13 +339,11 @@ const AlumniDashboardView = ({
       </>
     );
   };
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="alumni-dashboard">
       <style>{slideTransitionStyles}</style>
       <Sidebar />
-
       <div
         className="dashboard-content"
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
@@ -446,15 +363,13 @@ const AlumniDashboardView = ({
               marginRight: "35px",
             }}
           >
-            {/* NEW COMPONENT: Kept intact inside the old wrapper */}
             <NotificationBell
               onSeeAll={() => onNavigate("/notifications")}
             />
           </div>
         </div>
 
-        {/* ── Reward Points Banner (Slider) — friend's new feature ── */}
-        {/* <div className="reward-banner reward-banner-slider" style={{ minHeight: 120 }}> */}
+        {/* ── Reward Points Banner (Slider) ── */}
         <div className="reward-banner reward-banner-slider">
           <button
             className="reward-nav reward-nav--left"
@@ -462,36 +377,17 @@ const AlumniDashboardView = ({
             aria-label="Previous"
             style={{ zIndex: 10 }}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-
           <button
             className="reward-nav reward-nav--right"
             onClick={nextSlide}
             aria-label="Next"
             style={{ zIndex: 10 }}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -587,13 +483,11 @@ const AlumniDashboardView = ({
             <div className="survey-blur" />
             <div className="survey-deco-circle survey-deco-circle--tl" />
             <div className="survey-deco-circle survey-deco-circle--br" />
-
             <div className="survey-card-content">
               <p className="survey-label">TRACER SURVEY</p>
               <p className="survey-message">
                 Your alumni tracer survey progress!
               </p>
-
               <button
                 className="continue-button"
                 onClick={() => surveyRoute && onSurveyNavigate(surveyRoute)}
@@ -615,7 +509,6 @@ const AlumniDashboardView = ({
                 </svg>
               </button>
             </div>
-
             <ProgressCircle animatedPercentage={animatedPercentage} />
           </div>
         </div>
@@ -624,7 +517,6 @@ const AlumniDashboardView = ({
         <div className="for-you-section">
           <h3 className="for-you-heading">For You</h3>
           <p className="for-you-subtitle">See what's here for you.</p>
-
           <div className="for-you-grid">
             {forYouItems.map((item, i) => (
               <ForYouCard
