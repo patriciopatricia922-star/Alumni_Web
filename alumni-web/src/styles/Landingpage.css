@@ -607,9 +607,9 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  /*  ADJUSTMENT: Center the group, then shift right with padding-left */
+  /*  ADJUSTMENT: Increased padding-left to shift content further right on Desktop */
   justify-content: center;
-  padding-left: 15%; /* Shifts the centered content to the right */
+  padding-left: 25%; 
   gap: 80px;
   flex-wrap: wrap;
 }
@@ -680,8 +680,8 @@ body {
   .lp-footer-inner {
     padding: 36px 32px 28px;
     gap: 48px;
-    /*  ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
-    padding-left: 10%; 
+    /*  ADJUSTMENT: Increased padding-left to shift content further right on Tablet */
+    padding-left: 20%; 
     justify-content: center;
   }
   .lp-footer-logo {
