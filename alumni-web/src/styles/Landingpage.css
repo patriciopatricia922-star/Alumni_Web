@@ -607,7 +607,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  /* 👇 ADJUSTMENT: Center the group, then shift right with padding-left */
+  /*  ADJUSTMENT: Center the group, then shift right with padding-left */
   justify-content: center;
   padding-left: 15%; /* Shifts the centered content to the right */
   gap: 80px;
@@ -631,7 +631,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 👇 ADJUSTMENT: Reset margin-left since we are using padding-left on container */
+  /*  ADJUSTMENT: Reset margin-left since we are using padding-left on container */
   margin-left: 0;
 }
 
@@ -680,7 +680,7 @@ body {
   .lp-footer-inner {
     padding: 36px 32px 28px;
     gap: 48px;
-    /* 👇 ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
+    /*  ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
     padding-left: 10%; 
     justify-content: center;
   }
@@ -764,21 +764,18 @@ body {
 
   .lp-stat-item {
     flex-direction: column;
-    /* Left-align each stat's content within its grid column so that
-       "Alumni" lines up with "Undergraduate and Postgraduate Programmes"
-       (row 1) and "Employment Rate" lines up with "Asia University
-       Ranking" (row 2), matching the shared left edges shown in the
-       reference photo, instead of each item being independently centered. */
-    align-items: flex-start;
+    /* CHANGE: Center align text within the stat item on mobile */
+    align-items: center;
     justify-content: flex-start;
-    text-align: left;
+    text-align: center;
     padding: 0 8px;
     width: 100%;
     box-sizing: border-box;
   }
 
   .lp-stat-text {
-    align-items: flex-start;
+    /* CHANGE: Center align the text container content */
+    align-items: center;
     justify-content: center;
     width: 100%;
   }
@@ -788,16 +785,6 @@ body {
   .lp-stat-item[data-stat="employment"] { grid-area: 2 / 1; }
   .lp-stat-item[data-stat="programmes"] { grid-area: 1 / 2; }
   .lp-stat-item[data-stat="ranking"] { grid-area: 2 / 2; }
-
-  /* FIX: Center "Asia University Ranking" specifically on mobile */
-  .lp-stat-item[data-stat="ranking"] {
-    align-items: center !important;
-    text-align: center !important;
-  }
-  
-  .lp-stat-item[data-stat="ranking"] .lp-stat-text {
-    align-items: center !important;
-  }
 
   /* TYPOGRAPHY BOOST */
   .lp-stat-number {
@@ -850,7 +837,7 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: 32px;
-    /* 👇 RESET: Remove the desktop padding-left shift for mobile */
+    /*  RESET: Remove the desktop padding-left shift for mobile */
     padding: 16px 24px 12px; 
     padding-left: 24px; /* Standard mobile padding */
     min-height: auto !important;
