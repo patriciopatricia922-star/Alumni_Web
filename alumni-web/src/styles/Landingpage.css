@@ -607,10 +607,11 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  /*  ADJUSTMENT: Increased padding-left to shift content further right on Desktop */
+  /*  ADJUSTMENT: Center the group, then shift right with padding-left */
   justify-content: center;
-  padding-left: 25%; 
-  gap: 80px;
+  padding-left: 15%; /* Shifts the centered content to the right */
+  /*  CHANGE: Responsive gap for Desktop (min 80px, scales up to 120px) */
+  gap: clamp(80px, 8vw, 120px);
   flex-wrap: wrap;
 }
 
@@ -679,9 +680,10 @@ body {
   }
   .lp-footer-inner {
     padding: 36px 32px 28px;
-    gap: 48px;
-    /*  ADJUSTMENT: Increased padding-left to shift content further right on Tablet */
-    padding-left: 20%; 
+    /*  CHANGE: Responsive gap for Tablet (min 48px, scales up to 80px) */
+    gap: clamp(48px, 6vw, 80px);
+    /*  ADJUSTMENT: Maintain the rightward shift for tablet, slightly less percentage */
+    padding-left: 10%; 
     justify-content: center;
   }
   .lp-footer-logo {
