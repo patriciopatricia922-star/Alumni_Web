@@ -789,6 +789,16 @@ body {
   .lp-stat-item[data-stat="programmes"] { grid-area: 1 / 2; }
   .lp-stat-item[data-stat="ranking"] { grid-area: 2 / 2; }
 
+  /* FIX: Center "Asia University Ranking" specifically on mobile */
+  .lp-stat-item[data-stat="ranking"] {
+    align-items: center !important;
+    text-align: center !important;
+  }
+  
+  .lp-stat-item[data-stat="ranking"] .lp-stat-text {
+    align-items: center !important;
+  }
+
   /* TYPOGRAPHY BOOST */
   .lp-stat-number {
     font-size: clamp(36px, 9vw, 48px) !important;

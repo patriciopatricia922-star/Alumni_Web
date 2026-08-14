@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import capBg from '../assets/cap_bg.png';
-import mcapBg from '../assets/mcap_bg.png'; // <-- 1. Import the new mobile asset
+import mcapBg from '../assets/mcap_bg.png';
 import '../styles/Landingpage.css';
 import {
   HiOutlineCalendarDays,
@@ -55,7 +55,6 @@ const ContentCard = ({ item, type }) => {
           alt={item.title || type}
           loading="lazy"
           onError={(e) => {
-            // Prevent infinite error loop; degrade to per-type fallback
             const fallback = FALLBACKS[type];
             if (e.currentTarget.src !== fallback) {
               e.currentTarget.src = fallback;
