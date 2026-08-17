@@ -1,17 +1,3 @@
-/* .reward-banner {
-position: relative;
-overflow: hidden;
-display: flex;
-align-items: center;
-justify-content: space-between;
-background: linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%);
-border-radius: 20px;
-font-family: 'Montserrat', Arial, sans-serif;
-padding: 10px 60px;
-margin-bottom: 15px;
-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 12px 48px rgba(0, 62, 166, 0.18);
-min-height: 100px;
-} */
 .reward-banner {
   position: relative;
   overflow: hidden;
@@ -28,6 +14,7 @@ min-height: 100px;
     0 12px 48px rgba(0, 62, 166, 0.18);
   min-height: 100px;
 }
+
 .reward-banner-left {
   display: flex;
   align-items: center;
@@ -37,6 +24,7 @@ min-height: 100px;
   min-width: 0;
   flex: 1;
 }
+
 .reward-banner-icon-box {
   width: clamp(44px, 6vw, 56px);
   height: clamp(44px, 6vw, 56px);
@@ -48,6 +36,7 @@ min-height: 100px;
   flex-shrink: 0;
   margin-left: clamp(0px, 1.5vw, 15px);
 }
+
 .reward-banner-text {
   display: flex;
   flex-direction: column;
@@ -55,6 +44,7 @@ min-height: 100px;
   margin-left: clamp(8px, 2.5vw, 25px);
   min-width: 0;
 }
+
 .reward-banner-label {
   margin: 0;
   font-size: clamp(11px, 1.3vw, 13px);
@@ -63,6 +53,7 @@ min-height: 100px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
+
 .reward-banner-points {
   margin: 0;
   font-size: clamp(22px, 3.4vw, 34px);
@@ -74,18 +65,21 @@ min-height: 100px;
   min-height: calc(1.18em);
   flex-wrap: wrap;
 }
+
 .reward-banner-points svg {
   margin-left: 10px;
   width: 28px;
   height: 28px;
   flex-shrink: 0;
 }
+
 .reward-banner-sub {
   margin: 4px 0 0 0;
   font-size: clamp(11px, 1.2vw, 13px);
   color: rgba(255, 255, 255, 0.75);
   font-family: "Montserrat", Arial, sans-serif;
 }
+
 .redeem-button {
   display: flex;
   align-items: center;
@@ -108,18 +102,22 @@ min-height: 100px;
   min-height: 44px;
   flex-shrink: 0;
 }
+
 .redeem-button svg {
   width: 17px;
   height: 17px;
 }
+
 .redeem-button:hover {
   background: #f0f4ff;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
 }
+
 .redeem-button:active {
   transform: translateY(0);
 }
+
 .reward-nav {
   position: absolute;
   top: 50%;
@@ -139,12 +137,8 @@ min-height: 100px;
     background 0.15s,
     transform 0.08s;
 }
-/* Enlarge tap hit-area on touch/coarse-pointer devices without changing
-the visible 36px circle — uses an invisible ::before overlay. */
+
 @media (pointer: coarse) {
-  .reward-nav {
-    position: absolute;
-  }
   .reward-nav::before {
     content: "";
     position: absolute;
@@ -155,164 +149,181 @@ the visible 36px circle — uses an invisible ::before overlay. */
     transform: translate(-50%, -50%);
   }
 }
+
 .reward-nav:hover {
   background: rgba(255, 255, 255, 0.18);
   transform: translateY(-50%) scale(1.03);
 }
+
 .reward-nav:active {
   transform: translateY(-50%) scale(0.98);
 }
+
 .reward-nav--left {
   left: 12px;
 }
+
 .reward-nav--right {
   right: 12px;
 }
+
 .reward-points-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 .reward-bubbles {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
+
 .bubble {
   display: inline-block;
   border-radius: 50%;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
+
 .bubble--small {
   width: 8px;
   height: 8px;
   background: rgba(255, 255, 255, 0.32);
 }
+
 .bubble--medium {
   width: 12px;
   height: 12px;
   background: linear-gradient(180deg, #ffd600, #ffa500);
   border: 1px solid rgba(255, 255, 255, 0.22);
 }
+
 .bubble--large {
   width: 16px;
   height: 16px;
   background: linear-gradient(180deg, #ffd600, #ffb020);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
-@media (max-width: 767px) {
-  .reward-points-row {
-    gap: 8px;
-  }
-  .bubble--small {
-    width: 6px;
-    height: 6px;
-  }
-  .bubble--medium {
-    width: 10px;
-    height: 10px;
-  }
-  .bubble--large {
-    width: 12px;
-    height: 12px;
-  }
-}
-/* Tablet: tighten side padding slightly so nav arrows don't crowd content */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .reward-banner {
-    padding: 10px 48px;
-  }
-}
-/* Mobile */
+
 @media (max-width: 767px) {
   .reward-banner {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
     padding: 12px 16px;
+    min-height: auto;
   }
+
   .reward-banner-left {
     margin-left: 0;
     width: 100%;
   }
+
   .reward-banner-icon-box {
     margin-left: 0;
   }
+
   .reward-banner-text {
     margin-left: 12px;
     flex: 1;
     min-width: 0;
   }
+
   .redeem-button {
     width: 100%;
     justify-content: center;
     padding: 10px 18px;
   }
+
   .reward-banner-points {
     font-size: 28px;
     min-height: calc(28px * 1.18);
   }
+
   .reward-banner-sub {
     margin-top: 4px;
   }
-  /* hide nav arrows on small screens to avoid overlap */
+
   .reward-nav {
     display: none;
   }
 
-  /* MOBILE ICON SIZE ADJUSTMENT: Scale up icons visually without changing container size */
-  /* Base scale for all icons */
   .reward-banner-icon-box img {
     transform: scale(1.4);
   }
 
-  /* SPECIFIC ADJUSTMENTS: Increase scale for Rewards, Announcements, and Events to match Jobs/Discounts visual size */
-  /* These icons likely have more internal whitespace or smaller intrinsic dimensions relative to their canvas */
   .slide-rewards .reward-banner-icon-box img,
   .slide-announcements .reward-banner-icon-box img,
   .slide-events .reward-banner-icon-box img {
     transform: scale(1.85) !important;
   }
 
-  /* Preserve specific transforms if they existed (like translateY for events) while scaling */
-  /* Note: The inline style for events had translateY(1.5px). We need to combine it. */
-  /* Since inline styles have high specificity, we used !important above. 
-   But we lost the translateY. Let's re-add it for events specifically. */
   .slide-events .reward-banner-icon-box img {
     transform: scale(1.85) translateY(1.5px) !important;
   }
 
-  /* Rewards had translateY(2px) in inline logic (isReward check) */
   .slide-rewards .reward-banner-icon-box img {
     transform: scale(1.85) translateY(2px) !important;
   }
+
+  .reward-points-row {
+    gap: 8px;
+  }
+
+  .bubble--small {
+    width: 6px;
+    height: 6px;
+  }
+
+  .bubble--medium {
+    width: 10px;
+    height: 10px;
+  }
+
+  .bubble--large {
+    width: 12px;
+    height: 12px;
+  }
 }
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .reward-banner {
+    padding: 10px 48px;
+  }
+}
+
 @media (max-width: 400px) {
   .reward-slide {
     padding: 10px 14px;
     gap: 10px;
   }
+
   .reward-banner-left {
     gap: 10px;
   }
+
   .reward-banner-icon-box {
     width: 38px;
     height: 38px;
     border-radius: 12px;
   }
+
   .reward-banner-label {
     font-size: 10px;
     letter-spacing: 0.03em;
   }
+
   .reward-banner-points {
     font-size: 22px;
     line-height: 1.15;
   }
+
   .reward-banner-points svg {
     width: 18px;
     height: 18px;
     margin-left: 6px;
   }
+
   .reward-banner-sub {
     font-size: 11px;
     line-height: 1.35;
@@ -321,21 +332,25 @@ the visible 36px circle — uses an invisible ::before overlay. */
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
   .redeem-button {
     padding: 9px 14px;
     font-size: 12.5px;
     min-height: 40px;
     border-radius: 999px;
   }
+
   .redeem-button svg {
     width: 15px;
     height: 15px;
   }
 }
+
 @media (max-width: 380px) {
   .reward-banner-points {
     font-size: 24px;
   }
+
   .reward-banner-icon-box {
     width: 40px;
     height: 40px;
