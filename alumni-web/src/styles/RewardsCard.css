@@ -208,15 +208,14 @@
 
 @media (max-width: 767px) {
   .reward-banner-slider {
-    min-height: auto !important;
-    height: auto !important;
+    min-height: clamp(170px, 48vw, 220px);
   }
 
   .reward-banner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    padding: 10px 16px;
+    gap: 10px;
+    padding: 12px 16px;
     min-height: auto;
   }
 
@@ -233,14 +232,14 @@
     margin-left: 12px;
     flex: 1;
     min-width: 0;
-    gap: 2px;
+    gap: 3px;
   }
 
   .redeem-button {
     width: 100%;
     justify-content: center;
-    padding: 8px 18px;
-    min-height: 38px;
+    padding: 10px 18px;
+    min-height: 42px;
   }
 
   .reward-banner-points {
@@ -249,7 +248,7 @@
   }
 
   .reward-banner-sub {
-    margin-top: 2px;
+    margin-top: 3px;
   }
 
   .reward-nav {
@@ -302,8 +301,8 @@
 
 @media (max-width: 400px) {
   .reward-slide {
-    padding: 8px 14px;
-    gap: 8px;
+    padding: 10px 14px;
+    gap: 10px;
   }
 
   .reward-banner-left {
@@ -342,9 +341,9 @@
   }
 
   .redeem-button {
-    padding: 7px 14px;
+    padding: 9px 14px;
     font-size: 12.5px;
-    min-height: 36px;
+    min-height: 40px;
     border-radius: 999px;
   }
 
