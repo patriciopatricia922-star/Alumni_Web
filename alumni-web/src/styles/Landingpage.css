@@ -733,8 +733,8 @@ MEDIA QUERIES (Mobile Last)
   .lp-footer-inner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 32px;
-    padding: 8px 24px 0px;
+    gap: 16px;
+    padding: 4px 24px 0px;
     padding-left: 24px;
     min-height: auto !important;
     justify-content: flex-start;
@@ -787,9 +787,9 @@ MEDIA QUERIES (Mobile Last)
     font-size: clamp(14px, 3.8vw, 18px) !important;
   }
   .lp-footer-inner {
-    padding: 8px 16px 0px;
+    padding: 4px 16px 0px;
     padding-left: 16px;
-    gap: 24px;
+    gap: 16px;
     min-height: auto !important;
     justify-content: flex-start;
   }
