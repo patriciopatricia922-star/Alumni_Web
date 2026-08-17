@@ -53,7 +53,7 @@ const IDRegistrationView = ({
       */}
       <div
         className={`aid-page-root${isModal ? ' aid-page-root--modal' : ''}`}
-        style={{ fontFamily: 'Montserrat, Arial, sans-serif' }}
+        style={{ fontFamily: 'Montserrat' }}
       >
 
         {/* Back link — full-page route only */}
