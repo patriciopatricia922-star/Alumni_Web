@@ -6,7 +6,6 @@ import '../styles/AlumniDashboard.css';
 import '../styles/RewardsCard.css';
 import { truncateHtml } from "../utils/textHelpers";
 
-// ============================ FOR YOU CARD COMPONENT ============================
 const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
   <div
     className={`for-you-card for-you-${item.category}`}
@@ -32,13 +31,11 @@ const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
   </div>
 );
 
-// ============================ PROGRESS CIRCLE COMPONENT ============================
 const ProgressCircle = ({ animatedPercentage }) => {
   const size          = 154;
   const radius        = 64;
   const strokeWidth   = 13;
   const circumference = 2 * Math.PI * radius;
-
   return (
     <div className="progress-circle">
       <svg
@@ -68,77 +65,72 @@ const ProgressCircle = ({ animatedPercentage }) => {
   );
 };
 
-// ============================ SLIDE TRANSITION STYLES ============================
 const slideTransitionStyles = `
-  .reward-banner-slider {
-    position: relative;
-    overflow: hidden;
-    border-radius: 20px;
-    margin-bottom: 15px;
-  }
-  .reward-slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 60px;
-    border-radius: 20px;
-    opacity: 0;
-    pointer-events: none;
-    transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity   0.42s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform, opacity;
-  }
-  .reward-slide--active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(0) !important;
-  }
-  .reward-slide--enter-next { transform: translateX(100%); }
-  .reward-slide--enter-prev { transform: translateX(-100%); }
-  .reward-slide--exit-next  { transform: translateX(-100%); opacity: 0; }
-  .reward-slide--exit-prev  { transform: translateX(100%);  opacity: 0; }
-  
-  @media (max-width: 767px) {
-    .reward-slide { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
-    .reward-banner-slider { min-height: clamp(200px, 56vw, 260px); }
-  }
-  @media (max-width: 380px) {
-    .reward-banner-slider { min-height: clamp(220px, 64vw, 260px); }
-  }
-
-  /* Slide indicator dots */
-  .slide-dots {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    z-index: 10;
-  }
-  .slide-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    transition: background 0.3s, transform 0.3s;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-    flex-shrink: 0;
-  }
-  .slide-dot--active {
-    background: rgba(255, 255, 255, 0.95);
-    width: 18px;
-    border-radius: 3px;
-    transform: none;
-  }
+.reward-banner-slider {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  margin-bottom: 15px;
+}
+.reward-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 60px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity   0.42s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+.reward-slide--active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) !important;
+}
+.reward-slide--enter-next { transform: translateX(100%); }
+.reward-slide--enter-prev { transform: translateX(-100%); }
+.reward-slide--exit-next  { transform: translateX(-100%); opacity: 0; }
+.reward-slide--exit-prev  { transform: translateX(100%);  opacity: 0; }
+@media (max-width: 767px) {
+  .reward-slide { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .reward-banner-slider { min-height: clamp(200px, 56vw, 260px); }
+}
+@media (max-width: 380px) {
+  .reward-banner-slider { min-height: clamp(220px, 64vw, 260px); }
+}
+.slide-dots {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+}
+.slide-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: background 0.3s, transform 0.3s;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.slide-dot--active {
+  background: rgba(255, 255, 255, 0.95);
+  width: 18px;
+  border-radius: 3px;
+  transform: none;
+}
 `;
 
-// ============================ MAIN VIEW COMPONENT ============================
 const AlumniDashboardView = ({
   isMobile,
   isTablet,
@@ -159,15 +151,16 @@ const AlumniDashboardView = ({
   jobsIcon,
   grandWestsideHotel,
 }) => {
-  // ── Slider state ──────────────────────────────────────────
   const [slideIndex, setSlideIndex] = useState(0);
   const [prevIndex,  setPrevIndex]  = useState(null);
   const [animating,  setAnimating]  = useState(false);
-  
   const autoPlayRef   = useRef(null);
   const slideLenRef   = useRef(5);
   const interactedRef = useRef(false);
   const goToSlideRef = useRef(null);
+  const bannerRef = useRef(null);
+  const touchStartRef = useRef(null);
+  const touchDeltaRef = useRef(0);
 
   goToSlideRef.current = (nextIdx) => {
     if (animating) return;
@@ -191,6 +184,83 @@ const AlumniDashboardView = ({
     resetAutoPlay();
     return () => clearInterval(autoPlayRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!isMobile || !bannerRef.current) return;
+
+    const SWIPE_THRESHOLD = 50;
+    const DIRECTION_LOCK_ANGLE = 30;
+    let startY = 0;
+    let isHorizontalSwipe = null;
+
+    const handleTouchStart = (e) => {
+      touchStartRef.current = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      touchDeltaRef.current = 0;
+      isHorizontalSwipe = null;
+    };
+
+    const handleTouchMove = (e) => {
+      if (touchStartRef.current === null) return;
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = currentX - touchStartRef.current;
+      const deltaY = currentY - startY;
+      touchDeltaRef.current = deltaX;
+
+      if (isHorizontalSwipe === null) {
+        const absX = Math.abs(deltaX);
+        const absY = Math.abs(deltaY);
+        if (absX > 10 || absY > 10) {
+          const angle = Math.atan2(absY, absX) * (180 / Math.PI);
+          isHorizontalSwipe = angle < DIRECTION_LOCK_ANGLE;
+        }
+      }
+
+      if (isHorizontalSwipe) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (touchStartRef.current === null || !isHorizontalSwipe) {
+        touchStartRef.current = null;
+        touchDeltaRef.current = 0;
+        isHorizontalSwipe = null;
+        return;
+      }
+
+      const delta = touchDeltaRef.current;
+      if (Math.abs(delta) >= SWIPE_THRESHOLD) {
+        if (delta < 0) {
+          const next = (slideIndex + 1) % slideLenRef.current;
+          goToSlideRef.current(next);
+          resetAutoPlay(true);
+        } else {
+          const prev = (slideIndex - 1 + slideLenRef.current) % slideLenRef.current;
+          goToSlideRef.current(prev);
+          resetAutoPlay(true);
+        }
+      }
+
+      touchStartRef.current = null;
+      touchDeltaRef.current = 0;
+      isHorizontalSwipe = null;
+    };
+
+    const el = bannerRef.current;
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchmove', handleTouchMove, { passive: false });
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove', handleTouchMove);
+      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isMobile, slideIndex]);
 
   const rewardSlides = [
     {
@@ -243,8 +313,7 @@ const AlumniDashboardView = ({
       icon: eventsIcon,
       iconSize: 137,
       iconTransform: 'translateY(1.5px)',
-      // CHANGE: Removed background gradient for Events icon
-      iconBg: 'transparent', 
+      iconBg: 'transparent',
       title: 'Event',
       description: 'Connect with fellow alumni — check out the latest events and activities happening near you.',
       buttonLabel: 'View Events',
@@ -259,7 +328,6 @@ const AlumniDashboardView = ({
       gradient: 'linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)',
       icon: jobsIcon,
       iconSize: 110,
-      // CHANGE: Removed background gradient for Jobs icon
       iconBg: 'transparent',
       title: 'Job',
       description: 'Advance your career — explore job listings tailored for our growing alumni network.',
@@ -348,7 +416,6 @@ const AlumniDashboardView = ({
         className="dashboard-content"
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
-        {/* ── Page Header ── */}
         <div className="dashboard-header">
           <div className="dashboard-header-text">
             <h1>Welcome Bark!</h1>
@@ -369,8 +436,7 @@ const AlumniDashboardView = ({
           </div>
         </div>
 
-        {/* ── Reward Points Banner (Slider) ── */}
-        <div className="reward-banner reward-banner-slider">
+        <div className="reward-banner reward-banner-slider" ref={bannerRef}>
           <button
             className="reward-nav reward-nav--left"
             onClick={prevSlide}
@@ -391,8 +457,6 @@ const AlumniDashboardView = ({
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
-
-          {/* Slide Indicator Dots */}
           <div className="slide-dots">
             {rewardSlides.map((_, idx) => (
               <button
@@ -407,7 +471,6 @@ const AlumniDashboardView = ({
               />
             ))}
           </div>
-
           {rewardSlides.map((slide, idx) => {
             const isActive = idx === slideIndex;
             const isExiting = idx === prevIndex;
@@ -449,9 +512,7 @@ const AlumniDashboardView = ({
           })}
         </div>
 
-        {/* ── Top Banner Row ── */}
         <div className="top-banner-row">
-          {/* Hello Card */}
           <div className="hello-card">
             <div className="hello-deco-circle hello-deco-circle--tr" />
             <div className="hello-deco-circle hello-deco-circle--bl" />
@@ -477,8 +538,6 @@ const AlumniDashboardView = ({
               </p>
             </div>
           </div>
-
-          {/* Survey Progress Card */}
           <div className="survey-card">
             <div className="survey-blur" />
             <div className="survey-deco-circle survey-deco-circle--tl" />
@@ -513,7 +572,6 @@ const AlumniDashboardView = ({
           </div>
         </div>
 
-        {/* ── For You Section ── */}
         <div className="for-you-section">
           <h3 className="for-you-heading">For You</h3>
           <p className="for-you-subtitle">See what's here for you.</p>
