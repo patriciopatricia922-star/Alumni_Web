@@ -745,7 +745,7 @@ MEDIA QUERIES (Mobile Last)
     align-self: center !important;
     width: clamp(160px, 40vw, 220px) !important;
     height: clamp(160px, 40vw, 220px) !important;
-    transform: translateX(-15px);
+    transform: translateX(-30px);
   }
   .lp-footer-contact h3 {
     margin-bottom: 16px !important;
@@ -754,8 +754,7 @@ MEDIA QUERIES (Mobile Last)
     margin-bottom: -16px !important;
   }
   .lp-section-title {
-    font-size: 42px !important;
-    line-height: 1.1;
+    line-height: 1.2;
   }
 }
 /* --- Small Mobile (max-width: 480px) --- */
