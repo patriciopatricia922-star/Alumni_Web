@@ -44,7 +44,7 @@
   justify-content: center;
   padding: 40px 16px;
   box-sizing: border-box;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 /* Modal context — strip the dark backdrop completely */
@@ -105,7 +105,7 @@
 }
 
 .aid-header-title {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
   font-size: 16px;
   line-height: 1.5;
@@ -114,7 +114,7 @@
 }
 
 .aid-header-sub {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: 11px;
   line-height: 1.5;
@@ -172,7 +172,7 @@
 .aid-section { display: flex; flex-direction: column; gap: 8px; }
 
 .aid-section-label {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
   font-size: 15px;
   color: #003EA6;
@@ -204,7 +204,7 @@
 }
 
 .aid-upload-hint {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 12px;
   color: rgba(0, 62, 166, 0.45);
   margin: 0;
@@ -244,7 +244,7 @@
   background: rgba(0, 62, 166, 0.07);
   border: 1px solid rgba(0, 62, 166, 0.18);
   border-radius: 10px;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 12px;
   color: #003EA6;
   cursor: pointer;
@@ -283,7 +283,7 @@
 
 /* ── Extracted data rows ─────────────────────────────────────── */
 .aid-extracted-row {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 11px;
   color: rgba(10, 10, 10, 0.7);
   margin: 0;
@@ -309,7 +309,7 @@
 }
 
 .aid-terms-label {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 22px;
@@ -321,7 +321,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #003EA6;
@@ -339,7 +339,7 @@
   border: none;
   border-radius: 36px;
   box-shadow: 0 4px 4px rgba(0,0,0,0.12);
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
   font-size: 14px;
   color: #FFFFFF;
@@ -357,7 +357,7 @@
 
 /* ── Footer ──────────────────────────────────────────────────── */
 .aid-footer-text {
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 22px;
@@ -370,7 +370,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Arimo', Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #003EA6;
