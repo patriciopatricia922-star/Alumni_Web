@@ -208,14 +208,14 @@
 
 @media (max-width: 767px) {
   .reward-banner-slider {
-    min-height: clamp(170px, 48vw, 220px);
+    min-height: clamp(167px, 47vw, 217px);
   }
 
   .reward-banner {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    padding: 12px 16px;
+    padding: 10px 16px;
     min-height: auto;
   }
 
@@ -232,7 +232,7 @@
     margin-left: 12px;
     flex: 1;
     min-width: 0;
-    gap: 3px;
+    gap: 4px;
   }
 
   .redeem-button {
