@@ -4,7 +4,7 @@
    Color palette: #003EA6 (primary), #FFFFFF, #D9CA81 (accent)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
 /* ── Keyframes ─────────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
