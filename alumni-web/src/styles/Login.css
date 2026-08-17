@@ -1,3 +1,9 @@
+/* ============================================================
+Login.css
+Floating-card web layout — mirrors IDRegistration.css / Signup.css
+Color palette: #003EA6 (primary), #FFFFFF, #D9CA81 (accent)
+Font: Montserrat
+============================================================ */
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
 /* ── Keyframes ─────────────────────────────────────────────── */
 @keyframes lgn-fade-in {
@@ -10,7 +16,10 @@
     transform: translateY(0);
   }
 }
-/* ── Page root ────────────────────────── */
+/* ── Page root ───────────────────────────────────────────────
+Default: full-page standalone route — dark blue backdrop.
+Modifier --modal: parent overlay owns the backdrop.
+─────────────────────────────────────────────────────────── */
 .lgn-page-root {
   width: 100%;
   min-height: 100vh;
@@ -28,7 +37,7 @@
   padding: 0;
   width: auto;
 }
-/* ── Back button ──────────────────────── */
+/* ── Back button (full-page route only) ──────────────────────── */
 .lgn-back {
   position: fixed;
   top: 27px;
@@ -85,7 +94,14 @@ FLOATING CARD — white card with blue header band
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
 }
-/* ── Close / back button in card header ────────────────────── */
+/* ── Close / back button in card header ──────────────────────
+Intentionally icon-only: no circular background, no border,
+no border-radius. Sizing kept so the click target remains
+comfortable (32 × 32 px) without any visible shape.
+Hover subtly dims the icon instead of filling a pill/circle.
+Focus ring is supplied via JS onFocus/onBlur in the JSX so
+it works for both <button> and <Link> variants.
+─────────────────────────────────────────────────────────── */
 .lgn-header-close {
   width: 32px;
   height: 32px;
@@ -111,6 +127,7 @@ FLOATING CARD — white card with blue header band
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Let content determine height — no max-height clipping */
   overflow-x: hidden;
   box-sizing: border-box;
 }
@@ -339,7 +356,11 @@ FLOATING CARD — white card with blue header band
 .lgn-signup-link:hover {
   opacity: 0.75;
 }
-
+/* ══════════════════════════════════════════════════════════════
+FIX: Prevent button shrinking in ALL modal cards
+These rules ensure submit/action buttons never collapse
+regardless of parent flex/height constraints.
+══════════════════════════════════════════════════════════════ */
 /* Signup modal */
 .sup-submit-btn {
   flex-shrink: 0 !important;
@@ -351,7 +372,7 @@ FLOATING CARD — white card with blue header band
   min-height: 42px !important;
 }
 /* ══════════════════════════════════════════════════════════════
-RESPONSIVE BEHAVIORS
+RESPONSIVE
 ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .lgn-back {
@@ -399,6 +420,6 @@ RESPONSIVE BEHAVIORS
     height: 40px;
   }
   .lgn-footer-text {
-    margin-top: 12px;
+    margin-top: 4px;
   }
 }
