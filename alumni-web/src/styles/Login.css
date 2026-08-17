@@ -1,22 +1,16 @@
-/* ============================================================
-   Login.css
-   Floating-card web layout — mirrors IDRegistration.css / Signup.css
-   Color palette: #003EA6 (primary), #FFFFFF, #D9CA81 (accent)
-   Font: Montserrat
-   ============================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
 /* ── Keyframes ─────────────────────────────────────────────── */
 @keyframes lgn-fade-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-
-/* ── Page root ───────────────────────────────────────────────
-   Default: full-page standalone route — dark blue backdrop.
-   Modifier --modal: parent overlay owns the backdrop.
-   ─────────────────────────────────────────────────────────── */
+/* ── Page root ────────────────────────── */
 .lgn-page-root {
   width: 100%;
   min-height: 100vh;
@@ -26,47 +20,42 @@
   justify-content: center;
   padding: 40px 16px;
   box-sizing: border-box;
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
 }
-
 .lgn-page-root--modal {
   min-height: unset;
   background: transparent;
   padding: 0;
   width: auto;
 }
-
-/* ── Back button (full-page route only) ──────────────────────── */
+/* ── Back button ──────────────────────── */
 .lgn-back {
   position: fixed;
   top: 27px;
   left: 39px;
   z-index: 10;
 }
-
 /* ══════════════════════════════════════════════════════════════
-   FLOATING CARD — white card with blue header band
-   ══════════════════════════════════════════════════════════════ */
+FLOATING CARD — white card with blue header band
+══════════════════════════════════════════════════════════════ */
 .lgn-floating-card {
   width: 480px;
   max-width: 95vw;
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   overflow: hidden;
   animation: lgn-fade-in 0.3s ease both;
 }
-
 /* ── Card header band ────────────────────────────────────────── */
 .lgn-card-header {
-  background: #003EA6;
+  background: #003ea6;
   border-radius: 24px 24px 0 0;
   padding: 20px 24px;
   display: flex;
   align-items: center;
   gap: 14px;
 }
-
 .lgn-header-icon {
   width: 42px;
   height: 42px;
@@ -77,35 +66,26 @@
   justify-content: center;
   flex-shrink: 0;
 }
-
-.lgn-header-text { flex: 1; }
-
+.lgn-header-text {
+  flex: 1;
+}
 .lgn-header-title {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 700;
   font-size: 16px;
   line-height: 1.5;
-  color: #FFFFFF;
+  color: #ffffff;
   margin: 0 0 2px;
 }
-
 .lgn-header-sub {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
   font-size: 11px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
 }
-
-/* ── Close / back button in card header ──────────────────────
-   Intentionally icon-only: no circular background, no border,
-   no border-radius. Sizing kept so the click target remains
-   comfortable (32 × 32 px) without any visible shape.
-   Hover subtly dims the icon instead of filling a pill/circle.
-   Focus ring is supplied via JS onFocus/onBlur in the JSX so
-   it works for both <button> and <Link> variants.
-   ─────────────────────────────────────────────────────────── */
+/* ── Close / back button in card header ────────────────────── */
 .lgn-header-close {
   width: 32px;
   height: 32px;
@@ -122,24 +102,23 @@
   padding: 0;
   transition: opacity 0.2s;
 }
-.lgn-header-close:hover { opacity: 0.7; }
-
+.lgn-header-close:hover {
+  opacity: 0.7;
+}
 /* ── Card body ───────────────────────────────────────────────── */
 .lgn-card-body {
   padding: 24px 28px 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* Let content determine height — no max-height clipping */
   overflow-x: hidden;
   box-sizing: border-box;
 }
-
 /* ── Google button ───────────────────────────────────────────── */
 .lgn-google-btn {
   width: 100%;
   height: 42px;
-  background: #F3F3F5;
+  background: #f3f3f5;
   border: 1.23674px solid rgba(0, 0, 0, 0.25);
   border-radius: 14px;
   display: flex;
@@ -147,115 +126,117 @@
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
+  transition:
+    background 0.2s,
+    opacity 0.2s;
   box-sizing: border-box;
   flex-shrink: 0;
 }
-.lgn-google-btn:hover:not(:disabled) { background: #e8e8eb; }
-.lgn-google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
+.lgn-google-btn:hover:not(:disabled) {
+  background: #e8e8eb;
+}
+.lgn-google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .lgn-google-label {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 500;
   font-size: 13px;
-  color: #003EA6;
+  color: #003ea6;
   white-space: nowrap;
 }
-
 /* ── OR divider ──────────────────────────────────────────────── */
 .lgn-or-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .lgn-or-line {
   flex: 1;
   height: 1px;
   background: rgba(10, 10, 10, 0.15);
   border: none;
 }
-
 .lgn-or-label {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
   font-size: 9px;
-  color: #0A0A0A;
+  color: #0a0a0a;
   flex-shrink: 0;
 }
-
 /* ── Field wrapper ───────────────────────────────────────────── */
 .lgn-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
-
 /* ── Field label ─────────────────────────────────────────────── */
 .lgn-label {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 500;
   font-size: 13px;
   line-height: 14px;
-  color: #003EA6;
+  color: #003ea6;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-
-.lgn-label-required { color: #FF4D4D; font-weight: 700; }
-
+.lgn-label-required {
+  color: #ff4d4d;
+  font-weight: 700;
+}
 /* ── Text input ──────────────────────────────────────────────── */
 .lgn-input {
   width: 100%;
   height: 36px;
-  background: #FFFFFF;
-  border: 0.8px solid #4A5565;
+  background: #ffffff;
+  border: 0.8px solid #4a5565;
   border-radius: 14px;
   padding: 4px 12px;
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 24px;
-  color: #0A0A0A;
+  color: #0a0a0a;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
-
 .lgn-input::placeholder {
   color: rgba(10, 10, 10, 0.5);
   opacity: 1;
 }
-
 .lgn-input:focus {
-  border-color: #003EA6;
+  border-color: #003ea6;
   box-shadow: 0 0 0 3px rgba(0, 62, 166, 0.08);
 }
-
 .lgn-input--error {
   border-color: rgba(255, 80, 80, 0.6);
 }
 .lgn-input--error:focus {
-  border-color: #FF4D4D;
+  border-color: #ff4d4d;
   box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.08);
 }
-
 /* Autofill override — keep white background */
 .lgn-input:-webkit-autofill,
 .lgn-input:-webkit-autofill:hover,
 .lgn-input:-webkit-autofill:focus,
 .lgn-input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #0A0A0A !important;
-  caret-color: #0A0A0A !important;
+  -webkit-text-fill-color: #0a0a0a !important;
+  caret-color: #0a0a0a !important;
   transition: background-color 9999s ease-in-out 0s;
 }
-
 /* ── Password wrapper ────────────────────────────────────────── */
-.lgn-pw-wrap { position: relative; }
-.lgn-pw-wrap .lgn-input { padding-right: 38px; }
-
+.lgn-pw-wrap {
+  position: relative;
+}
+.lgn-pw-wrap .lgn-input {
+  padding-right: 38px;
+}
 .lgn-eye-btn {
   position: absolute;
   right: 10px;
@@ -271,15 +252,16 @@
   line-height: 0;
   -webkit-appearance: none;
 }
-.lgn-eye-btn:focus { outline: none; }
-
+.lgn-eye-btn:focus {
+  outline: none;
+}
 /* ── Forgot password link ────────────────────────────────────── */
 .lgn-forgot-link {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
   font-size: 11px;
   line-height: 24px;
-  color: #003EA6;
+  color: #003ea6;
   text-decoration: none;
   background: none;
   border: none;
@@ -287,8 +269,9 @@
   padding: 0;
   transition: opacity 0.15s;
 }
-.lgn-forgot-link:hover { opacity: 0.75; }
-
+.lgn-forgot-link:hover {
+  opacity: 0.75;
+}
 /* ── Error banner ────────────────────────────────────────────── */
 .lgn-error-banner {
   background: rgba(255, 80, 80, 0.08);
@@ -296,30 +279,30 @@
   border-radius: 10px;
   padding: 10px 14px;
 }
-
 .lgn-error-banner p {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-size: 11px;
-  color: #FF6B6B;
+  color: #ff6b6b;
   margin: 0;
 }
-
 /* ── Log in button ───────────────────────────────────────────── */
 .lgn-submit-btn {
   width: 100%;
   height: 42px;
-  min-height: 42px;           /* prevent shrink */
-  flex-shrink: 0;             /* prevent flex shrink */
-  background: #003EA6;
+  min-height: 42px; /* prevent shrink */
+  flex-shrink: 0; /* prevent flex shrink */
+  background: #003ea6;
   border: none;
   border-radius: 36px;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 700;
   font-size: 14px;
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
-  transition: background 0.25s ease, box-shadow 0.2s;
+  transition:
+    background 0.25s ease,
+    box-shadow 0.2s;
   box-sizing: border-box;
 }
 .lgn-submit-btn:hover:not(:disabled) {
@@ -330,69 +313,92 @@
   background: rgba(0, 62, 166, 0.5);
   cursor: not-allowed;
 }
-
 /* ── Footer link ─────────────────────────────────────────────── */
 .lgn-footer-text {
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 38px;
-  color: #4A5565;
+  color: #4a5565;
   text-align: center;
   margin: 0;
   flex-shrink: 0;
 }
-
 .lgn-signup-link {
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Montserrat', Arial, sans-serif;
+  font-family: "Montserrat", Arial, sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: #003EA6;
+  color: #003ea6;
   cursor: pointer;
   text-decoration: none;
   transition: opacity 0.15s;
 }
-.lgn-signup-link:hover { opacity: 0.75; }
-
-/* ══════════════════════════════════════════════════════════════
-   FIX: Prevent button shrinking in ALL modal cards
-   These rules ensure submit/action buttons never collapse
-   regardless of parent flex/height constraints.
-   ══════════════════════════════════════════════════════════════ */
+.lgn-signup-link:hover {
+  opacity: 0.75;
+}
 
 /* Signup modal */
 .sup-submit-btn {
   flex-shrink: 0 !important;
   min-height: 42px !important;
 }
-
 /* ID Registration modal */
 .aid-next-btn {
   flex-shrink: 0 !important;
   min-height: 42px !important;
 }
-
 /* ══════════════════════════════════════════════════════════════
-   RESPONSIVE
-   ══════════════════════════════════════════════════════════════ */
-
+RESPONSIVE BEHAVIORS
+══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .lgn-back          { top: 16px; left: 16px; }
-  .lgn-floating-card { width: 420px; }
-  .lgn-card-body     { padding: 20px 22px 24px; }
+  .lgn-back {
+    top: 16px;
+    left: 16px;
+  }
+  .lgn-floating-card {
+    width: 420px;
+  }
+  .lgn-card-body {
+    padding: 20px 22px 24px;
+  }
 }
-
 @media (max-width: 480px) {
-  .lgn-back            { top: 12px; left: 12px; }
-  .lgn-page-root       { padding: 16px 8px; align-items: flex-start; }
-  .lgn-floating-card   { width: 100%; border-radius: 16px; }
-  .lgn-card-header     { padding: 16px 18px; border-radius: 16px 16px 0 0; }
-  .lgn-header-title    { font-size: 14px; }
-  .lgn-card-body       { padding: 16px 16px 20px; gap: 12px; }
-  .lgn-submit-btn      { height: 40px; min-height: 40px; font-size: 13px; margin-top: 12px; }
-  .lgn-google-btn      { height: 40px; }
-  .lgn-footer-text     { margin-top: 12px; }
+  .lgn-back {
+    top: 12px;
+    left: 12px;
+  }
+  .lgn-page-root {
+    padding: 16px 8px;
+    align-items: flex-start;
+  }
+  .lgn-floating-card {
+    width: 100%;
+    border-radius: 16px;
+  }
+  .lgn-card-header {
+    padding: 16px 18px;
+    border-radius: 16px 16px 0 0;
+  }
+  .lgn-header-title {
+    font-size: 14px;
+  }
+  .lgn-card-body {
+    padding: 16px 16px 8px;
+    gap: 12px;
+  }
+  .lgn-submit-btn {
+    height: 40px;
+    min-height: 40px;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .lgn-google-btn {
+    height: 40px;
+  }
+  .lgn-footer-text {
+    margin-top: 12px;
+  }
 }
