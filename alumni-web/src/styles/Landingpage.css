@@ -754,7 +754,8 @@ MEDIA QUERIES (Mobile Last)
     margin-bottom: -16px !important;
   }
   .lp-section-title {
-    line-height: 1.2;
+    font-size: 42px !important;
+    line-height: 1.1;
   }
 }
 /* --- Small Mobile (max-width: 480px) --- */
