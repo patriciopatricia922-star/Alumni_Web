@@ -55,12 +55,6 @@
   z-index: 1101;
 }
 
-.nb-desktop-link {
-  transition: opacity 0.2s ease;
-}
-.nb-desktop-link:hover {
-  opacity: 0.7;
-}
 
 /* ============================
    MOBILE DROPDOWN MENU
