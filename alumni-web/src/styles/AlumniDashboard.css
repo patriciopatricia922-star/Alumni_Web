@@ -22,12 +22,9 @@
 }
 
 /* ============================ MOBILE SCROLLBAR HIDING ============================ */
-/* Hide scrollbar for mobile only while maintaining scroll functionality */
 @media (max-width: 767px) {
   .dashboard-content {
-    /* Firefox */
     scrollbar-width: none;
-    /* IE/Edge Legacy */
     -ms-overflow-style: none;
   }
 
@@ -51,12 +48,6 @@
   width: 100%;
   box-sizing: border-box;
   padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
-  /* NOTE: intentionally no position:relative here — the notification bell
-     is anchored to .dashboard-content (the nearest positioned ancestor)
-     so its top/right offsets are measured from the page's padding box,
-     matching the bell's original on-screen position. Adding position:relative
-     back here would make the bell anchor to this row instead, shifting it
-     down/left by this element's own top margin and inset from the page edge. */
 }
 
 .dashboard-header-text {
@@ -76,14 +67,6 @@
 }
 
 /* ============================ NOTIFICATION BELL (REUSABLE COMPONENT OVERRIDE) ============================ */
-/* 
-   The reusable NotificationBell component renders .notification-bell-wrapper.
-   We override its positioning here to match the original AlumniDashboard layout.
-   Positioning: absolute, anchored to .dashboard-content's padding box
-   (the nearest positioned ancestor now that .dashboard-header no longer
-   sets position:relative), so the bell sits at the page's top-right corner
-   rather than being pushed down/inward by the header row's own spacing.
-*/
 .dashboard-header .notification-bell-wrapper {
   position: absolute;
   top: clamp(28px, 4vh, 52px);
@@ -116,8 +99,6 @@
 }
 
 .dashboard-header .notification-dropdown {
-  /* Example: Adjust top offset if the global one is slightly off due to header height differences */
-  /* top: calc(clamp(44px, 4vw, 52px) + 10px); */
 }
 
 /* ============================ LEGACY CLASSES (KEPT FOR SAFETY / OTHER COMPONENTS) ============================ */
@@ -127,15 +108,13 @@
   top: clamp(28px, 4vh, 52px);
   right: clamp(24px, 3.2vw, 56px);
   z-index: 200;
-  
-  /* Flex helpers to align the inner component if needed */
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
 .notification-bell .notification-bell-wrapper {
-  position: static; /* Override 'relative' from NotificationBell.css */
+  position: static; 
   z-index: auto;
   margin: 0;
   padding: 0;
@@ -143,7 +122,6 @@
   height: auto;
 }
 
-/* Keep original mobile overrides for the wrapper */
 @media (max-width: 767px) {
   .notification-bell {
     top: clamp(12px, 2vh, 18px);
@@ -154,27 +132,10 @@
     padding-right: 0;
   }
 
-  /* ROOT-CAUSE FIX for mobile alignment:
-     The bell is actually TWO nested positioned boxes — this outer JSX
-     wrapper (.notification-bell.mobile) AND the .notification-bell-wrapper
-     that <NotificationBell /> renders inside it. The inline JSX styles
-     (paddingTop/marginRight) plus a possible position:absolute coming from
-     NotificationBell's own stylesheet (which may load after this file and
-     win the cascade) can make BOTH boxes offset from the page edge at once,
-     stacking their insets instead of using a single anchor point. That
-     compounding is what pushes the bell further down/left than the
-     "Welcome Bark!" header row's right edge.
-
-     Fix: force the OUTER box to be the single absolutely-positioned anchor
-     (clamp-based, matching the same right/top inset used by
-     .dashboard-content's own mobile padding, so it lines up with the
-     "Welcome"/subtitle text block), and force the INNER wrapper back to
-     plain static/in-flow with zero offsets — all with !important so it
-     can't be re-introduced by NotificationBell.css load order. Scoped to
-     max-width:767px only, so desktop/tablet are untouched. */
+  /* Notification Mobile Alignment */
   .notification-bell.mobile {
     position: absolute !important;
-    top: calc(clamp(12px, 2vh, 18px) + clamp(38px, 7.5vh, 56px) - 6px) !important;
+    top: calc(clamp(12px, 2vh, 18px) + clamp(38px, 7.5vh, 56px) - 8px) !important;
     right: clamp(12px, 4vw, 18px) !important;
     left: auto !important;
     bottom: auto !important;
