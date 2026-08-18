@@ -6,22 +6,23 @@ import { logAction } from "../lib/auditLogger";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 const TABS = [
-  { id: "events", label: "Events" },
-  { id: "announcements", label: "Announcements" },
-  { id: "jobs", label: "Jobs" },
-  { id: "discounts", label: "Discounts" },
-  { id: "rewards", label: "Rewards" },
-  { id: "landingpage", label: "Landing Page" },
-  { id: "disclosurepage", label: "User Notification/Disclosure" },
+  { id: "announcements",  label: "Announcements" },
+  { id: "discounts",      label: "Discounts" },
+  { id: "events",         label: "Events" },
+  { id: "jobs",           label: "Jobs" },
+  { id: "rewards",        label: "Rewards" },
+  { id: 'landingpage', label: 'Landing Page', rightGroup: true },
+{ id: 'disclosurepage', label: 'User Notification / Disclosure', rightGroup: true },
 ];
 
 const SHS_TABS = [
-  { id: "events", label: "Events" },
-  { id: "announcements", label: "Announcements" },
-  { id: "discounts", label: "Discounts" },
-  { id: "rewards", label: "Rewards" },
-  { id: "landingpage", label: "Landing Page" },
-  { id: "disclosurepage", label: "User Notification/Disclosure" },
+  { id: "announcements",  label: "Announcements" },
+  { id: "discounts",      label: "Discounts" },
+  { id: "events",         label: "Events" },
+  { id: "rewards",        label: "Rewards" },
+  { id: "jobs",           label: "Jobs" },
+  { id: 'landingpage', label: 'Landing Page', rightGroup: true },
+{ id: 'disclosurepage', label: 'User Notification / Disclosure', rightGroup: true },
 ];
 
 function useContentManagement() {

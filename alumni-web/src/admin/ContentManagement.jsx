@@ -40,8 +40,6 @@ const TABS = [
   { id: "events",         label: "Events" },
   { id: "jobs",           label: "Jobs" },
   { id: "rewards",        label: "Rewards" },
-  // { id: "landingpage",    label: "Landing Page", newGroup: true },
-  // { id: "disclosurepage", label: "User Notification / Disclosure" },
   { id: 'landingpage', label: 'Landing Page', rightGroup: true },
 { id: 'disclosurepage', label: 'User Notification / Disclosure', rightGroup: true },
 ];
@@ -51,8 +49,7 @@ const SHS_TABS = [
   { id: "discounts",      label: "Discounts" },
   { id: "events",         label: "Events" },
   { id: "rewards",        label: "Rewards" },
-  // { id: "landingpage",    label: "Landing Page", newGroup: true },
-  // { id: "disclosurepage", label: "User Notification / Disclosure" },
+  { id: "jobs",           label: "Jobs" },
   { id: 'landingpage', label: 'Landing Page', rightGroup: true },
 { id: 'disclosurepage', label: 'User Notification / Disclosure', rightGroup: true },
 ];
