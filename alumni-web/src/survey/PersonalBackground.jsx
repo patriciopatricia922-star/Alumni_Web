@@ -199,7 +199,7 @@ const PersonalBackground = () => {
 
     const labels = {}, placeholders = {}, options = {};
     section.questions.forEach((q, idx) => {
-      const key = q.id || INDEX_TO_FIELD[idx];
+      const key = INDEX_TO_FIELD[idx]; // strictly index-based, no q.id fallback
       if (!key) return;
       labels[key] = q.label;
       if (q.placeholder) placeholders[key] = q.placeholder;
