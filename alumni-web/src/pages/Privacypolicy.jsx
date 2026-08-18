@@ -74,7 +74,7 @@ const PrivacyPolicy = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: 'Arimo, Arimo',
+          fontFamily: 'Montserrat, Montserrat',
           overflow: 'hidden',
         }}
       >
@@ -103,7 +103,7 @@ const PrivacyPolicy = () => {
                 />
               </svg>
               <span style={{ 
-                fontFamily: 'Arimo', 
+                fontFamily: 'Montserrat', 
                 fontWeight: 700, 
                 fontSize: '14px', 
                 lineHeight: '16px', 
@@ -134,10 +134,10 @@ const PrivacyPolicy = () => {
               flexShrink: 0,
             }}
           >
-            <h1 style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '28px', lineHeight: '42px', color: '#FFFFFF', margin: '0 0 8px 0' }}>
+            <h1 style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '28px', lineHeight: '42px', color: '#FFFFFF', margin: '0 0 8px 0' }}>
               Privacy Policy
             </h1>
-            <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: 'rgba(255, 255, 255, 0.5)', margin: 0 }}>
+            <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: 'rgba(255, 255, 255, 0.5)', margin: 0 }}>
               Last Updated: February 28, 2026
             </p>
           </div>
@@ -155,10 +155,10 @@ const PrivacyPolicy = () => {
           >
             {sections.map((section, index) => (
               <div key={index}>
-                <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#D9CA81', margin: '0 0 4px 0' }}>
+                <p style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#D9CA81', margin: '0 0 4px 0' }}>
                   {section.title}
                 </p>
-                <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', margin: 0, whiteSpace: 'pre-line' }}>
+                <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', margin: 0, whiteSpace: 'pre-line' }}>
                   {section.body}
                 </p>
               </div>
