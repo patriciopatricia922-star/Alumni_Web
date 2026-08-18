@@ -10,7 +10,7 @@ import RewardsModal      from '../modals/RewardsModal';
 import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
 import AwardPointsModal  from '../modals/AwardPointsModal';
 
-const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
+const HIDDEN_SECTION_TYPES = ['hero'];
 
 const TabIcon = ({ type, active }) => {
   const c = active ? '#FFFFFF' : '#475569';

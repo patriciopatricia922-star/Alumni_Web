@@ -22,13 +22,10 @@ import DiscountModal     from '../modals/DiscountModal';
 import RewardsModal      from '../modals/RewardsModal';
 import LandingModal      from '../modals/LandingModal';
 import AwardPointsModal from '../modals/AwardPointsModal';
-// INTEGRATION: DisclosureModal import from friend's implementation.
-// Requires the modal component at ../modals/DisclosureModal
 import DisclosureModal, { DEFAULT_TOS, DEFAULT_PP } from '../modals/DisclosureModal';
 
-// INTEGRATION: Section types that are not editable via Content Management.
-// hero and stats are managed elsewhere but still exist in the database.
-const HIDDEN_SECTION_TYPES = ['hero', 'stats'];
+// Section types that are not editable via Content Management.
+const HIDDEN_SECTION_TYPES = ['hero'];
 
 // ── Tab icons ─────────────────────────────────────────────────────────────────
 const TabIcon = ({ type, active }) => {
@@ -83,8 +80,6 @@ const TabIcon = ({ type, active }) => {
 };
 
 // ── Landing section card ──────────────────────────────────────────────────────
-// INTEGRATION: Added inline Edit button (friend). Card is no longer clickable;
-// editing is done via the explicit Edit button. Also filters hidden section types.
 const LandingSectionCard = ({ section, onEdit }) => {
   const strip = (html) => {
     if (!html) return '';
@@ -137,9 +132,6 @@ const LandingSectionCard = ({ section, onEdit }) => {
 };
 
 // ── Disclosure Tab Content ────────────────────────────────────────────────────
-// INTEGRATION: New component from friend's implementation.
-// Renders Terms of Service and Privacy Policy preview cards with Edit buttons.
-// Uses DEFAULT_TOS / DEFAULT_PP as fallback when DB row doesn't exist yet.
 const DisclosureTabContent = ({ disclosure, onEditClick }) => {
   const stripHtml = (html) => {
     if (!html) return '';
@@ -193,12 +185,6 @@ const DisclosureTabContent = ({ disclosure, onEditClick }) => {
 };
 
 // ── Content item card ─────────────────────────────────────────────────────────
-// INTEGRATION: Events now show image thumbnails (friend's change).
-// Archive button triggers confirm dialog with item title.
-// Rewards: color, image, meta (category, points, stock) added from friend.
-// ── Content item card ─────────────────────────────────────────────────────────
-// Restyled to mirror the public DiscountsView card treatment (image with
-// overlay tags, rounded card, hover lift) but kept compact for a management grid.
 const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   const [hovered, setHovered] = React.useState(false);
 
@@ -250,8 +236,6 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
 
   const showImage = ['events', 'jobs', 'discounts', 'rewards', 'announcements'].includes(type) && item.image_url;
 
-  // Bottom-left overlay tag — mirrors the public Discounts card's category pill.
-  // Falls back through the most relevant field per type.
   const tagText = item.category || item.company || null;
 
   const description = strip(item.description);
@@ -499,7 +483,7 @@ const ContentManagementView = ({
 
   const [rewardFilter, setRewardFilter] = React.useState('All');
 
-  // INTEGRATION: Filter out hero/stats sections — not editable via this UI.
+
   const editableLandingSections = (landingSections || []).filter(
     s => !HIDDEN_SECTION_TYPES.includes(s.section_type)
   );
@@ -524,8 +508,6 @@ const ContentManagementView = ({
   const renderContent = () => {
     if (loading) return <div className="loading-state">Loading content…</div>;
 
-    // INTEGRATION: SHS alumni guard — show empty board for non-landing/disclosure tabs
-    // since SHS context has no college alumni records for those content types.
     if (alumniType === 'shs' && activeTab !== 'landingpage' && activeTab !== 'disclosurepage') {
       return (
         <div className="cm-board">
@@ -543,7 +525,6 @@ const ContentManagementView = ({
       );
     }
 
-    // INTEGRATION: Disclosure tab rendering
     if (activeTab === 'disclosurepage') {
       return (
         <DisclosureTabContent
@@ -553,7 +534,6 @@ const ContentManagementView = ({
       );
     }
 
-    // INTEGRATION: Landing page uses filtered (editable) sections
     if (activeTab === 'landingpage') {
       const createCard = (
         <div className="cm-create-card" onClick={onOpenCreate}>
@@ -581,7 +561,6 @@ const ContentManagementView = ({
       );
     }
 
-    // INTEGRATION: Rewards category filter — only applied when tab is 'rewards'
     const displayedItems = (activeTab === 'rewards' && rewardFilter !== 'All')
       ? activeItems.filter(item => {
           if (rewardFilter === 'Others') {
@@ -615,7 +594,6 @@ const ContentManagementView = ({
               item={item}
               type={activeTab}
               onEdit={onOpenEdit}
-              // INTEGRATION: Archive triggers confirmation dialog with title
               onArchive={(type, id, title) => onShowConfirm(
                 'Archive this item?',
                 `"${title}" will be moved to the archive and hidden from users.`,
@@ -671,7 +649,6 @@ const ContentManagementView = ({
             ))}
           </div>
 
-          {/* INTEGRATION: cm-board-header wrapper with reward filter bar */}
           <div className="cm-board-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div className="cm-board-title">{boardTitle}</div>
@@ -707,7 +684,6 @@ const ContentManagementView = ({
         <ArchivePanel archivedItems={archivedItems} onClose={() => setShowArchive(false)} onRestore={onRestore} />
       )}
 
-      {/* INTEGRATION: !showArchive guard prevents modals from mounting while archive panel is open */}
       {modalOpen && !showArchive && activeTab === 'events' && (
         <EventModal open={modalOpen} onClose={onCloseModal} mode={modalMode}
           event={editingItem} onCreate={onCreateEvent} onUpdate={onUpdateEvent} />
@@ -734,7 +710,6 @@ const ContentManagementView = ({
           onCreate={onCreateLandingSection} onUpdate={onUpdateLandingSection} />
       )}
 
-      {/* INTEGRATION: Disclosure Modal */}
       <DisclosureModal
         open={disclosureModalOpen}
         onClose={onCloseDisclosureModal}
