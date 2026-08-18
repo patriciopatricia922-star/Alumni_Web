@@ -1,13 +1,8 @@
-/* =========================================================
-   NAVBAR STYLES
-   Organized: Base/Components -> Media Queries (Responsive)
-   ========================================================= */
-
 /* ============================
-   1. HAMBURGER MENU
+   HAMBURGER MENU
    ============================ */
 .nb-hamburger {
-  display: none; /* Hidden on desktop by default */
+  display: none;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
@@ -27,7 +22,7 @@
   transition: all 0.3s ease;
 }
 
-/* Hamburger Animation (Open State) */
+/* Hamburger Animation (Open) */
 .nb-hamburger.open span:nth-child(1) {
   transform: translateY(7px) rotate(45deg);
 }
@@ -42,25 +37,29 @@
 }
 
 /* ============================
-   2. DESKTOP ELEMENTS
+   DESKTOP ELEMENTS
    ============================ */
 .nb-links {
   display: flex;
   align-items: center;
   gap: 32px;
+  position: relative;
+  z-index: 1101;
 }
 
 .nb-actions {
   display: flex;
   align-items: center;
   gap: 16px;
+  position: relative;
+  z-index: 1101;
 }
 
 /* ============================
-   3. MOBILE DROPDOWN MENU
+   MOBILE DROPDOWN MENU
    ============================ */
 .nb-mobile-menu {
-  display: none; /* Hidden by default */
+  display: none; 
   position: fixed;
   top: 64px;
   left: 0;
@@ -100,7 +99,7 @@
 }
 
 /* =========================================================
-   4. MEDIA QUERIES (RESPONSIVE)
+   MEDIA QUERIES
    ========================================================= */
 
 /* --- Tablet: 769px – 1024px --- */
@@ -116,7 +115,6 @@
 /* --- Mobile: ≤ 768px --- */
 @media (max-width: 768px) {
   .nb-inner {
-    /* padding: 0 20px 0 clamp(9px, 3vw, 10px) !important; */
     padding: 0 20px 0 2px !important; 
   }
 
