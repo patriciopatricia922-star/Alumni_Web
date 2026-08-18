@@ -1,23 +1,39 @@
 /**
- * surveyConfig.js  (v3 — branching-aware + hardened)
+ * surveyConfig.js  (v4 — reads routed through Railway, RLS-safe in prod)
  * ─────────────────────────────────────────────────────────────────────────────
- * Changes vs v2:
+ * Changes vs v3:
  *
- *  1. `loadSurveyConfig()` — added explicit error code logging so RLS failures
- *     and "no rows" (PGRST116) are distinguishable in the console.
- *     The .or() filter is unchanged in shape but documented more precisely.
+ *  1. `loadSurveyConfig()` — now fetches from the Railway API
+ *     (`${API_BASE}/admin/survey-config?survey_type=...`) instead of querying
+ *     `survey_config` directly with the browser's Supabase anon-key client.
+ *     The old direct SELECT was subject to RLS, which blocks unauthenticated
+ *     alumni reads in production while happening to work on localhost (same
+ *     admin-authenticated browser session used to preview both sides). This
+ *     mirrors the pattern SurveyManagement.jsx already uses for Admin reads.
+ *     Function signature, cache shape, and return value are unchanged, so no
+ *     caller needed to change.
  *
- *  2. `getBranches()` — unchanged from v2, kept as-is.
+ *  2. `getBranches()` — unchanged.
  *
- *  3. `getConfigSection()` — unchanged from v2, kept as-is.
+ *  3. `getConfigSection()` — unchanged.
  *
- *  4. All other exports are character-for-character identical to v1/v2.
+ *  4. `subscribeToSurveyConfigChanges()` — unchanged (still Supabase Realtime;
+ *     this only affects live in-tab refresh, not the initial load, and every
+ *     section already force-refreshes via `loadSurveyConfig(true, ...)` on
+ *     mount, which is the actual fix for the reported symptom).
+ *
+ *  5. All other exports are character-for-character identical to v3.
  */
 
 import { supabase } from './supabase';
 
 let cachedConfigs = {};
 const CACHE_DURATION = 60_000; // 1 minute
+
+// Same Railway API base the Admin panel (SurveyManagement.jsx) already uses
+// for its own reads/writes. Falls back to the local dev API when
+// VITE_API_BASE_URL isn't set (matches SurveyManagement.jsx's pattern).
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 
 export const clearSurveyConfigCache = () => {
   cachedConfigs = {};
@@ -59,53 +75,54 @@ export const loadSurveyConfig = async (forceRefresh = false, departmentType = 'c
   }
 
   try {
-    // ── Filter explanation ──────────────────────────────────────────────────
-    // The Admin saves config without a survey_type field, so the JSONB column
-    // will have config->>'survey_type' = NULL for college configs.
-    // PostgREST's .or() with 'config->>survey_type.is.null' matches those rows.
+    // ── ROOT CAUSE (see investigation notes) ─────────────────────────────────
+    // This used to query `survey_config` directly with the browser's Supabase
+    // anon-key client (a plain .from('survey_config').select('config') call).
+    // That direct client-side SELECT is governed by the table's RLS policy,
+    // which only grants read access to authenticated staff/admin sessions —
+    // not to anonymous alumni visitors. On localhost this was masked because
+    // the same logged-in admin session/browser was reused to preview the
+    // alumni survey pages, so RLS happened to allow the read. In production,
+    // real alumni requests are unauthenticated, so PostgREST silently
+    // returned 0 rows (not a thrown error) — `data` ended up null every time,
+    // `applyConfig()` never ran in any section, and every field quietly fell
+    // back to its hardcoded DEFAULT_* labels/options. That is exactly the
+    // "Admin changes don't reflect on the alumni side" symptom.
     //
-    // If this filter returns 0 rows despite a row existing, run this in
-    // Supabase SQL editor to debug:
-    //   select id, config->>'survey_type', updated_at
-    //   from survey_config
-    //   order by updated_at desc limit 5;
-    // ───────────────────────────────────────────────────────────────────────
+    // SurveyManagement.jsx (Admin) already solved this identical problem for
+    // its own reads by routing through the Railway API instead of the direct
+    // Supabase client (see its commented-out `supabaseAdmin` calls, replaced
+    // by `fetch(`${API_BASE}/admin/survey-config...`)`). That Railway route
+    // holds the service-role key server-side and isn't subject to the
+    // browser-facing RLS policy, which is why Admin's own reads always work
+    // in production. We mirror that exact, already-verified-working pattern
+    // here so every alumni-facing section (College and SHS) reads through the
+    // same reliable path instead of the RLS-restricted browser client.
+    //
+    // Nothing else about this function changes: same cache shape, same
+    // signature, same return value (the raw `config` object), so no caller
+    // (getSectionQuestions, getBranches, getConfigSection, or any of the
+    // section controllers / useSurveyBranching) needs to change.
+    const res = await fetch(`${API_BASE}/admin/survey-config?survey_type=${departmentType}`);
 
-    let query = supabase
-      .from('survey_config')
-      .select('config')
-      .order('updated_at', { ascending: false });
-
-    if (departmentType === 'shs') {
-      query = query.eq('config->>survey_type', 'shs');
-    } else {
-      query = query.or('config->>survey_type.is.null,config->>survey_type.eq.college');
-    }
-
-    const { data, error } = await query.limit(1).single();
-
-    if (error) {
-      // PGRST116 = no rows found — not a hard error, just no config saved yet
-      if (error.code === 'PGRST116') {
-        console.warn(
-          '[surveyConfig] loadSurveyConfig: no config row found for departmentType=',
-          departmentType,
-          '— using fallback.'
-        );
-      } else {
-        // 42501 = RLS permission denied. Any other code = unexpected error.
-        console.error(
-          '[surveyConfig] loadSurveyConfig error:',
-          error.code,
-          error.message,
-          '| departmentType:', departmentType
-        );
-      }
+    if (!res.ok) {
+      console.error(
+        '[surveyConfig] loadSurveyConfig: request failed —',
+        res.status, res.statusText,
+        '| departmentType:', departmentType
+      );
       return cached?.data ?? null;
     }
 
+    const json = await res.json();
+    const data = json?.data;
+
     if (!data?.config) {
-      console.warn('[surveyConfig] loadSurveyConfig: row found but config field is empty.');
+      console.warn(
+        '[surveyConfig] loadSurveyConfig: no config row found for departmentType=',
+        departmentType,
+        '— using fallback.'
+      );
       return cached?.data ?? null;
     }
 
