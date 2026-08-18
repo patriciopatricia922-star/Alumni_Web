@@ -19,8 +19,8 @@ const SHS_TABS = [
   { id: "announcements",  label: "Announcements" },
   { id: "discounts",      label: "Discounts" },
   { id: "events",         label: "Events" },
-  { id: "rewards",        label: "Rewards" },
   { id: "jobs",           label: "Jobs" },
+  { id: "rewards",        label: "Rewards" },
   { id: 'landingpage', label: 'Landing Page', rightGroup: true },
 { id: 'disclosurepage', label: 'User Notification / Disclosure', rightGroup: true },
 ];

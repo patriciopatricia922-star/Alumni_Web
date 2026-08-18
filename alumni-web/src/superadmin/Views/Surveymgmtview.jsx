@@ -1,98 +1,43 @@
-// ============================================================================
-// THIS IS THE UI. SUPERADMIN
-// ============================================================================
-// Purpose: Renders all visual components for survey management including:
-//          - Sidebar with section list
-//          - Question builder interface
-//          - Branching logic interface
-//          - Modals, toasts, and all presentational elements
-// ============================================================================
-//
-// SYNC NOTES (Admin → Super Admin)
-// ─────────────────────────────────
-// 1. Added `alumniType` prop + header badge (College/SHS pill) next to the
-//    title, matching Admin's UI exactly. Purely additive, no restructuring.
-// 2. Added `targetSectionIdx` prop consumption (FIX 7): now destructured from
-//    props instead of being recomputed locally via the broken
-//    `parseInt(branchTargetQ.split("-")[1], 10)` logic. This fixes the same
-//    latent bug Admin had — if the controller sets branchTargetQ as
-//    `q-${q.id}` (uid-based, itself containing dashes), the local split-based
-//    parse silently returns the wrong section index. Consuming the
-//    controller-computed value keeps this correct regardless of which
-//    branchTargetQ format the paired controller uses.
-// 3. Kept Super Admin's own visual treatment for multi-select branch rows
-//    (flex/wrap layout with radio bullets) — this is a Super
-//    Admin-specific styling difference, not a functionality gap, so it was
-//    preserved rather than overwritten with Admin's grid layout.
-// 4. Kept SuperAdsidebar, existing class names, routes, and file structure
-//    untouched.
-// 5. PARITY FIX (this pass): added the "checkbox" option-rendering branch in
-//    Editor Mode, mirroring the existing "multiple" branch exactly (same
-//    layout, same edit/add/delete option controls), just using
-//    <input type="checkbox"> instead of <input type="radio"> for the preview
-//    state. Previously, checkbox-type questions rendered their header/card
-//    but never rendered their options list, because the options-rendering
-//    JSX was gated strictly on `q.type === "multiple"`. Ported from Admin.
-// ============================================================================
-
 import SuperAdsidebar from "../SuperAdSidebar";
 import '../styles/Surveymgmt.css';
-import { 
-  FiTrash2, 
-  FiCopy, 
-  FiArrowLeft, 
-  FiEdit2, 
-  FiCheck, 
+import {
+  FiTrash2,
+  FiCopy,
+  FiArrowLeft,
+  FiEdit2,
+  FiCheck,
   FiPlus
 } from "react-icons/fi";
 import { BiGitBranch } from "react-icons/bi";
+import { useState, useEffect } from "react";
 
 export default function SurveyMgmtView({
-  // ============================ CORE DATA ============================
   survey,
   setSurvey,
   configId,
   setConfigId,
-
-  // ============================ SECTION NAVIGATION ============================
   activeSection,
   setActiveSection,
-
-  // ============================ UI MODES ============================
   branchMode,
   setBranchMode,
   editingQ,
   setEditingQ,
-
-  // ============================ EDIT TRACKING ============================
   dirtyQ,
   editSnapshotRef,
-
-  // ============================ PUBLICATION STATE ============================
   saving,
   status,
-
-  // ============================ BRANCHING DATA ============================
   branches,
   setBranches,
   highlightQ,
   branchTargetQ,
   setBranchTargetQ,
-
-  // ============================ TOAST NOTIFICATIONS ============================
   toasts,
   addToast,
-
-  // ============================ CONFIRMATION MODAL ============================
   confirmState,
   setConfirmState,
   askConfirm,
-
-  // ============================ DATA CONSTANTS ============================
   TYPE_LABELS,
   DEFAULT_SURVEY,
-
-  // ============================ QUESTION HANDLERS ============================
   updateQuestion,
   deleteQuestion,
   duplicateQuestion,
@@ -100,31 +45,29 @@ export default function SurveyMgmtView({
   openEdit,
   closeEdit,
   saveEdit,
-
-  // ============================ SECTION HANDLERS ============================
   addSection,
   deleteSection,
-
-  // ============================ OPTION HANDLERS ============================
   addOption,
   updateOption,
   deleteOption,
-
-  // ============================ PUBLISH HANDLER ============================
   handlePublish,
-
-  // ============================ DERIVED DATA ============================
   currentSection,
-  allQuestions,    // Flattened list of ALL questions across ALL sections
-  targetSectionIdx, // FIX 7 — computed correctly in the controller via
-                     // survey.sections.findIndex(); consumed here instead
-                     // of being recomputed from a broken positional split.
-  alumniType, // 'college' | 'shs' — drives the header badge only.
+  allQuestions,
+  targetSectionIdx,
+  alumniType,
 }) {
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (status === "saved") {
+      setShowSuccessModal(true);
+      const timer = setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
-  // Format long section titles with line breaks for sidebar display
   const formatSectionTitle = (title) => {
     if (title && title.length > 25) {
       const words = title.split(" ");
@@ -136,15 +79,6 @@ export default function SurveyMgmtView({
     return title;
   };
 
-  // NOTE: targetSectionIdx now comes from props (FIX 7, computed correctly
-  // in the controller). The old local computation here was:
-  //   const targetSectionIdx = branchTargetQ
-  //     ? parseInt(branchTargetQ.split("-")[1], 10)
-  //     : activeSection;
-  // — removed because it silently broke once branchTargetQ carries a
-  // uid-based key ("q-{uid}") instead of positional indices.
-
-  // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
     return (
       <div style={{
@@ -160,8 +94,6 @@ export default function SurveyMgmtView({
   return (
     <>
       <SuperAdsidebar />
-
-      {/* ── Toast Container ─────────────────────────────────────────────── */}
       <div style={{
         position: "fixed", bottom: "1.5rem", right: "1.5rem",
         display: "flex", flexDirection: "column", gap: "0.5rem",
@@ -171,16 +103,15 @@ export default function SurveyMgmtView({
           <div key={t.id} className={`sm-toast sm-toast-${t.type} ${t.exiting ? "sm-toast-exit" : "sm-toast-enter"}`}>
             <span className="sm-toast-icon">
               {t.type === "success" && "✓"}
-              {t.type === "copy"    && "⧉"}
-              {t.type === "delete"  && "🗑"}
-              {t.type === "edit"    && "✎"}
+              {t.type === "copy" && "⧉"}
+              {t.type === "delete" && "🗑"}
+              {t.type === "edit" && "✎"}
             </span>
             {t.message}
           </div>
         ))}
       </div>
 
-      {/* ── Confirm / Publish Modal ─────────────────────────────────────── */}
       {confirmState && (
         <div className="sm-confirm-overlay" onClick={() => setConfirmState(null)}>
           <div className="sm-confirm-card" onClick={e => e.stopPropagation()}>
@@ -201,13 +132,18 @@ export default function SurveyMgmtView({
         </div>
       )}
 
-      {/* ── Main Page ───────────────────────────────────────────────────── */}
-      <div className="survey-page">
+      {showSuccessModal && (
+        <div className="sm-confirm-overlay" style={{ pointerEvents: "none" }}>
+          <div className="sm-confirm-card">
+            <h3 className="sm-confirm-title">Changes published successfully!</h3>
+            <p className="sm-confirm-message">The survey changes have been published successfully.</p>
+          </div>
+        </div>
+      )}
 
-        {/* ── Header ────────────────────────────────────────────────────── */}
+      <div className="survey-page">
         <div className="survey-header">
           <div className="survey-header-left">
-            {/* alumniType badge — ported from Admin */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <h1 style={{ fontWeight: 700, fontSize: 27 }}>Survey Management</h1>
               <span style={{
@@ -224,8 +160,7 @@ export default function SurveyMgmtView({
             <p className="survey-desc">Edit questions and publish to reflect on the alumni survey</p>
           </div>
           <div className="survey-header-actions">
-            {status === "saved"  && <span style={{ color: "#00A63E", fontSize: "0.75rem" }}>✓ Published</span>}
-            {status === "error"  && <span style={{ color: "#BF0000", fontSize: "0.75rem" }}>Failed to save</span>}
+            {status === "error" && <span style={{ color: "#BF0000", fontSize: "0.75rem" }}>Failed to save</span>}
             {status === "saving" && <span style={{ color: "#6A7282", fontSize: "0.75rem" }}>Saving…</span>}
             <button
               className="publish-btn"
@@ -238,15 +173,12 @@ export default function SurveyMgmtView({
                 )
               }
             >
-              {saving ? "Publishing…" : status === "saved" ? "✓ Published" : "Publish"}
+              {saving ? "Publishing…" : "Publish"}
             </button>
           </div>
         </div>
 
-        {/* ── Main Layout ───────────────────────────────────────────────── */}
         <div className="survey-main">
-
-          {/* ── Section Sidebar ─────────────────────────────────────────── */}
           <div className="survey-sections">
             <button className="add-section-btn" onClick={addSection}>+ Add Section</button>
             <div className="sections-list">
@@ -277,11 +209,8 @@ export default function SurveyMgmtView({
             </div>
           </div>
 
-          {/* ── Builder Area ────────────────────────────────────────────── */}
           <div className="survey-builder">
-
             {branchMode ? (
-              /* ── Branch Mode ────────────────────────────────────────── */
               <div className="branch-page">
                 <div className="branch-header">
                   <button
@@ -292,9 +221,7 @@ export default function SurveyMgmtView({
                   </button>
                   <h2>Branching Options</h2>
                 </div>
-
                 <div className="branch-card">
-                  {/* Show only the section containing the question that triggered branch mode */}
                   {survey.sections
                     .filter((_, sIdx) => sIdx === targetSectionIdx)
                     .map((section) => {
@@ -307,13 +234,9 @@ export default function SurveyMgmtView({
                           }}>
                             {section.title}
                           </div>
-
                           {section.questions.map((q, qIdx) => {
-                            // Stable key uses q.id — safe against reorder and delete.
-                            // DOM id uses positional indices for scroll targeting only.
-                            const key   = `q-${q.id}`;
+                            const key = `q-${q.id}`;
                             const domId = `q-${targetSectionIdx}-${qIdx}`;
-
                             return (
                               <div
                                 key={key}
@@ -331,17 +254,13 @@ export default function SurveyMgmtView({
                                 }}>
                                   {q.label}
                                 </div>
-
                                 {q.type === "multiple" ? (
-                                  // Per-option multi-select branch targets
                                   (q.options || []).map((opt, oIdx) => {
-                                    // Key uses stable q.id; deleteOption() re-indexes oIdx
-                                    const optKey     = `q-${q.id}-opt${oIdx}`;
+                                    const optKey = `q-${q.id}-opt${oIdx}`;
                                     const currentVal = branches[optKey];
-                                    const selectVal  = Array.isArray(currentVal)
+                                    const selectVal = Array.isArray(currentVal)
                                       ? currentVal
                                       : currentVal ? [currentVal] : ["next"];
-
                                     return (
                                       <div key={oIdx} style={{
                                         display: "flex", alignItems: "center", gap: "0.75rem",
@@ -386,7 +305,6 @@ export default function SurveyMgmtView({
                                     );
                                   })
                                 ) : (
-                                  // Single multi-select branch target for non-multiple questions
                                   <div style={{
                                     display: "flex", alignItems: "center", gap: "0.75rem",
                                     padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
@@ -428,7 +346,6 @@ export default function SurveyMgmtView({
                         </div>
                       );
                     })}
-
                   {survey.sections[targetSectionIdx]?.questions.length === 0 && (
                     <div style={{
                       fontSize: "0.85rem", color: "#6b7280",
@@ -440,9 +357,7 @@ export default function SurveyMgmtView({
                 </div>
               </div>
             ) : (
-              /* ── Editor Mode ─────────────────────────────────────────── */
               <>
-                {/* Section header card */}
                 <div className="section-card">
                   <div className="section-top">
                     <span>Section {activeSection + 1} of {survey.sections.length}</span>
@@ -450,12 +365,8 @@ export default function SurveyMgmtView({
                   <h2>{currentSection.title}</h2>
                   <p className="section-sub">{currentSection.description}</p>
                 </div>
-
-                {/* Questions */}
                 {currentSection.questions.map((q, qIdx) => {
                   const isEditing = editingQ?.sIdx === activeSection && editingQ?.qIdx === qIdx;
-
-                  // Title-type question
                   if (q.type === "title") {
                     return (
                       <div key={q.id} className="section-card inner-section-card">
@@ -503,12 +414,8 @@ export default function SurveyMgmtView({
                       </div>
                     );
                   }
-
-                  // Standard question card
                   return (
                     <div key={q.id} className={`question-card${isEditing ? " editing" : ""}`}>
-
-                      {/* Header row */}
                       <div className="question-header">
                         {isEditing ? (
                           <input
@@ -563,8 +470,6 @@ export default function SurveyMgmtView({
                           </button>
                         </div>
                       </div>
-
-                      {/* Required toggle */}
                       {isEditing && (
                         <label style={{
                           display: "inline-flex", alignItems: "center", gap: "0.4rem",
@@ -579,8 +484,6 @@ export default function SurveyMgmtView({
                           Required
                         </label>
                       )}
-
-                      {/* Short answer */}
                       {q.type === "short" && (
                         <>
                           {isEditing && (
@@ -596,8 +499,6 @@ export default function SurveyMgmtView({
                           )}
                         </>
                       )}
-
-                      {/* Long answer */}
                       {q.type === "long" && (
                         <>
                           {isEditing && (
@@ -611,20 +512,14 @@ export default function SurveyMgmtView({
                           <textarea className="question-input" placeholder={q.placeholder || "Long answer"} rows="3" readOnly />
                         </>
                       )}
-
-                      {/* Date */}
                       {q.type === "date" && (
                         <input type="date" className="question-input" style={{ maxWidth: "200px" }} readOnly />
                       )}
-
-                      {/* Rating */}
                       {q.type === "rating" && (
                         <div className="rating-group">
                           {[1, 2, 3, 4, 5].map(star => <span key={star} className="star">★</span>)}
                         </div>
                       )}
-
-                      {/* Multiple choice */}
                       {q.type === "multiple" && (
                         <div className="radio-group">
                           {(q.options || []).map((opt, oIdx) => (
@@ -659,12 +554,6 @@ export default function SurveyMgmtView({
                           )}
                         </div>
                       )}
-
-                      {/* Checkbox (multi-select) — mirrors "multiple" block above,
-                          just rendered with checkbox inputs instead of radio.
-                          Fixes: checkbox-type questions previously showed no
-                          option list at all in this editor view (parity fix,
-                          ported from Admin). */}
                       {q.type === "checkbox" && (
                         <div className="radio-group">
                           {(q.options || []).map((opt, oIdx) => (
@@ -699,8 +588,6 @@ export default function SurveyMgmtView({
                           )}
                         </div>
                       )}
-
-                      {/* Save / Cancel row */}
                       {isEditing && (
                         <div className="q-save-row">
                           <button className="q-save-btn" disabled={!dirtyQ} onClick={() => saveEdit(activeSection, qIdx)}>
@@ -709,20 +596,12 @@ export default function SurveyMgmtView({
                           <button className="q-cancel-btn" onClick={closeEdit}>Cancel</button>
                         </div>
                       )}
-
-                      {/* Branch button — pill-shaped with label */}
                       {!isEditing && (
                         <div className="branch-container">
                           <button
                             className="branch-btn"
                             style={{ borderRadius: "0.4rem", padding: "0.3rem 0.5rem", gap: "0.3rem", width: "auto" }}
                             onClick={() => {
-                              // Kept exactly as-is (positional key) to preserve
-                              // Super Admin's existing controller contract.
-                              // If Super Admin's controller is later migrated
-                              // to the uid-based FIX-7 contract (branchTargetQ
-                              // as `q-${q.id}`), change this line to match:
-                              //   setBranchTargetQ(`q-${q.id}`);
                               setBranchTargetQ(`q-${activeSection}-${qIdx}`);
                               setBranchMode(true);
                             }}
@@ -735,8 +614,6 @@ export default function SurveyMgmtView({
                     </div>
                   );
                 })}
-
-                {/* Add Question */}
                 <button
                   onClick={() => addQuestion(activeSection)}
                   style={{
