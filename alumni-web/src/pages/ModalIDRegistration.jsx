@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { verifyAlumniID } from "../utils/ocrUtils";
+import { verifyAlumniID, normalizeImageForOCR } from "../utils/ocrUtils";
 import IDRegistrationView from "../Views/IDRegistrationview";
 
 const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
@@ -30,7 +30,14 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
       setErrorMsg("");
       setExtractedData(null);
       try {
-        const result = await verifyAlumniID(imageFile);
+        // Mobile file-picker/camera photos come in at full sensor resolution
+        // (often several MB), which silently fails against the OCR
+        // provider's file-size limit. Normalize (downscale + recompress)
+        // every image — gallery pick, native camera photo, or in-app
+        // camera capture — before sending it for OCR. This does not change
+        // OCR logic/thresholds/validation, only what bytes reach it.
+        const normalizedFile = await normalizeImageForOCR(imageFile);
+        const result = await verifyAlumniID(normalizedFile);
         if (result.verified) {
           setStatus("verified");
           setExtractedData(result.extracted);
