@@ -735,7 +735,7 @@
 .survey-message {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 750;
-  font-size: clamp(15px, 2.14vw, 30px);
+  font-size: clamp(18px, 5.5vw, 26px) !important;
   line-height: 1.29;
   letter-spacing: 0.1px;
   color: #FFFFFF;
