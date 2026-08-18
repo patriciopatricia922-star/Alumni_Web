@@ -135,7 +135,7 @@
   /* Notification Mobile Alignment */
   .notification-bell.mobile {
     position: absolute !important;
-    top: calc(clamp(12px, 2vh, 18px) + clamp(38px, 7.5vh, 56px) - 14px) !important;
+    top: calc(clamp(12px, 2vh, 18px) + clamp(38px, 7.5vh, 56px) - 19px) !important;
     right: clamp(12px, 4vw, 18px) !important;
     left: auto !important;
     bottom: auto !important;
