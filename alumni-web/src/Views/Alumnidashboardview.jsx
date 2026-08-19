@@ -216,7 +216,7 @@ const AlumniDashboardView = ({
       buttonLabel: "Redeem Rewards",
       buttonPath: "/rewards",
     },
-    // Slide 1: Dynamic content from latest Events/Announcements/Jobs/Discounts
+    // Slide 1: Dynamic content from ALL existing Events/Announcements/Jobs/Discounts
     ...(dynamicRewardSlide
       ? [dynamicRewardSlide]
       : [
