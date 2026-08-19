@@ -1,13 +1,13 @@
 // ============================================================================
-// AlumniDashboard — Merged Implementation
+// AlumniDashboard — Merged Implementation with Dynamic RewardsCard
 // ============================================================================
 // Base logic: original (authoritative). Additive from friend's code:
 //   • rewardPoints state + Supabase fetch from `reward_points`
 //   • Extra imports: rewardIcon, grandWestsideHotel, announcement_icn.svg
 //   • Extra props forwarded to AlumniDashboardView
 //   • forYouItems order: Announcements → Discounts → Events → Jobs
+//   • NEW: Dynamic RewardsCard content from latest Events/Announcements/Jobs/Discounts
 // ============================================================================
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
@@ -19,7 +19,6 @@ import {
 } from "../lib/surveyProgress";
 import { logAction } from "../lib/auditLogger";
 import { stripHtml, decodeHtmlEntities } from "../utils/textHelpers";
-
 // Icons — announcement_icn.svg (friend's variant) is used as the primary
 // announcement icon; the original announcement_ic.svg is kept as a fallback
 // alias so any view code referencing either name continues to work.
@@ -29,9 +28,8 @@ import discountIcon from "../assets/discount_ic.svg";
 import eventsIcon from "../assets/events_ic.svg";
 import jobsIcon from "../assets/jobs_ic.svg";
 import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
-
-import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css';
+import NotificationBell from "../components/notifications/NotificationBell";
+import "../styles/NotificationBell.css";
 import AlumniDashboardView from "../Views/Alumnidashboardview";
 import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
@@ -67,6 +65,27 @@ const persistDismissed = (category, count) => {
   localStorage.setItem(STORAGE_KEYS[category], String(count));
 };
 
+// Resolve image URL from raw Supabase row (mirrors Landingpageview.jsx pattern)
+const resolveImage = (item, type) => {
+  const FALLBACKS = {
+    events:
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
+    jobs: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80",
+    discounts:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80",
+    announcements:
+      "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80",
+  };
+  return (
+    item.image_url ||
+    item.image ||
+    item.cover_image ||
+    item.banner_url ||
+    FALLBACKS[type] ||
+    null
+  );
+};
+
 // ============================ WINDOW WIDTH HOOK ============================
 const useWindowWidth = () => {
   const [width, setWidth] = useState(
@@ -93,26 +112,14 @@ const AlumniDashboard = () => {
   const [user, setUser] = useState(null);
   const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  // const [notifs, setNotifs] = useState([]);
-  // const [unreadCount, setUnreadCount] = useState(0);
-  // const [showDropdown, setShowDropdown] = useState(false);
-  // const [notifTab, setNotifTab] = useState("all");
-  const {
-    unreadCount,
-    markAllRead,
-    markOneRead,
-  } = useNotifications();
+  const { unreadCount, markAllRead, markOneRead } = useNotifications();
   const [toast, setToast] = useState({
     visible: false,
     points: 0,
     newBalance: 0,
     label: "",
   });
-  // const bellRef = useRef(null);
-
-  // Survey route — null while resolving (same pattern as Sidebar).
   const [surveyRoute, setSurveyRoute] = useState(null);
-
   const [cardBadges, setCardBadges] = useState({
     announcements: false,
     events: false,
@@ -140,48 +147,242 @@ const AlumniDashboard = () => {
     },
   });
 
+  // ============================ DYNAMIC REWARDS CARD CONTENT ============================
+  const [dynamicRewardSlide, setDynamicRewardSlide] = useState(null);
+  const [loadingRewardContent, setLoadingRewardContent] = useState(true);
+
+  // Fetch and randomize latest content for RewardsCard
+  const fetchAndRandomizeRewardContent = useCallback(async () => {
+    try {
+      // Fetch latest item from each content type
+      const [eventsRes, announcementsRes, jobsRes, discountsRes] =
+        await Promise.all([
+          supabase
+            .from("events")
+            .select("*")
+            .eq("is_active", true)
+            .gte("event_date", new Date().toISOString())
+            .order("event_date", { ascending: true })
+            .limit(1),
+          supabase
+            .from("announcements")
+            .select("*")
+            .eq("is_active", true)
+            .order("published_at", { ascending: false })
+            .limit(1),
+          supabase
+            .from("jobs")
+            .select("*")
+            .eq("is_active", true)
+            .order("posted_at", { ascending: false })
+            .limit(1),
+          supabase
+            .from("discounts")
+            .select("*")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .limit(1),
+        ]);
+
+      // Build array of available content types with their data
+      const availableContent = [];
+
+      if (eventsRes.data && eventsRes.data.length > 0) {
+        const event = eventsRes.data[0];
+        availableContent.push({
+          type: "events",
+          data: event,
+          slide: {
+            label: "Event",
+            title: event.title || "Upcoming Event",
+            description:
+              stripHtml(event.description)?.substring(0, 100) +
+                (stripHtml(event.description)?.length > 100 ? "..." : "") ||
+              "Check out our latest alumni event!",
+            buttonLabel: "View Events",
+            buttonPath: "/events",
+            gradient:
+              "linear-gradient(90deg, #7c3aed 0%, #9b5cf6 50%, #c4a0ff 100%)",
+            icon: eventsIcon,
+            iconSize: 137,
+            iconTransform: "translateY(1.5px)",
+            iconBg: "transparent",
+            bgImage: resolveImage(event, "events"),
+            buttonColor: "#5b21b6",
+            buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
+          },
+        });
+      }
+
+      if (announcementsRes.data && announcementsRes.data.length > 0) {
+        const announcement = announcementsRes.data[0];
+        availableContent.push({
+          type: "announcements",
+          data: announcement,
+          slide: {
+            label: "Announcement",
+            title: announcement.title || "Latest Announcement",
+            description:
+              stripHtml(announcement.content)?.substring(0, 100) +
+                (stripHtml(announcement.content)?.length > 100 ? "..." : "") ||
+              "Stay updated with the latest news!",
+            buttonLabel: "View Announcements",
+            buttonPath: "/announcements",
+            gradient:
+              "linear-gradient(90deg, #C01828 0%, #D92B40 50%, #F24057 100%)",
+            icon: announcementIcon,
+            iconSize: 142,
+            iconBg: "transparent",
+            buttonColor: "#C0152A",
+            buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
+          },
+        });
+      }
+
+      if (jobsRes.data && jobsRes.data.length > 0) {
+        const job = jobsRes.data[0];
+        availableContent.push({
+          type: "jobs",
+          data: job,
+          slide: {
+            label: "Job",
+            title: job.title || "Career Opportunity",
+            description:
+              stripHtml(job.description)?.substring(0, 100) +
+                (stripHtml(job.description)?.length > 100 ? "..." : "") ||
+              "Explore career opportunities!",
+            buttonLabel: "View Jobs",
+            buttonPath: "/jobs",
+            gradient:
+              "linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)",
+            icon: jobsIcon,
+            iconSize: 110,
+            iconBg: "transparent",
+            bgImage: resolveImage(job, "jobs"),
+            buttonColor: "#065f46",
+            buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
+          },
+        });
+      }
+
+      if (discountsRes.data && discountsRes.data.length > 0) {
+        const discount = discountsRes.data[0];
+        availableContent.push({
+          type: "discounts",
+          data: discount,
+          slide: {
+            label: "Discount",
+            title: discount.title || "Exclusive Discount",
+            description:
+              stripHtml(discount.description)?.substring(0, 100) +
+                (stripHtml(discount.description)?.length > 100 ? "..." : "") ||
+              "Enjoy exclusive alumni benefits!",
+            buttonLabel: "View Discounts",
+            buttonPath: "/discounts",
+            gradient:
+              "linear-gradient(90deg, rgba(120,60,0,0.72) 0%, rgba(160,80,0,0.60) 50%, rgba(100,50,0,0.72) 100%)",
+            icon: discountIcon,
+            iconSize: 110,
+            iconBg: "transparent",
+            bgImage: resolveImage(discount, "discounts") || grandWestsideHotel,
+            buttonColor: "#7a3c00",
+            buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
+          },
+        });
+      }
+
+      // Randomly select from available content
+      if (availableContent.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableContent.length);
+        setDynamicRewardSlide(availableContent[randomIndex].slide);
+      } else {
+        // Fallback to a default message if no content is available
+        setDynamicRewardSlide({
+          label: "Welcome",
+          title: "Alumni Network",
+          description: "Connect with fellow alumni and explore opportunities!",
+          buttonLabel: "Explore More",
+          buttonPath: "/dashboard",
+          gradient:
+            "linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%)",
+          icon: rewardIcon,
+          iconBg: "transparent",
+        });
+      }
+    } catch (error) {
+      console.error("[AlumniDashboard] Error fetching reward content:", error);
+      // Set a safe fallback on error
+      setDynamicRewardSlide({
+        label: "Welcome",
+        title: "Alumni Network",
+        description: "Connect with fellow alumni and explore opportunities!",
+        buttonLabel: "Explore More",
+        buttonPath: "/dashboard",
+        gradient:
+          "linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%)",
+        icon: rewardIcon,
+        iconBg: "transparent",
+      });
+    } finally {
+      setLoadingRewardContent(false);
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchAndRandomizeRewardContent();
+  }, [fetchAndRandomizeRewardContent]);
+
+  // Refresh when navigating back to dashboard or periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAndRandomizeRewardContent();
+    }, 300000); // Refresh every 5 minutes
+
+    return () => clearInterval(interval);
+  }, [fetchAndRandomizeRewardContent]);
+
   // ============================ RESPONSIVE BREAKPOINTS ============================
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const sidebarWidth = isTablet ? 200 : 229;
 
   const refreshSurveyProgress = useCallback(async () => {
-      const progress = await loadSurveyProgress();
-      if (progress) setSurveyProgress(progress);
-    }, []);
+    const progress = await loadSurveyProgress();
+    if (progress) setSurveyProgress(progress);
+  }, []);
 
-    const refreshBadges = useCallback(async () => {
-      const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-        supabase
-          .from("events")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-        supabase
-          .from("discounts")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-        supabase
-          .from("jobs")
-          .select("id", { count: "exact", head: true })
-          .eq("is_active", true),
-      ]);
-      const eventsCount = eventsRes.count || 0;
-      const discountsCount = discountsRes.count || 0;
-      const jobsCount = jobsRes.count || 0;
-      setCardCounts({
-        events: eventsCount,
-        discounts: discountsCount,
-        jobs: jobsCount,
-      });
-      setCardBadges((prev) => ({
-        ...prev,
-        events: eventsCount > 0 && !isCategoryDismissed("events", eventsCount),
-        discounts:
-          discountsCount > 0 &&
-          !isCategoryDismissed("discounts", discountsCount),
-        jobs: jobsCount > 0 && !isCategoryDismissed("jobs", jobsCount),
-      }));
-    }, []);
+  const refreshBadges = useCallback(async () => {
+    const [eventsRes, discountsRes, jobsRes] = await Promise.all([
+      supabase
+        .from("events")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
+      supabase
+        .from("discounts")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
+      supabase
+        .from("jobs")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
+    ]);
+    const eventsCount = eventsRes.count || 0;
+    const discountsCount = discountsRes.count || 0;
+    const jobsCount = jobsRes.count || 0;
+    setCardCounts({
+      events: eventsCount,
+      discounts: discountsCount,
+      jobs: jobsCount,
+    });
+    setCardBadges((prev) => ({
+      ...prev,
+      events: eventsCount > 0 && !isCategoryDismissed("events", eventsCount),
+      discounts:
+        discountsCount > 0 && !isCategoryDismissed("discounts", discountsCount),
+      jobs: jobsCount > 0 && !isCategoryDismissed("jobs", jobsCount),
+    }));
+  }, []);
 
   // ============================ DATA FETCHING ============================
   useEffect(() => {
@@ -205,7 +406,6 @@ const AlumniDashboard = () => {
         .select("reward_points")
         .eq("id", authUser.id)
         .single();
-
       if (rewardError) {
         console.error(
           "[AlumniDashboard] reward_points fetch failed:",
@@ -235,13 +435,11 @@ const AlumniDashboard = () => {
   // ============================ RESOLVE SURVEY ROUTE ============================
   useEffect(() => {
     let cancelled = false;
-
     const resolveSurveyRoute = async () => {
       try {
         await getSurveySections();
         const complete = await isSurveyComplete();
         if (cancelled) return;
-
         if (complete) {
           setSurveyRoute("/update-tracer");
         } else {
@@ -253,7 +451,6 @@ const AlumniDashboard = () => {
         if (!cancelled) setSurveyRoute("/survey/personal-background");
       }
     };
-
     resolveSurveyRoute();
     return () => {
       cancelled = true;
@@ -282,42 +479,7 @@ const AlumniDashboard = () => {
     return () => clearInterval(timer);
   }, [progressPct]);
 
-  // ============================ FETCH NOTIFICATIONS (ANNOUNCEMENTS) ============================
-  // useEffect(() => {
-  //   const fetchNotifs = async () => {
-  //     const { data, error } = await supabase
-  //       .from("announcements")
-  //       .select("id, title, content, published_at, is_active")
-  //       .eq("is_active", true)
-  //       .order("published_at", { ascending: false })
-  //       .limit(20);
-  //     if (error || !data) return;
-  //     const readIds = JSON.parse(
-  //       localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
-  //     );
-  //     const mapped = data.map((n) => ({
-  //       id: n.id,
-  //       title: decodeHtmlEntities(n.title),
-  //       body: stripHtml(n.content),
-  //       time: n.published_at,
-  //       read: readIds.includes(n.id),
-  //     }));
-  //     setNotifs(mapped);
-  //     setUnreadCount(mapped.filter((n) => !n.read).length);
-  //     setCardBadges((prev) => ({
-  //       ...prev,
-  //       announcements: mapped.some((n) => !n.read),
-  //     }));
-  //   };
-  //   fetchNotifs();
-  // }, []);
-
-  
-
   // ============================ FETCH CARD BADGES (EVENTS / DISCOUNTS / JOBS) ============================
-  // Badge is shown when: active items exist AND stored watermark < current count.
-  // This means the badge automatically reappears when an admin adds new content.
-  // Also stores live counts for dynamic card descriptions.
   useEffect(() => {
     const fetchBadges = async () => {
       const [eventsRes, discountsRes, jobsRes] = await Promise.all([
@@ -358,120 +520,36 @@ const AlumniDashboard = () => {
     fetchBadges();
   }, []);
 
-  // ============================ BELL OUTSIDE CLICK ============================
-  // useEffect(() => {
-  //   const handler = (e) => {
-  //     if (bellRef.current && !bellRef.current.contains(e.target))
-  //       setShowDropdown(false);
-  //   };
-  //   document.addEventListener("mousedown", handler);
-  //   return () => document.removeEventListener("mousedown", handler);
-  // }, []);
-
   // ============================ REAL-TIME REWARD SYNC (Dashboard) ============================
   const rewardChannelRef = useRef(null);
   useEffect(() => {
-  let mounted = true;
-  subscribeToRewardPoints(
-    (newPoints) => {
-      console.log("[AlumniDashboard] realtime reward update:", newPoints);
-      if (mounted) setRewardPoints(newPoints);
-    },
-    ({ points, newBalance }) => {
-      if (!mounted) return;
-      setToast({
-        visible: true,
-        points,
-        newBalance,
-        label: "Points awarded",
-      });
-    },
-  ).then((channel) => {
-    if (mounted) rewardChannelRef.current = channel;
-    else channel?.unsubscribe();
-  });
+    let mounted = true;
+    subscribeToRewardPoints(
+      (newPoints) => {
+        console.log("[AlumniDashboard] realtime reward update:", newPoints);
+        if (mounted) setRewardPoints(newPoints);
+      },
+      ({ points, newBalance }) => {
+        if (!mounted) return;
+        setToast({
+          visible: true,
+          points,
+          newBalance,
+          label: "Points awarded",
+        });
+      },
+    ).then((channel) => {
+      if (mounted) rewardChannelRef.current = channel;
+      else channel?.unsubscribe();
+    });
+    return () => {
+      mounted = false;
+      rewardChannelRef.current?.unsubscribe();
+      rewardChannelRef.current = null;
+    };
+  }, []);
 
-  return () => {
-    mounted = false;
-    rewardChannelRef.current?.unsubscribe();
-    rewardChannelRef.current = null;
-  };
-}, []);
-
-  // ============================ NOTIFICATION HANDLERS ============================
-
-  // Bulk dismiss — clears every category at once.
-  // Announcements: marks every fetched notification ID as read in localStorage.
-  // Events / Discounts / Jobs: writes current count as watermark so badge stays
-  // gone until new content is added.
-  // // const markAllRead = useCallback(async () => {
-  // //   // ── Announcements ──
-  // //   const allIds = notifs.map((n) => n.id);
-  // //   localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(allIds));
-  // //   setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  // //   setUnreadCount(0);
-
-  // //   // ── Events / Discounts / Jobs ──
-  // //   // Optimistically clear all dots immediately; then persist the watermarks.
-  // //   setCardBadges({
-  // //     announcements: false,
-  // //     events: false,
-  // //     discounts: false,
-  // //     jobs: false,
-  // //   });
-
-  // //   try {
-  // //     const [eventsRes, discountsRes, jobsRes] = await Promise.all([
-  // //       supabase
-  // //         .from("events")
-  // //         .select("id", { count: "exact", head: true })
-  // //         .eq("is_active", true),
-  // //       supabase
-  // //         .from("discounts")
-  // //         .select("id", { count: "exact", head: true })
-  // //         .eq("is_active", true),
-  // //       supabase
-  // //         .from("jobs")
-  // //         .select("id", { count: "exact", head: true })
-  // //         .eq("is_active", true),
-  // //     ]);
-  // //     persistDismissed("events", eventsRes.count || 0);
-  // //     persistDismissed("discounts", discountsRes.count || 0);
-  // //     persistDismissed("jobs", jobsRes.count || 0);
-  // //   } catch (err) {
-  // //     // Fetch failed — write a safe sentinel so badges stay cleared.
-  // //     console.warn("AlumniDashboard: markAllRead badge fetch failed", err);
-  // //     persistDismissed("events", 999999);
-  // //     persistDismissed("discounts", 999999);
-  // //     persistDismissed("jobs", 999999);
-  // //   }
-  // // }, [notifs]);
-
-  // // // Per-item announcement read (existing behaviour — unchanged).
-  // // const markOneRead = useCallback((id) => {
-  // //   const readIds = JSON.parse(
-  // //     localStorage.getItem(STORAGE_KEYS.announcements) || "[]",
-  // //   );
-  // //   if (!readIds.includes(id)) {
-  // //     readIds.push(id);
-  // //     localStorage.setItem(STORAGE_KEYS.announcements, JSON.stringify(readIds));
-  // //   }
-  // //   setNotifs((prev) => {
-  // //     const updated = prev.map((n) => (n.id === id ? { ...n, read: true } : n));
-  // //     setCardBadges((p) => ({
-  // //       ...p,
-  // //       announcements: updated.some((n) => !n.read),
-  // //     }));
-  // //     return updated;
-  // //   });
-  // //   setUnreadCount((prev) => Math.max(0, prev - 1));
-  // // }, []);
-
-  // // Per-card dismiss for Events / Discounts / Jobs.
-  // // Called the moment the user clicks a ForYouCard so the dot vanishes
-  // // before the route transition completes.
-  // // Announcements are handled exclusively through markOneRead / markAllRead
-  // // (their IDs are already tracked individually), so this is a no-op for them.
+  // Per-card dismiss for Events / Discounts / Jobs.
   const dismissBadge = useCallback(async (category) => {
     if (category === "announcements") return;
 
@@ -495,43 +573,7 @@ const AlumniDashboard = () => {
     }
   }, []);
 
-  // ============================ HELPER FUNCTIONS ============================
-  // const groupByDate = (list) => {
-  //   const today = new Date();
-  //   today.setHours(0, 0, 0, 0);
-  //   const yesterday = new Date(today);
-  //   yesterday.setDate(today.getDate() - 1);
-  //   const weekAgo = new Date(today);
-  //   weekAgo.setDate(today.getDate() - 7);
-  //   const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
-  //   list.forEach((n) => {
-  //     const d = new Date(n.time);
-  //     d.setHours(0, 0, 0, 0);
-  //     if (d >= today) groups["Today"].push(n);
-  //     else if (d >= yesterday) groups["Yesterday"].push(n);
-  //     else if (d >= weekAgo) groups["This Week"].push(n);
-  //     else groups["Earlier"].push(n);
-  //   });
-  //   return groups;
-  // };
-
-  // const formatTime = (iso) => {
-  //   if (!iso) return "";
-  //   const d = new Date(iso);
-  //   const now = new Date();
-  //   const diff = Math.floor((now - d) / 1000);
-  //   if (diff < 60) return "Just now";
-  //   if (diff < 3600) return Math.floor(diff / 60) + "m ago";
-  //   if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
-  //   if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
-  //   return d.toLocaleDateString("en-PH", { month: "short", day: "numeric" });
-  // };
-
   // ============================ FOR YOU ITEMS ============================
-  // Order: Announcements → Discounts → Events → Jobs (friend's order).
-  // All descriptions and badge logic use YOUR (original) implementation.
-  // `category` is the dismissBadge key; must match a STORAGE_KEYS entry and
-  // the Supabase table name for events / discounts / jobs.
   const forYouItems = [
     {
       icon: announcementIcon,
@@ -605,7 +647,6 @@ const AlumniDashboard = () => {
       {showModal && (
         <DataPrivacyModal onAccept={handleAccept} onDecline={handleDecline} />
       )}
-
       <AlumniDashboardView
         // ── Layout ──
         isMobile={isMobile}
@@ -614,21 +655,7 @@ const AlumniDashboard = () => {
         // ── User ──
         firstName={firstName}
         // ── Notifications / Bell ──
-        // bellRef={bellRef}
-        // notifs={notifs}
         unreadCount={unreadCount}
-        // showDropdown={showDropdown}
-        // notifTab={notifTab}
-        // setShowDropdown={setShowDropdown}
-        // setNotifTab={setNotifTab}
-        // markAllRead={markAllRead}
-        // markOneRead={markOneRead}
-        // groupByDate={groupByDate}
-        // formatTime={formatTime}
-        // onSeeAllNotifs={() => {
-        //   setShowDropdown(false);
-        //   navigate("/notifications");
-        // }}
         // ── Survey progress ──
         animatedPercentage={animatedPercentage}
         surveyRoute={surveyRoute}
@@ -639,6 +666,9 @@ const AlumniDashboard = () => {
         onDismissBadge={dismissBadge}
         // ── Reward points (additive — from friend's code) ──
         rewardPoints={rewardPoints}
+        // ── Dynamic RewardsCard content ──
+        dynamicRewardSlide={dynamicRewardSlide}
+        loadingRewardContent={loadingRewardContent}
         // ── Asset references forwarded to view (additive — from friend's code) ──
         announcementIcon={announcementIcon}
         rewardIcon={rewardIcon}
