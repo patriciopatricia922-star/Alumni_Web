@@ -15,8 +15,22 @@ const Navbar = ({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  useEffect(() => {
+    let last = window.scrollY;
+    const watcher = () => {
+      const now = window.scrollY;
+      if (Math.abs(now - last) > 5) {
+        console.log('[nav-debug] RAW scroll changed from', last, 'to', now);
+      }
+      last = now;
+    };
+    window.addEventListener('scroll', watcher, { passive: true });
+    return () => window.removeEventListener('scroll', watcher);
+  }, []);
+
   const smoothScrollTo = (targetY, duration = 600) => {
     console.log('[nav-debug] smoothScrollTo called, targetY=', targetY, 'currentScrollY=', window.scrollY);
+    console.trace('[nav-debug] smoothScrollTo call stack');
     const startY = window.scrollY;
     const diff   = targetY - startY;
     let startTime = null;
