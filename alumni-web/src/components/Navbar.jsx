@@ -16,6 +16,7 @@ const Navbar = ({
   }, []);
 
   const smoothScrollTo = (targetY, duration = 600) => {
+    console.log('[nav-debug] smoothScrollTo called, targetY=', targetY, 'currentScrollY=', window.scrollY);
     const startY = window.scrollY;
     const diff   = targetY - startY;
     let startTime = null;
@@ -26,16 +27,21 @@ const Navbar = ({
       const progress = Math.min(elapsed / duration, 1);
       window.scrollTo(0, startY + diff * easeInOutCubic(progress));
       if (progress < 1) requestAnimationFrame(step);
+      else console.log('[nav-debug] scroll animation finished at scrollY=', window.scrollY);
     };
     requestAnimationFrame(step);
   };
 
   const scrollTo = (id) => {
+    console.log('[nav-debug] scrollTo called with id=', id);
     const el = document.getElementById(id);
+    console.log('[nav-debug] getElementById result=', el);
     if (el) {
       const top = el.getBoundingClientRect().top + window.scrollY - 64;
+      console.log('[nav-debug] computed target top=', top);
       smoothScrollTo(top, 700);
     } else {
+      console.log('[nav-debug] element not found, falling back to hash navigation');
       window.location.href = `/#${id}`;
     }
     setMenuOpen(false);
