@@ -53,7 +53,11 @@ const Navbar = ({
     if (el) {
       const top = el.getBoundingClientRect().top + window.scrollY - 64;
       console.log('[nav-debug] computed target top=', top);
-      smoothScrollTo(top, 700);
+      console.log('[nav-debug] TEST: jumping instantly (no animation) to isolate the cause');
+      window.scrollTo(0, top);
+      console.log('[nav-debug] TEST: scrollY immediately after instant jump=', window.scrollY);
+      setTimeout(() => console.log('[nav-debug] TEST: scrollY 300ms after instant jump=', window.scrollY), 300);
+      // smoothScrollTo(top, 700); // temporarily disabled for this test
     } else {
       console.log('[nav-debug] element not found, falling back to hash navigation');
       window.location.href = `/#${id}`;
