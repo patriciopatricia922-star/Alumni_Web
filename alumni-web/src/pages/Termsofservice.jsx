@@ -65,11 +65,11 @@ const TermsOfService = () => {
               padding: 0,
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 7.5H3M3 7.5L7.5 3M3 7.5L7.5 12"
                 stroke="#FFFFFF"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
