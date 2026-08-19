@@ -18,7 +18,9 @@ const ForYouCard = ({ item, onNavigate, onDismissBadge }) => (
       <img
         src={item.icon}
         alt={item.title}
-        className={`for-you-icon ${item.title === "Discounts" ? "discount-icon" : ""}`}
+        className={`for-you-icon ${
+          item.title === "Discounts" ? "discount-icon" : ""
+        }`}
       />
       {item.showDot && <div className="notification-dot" />}
     </div>
@@ -236,6 +238,9 @@ const AlumniDashboardView = ({
       icon: announcementIcon,
       iconSize: 142,
       iconBg: "transparent",
+      // FIX: Added bgImage mapping for Announcements
+      bgImage:
+        dynamicType === "announcement" ? dynamicRewardSlide.bgImage : undefined,
       buttonColor: "#C0152A",
       buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
     },
@@ -280,6 +285,7 @@ const AlumniDashboardView = ({
       iconSize: 137,
       iconTransform: "translateY(1.5px)",
       iconBg: "transparent",
+      // Events bgImage mapping is already present
       bgImage: dynamicType === "event" ? dynamicRewardSlide.bgImage : undefined,
       buttonColor: "#5b21b6",
       buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
@@ -301,6 +307,7 @@ const AlumniDashboardView = ({
       icon: jobsIcon,
       iconSize: 110,
       iconBg: "transparent",
+      // Jobs bgImage mapping is already present
       bgImage: dynamicType === "job" ? dynamicRewardSlide.bgImage : undefined,
       buttonColor: "#065f46",
       buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
@@ -472,7 +479,9 @@ const AlumniDashboardView = ({
             {rewardSlides.map((_, idx) => (
               <button
                 key={idx}
-                className={`slide-dot${idx === slideIndex ? " slide-dot--active" : ""}`}
+                className={`slide-dot${
+                  idx === slideIndex ? " slide-dot--active" : ""
+                }`}
                 onClick={(e) => {
                   e.stopPropagation();
                   goToSlideRef.current(idx);
