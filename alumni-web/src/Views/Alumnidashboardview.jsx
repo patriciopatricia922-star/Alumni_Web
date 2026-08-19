@@ -91,7 +91,7 @@ const AlumniDashboardView = ({
   const [prevIndex, setPrevIndex] = useState(null);
   const [animating, setAnimating] = useState(false);
   const autoPlayRef = useRef(null);
-  const slideLenRef = useRef(2); // Will be updated dynamically
+  const slideLenRef = useRef(5); // Restored to 5 slides
   const interactedRef = useRef(false);
   const goToSlideRef = useRef(null);
   const bannerRef = useRef(null);
@@ -202,9 +202,12 @@ const AlumniDashboardView = ({
     };
   }, [isMobile, slideIndex]);
 
-  // Build reward slides array dynamically
+  // Determine the type of the dynamic content to map it to the correct slide
+  const dynamicType = dynamicRewardSlide?.label?.toLowerCase() || "";
+
+  // Restore the original 5-slide structure with dynamic content injection
   const rewardSlides = [
-    // Slide 0: Always the Reward Points slide (static)
+    // Slide 0: Rewards (Static)
     {
       label: "Your Reward Points",
       points: rewardPoints ?? 0,
@@ -216,24 +219,92 @@ const AlumniDashboardView = ({
       buttonLabel: "Redeem Rewards",
       buttonPath: "/rewards",
     },
-    // Slide 1: Dynamic content from ALL existing Events/Announcements/Jobs/Discounts
-    ...(dynamicRewardSlide
-      ? [dynamicRewardSlide]
-      : [
-          // Fallback if loading or no content
-          {
-            label: "Welcome",
-            title: "Alumni Network",
-            description:
-              "Connect with fellow alumni and explore opportunities!",
-            buttonLabel: "Explore More",
-            buttonPath: "/dashboard",
-            gradient:
-              "linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%)",
-            icon: rewardIcon,
-            iconBg: "transparent",
-          },
-        ]),
+    // Slide 1: Announcements (Dynamic Content)
+    {
+      label: "Announcement",
+      title:
+        dynamicType === "announcement"
+          ? dynamicRewardSlide.title
+          : "Latest Updates",
+      description:
+        dynamicType === "announcement"
+          ? dynamicRewardSlide.description
+          : "Stay updated with the latest news!",
+      buttonLabel: "View Announcements",
+      buttonPath: "/announcements",
+      gradient: "linear-gradient(90deg, #C01828 0%, #D92B40 50%, #F24057 100%)",
+      icon: announcementIcon,
+      iconSize: 142,
+      iconBg: "transparent",
+      buttonColor: "#C0152A",
+      buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
+    },
+    // Slide 2: Discounts (Dynamic Content)
+    {
+      label: "Discount",
+      title:
+        dynamicType === "discount"
+          ? dynamicRewardSlide.title
+          : "Exclusive Deals",
+      description:
+        dynamicType === "discount"
+          ? dynamicRewardSlide.description
+          : "Enjoy exclusive alumni benefits!",
+      buttonLabel: "View Discounts",
+      buttonPath: "/discounts",
+      gradient:
+        "linear-gradient(90deg, rgba(120,60,0,0.72) 0%, rgba(160,80,0,0.60) 50%, rgba(100,50,0,0.72) 100%)",
+      bgImage:
+        dynamicType === "discount"
+          ? dynamicRewardSlide.bgImage
+          : grandWestsideHotel,
+      icon: discountIcon,
+      iconSize: 110,
+      iconBg: "transparent",
+      buttonColor: "#7a3c00",
+      buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
+    },
+    // Slide 3: Events (Dynamic Content)
+    {
+      label: "Event",
+      title:
+        dynamicType === "event" ? dynamicRewardSlide.title : "Upcoming Events",
+      description:
+        dynamicType === "event"
+          ? dynamicRewardSlide.description
+          : "Connect with fellow alumni at our events!",
+      buttonLabel: "View Events",
+      buttonPath: "/events",
+      gradient: "linear-gradient(90deg, #7c3aed 0%, #9b5cf6 50%, #c4a0ff 100%)",
+      icon: eventsIcon,
+      iconSize: 137,
+      iconTransform: "translateY(1.5px)",
+      iconBg: "transparent",
+      bgImage: dynamicType === "event" ? dynamicRewardSlide.bgImage : undefined,
+      buttonColor: "#5b21b6",
+      buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
+    },
+    // Slide 4: Jobs (Dynamic Content)
+    {
+      label: "Job",
+      title:
+        dynamicType === "job"
+          ? dynamicRewardSlide.title
+          : "Career Opportunities",
+      description:
+        dynamicType === "job"
+          ? dynamicRewardSlide.description
+          : "Explore career opportunities for alumni!",
+      buttonLabel: "View Jobs",
+      buttonPath: "/jobs",
+      gradient: "linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)",
+      icon: jobsIcon,
+      iconSize: 110,
+      iconBg: "transparent",
+      bgImage: dynamicType === "job" ? dynamicRewardSlide.bgImage : undefined,
+      buttonColor: "#065f46",
+      buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
+    },
   ];
 
   slideLenRef.current = rewardSlides.length;
