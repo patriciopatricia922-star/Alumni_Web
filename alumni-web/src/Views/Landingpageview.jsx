@@ -250,7 +250,7 @@ loadingDiscounts,
  <section id="about" style={{ width: '100%', background: '#F9FAFB', padding: '96px 32px 80px' }}>
    <div style={{ maxWidth: '860px', margin: '0 auto' }}>
      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
-       <h2 className="lp-section-title">
+       <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>
          {whyJoinSection?.title?.split(' ').slice(0, 2).join(' ') || 'Why Join'}{' '}
          <span style={{ color: '#003EA6' }}>
            {whyJoinSection?.title?.split(' ')[2]?.slice(0, 5) || 'Alumn'}
@@ -259,7 +259,7 @@ loadingDiscounts,
            {whyJoinSection?.title?.split(' ')[2]?.slice(5) || 'AI'}
          </span>
        </h2>
-       <p className="lp-section-subtitle">{whyJoinSection?.description || 'Connecting National University—Dasmariñas alumni through innovative technology and community engagement.'}</p>
+       <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#364153', margin: '0 0 16px', textAlign: 'justify' }}>{whyJoinSection?.description || 'Connecting National University—Dasmariñas alumni through innovative technology and community engagement.'}</p>
      </div>
      <div style={{ marginBottom: '56px' }}>
        <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '42px', lineHeight: '1.1', color: '#101828', textAlign: 'center', margin: '0 0 16px' }}>Mission</h2>
@@ -288,16 +288,12 @@ loadingDiscounts,
    <div style={{ maxWidth: '1216px', margin: '0 auto' }}>
      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
        <h2 style={{ fontFamily: 'Arial', fontWeight: 700, fontSize: '36px', lineHeight: '44px', color: '#101828', margin: '0 0 12px' }}>
-         {(() => {
-           const title = benefitsSection?.title || 'What You Get as an Alumni?';
-           const titleWithQuestionMark = title.endsWith('?') ? title : title + '?';
-           return titleWithQuestionMark.split(' ').map((word, index, arr) => {
-             if (word.toLowerCase() === 'alumni' || word.toLowerCase() === 'alumni?') {
-               return <span key={index} style={{ color: '#003EA6' }}>{word}</span>;
-             }
-             return <React.Fragment key={index}>{word}{index < arr.length - 1 ? ' ' : ''}</React.Fragment>;
-           });
-         })()}
+         {(benefitsSection?.title || 'What You Get as an Alumni?').split(' ').map((word, index, arr) => {
+           if (word.toLowerCase() === 'alumni') {
+             return <span key={index} style={{ color: '#003EA6' }}>{word}</span>;
+           }
+           return <React.Fragment key={index}>{word}{index < arr.length - 1 ? ' ' : ''}</React.Fragment>;
+         })}
        </h2>
        <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '26px', color: '#4A5565', margin: 0 }}>{benefitsSection?.description || 'Membership opens doors to a lifetime of opportunity, connection, and growth.'}</p>
      </div>
