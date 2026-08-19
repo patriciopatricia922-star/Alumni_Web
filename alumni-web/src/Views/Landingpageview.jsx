@@ -335,7 +335,7 @@ loadingDiscounts,
          ].map((item, i) => (
            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
              <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style={{ flexShrink: 0, marginTop: '3px' }}>{item.icon}</svg>
-             <p style={{ fontFamily: 'Arial', fontSize: '18px', lineHeight: '26px', color: '#FFFFFF', margin: 0 }}>{item.text}</p>
+             <p style={{ fontFamily: 'Arial', fontSize: '17px', lineHeight: '28px', color: '#FFFFFF', margin: 0 }}>{item.text}</p>
            </div>
          ))}
        </div>
