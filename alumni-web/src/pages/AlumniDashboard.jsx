@@ -236,6 +236,7 @@ const AlumniDashboard = () => {
               icon: announcementIcon,
               iconSize: 142,
               iconBg: "transparent",
+              bgImage: resolveImage(announcement, "announcements"),
               buttonColor: "#C0152A",
               buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
             },
