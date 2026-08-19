@@ -6,8 +6,7 @@ const Navbar = ({
   onOpenRegister,
   onOpenLogin,
 }) => {
-  // const [scrolled,  setScrolled]  = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onResize = () => { if (window.innerWidth > 768) setMenuOpen(false); };
@@ -15,23 +14,23 @@ const Navbar = ({
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  useEffect(() => {
-    let last = window.scrollY;
-    const watcher = () => {
-      const now = window.scrollY;
-      if (Math.abs(now - last) > 5) {
-        console.log('[nav-debug] RAW scroll changed from', last, 'to', now);
-      }
-      last = now;
-    };
-    window.addEventListener('scroll', watcher, { passive: true });
-    return () => window.removeEventListener('scroll', watcher);
-  }, []);
+  // index.css sets `body { overflow-y: auto !important }`, which makes
+  // <body> the actual scrolling box in most desktop browsers instead of
+  // the window/document element. window.scrollTo() therefore has no
+  // effect there. Scroll whichever element actually has scroll range.
+  const getScrollEl = () => {
+    if (document.body.scrollHeight > document.body.clientHeight) return document.body;
+    return document.documentElement;
+  };
+
+  const scrollToY = (y) => {
+    getScrollEl().scrollTop = y;
+  };
+
+  const getScrollY = () => getScrollEl().scrollTop || window.scrollY;
 
   const smoothScrollTo = (targetY, duration = 600) => {
-    console.log('[nav-debug] smoothScrollTo called, targetY=', targetY, 'currentScrollY=', window.scrollY);
-    console.trace('[nav-debug] smoothScrollTo call stack');
-    const startY = window.scrollY;
+    const startY = getScrollY();
     const diff   = targetY - startY;
     let startTime = null;
     const easeInOutCubic = (t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
@@ -39,27 +38,18 @@ const Navbar = ({
       if (!startTime) startTime = timestamp;
       const elapsed  = timestamp - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      window.scrollTo(0, startY + diff * easeInOutCubic(progress));
+      scrollToY(startY + diff * easeInOutCubic(progress));
       if (progress < 1) requestAnimationFrame(step);
-      else console.log('[nav-debug] scroll animation finished at scrollY=', window.scrollY);
     };
     requestAnimationFrame(step);
   };
 
   const scrollTo = (id) => {
-    console.log('[nav-debug] scrollTo called with id=', id);
     const el = document.getElementById(id);
-    console.log('[nav-debug] getElementById result=', el);
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 64;
-      console.log('[nav-debug] computed target top=', top);
-      console.log('[nav-debug] TEST: jumping instantly (no animation) to isolate the cause');
-      window.scrollTo(0, top);
-      console.log('[nav-debug] TEST: scrollY immediately after instant jump=', window.scrollY);
-      setTimeout(() => console.log('[nav-debug] TEST: scrollY 300ms after instant jump=', window.scrollY), 300);
-      // smoothScrollTo(top, 700); // temporarily disabled for this test
+      const top = el.getBoundingClientRect().top + getScrollY() - 64;
+      smoothScrollTo(top, 700);
     } else {
-      console.log('[nav-debug] element not found, falling back to hash navigation');
       window.location.href = `/#${id}`;
     }
     setMenuOpen(false);

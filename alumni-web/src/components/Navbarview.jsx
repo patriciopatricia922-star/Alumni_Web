@@ -28,7 +28,7 @@ const NavbarView = ({
         {/* Desktop nav links */}
         <div className="nb-links">
           {navLinks.map((link) => (
-            <button key={link.label} onClick={(e) => { console.log('[nav-debug] desktop button clicked:', link.label); link.action(e); }} style={{ fontFamily: 'Arial, sans-serif', fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.4px', padding: 0, transition: 'opacity 0.2s ease' }}
+            <button key={link.label} onClick={link.action} style={{ fontFamily: 'Arial, sans-serif', fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.4px', padding: 0, transition: 'opacity 0.2s ease' }}
               onMouseEnter={(e) => (e.target.style.opacity = '0.7')}
               onMouseLeave={(e) => (e.target.style.opacity = '1')}>
               {link.label}
