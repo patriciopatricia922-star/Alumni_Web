@@ -76,6 +76,7 @@ const resolveImage = (item, type) => {
     announcements:
       "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80",
   };
+  // Check common image fields used across tables
   return (
     item.image_url ||
     item.image ||
