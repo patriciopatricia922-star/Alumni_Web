@@ -28,8 +28,8 @@ import discountIcon from "../assets/discount_ic.svg";
 import eventsIcon from "../assets/events_ic.svg";
 import jobsIcon from "../assets/jobs_ic.svg";
 import grandWestsideHotel from "../assets/grandwestside_hotel.jpeg";
-import NotificationBell from "../components/notifications/NotificationBell";
-import "../styles/NotificationBell.css";
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css';
 import AlumniDashboardView from "../Views/Alumnidashboardview";
 import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
@@ -68,23 +68,13 @@ const persistDismissed = (category, count) => {
 // Resolve image URL from raw Supabase row (mirrors Landingpageview.jsx pattern)
 const resolveImage = (item, type) => {
   const FALLBACKS = {
-    events:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
-    jobs: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80",
-    discounts:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80",
-    announcements:
-      "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80",
+    events: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80',
+    jobs: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80',
+    discounts: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
+    announcements: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&q=80'
   };
-  // Check common image fields used across tables
-  return (
-    item.image_url ||
-    item.image ||
-    item.cover_image ||
-    item.banner_url ||
-    FALLBACKS[type] ||
-    null
-  );
+  // Prioritize image_url as per LandingPage implementation, then check other common fields
+  return item.image_url || item.image || item.cover_image || item.banner_url || FALLBACKS[type] || null;
 };
 
 // ============================ WINDOW WIDTH HOOK ============================
@@ -292,8 +282,7 @@ const AlumniDashboard = () => {
               icon: discountIcon,
               iconSize: 110,
               iconBg: "transparent",
-              bgImage:
-                resolveImage(discount, "discounts") || grandWestsideHotel,
+              bgImage: resolveImage(discount, "discounts") || grandWestsideHotel,
               buttonColor: "#7a3c00",
               buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
             },
@@ -391,7 +380,8 @@ const AlumniDashboard = () => {
       ...prev,
       events: eventsCount > 0 && !isCategoryDismissed("events", eventsCount),
       discounts:
-        discountsCount > 0 && !isCategoryDismissed("discounts", discountsCount),
+        discountsCount > 0 &&
+        !isCategoryDismissed("discounts", discountsCount),
       jobs: jobsCount > 0 && !isCategoryDismissed("jobs", jobsCount),
     }));
   }, []);

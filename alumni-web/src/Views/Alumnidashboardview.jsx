@@ -240,7 +240,9 @@ const AlumniDashboardView = ({
       iconBg: "transparent",
       // FIX: Added bgImage mapping for Announcements
       bgImage:
-        dynamicType === "announcement" ? dynamicRewardSlide.bgImage : undefined,
+        dynamicType === "announcement"
+          ? dynamicRewardSlide.bgImage
+          : undefined,
       buttonColor: "#C0152A",
       buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
     },
@@ -286,7 +288,8 @@ const AlumniDashboardView = ({
       iconTransform: "translateY(1.5px)",
       iconBg: "transparent",
       // Events bgImage mapping is already present
-      bgImage: dynamicType === "event" ? dynamicRewardSlide.bgImage : undefined,
+      bgImage:
+        dynamicType === "event" ? dynamicRewardSlide.bgImage : undefined,
       buttonColor: "#5b21b6",
       buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
     },
@@ -337,7 +340,7 @@ const AlumniDashboardView = ({
   };
 
   const renderSlideContent = (slide) => {
-    const iconSize = slide.isReward ? 100 : (slide.iconSize ?? 130);
+    const iconSize = slide.isReward ? 100 : slide.iconSize ?? 130;
 
     return (
       <>
@@ -358,7 +361,7 @@ const AlumniDashboardView = ({
                 objectFit: "contain",
                 transform: slide.isReward
                   ? "translateY(2px)"
-                  : (slide.iconTransform ?? undefined),
+                  : slide.iconTransform ?? undefined,
                 filter: "drop-shadow(0px 2px 4px rgba(0,0,0,0.18))",
               }}
             />
