@@ -1,11 +1,11 @@
 // ============================================================================
 // AlumniDashboard — Merged Implementation with Independent Dynamic RewardsCard
-// ============================================================================
+// ================= ===========================================================
 // Base logic: original (authoritative). Additive from friend's code:
-//   • rewardPoints state + Supabase fetch from `reward_points`
+//   • rewardPoints state + Supabase fetch from  `reward_points` 
 //   • Extra imports: rewardIcon, grandWestsideHotel, announcement_icn.svg
 //   • Extra props forwarded to AlumniDashboardView
-//   • forYouItems order: Announcements → Discounts → Events → Jobs
+//   • forYouItems order: Announcements → Discounts  → Events → Jobs
 //   • NEW: Independent Dynamic RewardsCard content for each type
 // ============================================================================
 import React, { useEffect, useState, useRef, useCallback } from "react";
