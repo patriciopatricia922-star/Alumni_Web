@@ -175,13 +175,21 @@ body {
   }
 }
 
-/* Desktop only: align with the Jobs page notification bell reference
-   (top: 46px, right: 84px). Scoped to min-width: 1025px so Tablet and
-   Mobile overrides above remain exactly as they are. */
+/* Desktop only: align with the Events/Jobs notification bell reference
+   (top: 46px, right: 84px). Announcements' main-content also has
+   `overflow-y: auto; scrollbar-gutter: stable;` (Events/Jobs don't),
+   which permanently reserves ~16px of scrollbar-track space on the
+   right side of the content box. That reserved space isn't present
+   on Events/Jobs, so the same `right: 84px` renders further inset
+   here than there. Compensating by ~16px (right: 68px) so the bell
+   lines up visually at the same position as Events/Jobs, without
+   touching the scrollbar-gutter rule itself. Scoped to
+   min-width: 1025px so Tablet and Mobile overrides above remain
+   exactly as they are. */
 @media (min-width: 1025px) {
   .announcements-main-content .notification-bell-wrapper {
     top: 46px;
-    right: 84px;
+    right: 68px;
   }
 }
 
