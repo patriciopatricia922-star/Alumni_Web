@@ -175,6 +175,16 @@ body {
   }
 }
 
+/* Desktop only: align with the Jobs page notification bell reference
+   (top: 46px, right: 84px). Scoped to min-width: 1025px so Tablet and
+   Mobile overrides above remain exactly as they are. */
+@media (min-width: 1025px) {
+  .announcements-main-content .notification-bell-wrapper {
+    top: 46px;
+    right: 84px;
+  }
+}
+
 /* ── Featured banner ───────────────────────────────────────── */
 .ann-banner {
   background: #ffffff !important;
