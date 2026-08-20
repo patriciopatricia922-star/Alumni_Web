@@ -87,6 +87,40 @@
   }
 }
 
+/* Desktop only: fixes an unintended overflow/scrollbar issue and aligns the
+   bell with the Announcements reference position (top: 46px, right: 60px).
+
+   Root cause of the overflow: unlike .announcements-main-content,
+   .discounts-main-content never reserved space for the vertical scrollbar.
+   The page scrolled at the document (html/body) level instead, so whenever
+   content height crossed the viewport threshold, the browser's scrollbar
+   appeared/disappeared and silently changed the available viewport width.
+   Because .discounts-main-content is sized with `calc(100% - sidebar-width)`,
+   that width (and therefore the bell's apparent position, computed via
+   `right`) shifted by the scrollbar's width depending on how much content
+   was on screen (e.g. after filtering). This is the same class of issue
+   Announcements already solved for its own content.
+
+   Fix: make .discounts-main-content its own scroll container and reserve a
+   stable scrollbar gutter, exactly like .announcements-main-content does,
+   so the container's width - and the bell's position - no longer depends on
+   whether a scrollbar is actually showing. This does not remove scrolling;
+   the page remains scrollable, it just always scrolls in the same place.
+   Scoped to min-width: 1025px (the same breakpoint Announcements uses for
+   its desktop bell override) so Tablet and Mobile scrolling/layout are
+   untouched. */
+@media (min-width: 1025px) {
+  .discounts-main-content {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+
+  .discounts-main-content .notification-bell-wrapper {
+    top: 46px;
+    right: 60px;
+  }
+}
+
 /* Back Button */
 .back-button {
   display: inline-flex;
