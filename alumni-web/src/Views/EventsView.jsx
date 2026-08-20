@@ -65,7 +65,7 @@ const CategoryBadge = ({ category }) => {
         ? <FaStar size={10} color={T.exclusiveBadge} />
         : <HiOutlineCalendar size={11} color={T.accent} />}
       <span style={{
-        fontFamily:    "'Montserrat', Arial, sans-serif",
+        fontFamily:     "'Montserrat', Arial, sans-serif",
         fontSize:      '10px',
         fontWeight:    700,
         color:         isExclusive ? T.exclusiveBadge : T.accent,
@@ -97,7 +97,6 @@ const MetaItem = ({ icon, text }) => (
 const EventCard = ({ event, isMobile }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
-
   const isExclusive = event.category === 'Exclusive Events';
 
   const formatEventDate = (dateStr) =>
@@ -123,6 +122,7 @@ const EventCard = ({ event, isMobile }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const images = event.images?.length ? event.images : event.image ? [event.image] : [];
   const hasMultiple = images.length > 1;
+
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
 
@@ -141,22 +141,35 @@ const EventCard = ({ event, isMobile }) => {
         cursor:       'pointer',
         transform:    hovered ? 'translateY(-1px)' : 'translateY(0)',
         transition:   'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.12s ease',
+        display:      'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* ── Image with arrows ── */}
+      {/* ── Image with arrows (1:1 Aspect Ratio like Discounts) ── */}
       {images.length > 0 && (
         <div
           className={isMobile ? 'events-event-image-wrapper mobile' : undefined}
-          style={{ position: 'relative', width: '100%', height: isMobile ? undefined : '220px', overflow: 'hidden', flexShrink: 0 }}
+          style={{ 
+            position: 'relative', 
+            width: '100%', 
+            aspectRatio: '1 / 1', // Reference: 1080x1080 square ratio
+            overflow: 'hidden', 
+            flexShrink: 0 
+          }}
         >
           <img
             src={images[imgIndex]}
             alt={event.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-              transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.35s ease' }}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover', 
+              display: 'block',
+              transform: hovered ? 'scale(1.04)' : 'scale(1)', 
+              transition: 'transform 0.35s ease' 
+            }}
             onError={e => { e.target.style.display = 'none'; }}
           />
-
           {/* Left arrow */}
           <button onClick={prevImg} style={{
             position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
@@ -172,7 +185,6 @@ const EventCard = ({ event, isMobile }) => {
               <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-
           {/* Right arrow */}
           <button onClick={nextImg} style={{
             position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
@@ -188,7 +200,6 @@ const EventCard = ({ event, isMobile }) => {
               <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-
           {/* Dot indicators */}
           <div style={{
             position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
@@ -208,187 +219,158 @@ const EventCard = ({ event, isMobile }) => {
       {/* Card body */}
       <div style={{
         display:    'flex',
-        alignItems: 'flex-start',
-        padding:    isMobile ? '12px 14px' : '14px 18px',
+        flexDirection: 'column',
+        padding:    isMobile ? '16px 14px' : '18px 20px',
         gap:        '12px',
+        flex:       1,
       }}>
-
-        {/* Icon box */}
-        <div style={{
-          width:          40,
-          height:         40,
-          minWidth:       40,
-          background:     'rgba(0,62,166,0.08)',
-          border:         '1px solid rgba(0,62,166,0.15)',
-          borderRadius:   '50%',
-          display:        'flex',
-          alignItems:     'center',
-          justifyContent: 'center',
-          flexShrink:     0,
-          marginTop:      '2px',
-          transition:     'transform 0.2s ease, box-shadow 0.2s ease',
-          transform:      hovered ? 'scale(1.05)' : 'scale(1)',
-          boxShadow:      hovered ? '0px 4px 12px rgba(0,62,166,0.2)' : 'none',
-        }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <rect x="3" y="4" width="18" height="18" rx="3" stroke="#003EA6" strokeWidth="1.6" />
-            <path d="M3 9H21" stroke="#003EA6" strokeWidth="1.6" />
-            <path d="M8 2V5M16 2V5" stroke="#003EA6" strokeWidth="1.6" strokeLinecap="round" />
-            <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="#003EA6" />
-            <rect x="11" y="13" width="2.5" height="2.5" rx="0.5" fill="#003EA6" />
-          </svg>
+        {/* Top row: badge + timestamp */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+          <CategoryBadge category={event.category} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, paddingTop: '2px' }}>
+            <ClockSVG />
+            <span style={{
+              fontFamily: "'Montserrat', Arial, sans-serif",
+              fontSize:   '11px',
+              color:      'rgba(0,0,0,0.35)',
+              whiteSpace: 'nowrap',
+            }}>
+              {relativeTime(event.created_at || event.event_date)}
+            </span>
+          </div>
         </div>
 
-        {/* Content column */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {/* Title */}
+        <p style={{
+          fontFamily:    "'Montserrat', Arial, sans-serif",
+          fontWeight:    700,
+          fontSize:      '15px',
+          lineHeight:    '1.4',
+          letterSpacing: '0px',
+          color:         '#0A0A0A',
+          margin:        '0',
+        }}>
+          {event.name || event.title}
+        </p>
 
-          {/* Top row: badge + timestamp */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <CategoryBadge category={event.category} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, paddingTop: '2px' }}>
-              <ClockSVG />
-              <span style={{
-                fontFamily: "'Montserrat', Arial, sans-serif",
-                fontSize:   '11px',
-                color:      'rgba(0,0,0,0.35)',
-                whiteSpace: 'nowrap',
-              }}>
-                {relativeTime(event.created_at || event.event_date)}
-              </span>
-            </div>
-          </div>
+        {/* Description with inline See more */}
+        <p style={{
+          fontFamily: "'Montserrat', Arial, sans-serif",
+          fontWeight: 400,
+          fontSize:   '13px',
+          lineHeight: expanded ? '1.6' : '1.5',
+          color:      '#4A5565',
+          margin:     '0',
+          whiteSpace: 'pre-wrap',
+          wordBreak:  'break-word',
+        }}>
+          {expanded
+            ? previewText
+            : needsTrunc
+              ? previewText.substring(0, 120) + '… '
+              : previewText}
+          {!expanded && needsTrunc && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+              style={{
+                background:  'none',
+                border:      'none',
+                padding:     0,
+                fontFamily:  "'Montserrat', Arial, sans-serif",
+                fontSize:    '13px',
+                fontWeight:  700,
+                color:       '#2B72FB',
+                cursor:      'pointer',
+                display:     'inline',
+                lineHeight:  'inherit',
+              }}
+            >
+              See more
+            </button>
+          )}
+        </p>
 
-          {/* Title */}
-          <p style={{
-            fontFamily:    "'Montserrat', Arial, sans-serif",
-            fontWeight:    700,
-            fontSize:      '13px',
-            lineHeight:    '1.4',
-            letterSpacing: '0px',
-            color:         '#0A0A0A',
-             margin:     expanded ? '0 0 16px 0' : '0 0 4px 0',
+        {/* Compact meta (always visible) */}
+        {!expanded && hasDetails && (
+          <div style={{
+            display:       'flex',
+            flexDirection: 'column',
+            gap:           '10px',
+            paddingTop:    '12px',
+            borderTop:     '1px solid #F0F2F5',
+            marginTop:     '4px',
           }}>
-            {event.name || event.title}
-          </p>
-
-          {/* Description with inline See more */}
-          <p style={{
-            fontFamily: "'Montserrat', Arial, sans-serif",
-            fontWeight: 400,
-            fontSize:   '12px',
-            lineHeight: expanded ? '1.8' : '1.6',   // ← changed
-            color:      '#4A5565',
-            margin:     expanded ? '0 0 16px 0' : '0 0 4px 0',  // ← changed
-            whiteSpace: 'pre-wrap',    // ← new
-            wordBreak:  'break-word',  // ← new
-          }}>
-            {expanded
-              ? previewText
-              : needsTrunc
-                ? previewText.substring(0, 120) + '… '
-                : previewText}
-            {!expanded && needsTrunc && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-                style={{
-                  background:  'none',
-                  border:      'none',
-                  padding:     0,
-                  fontFamily:  "'Montserrat', Arial, sans-serif",
-                  fontSize:    '12px',
-                  fontWeight:  700,
-                  color:       '#2B72FB',
-                  cursor:      'pointer',
-                  display:     'inline',
-                  lineHeight:  'inherit',
-                }}
-              >
-                See more
-              </button>
+            {event.event_date && (
+              <MetaItem
+                icon={<FaCalendarAlt size={11} color={T.metaColor} />}
+                text={formatEventDate(event.event_date)}
+              />
             )}
-          </p>
+            {event.location && (
+              <MetaItem
+                icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
+                text={event.location}
+              />
+            )}
+            {event.event_date && (
+              <MetaItem
+                icon={<HiOutlineClock size={13} color={T.metaColor} />}
+                text={formatEventTime(event.event_date)}
+              />
+            )}
+          </div>
+        )}
 
-          {/* Compact meta (always visible) */}
-          {!expanded && hasDetails && (
-            <div style={{
-              display:       'flex',
-              flexDirection: 'column',
-              gap:           '10px',    // was 8px
-              paddingTop:    '8px',     // was 4px
-            }}>
-              <div style={{ height: '1px', background: '#FAC775', margin: '0 0 4px 0' }} />
-              {event.event_date && (
-                <MetaItem
-                  icon={<FaCalendarAlt size={11} color={T.metaColor} />}
-                  text={formatEventDate(event.event_date)}
-                />
-              )}
-              {event.location && (
-                <MetaItem
-                  icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
-                  text={event.location}
-                />
-              )}
-              {event.event_date && (
-                <MetaItem
-                  icon={<HiOutlineClock size={13} color={T.metaColor} />}
-                  text={formatEventTime(event.event_date)}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Expanded: full meta + See less */}
-          {expanded && hasDetails && (
-            <div style={{
-              display:       'flex',
-              flexDirection: 'column',
-              gap:           '12px',      // ← was 8px
-              paddingTop:    '12px',      // ← was 4px
-            }}>
-              <div style={{ height: '1px', background: '#FAC775', margin: '0 0 8px 0' }} />
-              {event.location && (
-                <MetaItem
-                  icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
-                  text={event.location}
-                />
-              )}
-              {event.event_date && (
-                <MetaItem
-                  icon={<FaCalendarAlt size={11} color={T.metaColor} />}
-                  text={formatEventDate(event.event_date)}
-                />
-              )}
-              {event.event_date && (
-                <MetaItem
-                  icon={<HiOutlineClock size={13} color={T.metaColor} />}
-                  text={formatEventTime(event.event_date)}
-                />
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
-                style={{
-                  background:  'none',
-                  border:      'none',
-                  padding:     0,
-                  fontFamily:  "'Montserrat', Arial, sans-serif",
-                  fontSize:    '12px',
-                  fontWeight:  700,
-                  color:       '#2B72FB',
-                  cursor:      'pointer',
-                  display:     'inline-flex',
-                  alignItems:  'center',
-                  gap:         '4px',
-                  marginTop: '8px', 
-                  alignSelf:   'flex-start',
-                }}
-              >
-                See less <FaChevronUp size={9} />
-              </button>
-            </div>
-          )}
-
-        </div>  
+        {/* Expanded: full meta + See less */}
+        {expanded && hasDetails && (
+          <div style={{
+            display:       'flex',
+            flexDirection: 'column',
+            gap:           '12px',
+            paddingTop:    '12px',
+            borderTop:     '1px solid #F0F2F5',
+            marginTop:     '4px',
+          }}>
+            {event.location && (
+              <MetaItem
+                icon={<HiOutlineLocationMarker size={13} color={T.metaColor} />}
+                text={event.location}
+              />
+            )}
+            {event.event_date && (
+              <MetaItem
+                icon={<FaCalendarAlt size={11} color={T.metaColor} />}
+                text={formatEventDate(event.event_date)}
+              />
+            )}
+            {event.event_date && (
+              <MetaItem
+                icon={<HiOutlineClock size={13} color={T.metaColor} />}
+                text={formatEventTime(event.event_date)}
+              />
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+              style={{
+                background:  'none',
+                border:      'none',
+                padding:     0,
+                fontFamily:  "'Montserrat', Arial, sans-serif",
+                fontSize:    '12px',
+                fontWeight:  700,
+                color:       '#2B72FB',
+                cursor:      'pointer',
+                display:     'inline-flex',
+                alignItems:  'center',
+                gap:         '4px',
+                marginTop: '8px', 
+                alignSelf:   'flex-start',
+              }}
+            >
+              See less <FaChevronUp size={9} />
+            </button>
+          </div>
+        )}
       </div>    
     </div>      
   );
@@ -410,7 +392,6 @@ const EventsView = ({
       background: T.pageBg,
     }}>
       <Sidebar />
-
       <div
         className={`events-main-content ${isMobile ? 'mobile' : ''}`}
         style={{
@@ -421,13 +402,11 @@ const EventsView = ({
           overflowX:  'hidden',
           position:   'relative',
         }}>
-
         <NotificationBell
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
           dropdownClassName={isMobile ? 'mobile' : ''}
         />
-
         {/* ── Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
@@ -440,7 +419,6 @@ const EventsView = ({
           </svg>
           <span>Back</span>
         </button>
-
         {/* ── Header ── */}
         <div className={`events-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`events-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
@@ -450,7 +428,6 @@ const EventsView = ({
             Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community
           </p>
         </div>
-
         {/* ── Filter Bar ── */}
         <div
           className={isMobile ? 'events-filter-bar mobile' : 'events-filter-bar'}
@@ -467,7 +444,6 @@ const EventsView = ({
             className={isMobile ? 'events-filter-container mobile' : 'events-filter-container'}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
           >
-
             <div style={{ position: 'relative' }} className={isMobile ? 'events-filter-trigger-wrap mobile' : undefined}>
             <div
               className={isMobile ? 'events-filter-display mobile' : 'events-filter-display'}
@@ -512,7 +488,6 @@ const EventsView = ({
                 </span>
               </div>
             </div>
-
             {showFilter && (
               <div
                 className={isMobile ? 'events-filter-dropdown mobile' : 'events-filter-dropdown'}
@@ -582,7 +557,6 @@ const EventsView = ({
               </div>
             )}
             </div>
-
             <button
               onClick={() => setShowFilter(f => !f)}
               className={isMobile ? 'events-filter-button mobile' : 'events-filter-button'}
@@ -613,14 +587,12 @@ const EventsView = ({
             </button>
           </div>
         </div>
-
         {/* ── Events List (stacked, full-width cards) ── */}
-        <div className={isMobile ? 'events-list-wrap mobile' : undefined} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className={isMobile ? 'events-list-wrap mobile' : undefined} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {filtered.map(event => (
             <EventCard key={event.id} event={event} isMobile={isMobile} />
           ))}
         </div>
-
         {filtered.length === 0 && (
           <div style={{
             textAlign:  'center',
