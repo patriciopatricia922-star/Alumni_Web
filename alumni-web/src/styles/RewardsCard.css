@@ -260,6 +260,17 @@
     min-height: 112px;
   }
 }
+
+/* Announcements banner only: reduce description text on tablet/desktop
+   so the dynamic content fits within the existing card. Scoped to
+   .slide-announcements so no other banner is affected, and left out of
+   mobile breakpoints so the existing mobile typography is unchanged. */
+@media (min-width: 768px) {
+  .slide-announcements .reward-banner-sub {
+    font-size: clamp(10px, 0.95vw, 12px);
+    line-height: 1.35;
+  }
+}
 @media (max-width: 400px) {
   .reward-slide {
     padding: 10px 14px;

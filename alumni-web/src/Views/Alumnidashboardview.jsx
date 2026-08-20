@@ -236,6 +236,7 @@ const AlumniDashboardView = ({
       bgImage: dynamicAnnouncement?.bgImage,
       buttonColor: "#C0152A",
       buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
+      isAnnouncement: true,
     },
     // Slide 2: Discounts (Independent Dynamic Content)
     {
@@ -357,7 +358,9 @@ const AlumniDashboardView = ({
               ) : (
                 <span
                   style={{
-                    fontSize: "clamp(18px, 4vw, 30px)",
+                    fontSize: slide.isAnnouncement
+                      ? "clamp(15px, 2.2vw, 20px)"
+                      : "clamp(18px, 4vw, 30px)",
                     fontWeight: 700,
                   }}
                 >
@@ -473,7 +476,10 @@ const AlumniDashboardView = ({
             return (
               <div
                 key={idx}
-                className={getSlideClass(idx)}
+                className={
+                  getSlideClass(idx) +
+                  (slide.isAnnouncement ? " slide-announcements" : "")
+                }
                 style={{
                   background: slide.bgImage ? "transparent" : slide.gradient,
                 }}
