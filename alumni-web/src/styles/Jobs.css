@@ -716,6 +716,20 @@
     overflow: hidden;
   }
 
+  /* Image container only: 1:1 (1080×1080-equivalent) aspect ratio.
+     The wrapper's fixed 220px height is set inline in JobsView.jsx,
+     so !important is required here to override it — the same
+     technique already used for the Mobile breakpoint above. Only
+     the container's proportions change; the <img> itself keeps its
+     existing src, width:100%/height:100%/object-fit:cover, so it
+     simply scales to fill the new square box instead of the old
+     fixed-height rectangle. Card/body/content dimensions are
+     untouched. */
+  .job-card-image-wrapper {
+    height: auto !important;
+    aspect-ratio: 1 / 1;
+  }
+
   .job-card-body {
     flex-direction: column;
     align-items: stretch;
