@@ -677,3 +677,102 @@
     height: clamp(200px, 42vw, 240px) !important;
   }
 }
+
+/* ============================================================
+   DESKTOP-ONLY: JOB CARD VISUAL REDESIGN
+   (matches the Discounts individual-card layout/structure)
+
+   Scope: min-width: 1025px ONLY, i.e. strictly above the Tablet
+   breakpoint (max-width: 1024px) used elsewhere in this file.
+   Tablet and Mobile rules above are completely untouched, and
+   this block introduces no new classes/props/JSX — it only
+   restyles the EXISTING .job-card markup and its existing
+   children (.job-card-body, .job-icon-box, .job-content,
+   .compact-meta, .expanded-meta, .see-less-btn) for desktop.
+   All Job content, data, variables and functionality are
+   unchanged.
+   ============================================================ */
+@media (min-width: 1025px) {
+
+  /* Card grid, mirroring the Discounts grid pattern. auto-fill/
+     minmax (rather than a hard-coded column count) keeps the
+     grid stable across narrow desktop windows, wide monitors,
+     ultrawide displays, and manual browser resizing. */
+  .jobs-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    align-items: start;
+    gap: 14px;
+  }
+
+  /* Card: vertical composition (image → body → meta → action),
+     matching the Discount card's proportions/structure. */
+  .job-card {
+    display: flex;
+    flex-direction: column;
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    overflow: hidden;
+  }
+
+  .job-card-body {
+    flex-direction: column;
+    align-items: stretch;
+    flex: 1;
+  }
+
+  /* Smaller, less dominant icon/logo now that it sits above the
+     content instead of beside it — same image, same source,
+     just resized to match the Discount card's visual hierarchy. */
+  .job-icon-box {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 12px;
+    margin-bottom: 2px;
+  }
+
+  .job-content {
+    gap: 8px;
+  }
+
+  /* Divider above the meta section, matching the Discount card's
+     divider placement between description and details. */
+  .compact-meta,
+  .expanded-meta {
+    position: relative;
+    padding-top: 14px;
+  }
+
+  .compact-meta::before,
+  .expanded-meta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  /* Push the expanded state's toggle toward the bottom of the
+     card and give it the pill-button treatment used by the
+     Discount card's toggle (full-width, filled, rounded). */
+  .expanded-meta {
+    margin-top: auto;
+  }
+
+  .see-less-btn {
+    width: 100%;
+    height: 37px;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #FFFFFF;
+  }
+
+  .see-less-btn:hover {
+    opacity: 0.88;
+  }
+}
