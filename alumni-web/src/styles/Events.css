@@ -77,12 +77,14 @@
   }
 }
 
-/* Desktop only: align vertical position with the Jobs page notification
-   bell (top: 45px). Scoped to min-width: 1025px so Tablet (which only
-   overrides `right` above) and Mobile remain exactly as they are. */
+/* Desktop only: align vertical AND horizontal position with the Jobs page
+   notification bell (top: 45px, right: 84px). Scoped to min-width: 1025px
+   so Tablet (which only overrides `right` above) and Mobile remain exactly
+   as they are. */
 @media (min-width: 1025px) {
   .events-main-content .notification-bell-wrapper {
     top: 45px;
+    right: 84px;
   }
 }
 
