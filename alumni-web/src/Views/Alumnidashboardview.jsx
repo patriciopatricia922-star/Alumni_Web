@@ -80,7 +80,10 @@ const AlumniDashboardView = ({
   surveyRoute,
   onSurveyNavigate,
   rewardPoints = 0,
-  dynamicRewardSlide = null,
+  dynamicAnnouncement = null,
+  dynamicDiscount = null,
+  dynamicEvent = null,
+  dynamicJob = null,
   loadingRewardContent = true,
   announcementIcon,
   rewardIcon,
@@ -204,10 +207,7 @@ const AlumniDashboardView = ({
     };
   }, [isMobile, slideIndex]);
 
-  // Determine the type of the dynamic content to map it to the correct slide
-  const dynamicType = dynamicRewardSlide?.label?.toLowerCase() || "";
-
-  // Restore the original 5-slide structure with dynamic content injection
+  // Restore the original 5-slide structure with independent dynamic content injection
   const rewardSlides = [
     // Slide 0: Rewards (Static)
     {
@@ -221,65 +221,45 @@ const AlumniDashboardView = ({
       buttonLabel: "Redeem Rewards",
       buttonPath: "/rewards",
     },
-    // Slide 1: Announcements (Dynamic Content)
+    // Slide 1: Announcements (Independent Dynamic Content)
     {
       label: "Announcement",
-      title:
-        dynamicType === "announcement"
-          ? dynamicRewardSlide.title
-          : "Latest Updates",
+      title: dynamicAnnouncement?.title || "Latest Updates",
       description:
-        dynamicType === "announcement"
-          ? dynamicRewardSlide.description
-          : "Stay updated with the latest news!",
+        dynamicAnnouncement?.description || "Stay updated with the latest news!",
       buttonLabel: "View Announcements",
       buttonPath: "/announcements",
       gradient: "linear-gradient(90deg, #C01828 0%, #D92B40 50%, #F24057 100%)",
       icon: announcementIcon,
       iconSize: 142,
       iconBg: "transparent",
-      // FIX: Added bgImage mapping for Announcements
-      bgImage:
-        dynamicType === "announcement"
-          ? dynamicRewardSlide.bgImage
-          : undefined,
+      bgImage: dynamicAnnouncement?.bgImage,
       buttonColor: "#C0152A",
       buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
     },
-    // Slide 2: Discounts (Dynamic Content)
+    // Slide 2: Discounts (Independent Dynamic Content)
     {
       label: "Discount",
-      title:
-        dynamicType === "discount"
-          ? dynamicRewardSlide.title
-          : "Exclusive Deals",
+      title: dynamicDiscount?.title || "Exclusive Deals",
       description:
-        dynamicType === "discount"
-          ? dynamicRewardSlide.description
-          : "Enjoy exclusive alumni benefits!",
+        dynamicDiscount?.description || "Enjoy exclusive alumni benefits!",
       buttonLabel: "View Discounts",
       buttonPath: "/discounts",
       gradient:
         "linear-gradient(90deg, rgba(120,60,0,0.72) 0%, rgba(160,80,0,0.60) 50%, rgba(100,50,0,0.72) 100%)",
-      bgImage:
-        dynamicType === "discount"
-          ? dynamicRewardSlide.bgImage
-          : grandWestsideHotel,
+      bgImage: dynamicDiscount?.bgImage || grandWestsideHotel,
       icon: discountIcon,
       iconSize: 110,
       iconBg: "transparent",
       buttonColor: "#7a3c00",
       buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
     },
-    // Slide 3: Events (Dynamic Content)
+    // Slide 3: Events (Independent Dynamic Content)
     {
       label: "Event",
-      title:
-        dynamicType === "event" ? dynamicRewardSlide.title : "Upcoming Events",
+      title: dynamicEvent?.title || "Upcoming Events",
       description:
-        dynamicType === "event"
-          ? dynamicRewardSlide.description
-          : "Connect with fellow alumni at our events!",
+        dynamicEvent?.description || "Connect with fellow alumni at our events!",
       buttonLabel: "View Events",
       buttonPath: "/events",
       gradient: "linear-gradient(90deg, #7c3aed 0%, #9b5cf6 50%, #c4a0ff 100%)",
@@ -287,31 +267,23 @@ const AlumniDashboardView = ({
       iconSize: 137,
       iconTransform: "translateY(1.5px)",
       iconBg: "transparent",
-      // Events bgImage mapping is already present
-      bgImage:
-        dynamicType === "event" ? dynamicRewardSlide.bgImage : undefined,
+      bgImage: dynamicEvent?.bgImage,
       buttonColor: "#5b21b6",
       buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
     },
-    // Slide 4: Jobs (Dynamic Content)
+    // Slide 4: Jobs (Independent Dynamic Content)
     {
       label: "Job",
-      title:
-        dynamicType === "job"
-          ? dynamicRewardSlide.title
-          : "Career Opportunities",
+      title: dynamicJob?.title || "Career Opportunities",
       description:
-        dynamicType === "job"
-          ? dynamicRewardSlide.description
-          : "Explore career opportunities for alumni!",
+        dynamicJob?.description || "Explore career opportunities for alumni!",
       buttonLabel: "View Jobs",
       buttonPath: "/jobs",
       gradient: "linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)",
       icon: jobsIcon,
       iconSize: 110,
       iconBg: "transparent",
-      // Jobs bgImage mapping is already present
-      bgImage: dynamicType === "job" ? dynamicRewardSlide.bgImage : undefined,
+      bgImage: dynamicJob?.bgImage,
       buttonColor: "#065f46",
       buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
     },

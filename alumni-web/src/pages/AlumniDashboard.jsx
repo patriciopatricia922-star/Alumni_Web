@@ -1,12 +1,12 @@
 // ============================================================================
-// AlumniDashboard — Merged Implementation with Dynamic RewardsCard (All Content)
+// AlumniDashboard — Merged Implementation with Independent Dynamic RewardsCard
 // ============================================================================
 // Base logic: original (authoritative). Additive from friend's code:
 //   • rewardPoints state + Supabase fetch from `reward_points`
 //   • Extra imports: rewardIcon, grandWestsideHotel, announcement_icn.svg
 //   • Extra props forwarded to AlumniDashboardView
 //   • forYouItems order: Announcements → Discounts → Events → Jobs
-//   • NEW: Dynamic RewardsCard content from ALL existing Events/Announcements/Jobs/Discounts
+//   • NEW: Independent Dynamic RewardsCard content for each type
 // ============================================================================
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -138,15 +138,24 @@ const AlumniDashboard = () => {
     },
   });
 
-  // ============================ DYNAMIC REWARDS CARD CONTENT ============================
-  const [dynamicRewardSlide, setDynamicRewardSlide] = useState(null);
+  // ============================ INDEPENDENT DYNAMIC REWARDS CARD CONTENT ============================
+  const [dynamicAnnouncement, setDynamicAnnouncement] = useState(null);
+  const [dynamicDiscount, setDynamicDiscount] = useState(null);
+  const [dynamicEvent, setDynamicEvent] = useState(null);
+  const [dynamicJob, setDynamicJob] = useState(null);
   const [loadingRewardContent, setLoadingRewardContent] = useState(true);
 
-  // Fetch and randomize from ALL available content for RewardsCard
+  // Helper to randomly select one item from an array
+  const getRandomItem = (items) => {
+    if (!items || items.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * items.length);
+    return items[randomIndex];
+  };
+
+  // Fetch and randomize independently for each content type
   const fetchAndRandomizeRewardContent = useCallback(async () => {
     try {
       // Fetch a larger pool of active items from each content type
-      // Using limit(50) to get a good variety without fetching the entire database if it's huge
       const [eventsRes, announcementsRes, jobsRes, discountsRes] =
         await Promise.all([
           supabase
@@ -176,154 +185,113 @@ const AlumniDashboard = () => {
             .limit(50),
         ]);
 
-      // Build array of all available content items
-      const allAvailableContent = [];
+      // Independently select one random item for each type
+      const randomEvent = getRandomItem(eventsRes.data);
+      const randomAnnouncement = getRandomItem(announcementsRes.data);
+      const randomJob = getRandomItem(jobsRes.data);
+      const randomDiscount = getRandomItem(discountsRes.data);
 
-      if (eventsRes.data && eventsRes.data.length > 0) {
-        eventsRes.data.forEach((event) => {
-          allAvailableContent.push({
-            type: "events",
-            data: event,
-            slide: {
-              label: "Event",
-              title: event.title || "Upcoming Event",
-              description:
-                stripHtml(event.description)?.substring(0, 100) +
-                  (stripHtml(event.description)?.length > 100 ? "..." : "") ||
-                "Check out our latest alumni event!",
-              buttonLabel: "View Events",
-              buttonPath: "/events",
-              gradient:
-                "linear-gradient(90deg, #7c3aed 0%, #9b5cf6 50%, #c4a0ff 100%)",
-              icon: eventsIcon,
-              iconSize: 137,
-              iconTransform: "translateY(1.5px)",
-              iconBg: "transparent",
-              bgImage: resolveImage(event, "events"),
-              buttonColor: "#5b21b6",
-              buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
-            },
-          });
-        });
-      }
-
-      if (announcementsRes.data && announcementsRes.data.length > 0) {
-        announcementsRes.data.forEach((announcement) => {
-          allAvailableContent.push({
-            type: "announcements",
-            data: announcement,
-            slide: {
-              label: "Announcement",
-              title: announcement.title || "Latest Announcement",
-              description:
-                stripHtml(announcement.content)?.substring(0, 100) +
-                  (stripHtml(announcement.content)?.length > 100
-                    ? "..."
-                    : "") || "Stay updated with the latest news!",
-              buttonLabel: "View Announcements",
-              buttonPath: "/announcements",
-              gradient:
-                "linear-gradient(90deg, #C01828 0%, #D92B40 50%, #F24057 100%)",
-              icon: announcementIcon,
-              iconSize: 142,
-              iconBg: "transparent",
-              bgImage: resolveImage(announcement, "announcements"),
-              buttonColor: "#C0152A",
-              buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
-            },
-          });
-        });
-      }
-
-      if (jobsRes.data && jobsRes.data.length > 0) {
-        jobsRes.data.forEach((job) => {
-          allAvailableContent.push({
-            type: "jobs",
-            data: job,
-            slide: {
-              label: "Job",
-              title: job.title || "Career Opportunity",
-              description:
-                stripHtml(job.description)?.substring(0, 100) +
-                  (stripHtml(job.description)?.length > 100 ? "..." : "") ||
-                "Explore career opportunities!",
-              buttonLabel: "View Jobs",
-              buttonPath: "/jobs",
-              gradient:
-                "linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)",
-              icon: jobsIcon,
-              iconSize: 110,
-              iconBg: "transparent",
-              bgImage: resolveImage(job, "jobs"),
-              buttonColor: "#065f46",
-              buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
-            },
-          });
-        });
-      }
-
-      if (discountsRes.data && discountsRes.data.length > 0) {
-        discountsRes.data.forEach((discount) => {
-          allAvailableContent.push({
-            type: "discounts",
-            data: discount,
-            slide: {
-              label: "Discount",
-              title: discount.title || "Exclusive Discount",
-              description:
-                stripHtml(discount.description)?.substring(0, 100) +
-                  (stripHtml(discount.description)?.length > 100
-                    ? "..."
-                    : "") || "Enjoy exclusive alumni benefits!",
-              buttonLabel: "View Discounts",
-              buttonPath: "/discounts",
-              gradient:
-                "linear-gradient(90deg, rgba(120,60,0,0.72) 0%, rgba(160,80,0,0.60) 50%, rgba(100,50,0,0.72) 100%)",
-              icon: discountIcon,
-              iconSize: 110,
-              iconBg: "transparent",
-              bgImage: resolveImage(discount, "discounts") || grandWestsideHotel,
-              buttonColor: "#7a3c00",
-              buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
-            },
-          });
-        });
-      }
-
-      // Randomly select from ALL available content
-      if (allAvailableContent.length > 0) {
-        const randomIndex = Math.floor(
-          Math.random() * allAvailableContent.length,
-        );
-        setDynamicRewardSlide(allAvailableContent[randomIndex].slide);
-      } else {
-        // Fallback to a default message if no content is available
-        setDynamicRewardSlide({
-          label: "Welcome",
-          title: "Alumni Network",
-          description: "Connect with fellow alumni and explore opportunities!",
-          buttonLabel: "Explore More",
-          buttonPath: "/dashboard",
+      // Map Announcement
+      if (randomAnnouncement) {
+        setDynamicAnnouncement({
+          label: "Announcement",
+          title: randomAnnouncement.title || "Latest Announcement",
+          description:
+            stripHtml(randomAnnouncement.content)?.substring(0, 100) +
+              (stripHtml(randomAnnouncement.content)?.length > 100
+                ? "..."
+                : "") || "Stay updated with the latest news!",
+          buttonLabel: "View Announcements",
+          buttonPath: "/announcements",
           gradient:
-            "linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%)",
-          icon: rewardIcon,
+            "linear-gradient(90deg, #C01828 0%, #D92B40 50%, #F24057 100%)",
+          icon: announcementIcon,
+          iconSize: 142,
           iconBg: "transparent",
+          bgImage: resolveImage(randomAnnouncement, "announcements"),
+          buttonColor: "#C0152A",
+          buttonShadow: "0 12px 24px rgba(192,21,42,0.12)",
         });
+      } else {
+        setDynamicAnnouncement(null);
       }
+
+      // Map Discount
+      if (randomDiscount) {
+        setDynamicDiscount({
+          label: "Discount",
+          title: randomDiscount.title || "Exclusive Discount",
+          description:
+            stripHtml(randomDiscount.description)?.substring(0, 100) +
+              (stripHtml(randomDiscount.description)?.length > 100
+                ? "..."
+                : "") || "Enjoy exclusive alumni benefits!",
+          buttonLabel: "View Discounts",
+          buttonPath: "/discounts",
+          gradient:
+            "linear-gradient(90deg, rgba(120,60,0,0.72) 0%, rgba(160,80,0,0.60) 50%, rgba(100,50,0,0.72) 100%)",
+          icon: discountIcon,
+          iconSize: 110,
+          iconBg: "transparent",
+          bgImage: resolveImage(randomDiscount, "discounts") || grandWestsideHotel,
+          buttonColor: "#7a3c00",
+          buttonShadow: "0 12px 24px rgba(120,60,0,0.18)",
+        });
+      } else {
+        setDynamicDiscount(null);
+      }
+
+      // Map Event
+      if (randomEvent) {
+        setDynamicEvent({
+          label: "Event",
+          title: randomEvent.title || "Upcoming Event",
+          description:
+            stripHtml(randomEvent.description)?.substring(0, 100) +
+              (stripHtml(randomEvent.description)?.length > 100 ? "..." : "") ||
+            "Check out our latest alumni event!",
+          buttonLabel: "View Events",
+          buttonPath: "/events",
+          gradient:
+            "linear-gradient(90deg, #7c3aed 0%, #9b5cf6 50%, #c4a0ff 100%)",
+          icon: eventsIcon,
+          iconSize: 137,
+          iconTransform: "translateY(1.5px)",
+          iconBg: "transparent",
+          bgImage: resolveImage(randomEvent, "events"),
+          buttonColor: "#5b21b6",
+          buttonShadow: "0 12px 24px rgba(91,33,182,0.12)",
+        });
+      } else {
+        setDynamicEvent(null);
+      }
+
+      // Map Job
+      if (randomJob) {
+        setDynamicJob({
+          label: "Job",
+          title: randomJob.title || "Career Opportunity",
+          description:
+            stripHtml(randomJob.description)?.substring(0, 100) +
+              (stripHtml(randomJob.description)?.length > 100 ? "..." : "") ||
+            "Explore career opportunities!",
+          buttonLabel: "View Jobs",
+          buttonPath: "/jobs",
+          gradient:
+            "linear-gradient(90deg, #0a7a5a 0%, #10b87e 50%, #4dd9a4 100%)",
+          icon: jobsIcon,
+          iconSize: 110,
+          iconBg: "transparent",
+          bgImage: resolveImage(randomJob, "jobs"),
+          buttonColor: "#065f46",
+          buttonShadow: "0 12px 24px rgba(6,95,70,0.12)",
+        });
+      } else {
+        setDynamicJob(null);
+      }
+
     } catch (error) {
       console.error("[AlumniDashboard] Error fetching reward content:", error);
-      // Set a safe fallback on error
-      setDynamicRewardSlide({
-        label: "Welcome",
-        title: "Alumni Network",
-        description: "Connect with fellow alumni and explore opportunities!",
-        buttonLabel: "Explore More",
-        buttonPath: "/dashboard",
-        gradient:
-          "linear-gradient(90deg, #1A55C0 0%, #2E6AE8 50%, #4A85F5 100%)",
-        icon: rewardIcon,
-        iconBg: "transparent",
-      });
     } finally {
       setLoadingRewardContent(false);
     }
@@ -668,8 +636,11 @@ const AlumniDashboard = () => {
         onDismissBadge={dismissBadge}
         // ── Reward points (additive — from friend's code) ──
         rewardPoints={rewardPoints}
-        // ── Dynamic RewardsCard content ──
-        dynamicRewardSlide={dynamicRewardSlide}
+        // ── Independent Dynamic RewardsCard content ──
+        dynamicAnnouncement={dynamicAnnouncement}
+        dynamicDiscount={dynamicDiscount}
+        dynamicEvent={dynamicEvent}
+        dynamicJob={dynamicJob}
         loadingRewardContent={loadingRewardContent}
         // ── Asset references forwarded to view (additive — from friend's code) ──
         announcementIcon={announcementIcon}
