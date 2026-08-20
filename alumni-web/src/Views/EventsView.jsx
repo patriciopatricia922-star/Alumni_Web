@@ -5,6 +5,7 @@ import {
   FaStar,
   FaFilter,
   FaChevronDown,
+  FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
 import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
@@ -33,7 +34,7 @@ const T = {
   dividerColor:    'rgba(0, 0, 0, 0.08)',
 };
 
-// ── Clock SVG ────────────────────────────────────────────────────────────────
+// ── Clock SVG ───────────────────────────────────────────────────────────────
 const ClockSVG = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
     <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(74,85,101,0.45)" strokeWidth="1.2" />
@@ -77,7 +78,7 @@ const CategoryBadge = ({ category }) => {
   );
 };
 
-// ── Event Card ────────────────────────────────────────────────────────────────
+// ── Event Card ───────────────────────────────────────────────────────────────
 const EventCard = ({ event, isMobile }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -133,24 +134,24 @@ const EventCard = ({ event, isMobile }) => {
       {/* ── Image Area (1:1 Aspect Ratio) ── */}
       {images.length > 0 && (
         <div
-          style={{ 
-            position: 'relative', 
-            width: '100%', 
-            aspectRatio: '1 / 1', 
-            overflow: 'hidden', 
-            flexShrink: 0 
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '1 / 1',
+            overflow: 'hidden',
+            flexShrink: 0
           }}
         >
           <img
             src={images[imgIndex]}
             alt={event.title}
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'cover', 
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
               display: 'block',
-              transform: hovered ? 'scale(1.04)' : 'scale(1)', 
-              transition: 'transform 0.35s ease' 
+              transform: hovered ? 'scale(1.04)' : 'scale(1)',
+              transition: 'transform 0.35s ease'
             }}
             onError={e => { e.target.style.display = 'none'; }}
           />
@@ -210,7 +211,7 @@ const EventCard = ({ event, isMobile }) => {
         
         {/* Category Badge (Overlapping Image Bottom) */}
         <CategoryBadge category={event.category} />
-
+        
         {/* Timestamp (Top Right of Content Area) */}
         <div style={{ 
           position: 'absolute', 
@@ -335,7 +336,6 @@ const EventCard = ({ event, isMobile }) => {
             <FaChevronDown size={10} style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
         </div>
-
       </div>    
     </div>      
   );
@@ -372,7 +372,7 @@ const EventsView = ({
           className={isMobile ? 'mobile' : ''}
           dropdownClassName={isMobile ? 'mobile' : ''}
         />
-        {/* ── Back Button ── */}
+        {/* ─ Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
           onClick={() => navigate(-1)}
