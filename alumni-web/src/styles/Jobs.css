@@ -77,6 +77,13 @@
   }
 }
 
+/* Desktop only: nudge the notification bell slightly upward. */
+@media (min-width: 1025px) {
+  .jobs-main-content .notification-bell-wrapper {
+    top: 42px;
+  }
+}
+
 @media (max-width: 767px) {
   .jobs-main-content .notification-bell-wrapper {
     top: 24px;
