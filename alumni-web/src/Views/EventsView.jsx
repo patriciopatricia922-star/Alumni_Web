@@ -5,7 +5,6 @@ import {
   FaStar,
   FaFilter,
   FaChevronDown,
-  FaChevronUp,
 } from 'react-icons/fa';
 import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock } from 'react-icons/hi';
 import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
@@ -34,7 +33,7 @@ const T = {
   dividerColor:    'rgba(0, 0, 0, 0.08)',
 };
 
-// ── Clock SVG ───────────────────────────────────────────────────────────────
+// ── Clock SVG ────────────────────────────────────────────────────────────────
 const ClockSVG = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
     <circle cx="6.5" cy="6.5" r="5.5" stroke="rgba(74,85,101,0.45)" strokeWidth="1.2" />
@@ -78,7 +77,7 @@ const CategoryBadge = ({ category }) => {
   );
 };
 
-// ── Event Card ───────────────────────────────────────────────────────────────
+// ── Event Card ────────────────────────────────────────────────────────────────
 const EventCard = ({ event, isMobile }) => {
   const [hovered,  setHovered]  = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -372,7 +371,7 @@ const EventsView = ({
           className={isMobile ? 'mobile' : ''}
           dropdownClassName={isMobile ? 'mobile' : ''}
         />
-        {/* ─ Back Button ── */}
+        {/* ── Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
           onClick={() => navigate(-1)}
