@@ -34,7 +34,7 @@ const CategoryBadge = ({ isRecommended }) => (
   </div>
 );
 
-// ─ Meta item ─────────────────────────────────────────────────────────────────
+// ── Meta item ─────────────────────────────────────────────────────────────────
 const MetaItem = ({ icon, text }) => (
   <div className="meta-item">
     <span className="meta-icon">{icon}</span>
@@ -42,7 +42,7 @@ const MetaItem = ({ icon, text }) => (
   </div>
 );
 
-// ── Job Card ──────────────────────────────────────────────────────────────────
+// ── Job Card ─────────────────────────────────────────────────────────────────
 const JobCard = ({ job, isRecommended = false, isMobile }) => {
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -82,7 +82,7 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
           <img
             src={images[imgIndex]}
             alt={job.company || job.title}
-            className={`job-card-image ${hovered ? 'hovered' : ''}`}
+            className="job-card-image"
             onError={e => { e.target.style.display = 'none'; }}
           />
           
@@ -268,7 +268,7 @@ const JobsView = ({
           </svg>
           <span>Back</span>
         </button>
-        {/* ── Header ── */}
+        {/* ─ Header ── */}
         <div className={`jobs-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`jobs-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
             Jobs
