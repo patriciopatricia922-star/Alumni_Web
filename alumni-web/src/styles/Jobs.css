@@ -80,7 +80,7 @@
 /* Desktop only: nudge the notification bell slightly upward. */
 @media (min-width: 1025px) {
   .jobs-main-content .notification-bell-wrapper {
-    top: 36px;
+    top: 41px;
   }
 }
 
