@@ -2,19 +2,29 @@
 :root {
   --page-bg: #DAE5F1;
   --card-bg: #FFFFFF;
-  --card-border: rgba(0, 0, 0, 0.07);
-  --card-border-hover: rgba(0, 62, 166, 0.25);
-  --card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
-  --card-shadow-hover: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
-  --title-color: #1e3a5f;
-  --body-color: #4a5565;
+  --card-border: #E5E7EB;
+  --card-border-hover: #2B72FB;
+  --card-shadow: 0px 2px 8px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.06);
+  --card-shadow-hover: 0px 8px 24px rgba(43,114,251,0.14), 0px 2px 8px rgba(0,0,0,0.08);
+  --title-color: #003EA6;
+  --body-color: #4A5565;
   --meta-color: #8A94A6;
-  --accent: #003ea6;
-  --discount-badge: #ef4444;
-  --filter-bg: #ffffff;
-  --filter-border: rgba(0, 62, 166, 0.2);
+  --timestamp-color: rgba(74,85,101,0.65);
+  --accent: #2B72FB;
+  --page-title: #314C86;
+  --page-subtitle: #545454;
+  --back-color: #003EA6;
+  --filter-bg: #FFFFFF;
+  --filter-border: #E5E7EB;
+  --filter-text: #003EA6;
+  --badge-bg: #2B72FB;
+  --recommended-badge: #FAC775;
+  --footer-border: #F0F2F5;
   --sidebar-width-desktop: 229px;
   --sidebar-width-tablet: 200px;
+  --icon-box-bg: linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
+  --icon-box-shadow: 0px 4px 10px rgba(43,114,251,0.35);
+  --icon-box-shadow-hover: 0px 8px 20px rgba(43,114,251,0.45);
 }
 
 /* Main container */
@@ -22,7 +32,7 @@
   display: flex;
   min-height: 100vh;
   background: var(--page-bg);
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 /* Main content area - Desktop (default) */
@@ -34,7 +44,6 @@
   overflow-x: clip;
   position: relative;
   width: calc(100% - var(--sidebar-width-desktop));
-  min-width: 0;
 }
 
 /* Tablet styles */
@@ -43,11 +52,6 @@
     margin-left: var(--sidebar-width-tablet);
     padding: 37px 28px 48px;
     width: calc(100% - var(--sidebar-width-tablet));
-    overflow-x: clip;
-  }
-  .filter-dropdown {
-    left: 0;
-    right: auto;
   }
 }
 
@@ -57,24 +61,19 @@
     margin-left: 0;
     padding: 24px 16px 90px;
     width: 100%;
-    overflow-x: clip;
-  }
-  .filter-dropdown {
-    left: 0;
-    right: auto;
   }
 }
 
 .jobs-main-content .notification-bell-wrapper {
   position: absolute;
-  top: 37px;
-  right: 51px;
+  top: 45px;
+  right: 84px;
   z-index: 200;
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
   .jobs-main-content .notification-bell-wrapper {
-    right: 28px;
+    right: 65px;
   }
 }
 
@@ -89,7 +88,7 @@
 .back-button {
   display: inline-flex;
   align-items: center;
-  gap: 19px;
+  gap: 8px;
   background: none;
   border: none;
   cursor: pointer;
@@ -107,16 +106,13 @@
   }
 }
 
-.back-button:hover {
-  opacity: 0.7;
-}
+.back-button:hover { opacity: 0.7; }
 
 .back-button span {
   font-family: 'Montserrat', sans-serif;
   font-weight: 600;
   font-size: clamp(13px, 0.9vw, 15px);
   color: #002263;
-  margin-left: 7.5px;
 }
 
 /* Header */
@@ -136,13 +132,13 @@
 }
 
 .jobs-title {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
   font-size: clamp(28px, 3.2vw, 29px);
   line-height: 1.2;
   letter-spacing: -1px;
   color: #1e3a5f;
-  margin: 30px 0 0px 37.5px;
+  margin: 22px 0 0px 38px;
 }
 
 .jobs-title.mobile {
@@ -154,12 +150,12 @@
 }
 
 .jobs-subtitle {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
   font-size: clamp(13.5px, 0.75vw, 14.5px);
   line-height: 1.6;
   color: #545454;
-  margin: 6px 0 0 37.5px;
+  margin: 6px 0 0 38px;
 }
 
 .jobs-subtitle.mobile {
@@ -168,262 +164,96 @@
 }
 
 /* Filter Bar */
-.filter-bar {
+/* Filter bar — styles now handled via inline styles in JobsView.jsx (matching Announcements pattern) */
+
+
+/* Jobs List */
+.jobs-list {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 12px;
-  overflow: visible;
-}
-
-.filter-bar.mobile {
-  margin-bottom: 16px;
-}
-
-.filter-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  overflow: visible;
-}
-
-.filter-display {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  background: var(--filter-bg);
-  border: 1px solid var(--filter-border);
-  border-radius: 10px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
-  min-width: 200px;
-}
-
-.filter-display.mobile {
-  min-width: 0;
-  flex: 1;
-}
-
-.filter-active-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #1e3a5f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-
-.filter-count-badge {
-  background: #003ea6;
-  border-radius: 6px;
-  min-width: 24px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  flex-shrink: 0;
-}
-
-.filter-count-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 12px;
-  color: #ffffff;
-}
-
-.filter-button {
-  height: 40px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #003ea6;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
-  transition: opacity 0.15s;
-}
-
-.filter-button:hover {
-  opacity: 0.85;
-}
-
-.filter-button-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #FFFFFF;
-  white-space: nowrap;
-}
-
-.filter-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: auto;
-  background: #ffffff;
-  border: 1px solid rgba(0, 62, 166, 0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  z-index: 300;
-  min-width: 220px;
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.filter-option {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.filter-option:hover {
-  background: #f0f4ff;
-}
-
-.filter-option.active {
-  background: #dbeafe;
-}
-
-.filter-option-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #4a5565;
-  font-weight: 400;
-}
-
-.filter-option-text.active {
-  color: #003ea6;
-  font-weight: 700;
-}
-
-.filter-option-count {
-  background: #dbeafe;
-  border-radius: 6px;
-  padding: 1px 7px;
-}
-
-.filter-option-count.active {
-  background: #003ea6;
-}
-
-.filter-option-count-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  color: #003ea6;
-}
-
-.filter-option-count.active .filter-option-count-text {
-  color: #ffffff;
-}
-
-/* Jobs Grid */
-.jobs-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  flex-direction: column;
   gap: 14px;
-  align-items: start;
-}
-
-.jobs-grid.tablet {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.jobs-grid.mobile {
-  grid-template-columns: 1fr;
-  gap: 16px;
 }
 
 .empty-jobs {
   text-align: center;
   padding: 80px 0;
-  color: #6a7282;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  color: var(--meta-color);
   font-size: 15px;
-  line-height: 1.5;
+  font-family: 'Montserrat', Arial, sans-serif;
 }
 
 /* Job Card */
 .job-card {
   background: var(--card-bg);
-  margin-top: 1px;
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
   border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow: visible;
+  cursor: pointer;
   transform: translateY(0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  max-width: 95%;
-  margin-left: auto;
-  margin-right: auto;
-  max-height: 510px;
-}
-
-.job-card.expanded {
-  max-height: none;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .job-card.hovered {
   border-color: var(--card-border-hover);
   box-shadow: var(--card-shadow-hover);
-  transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
-/* Image Wrapper - Responsive 1:1 Aspect Ratio */
-.job-card-image-wrapper {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
+.job-card-body {
+  display: flex;
+  align-items: flex-start;
+  padding: 18px 20px;
+  gap: 16px;
+}
+
+.job-card-body.mobile {
+  padding: 14px;
+}
+
+.job-icon-box {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  background: var(--icon-box-bg);
+  box-shadow: var(--icon-box-shadow);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  position: relative;
-}
-
-.job-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
   transform: scale(1);
-  transition: transform 0.35s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.job-card-image.hovered {
+.job-icon-box.hovered {
   transform: scale(1.04);
+  box-shadow: var(--icon-box-shadow-hover);
 }
 
-/* Category Badge - Bottom Left Overlap */
+.job-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Category Badge */
 .category-badge {
-  position: absolute;
-  bottom: 19px;
-  left: 12px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 20px;
-  padding: 4px 10px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  z-index: 10;
-  box-shadow: 0px 2px 4px rgba(0,0,0,0.05);
+  border-radius: 20px;
+  padding: 3px 10px;
+  align-self: flex-start;
 }
 
 .category-badge.job {
@@ -433,7 +263,7 @@
 
 .category-badge.recommended {
   background: rgba(250,199,117,0.15);
-  border: 1px solid #FAC775;
+  border: 1px solid var(--recommended-badge);
 }
 
 .badge-icon {
@@ -445,240 +275,251 @@
 }
 
 .badge-icon.recommended {
-  color: #FAC775;
+  color: var(--recommended-badge);
 }
 
 .badge-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  color: var(--accent);
-  line-height: 1;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.category-badge.recommended .badge-text {
-  color: #FAC775;
+.category-badge.job .badge-text {
+  color: var(--accent);
 }
 
-/* Timestamp Overlay - Top Right */
-.job-timestamp-overlay {
-  position: absolute;
-  top: 22px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(4px);
-  border-radius: 20px;
-  padding: 4px 8px;
+.category-badge.recommended .badge-text {
+  color: var(--recommended-badge);
+}
+
+.job-timestamp {
   display: flex;
   align-items: center;
-  gap: 4px;
-  z-index: 10;
+  gap: 5px;
+  flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .timestamp-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 600;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-size: 11px;
-  color: rgba(0,0,0,0.35);
-  line-height: 1;
-}
-
-/* Card Body */
-.job-card-body {
-  padding: 18px 20px 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* Title Row with Icon */
-.job-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
-  margin-top: 16px;
-}
-
-.job-title-icon {
-  margin-top: 3px;
-  flex-shrink: 0;
-  color: var(--accent);
-  display: flex;
-  align-items: center;
+  color: var(--timestamp-color);
+  white-space: nowrap;
 }
 
 .job-title {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 15.5px;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
   color: var(--title-color);
   margin: 0;
-  word-break: break-word;
+}
+
+.job-title.mobile {
+  font-size: 14px;
 }
 
 .job-company {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 600;
   font-size: 13px;
   color: var(--meta-color);
-  margin: 0 0 8px 0;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.job-company.mobile {
+  font-size: 12px;
 }
 
 .job-description {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+  font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 400;
-  font-size: 13px;
+  font-size: 13.5px;
   line-height: 1.65;
   color: var(--body-color);
-  margin: 0 0 16px 0;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  margin: 0;
 }
 
-.job-card-divider {
-  width: 100%;
-  height: 1px;
-  background: rgba(0, 0, 0, 0.08);
-  margin-bottom: 0;
-  flex-shrink: 0;
+.job-description.mobile {
+  font-size: 12.5px;
 }
 
-/* Expandable details */
-.job-card-details {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-              padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+.see-more-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  display: inline;
+  line-height: inherit;
 }
 
-.job-card-details.expanded {
-  max-height: 600px;
+.see-more-btn.mobile {
+  font-size: 12.5px;
 }
 
-.job-card-details-content {
-  padding: 14px 0 4px;
+.compact-meta {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 2px;
 }
 
 .meta-item {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.meta-icon {
-  margin-top: 2px;
-  flex-shrink: 0;
-  color: var(--meta-color);
-}
-
-.meta-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--body-color);
-  margin: 0;
-  white-space: pre-line;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-/* Toggle button wrapper */
-.job-card-button-wrapper {
-  padding: 14px 20px 20px;
-  flex-shrink: 0;
-  margin-top: auto;
-}
-
-.job-card-toggle-btn {
-  width: 100%;
-  height: 37px;
-  background: var(--accent);
-  border: none;
-  border-radius: 10px;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
 }
 
-.job-card-toggle-btn.expanded {
-  background: transparent;
-  border: 1.5px solid var(--accent);
-  color: var(--accent);
+.meta-icon {
+  color: var(--meta-color);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-/* Linkified URLs */
-.job-link {
-  color: var(--accent);
+.meta-text {
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 12.5px;
+  color: var(--body-color);
+  line-height: 1.4;
+}
+
+.expanded-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.meta-divider {
+  height: 1px;
+  background: var(--footer-border);
+  margin: 4px 0;
+}
+
+.job-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.job-tag {
+  background: #EEF4FF;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 11px;
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  word-break: break-all;
-  transition: color 0.15s, opacity 0.15s;
+  color: var(--accent);
 }
 
-.job-link:hover {
-  color: #2b72fb;
-  opacity: 0.85;
+.see-less-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+.see-less-btn.mobile {
+  font-size: 12.5px;
+}
+
+/* ── Job card image ─────────────────────────────────────────── */
+.job-icon-box--img {
+  background: var(--card-border);  /* neutral bg while image loads */
+  box-shadow: var(--icon-box-shadow);
+  overflow: hidden;
+  padding: 0;
+}
+
+.job-icon-box--img.hovered {
+  box-shadow: var(--icon-box-shadow-hover);
+}
+
+/* Restore gradient bg when image fails to load */
+.job-icon-box--img.job-icon-box--fallback {
+  background: var(--icon-box-bg);
+}
+
+.job-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 14px;  /* matches parent border-radius */
 }
 
 /* ============================================================
-MOBILE-ONLY RESPONSIVE ADDITIONS
-============================================================ */
+   MOBILE-ONLY RESPONSIVE ADDITIONS
+   ============================================================ */
+
 @media (max-width: 767px) {
+
   /* ── Global overflow guard ─────────────────────────────── */
-  html,
-  body {
+  html, body {
     overflow-x: hidden;
   }
+
   .jobs-view-container {
     overflow-x: hidden;
     width: 100%;
   }
+
   .jobs-main-content {
     overflow-x: hidden;
     box-sizing: border-box;
   }
+
   .jobs-main-content.mobile {
     padding: clamp(20px, 5vw, 28px) clamp(12px, 4vw, 18px) 90px;
   }
+
   /* ── 1. Back button: keep fully visible, no negative margin ── */
   .back-button.mobile {
     margin-left: 0 !important;
-    gap: clamp(12px, 3vw, 19px);
+    gap: clamp(8px, 2.4vw, 12px);
     max-width: 100%;
   }
+
   .back-button.mobile span {
     font-size: clamp(13px, 3.6vw, 15px);
   }
+
   /* ── 2. Notification bell + dropdown: viewport-safe positioning,
-  reference = Dashboard's clamp-based, self-anchoring approach,
-  but implemented with the Jobs page's own classes ── */
+     reference = Dashboard's clamp-based, self-anchoring approach,
+     implemented using the Jobs page's own classes ── */
   .jobs-bell-wrapper.mobile {
     position: absolute;
     top: clamp(20px, 5vw, 28px);
     right: clamp(12px, 4vw, 18px);
     z-index: 200;
   }
+
   .jobs-bell-btn.mobile {
     width: clamp(40px, 11vw, 44px) !important;
     height: clamp(40px, 11vw, 44px) !important;
   }
+
   .jobs-notif-dropdown.mobile {
     position: absolute;
     top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
@@ -690,32 +531,39 @@ MOBILE-ONLY RESPONSIVE ADDITIONS
     max-height: min(70vh, 520px) !important;
     overflow: hidden;
   }
-  .jobs-notif-dropdown.mobile>div[style*="overflowY"] {
+
+  .jobs-notif-dropdown.mobile > div[style*="overflowY"] {
     max-height: none;
   }
+
   /* ── 3. Filter: consistent width, viewport-safe dropdown,
-  reference = Announcements' fixed-width filter trigger ── */
+     reference = Announcements/Discounts' fixed-width filter trigger ── */
   .jobs-filter-bar.mobile {
     margin-left: 0;
     margin-right: 0;
     width: 100%;
     box-sizing: border-box;
   }
+
   .jobs-filter-container.mobile {
     width: 100%;
   }
+
   .jobs-filter-trigger-wrap.mobile {
     flex: 1;
     min-width: 0;
   }
+
   .jobs-filter-display.mobile {
     min-width: 0 !important;
     width: 100%;
     box-sizing: border-box;
   }
+
   .jobs-filter-display.mobile span {
     max-width: 100%;
   }
+
   .jobs-filter-dropdown.mobile {
     left: 0 !important;
     right: 0 !important;
@@ -724,49 +572,68 @@ MOBILE-ONLY RESPONSIVE ADDITIONS
     max-width: 100%;
     box-sizing: border-box;
   }
+
   .jobs-filter-button.mobile {
     padding: 0 clamp(12px, 4vw, 18px) !important;
   }
+
   /* ── Header ─────────────────────────────────────────────── */
   .jobs-header.mobile {
     padding-right: calc(clamp(40px, 11vw, 44px) + clamp(12px, 4vw, 18px) + 10px);
   }
+
   .jobs-title.mobile {
     margin: clamp(20px, 5vw, 26px) 0 0 0;
     font-size: clamp(22px, 6.5vw, 27px);
     letter-spacing: -0.6px;
     word-break: break-word;
   }
+
   .jobs-subtitle.mobile {
     margin: 6px 0 0 0;
     font-size: clamp(12.5px, 3.4vw, 14px);
     overflow-wrap: break-word;
   }
-  /* ── 4. Grid / cards: full-width, no clipping ────────────── */
-  .jobs-grid.mobile {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+
+  /* ── 4. Jobs list / cards: full-width, no clipping ───────── */
+  .jobs-list.mobile {
     width: 100%;
     box-sizing: border-box;
-    gap: clamp(12px, 4vw, 16px);
+    gap: clamp(12px, 4vw, 14px);
   }
-  .jobs-grid.mobile .job-card {
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
+
+  .job-card-image-wrapper.mobile {
+    height: clamp(160px, 50vw, 220px) !important;
   }
-  .jobs-grid.mobile .job-card-image-wrapper {
-    height: clamp(200px, 55vw, 280px);
+
+  .job-card-body.mobile {
+    padding: clamp(12px, 3.6vw, 14px);
+    gap: clamp(10px, 3vw, 14px);
   }
-  .jobs-grid.mobile .job-title {
-    font-size: clamp(14px, 3.8vw, 15px);
+
+  .job-title.mobile {
+    font-size: clamp(13.5px, 3.7vw, 14px);
   }
-  .jobs-grid.mobile .job-description {
-    font-size: clamp(12.5px, 3.4vw, 13px);
+
+  .job-company.mobile {
+    font-size: clamp(11.5px, 3.2vw, 12px);
   }
-  .jobs-grid.mobile .job-card-toggle-btn {
-    font-size: clamp(12px, 3.2vw, 13px);
+
+  .job-description.mobile {
+    font-size: clamp(12px, 3.3vw, 12.5px);
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
+
+  .compact-meta {
+    gap: clamp(8px, 2.6vw, 12px);
+  }
+
+  .meta-text {
+    font-size: clamp(11.5px, 3.1vw, 12.5px);
+    word-break: break-word;
+  }
+
   .empty-jobs {
     padding: 60px 16px;
     font-size: clamp(13px, 3.6vw, 15px);
@@ -775,28 +642,38 @@ MOBILE-ONLY RESPONSIVE ADDITIONS
 
 /* ── Small phones (<= 380px) ─────────────────────────────── */
 @media (max-width: 380px) {
-  .jobs-grid.mobile .job-card-image-wrapper {
-    height: clamp(180px, 58vw, 220px);
+  .job-card-image-wrapper.mobile {
+    height: clamp(140px, 52vw, 180px) !important;
   }
+
   .jobs-bell-btn.mobile {
     width: 40px !important;
     height: 40px !important;
   }
+
   .jobs-notif-dropdown.mobile {
     width: calc(100vw - 20px) !important;
     min-width: 240px;
   }
+
   .jobs-title.mobile {
     font-size: clamp(20px, 6.8vw, 24px);
+  }
+
+  .job-icon-box {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
   }
 }
 
 /* ── Large phones (min 480px, still mobile) ──────────────── */
 @media (min-width: 480px) and (max-width: 767px) {
-  .jobs-grid.mobile {
-    gap: 18px;
+  .jobs-list.mobile {
+    gap: 16px;
   }
-  .jobs-grid.mobile .job-card-image-wrapper {
-    height: clamp(240px, 45vw, 300px);
+
+  .job-card-image-wrapper.mobile {
+    height: clamp(200px, 42vw, 240px) !important;
   }
 }

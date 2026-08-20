@@ -4,7 +4,6 @@ import {
   FaArrowLeft,
   FaFilter,
   FaBell,
-  FaChevronDown,
   FaChevronUp,
   FaStar,
 } from 'react-icons/fa';
@@ -12,7 +11,7 @@ import { HiOutlineLocationMarker, HiOutlineClock, HiOutlineBriefcase } from 'rea
 import { truncateHtml, stripHtml } from '../utils/textHelpers';
 import '../styles/Jobs.css';
 import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css';
+import '../styles/NotificationBell.css'; 
 
 // ── Clock SVG ────────────────────────────────────────────────────────────────
 const ClockSVG = () => (
@@ -42,13 +41,12 @@ const MetaItem = ({ icon, text }) => (
   </div>
 );
 
-// ── Job Card ─────────────────────────────────────────────────────────────────
+// ── Job Card ──────────────────────────────────────────────────────────────────
 const JobCard = ({ job, isRecommended = false, isMobile }) => {
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
-  
-  // Preserve existing image logic but adapt container for 1:1 aspect ratio
+
   const images = job.images?.length ? job.images : job.image ? [job.image] : [];
   const hasMultiple = images.length > 1;
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
@@ -67,6 +65,7 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
   const previewText = stripHtml
     ? stripHtml(job.description || '')
     : (job.description || '').replace(/<[^>]+>/g, '');
+
   const needsTrunc = previewText.length > 120;
   const hasDetails = job.website || job.date || job.category;
 
@@ -74,129 +73,177 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`job-card ${hovered ? 'hovered' : ''} ${expanded ? 'expanded' : ''}`}
+      className={`job-card ${hovered || expanded ? 'hovered' : ''}`}
     >
-      {/* ── Image Area (1:1 Aspect Ratio like Events) ── */}
+      {/* ── Photo with arrows ── */}
       {images.length > 0 && (
-        <div className="job-card-image-wrapper">
+        <div className={`job-card-image-wrapper ${isMobile ? 'mobile' : ''}`} style={{ position: 'relative', width: '100%', height: '220px', overflow: 'hidden', flexShrink: 0 }}>
           <img
             src={images[imgIndex]}
             alt={job.company || job.title}
-            className="job-card-image"
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+              transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.35s ease',
+            }}
             onError={e => { e.target.style.display = 'none'; }}
           />
-          
-          {/* Navigation Arrows */}
-          {hasMultiple && (
-            <>
-              <button onClick={prevImg} style={{
-                position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-                width: '40px', height: '40px', borderRadius: '50%',
-                background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 10, transition: 'background 0.15s',
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-              >
-                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-                  <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <button onClick={nextImg} style={{
-                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                width: '40px', height: '40px', borderRadius: '50%',
-                background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 10, transition: 'background 0.15s',
-              }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-              >
-                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-                  <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              
-              {/* Dot Indicators */}
-              <div style={{
-                position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
-                display: 'flex', gap: '6px', zIndex: 10,
-              }}>
-                {images.map((_, i) => (
-                  <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
-                    width: i === imgIndex ? '18px' : '6px', height: '6px',
-                    borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                  }} />
-                ))}
-              </div>
-            </>
-          )}
+
+          {/* Left arrow */}
+          <button onClick={prevImg} style={{
+            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Right arrow */}
+          <button onClick={nextImg} style={{
+            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+            width: '40px', height: '40px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 10, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+          >
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Dot indicators */}
+          <div style={{
+            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', gap: '5px', zIndex: 10,
+          }}>
+            {images.map((_, i) => (
+              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                width: i === imgIndex ? '18px' : '6px', height: '6px',
+                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer', transition: 'all 0.2s',
+              }} />
+            ))}
+          </div>
         </div>
       )}
-
-      {/* ── Content Body ── */}
-      <div className="job-card-body">
-        {/* Category Badge (Overlapping Image Bottom) */}
-        <CategoryBadge isRecommended={isRecommended} />
-        
-        {/* Timestamp (Top Right of Content Area) */}
-        <div className="job-timestamp-overlay">
-          <ClockSVG />
-          <span className="timestamp-text">
-            {relativeTime(job.posted_at)}
-          </span>
-        </div>
-
-        {/* Title Row with Icon */}
-        <div className="job-title-row">
-          <div className="job-title-icon">
-            <HiOutlineBriefcase size={16} />
+      <div className={`job-card-body ${isMobile ? 'mobile' : ''}`}>
+        {/* Icon box / company image */}
+        {job.image ? (
+          <div className={`job-icon-box ${hovered ? 'hovered' : ''} job-icon-box--img`}>
+            <img
+              src={job.image}
+              alt={job.company || job.title}
+              className="job-card-img"
+              onError={e => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement.classList.add('job-icon-box--fallback');
+              }}
+            />
           </div>
-          <p className="job-title">
-            {job.title}
-          </p>
-        </div>
-
-        {/* Company Name */}
-        {job.company && (
-          <p className="job-company">
-            {job.company}
-          </p>
+        ) : (
+          <div className={`job-icon-box ${hovered ? 'hovered' : ''}`}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="7" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
+              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round"/>
+              <path d="M2 12h20" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
+            </svg>
+          </div>
         )}
 
-        {/* Description */}
-        <p className="job-description">
-          {expanded
-            ? previewText
-            : needsTrunc
-              ? previewText.substring(0, 120) + '…'
-              : previewText}
-        </p>
+        {/* Content */}
+        <div className="job-content">
+          {/* Top row: badge + timestamp */}
+          <div className="job-header-row">
+            <CategoryBadge isRecommended={isRecommended} />
+            <div className="job-timestamp">
+              <ClockSVG />
+              <span className="timestamp-text">
+                {relativeTime(job.posted_at)}
+              </span>
+            </div>
+          </div>
 
-        {/* Divider */}
-        <div className="job-card-divider" />
+          {/* Title */}
+          <p className={`job-title ${isMobile ? 'mobile' : ''}`}>
+            {job.title}
+          </p>
 
-        {/* Expanded Details (if needed, otherwise hidden) */}
-        {expanded && hasDetails && (
-          <div className="job-card-details expanded">
-            <div className="job-card-details-content">
+          {/* Company */}
+          {job.company && (
+            <p className={`job-company ${isMobile ? 'mobile' : ''}`}>
+              {job.company}
+            </p>
+          )}
+
+          {/* Description with inline See more */}
+          <p className={`job-description ${isMobile ? 'mobile' : ''}`}>
+            {expanded
+              ? previewText
+              : needsTrunc
+                ? previewText.substring(0, 120) + '… '
+                : previewText}
+            {!expanded && needsTrunc && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+                className={`see-more-btn ${isMobile ? 'mobile' : ''}`}
+              >
+                See more
+              </button>
+            )}
+          </p>
+
+          {/* Compact meta (always visible when not expanded) */}
+          {!expanded && hasDetails && (
+            <div className="compact-meta">
               {job.website && (
                 <MetaItem
-                  icon={<HiOutlineLocationMarker size={14} />}
+                  icon={<HiOutlineLocationMarker size={13} />}
                   text={job.website}
                 />
               )}
               {job.category && (
                 <MetaItem
-                  icon={<HiOutlineBriefcase size={14} />}
+                  icon={<HiOutlineBriefcase size={13} />}
                   text={job.category}
                 />
               )}
               {job.date && (
                 <MetaItem
-                  icon={<HiOutlineClock size={14} />}
+                  icon={<HiOutlineClock size={13} />}
+                  text={`Expires: ${job.date}`}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Expanded: full meta + tags + See less */}
+          {expanded && (
+            <div className="expanded-meta">
+              <div className="meta-divider" />
+              {job.website && (
+                <MetaItem
+                  icon={<HiOutlineLocationMarker size={13} />}
+                  text={job.website}
+                />
+              )}
+              {job.category && (
+                <MetaItem
+                  icon={<HiOutlineBriefcase size={13} />}
+                  text={job.category}
+                />
+              )}
+              {job.date && (
+                <MetaItem
+                  icon={<HiOutlineClock size={13} />}
                   text={`Expires: ${job.date}`}
                 />
               )}
@@ -210,25 +257,15 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
                   ))}
                 </div>
               )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+                className={`see-less-btn ${isMobile ? 'mobile' : ''}`}
+              >
+                See less <FaChevronUp size={9} />
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* See More Button */}
-        {hasDetails && (
-          <div className="job-card-button-wrapper">
-            <button
-              onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-              className={`job-card-toggle-btn ${expanded ? 'expanded' : ''}`}
-            >
-              {expanded ? (
-                <>See Less <FaChevronUp size={10} /></>
-              ) : (
-                <>See More <FaChevronDown size={10} /></>
-              )}
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -251,11 +288,13 @@ const JobsView = ({
   return (
     <div className="jobs-view-container">
       <Sidebar />
+
       <div className={`jobs-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
         <NotificationBell
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
         />
+
         {/* ── Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
@@ -268,7 +307,8 @@ const JobsView = ({
           </svg>
           <span>Back</span>
         </button>
-        {/* ─ Header ── */}
+
+        {/* ── Header ── */}
         <div className={`jobs-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`jobs-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
             Jobs
@@ -277,6 +317,7 @@ const JobsView = ({
             Discover career opportunities tailored for alumni, advance your professional journey, and achieve your career goals.
           </p>
         </div>
+
         {/* ── Filter Bar ── */}
         <div
           className={isMobile ? 'jobs-filter-bar mobile' : 'jobs-filter-bar'}
@@ -294,6 +335,7 @@ const JobsView = ({
             className={isMobile ? 'jobs-filter-container mobile' : 'jobs-filter-container'}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
           >
+
             <div style={{ position: 'relative' }} className={isMobile ? 'jobs-filter-trigger-wrap mobile' : undefined}>
               <div
                 className={isMobile ? 'jobs-filter-display mobile' : 'jobs-filter-display'}
@@ -339,6 +381,7 @@ const JobsView = ({
                   </span>
                 </div>
               </div>
+
               {showFilter && (
                 <div
                   className={isMobile ? 'jobs-filter-dropdown mobile' : 'jobs-filter-dropdown'}
@@ -409,6 +452,7 @@ const JobsView = ({
                 </div>
               )}
             </div>
+
             <button
               onClick={() => setShowFilter(f => !f)}
               className={isMobile ? 'jobs-filter-button mobile' : 'jobs-filter-button'}
@@ -439,6 +483,7 @@ const JobsView = ({
             </button>
           </div>
         </div>
+
         {/* ── Jobs List (stacked, full-width cards) ── */}
         <div className={`jobs-list ${isMobile ? 'mobile' : ''}`}>
           {mergedList.map(job => (
@@ -450,6 +495,7 @@ const JobsView = ({
             />
           ))}
         </div>
+
         {filtered.length === 0 && (
           <div className="empty-jobs">
             No jobs found for this category.
