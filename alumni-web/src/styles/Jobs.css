@@ -80,7 +80,7 @@
 /* Desktop only: nudge the notification bell slightly upward. */
 @media (min-width: 1025px) {
   .jobs-main-content .notification-bell-wrapper {
-    top: 30px;
+    top: 36px;
   }
 }
 
@@ -700,16 +700,6 @@
    unchanged.
    ============================================================ */
 @media (min-width: 1025px) {
-
-  /* Notification bell: tiny downward nudge, Desktop only. The base
-     rule above (top: 45px) is also inherited by Tablet (which only
-     overrides `right`, not `top`), so this must be scoped to the
-     Desktop-only breakpoint rather than edited in place, to avoid
-     shifting the Tablet position. Uses the same top/right absolute
-     positioning mechanism already in place — just a +3px offset. */
-  .jobs-main-content .notification-bell-wrapper {
-    top: 48px;
-  }
 
   /* Card grid, mirroring the Discounts grid pattern. auto-fill/
      minmax (rather than a hard-coded column count) keeps the
