@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import EventsView from '../Views/EventsView';
 import { useNotifications } from '../hooks/useNotifications';
 
@@ -18,16 +18,17 @@ const CATEGORIES = ['All Events', 'Upcoming Events', 'Exclusive Events'];
 
 const Events = () => {
   const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetEventId = searchParams.get('event'); // NEW
+  
   const width     = useWindowWidth();
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1024;
-
   const [activeCategory, setActiveCategory] = useState('All Events');
   const [showFilter,     setShowFilter]     = useState(false);
   const [events,         setEvents]         = useState([]);
   const [loading,        setLoading]        = useState(true);
   const filterRef = useRef(null);
-
   const { unreadCount } = useNotifications();
 
   // Fetch events from Supabase
@@ -102,6 +103,8 @@ const Events = () => {
       filtered={filtered}
       // navigation
       navigate={navigate}
+      // NEW: Pass target ID
+      targetEventId={targetEventId}
     />
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from '../components/Sidebar';
 import {
   FaArrowLeft,
@@ -11,7 +11,7 @@ import { HiOutlineLocationMarker, HiOutlineClock, HiOutlineBriefcase } from 'rea
 import { truncateHtml, stripHtml } from '../utils/textHelpers';
 import '../styles/Jobs.css';
 import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css'; 
+import '../styles/NotificationBell.css';
 
 // ── Clock SVG ────────────────────────────────────────────────────────────────
 const ClockSVG = () => (
@@ -42,16 +42,15 @@ const MetaItem = ({ icon, text }) => (
 );
 
 // ── Job Card ──────────────────────────────────────────────────────────────────
-const JobCard = ({ job, isRecommended = false, isMobile }) => {
+const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
   const [hovered, setHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isTarget); // Auto-expand if target
   const [imgIndex, setImgIndex] = useState(0);
-
   const images = job.images?.length ? job.images : job.image ? [job.image] : [];
   const hasMultiple = images.length > 1;
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
-
+  
   const relativeTime = (dateStr) => {
     if (!dateStr) return '2 hours ago';
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -65,15 +64,24 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
   const previewText = stripHtml
     ? stripHtml(job.description || '')
     : (job.description || '').replace(/<[^>]+>/g, '');
-
   const needsTrunc = previewText.length > 120;
   const hasDetails = job.website || job.date || job.category;
 
+  // Scroll into view if it's the target
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (isTarget && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isTarget]);
+
   return (
     <div
+      ref={cardRef}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`job-card ${hovered || expanded ? 'hovered' : ''}`}
+      className={`job-card ${hovered || expanded ? 'hovered' : ''} ${isTarget ? 'target-highlight' : ''}`}
+      style={isTarget ? { boxShadow: '0 0 0 2px #003ea6, 0px 12px 32px rgba(0,62,166,0.15)' } : {}}
     >
       {/* ── Photo with arrows ── */}
       {images.length > 0 && (
@@ -87,7 +95,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
             }}
             onError={e => { e.target.style.display = 'none'; }}
           />
-
           {/* Left arrow */}
           <button onClick={prevImg} style={{
             position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
@@ -103,7 +110,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
               <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-
           {/* Right arrow */}
           <button onClick={nextImg} style={{
             position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
@@ -119,7 +125,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
               <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-
           {/* Dot indicators */}
           <div style={{
             position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
@@ -158,7 +163,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
             </svg>
           </div>
         )}
-
         {/* Content */}
         <div className="job-content">
           {/* Top row: badge + timestamp */}
@@ -171,19 +175,16 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
               </span>
             </div>
           </div>
-
           {/* Title */}
           <p className={`job-title ${isMobile ? 'mobile' : ''}`}>
             {job.title}
           </p>
-
           {/* Company */}
           {job.company && (
             <p className={`job-company ${isMobile ? 'mobile' : ''}`}>
               {job.company}
             </p>
           )}
-
           {/* Description with inline See more */}
           <p className={`job-description ${isMobile ? 'mobile' : ''}`}>
             {expanded
@@ -200,7 +201,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
               </button>
             )}
           </p>
-
           {/* Compact meta (always visible when not expanded) */}
           {!expanded && hasDetails && (
             <div className="compact-meta">
@@ -224,7 +224,6 @@ const JobCard = ({ job, isRecommended = false, isMobile }) => {
               )}
             </div>
           )}
-
           {/* Expanded: full meta + tags + See less */}
           {expanded && (
             <div className="expanded-meta">
@@ -277,6 +276,7 @@ const JobsView = ({
   categories, activeCategory, setActiveCategory,
   showFilter, setShowFilter, filterRef, categoryCounts, filtered,
   recommended, navigate,
+  targetJobId, // NEW PROP
 }) => {
   const recommendedIds = new Set(recommended.map(r => r.job.id));
   const recommendedJobs = recommended.map(r => ({ ...r.job, _isRecommended: true }));
@@ -288,13 +288,11 @@ const JobsView = ({
   return (
     <div className="jobs-view-container">
       <Sidebar />
-
       <div className={`jobs-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
         <NotificationBell
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
         />
-
         {/* ── Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
@@ -307,7 +305,6 @@ const JobsView = ({
           </svg>
           <span>Back</span>
         </button>
-
         {/* ── Header ── */}
         <div className={`jobs-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`jobs-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
@@ -317,7 +314,6 @@ const JobsView = ({
             Discover career opportunities tailored for alumni, advance your professional journey, and achieve your career goals.
           </p>
         </div>
-
         {/* ── Filter Bar ── */}
         <div
           className={isMobile ? 'jobs-filter-bar mobile' : 'jobs-filter-bar'}
@@ -335,7 +331,6 @@ const JobsView = ({
             className={isMobile ? 'jobs-filter-container mobile' : 'jobs-filter-container'}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
           >
-
             <div style={{ position: 'relative' }} className={isMobile ? 'jobs-filter-trigger-wrap mobile' : undefined}>
               <div
                 className={isMobile ? 'jobs-filter-display mobile' : 'jobs-filter-display'}
@@ -381,7 +376,6 @@ const JobsView = ({
                   </span>
                 </div>
               </div>
-
               {showFilter && (
                 <div
                   className={isMobile ? 'jobs-filter-dropdown mobile' : 'jobs-filter-dropdown'}
@@ -452,7 +446,6 @@ const JobsView = ({
                 </div>
               )}
             </div>
-
             <button
               onClick={() => setShowFilter(f => !f)}
               className={isMobile ? 'jobs-filter-button mobile' : 'jobs-filter-button'}
@@ -483,7 +476,6 @@ const JobsView = ({
             </button>
           </div>
         </div>
-
         {/* ── Jobs List (stacked, full-width cards) ── */}
         <div className={`jobs-list ${isMobile ? 'mobile' : ''}`}>
           {mergedList.map(job => (
@@ -492,10 +484,10 @@ const JobsView = ({
               job={job}
               isRecommended={job._isRecommended}
               isMobile={isMobile}
+              isTarget={targetJobId && String(job.id) === String(targetJobId)}
             />
           ))}
         </div>
-
         {filtered.length === 0 && (
           <div className="empty-jobs">
             No jobs found for this category.

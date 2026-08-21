@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { getExcerpt } from "../utils/textHelpers";
 import {
@@ -36,20 +36,19 @@ const SURVEY_REWARD_POINTS = 50;
 
 const RewardStore = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetRewardId = searchParams.get('reward'); // NEW
+  
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
   const sidebarWidth = windowWidth < 768 ? 0 : windowWidth < 1100 ? 72 : 220;
   const bellRef = useRef(null);
-
   // Holds the real Supabase channel so cleanup is reliable
   const realtimeChannelRef = useRef(null);
   // Ref-based mutex — immune to stale closure issues with useState
   // const isClaimingRef = useRef(false);
-
-
   const { showModal, requestNavigation, handleAccept, handleDecline } =
     useDpaGate(navigate);
-
   const [rewardPoints, setRewardPoints] = useState(0);
   const [merchandise, setMerchandise] = useState([]);
   const [activeFilter, setActiveFilter] = useState("All");
@@ -74,7 +73,6 @@ const RewardStore = () => {
       localStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
     } catch {}
   };
-
   const groupByDate = (list) => {
     const now = new Date();
     const today = new Date(now);
@@ -94,7 +92,6 @@ const RewardStore = () => {
     });
     return groups;
   };
-
   const formatTime = (iso) => {
     if (!iso) return "";
     const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
@@ -115,7 +112,6 @@ const RewardStore = () => {
     newBalance: 0,
     label: "",
   });
-
   const dismissToast = useCallback(() => {
     setToast((t) => ({ ...t, visible: false }));
   }, []);
@@ -139,7 +135,6 @@ const RewardStore = () => {
       if (mounted) realtimeChannelRef.current = channel;
       else channel?.unsubscribe();
     });
-
     return () => {
       mounted = false;
       realtimeChannelRef.current?.unsubscribe();
@@ -233,10 +228,8 @@ const RewardStore = () => {
   // useEffect(() => {
   //   const params = new URLSearchParams(window.location.search);
   //   if (params.get("survey_completed") !== "1") return;
-
   //   // Strip param immediately — prevents re-trigger on refresh
   //   window.history.replaceState({}, "", window.location.pathname);
-
   //   const attemptClaim = async () => {
   //     if (isClaimingRef.current) {
   //       console.warn(
@@ -246,15 +239,12 @@ const RewardStore = () => {
   //     }
   //     isClaimingRef.current = true;
   //     setIsClaiming(true);
-
   //     try {
   //       // saveSectionProgress awaits its own upsert before navigate() fires
   //       // so the DB write is already committed. Short buffer covers replication lag.
   //       await new Promise((r) => setTimeout(r, 400));
-
   //       console.log("[RewardStore] attemptClaim: calling claimSurveyReward...");
   //       const result = await claimSurveyReward(SURVEY_REWARD_POINTS);
-
   //       if (!result) {
   //         console.error(
   //           "[RewardStore] claimSurveyReward returned null — re-fetching balance",
@@ -266,19 +256,16 @@ const RewardStore = () => {
   //         }
   //         return;
   //       }
-
   //       console.log("[RewardStore] attemptClaim result:", result);
-
   //       // Sync to DB-confirmed balance regardless of awarded flag
   //       if (typeof result.points === "number" && result.points >= 0) {
   //         setRewardPoints(result.points);
   //       }
-
   //       if (result.awarded) {
   //         setSurveyAlreadyClaimed(true);
   //         // Show the polished toast instead of a browser alert
   //         setToast({
-  //           visible: true,
+  //           visible : true,
   //           points: SURVEY_REWARD_POINTS,
   //           newBalance: result.points,
   //           label: "Survey completed",
@@ -321,27 +308,22 @@ const RewardStore = () => {
   //       setIsClaiming(false);
   //     }
   //   };
-
   //   attemptClaim();
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []); // intentionally runs once on mount only
-
   useSurveyRewardClaim({
-  onPointsSynced: setRewardPoints,
-  onClaimedStatus: setSurveyAlreadyClaimed,
-  onToast: setToast,
-});
+    onPointsSynced: setRewardPoints,
+    onClaimedStatus: setSurveyAlreadyClaimed,
+    onToast: setToast,
+  });
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-
   const isRedeemingRef = useRef(false);
-
   const markAllRead = useCallback(() => {
     saveReadIds(notifs.map((n) => n.id));
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   }, [notifs]);
-
   const markOneRead = useCallback((id) => {
     const ids = getReadIds();
     if (!ids.includes(id)) {
@@ -353,16 +335,13 @@ const RewardStore = () => {
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
   }, []);
-
   const handleRedeem = async (item) => {
     if (isRedeemingRef.current) return;
     isRedeemingRef.current = true;
-
     try {
       // Re-fetch the authoritative balance instead of trusting stale closure state.
       const profile = await fetchRewardProfile();
       const currentPoints = profile ? profile.rewardPoints : rewardPoints;
-
       if (currentPoints < item.points) {
         setToast({
           visible: true,
@@ -372,7 +351,6 @@ const RewardStore = () => {
         });
         return;
       }
-
       const confirmedPoints = await deductPoints(currentPoints, item.points);
       if (confirmedPoints === null) {
         setToast({
@@ -384,7 +362,6 @@ const RewardStore = () => {
         });
         return;
       }
-
       // Record the redemption using the existing Supabase client.
       const {
         data: { user },
@@ -402,7 +379,6 @@ const RewardStore = () => {
           );
         }
       }
-
       setRewardPoints(confirmedPoints);
       setToast({
         visible: true,
@@ -414,7 +390,6 @@ const RewardStore = () => {
       isRedeemingRef.current = false;
     }
   };
-
   const handleCompleteSurvey = useCallback(() => {
     if (!surveyRoute) return;
     sessionStorage.setItem("survey_origin_route", "/rewards");
@@ -427,7 +402,6 @@ const RewardStore = () => {
       {showModal && (
         <DataPrivacyModal onAccept={handleAccept} onDecline={handleDecline} />
       )}
-
       <PointsToast
         visible={toast.visible}
         points={toast.points}
@@ -435,7 +409,6 @@ const RewardStore = () => {
         label={toast.label}
         onDismiss={dismissToast}
       />
-
       <RewardStoreView
         sidebarWidth={sidebarWidth}
         isMobile={isMobile}
@@ -461,6 +434,8 @@ const RewardStore = () => {
         groupByDate={groupByDate}
         formatTime={formatTime}
         navigate={navigate}
+        // NEW: Pass target ID
+        targetRewardId={targetRewardId}
       />
     </>
   );

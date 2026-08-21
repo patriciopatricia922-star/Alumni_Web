@@ -34,29 +34,54 @@ const NotificationBell = ({
   const isMobile = className.includes('mobile');
 
   // Optional: lets a parent page mirror this component's unread count
-  // (e.g. for greeting text elsewhere on the page) without running its
-  // own separate useNotifications() instance. No-op if not provided.
   useEffect(() => {
     onUnreadCountChange?.(unreadCount);
   }, [unreadCount, onUnreadCountChange]);
 
-  // NEW: clicking a notification marks it read (existing behavior,
-  // preserved) and, if it originated from an announcement, navigates
-  // to that specific announcement using the existing Announcements
-  // route + the announcement's own id (no new/fake ids, no hardcoding).
+  // NEW: Extended click handler for all notification types
   const handleNotificationClick = (n) => {
     markOneRead(n.id);
+    
+    let targetPath = '';
+    let queryParams = '';
 
-    const isAnnouncement = n.type === 'announcement' || (!n.type && n.id);
-    if (isAnnouncement) {
-      const targetId = n.announcementId ?? n.id;
+    switch (n.type) {
+      case 'announcement':
+        targetPath = '/announcements';
+        queryParams = `announcement=${encodeURIComponent(n.typeId)}`;
+        break;
+      case 'discount':
+        targetPath = '/discounts';
+        queryParams = `discount=${encodeURIComponent(n.typeId)}`;
+        break;
+      case 'job':
+        targetPath = '/jobs';
+        queryParams = `job=${encodeURIComponent(n.typeId)}`;
+        break;
+      case 'event':
+        targetPath = '/events';
+        queryParams = `event=${encodeURIComponent(n.typeId)}`;
+        break;
+      case 'reward':
+        targetPath = '/rewards';
+        queryParams = `reward=${encodeURIComponent(n.typeId)}`;
+        break;
+      default:
+        // Fallback for unknown types or legacy notifications without type
+        if (n.typeId) {
+           targetPath = '/announcements';
+           queryParams = `announcement=${encodeURIComponent(n.typeId)}`;
+        }
+        break;
+    }
+
+    if (targetPath) {
       try {
         setShowDropdown(false);
-        navigate(`/announcements?announcement=${encodeURIComponent(targetId)}`);
+        navigate(`${targetPath}?${queryParams}`);
       } catch (err) {
-        // Graceful fallback: never leave the user on a broken page.
         console.error('Notification navigation failed:', err);
-        navigate('/announcements');
+        navigate(targetPath);
       }
     }
   };
@@ -68,10 +93,10 @@ const NotificationBell = ({
         className={`notification-bell-btn ${showDropdown ? 'active' : ''} ${bellClassName}`}
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
       >
-        <img 
-          src={notifIcon} 
-          alt="Notifications" 
-          className="notification-bell-icon" 
+        <img
+          src={notifIcon}
+          alt="Notifications"
+          className="notification-bell-icon"
         />
         {unreadCount > 0 && (
           <div className="notification-badge">
@@ -81,7 +106,6 @@ const NotificationBell = ({
           </div>
         )}
       </button>
-
       {showDropdown && (
         <div className={`notification-dropdown ${dropdownClassName}`}>
           {/* Header */}
@@ -93,7 +117,6 @@ const NotificationBell = ({
               </button>
             )}
           </div>
-
           {/* Tabs */}
           <div className="dropdown-tabs">
             {['all', 'unread'].map((t) => (
@@ -106,7 +129,6 @@ const NotificationBell = ({
               </button>
             ))}
           </div>
-
           {/* Body */}
           <div className="dropdown-body">
             {filteredList.length === 0 ? (
@@ -158,7 +180,6 @@ const NotificationBell = ({
               })
             )}
           </div>
-
           {/* Footer */}
           {onSeeAll && (
             <div className="dropdown-footer">

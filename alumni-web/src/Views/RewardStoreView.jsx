@@ -1,26 +1,35 @@
 // ============================================================================
 // RewardStoreView.jsx — Merged (Friend's UI + Modal + My Logic, no dummy data)
 // ============================================================================
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // import { useNavigate } from 'react-router-dom';
 import Sidebar from "../components/Sidebar";
 import "../styles/RewardStore.css";
 import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
 
 // ============================ MERCH CARD ============================
-const MerchCard = ({ item, userPoints, onRedeem }) => {
+const MerchCard = ({ item, userPoints, onRedeem, isTarget }) => {
   const [hovered, setHovered] = useState(false);
   const canAfford = userPoints >= item.points;
+  
+  // Scroll into view if it's the target
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (isTarget && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isTarget]);
 
   return (
     <div
-      className="merch-card"
+      ref={cardRef}
+      className={`merch-card ${isTarget ? 'target-highlight' : ''}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         transform: hovered ? "translateY(-3px)" : "translateY(0)",
         transition: "transform 0.2s, box-shadow 0.2s",
+        boxShadow: isTarget ? '0 0 0 2px #003ea6, 0px 12px 32px rgba(0,62,166,0.15)' : undefined
       }}
     >
       {/* Image */}
@@ -45,7 +54,6 @@ const MerchCard = ({ item, userPoints, onRedeem }) => {
         </div>
         <div className="merch-card-category-badge">{item.category}</div>
       </div>
-
       {/* Body */}
       <div className="merch-card-info">
         <p className="merch-card-name">{item.name}</p>
@@ -100,24 +108,21 @@ const RewardStoreView = ({
   groupByDate,
   formatTime,
   navigate,
+  targetRewardId, // NEW PROP
 }) => {
   const filters = ["All", "Apparel", "Drinkware", "Accessories"];
-
   const filtered =
     activeFilter === "All"
       ? merchandise || []
       : (merchandise || []).filter((m) => m.category === activeFilter);
 
   // const navigate = useNavigate();
-
   // ── Redeem confirmation modal ──────────────────────────────────────────
   const [redeemedItem, setRedeemedItem] = useState(null);
-
   const handleRedeem = (item) => {
     onRedeem(item);
     setRedeemedItem(item);
   };
-
   const closeRedeemModal = () => setRedeemedItem(null);
 
   // Survey button derived state (my logic — controls disabled + label)
@@ -216,7 +221,6 @@ const RewardStoreView = ({
             </p>
           </div>
         </div>
-
         {/* Right — survey button (my logic: disabled + dynamic label, friend's styling via className) */}
         <button
           className="rewards-survey-button"
@@ -277,6 +281,7 @@ const RewardStoreView = ({
             item={item}
             userPoints={rewardPoints ?? 0}
             onRedeem={handleRedeem}
+            isTarget={targetRewardId && String(item.id) === String(targetRewardId)}
           />
         ))
       )}
@@ -303,11 +308,10 @@ const RewardStoreView = ({
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
         {/* ── Sticky header row (pattern: AlumniDashboardView's .dashboard-header) ──
-             backButton renders inside this same row, bell sits at the far right,
-             so both sit on one sticky line like the reference screenshot. ── */}
+        backButton renders inside this same row, bell sits at the far right,
+        so both sit on one sticky line  like the reference screenshot. ── */}
         <div className="rewards-header-row">
           {backButton}
-
           <div ref={bellRef} className="notification-bell-inline">
             <button
               onClick={() => setShowDropdown((v) => !v)}
@@ -382,7 +386,6 @@ const RewardStoreView = ({
                 </>
               )}
             </button>
-
             {showDropdown && (
               <div
                 style={{
@@ -686,12 +689,10 @@ const RewardStoreView = ({
             )}
           </div>
         </div>
-
         {header}
         {pointsBanner}
         {merchandiseSection}
       </div>
-
       {/* ── Redeem confirmation modal ── */}
       {redeemedItem && (
         <div className="redeem-modal-overlay" onClick={closeRedeemModal}>
@@ -710,7 +711,6 @@ const RewardStoreView = ({
                 />
               </svg>
             </button>
-
             <div className="redeem-modal-icon">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
                 <path
@@ -750,9 +750,7 @@ const RewardStoreView = ({
                 />
               </svg>
             </div>
-
             <h2 className="redeem-modal-title">Redeem Request Received</h2>
-
             <p className="redeem-modal-subtitle">
               Your request to redeem{" "}
               <span className="redeem-modal-item-name">
@@ -760,7 +758,6 @@ const RewardStoreView = ({
               </span>{" "}
               has been noted.
             </p>
-
             <div className="redeem-modal-notice">
               <p className="redeem-modal-notice-title">Important Notice</p>
               <p className="redeem-modal-notice-text">
@@ -769,7 +766,6 @@ const RewardStoreView = ({
                 valid ID for verification.
               </p>
             </div>
-
             <button
               className="redeem-modal-confirm-btn"
               onClick={closeRedeemModal}

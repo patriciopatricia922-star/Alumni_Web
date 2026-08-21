@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import JobsView from '../Views/JobsView';
 import { useNotifications } from '../hooks/useNotifications';
 
@@ -44,19 +44,19 @@ const scoreJob = (job, programKws) => {
 
 const Jobs = () => {
   const navigate  = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetJobId = searchParams.get('job'); // NEW
+  
   const width     = useWindowWidth();
   const isMobile  = width < 768;
   const isTablet  = width >= 768 && width < 1024;
-
   const [activeCategory, setActiveCategory] = useState('All Jobs');
   const [showFilter,     setShowFilter]     = useState(false);
   const [jobs,           setJobs]           = useState([]);
   const [loading,        setLoading]        = useState(true);
   const filterRef = useRef(null);
-
   const [alumniProgram,  setAlumniProgram]  = useState('');
   const [recommended,    setRecommended]    = useState([]);
-
   const { unreadCount } = useNotifications();
 
   // Fetch jobs from Supabase
@@ -108,15 +108,12 @@ const Jobs = () => {
     if (!alumniProgram || jobs.length === 0) return;
     const programKws = getProgramKeywords(alumniProgram);
     if (programKws.length === 0) return;
-
     const scored = jobs
       .map(job => ({ job, ...scoreJob(job, programKws) }))
       .filter(({ score }) => score > 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
-
     setRecommended(scored);
-
     // On initial page load, default to Recommended if matches exist;
     // only update when the category hasn't been manually changed yet.
     setActiveCategory(prev =>
@@ -137,9 +134,9 @@ const Jobs = () => {
     : recommended.map(r => r.job);
 
   const categoryCounts = {
-  'All Jobs':    jobs.length,
-  'Recommended': recommended.length,
-};
+    'All Jobs':    jobs.length,
+    'Recommended': recommended.length,
+  };
 
   const recSubtitle = alumniProgram ? `program: ${alumniProgram}` : 'Recommended jobs based on your profile';
 
@@ -162,6 +159,8 @@ const Jobs = () => {
       recSubtitle={recSubtitle}
       // navigation
       navigate={navigate}
+      // NEW: Pass target ID
+      targetJobId={targetJobId}
     />
   );
 };

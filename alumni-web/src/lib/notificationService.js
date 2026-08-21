@@ -5,34 +5,87 @@ import { stripHtml, decodeHtmlEntities } from '../utils/textHelpers';
 const STORAGE_KEY = 'read_notifs';
 
 export async function fetchNotifications(userId, limit = 20) {
-  const { data, error } = await supabase
-    .from('announcements')
-    .select('id, title, content, published_at, is_active')
-    .eq('is_active', true)
-    .or(`target_user_ids.is.null,target_user_ids.cs.{${userId}}`)
-    .order('published_at', { ascending: false })
-    .limit(limit);
-
-  if (error || !data) return [];
+  // Fetch from all relevant tables in parallel
+  const [
+    { data: annData, error: annError },
+    { data: discData, error: discError },
+    { data: jobData, error: jobError },
+    { data: eventData, error: eventError },
+    { data: rewardData, error: rewardError },
+  ] = await Promise.all([
+    supabase
+      .from('announcements')
+      .select('id, title, content, published_at, is_active')
+      .eq('is_active', true)
+      .or(`target_user_ids.is.null,target_user_ids.cs.{${userId}}`)
+      .order('published_at', { ascending: false }),
+    
+    supabase
+      .from('discounts')
+      .select('id, title, description, created_at, is_active')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+      
+    supabase
+      .from('jobs')
+      .select('id, title, description, posted_at, is_active')
+      .eq('is_active', true)
+      .order('posted_at', { ascending: false }),
+      
+    supabase
+      .from('events')
+      .select('id, title, description, event_date, is_active')
+      .eq('is_active', true)
+      .order('event_date', { ascending: false }),
+      
+    supabase
+      .from('rewards')
+      .select('id, title, points_required, created_at, is_active')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false }),
+  ]);
 
   const readIds = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  
+  const notifications = [];
 
-  return data.map((n) => ({
-    id: n.id,
-    title: decodeHtmlEntities(n.title),
-    body: stripHtml(n.content),
-    time: n.published_at,
-    read: readIds.includes(n.id),
-    // NEW: lets the notification identify its source content and
-    // where clicking it should navigate. Currently all notifications
-    // come from announcements, so type is fixed here; announcementId
-    // mirrors id (the announcement's own primary key) so downstream
-    // code has an explicit, self-describing field to read instead of
-    // relying on "id" meaning different things for different types
-    // if more notification sources are added later.
-    type: 'announcement',
-    announcementId: n.id,
-  }));
+  // Helper to normalize data from different tables into a unified notification structure
+  const normalize = (data, type, idField, titleField, bodyField, dateField) => {
+    if (!data) return [];
+    return data.map(item => ({
+      // Create a unique ID by prefixing with type to avoid collisions between tables
+      id: `${type}-${item[idField]}`, 
+      type: type,
+      typeId: item[idField], // The actual DB ID for navigation
+      title: decodeHtmlEntities(item[titleField]),
+      body: stripHtml(item[bodyField] || ''),
+      time: item[dateField],
+      read: readIds.includes(`${type}-${item[idField]}`),
+    }));
+  };
+
+  if (!annError && annData) {
+    notifications.push(...normalize(annData, 'announcement', 'id', 'title', 'content', 'published_at'));
+  }
+  if (!discError && discData) {
+    notifications.push(...normalize(discData, 'discount', 'id', 'title', 'description', 'created_at'));
+  }
+  if (!jobError && jobData) {
+    notifications.push(...normalize(jobData, 'job', 'id', 'title', 'description', 'posted_at'));
+  }
+  if (!eventError && eventData) {
+    notifications.push(...normalize(eventData, 'event', 'id', 'title', 'description', 'event_date'));
+  }
+  if (!rewardError && rewardData) {
+    // For rewards, we use points_required as a snippet in the body if description isn't available
+    notifications.push(...normalize(rewardData, 'reward', 'id', 'title', 'points_required', 'created_at'));
+  }
+
+  // Sort all notifications by time descending
+  notifications.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+  // Limit the total number of notifications
+  return notifications.slice(0, limit);
 }
 
 export function getReadIds() {
@@ -67,6 +120,7 @@ export function groupByDate(list) {
   weekAgo.setDate(today.getDate() - 7);
 
   const groups = { Today: [], Yesterday: [], 'This Week': [], Earlier: [] };
+
   list.forEach((n) => {
     const d = new Date(n.time);
     d.setHours(0, 0, 0, 0);
@@ -75,6 +129,7 @@ export function groupByDate(list) {
     else if (d >= weekAgo) groups['This Week'].push(n);
     else groups['Earlier'].push(n);
   });
+
   return groups;
 }
 

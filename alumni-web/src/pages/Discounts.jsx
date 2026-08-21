@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import DiscountsView from '../Views/DiscountsView';
 import { useNotifications } from '../hooks/useNotifications';
+
 const useWindowWidth = () => {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1440);
   useEffect(() => {
@@ -19,7 +20,6 @@ const CATEGORIES = ['All', 'Accommodations', 'Food & Dining', 'Health, Wellness 
 const mapCategory = (discount) => {
   const title = discount.title?.toLowerCase() || '';
   const description = discount.description?.toLowerCase() || '';
-  
   if (title.includes('hotel') || title.includes('resort') || description.includes('accommodation')) {
     return 'Accommodations';
   }
@@ -37,24 +37,23 @@ const mapCategory = (discount) => {
 
 const Discounts = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetDiscountId = searchParams.get('discount'); // NEW
+  
   const width    = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
-
   const [activeCategory, setActiveCategory] = useState('All');
   const [showFilter,     setShowFilter]     = useState(false);
   const [discounts,      setDiscounts]      = useState([]);
   const [loading,        setLoading]        = useState(true);
   const filterRef = useRef(null);
-
   const { unreadCount } = useNotifications();
 
   // Fetch discounts from Supabase
   useEffect(() => {
     const fetchDiscounts = async () => {
       setLoading(true);
-      
-      
       const { data, error } = await supabase
         .from('discounts')
         .select('*')
@@ -66,14 +65,7 @@ const Discounts = () => {
         setLoading(false);
         return;
       }
-      
       if (data) {
-        console.log('Raw discount data with image_url:', data.map(d => ({ 
-          id: d.id, 
-          title: d.title, 
-          image_url: d.image_url 
-        })));
-        
         const formattedDiscounts = data.map(discount => ({
           id: discount.id,
           name: discount.title,
@@ -86,12 +78,6 @@ const Discounts = () => {
             ? discount.image_urls
             : [discount.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80'],
         }));
-        
-        console.log('Formatted discounts with images:', formattedDiscounts.map(d => ({ 
-          name: d.name, 
-          image: d.image 
-        })));
-        
         setDiscounts(formattedDiscounts);
       }
       setLoading(false);
@@ -125,6 +111,8 @@ const Discounts = () => {
       filtered={filtered}
       // navigation
       navigate={navigate}
+      // NEW: Pass target ID
+      targetDiscountId={targetDiscountId}
     />
   );
 };

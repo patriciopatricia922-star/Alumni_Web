@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { truncateHtml } from '../utils/textHelpers';
 import '../styles/Discounts.css';
-import NotificationBell from '../components/notifications/NotificationBell'; // NEW IMPORT
-import '../styles/NotificationBell.css'; // NEW IMPORT
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const PriceTagIcon = () => (
@@ -13,7 +13,6 @@ const PriceTagIcon = () => (
     <circle cx="6" cy="6" r="1.5" fill="#003ea6"/>
   </svg>
 );
-
 const LocationIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
     <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.75 4.5 8.5 4.5 8.5s4.5-4.75 4.5-8.5c0-2.485-2.015-4.5-4.5-4.5z"
@@ -21,7 +20,6 @@ const LocationIcon = () => (
     <circle cx="8" cy="6" r="1.5" stroke="#4a5565" strokeWidth="1.2"/>
   </svg>
 );
-
 const CalendarIcon = () => (
   <svg width="14" height="14" viewBox="0 0 22 22" fill="none">
     <rect x="2" y="3" width="18" height="17" rx="2" stroke="#4a5565" strokeWidth="1.5"/>
@@ -47,28 +45,34 @@ const linkifyHtml = (html) => {
 };
 
 // ── Discount Card ─────────────────────────────────────────────────────────────
-const DiscountCard = ({ item }) => {
+const DiscountCard = ({ item, isTarget }) => {
   const [hovered, setHovered] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isTarget); // Auto-expand if it's the target
   const [imgIndex, setImgIndex] = useState(0);
-
   const images = item.images?.length ? item.images : [item.image];
   const hasMultiple = images.length > 1;
-
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
-
   const hasDetails = item.location || item.validUntil;
-
   const descriptionContent = linkifyHtml(
     expanded ? item.discount : truncateHtml(item.discount, 80)
   );
 
+  // Scroll into view if it's the target
+  const cardRef = useRef(null);
+  useEffect(() => {
+    if (isTarget && cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isTarget]);
+
   return (
     <div
+      ref={cardRef}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`discount-card ${hovered ? 'hovered' : ''} ${expanded ? 'expanded' : ''}`}
+      className={`discount-card ${hovered ? 'hovered' : ''} ${expanded ? 'expanded' : ''} ${isTarget ? 'target-highlight' : ''}`}
+      style={isTarget ? { boxShadow: '0 0 0 2px #003ea6, 0px 12px 32px rgba(0,62,166,0.15)' } : {}}
     >
       {/* ── Photo with discount badge + category tag ── */}
       <div className="discount-card-image-wrapper">
@@ -78,7 +82,6 @@ const DiscountCard = ({ item }) => {
           className={`discount-card-image ${hovered ? 'hovered' : ''}`}
           onError={e => { e.target.style.background = '#dbeafe'; e.target.style.display = 'none'; }}
         />
-
         {/* Left / Right arrows */}
         <>
           <button onClick={prevImg} style={{
@@ -109,7 +112,6 @@ const DiscountCard = ({ item }) => {
               <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-
           {/* Dot indicators */}
           <div style={{
             position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
@@ -124,7 +126,6 @@ const DiscountCard = ({ item }) => {
             ))}
           </div>
         </>
-
         {/* Discount % badge — top-right, red pill */}
         {item.discountPercent && (
           <div className="discount-badge">
@@ -133,7 +134,6 @@ const DiscountCard = ({ item }) => {
             </span>
           </div>
         )}
-
         {/* Category tag — bottom-left, white pill */}
         {item.category && (
           <div className="discount-category-tag">
@@ -143,7 +143,6 @@ const DiscountCard = ({ item }) => {
           </div>
         )}
       </div>
-
       {/* ── Body ── */}
       <div className="discount-card-body">
         {/* Title row */}
@@ -153,16 +152,13 @@ const DiscountCard = ({ item }) => {
             {item.name}
           </p>
         </div>
-
         {/* Discount description — shows truncated or full depending on expanded state */}
         <p
           className="discount-card-description"
           dangerouslySetInnerHTML={{ __html: descriptionContent }}
         />
-
         {/* Divider */}
         <div className="discount-card-divider" />
-
         {/* ── Expandable details (location + validity) ── */}
         <div className={`discount-card-details ${expanded ? 'expanded' : ''}`}>
           <div className="discount-card-details-content">
@@ -185,7 +181,6 @@ const DiscountCard = ({ item }) => {
           </div>
         </div>
       </div>
-
       {/* ── Toggle button ── */}
       {hasDetails && (
         <div className="discount-card-button-wrapper">
@@ -211,12 +206,13 @@ const DiscountsView = ({
   categories, activeCategory, setActiveCategory,
   showFilter, setShowFilter, filterRef, categoryCounts, filtered,
   navigate,
+  targetDiscountId, // NEW PROP
 }) => {
   return (
     <div className="discounts-view-container">
       <Sidebar />
       <div className={`discounts-main-content ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
-         <NotificationBell
+        <NotificationBell
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
         />
@@ -232,7 +228,6 @@ const DiscountsView = ({
           </svg>
           <span>Back</span>
         </button>
-
         {/* ── Header ────────────────────────────────────────────────────────── */}
         <div className={`discounts-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`discounts-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
@@ -242,7 +237,6 @@ const DiscountsView = ({
             Avail discounts on participating accommodations, dining, shopping, leisure, and health and wellness establishments.
           </p>
         </div>
-
         {/* ── Filter Bar ────────────────────────────────────────────────────── */}
         <div
           className={isMobile ? 'discounts-filter-bar mobile' : 'discounts-filter-bar'}
@@ -260,7 +254,6 @@ const DiscountsView = ({
             className={isMobile ? 'discounts-filter-container mobile' : 'discounts-filter-container'}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
           >
-
             <div style={{ position: 'relative' }} className={isMobile ? 'discounts-filter-trigger-wrap mobile' : undefined}>
             <div
               className={isMobile ? 'discounts-filter-display mobile' : 'discounts-filter-display'}
@@ -306,7 +299,6 @@ const DiscountsView = ({
                 </span>
               </div>
             </div>
-
             {showFilter && (
               <div
                 className={isMobile ? 'discounts-filter-dropdown mobile' : 'discounts-filter-dropdown'}
@@ -362,7 +354,6 @@ const DiscountsView = ({
                       justifyContent: 'center',
                       padding:        '0 6px',
                       flexShrink:     0,
-                      marginLeft:     '0',
                     }}>
                       <span style={{
                         fontFamily: 'Montserrat, Arial, sans-serif',
@@ -378,7 +369,6 @@ const DiscountsView = ({
               </div>
             )}
             </div>
-
             <button
               onClick={() => setShowFilter(f => !f)}
               className={isMobile ? 'discounts-filter-button mobile' : 'discounts-filter-button'}
@@ -409,7 +399,6 @@ const DiscountsView = ({
             </button>
           </div>
         </div>
-
         {/* ── Cards grid ────────────────────────────────────────────────────── */}
         {filtered.length > 0 ? (
           <div
@@ -421,7 +410,11 @@ const DiscountsView = ({
             }}
           >
             {filtered.map((item) => (
-              <DiscountCard key={item.id} item={item} />
+              <DiscountCard 
+                key={item.id} 
+                item={item} 
+                isTarget={targetDiscountId && String(item.id) === String(targetDiscountId)} 
+              />
             ))}
           </div>
         ) : (
