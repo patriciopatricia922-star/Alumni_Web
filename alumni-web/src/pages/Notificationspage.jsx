@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../hooks/useNotifications';
 import { groupByDate, formatTime } from '../lib/notificationService';
-import NotificationsPageView from './Views/NotificationsView';
+import NotificationsPageView from '../Views/NotificationsView';
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
