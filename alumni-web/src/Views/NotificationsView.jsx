@@ -2,14 +2,14 @@ import React from 'react';
 import Sidebar from '../components/Sidebar';
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Utility — strips HTML tags so raw markup in n.body never shows as text
+Utility — strips HTML tags so raw markup in n.body never shows as text
 ───────────────────────────────────────────────────────────────────────────── */
 const stripHtml = (html = '') =>
-  html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   NotificationsPageView
-   Light-theme, fully aligned with Announcements.css design tokens
+NotificationsPageView
+Light-theme, fully aligned with Announcements.css design tokens
 ───────────────────────────────────────────────────────────────────────────── */
 const NotificationsPageView = ({
   tab, setTab,
@@ -27,9 +27,8 @@ const NotificationsPageView = ({
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Arimo:wght@400;600;700&display=swap');
-
         *, *::before, *::after { box-sizing: border-box; }
-
+        
         /*
          * Root background — matches --ann-page-bg exactly.
          * Covers html/body/#root so no seam appears at the sidebar edge.
@@ -81,23 +80,6 @@ const NotificationsPageView = ({
           padding: 37px 51px 60px;
         }
 
-        /* ── Top bar: left (back + heading + tabs) / right (actions) */
-        .np-topbar {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 16px;
-          margin-bottom: 28px;
-        }
-
-        .np-topbar-left  { flex: 1; min-width: 0; }
-        .np-topbar-right {
-          display: flex;
-          align-items: flex-start;
-          padding-top: 2px;
-        }
-
         /* ── Back button — mirrors ann-back-btn ───────────────── */
         .np-back-btn {
           display: inline-flex;
@@ -139,8 +121,7 @@ const NotificationsPageView = ({
         }
 
         /* ── Tabs ─────────────────────────────────────────────── */
-        .np-tabs { display: flex; gap: 6px; }
-
+        .np-tabs { display: flex; gap: 6px; margin-bottom: 28px; }
         .np-tab-btn {
           height: 34px;
           padding: 0 18px;
@@ -186,6 +167,7 @@ const NotificationsPageView = ({
           letter-spacing: 0.2px;
           transition: opacity 0.15s;
           filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.15));
+          margin-bottom: 28px;
         }
         .np-mark-all-btn:hover { opacity: 0.85; }
 
@@ -398,24 +380,19 @@ const NotificationsPageView = ({
           .np-content { padding: 37px 32px 48px; }
           .np-heading  { font-size: 31px; }
         }
-
         @media (max-width: 900px) {
           .np-content        { padding: 24px 16px 60px; margin-left: 0 !important; }
           .np-heading        { font-size: 27px; }
           .np-subheading     { font-size: 13px; }
-          .np-topbar         { flex-direction: column; gap: 0; }
-          .np-topbar-right   { padding-top: 0; margin-bottom: 20px; }
           .np-back-btn span  { font-size: 14px; }
           .np-notif-card__body { padding: 14px; gap: 12px; }
           .np-notif-card__title { font-size: 13.5px; }
           .np-notif-card__preview { font-size: 12.5px; }
         }
-
         @media (max-width: 480px) {
           .np-notif-card__top-row { flex-direction: column; gap: 4px; }
           .np-notif-card__meta    { align-self: flex-start; }
         }
-
         @media (max-width: 380px) {
           .np-content { padding: 20px 12px 48px; }
           .np-heading { font-size: 23px; }
@@ -432,60 +409,54 @@ const NotificationsPageView = ({
        */}
       <div className="np-shell">
         <Sidebar />
-
         <div
           className="np-content"
           style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
         >
-          {/* ── Top bar ─────────────────────────────────────────────────── */}
-          <div className="np-topbar">
+          {/* ── Header Section (About-style) ─────────────────────────── */}
+          <button
+            className="np-back-btn"
+            onClick={() => navigate('/dashboard')}
+          >
+            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+              <path
+                d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67"
+                stroke="#003EA6"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Back</span>
+          </button>
 
-            {/* LEFT column */}
-            <div className="np-topbar-left">
-              <button
-                className="np-back-btn"
-                onClick={() => navigate('/dashboard')}
-              >
-                <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-                  <path
-                    d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67"
-                    stroke="#003EA6"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>Back</span>
-              </button>
+          <h1 className="np-heading">Notifications</h1>
+          <p className="np-subheading">
+            Stay updated with the latest announcements and activities.
+          </p>
 
-              <h1 className="np-heading">Notifications</h1>
-              <p className="np-subheading">
-                Stay updated with the latest announcements and activities.
-              </p>
-
-              {/* Tabs sit flush-left under the subheading */}
-              <div className="np-tabs">
-                {['all', 'unread'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`np-tab-btn ${tab === t ? 'np-tab-btn--active' : 'np-tab-btn--inactive'}`}
-                  >
-                    {t === 'all'
-                      ? 'All'
-                      : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-                  </button>
-                ))}
-              </div>
+          {/* ── Controls Row ──────────────────────────────────────────── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            {/* Tabs sit flush-left under the subheading */}
+            <div className="np-tabs" style={{ marginBottom: 0 }}>
+              {['all', 'unread'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`np-tab-btn ${tab === t ? 'np-tab-btn--active' : 'np-tab-btn--inactive'}`}
+                >
+                  {t === 'all'
+                    ? 'All'
+                    : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                </button>
+              ))}
             </div>
 
-            {/* RIGHT column — mirrors FILTER button position in AnnouncementsView */}
+            {/* RIGHT column — Mark All Read */}
             {unreadCount > 0 && (
-              <div className="np-topbar-right">
-                <button className="np-mark-all-btn" onClick={markAllRead}>
-                  Mark all as read
-                </button>
-              </div>
+              <button className="np-mark-all-btn" onClick={markAllRead} style={{ marginBottom: 0 }}>
+                Mark all as read
+              </button>
             )}
           </div>
 
@@ -517,12 +488,10 @@ const NotificationsPageView = ({
                 if (!items.length) return null;
                 return (
                   <React.Fragment key={label}>
-
                     {/* Date-group label with trailing rule */}
                     <div className="np-group-label">
                       <span>{label}</span>
                     </div>
-
                     {items.map(n => (
                       <div
                         key={n.id}
@@ -530,7 +499,6 @@ const NotificationsPageView = ({
                         onClick={() => markOneRead(n.id)}
                       >
                         <div className="np-notif-card__body">
-
                           {/* Gradient icon box */}
                           <div className="np-notif-card__icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -542,10 +510,8 @@ const NotificationsPageView = ({
                               />
                             </svg>
                           </div>
-
                           {/* Text content */}
                           <div className="np-notif-card__content">
-
                             {/* Title + timestamp on same row */}
                             <div className="np-notif-card__top-row">
                               <p className={`np-notif-card__title np-notif-card__title--${n.read ? 'read' : 'unread'}`}>
@@ -560,23 +526,19 @@ const NotificationsPageView = ({
                                 {!n.read && <div className="np-unread-dot" />}
                               </div>
                             </div>
-
                             {/* Body — HTML stripped to plain text */}
                             <p className="np-notif-card__preview">
                               {stripHtml(n.body)}
                             </p>
-
                           </div>
                         </div>
                       </div>
                     ))}
-
                   </React.Fragment>
                 );
               })}
             </div>
           )}
-
         </div>
       </div>
     </>
