@@ -95,7 +95,12 @@ const NotificationsPageView = ({
                     >
                       <div className="notif-card__body">
                         <div className="notif-card__icon">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          {/* 
+                            FIX: Added negative margin-left to compensate for 
+                            the SVG path's internal empty space on the right side,
+                            achieving true visual centering within the flex container.
+                          */}
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ marginLeft: '-2px' }}>
                             <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round"/>
                           </svg>
                         </div>

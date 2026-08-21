@@ -232,11 +232,6 @@ html, body, #root {
   box-shadow: 0px 8px 20px rgba(43,114,251,0.45);
 }
 
-/* NEW: Adjust small bell icon positioning inside the notification item */
-.notif-card__icon svg {
-  transform: translateX(1px);
-}
-
 .notif-card__content {
   flex: 1;
   min-width: 0;
