@@ -205,6 +205,11 @@
   margin-top: 2px;
 }
 
+/* NEW: Adjust small bell icon positioning inside the notification item */
+.notification-icon svg {
+  transform: translateX(1px);
+}
+
 .notification-content {
   flex: 1;
   min-width: 0;
@@ -276,9 +281,8 @@
 
 /* ============================ MOBILE RESPONSIVE ============================ */
 /* Reference: Discounts.css mobile positioning logic.
-   Uses absolute positioning relative to the wrapper, with viewport-safe
-   width constraints (max-width: calc(100vw - 24px)) to prevent overflow. */
-
+Uses absolute positioning relative to the wrapper, with viewport-safe
+width constraints (max-width: calc(100vw - 24px)) to prevent overflow. */
 @media (max-width: 767px) {
   .notification-bell-btn {
     width: 44px;
