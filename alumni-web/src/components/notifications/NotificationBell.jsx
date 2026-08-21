@@ -1,5 +1,6 @@
 // src/components/notifications/NotificationBell.jsx
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
 import { groupByDate, formatTime } from '../../lib/notificationService';
 import { truncateHtml } from '../../utils/textHelpers';
@@ -14,6 +15,7 @@ const NotificationBell = ({
   bellClassName = '',
   dropdownClassName = '',
 }) => {
+  const navigate = useNavigate();
   const {
     bellRef,
     notifs,
@@ -37,6 +39,27 @@ const NotificationBell = ({
   useEffect(() => {
     onUnreadCountChange?.(unreadCount);
   }, [unreadCount, onUnreadCountChange]);
+
+  // NEW: clicking a notification marks it read (existing behavior,
+  // preserved) and, if it originated from an announcement, navigates
+  // to that specific announcement using the existing Announcements
+  // route + the announcement's own id (no new/fake ids, no hardcoding).
+  const handleNotificationClick = (n) => {
+    markOneRead(n.id);
+
+    const isAnnouncement = n.type === 'announcement' || (!n.type && n.id);
+    if (isAnnouncement) {
+      const targetId = n.announcementId ?? n.id;
+      try {
+        setShowDropdown(false);
+        navigate(`/announcements?announcement=${encodeURIComponent(targetId)}`);
+      } catch (err) {
+        // Graceful fallback: never leave the user on a broken page.
+        console.error('Notification navigation failed:', err);
+        navigate('/announcements');
+      }
+    }
+  };
 
   return (
     <div ref={bellRef} className={`notification-bell-wrapper ${className}`}>
@@ -109,7 +132,7 @@ const NotificationBell = ({
                     {items.map((n) => (
                       <div
                         key={n.id}
-                        onClick={() => markOneRead(n.id)}
+                        onClick={() => handleNotificationClick(n)}
                         className={`notification-item ${!n.read ? 'unread' : 'read'}`}
                       >
                         <div className="notification-icon">

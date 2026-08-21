@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import AnnouncementsView from "../Views/AnnouncementsView";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
@@ -48,6 +48,12 @@ const Announcements = () => {
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
   const filterRef = useRef(null);
+
+  // NEW: read the announcement id (if any) carried by a notification
+  // click, e.g. /announcements?announcement=<id>. Uses the existing
+  // react-router-dom APIs already in use elsewhere in the app.
+  const [searchParams] = useSearchParams();
+  const targetAnnouncementId = searchParams.get("announcement");
 
   const [activeCategory, setActiveCategory] = useState("All Announcements");
   const [showFilter, setShowFilter] = useState(false);
@@ -217,6 +223,8 @@ const Announcements = () => {
         filterRef={filterRef}
         // notifications
         // unreadCount={unreadCount}
+        // deep-link from a notification click
+        targetAnnouncementId={targetAnnouncementId}
         // navigation
         navigate={navigate}
       />

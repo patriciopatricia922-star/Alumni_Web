@@ -23,6 +23,15 @@ export async function fetchNotifications(userId, limit = 20) {
     body: stripHtml(n.content),
     time: n.published_at,
     read: readIds.includes(n.id),
+    // NEW: lets the notification identify its source content and
+    // where clicking it should navigate. Currently all notifications
+    // come from announcements, so type is fixed here; announcementId
+    // mirrors id (the announcement's own primary key) so downstream
+    // code has an explicit, self-describing field to read instead of
+    // relying on "id" meaning different things for different types
+    // if more notification sources are added later.
+    type: 'announcement',
+    announcementId: n.id,
   }));
 }
 
