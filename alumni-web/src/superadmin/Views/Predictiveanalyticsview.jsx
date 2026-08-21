@@ -245,29 +245,46 @@ const Predictiveanalyticsview = ({
     return () => cancelAnimationFrame(animRef.current);
   }, [activePage, overviewTrend]);
 
-  // Loading skeleton state
+  // ── Insufficient-data state ────────────────────────────────────────────
+  // NOTE: This branch does NOT mean "still loading". By the time this view
+  // renders, the parent (AdminPredictiveAnalytics) has already resolved its
+  // own `loading`/`error` states from the Supabase fetch — this component
+  // only ever mounts after that fetch has settled. An empty `overviewTrend`
+  // here means the fetch succeeded but the `predictions` table currently
+  // has zero rows (e.g. predictions have never been generated yet, or the
+  // underlying alumni survey data doesn't have the fields the model needs).
+  // Previously this rendered the loading skeleton, which made the page look
+  // permanently stuck since nothing would ever re-trigger a fetch. We now
+  // show an explicit empty state instead, with the existing refresh action
+  // so the admin can generate predictions on demand.
   if (!overviewTrend || overviewTrend.length === 0) {
     return (
       <div className="pa-layout">
         {sidebar}
         <main className="pa-main">
           <div className="pa-page-header">
-            <div className="pa-skeleton" style={{ width: '60%', maxWidth: 220, height: 28, borderRadius: 8, marginBottom: 10 }} />
-            <div className="pa-skeleton" style={{ width: '80%', maxWidth: 320, height: 14, borderRadius: 6 }} />
+            <h1 className="pa-page-title">Predictive Analytics</h1>
+            <p className="pa-page-subtitle">
+              Welcome back! Here's what's happening with your alumni insights.
+            </p>
           </div>
           <div className="pa-tab-row">
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <div className="pa-skeleton" style={{ width: 80, height: 32, borderRadius: 8 }} />
-              <div className="pa-skeleton" style={{ width: 16, height: 16, borderRadius: 4 }} />
-              <div className="pa-skeleton" style={{ width: 100, height: 32, borderRadius: 8 }} />
-            </div>
             <div className="pa-tab-spacer" />
-            <div className="pa-skeleton" style={{ width: 160, height: 36, borderRadius: 8, flexShrink: 0 }} />
+            {refreshBar}
           </div>
           <div className="pa-overview-container">
-            <ChartSkeleton />
-            <div className="pa-ai-card">
-              <AIInsightsSkeleton />
+            <div className="pa-chart-card pa-empty-state">
+              <div className="pa-chart-icon">
+                <FiAlertCircle size={22} color="#155DFC" />
+              </div>
+              <h2 className="pa-chart-title">Not enough data yet</h2>
+              <p className="pa-chart-subtitle pa-empty-text">
+                No predictions have been generated yet. Predictive Analytics needs
+                at least one completed alumni survey (with degree program and
+                employment information) before it can produce a forecast. Once
+                alumni records are available, click <strong>Refresh Predictions</strong> above
+                to generate them.
+              </p>
             </div>
           </div>
         </main>
