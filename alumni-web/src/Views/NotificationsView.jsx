@@ -1,17 +1,16 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
-import NotificationBell from '../components/notifications/NotificationBell';
-import '../styles/NotificationBell.css';
 
 /* ─────────────────────────────────────────────────────────────────────────────
 Utility — strips HTML tags so raw markup in n.body never shows as text
 ───────────────────────────────────────────────────────────────────────────── */
 const stripHtml = (html = '') =>
-  html.replace(/<[^>]+>/g, '').replace(/ /g, ' ').trim();
+  html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
 
 /* ─────────────────────────────────────────────────────────────────────────────
 NotificationsPageView
 Redesigned to match the About page's header/wrapper design language.
+Uses unified notification data from useNotifications hook.
 ───────────────────────────────────────────────────────────────────────────── */
 const NotificationsPageView = ({
   tab, setTab,
@@ -20,9 +19,21 @@ const NotificationsPageView = ({
   markAllRead, markOneRead,
   formatTime,
   navigate,
-  isMobile,
-  isTablet,
+  onNotificationClick,
 }) => {
+  // Determine responsive sidebar width for layout calculation
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = React.useState(window.innerWidth >= 768 && window.innerWidth < 1100);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1100);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const sidebarWidth = isTablet ? 200 : 229;
 
   return (
@@ -76,26 +87,6 @@ const NotificationsPageView = ({
           position: relative;
         }
 
-        /* Notification Bell Positioning (Mirroring .ab-main .notification-bell-wrapper) */
-        .notif-main .notification-bell-wrapper {
-          position: absolute;
-          top: 37px;
-          right: 51px;
-          z-index: 200;
-        }
-        @media (max-width: 767px) {
-          .notif-main .notification-bell-wrapper.mobile {
-            top: clamp(34px, 5vw, 42px);
-            right: clamp(12px, 4vw, 18px);
-          }
-        }
-        @media (max-width: 1100px) and (min-width: 768px) {
-          .notif-main .notification-bell-wrapper {
-            top: 45px;
-            right: 65px;
-          }
-        }
-
         /* Back Button (Mirroring .ab-back) */
         .notif-back {
           display: inline-flex;
@@ -131,7 +122,7 @@ const NotificationsPageView = ({
         }
         .notif-title {
           font-weight: 700;
-          font-size: clamp(28px, 3.2vw, 39px); /* Using Announcements-like scale as requested, but within About structure */
+          font-size: clamp(28px, 3.2vw, 39px);
           line-height: 1.2;
           letter-spacing: -1px;
           color: var(--notif-text-dark-alt);
@@ -185,7 +176,7 @@ const NotificationsPageView = ({
           color: var(--notif-text-dark);
         }
 
-        /* Mark All Button (Mirroring Filter/Button style) */
+        /* Mark All Button */
         .notif-mark-all-btn {
           height: 37px;
           padding: 0 18px;
@@ -211,7 +202,7 @@ const NotificationsPageView = ({
           display: flex;
           flex-direction: column;
           gap: 10px;
-          padding-left: 10px; /* Align with title */
+          padding-left: 10px;
         }
 
         /* Date Group Label */
@@ -418,12 +409,6 @@ const NotificationsPageView = ({
         <Sidebar />
         <div className="notif-main">
           
-          {/* Notification Bell (Positioned Absolutely via CSS) */}
-          <NotificationBell
-            onSeeAll={() => {}} // No-op on main page
-            className={isMobile ? 'mobile' : ''}
-          />
-
           {/* Back Button */}
           <button className="notif-back" onClick={() => navigate('/dashboard')}>
             <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
@@ -488,7 +473,7 @@ const NotificationsPageView = ({
                       <div
                         key={n.id}
                         className={`notif-card${n.read ? '' : ' notif-card--unread'}`}
-                        onClick={() => markOneRead(n.id)}
+                        onClick={() => onNotificationClick(n)}
                       >
                         <div className="notif-card__body">
                           <div className="notif-card__icon">
