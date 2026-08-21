@@ -35,7 +35,6 @@ import DataPrivacyModal from "../modals/Dataprivacymodal";
 import { useDpaGate } from "../hooks/useDpaGate";
 import { subscribeToRewardPoints } from "../lib/rewardPoints";
 import { useSurveyRewardClaim } from "../hooks/useSurveyRewardClaim";
-import { useNotifications } from "../hooks/useNotifications";
 import PointsToast from "../modals/PointsToast";
 
 // ============================ STORAGE KEYS ============================
@@ -103,7 +102,7 @@ const AlumniDashboard = () => {
   const [user, setUser] = useState(null);
   const [surveyProgress, setSurveyProgress] = useState({ percentage: 0 });
   const [animatedPercentage, setAnimatedPercentage] = useState(0);
-  const { unreadCount, markAllRead, markOneRead } = useNotifications();
+  const [unreadCount, setUnreadCount] = useState(0);
   const [toast, setToast] = useState({
     visible: false,
     points: 0,
@@ -626,6 +625,7 @@ const AlumniDashboard = () => {
         firstName={firstName}
         // ── Notifications / Bell ──
         unreadCount={unreadCount}
+        onUnreadCountChange={setUnreadCount}
         // ── Survey progress ──
         animatedPercentage={animatedPercentage}
         surveyRoute={surveyRoute}

@@ -1,5 +1,5 @@
 // src/components/notifications/NotificationBell.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 import { groupByDate, formatTime } from '../../lib/notificationService';
 import { truncateHtml } from '../../utils/textHelpers';
@@ -9,6 +9,7 @@ const NotificationBell = ({
   autoMarkReadOnMount = false,
   limit = 20,
   onSeeAll,
+  onUnreadCountChange,
   className = '',
   bellClassName = '',
   dropdownClassName = '',
@@ -29,6 +30,13 @@ const NotificationBell = ({
   const filteredList = notifTab === 'unread' ? notifs.filter((n) => !n.read) : notifs;
   const grouped = groupByDate(filteredList);
   const isMobile = className.includes('mobile');
+
+  // Optional: lets a parent page mirror this component's unread count
+  // (e.g. for greeting text elsewhere on the page) without running its
+  // own separate useNotifications() instance. No-op if not provided.
+  useEffect(() => {
+    onUnreadCountChange?.(unreadCount);
+  }, [unreadCount, onUnreadCountChange]);
 
   return (
     <div ref={bellRef} className={`notification-bell-wrapper ${className}`}>

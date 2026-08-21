@@ -73,6 +73,7 @@ const AlumniDashboardView = ({
   sidebarWidth,
   firstName,
   unreadCount,
+  onUnreadCountChange,
   animatedPercentage,
   forYouItems,
   onNavigate,
@@ -410,7 +411,7 @@ const AlumniDashboardView = ({
               marginRight: "35px",
             }}
           >
-            <NotificationBell onSeeAll={() => onNavigate("/notifications")} />
+            <NotificationBell onSeeAll={() => onNavigate("/notifications")} onUnreadCountChange={onUnreadCountChange} />
           </div>
         </div>
 
