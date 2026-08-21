@@ -224,6 +224,7 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-right: 40px;
   flex-shrink: 0;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
