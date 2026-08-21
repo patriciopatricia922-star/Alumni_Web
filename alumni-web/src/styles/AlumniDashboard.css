@@ -114,6 +114,8 @@
 }
 
 .notification-bell .notification-bell-wrapper {
+  position: static; 
+  z-index: auto;
   margin: 0;
   padding: 0;
   width: auto;
