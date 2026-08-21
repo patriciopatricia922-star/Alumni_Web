@@ -155,7 +155,7 @@
   margin: 0;
 }
 
-.notification-date-label {
+.notification-dropdown .notification-date-label {
   font-family: Montserrat, Arial, sans-serif;
   font-weight: 700;
   font-size: 10px;
