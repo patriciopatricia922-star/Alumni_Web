@@ -1,15 +1,17 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
+import NotificationBell from '../components/notifications/NotificationBell';
+import '../styles/NotificationBell.css';
 
 /* ─────────────────────────────────────────────────────────────────────────────
 Utility — strips HTML tags so raw markup in n.body never shows as text
 ───────────────────────────────────────────────────────────────────────────── */
 const stripHtml = (html = '') =>
-  html.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+  html.replace(/<[^>]+>/g, '').replace(/ /g, ' ').trim();
 
 /* ─────────────────────────────────────────────────────────────────────────────
 NotificationsPageView
-Light-theme, fully aligned with Announcements.css design tokens
+Redesigned to match the About page's header/wrapper design language.
 ───────────────────────────────────────────────────────────────────────────── */
 const NotificationsPageView = ({
   tab, setTab,
@@ -27,12 +29,9 @@ const NotificationsPageView = ({
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Arimo:wght@400;600;700&display=swap');
-        *, *::before, *::after { box-sizing: border-box; }
         
-        /*
-         * Root background — matches --ann-page-bg exactly.
-         * Covers html/body/#root so no seam appears at the sidebar edge.
-         */
+        /* Reset & Base */
+        *, *::before, *::after { box-sizing: border-box; }
         html, body, #root {
           margin: 0;
           padding: 0;
@@ -40,89 +39,127 @@ const NotificationsPageView = ({
           background: #DAE5F1 !important;
         }
 
-        /* ── Design tokens (mirrors Announcements.css) ────────── */
-        .np-shell {
-          --np-page-bg:           #DAE5F1;
-          --np-card-bg:           #FFFFFF;
-          --np-card-border:       #E5E7EB;
-          --np-card-shadow:       0px 2px 8px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.06);
-          --np-card-shadow-hover: 0px 8px 24px rgba(43,114,251,0.14), 0px 2px 8px rgba(0,0,0,0.08);
-          --np-card-border-hover: #2B72FB;
-          --np-title-color:       #003EA6;
-          --np-body-color:        #4A5565;
-          --np-meta-color:        #8A94A6;
-          --np-timestamp-color:   rgba(74,85,101,0.65);
-          --np-clock-stroke:      rgba(74,85,101,0.45);
-          --np-accent-btn:        #003EA6;
-          --np-badge-bg:          #2B72FB;
-          --np-page-title:        #324D87;
-          --np-page-subtitle:     #545454;
-          --np-back-color:        #003EA6;
-          --np-icon-box-bg:       linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
-          --np-icon-box-shadow:   0px 4px 10px rgba(43,114,251,0.35);
-          --np-unread-border:     #2B72FB;
-          --np-divider:           #F0F2F5;
-          --np-group-label-text:  #8A94A6;
+        /* Design Tokens (Mirroring About.css) */
+        :root {
+          --notif-bg: #DAE5F1;
+          --notif-text-dark: #002263;
+          --notif-text-dark-alt: #324d87;
+          --notif-text-gray: #545454;
+          --notif-accent-blue: #2b72fb;
+          --notif-card-bg: #FFFFFF;
+          --notif-card-border: #E5E7EB;
+          --notif-card-shadow: 0px 2px 8px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.06);
+          --notif-unread-border: #2B72FB;
         }
 
-        /* ── Full-viewport flex shell ─────────────────────────── */
-        .np-shell {
+        /* Shell Layout (Mirroring .ab-root) */
+        .notif-root {
           display: flex;
-          min-height: 100vh;
-          background: var(--np-page-bg);
-          font-family: 'Montserrat', 'Arimo', sans-serif;
+          width: 100vw;
+          height: 100dvh;
+          overflow: hidden;
+          background: var(--notif-bg);
+          font-family: "Montserrat", sans-serif;
         }
 
-        /* ── Content area ─────────────────────────────────────── */
-        .np-content {
-          flex: 1;
+        /* Main Content Area (Mirroring .ab-main) */
+        .notif-main {
+          margin-left: ${isMobile ? '0' : `${sidebarWidth}px`};
+          flex: 1 1 0;
           min-width: 0;
-          padding: 37px 51px 60px;
+          height: 100dvh;
+          overflow-y: auto;
+          overflow-x: hidden;
+          display: flex;
+          flex-direction: column;
+          padding: clamp(28px, 4vh, 52px) clamp(24px, 3.2vw, 56px) clamp(12px, 1.8vh, 29px) clamp(40px, 8.2vw, 97.1px);
+          position: relative;
         }
 
-        /* ── Back button — mirrors ann-back-btn ───────────────── */
-        .np-back-btn {
+        /* Notification Bell Positioning (Mirroring .ab-main .notification-bell-wrapper) */
+        .notif-main .notification-bell-wrapper {
+          position: absolute;
+          top: 37px;
+          right: 51px;
+          z-index: 200;
+        }
+        @media (max-width: 767px) {
+          .notif-main .notification-bell-wrapper.mobile {
+            top: clamp(34px, 5vw, 42px);
+            right: clamp(12px, 4vw, 18px);
+          }
+        }
+        @media (max-width: 1100px) and (min-width: 768px) {
+          .notif-main .notification-bell-wrapper {
+            top: 45px;
+            right: 65px;
+          }
+        }
+
+        /* Back Button (Mirroring .ab-back) */
+        .notif-back {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 15px;
           background: none;
           border: none;
           cursor: pointer;
-          padding: 0;
-          margin-bottom: 14px;
-          transition: opacity 0.15s;
+          padding: 0px;
+          width: fit-content;
+          flex-shrink: 0;
+          margin-bottom: clamp(8px, 1.2vh, 14px);
+          margin-top: clamp(2px, 0.4vh, 6px);
+          margin-left: -65px;
+          transition: opacity 0.15s ease;
         }
-        .np-back-btn:hover { opacity: 0.7; }
-        .np-back-btn span {
-          font-family: 'Montserrat', sans-serif;
-          font-weight: 700;
-          font-size: 15px;
-          color: var(--np-back-color);
+        .notif-back:hover { opacity: 0.7; }
+        .notif-back span {
+          font-family: "Montserrat", sans-serif;
+          font-weight: 600;
+          font-size: clamp(13px, 0.9vw, 15px);
+          color: #002263;
+        }
+        @media (max-width: 767px) {
+          .notif-back { display: none; }
         }
 
-        /* ── Page heading — mirrors ann-heading ───────────────── */
-        .np-heading {
-          font-family: 'Montserrat', sans-serif;
+        /* Header Section (Mirroring .ab-hdr) */
+        .notif-hdr {
+          flex-shrink: 0;
+          margin-bottom: clamp(10px, 1.4vh, 16px);
+          padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
+        }
+        .notif-title {
           font-weight: 700;
-          font-size: 39px;
-          color: var(--np-page-title);
-          margin: 0 0 6px 0;
+          font-size: clamp(28px, 3.2vw, 39px); /* Using Announcements-like scale as requested, but within About structure */
+          line-height: 1.2;
           letter-spacing: -1px;
-          line-height: 1.15;
+          color: var(--notif-text-dark-alt);
+          margin-top: 20px;
+          margin-bottom: 3px;
+          margin-left: -10px;
         }
-
-        .np-subheading {
-          font-family: 'Montserrat', sans-serif;
+        .notif-sub {
           font-weight: 400;
-          font-size: 15px;
-          line-height: 22px;
-          color: var(--np-page-subtitle);
-          margin: 0 0 20px 0;
+          font-size: clamp(11px, 0.9vw, 15px);
+          line-height: 1.6;
+          color: var(--notif-text-gray);
+          margin-left: -10px;
+          margin-bottom: 20px;
         }
 
-        /* ── Tabs ─────────────────────────────────────────────── */
-        .np-tabs { display: flex; gap: 6px; margin-bottom: 28px; }
-        .np-tab-btn {
+        /* Controls Row (Tabs + Mark All) */
+        .notif-controls {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin-bottom: 28px;
+          margin-left: -10px;
+        }
+        .notif-tabs { display: flex; gap: 6px; }
+        .notif-tab-btn {
           height: 34px;
           padding: 0 18px;
           border-radius: 20px;
@@ -131,31 +168,31 @@ const NotificationsPageView = ({
           font-size: 13px;
           transition: all 0.15s;
         }
-        .np-tab-btn--active {
-          background: var(--np-accent-btn);
+        .notif-tab-btn--active {
+          background: var(--notif-accent-blue);
           border: none;
           font-weight: 700;
           color: #ffffff;
         }
-        .np-tab-btn--inactive {
+        .notif-tab-btn--inactive {
           background: #ffffff;
-          border: 1px solid var(--np-card-border);
+          border: 1px solid var(--notif-card-border);
           font-weight: 500;
-          color: var(--np-body-color);
+          color: #4A5565;
         }
-        .np-tab-btn--inactive:hover {
-          border-color: var(--np-card-border-hover);
-          color: var(--np-title-color);
+        .notif-tab-btn--inactive:hover {
+          border-color: var(--notif-unread-border);
+          color: var(--notif-text-dark);
         }
 
-        /* ── Mark-all — mirrors FILTER button styling ─────────── */
-        .np-mark-all-btn {
+        /* Mark All Button (Mirroring Filter/Button style) */
+        .notif-mark-all-btn {
           height: 37px;
           padding: 0 18px;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: var(--np-accent-btn);
+          background: var(--notif-accent-blue);
           border: 1px solid rgba(255,255,255,0.1);
           border-radius: 8px;
           font-family: 'Montserrat', sans-serif;
@@ -164,85 +201,78 @@ const NotificationsPageView = ({
           color: #ffffff;
           cursor: pointer;
           white-space: nowrap;
-          letter-spacing: 0.2px;
           transition: opacity 0.15s;
           filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.15));
-          margin-bottom: 28px;
         }
-        .np-mark-all-btn:hover { opacity: 0.85; }
+        .notif-mark-all-btn:hover { opacity: 0.85; }
 
-        /* ── Notification cards list ──────────────────────────── */
-        .np-cards-list {
+        /* Notification Cards List */
+        .notif-cards-list {
           display: flex;
           flex-direction: column;
           gap: 10px;
+          padding-left: 10px; /* Align with title */
         }
 
-        /* ── Date-group label ─────────────────────────────────── */
-        .np-group-label {
+        /* Date Group Label */
+        .notif-group-label {
           display: flex;
           align-items: center;
           gap: 10px;
           padding: 4px 0 6px;
           margin-top: 6px;
         }
-        .np-group-label:first-child { margin-top: 0; }
-        .np-group-label span {
+        .notif-group-label:first-child { margin-top: 0; }
+        .notif-group-label span {
           font-family: 'Montserrat', sans-serif;
           font-weight: 600;
           font-size: 10.5px;
-          color: var(--np-group-label-text);
+          color: #8A94A6;
           text-transform: uppercase;
           letter-spacing: 0.9px;
           white-space: nowrap;
         }
-        .np-group-label::after {
+        .notif-group-label::after {
           content: '';
           flex: 1;
           height: 1px;
-          background: var(--np-card-border);
+          background: var(--notif-card-border);
         }
 
-        /* ── Notification card — mirrors ann-card ─────────────── */
-        .np-notif-card {
-          background: var(--np-card-bg);
-          border: 1px solid var(--np-card-border);
-          box-shadow: var(--np-card-shadow);
+        /* Notification Card */
+        .notif-card {
+          background: var(--notif-card-bg);
+          border: 1px solid var(--notif-card-border);
+          box-shadow: var(--notif-card-shadow);
           border-radius: 16px;
           overflow: hidden;
           cursor: pointer;
           transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
-        .np-notif-card:hover {
-          border-color: var(--np-card-border-hover);
-          box-shadow: var(--np-card-shadow-hover);
+        .notif-card:hover {
+          border-color: var(--notif-unread-border);
+          box-shadow: 0px 8px 24px rgba(43,114,251,0.14), 0px 2px 8px rgba(0,0,0,0.08);
           transform: translateY(-2px);
         }
-
-        /* Unread: left accent stripe + very faint tint */
-        .np-notif-card--unread {
-          border-left: 3px solid var(--np-unread-border);
+        .notif-card--unread {
+          border-left: 3px solid var(--notif-unread-border);
           background: rgba(43,114,251,0.025);
         }
-        .np-notif-card--unread:hover {
-          background: rgba(43,114,251,0.05);
-        }
+        .notif-card--unread:hover { background: rgba(43,114,251,0.05); }
 
-        /* Inner body — mirrors ann-card__body */
-        .np-notif-card__body {
+        .notif-card__body {
           display: flex;
           align-items: flex-start;
           padding: 16px 20px;
           gap: 14px;
         }
 
-        /* Icon box — mirrors ann-card__icon-box */
-        .np-notif-card__icon {
+        .notif-card__icon {
           width: 46px;
           height: 46px;
           min-width: 46px;
-          background: var(--np-icon-box-bg);
-          box-shadow: var(--np-icon-box-shadow);
+          background: linear-gradient(180deg, #2B7FFF 0%, #155DFC 100%);
+          box-shadow: 0px 4px 10px rgba(43,114,251,0.35);
           border-radius: 12px;
           display: flex;
           align-items: center;
@@ -250,13 +280,12 @@ const NotificationsPageView = ({
           flex-shrink: 0;
           transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .np-notif-card:hover .np-notif-card__icon {
+        .notif-card:hover .notif-card__icon {
           transform: scale(1.04);
           box-shadow: 0px 8px 20px rgba(43,114,251,0.45);
         }
 
-        /* Content area */
-        .np-notif-card__content {
+        .notif-card__content {
           flex: 1;
           min-width: 0;
           display: flex;
@@ -264,49 +293,43 @@ const NotificationsPageView = ({
           gap: 5px;
         }
 
-        /* Top row: title + timestamp — mirrors ann-card__top-row */
-        .np-notif-card__top-row {
+        .notif-card__top-row {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
           gap: 12px;
         }
 
-        /* Title — mirrors ann-card__title */
-        .np-notif-card__title {
+        .notif-card__title {
           font-family: 'Montserrat', sans-serif;
           font-size: 14.5px;
           line-height: 1.35;
           letter-spacing: -0.15px;
-          color: var(--np-title-color);
+          color: #003EA6;
           margin: 0;
           flex: 1;
           min-width: 0;
           overflow-wrap: break-word;
           word-break: break-word;
         }
-        .np-notif-card__title--unread { font-weight: 700; }
-        .np-notif-card__title--read   { font-weight: 600; }
+        .notif-card__title--unread { font-weight: 700; }
+        .notif-card__title--read   { font-weight: 600; }
 
-        /* Timestamp row — mirrors ann-card__timestamp */
-        .np-notif-card__meta {
+        .notif-card__meta {
           display: flex;
           align-items: center;
           gap: 5px;
           flex-shrink: 0;
           padding-top: 2px;
         }
-        .np-notif-card__time {
+        .notif-card__time {
           font-family: 'Montserrat', sans-serif;
           font-size: 11px;
-          color: var(--np-timestamp-color);
+          color: rgba(74,85,101,0.65);
           white-space: nowrap;
           font-weight: 400;
-          letter-spacing: 0.1px;
         }
-
-        /* Unread indicator dot */
-        .np-unread-dot {
+        .notif-unread-dot {
           width: 7px;
           height: 7px;
           border-radius: 50%;
@@ -314,30 +337,28 @@ const NotificationsPageView = ({
           flex-shrink: 0;
         }
 
-        /* Body preview — mirrors ann-card__preview */
-        .np-notif-card__preview {
+        .notif-card__preview {
           font-family: 'Montserrat', sans-serif;
           font-weight: 400;
           font-size: 13px;
           line-height: 1.65;
-          color: var(--np-body-color);
+          color: #4A5565;
           margin: 0;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          overflow-wrap: break-word;
-          word-break: break-word;
         }
 
-        /* ── Empty / loading states ───────────────────────────── */
-        .np-state-card {
-          background: var(--np-card-bg);
-          border: 1px solid var(--np-card-border);
+        /* Empty/Loading States */
+        .notif-state-card {
+          background: var(--notif-card-bg);
+          border: 1px solid var(--notif-card-border);
           border-radius: 16px;
-          box-shadow: var(--np-card-shadow);
+          box-shadow: var(--notif-card-shadow);
+          margin-left: 10px;
         }
-        .np-state-center {
+        .notif-state-center {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -345,189 +366,151 @@ const NotificationsPageView = ({
           padding: 80px 20px;
           gap: 14px;
         }
-        .np-state-center p {
+        .notif-state-center p {
           font-family: 'Montserrat', sans-serif;
           font-size: 14px;
-          color: var(--np-meta-color);
+          color: #8A94A6;
           margin: 0;
           font-weight: 500;
         }
-        .np-loading-row {
+        .notif-loading-row {
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 60px 20px;
           gap: 12px;
         }
-        .np-loading-row span {
-          font-family: 'Montserrat', sans-serif;
-          font-size: 14px;
-          color: var(--np-meta-color);
-          font-weight: 500;
-        }
-        .np-spinner {
+        .notif-spinner {
           width: 18px;
           height: 18px;
-          border: 2px solid var(--np-card-border);
+          border: 2px solid var(--notif-card-border);
           border-top-color: #2B72FB;
           border-radius: 50%;
-          animation: np-spin 0.8s linear infinite;
+          animation: notif-spin 0.8s linear infinite;
         }
-        @keyframes np-spin { to { transform: rotate(360deg); } }
+        @keyframes notif-spin { to { transform: rotate(360deg); } }
 
-        /* ── Responsive ───────────────────────────────────────── */
+        /* Responsive Adjustments */
         @media (max-width: 1024px) {
-          .np-content { padding: 37px 32px 48px; }
-          .np-heading  { font-size: 31px; }
+          .notif-main { padding: 37px 32px 48px; }
         }
         @media (max-width: 900px) {
-          .np-content        { padding: 24px 16px 60px; margin-left: 0 !important; }
-          .np-heading        { font-size: 27px; }
-          .np-subheading     { font-size: 13px; }
-          .np-back-btn span  { font-size: 14px; }
-          .np-notif-card__body { padding: 14px; gap: 12px; }
-          .np-notif-card__title { font-size: 13.5px; }
-          .np-notif-card__preview { font-size: 12.5px; }
+          .notif-main { padding: 24px 16px 60px; margin-left: 0 !important; }
+          .notif-title { font-size: 27px; }
+          .notif-sub { font-size: 13px; }
+          .notif-controls { flex-direction: column; align-items: flex-start; gap: 12px; }
+          .notif-mark-all-btn { align-self: flex-end; }
+          .notif-card__body { padding: 14px; gap: 12px; }
         }
         @media (max-width: 480px) {
-          .np-notif-card__top-row { flex-direction: column; gap: 4px; }
-          .np-notif-card__meta    { align-self: flex-start; }
+          .notif-card__top-row { flex-direction: column; gap: 4px; }
+          .notif-card__meta { align-self: flex-start; }
         }
         @media (max-width: 380px) {
-          .np-content { padding: 20px 12px 48px; }
-          .np-heading { font-size: 23px; }
-          .np-notif-card__body { padding: 12px; gap: 10px; }
-          .np-notif-card__icon { width: 40px; height: 40px; min-width: 40px; }
-          .np-tabs { flex-wrap: wrap; }
+          .notif-main { padding: 20px 12px 48px; }
+          .notif-title { font-size: 23px; }
+          .notif-card__body { padding: 12px; gap: 10px; }
+          .notif-card__icon { width: 40px; height: 40px; min-width: 40px; }
         }
       `}</style>
 
-      {/*
-       * .np-shell spans the full viewport width in a flex row.
-       * The #DAE5F1 background on this element — and on html/body/#root —
-       * ensures no white gaps appear at the sidebar edge or page corners.
-       */}
-      <div className="np-shell">
+      <div className="notif-root">
         <Sidebar />
-        <div
-          className="np-content"
-          style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
-        >
-          {/* ── Header Section (About-style) ─────────────────────────── */}
-          <button
-            className="np-back-btn"
-            onClick={() => navigate('/dashboard')}
-          >
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-              <path
-                d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67"
-                stroke="#003EA6"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+        <div className="notif-main">
+          
+          {/* Notification Bell (Positioned Absolutely via CSS) */}
+          <NotificationBell
+            onSeeAll={() => {}} // No-op on main page
+            className={isMobile ? 'mobile' : ''}
+          />
+
+          {/* Back Button */}
+          <button className="notif-back" onClick={() => navigate('/dashboard')}>
+            <svg width="15" height="15" viewBox="0 0 17 17" fill="none">
+              <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5" stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <span>Back</span>
           </button>
 
-          <h1 className="np-heading">Notifications</h1>
-          <p className="np-subheading">
-            Stay updated with the latest announcements and activities.
-          </p>
+          {/* Header */}
+          <div className="notif-hdr">
+            <h1 className="notif-title">Notifications</h1>
+            <p className="notif-sub">Stay updated with the latest announcements and activities.</p>
+          </div>
 
-          {/* ── Controls Row ──────────────────────────────────────────── */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            {/* Tabs sit flush-left under the subheading */}
-            <div className="np-tabs" style={{ marginBottom: 0 }}>
+          {/* Controls: Tabs & Mark All */}
+          <div className="notif-controls">
+            <div className="notif-tabs">
               {['all', 'unread'].map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`np-tab-btn ${tab === t ? 'np-tab-btn--active' : 'np-tab-btn--inactive'}`}
+                  className={`notif-tab-btn ${tab === t ? 'notif-tab-btn--active' : 'notif-tab-btn--inactive'}`}
                 >
-                  {t === 'all'
-                    ? 'All'
-                    : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
+                  {t === 'all' ? 'All' : `Unread${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
                 </button>
               ))}
             </div>
-
-            {/* RIGHT column — Mark All Read */}
             {unreadCount > 0 && (
-              <button className="np-mark-all-btn" onClick={markAllRead} style={{ marginBottom: 0 }}>
+              <button className="notif-mark-all-btn" onClick={markAllRead}>
                 Mark all as read
               </button>
             )}
           </div>
 
-          {/* ── Notification list ──────────────────────────────────────── */}
+          {/* Notification List */}
           {loading ? (
-            <div className="np-state-card">
-              <div className="np-loading-row">
-                <div className="np-spinner" />
+            <div className="notif-state-card">
+              <div className="notif-loading-row">
+                <div className="notif-spinner" />
                 <span>Loading notifications…</span>
               </div>
             </div>
           ) : list.length === 0 ? (
-            <div className="np-state-card">
-              <div className="np-state-center">
+            <div className="notif-state-card">
+              <div className="notif-state-center">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                    stroke="#CBD5E1"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
+                  <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#CBD5E1" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 <p>{tab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</p>
               </div>
             </div>
           ) : (
-            <div className="np-cards-list">
+            <div className="notif-cards-list">
               {Object.entries(groups).map(([label, items]) => {
                 if (!items.length) return null;
                 return (
                   <React.Fragment key={label}>
-                    {/* Date-group label with trailing rule */}
-                    <div className="np-group-label">
+                    <div className="notif-group-label">
                       <span>{label}</span>
                     </div>
                     {items.map(n => (
                       <div
                         key={n.id}
-                        className={`np-notif-card${n.read ? '' : ' np-notif-card--unread'}`}
+                        className={`notif-card${n.read ? '' : ' notif-card--unread'}`}
                         onClick={() => markOneRead(n.id)}
                       >
-                        <div className="np-notif-card__body">
-                          {/* Gradient icon box */}
-                          <div className="np-notif-card__icon">
+                        <div className="notif-card__body">
+                          <div className="notif-card__icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                              <path
-                                d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z"
-                                stroke="#ffffff"
-                                strokeWidth="1.75"
-                                strokeLinecap="round"
-                              />
+                              <path d="M8.33 17.5H11.67M15 7.5C15 4.74 12.76 2.5 10 2.5C7.24 2.5 5 4.74 5 7.5C5 11.25 3.33 13.33 3.33 13.33H16.67C16.67 13.33 15 11.25 15 7.5Z" stroke="#ffffff" strokeWidth="1.75" strokeLinecap="round"/>
                             </svg>
                           </div>
-                          {/* Text content */}
-                          <div className="np-notif-card__content">
-                            {/* Title + timestamp on same row */}
-                            <div className="np-notif-card__top-row">
-                              <p className={`np-notif-card__title np-notif-card__title--${n.read ? 'read' : 'unread'}`}>
+                          <div className="notif-card__content">
+                            <div className="notif-card__top-row">
+                              <p className={`notif-card__title ${n.read ? 'notif-card__title--read' : 'notif-card__title--unread'}`}>
                                 {n.title}
                               </p>
-                              <div className="np-notif-card__meta">
+                              <div className="notif-card__meta">
                                 <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
                                   <circle cx="7" cy="7" r="6" stroke="rgba(74,85,101,0.45)" strokeWidth="1.17"/>
                                   <path d="M7 4V7.5L9.5 9" stroke="rgba(74,85,101,0.45)" strokeWidth="1.17" strokeLinecap="round"/>
                                 </svg>
-                                <span className="np-notif-card__time">{formatTime(n.time)}</span>
-                                {!n.read && <div className="np-unread-dot" />}
+                                <span className="notif-card__time">{formatTime(n.time)}</span>
+                                {!n.read && <div className="notif-unread-dot" />}
                               </div>
                             </div>
-                            {/* Body — HTML stripped to plain text */}
-                            <p className="np-notif-card__preview">
+                            <p className="notif-card__preview">
                               {stripHtml(n.body)}
                             </p>
                           </div>
