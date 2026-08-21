@@ -283,6 +283,28 @@ body {
   overflow-wrap: break-word;
 }
 
+/* ============================================
+   EMPTY / INSUFFICIENT-DATA STATE
+   (reuses .pa-chart-card / .pa-chart-icon / .pa-chart-title / .pa-chart-subtitle)
+   ============================================ */
+.pa-empty-state {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  padding: clamp(32px, 6vw, 56px) clamp(16px, 4vw, 32px);
+  gap: 12px;
+}
+
+.pa-empty-state .pa-chart-icon {
+  margin-bottom: 4px;
+}
+
+.pa-empty-text {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .pa-chart-legend {
   display: flex;
   justify-content: center;
