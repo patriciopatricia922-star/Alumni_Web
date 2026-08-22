@@ -32,7 +32,7 @@ const scrollbarStyles = `
   }
 
   .tos-title {
-    font-family: Arimo;
+    font-family: Montserrat;
     font-weight: 700;
     font-size: 28px;
     line-height: 42px;
@@ -58,7 +58,7 @@ const scrollbarStyles = `
 const TermsOfServiceAboutView = ({ sections, navigate }) => (
   <>
     <style>{scrollbarStyles}</style>
-    <div style={{ display: 'flex', width: '100%', height: '100vh', background: '#002263', fontFamily: 'Arimo, sans-serif', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100vh', background: '#002263', fontFamily: 'Montserrat, sans-serif', overflow: 'hidden' }}>
       <Sidebar />
 
       <div className="tos-page">
@@ -72,7 +72,7 @@ const TermsOfServiceAboutView = ({ sections, navigate }) => (
             <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
               <path d="M3.33 8.5H13.67M3.33 8.5L8.5 3.33M3.33 8.5L8.5 13.67" stroke="#FFFFFF" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '15px', color: '#FFFFFF' }}>Back</span>
+            <span style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '15px', color: '#FFFFFF' }}>Back</span>
           </button>
         </div>
 
@@ -92,7 +92,7 @@ const TermsOfServiceAboutView = ({ sections, navigate }) => (
             {/* Header */}
             <div className="tos-card-header" style={{ flexShrink: 0 }}>
               <h1 className="tos-title">Terms of Service</h1>
-              <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+              <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '14px', lineHeight: '21px', color: 'rgba(255,255,255,0.5)', margin: 0 }}>
                 Last Updated: February 28, 2026
               </p>
             </div>
@@ -101,10 +101,10 @@ const TermsOfServiceAboutView = ({ sections, navigate }) => (
             <div className="custom-scroll tos-card-body" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {sections.map((section, index) => (
                 <div key={index}>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#D9CA81', margin: '0 0 4px 0' }}>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '16px', lineHeight: '24px', color: '#D9CA81', margin: '0 0 4px 0' }}>
                     {section.title}
                   </p>
-                  <p style={{ fontFamily: 'Arimo', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', margin: 0 }}>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 400, fontSize: '16px', lineHeight: '24px', color: '#FFFFFF', margin: 0 }}>
                     {section.body}
                   </p>
                 </div>
