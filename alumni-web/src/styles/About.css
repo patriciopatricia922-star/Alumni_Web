@@ -686,7 +686,8 @@
 
 .ab-modal-sec-body {
   font-weight: 400;
-  font-size: clamp(12px, 0.95vw, 14px);
+  /* font-size: clamp(12px, 0.95vw, 14px); */
+  font-size: clamp(13px, 1.05vw, 15px);
   line-height: 1.7;
   color: #1a2a4a;
   white-space: pre-line;
