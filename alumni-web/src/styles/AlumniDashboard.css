@@ -513,7 +513,7 @@
 .survey-label {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 700;
-  font-size: clamp(12.4px, 3.4vw, 16px) !important;
+  font-size: clamp(11.5px, 3.1vw, 14.6px) !important;
   line-height: 1;
   letter-spacing: 0.1px;
   color: rgba(255, 255, 255, 0.8);
@@ -524,7 +524,7 @@
 .survey-message {
   font-family: 'Montserrat', Arial, sans-serif;
   font-weight: 750;
-  font-size: clamp(18px, 5.5vw, 26px) !important;
+  font-size: clamp(20px, 6.2vw, 29px) !important;
   line-height: 1.29;
   letter-spacing: 0.1px;
   color: #FFFFFF;
