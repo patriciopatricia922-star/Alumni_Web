@@ -5,8 +5,12 @@
 //                    formatUpdatedAt() renders a human-readable date when the
 //                    admin has saved a disclosure row, otherwise falls back to
 //                    the original static string so nothing breaks on first run.
+// [cleanup]          Removed accidental trailing spaces introduced by the
+//                    quote-standardization commit (Aug 20, 2026). No logic,
+//                    content, or markup structure changed.
 // ============================================================================
 import React from "react";
+
 /* ─────────────────────────────────────────────────────────────
 STATIC CONTENT
 ───────────────────────────────────────────────────────────── */
@@ -48,6 +52,7 @@ const PRIVACY_SECTIONS = [
     body: "We may revise this Privacy Policy from time to time. Continued use of AlumnAI means you agree to the updated policy.",
   },
 ];
+
 /* ─────────────────────────────────────────────────────────────
 HELPERS
 ───────────────────────────────────────────────────────────── */
@@ -67,6 +72,7 @@ const formatUpdatedAt = (iso) => {
     return FALLBACK_DATE;
   }
 };
+
 /* ─────────────────────────────────────────────────────────────
 SHARED MODAL SHELL  (mirrors About.jsx's <Modal> component)
 ───────────────────────────────────────────────────────────── */
@@ -108,31 +114,32 @@ const ModalShell = ({
     </div>
   </div>
 );
+
 /* ─────────────────────────────────────────────────────────────
 PRIVACY POLICY MODAL
 Props
 ─────
-onClose    () = > void   — closes the modal
+onClose    () => void   — closes the modal
 updatedAt  string|null  — ISO timestamp from disclosures.updated_at
 (pass disclosure?.updated_at from the parent).
-When null/undefined the fallback date  is shown.
+When null/undefined the fallback date is shown.
 ───────────────────────────────────────────────────────────── */
 const PrivacyPolicyModal = ({ onClose, updatedAt }) => (
   <ModalShell
     onClose={onClose}
-    iconClass="red "
+    iconClass="red"
     iconSvg={
-      <svg width="22 " height="22 " viewBox="0 0 24 24 " fill="none ">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path
-          d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z "
-          stroke="#fff "
-          strokeWidth="1.8 "
-          strokeLinecap="round "
-          strokeLinejoin="round "
+          d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+          stroke="#fff"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     }
-    title="Privacy Policy "
+    title="Privacy Policy"
     subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
   >
     <div className="ab-modal-inner">
@@ -145,4 +152,5 @@ const PrivacyPolicyModal = ({ onClose, updatedAt }) => (
     </div>
   </ModalShell>
 );
+
 export default PrivacyPolicyModal;

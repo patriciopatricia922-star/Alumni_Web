@@ -5,8 +5,12 @@
 //                    formatUpdatedAt() renders a human-readable date when the
 //                    admin has saved a disclosure row, otherwise falls back to
 //                    the original static string so nothing breaks on first run.
+// [cleanup]          Removed accidental trailing spaces introduced by the
+//                    quote-standardization commit (Aug 20, 2026). No logic,
+//                    content, or markup structure changed.
 // ============================================================================
 import React from "react";
+
 /* ─────────────────────────────────────────────────────────────
 STATIC CONTENT
 ───────────────────────────────────────────────────────────── */
@@ -40,6 +44,7 @@ const TOS_SECTIONS = [
     body: "We may update these Terms of Service from time to time. Continued use of the platform means you accept the updated terms.",
   },
 ];
+
 /* ─────────────────────────────────────────────────────────────
 HELPERS
 ───────────────────────────────────────────────────────────── */
@@ -56,6 +61,7 @@ const formatUpdatedAt = (iso) => {
     return FALLBACK_DATE;
   }
 };
+
 /* ─────────────────────────────────────────────────────────────
 SHARED MODAL SHELL  (mirrors About.jsx's <Modal> component)
 ───────────────────────────────────────────────────────────── */
@@ -97,38 +103,39 @@ const ModalShell = ({
     </div>
   </div>
 );
+
 /* ─────────────────────────────────────────────────────────────
 TERMS OF SERVICE MODAL
 Props
 ─────
-onClose    () = > void   — closes the modal
+onClose    () => void   — closes the modal
 updatedAt  string|null  — ISO timestamp from disclosures.updated_at
 (pass disclosure?.updated_at from the parent).
-When null/undefined the fallback date  is shown.
+When null/undefined the fallback date is shown.
 ───────────────────────────────────────────────────────────── */
 const TermsModal = ({ onClose, updatedAt }) => (
   <ModalShell
     onClose={onClose}
-    iconClass="yellow "
+    iconClass="yellow"
     iconSvg={
-      <svg width="22 " height="22 " viewBox="0 0 24 24 " fill="none ">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path
-          d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z "
-          stroke="#fff "
-          strokeWidth="1.8 "
-          strokeLinecap="round "
-          strokeLinejoin="round "
+          d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+          stroke="#fff"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
         <path
-          d="M14 2v6h6M16 13H8M16 17H8M10 9H8 "
-          stroke="#fff "
-          strokeWidth="1.8 "
-          strokeLinecap="round "
-          strokeLinejoin="round "
+          d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+          stroke="#fff"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     }
-    title="Terms of Service "
+    title="Terms of Service"
     subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
   >
     <div className="ab-modal-inner">
@@ -141,4 +148,5 @@ const TermsModal = ({ onClose, updatedAt }) => (
     </div>
   </ModalShell>
 );
+
 export default TermsModal;
