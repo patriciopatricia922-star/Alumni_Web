@@ -169,15 +169,33 @@ body,
   margin: 0 0 0 -10px; /* Matches About's margin structure */
 }
 
-/* Notification Bell Override - Scoped to Profile Header */
-/* We remove absolute positioning and let it sit in the flex row */
-.prof-page-header .notification-bell-wrapper {
-  position: relative;
-  top: auto;
-  right: auto;
-  margin-top: 0;
-  margin-left: auto; /* Pushes bell to the right if needed, though flex justify-space-between handles it */
+/* ============================ NOTIFICATION BELL OVERRIDE ============================ */
+/* Scopes the reusable NotificationBell component to the Profile page layout.
+   Mirrors the absolute positioning approach used in Announcements/Discounts 
+   to ensure consistent page-level alignment across all views. */
+.prof-content-wrapper .notification-bell-wrapper {
+  position: absolute;
+  top: 37px;
+  right: 51px;
+  z-index: 200;
 }
+
+@media (max-width: 1100px) and (min-width: 768px) {
+  .prof-content-wrapper .notification-bell-wrapper {
+    top: 45px;
+    right: 65px;
+  }
+}
+
+@media (max-width: 767px) {
+  .prof-content-wrapper .notification-bell-wrapper.mobile {
+    position: absolute;
+    top: clamp(34px, 5vw, 42px);
+    right: clamp(12px, 4vw, 18px);
+    z-index: 200;
+  }
+}
+/* ============================ END NOTIFICATION BELL OVERRIDE ============================ */
 
 /* Top Row Layout - UPDATED TO ALIGN WITH HEADER BOUNDARIES */
 .prof-top-row {
@@ -1391,7 +1409,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ── Short desktop screens ── */
+/* ── Short desktop screens ─ */
 @media (max-height: 768px) and (min-width: 768px) {
   :root {
     --prof-top-h: 155px;
@@ -1464,18 +1482,6 @@ RESPONSIVE BREAKPOINTS
     font-size: clamp(12.5px, 3.6vw, 15px);
     line-height: 1.7;
     overflow-wrap: break-word;
-  }
-
-  /* Ensure Notification Bell positions correctly on mobile */
-  .prof-page-header .notification-bell-wrapper {
-    position: absolute !important;
-    top: clamp(34px, 2vh, 42px);
-    right: clamp(12px, 4vw, 18px);
-    left: auto;
-    bottom: auto;
-    margin: 0 !important;
-    padding: 0;
-    z-index: 200;
   }
 
   .prof-top-row,
