@@ -78,7 +78,7 @@ html, body, #root {
 }
 .notif-title {
   font-weight: 700;
-  font-size: clamp(28px, 3.2vw, 39px);
+  font-size: clamp(28px, 3.2vw, 29px);
   line-height: 1.2;
   letter-spacing: -1px;
   color: var(--notif-text-dark-alt);
