@@ -437,7 +437,7 @@
   /* MODALVERIFICATION ONLY: Move Confirm button upward */
   /* Targeted by being the last child of the card body (unlike Login/FP which have footer text) */
   .lgn-page-root--modal .lgn-card-body > .lgn-submit-btn:last-child {
-    margin-top: -6px;
+    margin-top: -10px;
   }
 }
 
