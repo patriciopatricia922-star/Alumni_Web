@@ -20,6 +20,12 @@ html, body, #root {
   --notif-card-border: #E5E7EB;
   --notif-card-shadow: 0px 2px 8px rgba(0,0,0,0.08), 0px 1px 2px rgba(0,0,0,0.06);
   --notif-unread-border: #2B72FB;
+
+  /* Match About's sidebar-width tokens exactly, so .notif-main tracks the
+     same responsive offset as .ab-main at every viewport width, not just
+     at the two breakpoint endpoints. */
+  --notif-sidebar-w-desktop: clamp(180px, 15vw, 229px);
+  --notif-sidebar-w-tablet: 200px;
 }
 
 /* Shell Layout (Mirroring .ab-root) */
@@ -34,7 +40,7 @@ html, body, #root {
 
 /* Main Content Area (Mirroring .ab-main) */
 .notif-main {
-  margin-left: 229px; /* Default desktop sidebar width */
+  margin-left: var(--notif-sidebar-w-desktop); /* Mirrors .ab-main's responsive sidebar offset */
   flex: 1 1 0;
   min-width: 0;
   height: 100dvh;
@@ -363,19 +369,18 @@ html, body, #root {
 
 @keyframes notif-spin { to { transform: rotate(360deg); } }
 
-/* Responsive Adjustments */
+/* Responsive Adjustments — page-level container breakpoints (1100px / 767px)
+   mirror .ab-main / .ab-back in About.css exactly, so the back button's
+   position tracks About's at every width, not just above 1100px and below 900px. */
 @media (max-width: 1100px) {
   .notif-main {
-    margin-left: 200px; /* Tablet sidebar width */
+    margin-left: var(--notif-sidebar-w-tablet); /* Tablet sidebar width */
+    padding: clamp(22px, 3.2vh, 38px) clamp(14px, 2.2vw, 24px) clamp(12px, 1.8vh, 20px) clamp(20px, 2.8vw, 36px);
   }
 }
 
-@media (max-width: 1024px) {
-  .notif-main { padding: 37px 32px 48px; }
-}
-
+/* Card/tab-specific adjustments only — container offset is already handled above */
 @media (max-width: 900px) {
-  .notif-main { padding: 24px 16px 60px; margin-left: 0 !important; }
   .notif-title { font-size: 27px; }
   .notif-sub { font-size: 13px; }
   .notif-controls { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -384,6 +389,10 @@ html, body, #root {
 }
 
 @media (max-width: 767px) {
+  .notif-main {
+    margin-left: 0;
+    padding: clamp(20px, 3vh, 32px) clamp(12px, 4vw, 18px) calc(68px + env(safe-area-inset-bottom) + clamp(16px, 2.4vh, 28px)) clamp(12px, 4vw, 18px);
+  }
   .notif-back { display: none; }
 }
 
