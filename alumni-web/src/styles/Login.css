@@ -420,9 +420,9 @@
     margin-top: -8px;
   }
 
-  /* Move Send Code button slightly down in Forgot Password modal */
+  /* Move Send Code button and subsequent footer text down in Forgot Password/Login modals */
   .lgn-page-root--modal .lgn-submit-btn {
-    margin-top: 4px;
+    margin-top: 12px;
   }
 }
 
