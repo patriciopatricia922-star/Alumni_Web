@@ -191,7 +191,7 @@ body,
   margin-right: 0;
 }
 
-/* Hero Card Styles (Unchanged) */
+/* Hero Card Styles - SHADOW REMOVED */
 .prof-hero-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -200,7 +200,7 @@ body,
   align-items: center;
   justify-content: space-between;
   gap: clamp(8px, 2vw, 20px);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: none; /* Shadow removed as requested */
   position: relative;
   overflow: hidden;
   height: 100%;
@@ -336,7 +336,7 @@ body,
   margin: 0;
 }
 
-/* Strength Card Styles (Unchanged) */
+/* Strength Card Styles - SHADOW REMOVED */
 .prof-strength-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -345,7 +345,7 @@ body,
   flex-direction: column;
   justify-content: center;
   gap: clamp(8px, 1.2vh, 14px);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.5);
+  box-shadow: none; /* Shadow removed as requested */
   position: relative;
   overflow: hidden;
   height: 100%;
@@ -422,7 +422,7 @@ body,
   flex-shrink: 0;
 }
 
-/* Bottom Row Layout - UPDATED TO ALIGN WITH HEADER/NAME CARD BOUNDARIES */
+/* Bottom Row Layout - Kept original inset margins as per task focus on top row/name card */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -430,9 +430,8 @@ body,
   overflow: visible;
   min-height: 0;
   max-height: 100%;
-  /* REMOVED margin-left/right to match .prof-top-row and header alignment */
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: var(--prof-content-inset);
+  margin-right: var(--prof-content-inset);
 }
 
 /* Shared card base (Unchanged) */
@@ -1388,7 +1387,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ── Short desktop screens ─ */
+/* ── Short desktop screens ── */
 @media (max-height: 768px) and (min-width: 768px) {
   :root {
     --prof-top-h: 155px;
