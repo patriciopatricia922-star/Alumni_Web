@@ -1409,7 +1409,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ── Short desktop screens ─ */
+/* ── Short desktop screens  */
 @media (max-height: 768px) and (min-width: 768px) {
   :root {
     --prof-top-h: 155px;
@@ -1428,7 +1428,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ─ Mobile ── */
+/* ─ Mobile ─ */
 @media (max-width: 767px) {
   :root {
     --prof-content-inset: 0px;
