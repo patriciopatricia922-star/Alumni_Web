@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
+
 /* ── Keyframes ─────────────────────────────────────────────── */
 @keyframes lgn-fade-in {
   from {
@@ -10,6 +11,7 @@
     transform: translateY(0);
   }
 }
+
 /* ── Page root ─────────────────────────────────────────────── */
 .lgn-page-root {
   width: 100%;
@@ -22,12 +24,14 @@
   box-sizing: border-box;
   font-family: "Montserrat", Arial, sans-serif;
 }
+
 .lgn-page-root--modal {
   min-height: unset;
   background: transparent;
   padding: 0;
   width: auto;
 }
+
 /* ── Back button (full-page route only) ──────────────────────── */
 .lgn-back {
   position: fixed;
@@ -35,9 +39,10 @@
   left: 39px;
   z-index: 10;
 }
+
 /* ══════════════════════════════════════════════════════════════
-FLOATING CARD — white card with blue header band
-══════════════════════════════════════════════════════════════ */
+   FLOATING CARD — white card with blue header band
+   ══════════════════════════════════════════════════════════════ */
 .lgn-floating-card {
   width: 480px;
   max-width: 95vw;
@@ -47,6 +52,7 @@ FLOATING CARD — white card with blue header band
   overflow: hidden;
   animation: lgn-fade-in 0.3s ease both;
 }
+
 /* ── Card header band ────────────────────────────────────────── */
 .lgn-card-header {
   background: #003ea6;
@@ -56,6 +62,7 @@ FLOATING CARD — white card with blue header band
   align-items: center;
   gap: 14px;
 }
+
 .lgn-header-icon {
   width: 42px;
   height: 42px;
@@ -66,9 +73,11 @@ FLOATING CARD — white card with blue header band
   justify-content: center;
   flex-shrink: 0;
 }
+
 .lgn-header-text {
   flex: 1;
 }
+
 .lgn-header-title {
   font-family: "Montserrat", Arial, sans-serif;
   font-weight: 700;
@@ -77,6 +86,7 @@ FLOATING CARD — white card with blue header band
   color: #ffffff;
   margin: 0 0 2px;
 }
+
 .lgn-header-sub {
   font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
@@ -85,14 +95,15 @@ FLOATING CARD — white card with blue header band
   color: rgba(255, 255, 255, 0.8);
   margin: 0;
 }
+
 /* ── Close / back button in card header ──────────────────────
-Intentionally icon-only: no circular background, no border,
-no border-radius. Sizing kept so the click target remains
-comfortable (32 × 32 px) without any visible shape.
-Hover subtly dims the icon instead of filling a pill/circle.
-Focus ring is supplied via JS onFocus/onBlur in the JSX so
-it works for both <button> and <Link> variants.
-─────────────────────────────────────────────────────────── */
+   Intentionally icon-only: no circular background, no border,
+   no border-radius. Sizing kept so the click target remains
+   comfortable (32 × 32 px) without any visible shape.
+   Hover subtly dims the icon instead of filling a pill/circle.
+   Focus ring is supplied via JS onFocus/onBlur in the JSX so
+   it works for both <button> and <Link> variants.
+   ─────────────────────────────────────────────────────────── */
 .lgn-header-close {
   width: 32px;
   height: 32px;
@@ -109,9 +120,11 @@ it works for both <button> and <Link> variants.
   padding: 0;
   transition: opacity 0.2s;
 }
+
 .lgn-header-close:hover {
   opacity: 0.7;
 }
+
 /* ── Card body ───────────────────────────────────────────────── */
 .lgn-card-body {
   padding: 24px 28px 28px;
@@ -122,6 +135,7 @@ it works for both <button> and <Link> variants.
   overflow-x: hidden;
   box-sizing: border-box;
 }
+
 /* ── Google button ───────────────────────────────────────────── */
 .lgn-google-btn {
   width: 100%;
@@ -140,13 +154,16 @@ it works for both <button> and <Link> variants.
   box-sizing: border-box;
   flex-shrink: 0;
 }
+
 .lgn-google-btn:hover:not(:disabled) {
   background: #e8e8eb;
 }
+
 .lgn-google-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .lgn-google-label {
   font-family: "Montserrat", Arial, sans-serif;
   font-weight: 500;
@@ -154,18 +171,21 @@ it works for both <button> and <Link> variants.
   color: #003ea6;
   white-space: nowrap;
 }
+
 /* ── OR divider ──────────────────────────────────────────────── */
 .lgn-or-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .lgn-or-line {
   flex: 1;
   height: 1px;
   background: rgba(10, 10, 10, 0.15);
   border: none;
 }
+
 .lgn-or-label {
   font-family: "Montserrat", Arial, sans-serif;
   font-weight: 400;
@@ -173,12 +193,14 @@ it works for both <button> and <Link> variants.
   color: #0a0a0a;
   flex-shrink: 0;
 }
+
 /* ── Field wrapper ───────────────────────────────────────────── */
 .lgn-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
+
 /* ── Field label ─────────────────────────────────────────────── */
 .lgn-label {
   font-family: "Montserrat", Arial, sans-serif;
@@ -190,10 +212,12 @@ it works for both <button> and <Link> variants.
   align-items: center;
   gap: 4px;
 }
+
 .lgn-label-required {
   color: #ff4d4d;
   font-weight: 700;
 }
+
 /* ── Text input ──────────────────────────────────────────────── */
 .lgn-input {
   width: 100%;
@@ -213,21 +237,26 @@ it works for both <button> and <Link> variants.
     border-color 0.2s,
     box-shadow 0.2s;
 }
+
 .lgn-input::placeholder {
   color: rgba(10, 10, 10, 0.5);
   opacity: 1;
 }
+
 .lgn-input:focus {
   border-color: #003ea6;
   box-shadow: 0 0 0 3px rgba(0, 62, 166, 0.08);
 }
+
 .lgn-input--error {
   border-color: rgba(255, 80, 80, 0.6);
 }
+
 .lgn-input--error:focus {
   border-color: #ff4d4d;
   box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.08);
 }
+
 /* Autofill override — keep white background */
 .lgn-input:-webkit-autofill,
 .lgn-input:-webkit-autofill:hover,
@@ -238,13 +267,16 @@ it works for both <button> and <Link> variants.
   caret-color: #0a0a0a !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
 /* ── Password wrapper ────────────────────────────────────────── */
 .lgn-pw-wrap {
   position: relative;
 }
+
 .lgn-pw-wrap .lgn-input {
   padding-right: 38px;
 }
+
 .lgn-eye-btn {
   position: absolute;
   right: 10px;
@@ -260,9 +292,11 @@ it works for both <button> and <Link> variants.
   line-height: 0;
   -webkit-appearance: none;
 }
+
 .lgn-eye-btn:focus {
   outline: none;
 }
+
 /* ── Forgot password link ────────────────────────────────────── */
 .lgn-forgot-link {
   font-family: "Montserrat", Arial, sans-serif;
@@ -277,9 +311,11 @@ it works for both <button> and <Link> variants.
   padding: 0;
   transition: opacity 0.15s;
 }
+
 .lgn-forgot-link:hover {
   opacity: 0.75;
 }
+
 /* ── Error banner ────────────────────────────────────────────── */
 .lgn-error-banner {
   background: rgba(255, 80, 80, 0.08);
@@ -287,12 +323,14 @@ it works for both <button> and <Link> variants.
   border-radius: 10px;
   padding: 10px 14px;
 }
+
 .lgn-error-banner p {
   font-family: "Montserrat", Arial, sans-serif;
   font-size: 11px;
   color: #ff6b6b;
   margin: 0;
 }
+
 /* ── Log in button ───────────────────────────────────────────── */
 .lgn-submit-btn {
   width: 100%;
@@ -313,14 +351,17 @@ it works for both <button> and <Link> variants.
     box-shadow 0.2s;
   box-sizing: border-box;
 }
+
 .lgn-submit-btn:hover:not(:disabled) {
   background: #002d7a;
   box-shadow: 0 4px 12px rgba(0, 62, 166, 0.35);
 }
+
 .lgn-submit-btn:disabled {
   background: rgba(0, 62, 166, 0.5);
   cursor: not-allowed;
 }
+
 /* ── Footer link ─────────────────────────────────────────────── */
 .lgn-footer-text {
   font-family: "Montserrat", Arial, sans-serif;
@@ -332,6 +373,7 @@ it works for both <button> and <Link> variants.
   margin: 0;
   flex-shrink: 0;
 }
+
 .lgn-signup-link {
   background: none;
   border: none;
@@ -344,27 +386,41 @@ it works for both <button> and <Link> variants.
   text-decoration: none;
   transition: opacity 0.15s;
 }
+
 .lgn-signup-link:hover {
   opacity: 0.75;
 }
+
 /* ══════════════════════════════════════════════════════════════
-FIX: Prevent button shrinking in ALL modal cards
-These rules ensure submit/action buttons never collapse
-regardless of parent flex/height constraints.
-══════════════════════════════════════════════════════════════ */
+   FIX: Prevent button shrinking in ALL modal cards
+   These rules ensure submit/action buttons never collapse
+   regardless of parent flex/height constraints.
+   ══════════════════════════════════════════════════════════════ */
 /* Signup modal */
 .sup-submit-btn {
   flex-shrink: 0 !important;
   min-height: 42px !important;
 }
+
 /* ID Registration modal */
 .aid-next-btn {
   flex-shrink: 0 !important;
   min-height: 42px !important;
 }
+
 /* ══════════════════════════════════════════════════════════════
-RESPONSIVE
-══════════════════════════════════════════════════════════════ */
+   DESKTOP ONLY: Compact Login Modal Height
+   Reduces vertical padding for modal context on desktop screens
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+  .lgn-page-root--modal .lgn-card-body {
+    padding: 16px 28px 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   .lgn-back {
     top: 16px;
@@ -377,6 +433,7 @@ RESPONSIVE
     padding: 20px 22px 24px;
   }
 }
+
 @media (max-width: 480px) {
   .lgn-back {
     top: 12px;
