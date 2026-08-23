@@ -421,19 +421,23 @@
   }
 
   /* Move Send Code button down in Forgot Password modal */
-  .lgn-page-root--modal .lgn-submit-btn {
+  .lgn-page-root--modal .lgn-field + .lgn-submit-btn {
     margin-top: 7px;
   }
 
   /* LOGIN MODAL ONLY: Move Login button and Sign Up text upward */
-  /* Targeted by the presence of the password wrapper which precedes the button in Login */
   .lgn-page-root--modal .lgn-pw-wrap + .lgn-submit-btn {
     margin-top: -2px;
   }
   
-  /* Ensure the footer text following the login button also moves up */
   .lgn-page-root--modal .lgn-pw-wrap + .lgn-submit-btn + .lgn-footer-text {
-    margin-top: -12px; /* Compensates for the -8px base + extra upward shift */
+    margin-top: -12px;
+  }
+
+  /* MODALVERIFICATION ONLY: Move Confirm button upward */
+  /* Targeted by being the last child of the card body (unlike Login/FP which have footer text) */
+  .lgn-page-root--modal .lgn-card-body > .lgn-submit-btn:last-child {
+    margin-top: -6px;
   }
 }
 
