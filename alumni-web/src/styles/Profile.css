@@ -422,7 +422,7 @@ body,
   flex-shrink: 0;
 }
 
-/* Bottom Row Layout - Kept original inset margins as per task focus on top row/name card */
+/* Bottom Row Layout - UPDATED TO ALIGN WITH HEADER/NAME CARD BOUNDARIES */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -430,8 +430,9 @@ body,
   overflow: visible;
   min-height: 0;
   max-height: 100%;
-  margin-left: var(--prof-content-inset);
-  margin-right: var(--prof-content-inset);
+  /* REMOVED margin-left/right to match .prof-top-row and header alignment */
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* Shared card base (Unchanged) */
@@ -1387,7 +1388,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ── Short desktop screens ── */
+/* ── Short desktop screens ─ */
 @media (max-height: 768px) and (min-width: 768px) {
   :root {
     --prof-top-h: 155px;
