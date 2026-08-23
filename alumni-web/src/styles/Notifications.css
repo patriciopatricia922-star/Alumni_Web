@@ -38,7 +38,8 @@ html, body, #root {
   flex: 1 1 0;
   min-width: 0;
   height: 100dvh;
-  overflow: hidden; /* mirrors .ab-main — no scrollbar here means no layout shift for children like .notif-back */
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   padding: clamp(28px, 4vh, 52px) clamp(24px, 3.2vw, 56px) clamp(12px, 1.8vh, 29px) clamp(40px, 8.2vw, 97.1px);
@@ -168,10 +169,6 @@ html, body, #root {
   flex-direction: column;
   gap: 10px;
   padding-left: 10px;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 /* Date Group Label */
