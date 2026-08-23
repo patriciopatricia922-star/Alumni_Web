@@ -38,12 +38,14 @@ const EventCard = ({ event, isMobile, isTarget }) => {
     const days = Math.floor(hrs / 24);
     return `${days} day${days > 1 ? 's' : ''} ago`;
   };
+
   const hasDetails = event.location || event.event_date;
   const previewText = htmlToReadableText(event.description || '');
   const needsTrunc = previewText.length > 120;
   const [imgIndex, setImgIndex] = useState(0);
   const images = event.images?.length ? event.images : event.image ? [event.image] : [];
   const hasMultiple = images.length > 1;
+
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
 
@@ -76,9 +78,11 @@ const EventCard = ({ event, isMobile, isTarget }) => {
             className={`events-event-image ${hovered ? 'hovered' : ''}`}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          {/* Navigation Arrows */}
+          
+          {/* Navigation Arrows & Dots - Only visible if more than 1 image */}
           {hasMultiple && (
             <>
+              {/* Left / Right arrows */}
               <button onClick={prevImg} style={{
                 position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
                 width: '40px', height: '40px', borderRadius: '50%',
@@ -107,6 +111,7 @@ const EventCard = ({ event, isMobile, isTarget }) => {
                   <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
+              
               {/* Dot Indicators */}
               <div style={{
                 position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
@@ -122,12 +127,14 @@ const EventCard = ({ event, isMobile, isTarget }) => {
               </div>
             </>
           )}
+
           {/* Category Tag - Bottom Left */}
           <div className="events-category-tag">
             {isExclusive && <FaStar size={10} color="#FAC775" />}
             {!isExclusive && <HiOutlineCalendar size={11} color="#003ea6" />}
             <span className="events-category-text">{categoryLabel}</span>
           </div>
+          
           {/* Timestamp Overlay - Top Right */}
           <div className="events-timestamp-overlay">
             <ClockSVG />
@@ -137,6 +144,7 @@ const EventCard = ({ event, isMobile, isTarget }) => {
           </div>
         </div>
       )}
+
       {/* ── Card Body ── */}
       <div className="events-event-card-body">
         {/* Title Row with Icon */}
@@ -148,12 +156,15 @@ const EventCard = ({ event, isMobile, isTarget }) => {
             {event.name || event.title}
           </p>
         </div>
+        
         {/* Description */}
         <p className="events-event-description">
           {expanded ? previewText : (needsTrunc ? previewText.substring(0, 120) + '…' : previewText)}
         </p>
+        
         {/* Divider */}
         <div className="events-event-divider" />
+        
         {/* ─ Expandable Details (Location + Date/Time) ── */}
         <div className={`events-event-details ${expanded ? 'expanded' : ''}`}>
           <div className="events-event-details-content">
@@ -174,6 +185,7 @@ const EventCard = ({ event, isMobile, isTarget }) => {
           </div>
         </div>
       </div>
+
       {/* ── Toggle Button ── */}
       {hasDetails && (
         <div className="events-event-button-wrapper">
@@ -202,6 +214,7 @@ const EventsView = ({
   targetEventId, // NEW PROP
 }) => {
   const sidebarWidth = isTablet ? 200 : 229;
+
   return (
     <div className="events-view-container">
       <Sidebar />
@@ -211,6 +224,7 @@ const EventsView = ({
           className={isMobile ? 'mobile' : ''}
           dropdownClassName={isMobile ? 'mobile' : ''}
         />
+        
         {/* ── Back Button ── */}
         <button
           className={`back-button ${isMobile ? 'mobile' : ''}`}
@@ -219,11 +233,12 @@ const EventsView = ({
         >
           <svg width="15" height="15" viewBox="0 0 17 17" fill="none" style={{ marginLeft: '0.5px' }}>
             <path d="M13 8.5H2M2 8.5L7 3.5M2 8.5L7 13.5"
-              stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              stroke="#002263" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span>Back</span>
         </button>
-        {/* ── Header ── */}
+
+        {/* ── Header ─ */}
         <div className={`events-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`events-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
             Events
@@ -232,7 +247,8 @@ const EventsView = ({
             Stay updated with upcoming activities and gatherings designed to keep you engaged with the alumni community
           </p>
         </div>
-        {/* ── Filter Bar ── */}
+
+        {/* ─ Filter Bar ── */}
         <div
           className={`filter-bar ${isMobile ? 'mobile' : ''}`}
           style={{
@@ -273,6 +289,7 @@ const EventsView = ({
                   <span className="filter-count-text">{filtered.length}</span>
                 </div>
               </div>
+              
               {showFilter && (
                 <div
                   className={`filter-dropdown ${isMobile ? 'mobile' : ''}`}
@@ -318,6 +335,7 @@ const EventsView = ({
                 </div>
               )}
             </div>
+            
             <button
               onClick={() => setShowFilter(f => !f)}
               className={`filter-button ${isMobile ? 'mobile' : ''}`}
@@ -340,12 +358,13 @@ const EventsView = ({
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M1 2H13L8.5 7.5V12L5.5 10.5V7.5L1 2Z" stroke="#FFFFFF" strokeWidth="1.5" strokeLinejoin="round" />
               </svg>
               <span className="filter-button-text">FILTER</span>
             </button>
           </div>
         </div>
+
         {/* ── Events List (Grid Layout) ── */}
         {filtered.length > 0 ? (
           <div
@@ -357,10 +376,10 @@ const EventsView = ({
             }}
           >
             {filtered.map(event => (
-              <EventCard 
-                key={event.id} 
-                event={event} 
-                isMobile={isMobile} 
+              <EventCard
+                key={event.id}
+                event={event}
+                isMobile={isMobile}
                 isTarget={targetEventId && String(event.id) === String(targetEventId)}
               />
             ))}
