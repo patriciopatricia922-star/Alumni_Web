@@ -12,7 +12,7 @@ import {
 } from "../lib/surveyProgress";
 import { truncateHtml, createMarkup } from "../utils/textHelpers";
 import "../styles/Announcements.css";
-import NotificationBell from '../components/notifications/NotificationBell'; // NEW IMPORT
+import NotificationBell from '../components/notifications/NotificationBell';
 import '../styles/NotificationBell.css';
 
 const CATEGORY_ICONS = {
@@ -22,7 +22,7 @@ const CATEGORY_ICONS = {
 
 const getIcon = (category) => CATEGORY_ICONS[category] || documentIcon;
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// ─ Icons ──────────────────────────────────────────────────────────────────────
 const ClockIcon = () => (
   <img
     src={clockIcon}
@@ -33,8 +33,6 @@ const ClockIcon = () => (
     style={{ 
       display: "block", 
       flexShrink: 0,
-      // FIX: Apply brightness filter to ensure visibility on white background
-      // Matches the treatment used in the Alumni Tracer Survey banner
       filter: "brightness(0.4)" 
     }}
   />
@@ -111,112 +109,118 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
               e.target.style.display = "none";
             }}
           />
-          {/* Left / Right arrows */}
-          <>
-            <button
-              onClick={prevImg}
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.4)",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 10,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(0,0,0,0.65)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(0,0,0,0.4)")
-              }
-            >
-              <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-                <path
-                  d="M7 1L3 5L7 9"
-                  stroke="#fff"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={nextImg}
-              style={{
-                position: "absolute",
-                right: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.4)",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 10,
-                transition: "background 0.15s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(0,0,0,0.65)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(0,0,0,0.4)")
-              }
-            >
-              <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-                <path
-                  d="M3 1L7 5L3 9"
-                  stroke="#fff"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-            {/* Dot indicators */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: "7.5px",
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                gap: "5px",
-                zIndex: 10,
-              }}
-            >
-              {images.map((_, i) => (
-                <div
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImgIndex(i);
-                  }}
-                  style={{
-                    width: i === imgIndex ? "18px" : "6px",
-                    height: "6px",
-                    borderRadius: "3px",
-                    background:
-                      i === imgIndex ? "#fff" : "rgba(255,255,255,0.5)",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                />
-              ))}
-            </div>
-          </>
+          
+          {/* Navigation Arrows & Dots - Only visible if more than 1 image */}
+          {images.length > 1 && (
+            <>
+              {/* Left / Right arrows */}
+              <button
+                onClick={prevImg}
+                style={{
+                  position: "absolute",
+                  left: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "rgba(0,0,0,0.4)",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(0,0,0,0.65)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "rgba(0,0,0,0.4)")
+                }
+              >
+                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M7 1L3 5L7 9"
+                    stroke="#fff"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={nextImg}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "rgba(0,0,0,0.4)",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 10,
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "rgba(0,0,0,0.65)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "rgba(0,0,0,0.4)")
+                }
+              >
+                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M3 1L7 5L3 9"
+                    stroke="#fff"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              
+              {/* Dot indicators */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "7.5px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  gap: "5px",
+                  zIndex: 10,
+                }}
+              >
+                {images.map((_, i) => (
+                  <div
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImgIndex(i);
+                    }}
+                    style={{
+                      width: i === imgIndex ? "18px" : "6px",
+                      height: "6px",
+                      borderRadius: "3px",
+                      background:
+                        i === imgIndex ? "#fff" : "rgba(255,255,255,0.5)",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
           {/* Category tag — bottom-left, white pill (matches discount card) */}
           {announcement.category && (
             <div
@@ -244,6 +248,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           )}
         </div>
       )}
+
       {/* ── Body ── */}
       <div
         style={{
@@ -276,6 +281,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             {announcement.title}
           </p>
         </div>
+
         {/* Description — truncated or full depending on expanded state */}
         {!expanded ? (
           <p
@@ -307,6 +313,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             dangerouslySetInnerHTML={createMarkup(announcement.description)}
           />
         )}
+
         {/* Divider */}
         <div
           style={{
@@ -315,6 +322,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             background: "rgba(0,0,0,0.08)",
           }}
         />
+
         {/* ── Expandable details (timestamp) ─ */}
         <div
           style={{
@@ -360,7 +368,8 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           )}
         </div>
       </div>
-      {/* ─ Toggle button ── */}
+
+      {/*  Toggle button ── */}
       <div style={{ padding: "14px 20px 20px" }}>
         <button
           onClick={(e) => {
