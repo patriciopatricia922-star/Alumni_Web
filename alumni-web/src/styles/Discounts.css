@@ -1,817 +1,706 @@
 /* Design tokens */
 :root {
-  --page-bg: #DAE5F1;
-  --card-bg: #ffffff;
-  --card-border: rgba(0, 0, 0, 0.07);
-  --card-border-hover: rgba(0, 62, 166, 0.25);
-  --card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
-  --card-shadow-hover: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
-  --title-color: #1e3a5f;
-  --body-color: #4a5565;
-  --accent: #003ea6;
-  --discount-badge: #ef4444;
-  --filter-bg: #ffffff;
-  --filter-border: rgba(0, 62, 166, 0.2);
-  --sidebar-width-desktop: 229px;
-  --sidebar-width-tablet: 200px;
+--page-bg: #DAE5F1;
+--card-bg: #ffffff;
+--card-border: rgba(0, 0, 0, 0.07);
+--card-border-hover: rgba(0, 62, 166, 0.25);
+--card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.07);
+--card-shadow-hover: 0px 12px 32px rgba(0, 62, 166, 0.15), 0px 4px 16px rgba(0, 0, 0, 0.08);
+--title-color: #1e3a5f;
+--body-color: #4a5565;
+--accent: #003ea6;
+--discount-badge: #ef4444;
+--filter-bg: #ffffff;
+--filter-border: rgba(0, 62, 166, 0.2);
+--sidebar-width-desktop: 229px;
+--sidebar-width-tablet: 200px;
 }
-
 /* Main container */
 .discounts-view-container {
-  display: flex;
-  min-height: 100vh;
-  background: var(--page-bg);
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+display: flex;
+min-height: 100vh;
+background: var(--page-bg);
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
 }
-
 /* Main content area - Desktop (default) */
 .discounts-main-content {
-  flex: 1;
-  margin-left: var(--sidebar-width-desktop);
-  padding: 37px 51px 60px;
-  box-sizing: border-box;
-  overflow-x: clip;
-  position: relative;
-  width: calc(100% - var(--sidebar-width-desktop));
-  min-width: 0;
+flex: 1;
+margin-left: var(--sidebar-width-desktop);
+padding: 37px 51px 60px;
+box-sizing: border-box;
+overflow-x: clip;
+position: relative;
+width: calc(100% - var(--sidebar-width-desktop));
+min-width: 0;
 }
-
 /* Tablet styles */
 @media (max-width: 1024px) and (min-width: 769px) {
-  .discounts-main-content {
-    margin-left: var(--sidebar-width-tablet);
-    padding: 37px 28px 48px;
-    width: calc(100% - var(--sidebar-width-tablet));
-    overflow-x: clip;
-  }
-
-  .filter-dropdown {
-    left: 0;
-    right: auto;
-  }
+.discounts-main-content {
+margin-left: var(--sidebar-width-tablet);
+padding: 37px 28px 48px;
+width: calc(100% - var(--sidebar-width-tablet));
+overflow-x: clip;
 }
-
+.filter-dropdown {
+left: 0;
+right: auto;
+}
+}
 /* Mobile styles */
 @media (max-width: 768px) {
-  .discounts-main-content {
-    margin-left: 0;
-    padding: 24px 16px 90px;
-    width: 100%;
-    overflow-x: clip;
-  }
-
-  .filter-dropdown {
-    left: 0;
-    right: auto;
-  }
+.discounts-main-content {
+margin-left: 0;
+padding: 24px 16px 90px;
+width: 100%;
+overflow-x: clip;
 }
-
+.filter-dropdown {
+left: 0;
+right: auto;
+}
+}
 .discounts-main-content .notification-bell-wrapper {
-  position: absolute;
-  top: 37px;
-  right: 51px;
-  z-index: 200;
+position: absolute;
+top: 37px;
+right: 51px;
+z-index: 200;
 }
-
 @media (max-width: 1024px) and (min-width: 769px) {
-  .discounts-main-content .notification-bell-wrapper {
-    right: 28px;
-    /* Adjust based on tablet padding in Discounts.css */
-  }
+.discounts-main-content .notification-bell-wrapper {
+right: 28px;
+/* Adjust based on tablet padding in Discounts.css */
 }
-
+}
 @media (max-width: 767px) {
-  .discounts-main-content .notification-bell-wrapper {
-    top: 24px;
-    right: 16px;
-  }
+.discounts-main-content .notification-bell-wrapper {
+top: 24px;
+right: 16px;
 }
-
+}
 /* Desktop only: fixes an unintended overflow/scrollbar issue and aligns the
-   bell with the Announcements reference position (top: 46px, right: 60px).
-
-   Root cause of the overflow: unlike .announcements-main-content,
-   .discounts-main-content never reserved space for the vertical scrollbar.
-   The page scrolled at the document (html/body) level instead, so whenever
-   content height crossed the viewport threshold, the browser's scrollbar
-   appeared/disappeared and silently changed the available viewport width.
-   Because .discounts-main-content is sized with `calc(100% - sidebar-width)`,
-   that width (and therefore the bell's apparent position, computed via
-   `right`) shifted by the scrollbar's width depending on how much content
-   was on screen (e.g. after filtering). This is the same class of issue
-   Announcements already solved for its own content.
-
-   Fix: make .discounts-main-content its own scroll container and reserve a
-   stable scrollbar gutter, exactly like .announcements-main-content does,
-   so the container's width - and the bell's position - no longer depends on
-   whether a scrollbar is actually showing. This does not remove scrolling;
-   the page remains scrollable, it just always scrolls in the same place.
-   Scoped to min-width: 1025px (the same breakpoint Announcements uses for
-   its desktop bell override) so Tablet and Mobile scrolling/layout are
-   untouched. */
+bell with the Announcements reference position (top: 46px, right: 60px).
+Root cause of the overflow: unlike .announcements-main-content,
+.discounts-main-content never reserved space for the vertical scrollbar.
+The page scrolled at the document (html/body) level instead, so whenever
+content height crossed the viewport threshold, the browser's scrollbar
+appeared/disappeared and silently changed the available viewport width.
+Because .discounts-main-content is sized with `calc(100% - sidebar-width)`,
+that width (and therefore the bell's apparent position, computed via
+`right`) shifted by the scrollbar's width depending on how much content
+was on screen (e.g. after filtering). This is the same class of issue
+Announcements already solved for its own content.
+Fix: make .discounts-main-content its own scroll container and reserve a
+stable scrollbar gutter, exactly like .announcements-main-content does,
+so the container's width - and the bell's position - no longer depends on
+whether a scrollbar is actually showing. This does not remove scrolling;
+the page remains scrollable, it just always scrolls in the same place.
+Scoped to min-width: 1025px (the same breakpoint Announcements uses for
+its desktop bell override) so Tablet and Mobile scrolling/layout are
+untouched. */
 @media (min-width: 1025px) {
-  .discounts-main-content {
-    overflow-y: auto;
-    scrollbar-gutter: stable;
-  }
-
-  .discounts-main-content .notification-bell-wrapper {
-    top: 46px;
-    right: 72px;
-  }
+.discounts-main-content {
+overflow-y: auto;
+scrollbar-gutter: stable;
 }
-
+.discounts-main-content .notification-bell-wrapper {
+top: 46px;
+right: 72px;
+}
+}
 /* Back Button */
 .back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 19px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  width: fit-content;
-  flex-shrink: 0;
-  margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: clamp(2px, 0.4vh, 6px);
-  transition: opacity 0.15s ease;
+display: inline-flex;
+align-items: center;
+gap: 19px;
+background: none;
+border: none;
+cursor: pointer;
+padding: 0;
+width: fit-content;
+flex-shrink: 0;
+margin-bottom: clamp(8px, 1.2vh, 14px);
+margin-top: clamp(2px, 0.4vh, 6px);
+transition: opacity 0.15s ease;
 }
-
 @media (max-width: 768px) {
-  .back-button {
-    margin-bottom: 16px;
-  }
+.back-button {
+margin-bottom: 16px;
 }
-
+}
 .back-button:hover {
-  opacity: 0.7;
+opacity: 0.7;
 }
-
 .back-button span {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 600;
-  font-size: clamp(13px, 0.9vw, 15px);
-  color: #002263;
-  margin-left: 7.5px;
+font-family: 'Montserrat', sans-serif;
+font-weight: 600;
+font-size: clamp(13px, 0.9vw, 15px);
+color: #002263;
+margin-left: 7.5px;
 }
-
 /* Header */
 .discounts-header {
-  flex-shrink: 0;
-  margin-bottom: clamp(10px, 1.4vh, 16px);
-  padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
+flex-shrink: 0;
+margin-bottom: clamp(10px, 1.4vh, 16px);
+padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
 }
-
 .discounts-header.mobile {
-  margin-bottom: clamp(10px, 1.4vh, 16px);
-  padding-right: calc(clamp(12px, 4vw, 18px) + clamp(44px, 4vw, 52px) + 12px);
+margin-bottom: clamp(10px, 1.4vh, 16px);
+padding-right: calc(clamp(12px, 4vw, 18px) + clamp(44px, 4vw, 52px) + 12px);
 }
-
 .discounts-header.tablet {
-  padding-right: calc(clamp(14px, 2.2vw, 24px) + clamp(44px, 4vw, 52px) + 12px);
+padding-right: calc(clamp(14px, 2.2vw, 24px) + clamp(44px, 4vw, 52px) + 12px);
 }
-
 .discounts-title {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: clamp(28px, 3.2vw, 29px);
-  line-height: 1.2;
-  letter-spacing: -1px;
-  color: #1e3a5f;
-  margin: 30px 0 0px 37.5px;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: clamp(28px, 3.2vw, 29px);
+line-height: 1.2;
+letter-spacing: -1px;
+color: #1e3a5f;
+margin: 30px 0 0px 37.5px;
 }
-
 .discounts-title.mobile {
-  font-size: clamp(28px, 3.2vw, 29px);
+font-size: clamp(28px, 3.2vw, 29px);
 }
-
 .discounts-title.tablet {
-  font-size: clamp(28px, 3.2vw, 29px);
+font-size: clamp(28px, 3.2vw, 29px);
 }
-
 .discounts-subtitle {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: clamp(13.5px, 0.75vw, 14.5px);
-  line-height: 1.6;
-  color: #545454;
-  margin: 6px 0 0 37.5px;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 400;
+font-size: clamp(13.5px, 0.75vw, 14.5px);
+line-height: 1.6;
+color: #545454;
+margin: 6px 0 0 37.5px;
 }
-
 .discounts-subtitle.mobile {
-  font-size: clamp(13.5px, 0.75vw, 14.5px);
-  line-height: 1.6;
+font-size: clamp(13.5px, 0.75vw, 14.5px);
+line-height: 1.6;
 }
-
 /* Filter Bar */
 .filter-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 24px;
-  gap: 12px;
-  overflow: visible;
+display: flex;
+justify-content: flex-end;
+align-items: center;
+margin-bottom: 24px;
+gap: 12px;
+overflow: visible;
 }
-
 .filter-bar.mobile {
-  margin-bottom: 16px;
+margin-bottom: 16px;
 }
-
 .filter-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  overflow: visible;
+display: flex;
+align-items: center;
+gap: 12px;
+position: relative;
+overflow: visible;
 }
-
 .filter-display {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  background: var(--filter-bg);
-  border: 1px solid var(--filter-border);
-  border-radius: 10px;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
-  min-width: 200px;
+height: 40px;
+display: flex;
+align-items: center;
+padding: 0 14px;
+gap: 10px;
+background: var(--filter-bg);
+border: 1px solid var(--filter-border);
+border-radius: 10px;
+box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.06);
+min-width: 200px;
 }
-
 .filter-display.mobile {
-  min-width: 0;
-  flex: 1;
+min-width: 0;
+flex: 1;
 }
-
 .filter-active-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #1e3a5f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 600;
+font-size: 14px;
+line-height: 1.4;
+color: #1e3a5f;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+flex: 1;
 }
-
 .filter-count-badge {
-  background: #003ea6;
-  border-radius: 6px;
-  min-width: 24px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  flex-shrink: 0;
+background: #003ea6;
+border-radius: 6px;
+min-width: 24px;
+height: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 0 6px;
+flex-shrink: 0;
 }
-
 .filter-count-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 12px;
-  color: #ffffff;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 12px;
+color: #ffffff;
 }
-
 .filter-button {
-  height: 40px;
-  padding: 0 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #003ea6;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
-  transition: opacity 0.15s;
+height: 40px;
+padding: 0 18px;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+background: #003ea6;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+flex-shrink: 0;
+box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1), 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
+transition: opacity 0.15s;
 }
-
 .filter-button:hover {
-  opacity: 0.85;
+opacity: 0.85;
 }
-
 .filter-button-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #FFFFFF;
-  white-space: nowrap;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 13px;
+color: #FFFFFF;
+white-space: nowrap;
 }
-
 .filter-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: auto;
-  background: #ffffff;
-  border: 1px solid rgba(0, 62, 166, 0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  z-index: 300;
-  min-width: 220px;
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
+position: absolute;
+top: calc(100% + 8px);
+left: 0;
+right: auto;
+background: #ffffff;
+border: 1px solid rgba(0, 62, 166, 0.15);
+border-radius: 12px;
+overflow: hidden;
+z-index: 300;
+min-width: 220px;
+box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.15);
 }
-
 .filter-option {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 11px 16px;
+background: transparent;
+border: none;
+cursor: pointer;
+transition: background 0.15s;
 }
-
 .filter-option:hover {
-  background: #f0f4ff;
+background: #f0f4ff;
 }
-
 .filter-option.active {
-  background: #dbeafe;
+background: #dbeafe;
 }
-
 .filter-option-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 1.4;
-  color: #4a5565;
-  font-weight: 400;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.4;
+color: #4a5565;
+font-weight: 400;
 }
-
 .filter-option-text.active {
-  color: #003ea6;
-  font-weight: 700;
+color: #003ea6;
+font-weight: 700;
 }
-
 .filter-option-count {
-  background: #dbeafe;
-  border-radius: 6px;
-  padding: 1px 7px;
+background: #dbeafe;
+border-radius: 6px;
+padding: 1px 7px;
 }
-
 .filter-option-count.active {
-  background: #003ea6;
+background: #003ea6;
 }
-
 .filter-option-count-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  color: #003ea6;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 11px;
+color: #003ea6;
 }
-
 .filter-option-count.active .filter-option-count-text {
-  color: #ffffff;
+color: #ffffff;
 }
-
 /* Discounts Grid */
 .discounts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  align-items: start;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 14px;
+align-items: start;
 }
-
 .discounts-grid.tablet {
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+grid-template-columns: repeat(2, 1fr);
+gap: 20px;
 }
-
 .discounts-grid.mobile {
-  grid-template-columns: 1fr;
-  gap: 16px;
+grid-template-columns: 1fr;
+gap: 16px;
 }
-
 .empty-discounts {
-  text-align: center;
-  padding: 80px 0;
-  color: #6a7282;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
+text-align: center;
+padding: 80px 0;
+color: #6a7282;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-size: 15px;
+line-height: 1.5;
 }
-
 /* Discount Card */
 .discount-card {
-  background: var(--card-bg);
-  margin-top: 1px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transform: translateY(0);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  max-width: 95%;
-  margin-left: auto;
-  margin-right: auto;
-  max-height: 510px;
+background: var(--card-bg);
+margin-top: 1px;
+border: 1px solid var(--card-border);
+box-shadow: var(--card-shadow);
+border-radius: 16px;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+transform: translateY(0);
+transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+max-width: 95%;
+margin-left: auto;
+margin-right: auto;
+max-height: 510px;
 }
-
 .discount-card.expanded {
-  max-height: none;
+max-height: none;
 }
-
 .discount-card.hovered {
-  border-color: var(--card-border-hover);
-  box-shadow: var(--card-shadow-hover);
-  transform: translateY(-4px);
+border-color: var(--card-border-hover);
+box-shadow: var(--card-shadow-hover);
+transform: translateY(-4px);
 }
-
 .discount-card-image-wrapper {
-  width: 100%;
-  height: 330px;
-  overflow: visible;
-  flex-shrink: 0;
-  position: relative;
+width: 100%;
+height: 330px;
+overflow: visible;
+flex-shrink: 0;
+position: relative;
 }
-
 .discount-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transform: scale(1);
-  transition: transform 0.35s ease;
+width: 100%;
+height: 100%;
+object-fit: cover;
+display: block;
+transform: scale(1);
+transition: transform 0.35s ease;
 }
-
 .discount-card-image.hovered {
-  transform: scale(1.04);
+transform: scale(1.04);
 }
-
 .discount-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #ef4444;
-  border-radius: 20px;
-  padding: 4px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+position: absolute;
+top: 12px;
+right: 12px;
+background: #ef4444;
+border-radius: 20px;
+padding: 4px 10px;
+display: flex;
+align-items: center;
+justify-content: center;
 }
-
 .discount-badge-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 12px;
-  color: #ffffff;
-  line-height: 1;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 12px;
+color: #ffffff;
+line-height: 1;
 }
-
 .discount-category-tag {
-  position: absolute;
-  bottom: 19px;
-  left: 12px;
-  background: rgba(255, 255, 255, 0.92);
-  border-radius: 20px;
-  padding: 4px 10px;
+position: absolute;
+bottom: 19px;
+left: 12px;
+background: rgba(255, 255, 255, 0.92);
+border-radius: 20px;
+padding: 4px 10px;
 }
-
 .discount-category-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  font-size: 11px;
-  color: #1e3a5f;
-  line-height: 1;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 600;
+font-size: 11px;
+color: #1e3a5f;
+line-height: 1;
 }
-
 /* Card Body */
 .discount-card-body {
-  padding: 18px 20px 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+padding: 18px 20px 0;
+flex: 1;
+display: flex;
+flex-direction: column;
 }
-
 .discount-card-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 8px;
+display: flex;
+align-items: flex-start;
+gap: 8px;
+margin-bottom: 8px;
 }
-
 .discount-card-icon {
-  margin-top: 3px;
-  flex-shrink: 0;
+margin-top: 3px;
+flex-shrink: 0;
 }
-
 .discount-card-title {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.45;
-  color: #1e3a5f;
-  margin: 0;
-  word-break: break-word;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 15px;
+line-height: 1.45;
+color: #1e3a5f;
+margin: 0;
+word-break: break-word;
 }
-
 .discount-card-description {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 1.65;
-  color: #4a5565;
-  margin: 0 0 16px 0;
-  word-break: break-word;
-  overflow-wrap: break-word;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 400;
+font-size: 13px;
+line-height: 1.65;
+color: #4a5565;
+margin: 0 0 16px 0;
+word-break: break-word;
+overflow-wrap: break-word;
 }
-
 .discount-card-divider {
-  width: 100%;
-  height: 1px;
-  background: rgba(0, 0, 0, 0.08);
-  margin-bottom: 0;
-  flex-shrink: 0;
+width: 100%;
+height: 1px;
+background: rgba(0, 0, 0, 0.08);
+margin-bottom: 0;
+flex-shrink: 0;
 }
-
 /* Expandable details */
 .discount-card-details {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+overflow: hidden;
+max-height: 0;
+transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .discount-card-details.expanded {
-  max-height: 600px;
+max-height: 600px;
 }
-
 .discount-card-details-content {
-  padding: 14px 0 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+padding: 14px 0 4px;
+display: flex;
+flex-direction: column;
+gap: 10px;
 }
-
 .discount-card-detail-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+display: flex;
+align-items: flex-start;
+gap: 8px;
 }
-
 .detail-icon {
-  margin-top: 2px;
-  flex-shrink: 0;
+margin-top: 2px;
+flex-shrink: 0;
 }
-
 .detail-text {
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #4a5565;
-  margin: 0;
-  white-space: pre-line;
-  word-break: break-word;
-  overflow-wrap: break-word;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 400;
+font-size: 12px;
+line-height: 1.6;
+color: #4a5565;
+margin: 0;
+white-space: pre-line;
+word-break: break-word;
+overflow-wrap: break-word;
+align-self: center;
 }
-
 /* Toggle button wrapper */
 .discount-card-button-wrapper {
-  padding: 14px 20px 20px;
-  flex-shrink: 0;
-  margin-top: auto;
+padding: 14px 20px 20px;
+flex-shrink: 0;
+margin-top: auto;
 }
-
 .discount-card-toggle-btn {
-  width: 100%;
-  height: 37px;
-  background: #003ea6;
-  border: none;
-  border-radius: 10px;
-  font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+width: 100%;
+height: 37px;
+background: #003ea6;
+border: none;
+border-radius: 10px;
+font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+font-weight: 700;
+font-size: 13px;
+color: #ffffff;
+cursor: pointer;
+transition: background 0.15s, color 0.15s, border-color 0.15s;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
 }
-
 .discount-card-toggle-btn.expanded {
-  background: transparent;
-  border: 1.5px solid #003ea6;
-  color: #003ea6;
+background: transparent;
+border: 1.5px solid #003ea6;
+color: #003ea6;
 }
-
 /* Linkified URLs */
 .discount-link {
-  color: #003ea6;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  word-break: break-all;
-  transition: color 0.15s, opacity 0.15s;
+color: #003ea6;
+font-weight: 600;
+text-decoration: underline;
+text-underline-offset: 2px;
+word-break: break-all;
+transition: color 0.15s, opacity 0.15s;
 }
-
 .discount-link:hover {
-  color: #2b72fb;
-  opacity: 0.85;
+color: #2b72fb;
+opacity: 0.85;
 }
-
 /* ============================================================
-   MOBILE-ONLY RESPONSIVE ADDITIONS
-   ============================================================ */
-
+MOBILE-ONLY RESPONSIVE ADDITIONS
+============================================================ */
 @media (max-width: 767px) {
-
-  /* ── Global overflow guard ─────────────────────────────── */
-  html,
-  body {
-    overflow-x: hidden;
-  }
-
-  .discounts-view-container {
-    overflow-x: hidden;
-    width: 100%;
-  }
-
-  .discounts-main-content {
-    overflow-x: hidden;
-    box-sizing: border-box;
-  }
-
-  .discounts-main-content.mobile {
-    padding: clamp(20px, 5vw, 28px) clamp(12px, 4vw, 18px) 90px;
-  }
-
-  /* ── 1. Back button: keep fully visible, no negative margin ── */
-  .back-button.mobile {
-    margin-left: 0 !important;
-    gap: clamp(12px, 3vw, 19px);
-    max-width: 100%;
-  }
-
-  .back-button.mobile span {
-    font-size: clamp(13px, 3.6vw, 15px);
-  }
-
-  /* ── 2. Notification bell + dropdown: viewport-safe positioning,
-     reference = Dashboard's clamp-based, self-anchoring approach,
-     but implemented with the Discounts page's own classes ── */
-  .discounts-bell-wrapper.mobile {
-    position: absolute;
-    top: clamp(20px, 5vw, 28px);
-    right: clamp(12px, 4vw, 18px);
-    z-index: 200;
-  }
-
-  .discounts-bell-btn.mobile {
-    width: clamp(40px, 11vw, 44px) !important;
-    height: clamp(40px, 11vw, 44px) !important;
-  }
-
-  .discounts-notif-dropdown.mobile {
-    position: absolute;
-    top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
-    right: 0 !important;
-    left: auto !important;
-    width: min(92vw, 380px) !important;
-    min-width: 260px;
-    max-width: calc(100vw - 24px);
-    max-height: min(70vh, 520px) !important;
-    overflow: hidden;
-  }
-
-  .discounts-notif-dropdown.mobile>div[style*="overflowY"] {
-    max-height: none;
-  }
-
-  /* ── 3. Filter: consistent width, viewport-safe dropdown,
-     reference = Announcements' fixed-width filter trigger ── */
-  .discounts-filter-bar.mobile {
-    margin-left: 0;
-    margin-right: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .discounts-filter-container.mobile {
-    width: 100%;
-  }
-
-  .discounts-filter-trigger-wrap.mobile {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .discounts-filter-display.mobile {
-    min-width: 0 !important;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .discounts-filter-display.mobile span {
-    max-width: 100%;
-  }
-
-  .discounts-filter-dropdown.mobile {
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
-  .discounts-filter-button.mobile {
-    padding: 0 clamp(12px, 4vw, 18px) !important;
-  }
-
-  /* ── Header ─────────────────────────────────────────────── */
-  .discounts-header.mobile {
-    padding-right: calc(clamp(40px, 11vw, 44px) + clamp(12px, 4vw, 18px) + 10px);
-  }
-
-  .discounts-title.mobile {
-    margin: clamp(20px, 5vw, 26px) 0 0 0;
-    font-size: clamp(22px, 6.5vw, 27px);
-    letter-spacing: -0.6px;
-    word-break: break-word;
-  }
-
-  .discounts-subtitle.mobile {
-    margin: 6px 0 0 0;
-    font-size: clamp(12.5px, 3.4vw, 14px);
-    overflow-wrap: break-word;
-  }
-
-  /* ── 4. Grid / cards: full-width, no clipping ────────────── */
-  .discounts-grid.mobile {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100%;
-    box-sizing: border-box;
-    gap: clamp(12px, 4vw, 16px);
-  }
-
-  .discounts-grid.mobile .discount-card {
-    max-width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .discounts-grid.mobile .discount-card-image-wrapper {
-    height: clamp(200px, 55vw, 280px);
-  }
-
-  .discounts-grid.mobile .discount-card-title {
-    font-size: clamp(14px, 3.8vw, 15px);
-  }
-
-  .discounts-grid.mobile .discount-card-description {
-    font-size: clamp(12.5px, 3.4vw, 13px);
-  }
-
-  .discounts-grid.mobile .discount-card-toggle-btn {
-    font-size: clamp(12px, 3.2vw, 13px);
-  }
-
-  .empty-discounts {
-    padding: 60px 16px;
-    font-size: clamp(13px, 3.6vw, 15px);
-  }
+/* ── Global overflow guard ─────────────────────────────── */
+html,
+body {
+overflow-x: hidden;
 }
-
+.discounts-view-container {
+overflow-x: hidden;
+width: 100%;
+}
+.discounts-main-content {
+overflow-x: hidden;
+box-sizing: border-box;
+}
+.discounts-main-content.mobile {
+padding: clamp(20px, 5vw, 28px) clamp(12px, 4vw, 18px) 90px;
+}
+/* ── 1. Back button: keep fully visible, no negative margin ── */
+.back-button.mobile {
+margin-left: 0 !important;
+gap: clamp(12px, 3vw, 19px);
+max-width: 100%;
+}
+.back-button.mobile span {
+font-size: clamp(13px, 3.6vw, 15px);
+}
+/* ── 2. Notification bell + dropdown: viewport-safe positioning,
+reference = Dashboard's clamp-based, self-anchoring approach,
+but implemented with the Discounts page's own classes ─ */
+.discounts-bell-wrapper.mobile {
+position: absolute;
+top: clamp(20px, 5vw, 28px);
+right: clamp(12px, 4vw, 18px);
+z-index: 200;
+}
+.discounts-bell-btn.mobile {
+width: clamp(40px, 11vw, 44px) !important;
+height: clamp(40px, 11vw, 44px) !important;
+}
+.discounts-notif-dropdown.mobile {
+position: absolute;
+top: calc(clamp(40px, 11vw, 44px) + 10px) !important;
+right: 0 !important;
+left: auto !important;
+width: min(92vw, 380px) !important;
+min-width: 260px;
+max-width: calc(100vw - 24px);
+max-height: min(70vh, 520px) !important;
+overflow: hidden;
+}
+.discounts-notif-dropdown.mobile>div[style*="overflowY"] {
+max-height: none;
+}
+/* ── 3. Filter: consistent width, viewport-safe dropdown,
+reference = Announcements' fixed-width filter trigger ── */
+.discounts-filter-bar.mobile {
+margin-left: 0;
+margin-right: 0;
+width: 100%;
+box-sizing: border-box;
+}
+.discounts-filter-container.mobile {
+width: 100%;
+}
+.discounts-filter-trigger-wrap.mobile {
+flex: 1;
+min-width: 0;
+}
+.discounts-filter-display.mobile {
+min-width: 0 !important;
+width: 100%;
+box-sizing: border-box;
+}
+.discounts-filter-display.mobile span {
+max-width: 100%;
+}
+.discounts-filter-dropdown.mobile {
+left: 0 !important;
+right: 0 !important;
+width: 100% !important;
+min-width: 0 !important;
+max-width: 100%;
+box-sizing: border-box;
+}
+.discounts-filter-button.mobile {
+padding: 0 clamp(12px, 4vw, 18px) !important;
+}
+/* ─ Header ─────────────────────────────────────────────── */
+.discounts-header.mobile {
+padding-right: calc(clamp(40px, 11vw, 44px) + clamp(12px, 4vw, 18px) + 10px);
+}
+.discounts-title.mobile {
+margin: clamp(20px, 5vw, 26px) 0 0 0;
+font-size: clamp(22px, 6.5vw, 27px);
+letter-spacing: -0.6px;
+word-break: break-word;
+}
+.discounts-subtitle.mobile {
+margin: 6px 0 0 0;
+font-size: clamp(12.5px, 3.4vw, 14px);
+overflow-wrap: break-word;
+}
+/* ── 4. Grid / cards: full-width, no clipping ────────────── */
+.discounts-grid.mobile {
+margin-left: 0 !important;
+margin-right: 0 !important;
+width: 100%;
+box-sizing: border-box;
+gap: clamp(12px, 4vw, 16px);
+}
+.discounts-grid.mobile .discount-card {
+max-width: 100%;
+margin-left: 0;
+margin-right: 0;
+}
+.discounts-grid.mobile .discount-card-image-wrapper {
+height: clamp(200px, 55vw, 280px);
+}
+.discounts-grid.mobile .discount-card-title {
+font-size: clamp(14px, 3.8vw, 15px);
+}
+.discounts-grid.mobile .discount-card-description {
+font-size: clamp(12.5px, 3.4vw, 13px);
+}
+.discounts-grid.mobile .discount-card-toggle-btn {
+font-size: clamp(12px, 3.2vw, 13px);
+}
+.empty-discounts {
+padding: 60px 16px;
+font-size: clamp(13px, 3.6vw, 15px);
+}
+}
 /* ── Small phones (<= 380px) ─────────────────────────────── */
 @media (max-width: 380px) {
-  .discounts-grid.mobile .discount-card-image-wrapper {
-    height: clamp(180px, 58vw, 220px);
-  }
-
-  .discounts-bell-btn.mobile {
-    width: 40px !important;
-    height: 40px !important;
-  }
-
-  .discounts-notif-dropdown.mobile {
-    width: calc(100vw - 20px) !important;
-    min-width: 240px;
-  }
-
-  .discounts-title.mobile {
-    font-size: clamp(20px, 6.8vw, 24px);
-  }
+.discounts-grid.mobile .discount-card-image-wrapper {
+height: clamp(180px, 58vw, 220px);
 }
-
-/* ── Large phones (min 480px, still mobile) ──────────────── */
+.discounts-bell-btn.mobile {
+width: 40px !important;
+height: 40px !important;
+}
+.discounts-notif-dropdown.mobile {
+width: calc(100vw - 20px) !important;
+min-width: 240px;
+}
+.discounts-title.mobile {
+font-size: clamp(20px, 6.8vw, 24px);
+}
+}
+/* ── Large phones (min 480px, still mobile) ─────────────── */
 @media (min-width: 480px) and (max-width: 767px) {
-  .discounts-grid.mobile {
-    gap: 18px;
-  }
-
-  .discounts-grid.mobile .discount-card-image-wrapper {
-    height: clamp(240px, 45vw, 300px);
-  }
+.discounts-grid.mobile {
+gap: 18px;
+}
+.discounts-grid.mobile .discount-card-image-wrapper {
+height: clamp(240px, 45vw, 300px);
+}
 }
