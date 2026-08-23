@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import ProfileView from '../Views/ProfileView';
 import { classifyDepartment } from '../lib/departmentClassifier';
+import { loadSectionData } from '../lib/surveyProgress';
 import { useNotifications } from '../hooks/useNotifications'; 
 
 // ── Responsive hook ────────────────────────────────────────────────────────
@@ -207,20 +208,25 @@ const Profile = () => {
         ?? null;
       setLastPasswordChange(pwChangedAt);
 
-      const { data: surveyProgress, error: surveyError } = await supabase
-        .from('survey_progress')
-        .select('personal_background_data')
-        .eq('user_id', authUser.id)
-        .maybeSingle();
-      if (surveyError) console.error('Survey fetch error:', surveyError.message);
+      // deptType must be known before retrieving the first survey section,
+      // since College and SHS alumni answer that section under different
+      // section keys ('personal_background' vs 'shs_personal_background'),
+      // which loadSectionData resolves to different survey_progress columns.
+      const deptType = classifyDepartment(userData?.program) ?? 'college';
+      const personalBgSectionKey =
+        deptType === 'shs' ? 'shs_personal_background' : 'personal_background';
 
-      const personalBgData = surveyProgress?.personal_background_data || {};
+      let personalBgData = {};
+      try {
+        personalBgData = (await loadSectionData(personalBgSectionKey)) || {};
+      } catch (surveyError) {
+        console.error('Survey fetch error:', surveyError.message);
+      }
       setSurveyData(personalBgData);
 
       if (!userData) { console.warn('No user record for ID:', authUser.id); return; }
 
       const mergedUser = { ...userData, ...personalBgData };
-      const deptType   = classifyDepartment(userData?.program) ?? 'college';
       setUser(mergedUser);
       setDepartmentType(deptType);
       setStrength(calcStrength(mergedUser, personalBgData, deptType));
@@ -250,13 +256,10 @@ const Profile = () => {
       setPiLoading(true);
 
       supabase.auth.getUser().then(async ({ data: { user: au } }) => {
-        const { data: surveyProgress } = await supabase
-          .from('survey_progress')
-          .select('personal_background_data')
-          .eq('user_id', au?.id)
-          .maybeSingle();
+        const personalBgSectionKey =
+          departmentType === 'shs' ? 'shs_personal_background' : 'personal_background';
 
-        const personalBgData = surveyProgress?.personal_background_data || {};
+        const personalBgData = (await loadSectionData(personalBgSectionKey)) || {};
         const fullUserData   = { ...user, ...personalBgData };
 
         const mapped = { ...EMPTY_PI_FORM };
@@ -290,7 +293,7 @@ const Profile = () => {
         setPiLoading(false);
       });
     }
-  }, [showPIModal, user]);
+  }, [showPIModal, user, departmentType]);
 
   const handleClosePIModal = useCallback(() => {
     setShowPIModal(false);
@@ -343,7 +346,16 @@ const Profile = () => {
         if (userError) throw userError;
       }
 
-      // ── 2. survey_progress.personal_background_data (JSONB) ─────────────
+      // ── 2. survey_progress personal-background data column (JSONB) ──────
+      // Column name mirrors the section-key → column mapping already
+      // established by lib/surveyProgress.js (DB_DATA_COL): College's
+      // 'personal_background' section persists to 'personal_background_data',
+      // SHS's 'shs_personal_background' section persists to
+      // 'shs_personal_background_data'. Using the wrong column here would
+      // save SHS edits into the College column (or vice-versa), so it must
+      // stay in sync with the section key resolved on load.
+      const personalBgColumn =
+        departmentType === 'shs' ? 'shs_personal_background_data' : 'personal_background_data';
       const personalBgData = {};
 
       if (piForm.firstName  !== '') personalBgData.first_name   = piForm.firstName;
@@ -366,12 +378,12 @@ const Profile = () => {
       if (Object.keys(personalBgData).length > 0) {
         const { data: existingProgress } = await supabase
           .from('survey_progress')
-          .select('personal_background_data')
+          .select(personalBgColumn)
           .eq('user_id', authUser.id)
           .maybeSingle();
 
         const mergedData = {
-          ...existingProgress?.personal_background_data,
+          ...existingProgress?.[personalBgColumn],
           ...personalBgData,
         };
 
@@ -379,9 +391,9 @@ const Profile = () => {
           .from('survey_progress')
           .upsert(
             {
-              user_id:                  authUser.id,
-              personal_background_data: mergedData,
-              last_updated:             new Date().toISOString(),
+              user_id:               authUser.id,
+              [personalBgColumn]:    mergedData,
+              last_updated:          new Date().toISOString(),
             },
             { onConflict: 'user_id' }
           );
@@ -396,7 +408,7 @@ const Profile = () => {
       setPiSaving(false);
       setPiSaveError(err.message || 'Failed to save. Please try again.');
     }
-  }, [piForm, fetchUserAndSurvey]);
+  }, [piForm, fetchUserAndSurvey, departmentType]);
 
   // ── CP reset on close ──────────────────────────────────────────────────────
   const handleCloseCPModal = useCallback(() => {
