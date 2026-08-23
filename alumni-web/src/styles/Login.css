@@ -420,9 +420,20 @@
     margin-top: -8px;
   }
 
-  /* Move Send Code button and subsequent footer text down in Forgot Password/Login modals */
+  /* Move Send Code button down in Forgot Password modal */
   .lgn-page-root--modal .lgn-submit-btn {
     margin-top: 7px;
+  }
+
+  /* LOGIN MODAL ONLY: Move Login button and Sign Up text upward */
+  /* Targeted by the presence of the password wrapper which precedes the button in Login */
+  .lgn-page-root--modal .lgn-pw-wrap + .lgn-submit-btn {
+    margin-top: -4px;
+  }
+  
+  /* Ensure the footer text following the login button also moves up */
+  .lgn-page-root--modal .lgn-pw-wrap + .lgn-submit-btn + .lgn-footer-text {
+    margin-top: -12px; /* Compensates for the -8px base + extra upward shift */
   }
 }
 
