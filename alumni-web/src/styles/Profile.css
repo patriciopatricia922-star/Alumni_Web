@@ -1,3 +1,5 @@
+/* File: Profile.css */
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -37,6 +39,10 @@
   --prof-top-h: clamp(130px, 20vh, 210px);
   --prof-header-h: 110px;
   --prof-content-inset: 60px;
+  
+  /* Added About-aligned tokens for consistency */
+  --prof-radius-lg: 24px;
+  --prof-radius-md: 16px;
 }
 
 *,
@@ -71,13 +77,14 @@ body,
   overflow-x: hidden;
   position: relative;
   margin-left: var(--prof-sidebar-w);
-  padding: clamp(12px, 1.8vh, 24px) clamp(40px, 6vw, 97px) clamp(16px, 2.4vh, 32px) clamp(40px, 6vw, 97px);
+  /* Updated padding to match About.css .ab-main rhythm */
+  padding: clamp(28px, 4vh, 52px) clamp(24px, 3.2vw, 56px) clamp(12px, 1.8vh, 29px) clamp(40px, 8.2vw, 97.1px);
   box-sizing: border-box;
 }
 
 .prof-main {
-  display: grid;
-  grid-template-rows: auto auto var(--prof-top-h) auto;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: visible;
@@ -88,18 +95,20 @@ body,
   padding-bottom: calc(var(--prof-bottom-nav-h) + 0.5rem);
 }
 
+/* Back Button - Aligned with About.css .ab-back */
 .prof-back {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 15px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 0px;
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
   margin-top: clamp(2px, 0.4vh, 6px);
+  margin-left: -65px; /* Matches About's negative margin for alignment */
   transition: opacity 0.15s ease;
 }
 
@@ -118,6 +127,7 @@ body,
   opacity: 0.7;
 }
 
+/* Page Header - Aligned with About.css .ab-hdr */
 .prof-page-header {
   display: flex;
   flex-direction: row;
@@ -127,7 +137,7 @@ body,
   margin-bottom: clamp(10px, 1.4vh, 16px);
   margin-top: 0;
   box-sizing: border-box;
-  margin-left: 13px;
+  /* Removed specific left margin/padding overrides to rely on flex spacing */
   padding-right: calc(clamp(44px, 4vw, 52px) + clamp(16px, 2vw, 28px));
 }
 
@@ -138,70 +148,38 @@ body,
   min-width: 0;
 }
 
+/* Title - Aligned with About.css .ab-title */
 .prof-page-title {
   font-family: var(--prof-font-display);
   font-weight: 700;
   font-size: clamp(28px, 3.2vw, 29px);
   line-height: 1.2;
   letter-spacing: -1px;
-  color: #324D87;
-  margin: 0 0 3px 65px;
+  color: #324D87; /* Using prof-text which matches ab-text-dark-alt */
+  margin: 20px 0 3px -10px; /* Matches About's margin structure */
 }
 
+/* Subtitle - Aligned with About.css .ab-sub */
 .prof-page-subtitle {
   font-family: var(--prof-font-display);
   font-weight: 400;
   font-size: clamp(11px, 0.9vw, 15px);
-  line-height: 1.5;
+  line-height: 2;
   color: #545454;
-  margin: 0 0 0 65px;
+  margin: 0 0 0 -10px; /* Matches About's margin structure */
 }
 
-/* ============================ NOTIFICATION BELL OVERRIDE ============================ */
+/* Notification Bell Override - Scoped to Profile Header */
+/* We remove absolute positioning and let it sit in the flex row */
 .prof-page-header .notification-bell-wrapper {
   position: relative;
   top: auto;
   right: auto;
   margin-top: 0;
+  margin-left: auto; /* Pushes bell to the right if needed, though flex justify-space-between handles it */
 }
 
-@media (max-width: 1100px) {
-  .prof-page-header .notification-bell-wrapper {
-    /* Adjust if needed for tablet */
-  }
-}
-
-@media (max-width: 767px) {
-  .prof-back {
-    display: none;
-  }
-
-  .prof-page-header {
-    padding-right: calc(clamp(44px, 4vw, 52px) + 14px);
-    margin-top: clamp(8px, 1.6vh, 14px);
-  }
-
-  .prof-page-title,
-  .prof-page-subtitle {
-    margin-left: 0;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    white-space: normal;
-  }
-
-  .prof-page-header .notification-bell-wrapper {
-    position: absolute !important;
-    top: clamp(34px, 2vh, 42px);
-    right: clamp(12px, 4vw, 18px);
-    left: auto;
-    bottom: auto;
-    margin: 0 !important;
-    padding: 0;
-    z-index: 200;
-  }
-}
-/* ============================ END NOTIFICATION BELL OVERRIDE ============================ */
-
+/* Top Row Layout */
 .prof-top-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -212,6 +190,7 @@ body,
   margin-right: var(--prof-content-inset);
 }
 
+/* Hero Card Styles (Unchanged) */
 .prof-hero-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -356,6 +335,7 @@ body,
   margin: 0;
 }
 
+/* Strength Card Styles (Unchanged) */
 .prof-strength-card {
   background: var(--prof-hero-gradient);
   border-radius: 24px;
@@ -441,6 +421,7 @@ body,
   flex-shrink: 0;
 }
 
+/* Bottom Row Layout */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -452,7 +433,7 @@ body,
   margin-right: var(--prof-content-inset);
 }
 
-/* ── Shared card base ── */
+/* Shared card base (Unchanged) */
 .prof-info-card,
 .prof-cp-card {
   background: var(--prof-card-bg);
@@ -470,7 +451,7 @@ body,
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* ── Personal Info card: fixed height with internal scroll ── */
+/* Personal Info card: fixed height with internal scroll (Unchanged) */
 .prof-info-card {
   height: clamp(320px, 46vh, 480px);
   overflow: hidden;
@@ -544,7 +525,7 @@ body,
   color: #6B7280;
 }
 
-/* ── Info list: scrollable content area ── */
+/* Info list: scrollable content area (Unchanged) */
 .prof-info-list {
   display: flex;
   flex-direction: column;
@@ -591,7 +572,6 @@ body,
   width: 18px;
 }
 
-/* ── Value: wrap instead of clip so long addresses are fully visible ── */
 .prof-info-value {
   font-family: var(--prof-font-display);
   font-size: clamp(13.7px, 0.78vw, 13px);
@@ -695,6 +675,7 @@ body,
   font-weight: 700 !important;
 }
 
+/* Modal Styles (Unchanged) */
 .prof-modal-overlay {
   position: fixed;
   inset: 0;
@@ -861,6 +842,7 @@ body,
   margin-left: 2px;
 }
 
+/* Toast Styles (Unchanged) */
 .prof-toast {
   position: fixed;
   bottom: 24px;
@@ -914,13 +896,13 @@ body,
     right: 16px;
     left: 16px;
   }
-
   .prof-toast-content {
     width: 100%;
     min-width: auto;
   }
 }
 
+/* Form Field Styles (Unchanged) */
 .prof-pi-field,
 .prof-cp-field {
   display: flex;
@@ -1385,8 +1367,8 @@ body,
 }
 
 /* ════════════════════════════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
-   ════════════════════════════════════════════════════════════════ */
+RESPONSIVE BREAKPOINTS
+════════════════════════════════════════════════════════════════ */
 
 /* ── Tablet ── */
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -1394,12 +1376,10 @@ body,
     --prof-top-h: clamp(120px, 19vh, 185px);
     --prof-content-inset: 20px;
   }
-
   .prof-content-wrapper {
     margin-left: var(--prof-sidebar-w-tablet);
     padding: clamp(10px, 1.6vh, 18px) clamp(14px, 2.2vw, 24px) clamp(14px, 2vh, 22px) clamp(20px, 2.8vw, 36px);
   }
-
   .prof-top-row,
   .prof-bottom-row {
     gap: clamp(12px, 2vw, 20px);
@@ -1411,7 +1391,6 @@ body,
   :root {
     --prof-top-h: 155px;
   }
-
   .prof-info-card {
     height: clamp(280px, 42vh, 400px);
   }
@@ -1421,7 +1400,6 @@ body,
   :root {
     --prof-top-h: 130px;
   }
-
   .prof-info-card {
     height: clamp(240px, 38vh, 340px);
   }
@@ -1432,32 +1410,67 @@ body,
   :root {
     --prof-content-inset: 0px;
   }
-
   html,
   body,
   #root {
     overflow: auto;
     height: auto;
   }
-
   .prof-root {
     height: auto;
     overflow: visible;
   }
-
   .prof-content-wrapper {
     margin-left: 0;
     height: auto;
     overflow: visible;
     padding: clamp(12px, 2vh, 18px) clamp(12px, 4vw, 18px) 80px;
   }
-
   .prof-main {
     display: flex;
     flex-direction: column;
     overflow: visible;
     height: auto;
     gap: 12px;
+  }
+  
+  /* Hide Back Button on Mobile like About */
+  .prof-back {
+    display: none;
+  }
+
+  /* Align Header with About Mobile */
+  .prof-page-header {
+    padding-right: calc(clamp(44px, 4vw, 52px) + 14px);
+    margin-top: clamp(8px, 1.6vh, 14px);
+  }
+  
+  .prof-page-title {
+    margin-left: 0;
+    margin-top: 0;
+    font-size: clamp(22px, 6.5vw, 28px);
+    letter-spacing: -0.5px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .prof-page-subtitle {
+    margin-left: 0;
+    font-size: clamp(12.5px, 3.6vw, 15px);
+    line-height: 1.7;
+    overflow-wrap: break-word;
+  }
+
+  /* Ensure Notification Bell positions correctly on mobile */
+  .prof-page-header .notification-bell-wrapper {
+    position: absolute !important;
+    top: clamp(34px, 2vh, 42px);
+    right: clamp(12px, 4vw, 18px);
+    left: auto;
+    bottom: auto;
+    margin: 0 !important;
+    padding: 0;
+    z-index: 200;
   }
 
   .prof-top-row,
@@ -1467,80 +1480,66 @@ body,
     height: auto;
     overflow: visible;
   }
-
   .prof-hero-card,
   .prof-strength-card {
     height: auto;
     min-height: 120px;
   }
-
+  
   /* Mobile-only text scaling */
   .prof-hero-name {
     font-size: clamp(24px, 7.5vw, 30px);
   }
-
   .prof-hero-program {
     font-size: clamp(13px, 3.6vw, 16px);
   }
-
   .prof-hero-batch {
     font-size: clamp(12px, 3.2vw, 15px);
   }
-
   .prof-strength-eyebrow {
     font-size: clamp(10px, 2.8vw, 13px);
   }
-
   .prof-strength-label {
     font-size: clamp(22px, 6.5vw, 28px);
   }
-
   .prof-strength-hint {
     font-size: clamp(13px, 3.6vw, 16px);
   }
-
   .prof-info-card,
   .prof-cp-card {
     height: auto;
     overflow: visible;
   }
-
   .prof-info-list {
     flex: none;
     overflow: visible;
     max-height: none;
   }
-
   .prof-info-row {
     flex: none;
     padding: 10px 0;
     min-height: 38px;
     border-bottom: none;
   }
-
   .prof-info-value {
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
   }
-
   .prof-cp-card-body {
     overflow: visible;
   }
-
   .prof-cp-req-list {
     flex: none;
     gap: 8px;
   }
-
   .prof-contact-row {
     flex-direction: column;
   }
-
   .prof-country-code-select {
     width: 100%;
   }
-
+  
   /* --- MOBILE MODAL BUTTON FIX --- */
   .prof-pi-cancel-btn,
   .prof-cp-cancel-btn,
@@ -1550,7 +1549,6 @@ body,
     min-height: 48px;
     font-size: 14px;
   }
-
   .prof-pi-modal-footer,
   .prof-cp-modal-footer {
     padding: 16px clamp(20px, 4vw, 32px);
@@ -1565,7 +1563,7 @@ body,
     flex-direction: column;
     gap: 12px;
   }
-
+  
   /* --- MOBILE MODAL BUTTON FIX (STACKED) --- */
   .prof-pi-cancel-btn,
   .prof-cp-cancel-btn,
@@ -1574,15 +1572,13 @@ body,
     width: 100%;
   }
   /* ----------------------------------------- */
-
+  
   .prof-pi-row {
     grid-template-columns: 1fr;
   }
-
   .prof-contact-row {
     flex-direction: column;
   }
-
   .prof-country-code-select {
     width: 100%;
   }
@@ -1593,16 +1589,13 @@ body,
   :root {
     --prof-top-h: 220px;
   }
-
   .prof-content-wrapper {
-    padding: 28px 97.1px 28px 97.1px;
+    padding: 36px 56px 29px 97.1px;
   }
-
   .prof-top-row,
   .prof-bottom-row {
     gap: 38px;
   }
-
   .prof-info-card {
     height: clamp(360px, 48vh, 520px);
   }
