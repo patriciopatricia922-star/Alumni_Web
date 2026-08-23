@@ -389,8 +389,23 @@ html, body, #root {
 }
 
 @media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden; /* Mirrors About.css's mobile shell rule */
+  }
+
+  .notif-root {
+    height: auto;
+    overflow: visible;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
   .notif-main {
     margin-left: 0;
+    height: auto;
+    overflow: visible;
+    overflow-x: hidden;
+    box-sizing: border-box;
     padding: clamp(20px, 3vh, 32px) clamp(12px, 4vw, 18px) calc(68px + env(safe-area-inset-bottom) + clamp(16px, 2.4vh, 28px)) clamp(12px, 4vw, 18px);
   }
   .notif-back { display: none; }
