@@ -41,16 +41,17 @@ const MetaItem = ({ icon, text }) => (
   </div>
 );
 
-// ── Job Card ──────────────────────────────────────────────────────────────────
+// ── Job Card ─────────────────────────────────────────────────────────────────
 const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
   const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(isTarget); // Auto-expand if target
   const [imgIndex, setImgIndex] = useState(0);
   const images = job.images?.length ? job.images : job.image ? [job.image] : [];
   const hasMultiple = images.length > 1;
+
   const prevImg = (e) => { e.stopPropagation(); setImgIndex(i => (i - 1 + images.length) % images.length); };
   const nextImg = (e) => { e.stopPropagation(); setImgIndex(i => (i + 1) % images.length); };
-  
+
   const relativeTime = (dateStr) => {
     if (!dateStr) return '2 hours ago';
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -95,51 +96,60 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
             }}
             onError={e => { e.target.style.display = 'none'; }}
           />
-          {/* Left arrow */}
-          <button onClick={prevImg} style={{
-            position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '40px', height: '40px', borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 10, transition: 'background 0.15s',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-          >
-            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-              <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          {/* Right arrow */}
-          <button onClick={nextImg} style={{
-            position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-            width: '40px', height: '40px', borderRadius: '50%',
-            background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 10, transition: 'background 0.15s',
-          }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
-          >
-            <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
-              <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          {/* Dot indicators */}
-          <div style={{
-            position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', gap: '5px', zIndex: 10,
-          }}>
-            {images.map((_, i) => (
-              <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
-                width: i === imgIndex ? '18px' : '6px', height: '6px',
-                borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
-                cursor: 'pointer', transition: 'all 0.2s',
-              }} />
-            ))}
-          </div>
+          
+          {/* Navigation Arrows & Dots - Only visible if more than 1 image */}
+          {hasMultiple && (
+            <>
+              {/* Left arrow */}
+              <button onClick={prevImg} style={{
+                position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)',
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 10, transition: 'background 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+              >
+                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                  <path d="M7 1L3 5L7 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {/* Right arrow */}
+              <button onClick={nextImg} style={{
+                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                width: '40px', height: '40px', borderRadius: '50%',
+                background: 'rgba(0,0,0,0.4)', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 10, transition: 'background 0.15s',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.65)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0.4)'}
+              >
+                <svg width="13" height="13" viewBox="0 0 10 10" fill="none">
+                  <path d="M3 1L7 5L3 9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              
+              {/* Dot indicators */}
+              <div style={{
+                position: 'absolute', bottom: '7.5px', left: '50%', transform: 'translateX(-50%)',
+                display: 'flex', gap: '5px', zIndex: 10,
+              }}>
+                {images.map((_, i) => (
+                  <div key={i} onClick={(e) => { e.stopPropagation(); setImgIndex(i); }} style={{
+                    width: i === imgIndex ? '18px' : '6px', height: '6px',
+                    borderRadius: '3px', background: i === imgIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
+
       <div className={`job-card-body ${isMobile ? 'mobile' : ''}`}>
         {/* Icon box / company image */}
         {job.image ? (
@@ -163,6 +173,7 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
             </svg>
           </div>
         )}
+
         {/* Content */}
         <div className="job-content">
           {/* Top row: badge + timestamp */}
@@ -175,22 +186,25 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
               </span>
             </div>
           </div>
+
           {/* Title */}
           <p className={`job-title ${isMobile ? 'mobile' : ''}`}>
             {job.title}
           </p>
+
           {/* Company */}
           {job.company && (
             <p className={`job-company ${isMobile ? 'mobile' : ''}`}>
               {job.company}
             </p>
           )}
+
           {/* Description with inline See more */}
           <p className={`job-description ${isMobile ? 'mobile' : ''}`}>
             {expanded
               ? previewText
               : needsTrunc
-                ? previewText.substring(0, 120) + '… '
+                ? previewText.substring(0, 120) + '…'
                 : previewText}
             {!expanded && needsTrunc && (
               <button
@@ -201,6 +215,7 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
               </button>
             )}
           </p>
+
           {/* Compact meta (always visible when not expanded) */}
           {!expanded && hasDetails && (
             <div className="compact-meta">
@@ -224,6 +239,7 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
               )}
             </div>
           )}
+
           {/* Expanded: full meta + tags + See less */}
           {expanded && (
             <div className="expanded-meta">
@@ -246,6 +262,7 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
                   text={`Expires: ${job.date}`}
                 />
               )}
+
               {/* Tags */}
               {job.tags && job.tags.length > 0 && (
                 <div className="job-tags">
@@ -256,6 +273,7 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
                   ))}
                 </div>
               )}
+
               <button
                 onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
                 className={`see-less-btn ${isMobile ? 'mobile' : ''}`}
@@ -293,6 +311,7 @@ const JobsView = ({
           onSeeAll={() => navigate('/notifications')}
           className={isMobile ? 'mobile' : ''}
         />
+
         {/* ── Back Button ── */}
         <button
           className={isMobile ? 'back-button mobile' : 'back-button'}
@@ -305,6 +324,7 @@ const JobsView = ({
           </svg>
           <span>Back</span>
         </button>
+
         {/* ── Header ── */}
         <div className={`jobs-header ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
           <h1 className={`jobs-title ${isMobile ? 'mobile' : isTablet ? 'tablet' : ''}`}>
@@ -314,6 +334,7 @@ const JobsView = ({
             Discover career opportunities tailored for alumni, advance your professional journey, and achieve your career goals.
           </p>
         </div>
+
         {/* ── Filter Bar ── */}
         <div
           className={isMobile ? 'jobs-filter-bar mobile' : 'jobs-filter-bar'}
@@ -376,6 +397,7 @@ const JobsView = ({
                   </span>
                 </div>
               </div>
+
               {showFilter && (
                 <div
                   className={isMobile ? 'jobs-filter-dropdown mobile' : 'jobs-filter-dropdown'}
@@ -383,14 +405,14 @@ const JobsView = ({
                     position:     'absolute',
                     top:          'calc(100% + 8px)',
                     left:         0,
-                    background:   '#FFFFFF',
+                    background:    '#FFFFFF',
                     border:       '1px solid rgba(0,62,166,0.15)',
                     borderRadius: '12px',
                     overflow:     'hidden',
                     zIndex:       300,
                     minWidth:     '100%',
                     width:        '100%',
-                    boxShadow:    '0px 10px 30px rgba(0,0,0,0.15)',
+                    boxShadow:     '0px 10px 30px rgba(0,0,0,0.15)',
                   }}
                 >
                   {categories.map((cat, i) => (
@@ -402,7 +424,7 @@ const JobsView = ({
                         display:        'flex',
                         alignItems:     'center',
                         justifyContent: 'space-between',
-                        padding:        '12px 14px 12px 14.5px',
+                        padding:         '12px 14px 12px 14.5px',
                         background:     activeCategory === cat ? 'rgba(43,114,251,0.08)' : 'transparent',
                         border:         'none',
                         borderTop:      i > 0 ? '1px solid rgba(0,62,166,0.08)' : 'none',
@@ -446,6 +468,7 @@ const JobsView = ({
                 </div>
               )}
             </div>
+
             <button
               onClick={() => setShowFilter(f => !f)}
               className={isMobile ? 'jobs-filter-button mobile' : 'jobs-filter-button'}
@@ -453,7 +476,7 @@ const JobsView = ({
                 height:         '40px',
                 padding:        '0 18px',
                 display:        'flex',
-                alignItems:     'center',
+                alignItems:      'center',
                 justifyContent: 'center',
                 gap:            '8px',
                 background:     '#003ea6',
@@ -476,6 +499,7 @@ const JobsView = ({
             </button>
           </div>
         </div>
+
         {/* ── Jobs List (stacked, full-width cards) ── */}
         <div className={`jobs-list ${isMobile ? 'mobile' : ''}`}>
           {mergedList.map(job => (
@@ -488,6 +512,7 @@ const JobsView = ({
             />
           ))}
         </div>
+
         {filtered.length === 0 && (
           <div className="empty-jobs">
             No jobs found for this category.
