@@ -678,6 +678,7 @@
 /* Section content */
 .ab-modal-sec-title {
   font-weight: 700;
+  font-family: "Montserrat", sans-serif;
   font-size: clamp(13px, 1.05vw, 15px);
   color: #003ea6;
   margin-bottom: 4px;
