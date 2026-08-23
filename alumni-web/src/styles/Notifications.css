@@ -61,7 +61,7 @@ body,
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: clamp(4px, 0.6vh, 8px);
+  margin-top: clamp(6px, 0.8vh, 10px); 
   margin-left: -65px;
   transition: opacity 0.15s ease;
 }
