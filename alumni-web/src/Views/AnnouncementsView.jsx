@@ -19,6 +19,7 @@ const CATEGORY_ICONS = {
   News: megaphoneIcon,
   Activities: calenderIcon,
 };
+
 const getIcon = (category) => CATEGORY_ICONS[category] || documentIcon;
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -29,7 +30,13 @@ const ClockIcon = () => (
     aria-hidden="true"
     width="12"
     height="12"
-    style={{ display: "block", flexShrink: 0 }}
+    style={{ 
+      display: "block", 
+      flexShrink: 0,
+      // FIX: Apply brightness filter to ensure visibility on white background
+      // Matches the treatment used in the Alumni Tracer Survey banner
+      filter: "brightness(0.4)" 
+    }}
   />
 );
 
@@ -42,12 +49,14 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
   const images = announcement.images?.length
     ? announcement.images
     : announcement.image
-      ? [announcement.image]
-      : [];
+    ? [announcement.image]
+    : [];
+
   const prevImg = (e) => {
     e.stopPropagation();
     setImgIndex((i) => (i - 1 + images.length) % images.length);
   };
+
   const nextImg = (e) => {
     e.stopPropagation();
     setImgIndex((i) => (i + 1) % images.length);
@@ -76,7 +85,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
       }}
     >
-      {/* ── Photo with arrows + category pill ── */}
+      {/* ── Photo with arrows + category pill ─ */}
       {images.length > 0 && (
         <div
           style={{
@@ -102,7 +111,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
               e.target.style.display = "none";
             }}
           />
-
           {/* Left / Right arrows */}
           <>
             <button
@@ -177,7 +185,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
                 />
               </svg>
             </button>
-
             {/* Dot indicators */}
             <div
               style={{
@@ -210,7 +217,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
               ))}
             </div>
           </>
-
           {/* Category tag — bottom-left, white pill (matches discount card) */}
           {announcement.category && (
             <div
@@ -238,7 +244,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           )}
         </div>
       )}
-
       {/* ── Body ── */}
       <div
         style={{
@@ -271,7 +276,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             {announcement.title}
           </p>
         </div>
-
         {/* Description — truncated or full depending on expanded state */}
         {!expanded ? (
           <p
@@ -303,7 +307,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             dangerouslySetInnerHTML={createMarkup(announcement.description)}
           />
         )}
-
         {/* Divider */}
         <div
           style={{
@@ -312,8 +315,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
             background: "rgba(0,0,0,0.08)",
           }}
         />
-
-        {/* ── Expandable details (timestamp) ── */}
+        {/* ── Expandable details (timestamp) ─ */}
         <div
           style={{
             overflow: "hidden",
@@ -358,8 +360,7 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
           )}
         </div>
       </div>
-
-      {/* ── Toggle button ── */}
+      {/* ─ Toggle button ── */}
       <div style={{ padding: "14px 20px 20px" }}>
         <button
           onClick={(e) => {
@@ -399,7 +400,6 @@ const AnnouncementCard = ({ announcement, isMobile, isTablet }) => {
     </div>
   );
 };
-
 
 // ── Main View ──────────────────────────────────────────────────────────────────
 const AnnouncementsView = ({
@@ -446,14 +446,13 @@ const AnnouncementsView = ({
   return (
     <div className="ann-page" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
-
       <div
         className={
           isMobile
             ? "announcements-main-content mobile"
             : isTablet
-              ? "announcements-main-content tablet"
-              : "announcements-main-content"
+            ? "announcements-main-content tablet"
+            : "announcements-main-content"
         }
         style={{
           marginLeft: isMobile ? 0 : `${sidebarWidth}px`,
@@ -461,8 +460,8 @@ const AnnouncementsView = ({
           padding: isMobile
             ? "24px 16px 90px"
             : isTablet
-              ? "37px 32px 48px"
-              : "37px 51px 60px",
+            ? "37px 32px 48px"
+            : "37px 51px 60px",
           boxSizing: "border-box",
           maxWidth: "100%",
           overflowX: "hidden",
@@ -486,7 +485,6 @@ const AnnouncementsView = ({
           </svg>
           <span>Back</span>
         </button>
-
         <div
           className="ann-hdr"
           style={{
@@ -497,7 +495,6 @@ const AnnouncementsView = ({
           }}
         >
           <h1 className="ann-heading">Announcements</h1>
-
           <p
             className="ann-subheading"
             style={{
@@ -514,7 +511,6 @@ const AnnouncementsView = ({
             your alumni network.
           </p>
         </div>
-
         {!isMobile && (
           <div
             className="ann-banner"
@@ -551,7 +547,6 @@ const AnnouncementsView = ({
                 pointerEvents: "none",
               }}
             />
-
             <div
               style={{
                 width: isTablet ? "80px" : "120px",
@@ -576,7 +571,6 @@ const AnnouncementsView = ({
                 }}
               />
             </div>
-
             <div style={{ flex: 1, position: "relative" }}>
               <h2
                 style={{
@@ -673,7 +667,6 @@ const AnnouncementsView = ({
             </div>
           </div>
         )}
-
         <div
           className={isMobile ? "ann-filter-row mobile" : "ann-filter-row"}
           style={{
@@ -754,7 +747,6 @@ const AnnouncementsView = ({
                 </span>
               </div>
             </div>
-
             <button
               onClick={() => setShowFilter((f) => !f)}
               style={{
@@ -796,7 +788,6 @@ const AnnouncementsView = ({
                 FILTER
               </span>
             </button>
-
             {showFilter && (
               <div
                 className="ann-filter-dropdown"
@@ -884,7 +875,6 @@ const AnnouncementsView = ({
             )}
           </div>
         </div>
-
         {loading ? (
           <div
             style={{
@@ -913,8 +903,8 @@ const AnnouncementsView = ({
               gridTemplateColumns: isMobile
                 ? "1fr"
                 : isTablet
-                  ? "repeat(2, 1fr)"
-                  : "repeat(3, 1fr)",
+                ? "repeat(2, 1fr)"
+                : "repeat(3, 1fr)",
               gap: isMobile ? "16px" : "14px",
               alignItems: "start",
               marginLeft: isMobile ? "8px" : "24px",
