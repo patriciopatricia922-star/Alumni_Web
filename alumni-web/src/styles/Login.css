@@ -409,11 +409,11 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
-   DESKTOP ONLY: Compact Login Modal Height & Sign Up Position
+   DESKTOP ONLY: Compact Modal Height & Positioning
    ══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
   .lgn-page-root--modal .lgn-card-body {
-    padding: 16px 28px 12px;
+    padding: 16px 28px 4px;
   }
 
   .lgn-page-root--modal .lgn-footer-text {
