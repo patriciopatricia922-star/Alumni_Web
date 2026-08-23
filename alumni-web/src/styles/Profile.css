@@ -179,15 +179,16 @@ body,
   margin-left: auto; /* Pushes bell to the right if needed, though flex justify-space-between handles it */
 }
 
-/* Top Row Layout */
+/* Top Row Layout - UPDATED TO ALIGN WITH HEADER BOUNDARIES */
 .prof-top-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(16px, 3.2vw, 44px);
   min-height: 0;
   overflow: hidden;
-  margin-left: var(--prof-content-inset);
-  margin-right: var(--prof-content-inset);
+  /* REMOVED margin-left/right to allow full width alignment with header */
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* Hero Card Styles (Unchanged) */
@@ -421,7 +422,7 @@ body,
   flex-shrink: 0;
 }
 
-/* Bottom Row Layout */
+/* Bottom Row Layout - Kept original inset margins as per task focus on top row/name card */
 .prof-bottom-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1405,7 +1406,7 @@ RESPONSIVE BREAKPOINTS
   }
 }
 
-/* ── Mobile ── */
+/* ─ Mobile ── */
 @media (max-width: 767px) {
   :root {
     --prof-content-inset: 0px;
