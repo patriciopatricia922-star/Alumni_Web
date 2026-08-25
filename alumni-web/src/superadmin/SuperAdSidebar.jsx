@@ -56,52 +56,52 @@ const useWindowWidth = () => {
 const ALL_SUPERADMIN_MENU_ITEMS = [
   {
     path:  '/superadmin/super-admin-dashboard',
-    icon:  'TbLayoutDashboardFilled',
+    icon:  'dashboard_icn',
     label: 'Dashboard',
     // no module — always visible for all roles
   },
   {
     path:   '/superadmin/audit-logs',
-    icon:   'SiGoogleanalytics',
+    icon:   'audits_icn',
     label:  'Audit Logs',
     module: MODULES.AUDIT,          // annotation only
   },
   {
     path:   '/superadmin/admin-management',
-    icon:   'BsFillPeopleFill',
+    icon:   'admin_icn',
     label:  'Admin Management',
     split:  true,
     // superadmin-exclusive — no equivalent module gate for regular admins
   },
   {
     path:   '/superadmin/super-admin-alumni',
-    icon:   'RiSurveyFill',
+    icon:   'alumni_icn',
     label:  'Alumni Management',
     split:  true,
     module: MODULES.ALUMNI,         // annotation only
   },
   {
     path:   '/superadmin/super-alumni-engagement',
-    icon:   'FaBookBookmark',
+    icon:   'content_icn',
     label:  'Content Management',
     split:  true,
     module: MODULES.ENGAGEMENT,     // annotation only
   },
   {
     path:   '/superadmin/survey-management',
-    icon:   'RiSurveyFill',
+    icon:   'survey_icn',
     label:  'Survey Management',
     module: MODULES.SURVEY,         // annotation only
   },
   {
     path:   '/superadmin/response-and-analytics',
-    icon:   'SiGoogleanalytics',
+    icon:   'analytics_icn',
     label:  'Response & Analytics',
     module: MODULES.REPORTS,        // annotation only
   },
   {
     path:      '/superadmin/predictive-analytics',
-    icon:      'RiOrganizationChart',
+    icon:      'predict_icn',
     label:     'Predictive Analytics',
     marginTop: '16px',
     module:    MODULES.REPORTS,     // annotation only

@@ -26,7 +26,7 @@ body {
   flex-direction: column;
   gap: 1.5rem;
   font-family: "Lexend", sans-serif;
-  margin-left: 229px;
+  margin-left: 218px;
   background-color: #E1ECF7;  /* FIXED: Added background color */
   min-height: 100vh;
 }
