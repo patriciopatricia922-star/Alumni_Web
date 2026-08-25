@@ -283,6 +283,17 @@ body {
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
   font-family: "Lexend", sans-serif;
+  /* FIX: no text color was ever declared on this badge, so the <select>
+     variant (shown while editing) picked up an inherited color instead
+     of a readable one, making the selected type unreadable against the
+     light gray pill. */
+  color: #374151;
+}
+
+.question-type:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 /* Input field styling for preview mode */
@@ -294,6 +305,17 @@ body {
   border: 0.0625rem solid #d1d5db;
   font-family: "Lexend", sans-serif;
   font-size: 0.875rem;
+  /* FIX: background/color were never declared here, so these read-only
+     preview fields fell through to whatever the app's outer theme
+     happened to set (dark background, low-contrast text). Reasserting
+     them locally keeps the field on this page's intended light look. */
+  background-color: #f9fafb;
+  color: #6b7280;
+}
+
+.question-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
 }
 
 /* Radio group for multiple choice options */
@@ -642,4 +664,63 @@ body {
 .survey-builder { 
   margin-bottom: 3rem; 
   min-width: 0; 
+}
+
+/* ============================================================================
+   FORM FIELD READABILITY FIX (Admin Survey Management)
+   ============================================================================
+   Root cause: several inputs/selects/textareas in the survey editor (label
+   fields, placeholder fields, option fields, branch destination selects)
+   never declared their own background/color. Without that, the browser
+   falls back to whatever color/background the app's outer theme sets on
+   plain <input>/<select>/<textarea> elements, which here resolved to a
+   dark, low-contrast field instead of this page's light-card look.
+
+   These rules are scoped to .survey-page only (no layout/sizing changes)
+   and act as a safety net alongside the explicit inline background/color
+   now set directly on those fields in SurveyMgmtView.jsx, so the fields
+   stay readable even if new inputs are added later without their own
+   explicit colors.
+   ============================================================================ */
+.survey-page input:not([type="checkbox"]):not([type="radio"]),
+.survey-page select,
+.survey-page textarea {
+  background-color: #ffffff;
+  color: #111827;
+  caret-color: #111827;
+  font-family: "Lexend", sans-serif;
+}
+
+.survey-page input::placeholder,
+.survey-page textarea::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.survey-page input:focus,
+.survey-page select:focus,
+.survey-page textarea:focus {
+  outline: none;
+}
+
+.survey-page input:disabled,
+.survey-page input[readonly],
+.survey-page textarea[readonly] {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: default;
+}
+
+/* Edit / Copy / Delete / Branch action icon buttons — force a visible
+   neutral color so they never rely on an inherited currentColor that
+   could resolve to something invisible against the white card. */
+.survey-page .question-actions button,
+.survey-page .branch-btn,
+.survey-page .inner-section-card > div button {
+  color: #374151;
+}
+
+.survey-page .question-actions button:hover,
+.survey-page .inner-section-card > div button:hover {
+  color: #1f2937;
 }

@@ -447,6 +447,8 @@ export default function SurveyMgmtView({
                                               minWidth: "200px",
                                               maxWidth: "420px",
                                               height: "70px",
+                                              background: "#ffffff",
+                                              color: "#111827",
                                             }}
                                           >
                                             <option value="next">
@@ -535,6 +537,8 @@ export default function SurveyMgmtView({
                                           minWidth: "200px",
                                           maxWidth: "520px",
                                           height: "70px",
+                                          background: "#ffffff",
+                                          color: "#111827",
                                         }}
                                       >
                                         <option value="next">
@@ -654,7 +658,7 @@ export default function SurveyMgmtView({
                               justifyContent: "center",
                             }}
                           >
-                            <FiEdit2 size={14} />
+                            <FiEdit2 size={14} color="#374151" />
                           </button>
                           {isEditing && dirtyQ && (
                             <button
@@ -711,6 +715,7 @@ export default function SurveyMgmtView({
                               fontSize: "0.85rem",
                               fontWeight: 500,
                               background: "transparent",
+                              color: "#111827",
                               padding: "0.2rem 0",
                             }}
                           />
@@ -766,7 +771,7 @@ export default function SurveyMgmtView({
                           >
                             <FiEdit2
                               size={16}
-                              color={isEditing ? "#3b82f6" : undefined}
+                              color={isEditing ? "#3b82f6" : "#374151"}
                             />
                           </button>
                           <button
@@ -783,7 +788,7 @@ export default function SurveyMgmtView({
                             }}
                             title="Duplicate question"
                           >
-                            <FiCopy size={16} />
+                            <FiCopy size={16} color="#374151" />
                           </button>
                           <button
                             onClick={() =>
@@ -845,6 +850,8 @@ export default function SurveyMgmtView({
                                 padding: "0.35rem",
                                 fontSize: "0.75rem",
                                 fontFamily: "Lexend",
+                                background: "#ffffff",
+                                color: "#111827",
                               }}
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
@@ -878,6 +885,8 @@ export default function SurveyMgmtView({
                                 padding: "0.35rem",
                                 fontSize: "0.75rem",
                                 fontFamily: "Lexend",
+                                background: "#ffffff",
+                                color: "#111827",
                               }}
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
@@ -948,6 +957,8 @@ export default function SurveyMgmtView({
                                       fontSize: "0.8rem",
                                       fontFamily: "Lexend",
                                       padding: "0.2rem 0",
+                                      background: "#ffffff",
+                                      color: "#111827",
                                     }}
                                   />
                                   <button
@@ -1028,6 +1039,8 @@ export default function SurveyMgmtView({
                                       fontSize: "0.8rem",
                                       fontFamily: "Lexend",
                                       padding: "0.2rem 0",
+                                      background: "#ffffff",
+                                      color: "#111827",
                                     }}
                                   />
                                   <button
