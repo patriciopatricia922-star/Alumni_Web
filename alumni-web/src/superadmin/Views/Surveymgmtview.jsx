@@ -393,7 +393,7 @@ export default function SurveyMgmtView({
                               display: "flex", alignItems: "center", justifyContent: "center",
                             }}
                           >
-                            <FiEdit2 size={14} />
+                            <FiEdit2 size={14} color="#374151" />
                           </button>
                           {isEditing && dirtyQ && (
                             <button className="q-save-btn" onClick={() => saveEdit(activeSection, qIdx)}>
@@ -452,14 +452,14 @@ export default function SurveyMgmtView({
                             style={{ border: "none", background: "transparent", cursor: "pointer", padding: "0.2rem", display: "flex", alignItems: "center" }}
                             title={isEditing ? "Cancel editing" : "Edit question"}
                           >
-                            <FiEdit2 size={16} color={isEditing ? "#3b82f6" : undefined} />
+                            <FiEdit2 size={16} color={isEditing ? "#3b82f6" : "#374151"} />
                           </button>
                           <button
                             onClick={() => duplicateQuestion(activeSection, qIdx)}
                             style={{ border: "none", background: "transparent", cursor: "pointer", padding: "0.2rem", display: "flex", alignItems: "center" }}
                             title="Duplicate question"
                           >
-                            <FiCopy size={16} />
+                            <FiCopy size={16} color="#374151" />
                           </button>
                           <button
                             onClick={() => deleteQuestion(activeSection, qIdx, q.label)}

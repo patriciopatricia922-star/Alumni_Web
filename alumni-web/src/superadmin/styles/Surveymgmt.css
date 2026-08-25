@@ -294,6 +294,14 @@ body {
   border: 0.0625rem solid #d1d5db;
   font-family: "Lexend", sans-serif;
   font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #111827;
+  opacity: 1;
+}
+
+.question-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
 }
 
 /* Radio group for multiple choice options */
