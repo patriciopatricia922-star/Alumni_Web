@@ -643,3 +643,176 @@ body {
   margin-bottom: 3rem; 
   min-width: 0; 
 }
+/* ============================================================================
+   SURVEY SKELETON LOADER — sm-skel-* namespace
+   Append these rules to the bottom of Surveymgmt.css.
+   All selectors are prefixed sm-skel- to guarantee zero collision with
+   existing rules. The shimmer animation is self-contained.
+   ============================================================================ */
+
+/* ── Shimmer keyframe ────────────────────────────────────────────────────── */
+/*
+ * The gradient moves from left to right at a pace that reads as "loading"
+ * without feeling anxious. The base colour matches the #E1ECF7 page
+ * background; the highlight is a soft white pulse.
+ */
+@keyframes smSkelShimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+/* ── Bone atom ───────────────────────────────────────────────────────────── */
+/*
+ * Every skeleton piece uses this class. Width, height, and border-radius
+ * are set inline by the component for per-instance precision.
+ */
+.sm-skel-bone {
+  background: linear-gradient(
+    90deg,
+    #d8e6f3 0%,
+    #eaf2fb 38%,
+    #f0f6fc 50%,
+    #eaf2fb 62%,
+    #d8e6f3 100%
+  );
+  background-size: 600px 100%;
+  animation: smSkelShimmer 1.5s ease-in-out infinite;
+  /* Prevent any text content from rendering inside skeleton bones */
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── Page wrapper ────────────────────────────────────────────────────────── */
+/*
+ * .sm-skel-page is added alongside .survey-page on the skeleton root.
+ * It doesn't change layout — it just disables pointer events globally so
+ * nothing in the skeleton is accidentally interactive.
+ */
+.sm-skel-page {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── Section sidebar atoms ───────────────────────────────────────────────── */
+/* Mirrors the real "+ Add Section" button height exactly (same as .add-section-btn) */
+.sm-skel-add-section-btn {
+  height: 32px;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(
+    90deg,
+    #d8e6f3 0%,
+    #eaf2fb 38%,
+    #f0f6fc 50%,
+    #eaf2fb 62%,
+    #d8e6f3 100%
+  );
+  background-size: 600px 100%;
+  animation: smSkelShimmer 1.5s ease-in-out infinite;
+  /* Stagger so it doesn't pulse in lockstep with the section items */
+  animation-delay: 0.1s;
+}
+
+/* Circular section number badge — matches .section-number */
+.sm-skel-section-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    #c8daea 0%,
+    #ddeaf5 50%,
+    #c8daea 100%
+  );
+  background-size: 600px 100%;
+  animation: smSkelShimmer 1.5s ease-in-out infinite;
+  animation-delay: 0.05s;
+}
+
+/* ── Question card atoms ─────────────────────────────────────────────────── */
+/*
+ * The question card skeleton sits inside the real .question-card class so
+ * it inherits the correct border-radius, padding, shadow, and margin from
+ * the existing stylesheet. Only the interior content is replaced with bones.
+ */
+.sm-skel-question-card {
+  /* Override any editing-state background that might bleed in */
+  background: #ffffff !important;
+  /* Prevent hover/focus styles from triggering */
+  pointer-events: none;
+}
+
+/* Right side of the question header: type badge + 3 icon stubs */
+.sm-skel-qcard-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Textarea skeleton: two lines of varying width to imply multi-line input */
+.sm-skel-textarea-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* ── Builder bottom stub ─────────────────────────────────────────────────── */
+/* Mirrors the "+ Add Question" dashed button height */
+.sm-skel-add-question-btn {
+  width: 100%;
+  height: 36px;
+  border-radius: 10px;
+  margin-top: 0.5rem;
+  background: linear-gradient(
+    90deg,
+    #dde9f4 0%,
+    #edf4fa 50%,
+    #dde9f4 100%
+  );
+  background-size: 600px 100%;
+  animation: smSkelShimmer 1.5s ease-in-out infinite;
+  animation-delay: 0.25s;
+}
+
+/* ── Stagger delays ──────────────────────────────────────────────────────── */
+/*
+ * Each question card gets a slightly later shimmer start so the animation
+ * cascades down the page rather than all blocks pulsing simultaneously.
+ * nth-of-type selectors target .question-card inside the builder.
+ */
+.sm-skel-page .survey-builder .question-card:nth-child(2) .sm-skel-bone,
+.sm-skel-page .survey-builder .question-card:nth-child(2) .sm-skel-add-section-btn {
+  animation-delay: 0.12s;
+}
+
+.sm-skel-page .survey-builder .question-card:nth-child(3) .sm-skel-bone,
+.sm-skel-page .survey-builder .question-card:nth-child(3) .sm-skel-add-section-btn {
+  animation-delay: 0.24s;
+}
+
+.sm-skel-page .survey-builder .question-card:nth-child(4) .sm-skel-bone {
+  animation-delay: 0.36s;
+}
+
+/* ── Section sidebar stagger ─────────────────────────────────────────────── */
+.sm-skel-page .sections-list .section-item:nth-child(2) .sm-skel-bone { animation-delay: 0.07s; }
+.sm-skel-page .sections-list .section-item:nth-child(3) .sm-skel-bone { animation-delay: 0.14s; }
+.sm-skel-page .sections-list .section-item:nth-child(4) .sm-skel-bone { animation-delay: 0.21s; }
+
+/* ── Responsive — mobile ─────────────────────────────────────────────────── */
+/*
+ * On mobile (below 768px) the sidebar collapses; the skeleton adapts
+ * the same way the real layout does. No special rules needed because
+ * .survey-page, .survey-main, .survey-sections, and .survey-builder
+ * already handle this in the existing stylesheet. We only need to
+ * prevent the header skeleton from overflowing narrow viewports.
+ */
+@media (max-width: 767px) {
+  .sm-skel-page .survey-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
