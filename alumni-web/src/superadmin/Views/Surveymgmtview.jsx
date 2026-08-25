@@ -425,7 +425,7 @@ export default function SurveyMgmtView({
                               flex: 1, border: "none",
                               borderBottom: "2px solid #3b82f6", outline: "none",
                               fontFamily: "Lexend", fontSize: "0.85rem",
-                              fontWeight: 500, background: "transparent", padding: "0.2rem 0",
+                              fontWeight: 500, background: "transparent", color: "#111827", padding: "0.2rem 0",
                             }}
                           />
                         ) : (
@@ -488,7 +488,7 @@ export default function SurveyMgmtView({
                         <>
                           {isEditing && (
                             <input
-                              style={{ width: "100%", maxWidth: "22rem", marginLeft: "0.75rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend" }}
+                              style={{ width: "100%", maxWidth: "22rem", marginLeft: "0.75rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend", backgroundColor: "#ffffff", color: "#111827" }}
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
                               onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
@@ -503,7 +503,7 @@ export default function SurveyMgmtView({
                         <>
                           {isEditing && (
                             <input
-                              style={{ width: "100%", maxWidth: "22rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend" }}
+                              style={{ width: "100%", maxWidth: "22rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend", backgroundColor: "#ffffff", color: "#111827" }}
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
                               onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
@@ -530,7 +530,7 @@ export default function SurveyMgmtView({
                                   <input
                                     value={opt}
                                     onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
-                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0" }}
+                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "transparent", color: "#111827" }}
                                   />
                                   <button
                                     onClick={() => deleteOption(activeSection, qIdx, oIdx)}
@@ -564,7 +564,7 @@ export default function SurveyMgmtView({
                                   <input
                                     value={opt}
                                     onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
-                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0" }}
+                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "transparent", color: "#111827" }}
                                   />
                                   <button
                                     onClick={() => deleteOption(activeSection, qIdx, oIdx)}
