@@ -174,6 +174,7 @@ const PersonalBackground = () => {
     province: '', zip_code: '', country: '',
     contact_number: '', email: '',
     phone_prefix: '+63',
+    gender_other: '', civil_status_other: '',
   });
 
   const [errors,    setErrors]    = useState(new Set());
@@ -304,7 +305,13 @@ const PersonalBackground = () => {
   };
 
   const setRadio = (key) => (val) => {
-    setForm((f) => ({ ...f, [key]: val }));
+    setForm((f) => ({
+      ...f,
+      [key]: val,
+      // Clear the associated "Other" free-text value whenever a different
+      // option is chosen so stale text isn't silently carried/saved.
+      ...(val !== 'Other' && f[`${key}_other`] ? { [`${key}_other`]: '' } : {}),
+    }));
     if (errors.has(key)) {
       setErrors((prev) => {
         const next = new Set(prev);
@@ -379,7 +386,6 @@ const PersonalBackground = () => {
 
   const formPct = computeFormPct(form);
 
-  // Loading gate — wait for config and saved data
   // Loading gate — wait for config and saved data
   if (loadingConfig || !hasLoadedSavedData) {
     return <SkeletonLoader fieldCount={9} />;
