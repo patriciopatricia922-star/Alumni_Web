@@ -44,6 +44,7 @@ import useUserProfile from '../../hooks/Useuserprofile';
 import useSurveyBackGuard from '../../hooks/useSurveyBackGuard';
 import EducationalBackgroundViewSHS from '../views/EducationalBackgroundViewSHS';
 import { useNotifications } from '../../hooks/useNotifications'; // NEW IMPORT
+import { getReadIds } from '../../lib/notificationService';
 
 const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 2;
@@ -192,7 +193,7 @@ const EducationalBackgroundSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   // ── Dynamic survey config state (mirrors College) ─────────────────────
   const [questionLabels,       setQuestionLabels]       = useState({});

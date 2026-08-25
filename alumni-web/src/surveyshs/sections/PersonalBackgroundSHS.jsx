@@ -23,6 +23,7 @@ import useUserProfile from '../../hooks/Useuserprofile';
 import useSurveyBackGuard from '../../hooks/useSurveyBackGuard';
 import PersonalBackgroundViewSHS from '../views/PersonalBackgroundViewSHS';
 import { useNotifications } from '../../hooks/useNotifications';
+import { getReadIds } from '../../lib/notificationService';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
@@ -241,7 +242,7 @@ const PersonalBackgroundSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef                    = useRef(null);
 
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   useEffect(() => {
     refreshProfile();

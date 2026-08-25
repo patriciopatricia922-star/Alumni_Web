@@ -30,7 +30,8 @@ import { supabase } from '../../lib/supabase';
 import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import JobExperienceViewSHS from '../views/JobExperienceViewSHS';
-import { useNotifications } from '../../hooks/useNotifications'; 
+import { useNotifications } from '../../hooks/useNotifications';
+import { getReadIds } from '../../lib/notificationService';
 // ─────────────────────────────────────────────────────────────────────────────
 // Survey constants
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +136,7 @@ const JobExperienceSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   useEffect(() => {
     let cancelled = false;

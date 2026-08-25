@@ -187,7 +187,7 @@ const Profile = () => {
   const [cpSuccess, setCpSuccess] = useState(false);
 
   // ── Notifications ─────────────────────────────────────────────────────────
-  const { unreadCount } = useNotifications();
+  const { unreadCount, bellRef, setShowDropdown } = useNotifications();
 
   // ── Fetch user and survey data ─────────────────────────────────────────────
   const fetchUserAndSurvey = useCallback(async () => {

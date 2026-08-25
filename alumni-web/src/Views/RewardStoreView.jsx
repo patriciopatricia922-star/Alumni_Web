@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from "react";
 // import { useNavigate } from 'react-router-dom';
 import Sidebar from "../components/Sidebar";
 import "../styles/RewardStore.css";
-import { truncateHtml, stripHtml, htmlToReadableText } from '../utils/textHelpers';
+import { truncateHtml, stripHtml, htmlToReadableText, getExcerpt } from '../utils/textHelpers';
 
 // ============================ MERCH CARD ============================
 const MerchCard = ({ item, userPoints, onRedeem, isTarget }) => {

@@ -29,6 +29,7 @@ import { logAction } from '../../lib/auditLogger';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import FeedbackAndEngagementViewSHS from '../views/FeedbackAndEngagementViewSHS';
 import { useNotifications } from '../../hooks/useNotifications';
+import { getReadIds } from '../../lib/notificationService';
 
 const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 6;
@@ -102,7 +103,7 @@ const FeedbackAndEngagementSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   useEffect(() => {
     let cancelled = false;

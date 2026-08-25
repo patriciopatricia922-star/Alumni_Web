@@ -417,7 +417,7 @@ const SuperAdminDashboard = () => {
       const employedRows = withEmpData.filter(r => isEmployedHelper(r.emp));
       const withJobData  = parsed.filter(r => r.job !== null);
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log('[internship KPI] all first_job_source values:',
           withJobData.map(r => r.job.first_job_source ?? '(missing)'));
         console.log('[internship KPI] withJobData count:', withJobData.length);

@@ -380,7 +380,7 @@ function UploadCSVModal({ onClose, onSuccess }) {
       if (!res.ok) throw new Error("Bulk upload failed");
       const result = await res.json();
       setResult(result);
-      if (inserted > 0) onSuccess();
+      if (result.inserted > 0) onSuccess();
     } catch (e) {
       setResult({
         inserted: 0,

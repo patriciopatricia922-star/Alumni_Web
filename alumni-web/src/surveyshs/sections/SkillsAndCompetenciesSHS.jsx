@@ -16,6 +16,7 @@ import { saveSectionProgress, loadSectionData } from '../../lib/surveyProgress';
 import { loadSurveyConfig, subscribeToSurveyConfigChanges } from '../../lib/surveyConfig';
 import SkillsAndCompetenciesViewSHS from '../views/SkillsAndCompetenciesViewSHS';
 import { useNotifications } from '../../hooks/useNotifications';
+import { getReadIds } from '../../lib/notificationService';
 
 const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 5;
@@ -79,7 +80,7 @@ const SkillsAndCompetenciesSHS = () => {
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
 
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   useEffect(() => {
     let cancelled = false;

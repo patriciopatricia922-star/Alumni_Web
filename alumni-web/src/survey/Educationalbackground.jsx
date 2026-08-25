@@ -148,7 +148,7 @@ const EducationalBackground = () => {
   const [errors,    setErrors]    = useState(new Set());
   const [saveToast, setSaveToast] = useState(false);
   const cardRef = useRef(null);
-  const { unreadCount } = useNotifications();
+  const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
   useEffect(() => {
     refreshProfile();
