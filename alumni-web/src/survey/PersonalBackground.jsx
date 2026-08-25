@@ -174,7 +174,7 @@ const PersonalBackground = () => {
     province: '', zip_code: '', country: '',
     contact_number: '', email: '',
     phone_prefix: '+63',
-    gender_other: '', civil_status_other: '',
+    country_other: '',
   });
 
   const [errors,    setErrors]    = useState(new Set());
@@ -305,13 +305,7 @@ const PersonalBackground = () => {
   };
 
   const setRadio = (key) => (val) => {
-    setForm((f) => ({
-      ...f,
-      [key]: val,
-      // Clear the associated "Other" free-text value whenever a different
-      // option is chosen so stale text isn't silently carried/saved.
-      ...(val !== 'Other' && f[`${key}_other`] ? { [`${key}_other`]: '' } : {}),
-    }));
+    setForm((f) => ({ ...f, [key]: val }));
     if (errors.has(key)) {
       setErrors((prev) => {
         const next = new Set(prev);
@@ -324,7 +318,14 @@ const PersonalBackground = () => {
   const setCountry = (e) => {
     const c      = e.target.value;
     const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
-    setForm((f) => ({ ...f, country: c, phone_prefix: prefix }));
+    setForm((f) => ({
+      ...f,
+      country: c,
+      phone_prefix: prefix,
+      // Clear the custom "Other" country text whenever a different
+      // option is chosen so stale text isn't silently carried/saved.
+      ...(c !== 'Other' && f.country_other ? { country_other: '' } : {}),
+    }));
     if (errors.has('country')) {
       setErrors((prev) => {
         const next = new Set(prev);
@@ -386,6 +387,7 @@ const PersonalBackground = () => {
 
   const formPct = computeFormPct(form);
 
+  // Loading gate — wait for config and saved data
   // Loading gate — wait for config and saved data
   if (loadingConfig || !hasLoadedSavedData) {
     return <SkeletonLoader fieldCount={9} />;

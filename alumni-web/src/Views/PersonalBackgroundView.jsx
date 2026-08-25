@@ -297,10 +297,8 @@ const STYLES = `
     flex-shrink: 0;
   }
 
-  .pb-radio-other {
-    margin-top: 2px;
-    margin-left: 26px;
-    max-width: 100%;
+  .pb-select-other {
+    margin-top: 10px;
   }
 
   .pb-phone-row {
@@ -404,7 +402,6 @@ const STYLES = `
     .pb-input    { font-size: 13px; height: 44px; }
     .pb-btn-next { width: 80px; height: 42px; font-size: 13px; }
     .pb-btn-save { width: 80px; height: 42px; font-size: 13px; }
-    .pb-radio-other { margin-left: 22px; }
   }
   @media (max-height: 600px) {
     .pb-header   { padding-bottom: 10px; }
@@ -572,14 +569,6 @@ const PersonalBackgroundView = ({
                       {opt}
                     </label>
                   ))}
-                  {form.gender === "Other" && (
-                    <input
-                      className="pb-input pb-radio-other"
-                      placeholder="Please specify"
-                      value={form.gender_other || ""}
-                      onChange={set("gender_other")}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -625,14 +614,6 @@ const PersonalBackgroundView = ({
                       {opt}
                     </label>
                   ))}
-                  {form.civil_status === "Other" && (
-                    <input
-                      className="pb-input pb-radio-other"
-                      placeholder="Please specify"
-                      value={form.civil_status_other || ""}
-                      onChange={set("civil_status_other")}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -735,6 +716,14 @@ const PersonalBackgroundView = ({
                       </option>
                     ))}
                   </select>
+                  {form.country === "Other" && (
+                    <input
+                      className="pb-input pb-select-other"
+                      placeholder="Please specify your country"
+                      value={form.country_other || ""}
+                      onChange={set("country_other")}
+                    />
+                  )}
                 </div>
               </div>
 
