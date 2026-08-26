@@ -224,25 +224,9 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   };
 
   const Field = ({ label, value }) => (
-    <div
-      style={{
-        background: "#fff5e7",
-        padding: "10px",
-        borderRadius: 8,
-        fontSize: 13,
-      }}
-    >
-      <span
-        style={{
-          display: "block",
-          fontSize: 11,
-          color: "#6b7280",
-          marginBottom: 3,
-        }}
-      >
-        {label}
-      </span>
-      <strong style={{ color: "#111827" }}>{value || "N/A"}</strong>
+    <div className="ra-modal-field">
+      <span className="ra-modal-field-label">{label}</span>
+      <strong className="ra-modal-field-value">{value || "N/A"}</strong>
     </div>
   );
 
@@ -264,22 +248,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   );
 
   const FullBlock = ({ label, children }) => (
-    <div
-      style={{
-        background: "#fff5e7",
-        padding: "10px 12px",
-        borderRadius: 8,
-        fontSize: 13,
-      }}
-    >
-      <span
-        style={{
-          display: "block",
-          fontSize: 11,
-          color: "#6b7280",
-          marginBottom: 6,
-        }}
-      >
+    <div className="ra-modal-field">
+      <span className="ra-modal-field-label" style={{ marginBottom: 6 }}>
         {label}
       </span>
       {children}
@@ -299,39 +269,18 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
       <div className="ra-modal-card wide" onClick={(e) => e.stopPropagation()}>
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-            background: "#fff",
-            borderBottom: "1px solid #e5e7eb",
-            padding: "16px 24px",
-            borderRadius: "14px 14px 0 0",
-          }}
-        >
-          <button className="ra-modal-close" onClick={onClose}>
+        <div className="ra-modal-header">
+          <button className="ra-modal-close" onClick={onClose} aria-label="Close">
             ✕
           </button>
-          <h2 style={{ margin: 0, fontSize: 17, color: "#1f2937" }}>
-            {data.name}
-          </h2>
-          <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
+          <h2 className="ra-modal-name">{data.name}</h2>
+          <p className="ra-modal-meta">
             {data.email && <span>{data.email} • </span>}
             Batch {data.batch}
           </p>
         </div>
 
-        <div
-          style={{
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            overflowY: "auto",
-            flex: 1,
-          }}
-        >
+        <div className="ra-modal-body">
           {/* Section 1: Personal Information */}
           <div>
             <SectionHeader
@@ -553,22 +502,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 }
                 value={data.jobRelatedToDegree}
               />
-              <div
-                style={{
-                  background: "#fff5e7",
-                  padding: "10px",
-                  borderRadius: 8,
-                  fontSize: 13,
-                }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: 11,
-                    color: "#6b7280",
-                    marginBottom: 4,
-                  }}
-                >
+              <div className="ra-modal-field">
+                <span className="ra-modal-field-label">
                   {alumniType === "shs"
                     ? "Current Employment Status"
                     : "Employment Status"}
@@ -686,22 +621,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               </div>
             )}
             <div style={{ marginBottom: 10 }}>
-              <div
-                style={{
-                  background: "#fff5e7",
-                  borderRadius: 8,
-                  padding: "12px",
-                  fontSize: 13,
-                }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: 11,
-                    color: "#6b7280",
-                    marginBottom: 10,
-                  }}
-                >
+              <div className="ra-modal-field" style={{ padding: "12px" }}>
+                <span className="ra-modal-field-label" style={{ marginBottom: 10 }}>
                   How well did NU Dasma prepare you? (1 = Lowest, 5 = Highest)
                 </span>
                 <div

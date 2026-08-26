@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES. 
+   THIS IS FOR INLINE STYLES. admin
    ============================================================================
    Purpose: Contains all CSS styles for the Response & Analytics component.
             Uses friend's exact design with proper responsive breakpoints.
@@ -407,16 +407,17 @@ body {
 .ra-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999;
+  padding: 16px;
 }
 
 .ra-modal-card {
   width: 360px;
-  background: #e9e0d2;
+  background: #EDF3FB;
   border-radius: 14px;
   padding: 24px;
   position: relative;
@@ -424,13 +425,17 @@ body {
   animation: raFade 0.2s ease;
 }
 
+/* Alumni response modal: light-blue Admin Response Analytics theme */
 .ra-modal-card.wide {
   width: 700px;
+  max-width: 100%;
   max-height: 85vh;
   overflow: hidden;
   padding: 0;
   display: flex;
   flex-direction: column;
+  background: #EDF3FB;
+  border: 1px solid #CFDFEF;
 }
 
 @keyframes raFade {
@@ -438,16 +443,98 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ---- Header: name / email / batch ---- */
+.ra-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  border-bottom: 1px solid #E5EBF3;
+  padding: 18px 52px 16px 24px;
+  border-radius: 14px 14px 0 0;
+}
+
+.ra-modal-name {
+  margin: 0;
+  font-family: 'Lexend', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #324D87;
+  line-height: 1.3;
+}
+
+.ra-modal-meta {
+  margin: 4px 0 0;
+  font-family: 'Arimo', sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: #6A7282;
+}
+
+/* ---- Close button: clearly visible against white header ---- */
 .ra-modal-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  border: none;
-  background: #f1f5f9;
+  top: 14px;
+  right: 14px;
+  border: 1px solid #CAD5E2;
+  background: #EDF3FB;
+  color: #324D87;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.ra-modal-close:hover {
+  background: #324D87;
+  border-color: #324D87;
+  color: #ffffff;
+}
+
+.ra-modal-close:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* ---- Body / scroll area ---- */
+.ra-modal-body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ---- Response fields (reused across Field / FullBlock / status / ratings) ---- */
+.ra-modal-field {
+  background: #F5F9FD;
+  border: 1px solid #DCE7F3;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ra-modal-field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  color: #6A7282;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.ra-modal-field-value {
+  color: #1F2937;
+  font-size: 13.5px;
+  font-weight: 600;
 }
 
 .ra-grid {
@@ -461,22 +548,40 @@ body {
   .ra-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .ra-table th,
   .ra-table td {
     font-size: 11px;
     padding: 6px;
   }
-  
+
   .ra-name-cell {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .ra-pagination {
     flex-direction: column;
     gap: 10px;
     align-items: center;
+  }
+
+  .ra-modal-card.wide {
+    width: 100%;
+    max-height: 90vh;
+  }
+
+  .ra-modal-header {
+    padding: 16px 46px 14px 18px;
+  }
+
+  .ra-modal-name {
+    font-size: 17px;
+  }
+
+  .ra-modal-body {
+    padding: 16px 18px 20px;
+    gap: 20px;
   }
 }
 
@@ -484,21 +589,60 @@ body {
   .ra-page {
     padding: 20px 16px 40px;
   }
-  
+
   .ra-title {
     font-size: 22px;
   }
-  
+
   .ra-tab {
     padding: 6px 10px;
     font-size: 11px;
   }
-  
+
   .ra-chart-inner {
     padding: 16px;
   }
-  
+
   .ra-chart-title {
     font-size: 15px;
+  }
+
+  .ra-modal-overlay {
+    padding: 0;
+  }
+
+  .ra-modal-card.wide {
+    max-height: 100vh;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .ra-modal-header {
+    border-radius: 0;
+    padding: 14px 44px 12px 16px;
+  }
+
+  .ra-modal-close {
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+  }
+
+  .ra-modal-name {
+    font-size: 16px;
+  }
+
+  .ra-modal-meta {
+    font-size: 11.5px;
+  }
+
+  .ra-modal-body {
+    padding: 14px 14px 18px;
+    gap: 16px;
+  }
+
+  .ra-modal-field {
+    padding: 9px 10px;
   }
 }
