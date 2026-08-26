@@ -56,11 +56,17 @@
     color-scheme: light;
   }
   .cm-input:focus { border-color: #94A3B8; background: #fff; }
-  /* Native calendar icon on <input type="date">: ensure full opacity/visibility
-     and a consistent, clearly clickable affordance across browsers. */
+  /* Native calendar/clock icon on <input type="date"> and <input type="time">:
+     Chromium renders this glyph very light by default (it stays washed-out
+     even at opacity:1), so it needs to be explicitly recolored dark rather
+     than just made opaque. invert(1) turns the near-white default glyph into
+     a dark icon that reads clearly against this input's light background,
+     matching the dark neutral tone (#1E293B/#475569) used by the rest of the
+     Content Management icons. */
   .cm-input::-webkit-calendar-picker-indicator {
     opacity: 1;
     cursor: pointer;
+    filter: invert(1);
   }
   .cm-select-wrap {
   position: relative;
