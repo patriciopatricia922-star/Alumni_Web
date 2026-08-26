@@ -239,6 +239,15 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Guards a date field against past dates regardless of entry method
+  // (calendar click, typed digits, or paste). `min` on the input restricts
+  // the calendar UI; this catches any value that still slips through.
+  const handleDateFieldChange = (k) => (e) => {
+    const val = e.target.value;
+    const today = getTodayDateString();
+    s(k, val && val < today ? today : val);
+  };
+
   const handleSubmit = async () => {
     console.log('[JobModal] Submitting form:', form);
     setLoading(true);
@@ -317,7 +326,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         </div>
 
         <Field label="Expiry Date">
-          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={handleDateFieldChange('expiry')} />
         </Field>
 
         <ModalFooter

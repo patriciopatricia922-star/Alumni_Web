@@ -138,6 +138,15 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Guards a date field against past dates regardless of entry method
+  // (calendar click, typed digits, or paste). `min` on the input restricts
+  // the calendar UI; this catches any value that still slips through.
+  const handleDateFieldChange = (k) => (e) => {
+    const val = e.target.value;
+    const today = getTodayDateString();
+    s(k, val && val < today ? today : val);
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     try {
@@ -197,7 +206,7 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
               type="date"
               value={form.date}
               min={getTodayDateString()}
-              onChange={(e) => s('date', e.target.value)}
+              onChange={handleDateFieldChange('date')}
             />
           </Field>
           <Field label="Category" required>

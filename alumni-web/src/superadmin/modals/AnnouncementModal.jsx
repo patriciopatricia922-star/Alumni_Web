@@ -152,6 +152,15 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Guards a date field against past dates regardless of entry method
+  // (calendar click, typed digits, or paste). `min` on the input restricts
+  // the calendar UI; this catches any value that still slips through.
+  const handleDateFieldChange = (k) => (e) => {
+    const val = e.target.value;
+    const today = getTodayDateString();
+    s(k, val && val < today ? today : val);
+  };
+
   // Switching audience clears whichever targeting fields no longer apply,
   // and auto-opens the relevant picker so the admin isn't left with a
   // blank required field.
@@ -341,7 +350,7 @@ const AnnouncementModal = ({ open, onClose, mode, announcement, onCreate, onUpda
             type="date"
             value={form.expiry}
             min={getTodayDateString()}
-            onChange={(e) => s('expiry', e.target.value)}
+            onChange={handleDateFieldChange('expiry')}
           />
         </Field>
 

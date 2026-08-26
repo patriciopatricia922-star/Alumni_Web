@@ -255,6 +255,15 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
     setForm((f) => ({ ...f, [k]: v }));
   };
 
+  // Guards a date field against past dates regardless of entry method
+  // (calendar click, typed digits, or paste). `min` on the input restricts
+  // the calendar UI; this catches any value that still slips through.
+  const handleDateFieldChange = (k) => (e) => {
+    const val = e.target.value;
+    const today = getTodayDateString();
+    s(k, val && val < today ? today : val);
+  };
+
   // Switching audience away from By Program/By Batch clears the selection,
   // and picking either one auto-opens the picker.
   const handleAudienceChange = (value) => {
@@ -379,7 +388,7 @@ const DiscountModal = ({ open, onClose, mode, discount, onCreate, onUpdate }) =>
         )}
 
         <Field label="Expiry Date">
-          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={handleDateFieldChange('expiry')} />
         </Field>
 
         <ModalFooter
