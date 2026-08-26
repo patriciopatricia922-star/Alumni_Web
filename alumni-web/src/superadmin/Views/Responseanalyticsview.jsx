@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
-import '../styles/Responseanalytics.css';
+import '../styles/ResponseAnalytics.css';
 import { exportSurveyPDF } from '../../utils/exportPDF';
 import { exportSHSSurveyPDF } from '../../utils/exportSHSPDF';
 
@@ -140,9 +140,9 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   };
 
   const Field = ({ label, value }) => (
-    <div className="ra-modal-field">
-      <span className="ra-modal-field-label">{label}</span>
-      <strong className="ra-modal-field-value">{value || "N/A"}</strong>
+    <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 3 }}>{label}</span>
+      <strong style={{ color: "#111827" }}>{value || "N/A"}</strong>
     </div>
   );
 
@@ -155,8 +155,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   );
 
   const FullBlock = ({ label, children }) => (
-    <div className="ra-modal-field">
-      <span className="ra-modal-field-label" style={{ marginBottom: 6 }}>{label}</span>
+    <div style={{ background: "#fff5e7", padding: "10px 12px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 6 }}>{label}</span>
       {children}
     </div>
   );
@@ -170,16 +170,20 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
       <div className="ra-modal-card wide" onClick={(e) => e.stopPropagation()}>
-        <div className="ra-modal-header">
-          <button className="ra-modal-close" onClick={onClose} aria-label="Close">✕</button>
-          <h2 className="ra-modal-name">{data.name}</h2>
-          <p className="ra-modal-meta">
+        <div style={{
+          position: "sticky", top: 0, zIndex: 10,
+          background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "16px 24px", borderRadius: "14px 14px 0 0"
+        }}>
+          <button className="ra-modal-close" onClick={onClose}>✕</button>
+          <h2 style={{ margin: 0, fontSize: 17, color: "#1f2937" }}>{data.name}</h2>
+          <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
             {data.email && <span>{data.email} • </span>}
             Batch {data.batch}
           </p>
         </div>
 
-        <div className="ra-modal-body">
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24, overflowY: "auto", flex: 1 }}>
           
           {/* Section 1: Personal Information */}
           <div>
@@ -315,8 +319,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 label={isShs ? "Is your current job related to your strand?" : "Job Related to Degree"} 
                 value={data.jobRelatedToDegree} 
               />
-              <div className="ra-modal-field">
-                <span className="ra-modal-field-label">
+              <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
                   {isShs ? "Current Employment Status" : "Employment Status"}
                 </span>
                 <span className={`ra-status ${data.status?.toLowerCase().replace(/ /g, '-') || ''}`}>{data.status}</span>
@@ -377,8 +381,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               </div>
             )}
             <div style={{ marginBottom: 10 }}>
-              <div className="ra-modal-field" style={{ padding: "12px" }}>
-                <span className="ra-modal-field-label" style={{ marginBottom: 10 }}>
+              <div style={{ background: "#fff5e7", borderRadius: 8, padding: "12px", fontSize: 13 }}>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
                   How well did NU Dasma prepare you? (1 = Lowest, 5 = Highest)
                 </span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -420,31 +424,32 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 value={data.wouldRecommend} 
               />
             </div>
-            <FullBlock label={isShs ? "Suggestions for improving academic programs/strands?" : "Suggestions for Improving Academic Programs"}>
-              <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
-            </FullBlock>
-            
-            {/* SHS-only engagement questions */}
-            {isShs && (
-              <>
-                <div className="ra-grid" style={{ marginTop: 10 }}>
-                  <Field 
-                    label="Would you like to be informed about upcoming alumni events and activities?" 
-                    value={data.informedAboutEvents} 
-                  />
-                </div>
-                <FullBlock label="Would you be willing to participate in?">
+            <div style={{ marginBottom: 10 }}>
+              <FullBlock label={isShs ? "Suggestions for improving academic programs/strands?" : "Suggestions for Improving Academic Programs & Alumni Services"}>
+                <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
+              </FullBlock>
+            </div>
+
+            {/* Alumni engagement questions — shown for all alumni types (preserved from original Superadmin) */}
+            <div className="ra-grid" style={{ marginBottom: 10, alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, borderRadius: 0 }}>
+                <Field label="Would you like to be informed about upcoming alumni events and activities?" value={data.informedAboutEvents} />
+                {data.willingToParticipateOther && (
+                  <FullBlock label="Please Specify Other Participation">
+                    <span style={{ color: "#374151", lineHeight: 1.6 }}>{data.willingToParticipateOther}</span>
+                  </FullBlock>
+                )}
+              </div>
+              <FullBlock label="Willing to Participate In">
+                {(data.willingToParticipate && data.willingToParticipate.length > 0) ? (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {(data.willingToParticipate || []).map((s, i) => <Badge key={i} text={s} color="green" />)}
+                    {data.willingToParticipate.map((w, i) => <Badge key={i} text={w} color="orange" />)}
                   </div>
-                  {data.willingToParticipateOther && (
-                    <span style={{ display: "block", marginTop: 6, color: "#6b7280", fontSize: 12 }}>
-                      Other: {data.willingToParticipateOther}
-                    </span>
-                  )}
-                </FullBlock>
-              </>
-            )}
+                ) : (
+                  <span style={{ color: "#9ca3af" }}>None selected</span>
+                )}
+              </FullBlock>
+            </div>
           </div>
         </div>
       </div>
