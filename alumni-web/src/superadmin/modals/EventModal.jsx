@@ -11,6 +11,18 @@ import { FiX } from 'react-icons/fi';
 import MultiImageUpload from '../modals/MultiImageUpload';
 import '../modals/Disc.css';
 
+// ── Date restriction helper ───────────────────────────────────────────────────
+// Returns today's date as 'YYYY-MM-DD' (local time), used as the `min` for
+// date inputs so past dates cannot be selected. Computed at render time so it
+// stays correct on any future day.
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // ── Shared modal shell ────────────────────────────────────────────────────────
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
@@ -184,6 +196,7 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
               className="cm-input"
               type="date"
               value={form.date}
+              min={getTodayDateString()}
               onChange={(e) => s('date', e.target.value)}
             />
           </Field>

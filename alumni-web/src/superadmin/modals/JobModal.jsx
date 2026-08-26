@@ -12,6 +12,18 @@ import { supabase } from '../../lib/supabase';
 import MultiImageUpload from '../modals/MultiImageUpload';
 import '../modals/Disc.css';
 
+// ── Date restriction helper ───────────────────────────────────────────────────
+// Returns today's date as 'YYYY-MM-DD' (local time), used as the `min` for
+// date inputs so past dates cannot be selected. Computed at render time so it
+// stays correct on any future day.
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
 
@@ -305,7 +317,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         </div>
 
         <Field label="Expiry Date">
-          <input className="cm-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={(e) => s('expiry', e.target.value)} />
         </Field>
 
         <ModalFooter
