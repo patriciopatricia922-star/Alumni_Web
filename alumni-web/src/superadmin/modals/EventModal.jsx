@@ -7,7 +7,7 @@ import {
   FaAlignCenter,
   FaAlignRight,
 } from 'react-icons/fa';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiChevronDown } from 'react-icons/fi';
 import MultiImageUpload from '../modals/MultiImageUpload';
 import '../modals/Disc.css';
 
@@ -210,10 +210,13 @@ const EventModal = ({ open, onClose, mode, event, onCreate, onUpdate }) => {
             />
           </Field>
           <Field label="Category" required>
-            <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
-              <option>Upcoming Events</option>
-              <option>Exclusive Events</option>
-            </select>
+            <div className="cm-select-wrap">
+              <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
+                <option>Upcoming Events</option>
+                <option>Exclusive Events</option>
+              </select>
+              <FiChevronDown size={14} className="cm-select-arrow" />
+            </div>
           </Field>
         </div>
 

@@ -50,8 +50,18 @@
     width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 8px;
     font-size: 13px; font-family: 'Arimo', sans-serif; color: #1E293B;
     background: #F8FAFC; outline: none; box-sizing: border-box;
+    /* Force light-mode rendering for native form-control icons (e.g. the
+       date-input calendar glyph) so they don't inherit a dark-mode palette
+       that renders them near-invisible against this light background. */
+    color-scheme: light;
   }
   .cm-input:focus { border-color: #94A3B8; background: #fff; }
+  /* Native calendar icon on <input type="date">: ensure full opacity/visibility
+     and a consistent, clearly clickable affordance across browsers. */
+  .cm-input::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    cursor: pointer;
+  }
   .cm-select-wrap {
   position: relative;
   width: 100%;
@@ -123,7 +133,7 @@
 }
 .cm-user-search-icon {
   position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  color: #94A3B8; pointer-events: none;
+  color: #64748B; pointer-events: none;
 }
 .cm-user-search-input { padding-left: 34px; }
 

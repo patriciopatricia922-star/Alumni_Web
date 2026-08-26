@@ -7,7 +7,7 @@ import {
   FaAlignCenter,
   FaAlignRight
 } from 'react-icons/fa';
-import { FiImage, FiTrash2, FiX } from 'react-icons/fi';
+import { FiImage, FiTrash2, FiX, FiChevronDown } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 import MultiImageUpload from '../modals/MultiImageUpload';
 import '../modals/Disc.css';
@@ -305,13 +305,16 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           </Field>
 
           <Field label="Category" required>
-            <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
-              <option>Full-time</option>
-              <option>Part-time</option>
-              <option>Contract</option>
-              <option>Internship</option>
-              <option>Remote</option>
-            </select>
+            <div className="cm-select-wrap">
+              <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+                <option>Internship</option>
+                <option>Remote</option>
+              </select>
+              <FiChevronDown size={14} className="cm-select-arrow" />
+            </div>
           </Field>
         </div>
 
