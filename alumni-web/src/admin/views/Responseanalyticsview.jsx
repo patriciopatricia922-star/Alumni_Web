@@ -706,7 +706,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               label={
                 alumniType === "shs"
                   ? "Suggestions for improving academic programs/strands?"
-                  : "Suggestions for Improving Academic Programs"
+                  : "Suggestions for Improving Academic Programs & Alumni Services"
               }
             >
               <p
@@ -715,36 +715,36 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 {data.suggestions || "N/A"}
               </p>
             </FullBlock>
-            {/* NEW: SHS-only engagement questions, use data already extracted (informedAboutEvents, willingToParticipate, willingToParticipateOther) */}
-            {alumniType === "shs" && (
-              <>
-                <div className="ra-grid" style={{ marginTop: 10 }}>
-                  <Field
-                    label="Would you like to be informed about upcoming alumni events and activities?"
-                    value={data.informedAboutEvents}
-                  />
-                </div>
-                <FullBlock label="Would you be willing to participate in?">
+            {/* INTEGRATION: merged from friend's update — alumni-engagement
+                questions (informedAboutEvents / willingToParticipate) now show
+                for all alumni types, not just SHS, using friend's improved
+                two-column layout, restyled to match the existing modal fields. */}
+            <div className="ra-grid" style={{ marginTop: 10, alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <Field
+                  label="Would you like to be informed about upcoming alumni events and activities?"
+                  value={data.informedAboutEvents}
+                />
+                {data.willingToParticipateOther && (
+                  <FullBlock label="Please Specify Other Participation">
+                    <span style={{ color: "#374151", lineHeight: 1.6 }}>
+                      {data.willingToParticipateOther}
+                    </span>
+                  </FullBlock>
+                )}
+              </div>
+              <FullBlock label="Willing to Participate In">
+                {data.willingToParticipate && data.willingToParticipate.length > 0 ? (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {(data.willingToParticipate || []).map((s, i) => (
-                      <Badge key={i} text={s} color="green" />
+                    {data.willingToParticipate.map((s, i) => (
+                      <Badge key={i} text={s} color="orange" />
                     ))}
                   </div>
-                  {data.willingToParticipateOther && (
-                    <span
-                      style={{
-                        display: "block",
-                        marginTop: 6,
-                        color: "#6b7280",
-                        fontSize: 12,
-                      }}
-                    >
-                      Other: {data.willingToParticipateOther}
-                    </span>
-                  )}
-                </FullBlock>
-              </>
-            )}
+                ) : (
+                  <span style={{ color: "#9ca3af" }}>None selected</span>
+                )}
+              </FullBlock>
+            </div>
           </div>
         </div>
       </div>
