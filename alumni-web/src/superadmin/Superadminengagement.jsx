@@ -703,14 +703,15 @@ const resolveImages = (formData, existingUrls = []) => {
       }
 
       // handleCreateLandingSection
-      const { image_urls, image_url } = resolveImages(formData);
+      // Landing Section table only has a single `image_url` column — no
+      // `image_urls` array column exists, so only that field is used here.
+      const { image_url } = resolveImages(formData);
       const newSection = {
         title: formData.title.trim(),
         description: formData.description || "",
         section_type: formData.section_type,
         content: formData.content || "",
         image_url,
-        image_urls,
         order_index: landingSections.length,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -959,14 +960,20 @@ const handleUpdateEvent = async (id, formData) => {
       }
 
       // handleUpdateLandingSection
-      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+      // Landing Section table only has a single `image_url` column — no
+      // `image_urls` array column exists. Fall back to the existing
+      // image_url (wrapped as a 1-item list) so an unrelated text-only
+      // edit doesn't wipe out the current image.
+      const { image_url } = resolveImages(
+        formData,
+        editingItem?.image_url ? [editingItem.image_url] : [],
+      );
       const updates = {
         title:        formData.title?.trim(),
         description:  formData.description || '',
         section_type: formData.section_type,
         content:      formData.content || '',
         image_url,
-        image_urls,
         updated_at:   new Date().toISOString(),
       };
 
