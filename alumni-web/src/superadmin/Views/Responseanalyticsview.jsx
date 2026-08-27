@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
-import '../styles/ResponseAnalytics.css';
+import './styles/ResponseAnalytics.css';
 import { exportSurveyPDF } from '../../utils/exportPDF';
 import { exportSHSSurveyPDF } from '../../utils/exportSHSPDF';
 
