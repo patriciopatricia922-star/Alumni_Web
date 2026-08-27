@@ -504,7 +504,7 @@ const AlumniDashboard = () => {
           visible: true,
           points,
           newBalance,
-          label: "Points awarded",
+          label: "These points can be redeemed for rewards in the Rewards Store.",
         });
       },
     ).then((channel) => {

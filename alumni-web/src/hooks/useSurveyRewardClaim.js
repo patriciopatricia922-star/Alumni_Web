@@ -54,11 +54,24 @@ export const useSurveyRewardClaim = ({ onPointsSynced, onClaimedStatus, onToast,
 
         if (result.awarded) {
           onClaimedStatus?.(true);
+
+          // Single source of truth for the awarded amount: the
+          // claim_survey_reward RPC returns `awarded_amount`, the exact
+          // number of points it just credited (50 / 10 / one of 20,30,60).
+          // Never guess or recompute this on the client.
+          const awardedAmount = result.awarded_amount;
+          if (typeof awardedAmount !== 'number') {
+            console.error(
+              '[useSurveyRewardClaim] claimSurveyReward result missing awarded_amount — check lib/rewardPoints.js is passing the RPC field through',
+              result,
+            );
+          }
+
           onToast?.({
             visible: true,
-            points: SURVEY_REWARD_POINTS,
+            points: awardedAmount ?? SURVEY_REWARD_POINTS,
             newBalance: result.points,
-            label: 'Survey completed',
+            label: 'These points can be redeemed for rewards in the Rewards Store.',
           });
           onClaimed?.();
         } else if (result.reason === 'survey_incomplete') {
@@ -93,7 +106,6 @@ export const useSurveyRewardClaim = ({ onPointsSynced, onClaimedStatus, onToast,
     };
 
     attemptClaim();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 };
 
