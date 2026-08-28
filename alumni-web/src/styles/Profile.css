@@ -176,24 +176,28 @@ Mirrors the absolute positioning approach used in Announcements/Discounts
 to ensure consistent page-level alignment across all views. */
 .prof-content-wrapper .notification-bell-wrapper {
   position: absolute;
-  top: 37px;
-  right: 51px;
+  top: 45px;
+  right: 84px;
   z-index: 200;
 }
 
-@media (max-width: 1100px) and (min-width: 768px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .prof-content-wrapper .notification-bell-wrapper {
-    top: 45px;
     right: 65px;
   }
 }
 
 @media (max-width: 767px) {
-  .prof-content-wrapper .notification-bell-wrapper.mobile {
-    position: absolute;
-    top: clamp(34px, 5vw, 42px);
-    right: clamp(12px, 4vw, 18px);
-    z-index: 200;
+  .prof-content-wrapper .notification-bell-wrapper {
+    top: 24px;
+    right: 16px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .prof-content-wrapper .notification-bell-wrapper {
+    top: 46px;
+    right: 60px;
   }
 }
 
