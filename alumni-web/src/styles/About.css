@@ -257,7 +257,7 @@
 }
 
 .ab-logo {
-  height: clamp(48px, 5.6vh, 80px);
+  height: clamp(45px, calc(5.6vh - 3px), 77px);
   width: auto;
   object-fit: contain;
   filter: var(--ab-shadow-logo);
