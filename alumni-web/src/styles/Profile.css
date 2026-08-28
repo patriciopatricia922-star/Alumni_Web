@@ -104,7 +104,7 @@ body,
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: clamp(2px, 0.4vh, 6px);
+  margin-top: calc(clamp(2px, 0.4vh, 6px) + 2px);
   margin-left: -65px;
   /* Matches About's negative margin for alignment */
   transition: opacity 0.15s ease;
