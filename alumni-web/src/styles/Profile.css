@@ -669,7 +669,7 @@ to ensure consistent page-level alignment across all views. */
 .prof-cp-req-title {
   font-family: var(--prof-font-display);
   font-weight: 600;
-  font-size: clamp(10px, 0.78vw, 13px);
+  font-size: clamp(13px, 1.0vw, 16px);
   line-height: 1.4;
   color: var(--prof-text-tertiary);
   margin: 0 0 clamp(3px, 0.5vh, 7px) 0;
