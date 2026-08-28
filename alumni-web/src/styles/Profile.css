@@ -206,7 +206,7 @@ to ensure consistent page-level alignment across all views. */
   min-height: 0;
   overflow: hidden;
   /* REMOVED margin-left/right to allow full width alignment with header */
-  margin-left: -3px;
+  margin-left: -10px;
   margin-right: 0;
 }
 
@@ -454,7 +454,7 @@ to ensure consistent page-level alignment across all views. */
   min-height: 0;
   max-height: 100%;
   /* RESTORED: Removed inset margins to match .prof-top-row and header alignment */
-  margin-left: -3px;
+  margin-left: -10px;
   margin-right: 0;
 }
 
@@ -1415,7 +1415,7 @@ RESPONSIVE BREAKPOINTS
   .prof-bottom-row {
     gap: clamp(12px, 2vw, 20px);
     /* Ensure full width alignment is maintained on tablet */
-    margin-left: -3px;
+    margin-left: -10px;
     margin-right: 0;
   }
 }
@@ -1507,6 +1507,7 @@ RESPONSIVE BREAKPOINTS
     gap: 12px;
     height: auto;
     overflow: visible;
+    margin-left: 0;
   }
 
   .prof-hero-card,
