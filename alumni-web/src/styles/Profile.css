@@ -478,7 +478,7 @@ to ensure consistent page-level alignment across all views. */
 
 /* Personal Info card: fixed height with internal scroll (Unchanged) */
 .prof-info-card {
-  height: clamp(320px, 46vh, 480px);
+  height: clamp(307px, 44.2vh, 461px);
   overflow: hidden;
 }
 
@@ -1427,7 +1427,7 @@ RESPONSIVE BREAKPOINTS
   }
 
   .prof-info-card {
-    height: clamp(280px, 42vh, 400px);
+    height: clamp(269px, 40.3vh, 384px);
   }
 }
 
@@ -1437,7 +1437,7 @@ RESPONSIVE BREAKPOINTS
   }
 
   .prof-info-card {
-    height: clamp(240px, 38vh, 340px);
+    height: clamp(230px, 36.5vh, 326px);
   }
 }
 
@@ -1647,6 +1647,6 @@ RESPONSIVE BREAKPOINTS
   }
 
   .prof-info-card {
-    height: clamp(360px, 48vh, 520px);
+    height: clamp(346px, 46.1vh, 499px);
   }
 }
