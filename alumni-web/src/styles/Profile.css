@@ -331,7 +331,7 @@ to ensure consistent page-level alignment across all views. */
 .prof-hero-name {
   font-family: var(--prof-font-display);
   font-weight: 800;
-  font-size: clamp(20px, 2.8vw, 42px);
+  font-size: clamp(17px, 2.3vw, 34px);
   line-height: 1.15;
   letter-spacing: -0.8px;
   color: var(--prof-white);
@@ -1517,7 +1517,7 @@ RESPONSIVE BREAKPOINTS
 
   /* Mobile-only text scaling */
   .prof-hero-name {
-    font-size: clamp(24px, 7.5vw, 30px);
+    font-size: clamp(19px, 6vw, 24px);
   }
 
   .prof-hero-program {
