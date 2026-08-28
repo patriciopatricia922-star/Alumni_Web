@@ -177,27 +177,27 @@ to ensure consistent page-level alignment across all views. */
 .prof-content-wrapper .notification-bell-wrapper {
   position: absolute;
   top: 45px;
-  right: 110px;
+  right: 106px;
   z-index: 200;
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
   .prof-content-wrapper .notification-bell-wrapper {
-    right: 91px;
+    right: 87px;
   }
 }
 
 @media (max-width: 767px) {
   .prof-content-wrapper .notification-bell-wrapper {
     top: 24px;
-    right: 42px;
+    right: 38px;
   }
 }
 
 @media (min-width: 1025px) {
   .prof-content-wrapper .notification-bell-wrapper {
     top: 46px;
-    right: 86px;
+    right: 82px;
   }
 }
 
