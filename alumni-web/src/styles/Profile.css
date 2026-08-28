@@ -454,7 +454,7 @@ to ensure consistent page-level alignment across all views. */
   min-height: 0;
   max-height: 100%;
   /* RESTORED: Removed inset margins to match .prof-top-row and header alignment */
-  margin-left: 0;
+  margin-left: -3px;
   margin-right: 0;
 }
 
@@ -1417,6 +1417,10 @@ RESPONSIVE BREAKPOINTS
     /* Ensure full width alignment is maintained on tablet */
     margin-left: 0;
     margin-right: 0;
+  }
+
+  .prof-bottom-row {
+    margin-left: -3px;
   }
 }
 
