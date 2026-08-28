@@ -92,14 +92,14 @@
 .ab-main .notification-bell-wrapper {
   position: absolute;
   top: 45px;
-  right: 108px;
+  right: 117px;
   z-index: 200;
 }
 
 @media (max-width: 767px) {
   .ab-main .notification-bell-wrapper {
     top: 24px;
-    right: 40px;
+    right: 49px;
   }
 
   /* Ensure the dropdown respects the About page's mobile constraints if needed.
@@ -112,14 +112,14 @@
 
 @media (max-width: 1024px) and (min-width: 769px) {
   .ab-main .notification-bell-wrapper {
-    right: 89px;
+    right: 98px;
   }
 }
 
 @media (min-width: 1025px) {
   .ab-main .notification-bell-wrapper {
     top: 46px;
-    right: 84px;
+    right: 93px;
   }
 }
 
