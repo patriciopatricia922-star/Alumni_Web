@@ -91,17 +91,15 @@
    ============================================ */
 .ab-main .notification-bell-wrapper {
   position: absolute;
-  top: 37px;
-  right: 51px;
+  top: 45px;
+  right: 108px;
   z-index: 200;
 }
 
 @media (max-width: 767px) {
-  .ab-main .notification-bell-wrapper.mobile {
-    position: absolute;
-    top: clamp(34px, 5vw, 42px);
-    right: clamp(12px, 4vw, 18px);
-    z-index: 200;
+  .ab-main .notification-bell-wrapper {
+    top: 24px;
+    right: 40px;
   }
 
   /* Ensure the dropdown respects the About page's mobile constraints if needed.
@@ -112,10 +110,16 @@
   }
 }
 
-@media (max-width: 1100px) and (min-width: 768px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .ab-main .notification-bell-wrapper {
-    top: 45px;
-    right: 65px;
+    right: 89px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .ab-main .notification-bell-wrapper {
+    top: 46px;
+    right: 84px;
   }
 }
 
@@ -133,7 +137,7 @@
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: clamp(2px, 0.4vh, 6px);
+  margin-top: calc(clamp(2px, 0.4vh, 6px) + 1px);
   margin-left: -65px;
   transition: opacity 0.15s ease;
 }
