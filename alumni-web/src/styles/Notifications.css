@@ -67,7 +67,7 @@ html, body, #root {
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: clamp(2px, 0.4vh, 6px);
+  margin-top: calc(clamp(2px, 0.4vh, 6px) + 1px);
   margin-left: -65px;
   transition: opacity 0.15s ease;
 }
@@ -226,7 +226,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-left: 10px;
+  margin-left: -10px;
 }
 
 /* Date Group Label */
