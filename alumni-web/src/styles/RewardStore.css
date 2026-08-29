@@ -20,6 +20,17 @@
   min-width: 0;
 }
 
+/* ── Desktop-only scrollbar fix (same approach as Announcements.css):
+   reserve the scrollbar-track space with `scrollbar-gutter: stable` so the
+   content doesn't shift horizontally when the vertical scrollbar toggles
+   on/off. Scoped to min-width: 768px so mobile's overflow behavior is
+   untouched. ── */
+@media (min-width: 768px) {
+  .rewards-store-content {
+    scrollbar-gutter: stable;
+  }
+}
+
 .rewards-header {
   flex-shrink: 0;
   margin-bottom: clamp(12px, 1.6vh, 20px);
@@ -50,12 +61,31 @@
   box-sizing: border-box;
 }
 
+/* ── Desktop-only: align Back button + bell like About's header, where each
+   sits independently in the layout rather than being vertically centered
+   against each other. Mobile keeps the existing centered row untouched. ── */
+@media (min-width: 768px) {
+  .rewards-header-row {
+    align-items: flex-start;
+  }
+}
+
 .notification-bell-inline {
   flex-shrink: 0;
   z-index: 200;
   margin-left: auto;
   position: relative;
   top: clamp(6px, 50vh, 30px);
+}
+
+/* ── Desktop-only: with .rewards-header-row now top-aligned (see above),
+   the bell no longer needs the mobile "top" push to visually center
+   against the back button — matches About's bell sitting flush at the
+   top of its row. Mobile keeps its original offset untouched. ── */
+@media (min-width: 768px) {
+  .notification-bell-inline {
+    top: 0;
+  }
 }
 
 /* ── Bell anchored to banner-wrapper: always at banner right corner ── */
@@ -77,6 +107,20 @@
   margin-bottom: clamp(8px, 1.2vh, 14px);
   margin-top: clamp(2px, 0.4vh, 6px);
   transition: opacity 0.15s ease;
+}
+
+/* ── Desktop-only: reproduce About's .ab-back positioning values
+   (gap, margin-top, margin-left) on RewardStore's existing .back-button
+   class. About's back button sits in normal flow, pulled left via a
+   negative margin — no position/top offset needed. Mobile is untouched;
+   the button's inline style (isMobile branch) keeps the previous
+   position/top/marginLeft exactly as they were. ── */
+@media (min-width: 768px) {
+  .back-button {
+    gap: 15px;
+    margin-top: calc(clamp(2px, 0.4vh, 6px) + 1px);
+    margin-left: -65px;
+  }
 }
 
 .back-button:hover { opacity: 0.7; }

@@ -138,7 +138,11 @@ const RewardStoreView = ({
     <button
       className="back-button"
       onClick={() => navigate(-1)}
-      style={{ position: "relative", top: "14px", marginLeft: "-51px" }}
+      style={
+        isMobile
+          ? { position: "relative", top: "14px", marginLeft: "-51px" }
+          : undefined
+      }
     >
       <svg
         width="15"
