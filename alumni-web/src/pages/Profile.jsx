@@ -164,6 +164,7 @@ const Profile = () => {
   const [avatarUrl,          setAvatarUrl]         = useState(null);
   const [strength,           setStrength]          = useState(0);
   const [lastPasswordChange, setLastPasswordChange] = useState(null);
+  const [toast,              setToast]             = useState({ show: false, message: '', type: 'success' });
 
   // ── Modal visibility ──────────────────────────────────────────────────────
   const [showPIModal, setShowPIModal] = useState(false);
@@ -471,28 +472,65 @@ const Profile = () => {
   }, [cpCurrent, cpNew, cpConfirm, handleCloseCPModal]);
 
   // ── Avatar upload ──────────────────────────────────────────────────────────
+  // Persists to the existing `avatars` storage bucket + users.avatar_url column,
+  // keyed by the authenticated user's id (authUser.id), so each alumni's
+  // picture is stored and retrieved independently of every other alumni.
   const handleAvatarUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
-      const ext      = file.name.split('.').pop();
+      const ext      = file.name.split('.').pop().toLowerCase();
       const filePath = `avatars/${authUser.id}.${ext}`;
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
-      if (uploadError) { console.error('Upload error:', uploadError); return; }
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setToast({ show: true, message: 'Failed to upload profile picture. Please try again.', type: 'error' });
+        return;
+      }
+
+      // Best-effort cleanup: if this alumni's previous picture was saved under
+      // a different extension, remove it so old uploads don't linger in the
+      // bucket. Failures here are non-fatal — the new picture is already saved.
+      const staleExts  = ['jpg', 'jpeg', 'png', 'gif', 'webp'].filter((e2) => e2 !== ext);
+      const stalePaths = staleExts.map((e2) => `avatars/${authUser.id}.${e2}`);
+      try { await supabase.storage.from('avatars').remove(stalePaths); } catch (_) { /* ignore */ }
+
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-      await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', authUser.id);
-      setAvatarUrl(publicUrl);
-      fetchUserAndSurvey();
+
+      // This update was previously fired without checking its result, so a
+      // failed/blocked write (e.g. an RLS rejection) still let the frontend
+      // show the new picture as if it had been saved. Only reflect the new
+      // picture once we've confirmed it's actually persisted for this alumni.
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', authUser.id);
+
+      if (updateError) {
+        console.error('Avatar persist error:', updateError);
+        setToast({ show: true, message: 'Profile picture upload failed to save. Please try again.', type: 'error' });
+        return;
+      }
+
+      // Cache-bust only the in-memory display URL. When an alumni re-uploads
+      // using the same file extension, the storage path (and public URL) is
+      // identical to before, so without this the browser can keep showing the
+      // old cached image even though the new one saved successfully. The
+      // clean publicUrl (no query string) is what's stored in the database.
+      setAvatarUrl(`${publicUrl}?updated=${Date.now()}`);
+      setToast({ show: true, message: 'Profile picture updated successfully!', type: 'success' });
     } catch (err) {
       console.error('Avatar upload error:', err);
+      setToast({ show: true, message: 'Something went wrong while updating your profile picture.', type: 'error' });
     }
-  }, [fetchUserAndSurvey]);
+  }, []);
 
   return (
     <ProfileView
@@ -534,6 +572,9 @@ const Profile = () => {
       onCPSave={handleCPSave}
       // notifications
       unreadCount={unreadCount}
+      // toast
+      toast={toast}
+      setToast={setToast}
     />
   );
 };
