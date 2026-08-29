@@ -38,9 +38,12 @@ export async function fetchNotifications(userId, limit = 20) {
       .eq('is_active', true)
       .order('event_date', { ascending: false }),
       
+    // FIX: previously this only selected `points_required`, so there was no
+    // actual description column being fetched at all for rewards — normalize()
+    // had nothing else to use as the body. Now selecting `description` too.
     supabase
       .from('rewards')
-      .select('id, title, points_required, created_at, is_active')
+      .select('id, title, description, points_required, created_at, is_active')
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
   ]);
@@ -50,18 +53,26 @@ export async function fetchNotifications(userId, limit = 20) {
   const notifications = [];
 
   // Helper to normalize data from different tables into a unified notification structure
-  const normalize = (data, type, idField, titleField, bodyField, dateField) => {
+  // FIX: added an optional `fallbackBody` builder so a type can supply a
+  // data-driven fallback (e.g. rewards, when `description` is empty) instead
+  // of silently falling through to whatever field happened to be passed in.
+  const normalize = (data, type, idField, titleField, bodyField, dateField, fallbackBody) => {
     if (!data) return [];
-    return data.map(item => ({
-      // Create a unique ID by prefixing with type to avoid collisions between tables
-      id: `${type}-${item[idField]}`, 
-      type: type,
-      typeId: item[idField], // The actual DB ID for navigation
-      title: decodeHtmlEntities(item[titleField]),
-      body: stripHtml(item[bodyField] || ''),
-      time: item[dateField],
-      read: readIds.includes(`${type}-${item[idField]}`),
-    }));
+    return data.map(item => {
+      const rawBody = item[bodyField];
+      const hasBody = rawBody !== null && rawBody !== undefined && String(rawBody).trim() !== '';
+      const resolvedBody = hasBody ? rawBody : (fallbackBody ? fallbackBody(item) : '');
+      return {
+        // Create a unique ID by prefixing with type to avoid collisions between tables
+        id: `${type}-${item[idField]}`,
+        type: type,
+        typeId: item[idField], // The actual DB ID for navigation
+        title: decodeHtmlEntities(item[titleField]),
+        body: stripHtml(String(resolvedBody || '')),
+        time: item[dateField],
+        read: readIds.includes(`${type}-${item[idField]}`),
+      };
+    });
   };
 
   if (!annError && annData) {
@@ -77,8 +88,24 @@ export async function fetchNotifications(userId, limit = 20) {
     notifications.push(...normalize(eventData, 'event', 'id', 'title', 'description', 'event_date'));
   }
   if (!rewardError && rewardData) {
-    // For rewards, we use points_required as a snippet in the body if description isn't available
-    notifications.push(...normalize(rewardData, 'reward', 'id', 'title', 'points_required', 'created_at'));
+    // FIX: body now comes from the reward's own `description`. Only when a
+    // reward genuinely has no description do we fall back to a generated,
+    // human-readable sentence built from `points_required` — never the raw
+    // number by itself, and never a hardcoded reward name.
+    notifications.push(
+      ...normalize(
+        rewardData,
+        'reward',
+        'id',
+        'title',
+        'description',
+        'created_at',
+        (item) =>
+          item.points_required != null
+            ? `Redeem this reward for ${item.points_required} points.`
+            : 'Check the rewards page for details.'
+      )
+    );
   }
 
   // Sort all notifications by time descending
