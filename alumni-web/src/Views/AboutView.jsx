@@ -343,7 +343,7 @@ const ContactModal = ({ onClose }) => (
         <div>
           <p className="ab-contact-row-label">Email</p>
           <p className="ab-contact-row-value">nudaao@nu-dasma.edu.ph</p>
-          <p className="ab-contact-row-hint">
+          <p className="ab-contact-row-hint ab-contact-row-hint--response">
             Response Time: Within 24–48 hours
           </p>
         </div>
