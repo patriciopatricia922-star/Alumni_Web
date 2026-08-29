@@ -716,6 +716,148 @@
   font-family: "Montserrat", sans-serif;
 }
 
+/* ============================================
+   [mv-redesign] MISSION MODAL — redesigned body
+   Scoped to the Mission modal only. Does not affect
+   .ab-modal-inner or any other modal that still uses it.
+   ============================================ */
+.ab-mission-new {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 1.8vh, 18px);
+  font-family: "Montserrat", sans-serif;
+}
+
+.ab-mission-lead {
+  font-weight: 400;
+  font-size: clamp(12px, 0.98vw, 14px);
+  line-height: 1.75;
+  color: #364153;
+  padding-bottom: clamp(6px, 0.9vh, 10px);
+  border-bottom: 1px solid rgba(43, 114, 251, 0.14);
+}
+
+.ab-mission-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7f8db3;
+  font-family: "Montserrat", sans-serif;
+}
+
+.ab-commit-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1vh, 10px);
+}
+
+.ab-commit-row {
+  display: flex;
+  gap: clamp(10px, 1.4vw, 14px);
+  align-items: flex-start;
+  background: rgba(21, 93, 252, 0.05);
+  border: 0.8px solid rgba(43, 114, 251, 0.14);
+  border-radius: 14px;
+  padding: clamp(11px, 1.4vh, 14px) clamp(12px, 1.6vw, 16px);
+  transition: background var(--ab-tr-fast), border-color var(--ab-tr-fast);
+}
+
+.ab-commit-row:hover {
+  background: rgba(21, 93, 252, 0.09);
+  border-color: rgba(43, 114, 251, 0.3);
+}
+
+.ab-commit-icon {
+  width: clamp(32px, 3.6vw, 38px);
+  height: clamp(32px, 3.6vw, 38px);
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--ab-icon-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ab-commit-icon svg {
+  width: 55%;
+  height: 55%;
+  color: #fff;
+}
+
+.ab-commit-txt {
+  min-width: 0;
+  padding-top: 1px;
+}
+
+.ab-commit-title {
+  font-size: clamp(12px, 1.05vw, 13.5px);
+  font-weight: 700;
+  color: #003ea6;
+  margin: 0 0 3px;
+  letter-spacing: -0.1px;
+  font-family: "Montserrat", sans-serif;
+  word-break: break-word;
+}
+
+.ab-commit-desc {
+  font-size: clamp(11.5px, 0.95vw, 13px);
+  line-height: 1.55;
+  color: #4a5565;
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  word-break: break-word;
+}
+
+/* ============================================
+   [mv-redesign] VISION MODAL — redesigned body (pull-quote)
+   ============================================ */
+.ab-vision-quote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(8px, 1.2vh, 12px) clamp(4px, 1vw, 6px) 4px;
+}
+
+.ab-vision-mark {
+  width: clamp(26px, 3vw, 34px);
+  height: clamp(26px, 3vw, 34px);
+  color: #bcd2fb;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.ab-vision-text {
+  font-size: clamp(15px, 1.7vw, 19px);
+  line-height: 1.55;
+  font-weight: 600;
+  color: #12244f;
+  letter-spacing: -0.2px;
+  max-width: 440px;
+  margin: 0 0 20px;
+  font-family: "Montserrat", sans-serif;
+  overflow-wrap: break-word;
+}
+
+.ab-vision-rule {
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #2b72fb, #1e2555);
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.ab-vision-attrib {
+  font-size: clamp(10.5px, 0.85vw, 12px);
+  font-weight: 600;
+  color: #7f8db3;
+  letter-spacing: 0.02em;
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+}
+
 /* Contact rows */
 .ab-contact-subtitle {
   font-weight: 700;

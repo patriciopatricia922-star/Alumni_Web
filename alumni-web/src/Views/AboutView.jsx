@@ -13,6 +13,53 @@ import Missionicon from "../assets/mission_icn.svg";
 import useDisclosure from "../hooks/Usedisclosure";
 
 /* ─────────────────────────────────────────────────────────────
+   MISSION / VISION MODAL ICONS
+   [mv-redesign] Inline SVG icons used only inside the redesigned
+   Mission/Vision modal bodies below. No new asset files or
+   dependencies are introduced.
+───────────────────────────────────────────────────────────── */
+const IconGradCap = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <path d="M12 3L2 8l10 5 10-5-10-5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="M6 10.5V16c0 1.3 2.7 3 6 3s6-1.7 6-3v-5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M21 9v6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+const IconBriefcase = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <rect x="3" y="7.5" width="18" height="12" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M8 7.5V6a2 2 0 012-2h4a2 2 0 012 2v1.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M3 12.5h18" stroke="currentColor" strokeWidth="1.7" />
+  </svg>
+);
+const IconRibbon = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <circle cx="12" cy="8.5" r="5" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M9 13l-2 8 5-3 5 3-2-8" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+  </svg>
+);
+const IconHandshake = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <path d="M2 12l4-4 4 3 3-2 2 2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 11l3-2 5 4-3.5 3.5a2 2 0 01-2.8 0L11 13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8.5 14.5L11 17a1.7 1.7 0 002.4 0" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconCommunity = (props) => (
+  <svg viewBox="0 0 24 24" fill="none" {...props}>
+    <circle cx="8.5" cy="8" r="3" stroke="currentColor" strokeWidth="1.7" />
+    <circle cx="16" cy="9" r="2.4" stroke="currentColor" strokeWidth="1.7" />
+    <path d="M2.5 19c.5-3.3 2.9-5.3 6-5.3s5.5 2 6 5.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <path d="M14.7 14.2c2.4.2 4.2 2 4.6 4.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
+const IconQuote = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M7.5 6C4.5 7.6 3 10 3 12.8c0 2.3 1.4 3.9 3.4 3.9 1.7 0 3-1.3 3-3 0-1.6-1.1-2.8-2.6-2.9.4-1.6 1.6-3 3.3-3.9L7.5 6zm9 0c-3 1.6-4.5 4-4.5 6.8 0 2.3 1.4 3.9 3.4 3.9 1.7 0 3-1.3 3-3 0-1.6-1.1-2.8-2.6-2.9.4-1.6 1.6-3 3.3-3.9L16.5 6z" />
+  </svg>
+);
+
+/* ─────────────────────────────────────────────────────────────
    STATIC CONTENT (migrated from the former separate-page routes)
 ───────────────────────────────────────────────────────────── */
 const MISSION_TEXT = `Guided by the core values and characterized by our cultural heritage of Dynamic Filipinism, National University is committed to providing relevant, innovative, and accessible quality education and other development programs.
@@ -175,25 +222,34 @@ const MISSION_KEYWORDS = [
   "COMMUNITY",
 ];
 
-const MissionModal = ({ onClose }) => {
-  const colorized = MISSION_TEXT.split("\n").map((line, i) => {
-    const matched = MISSION_KEYWORDS.find((k) => line.trim().startsWith(k));
-    if (matched) {
-      const rest = line.slice(line.indexOf(matched) + matched.length);
-      return (
-        <span key={i} style={{ display: "block" }}>
-          <span style={{ color: "#003EA6", fontWeight: 700 }}>{matched}</span>
-          <span style={{ color: "#1a2a4a", fontWeight: 400 }}>{rest}</span>
-        </span>
-      );
-    }
-    return (
-      <span key={i} style={{ display: "block" }}>
-        {line}
-      </span>
-    );
-  });
+/* [mv-redesign] Intro paragraph = the text before "We are committed to our:" */
+const MISSION_INTRO = MISSION_TEXT.split("\n\n")[0];
 
+/* [mv-redesign] Maps each existing MISSION_KEYWORDS entry to an icon for the redesigned list */
+const MISSION_ICONS = {
+  "STUDENTS,": IconGradCap,
+  "FACULTY and EMPLOYEES,": IconBriefcase,
+  "ALUMNI,": IconRibbon,
+  "INDUSTRY PARTNERS and EMPLOYERS,": IconHandshake,
+  "COMMUNITY": IconCommunity,
+};
+
+/* [mv-redesign] Derived from MISSION_TEXT + MISSION_KEYWORDS (both unchanged above) —
+   builds the structured { label, text, icon } list for the redesigned rows */
+const MISSION_COMMITMENTS = MISSION_TEXT.split("\n").reduce((acc, line) => {
+  const matched = MISSION_KEYWORDS.find((k) => line.trim().startsWith(k));
+  if (matched) {
+    const rest = line.slice(line.indexOf(matched) + matched.length).trim();
+    acc.push({
+      label: matched.replace(/,$/, ""),
+      text: rest,
+      icon: MISSION_ICONS[matched],
+    });
+  }
+  return acc;
+}, []);
+
+const MissionModal = ({ onClose }) => {
   return (
     <Modal
       onClose={onClose}
@@ -203,8 +259,24 @@ const MissionModal = ({ onClose }) => {
       title="Mission"
       subtitle="Our core purpose"
     >
-      <div className="ab-modal-inner">
-        <p className="ab-mission-body">{colorized}</p>
+      <div className="ab-mission-new">
+        <p className="ab-mission-lead">{MISSION_INTRO}</p>
+
+        <p className="ab-mission-eyebrow">We are committed to our</p>
+
+        <div className="ab-commit-list">
+          {MISSION_COMMITMENTS.map(({ label, text, icon: Icon }) => (
+            <div className="ab-commit-row" key={label}>
+              <div className="ab-commit-icon">
+                <Icon />
+              </div>
+              <div className="ab-commit-txt">
+                <p className="ab-commit-title">{label}</p>
+                <p className="ab-commit-desc">{text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </Modal>
   );
@@ -222,8 +294,11 @@ const VisionModal = ({ onClose }) => (
     title="Vision"
     subtitle="What we aim to achieve"
   >
-    <div className="ab-modal-inner">
-      <p className="ab-vision-body">{VISION_TEXT}</p>
+    <div className="ab-vision-quote">
+      <IconQuote className="ab-vision-mark" />
+      <p className="ab-vision-text">{VISION_TEXT}</p>
+      <div className="ab-vision-rule" />
+      <p className="ab-vision-attrib">National University — Dasmariñas</p>
     </div>
   </Modal>
 );
