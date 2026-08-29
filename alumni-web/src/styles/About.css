@@ -579,6 +579,14 @@
   justify-content: center;
 }
 
+/* [mv-header-icon] Mission/Vision modal header icon sized ~4px larger than
+   the shared base above. Scoped to .ab-modal--mv only so the Contact
+   Support, Terms, and Privacy modal header icons are unaffected. */
+.ab-modal--mv .ab-modal-hdr-icon {
+  width: clamp(40px, calc(3.6vw + 4px), 52px);
+  height: clamp(40px, calc(3.6vw + 4px), 52px);
+}
+
 .ab-modal-hdr-icon img {
   width: 56%;
   height: 56%;

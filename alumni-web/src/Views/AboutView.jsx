@@ -173,6 +173,7 @@ const formatUpdatedAt = (iso) => {
 ───────────────────────────────────────────────────────────── */
 const Modal = ({
   onClose,
+  modalClass,
   iconClass,
   icon,
   iconAlt,
@@ -186,7 +187,7 @@ const Modal = ({
       if (e.target === e.currentTarget) onClose();
     }}
   >
-    <div className="ab-modal" role="dialog" aria-modal="true">
+    <div className={`ab-modal${modalClass ? ` ${modalClass}` : ""}`} role="dialog" aria-modal="true">
       <div className="ab-modal-hdr">
         <div className={`ab-modal-hdr-icon ${iconClass}`}>
           <img src={icon} alt={iconAlt} />
@@ -253,6 +254,7 @@ const MissionModal = ({ onClose }) => {
   return (
     <Modal
       onClose={onClose}
+      modalClass="ab-modal--mv"
       iconClass="blue"
       icon={TargetIcon}
       iconAlt="Mission"
@@ -288,6 +290,7 @@ const MissionModal = ({ onClose }) => {
 const VisionModal = ({ onClose }) => (
   <Modal
     onClose={onClose}
+    modalClass="ab-modal--mv"
     iconClass="blue"
     icon={MagnifyIcon}
     iconAlt="Vision"
