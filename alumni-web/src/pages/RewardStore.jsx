@@ -42,7 +42,6 @@ const RewardStore = () => {
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
   const sidebarWidth = windowWidth < 768 ? 0 : windowWidth < 1100 ? 72 : 220;
-  const bellRef = useRef(null);
   // Holds the real Supabase channel so cleanup is reliable
   const realtimeChannelRef = useRef(null);
   // Ref-based mutex — immune to stale closure issues with useState
@@ -52,58 +51,9 @@ const RewardStore = () => {
   const [rewardPoints, setRewardPoints] = useState(0);
   const [merchandise, setMerchandise] = useState([]);
   const [activeFilter, setActiveFilter] = useState("All");
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [notifs, setNotifs] = useState([]);
-  const [notifTab, setNotifTab] = useState("all");
   const [surveyRoute, setSurveyRoute] = useState(null);
   const [surveyAlreadyClaimed, setSurveyAlreadyClaimed] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
-
-  const NOTIF_KEY = "alumnai_read_notifs";
-  const getReadIds = () => {
-    try {
-      return JSON.parse(localStorage.getItem(NOTIF_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  };
-  const saveReadIds = (ids) => {
-    try {
-      localStorage.setItem(NOTIF_KEY, JSON.stringify(ids));
-    } catch {}
-  };
-  const groupByDate = (list) => {
-    const now = new Date();
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - 7);
-    const groups = { Today: [], Yesterday: [], "This Week": [], Earlier: [] };
-    list.forEach((n) => {
-      const d = new Date(n.time);
-      d.setHours(0, 0, 0, 0);
-      if (d >= today) groups["Today"].push(n);
-      else if (d >= yesterday) groups["Yesterday"].push(n);
-      else if (d >= weekAgo) groups["This Week"].push(n);
-      else groups["Earlier"].push(n);
-    });
-    return groups;
-  };
-  const formatTime = (iso) => {
-    if (!iso) return "";
-    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
-    if (diff < 60) return "Just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    return new Date(iso).toLocaleDateString("en-PH", {
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   // Toast state — replaces the browser alert()
   const [toast, setToast] = useState({
@@ -170,29 +120,6 @@ const RewardStore = () => {
     fetchMerchandise();
   }, []);
 
-  // ── Fetch notifications ───────────────────────────────────────────────────
-  useEffect(() => {
-    supabase
-      .from("announcements")
-      .select("id, title, content, published_at, is_active")
-      .eq("is_active", true)
-      .order("published_at", { ascending: false })
-      .limit(20)
-      .then(({ data, error }) => {
-        if (error || !data) return;
-        const readIds = getReadIds();
-        const mapped = data.map((n) => ({
-          id: n.id,
-          title: n.title,
-          body: n.content,
-          time: n.published_at,
-          read: readIds.includes(n.id),
-        }));
-        setNotifs(mapped);
-        setUnreadCount(mapped.filter((n) => !n.read).length);
-      });
-  }, []);
-
   // ── Resolve survey route ──────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -211,17 +138,6 @@ const RewardStore = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // ── Close dropdown on outside click ──────────────────────────────────────
-  useEffect(() => {
-    const handler = (e) => {
-      if (bellRef.current && !bellRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // ── Auto-claim on return from survey ─────────────────────────────────────
@@ -319,22 +235,6 @@ const RewardStore = () => {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const isRedeemingRef = useRef(false);
-  const markAllRead = useCallback(() => {
-    saveReadIds(notifs.map((n) => n.id));
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-    setUnreadCount(0);
-  }, [notifs]);
-  const markOneRead = useCallback((id) => {
-    const ids = getReadIds();
-    if (!ids.includes(id)) {
-      ids.push(id);
-      saveReadIds(ids);
-    }
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-  }, []);
   const handleRedeem = async (item) => {
     if (isRedeemingRef.current) return;
     isRedeemingRef.current = true;
@@ -422,17 +322,6 @@ const RewardStore = () => {
         surveyAlreadyClaimed={surveyAlreadyClaimed}
         surveyRewardPoints={SURVEY_REWARD_POINTS}
         rewardIcon={rewardIcon}
-        bellRef={bellRef}
-        unreadCount={unreadCount}
-        showDropdown={showDropdown}
-        setShowDropdown={setShowDropdown}
-        notifs={notifTab === "unread" ? notifs.filter((n) => !n.read) : notifs}
-        notifTab={notifTab}
-        setNotifTab={setNotifTab}
-        markAllRead={markAllRead}
-        markOneRead={markOneRead}
-        groupByDate={groupByDate}
-        formatTime={formatTime}
         navigate={navigate}
         // NEW: Pass target ID
         targetRewardId={targetRewardId}

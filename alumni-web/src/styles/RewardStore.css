@@ -28,6 +28,7 @@
 @media (min-width: 768px) {
   .rewards-store-content {
     scrollbar-gutter: stable;
+    overflow-x: clip;
   }
 }
 
@@ -70,21 +71,38 @@
   }
 }
 
-.notification-bell-inline {
-  flex-shrink: 0;
+/* ============================================
+   NOTIFICATION BELL OVERRIDE (REUSABLE COMPONENT)
+   Scopes the shared NotificationBell component to the RewardStore page
+   layout. Positioning values are taken from About's `.ab-main
+   .notification-bell-wrapper` (the source of truth for placement);
+   the selector keeps RewardStore's own naming (`.rewards-store-content`)
+   rather than About's `.ab-*` classes.
+   ============================================ */
+.rewards-store-content .notification-bell-wrapper {
+  position: absolute;
+  top: 45px;
+  right: 132px;
   z-index: 200;
-  margin-left: auto;
-  position: relative;
-  top: clamp(6px, 50vh, 30px);
 }
 
-/* ── Desktop-only: with .rewards-header-row now top-aligned (see above),
-   the bell no longer needs the mobile "top" push to visually center
-   against the back button — matches About's bell sitting flush at the
-   top of its row. Mobile keeps its original offset untouched. ── */
-@media (min-width: 768px) {
-  .notification-bell-inline {
-    top: 0;
+@media (max-width: 767px) {
+  .rewards-store-content .notification-bell-wrapper {
+    top: 24px;
+    right: 64px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .rewards-store-content .notification-bell-wrapper {
+    right: 113px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .rewards-store-content .notification-bell-wrapper {
+    top: 46px;
+    right: 108px;
   }
 }
 
