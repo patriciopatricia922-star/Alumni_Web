@@ -601,6 +601,7 @@
 .ab-modal--mission .ab-modal-hdr-icon img {
   width: 72%;
   height: 72%;
+  margin-left: 2px;
 }
 
 .ab-modal-hdr-icon.blue {
