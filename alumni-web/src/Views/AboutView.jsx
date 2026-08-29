@@ -66,9 +66,9 @@ const MISSION_TEXT = `Guided by the core values and characterized by our cultura
 
 We are committed to our:
 
-STUDENTS, by molding them into ethical, spiritual and responsible citizens.
+STUDENTS, by molding them into ethical, spiritual, and responsible citizens.
 
-FACULTY and EMPLOYEES, by enhancing their competencies, cultivating their commitment and providing a just and fulfilling work environment.
+FACULTY and EMPLOYEES, by enhancing their competencies, cultivating their commitment, and providing a just and fulfilling work environment.
 
 ALUMNI, by instilling in them a sense of pride, commitment, and loyalty to their alma mater.
 
