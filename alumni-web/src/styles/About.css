@@ -593,6 +593,16 @@
   object-fit: contain;
 }
 
+/* [mv-header-icon] Mission and Vision now share an identical container
+   size above, but the Mission icon asset renders visually smaller within
+   that box due to the source image's own proportions. This scales up
+   only the Mission icon's fill of its container so it visually matches
+   Vision's icon size. Vision's img rule above is untouched. */
+.ab-modal--mission .ab-modal-hdr-icon img {
+  width: 72%;
+  height: 72%;
+}
+
 .ab-modal-hdr-icon.blue {
   background: var(--ab-icon-blue);
 }

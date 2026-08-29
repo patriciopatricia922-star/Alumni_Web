@@ -254,7 +254,7 @@ const MissionModal = ({ onClose }) => {
   return (
     <Modal
       onClose={onClose}
-      modalClass="ab-modal--mv"
+      modalClass="ab-modal--mv ab-modal--mission"
       iconClass="blue"
       icon={TargetIcon}
       iconAlt="Mission"
