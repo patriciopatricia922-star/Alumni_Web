@@ -198,7 +198,7 @@ const MissionModal = ({ onClose }) => {
     <Modal
       onClose={onClose}
       iconClass="blue"
-      icon={Missionicon}
+      icon={TargetIcon}
       iconAlt="Mission"
       title="Mission"
       subtitle="Our core purpose"

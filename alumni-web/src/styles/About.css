@@ -701,7 +701,7 @@
 .ab-mission-body {
   font-weight: 400;
   font-size: clamp(12px, 0.98vw, 14px);
-  line-height: 1.75;
+  line-height: 1.9;
   color: #1a2a4a;
   white-space: pre-line;
   font-family: "Montserrat", sans-serif;
@@ -709,8 +709,9 @@
 
 .ab-vision-body {
   font-weight: 400;
-  font-size: clamp(14px, 1.3vw, 4px);
-  line-height: 1.75;
+  font-size: clamp(12px, 0.98vw, 14px);
+  line-height: 2;
+  text-align: justify;
   color: #1a2a4a;
   font-family: "Montserrat", sans-serif;
 }
