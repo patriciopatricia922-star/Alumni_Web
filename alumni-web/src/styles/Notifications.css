@@ -67,7 +67,7 @@ html, body, #root {
   width: fit-content;
   flex-shrink: 0;
   margin-bottom: clamp(8px, 1.2vh, 14px);
-  margin-top: calc(clamp(2px, 0.4vh, 6px) + 9px);
+  margin-top: calc(clamp(2px, 0.4vh, 6px) + 3px);
   margin-left: -65px;
   transition: opacity 0.15s ease;
 }
