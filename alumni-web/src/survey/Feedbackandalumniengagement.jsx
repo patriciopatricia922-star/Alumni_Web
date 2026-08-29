@@ -13,8 +13,6 @@ const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 7;
 const SECTION_KEY     = 'feedback_and_engagement';
 
-// Must match EmploymentInformation's DEFAULT_UNEMPLOYED_STATUSES exactly.
-// These respondents skip sections 5 & 6, so their "previous" is Employment Information.
 const DEFAULT_UNEMPLOYED_STATUSES = [
   'Unemployed, but looking for work',
   'Unemployed, but not looking for work',
@@ -91,9 +89,7 @@ const FeedbackAndAlumniEngagement = () => {
     other_participate:     '',
   });
 
-  // Derive previous route from saved employment status — no sessionStorage needed.
-  // Unemployed respondents skipped sections 5 & 6, so go back to Employment Information.
-  // All others (employed, or status not yet loaded) go back to Skills & Competencies.
+  
   const prevRoute = DEFAULT_UNEMPLOYED_STATUSES.includes(form.employment_status)
     ? '/survey/employment-information'
     : '/survey/skills-and-competencies';
@@ -156,8 +152,6 @@ const FeedbackAndAlumniEngagement = () => {
   }, []);
 
   // ── Load saved section data ───────────────────────────────────────────────
-  // Also loads employment_status from the employment_information section so
-  // prevRoute can be derived correctly without relying on navigation state.
   useEffect(() => {
     const load = async () => {
       const [saved, savedEmployment] = await Promise.all([
@@ -166,7 +160,6 @@ const FeedbackAndAlumniEngagement = () => {
       ]);
       setForm(f => ({
         ...f,
-        // Feedback fields
         ...(saved && {
           satisfaction:          saved.satisfaction          ?? f.satisfaction,
           recommend:             saved.recommend             ?? f.recommend,
@@ -175,7 +168,6 @@ const FeedbackAndAlumniEngagement = () => {
           participate_in:        saved.participate_in        ?? f.participate_in,
           other_participate:     saved.other_participate     ?? f.other_participate,
         }),
-        // Employment status — used only to compute prevRoute, not rendered
         employment_status: savedEmployment?.employment_status ?? f.employment_status ?? '',
       }));
     };
@@ -248,7 +240,7 @@ const FeedbackAndAlumniEngagement = () => {
       const originRoute = sessionStorage.getItem('survey_origin_route') || '/dashboard';
       sessionStorage.removeItem('survey_origin_route');
 
-      navigate(`${originRoute}?survey_completed=1`);
+      navigate('/survey/complete', { state: { originRoute } });
       
     } catch (err) {
       console.error('[FeedbackAndAlumniEngagement] handleSubmit error:', err);

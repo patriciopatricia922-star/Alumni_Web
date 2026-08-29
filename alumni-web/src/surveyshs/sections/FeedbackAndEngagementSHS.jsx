@@ -1,26 +1,3 @@
-/**
- * FeedbackAndEngagementSHS.jsx — Logic Layer
- * Location: src/surveyshs/FeedbackAndEngagementSHS.jsx
- *
- * FIX: PREV_ROUTE is now resolved dynamically from sessionStorage on mount
- * instead of being hardcoded to shs-employment-information.
- *
- * Why: Two paths reach this component:
- *   Skip path  (Studying/Graduated/Stopped) → arrives from Educational Background
- *   Full path  (Working)                    → arrives from Skills and Competencies
- *
- * The previous hardcoded value was only correct for the Working path, and
- * even then it pointed to Employment rather than Skills. Both paths now write
- * sessionStorage.shs_feedback_prev_route before navigating here, so the back
- * button always returns to the correct preceding section.
- *
- * Fallback: if sessionStorage is unavailable or the key is missing (e.g. direct
- * navigation, page refresh), falls back to shs-educational-background — the
- * lowest common ancestor that both paths share.
- *
- * All other logic is unchanged from the original.
- */
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -35,10 +12,8 @@ const TOTAL_SECTIONS  = 6;
 const CURRENT_SECTION = 6;
 const SECTION_KEY     = 'shs_feedback_and_engagement';
 
-const DEPARTMENT_TYPE = 'shs';  // used for surveyConfig filtering
-// Fallback used when sessionStorage is empty (direct nav / page refresh)
+const DEPARTMENT_TYPE = 'shs';  
 const PREV_ROUTE_FALLBACK = '/surveyshs/shs-educational-background';
-
 const SUBMIT_ROUTE_DEFAULT = '/surveyshs/shs-complete';
 const SUBMIT_ROUTE_REWARD  = '/rewards?survey_completed=1';
 
@@ -255,7 +230,7 @@ const FeedbackAndEngagementSHS = () => {
       const originRoute = sessionStorage.getItem('survey_origin_route') || '/dashboard';
       sessionStorage.removeItem('survey_origin_route');
 
-      navigate(`${originRoute}?survey_completed=1`);
+      navigate(SUBMIT_ROUTE_DEFAULT, { state: { originRoute } });
     } catch (err) {
       console.error('[FeedbackAndEngagementSHS] Submit error:', err);
       await logAction({

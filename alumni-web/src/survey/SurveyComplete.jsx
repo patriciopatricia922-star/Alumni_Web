@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 
 /* ─── Google Fonts: Montserrat ─────────────────────────────────────────────── */
@@ -13,7 +13,7 @@ if (!fontLink) {
 }
 
 /* ─── Survey sections shown in the completed checklist ─────────────────────── */
-const SECTIONS = [
+const COLLEGE_SECTIONS = [
   'Personal Background',
   'Educational Background',
   'Certification Achievement',
@@ -23,12 +23,29 @@ const SECTIONS = [
   'Feedback and Engagement',
 ];
 
+
+const SHS_SECTIONS = [
+  'Personal Background',
+  'Educational Background',
+  'Employment Information',
+  'Work Experience',
+  'Skills & Competencies',
+  'Feedback & Engagement',
+];
+
 const SurveyComplete = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isSHS = location.pathname.startsWith('/surveyshs');
+  const SECTIONS = isSHS ? SHS_SECTIONS : COLLEGE_SECTIONS;
+  const TOTAL_SECTIONS = SECTIONS.length;
+
+  const originRoute = location.state?.originRoute || '/dashboard';
+
   const [mounted, setMounted] = useState(false);
 
-  /* ── Scoped scroll suppression — this page only ──────────────────────────
-     Targets #root so no other route is affected. Restored on unmount.      */
+  /* ── Scoped scroll suppression — this page only ────────────────────────── */
   useEffect(() => {
     const el = document.getElementById('root') || document.body;
     const prev = el.style.overflow;
@@ -226,7 +243,7 @@ const SurveyComplete = () => {
             {/* Right: detail panel */}
             <div className="sc-right">
               <p style={{ color: '#1e3a5f', fontWeight: 600, fontSize: '13px', letterSpacing: '0.02em', margin: '0 0 4px 0' }}>
-                You completed 7 of 7 sections
+                You completed {TOTAL_SECTIONS} of {TOTAL_SECTIONS} sections
               </p>
               <p style={{ color: '#94a3b8', fontWeight: 400, fontSize: '12px', margin: '0 0 14px 0' }}>
                 Every part of the survey has been recorded.
@@ -266,8 +283,7 @@ const SurveyComplete = () => {
                 </div>
               </div>
 
-              {/* ── Button — preserves original navigate('/dashboard') handler ──── */}
-              <button className="sc-btn" onClick={() => navigate('/dashboard')}>
+              <button className="sc-btn" onClick={() => navigate(`${originRoute}?survey_completed=1`)}>
                 Return to dashboard
                 <span className="sc-arrow">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
