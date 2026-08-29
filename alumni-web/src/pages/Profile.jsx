@@ -481,7 +481,10 @@ const Profile = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
       const ext      = file.name.split('.').pop();
-      const filePath = `avatars/${authUser.id}.${ext}`;
+      // Bucket is "avatars"; the object path must be flat (no extra nested
+      // "avatars/" folder) so it matches how avatar files already sitting
+      // in the bucket are stored, e.g. "<user-id>.<ext>" at the bucket root.
+      const filePath = `${authUser.id}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
@@ -517,7 +520,7 @@ const Profile = () => {
         const idx = previousUrl.indexOf(marker);
         if (idx !== -1) {
           const previousPath = previousUrl.slice(idx + marker.length).split('?')[0];
-          if (previousPath && `avatars/${previousPath}` !== filePath) {
+          if (previousPath && previousPath !== filePath) {
             supabase.storage.from('avatars').remove([previousPath]).catch(() => {});
           }
         }
