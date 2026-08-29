@@ -164,7 +164,6 @@ const Profile = () => {
   const [avatarUrl,          setAvatarUrl]         = useState(null);
   const [strength,           setStrength]          = useState(0);
   const [lastPasswordChange, setLastPasswordChange] = useState(null);
-  const [toast,              setToast]             = useState({ show: false, message: '', type: 'success' });
 
   // ── Modal visibility ──────────────────────────────────────────────────────
   const [showPIModal, setShowPIModal] = useState(false);
@@ -186,6 +185,9 @@ const Profile = () => {
   const [cpLoading, setCpLoading] = useState(false);
   const [cpError,   setCpError]   = useState('');
   const [cpSuccess, setCpSuccess] = useState(false);
+
+  // ── Toast (existing Toast UI in ProfileView; wires success/error feedback) ──
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // ── Notifications ─────────────────────────────────────────────────────────
   const { unreadCount, bellRef, setShowDropdown } = useNotifications();
@@ -472,18 +474,14 @@ const Profile = () => {
   }, [cpCurrent, cpNew, cpConfirm, handleCloseCPModal]);
 
   // ── Avatar upload ──────────────────────────────────────────────────────────
-  // Persists to the existing `avatars` storage bucket + users.avatar_url column,
-  // keyed by the authenticated user's id (authUser.id), so each alumni's
-  // picture is stored and retrieved independently of every other alumni.
   const handleAvatarUpload = useCallback(async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
-      const ext      = file.name.split('.').pop().toLowerCase();
+      const ext      = file.name.split('.').pop();
       const filePath = `avatars/${authUser.id}.${ext}`;
-
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
@@ -492,45 +490,47 @@ const Profile = () => {
         setToast({ show: true, message: 'Failed to upload profile picture. Please try again.', type: 'error' });
         return;
       }
-
-      // Best-effort cleanup: if this alumni's previous picture was saved under
-      // a different extension, remove it so old uploads don't linger in the
-      // bucket. Failures here are non-fatal — the new picture is already saved.
-      const staleExts  = ['jpg', 'jpeg', 'png', 'gif', 'webp'].filter((e2) => e2 !== ext);
-      const stalePaths = staleExts.map((e2) => `avatars/${authUser.id}.${e2}`);
-      try { await supabase.storage.from('avatars').remove(stalePaths); } catch (_) { /* ignore */ }
-
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // This update was previously fired without checking its result, so a
-      // failed/blocked write (e.g. an RLS rejection) still let the frontend
-      // show the new picture as if it had been saved. Only reflect the new
-      // picture once we've confirmed it's actually persisted for this alumni.
-      const { error: updateError } = await supabase
+      // Persist the reference first, and only reflect it in the UI once the
+      // database write is confirmed — otherwise a failed save would leave
+      // the frontend showing a picture that was never actually persisted.
+      const { error: dbError } = await supabase
         .from('users')
         .update({ avatar_url: publicUrl })
         .eq('id', authUser.id);
-
-      if (updateError) {
-        console.error('Avatar persist error:', updateError);
-        setToast({ show: true, message: 'Profile picture upload failed to save. Please try again.', type: 'error' });
+      if (dbError) {
+        console.error('Avatar DB update error:', dbError);
+        setToast({ show: true, message: 'Failed to save profile picture. Please try again.', type: 'error' });
         return;
       }
 
-      // Cache-bust only the in-memory display URL. When an alumni re-uploads
-      // using the same file extension, the storage path (and public URL) is
-      // identical to before, so without this the browser can keep showing the
-      // old cached image even though the new one saved successfully. The
-      // clean publicUrl (no query string) is what's stored in the database.
-      setAvatarUrl(`${publicUrl}?updated=${Date.now()}`);
+      // If the alumni's previous picture lived at a different path (e.g. a
+      // different file extension than this upload), upsert won't have
+      // overwritten it — remove the stale file so it doesn't linger in
+      // storage now that the DB reference has moved to the new one.
+      const previousUrl = user?.avatar_url || avatarUrl;
+      if (previousUrl && previousUrl !== publicUrl) {
+        const marker = '/avatars/';
+        const idx = previousUrl.indexOf(marker);
+        if (idx !== -1) {
+          const previousPath = previousUrl.slice(idx + marker.length).split('?')[0];
+          if (previousPath && `avatars/${previousPath}` !== filePath) {
+            supabase.storage.from('avatars').remove([previousPath]).catch(() => {});
+          }
+        }
+      }
+
+      setAvatarUrl(publicUrl);
+      fetchUserAndSurvey();
       setToast({ show: true, message: 'Profile picture updated successfully!', type: 'success' });
     } catch (err) {
       console.error('Avatar upload error:', err);
-      setToast({ show: true, message: 'Something went wrong while updating your profile picture.', type: 'error' });
+      setToast({ show: true, message: 'Failed to upload profile picture. Please try again.', type: 'error' });
     }
-  }, []);
+  }, [fetchUserAndSurvey, user, avatarUrl]);
 
   return (
     <ProfileView
