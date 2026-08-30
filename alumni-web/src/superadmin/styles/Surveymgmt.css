@@ -503,6 +503,31 @@ body {
   font-family: "Lexend", sans-serif;
 }
 
+/* "Go to" branching multi-select list (option-level and question-level)
+   Widened from its original fixed 160px so long section/question labels
+   (e.g. "Educational Background \u2192 ...") are readable. Height, padding,
+   border, and font-size are unchanged and remain set inline. */
+.branch-goto-select {
+  width: 280px;
+  max-width: 280px;
+}
+
+/* Tablet: keep the list from crowding the row as space narrows */
+@media (max-width: 1024px) {
+  .branch-goto-select {
+    width: 220px;
+    max-width: 220px;
+  }
+}
+
+/* Mobile: let it fill the wrapped row instead of forcing a fixed width */
+@media (max-width: 767px) {
+  .branch-goto-select {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 /* ============================ TOAST NOTIFICATION STYLES ============================ */
 .sm-toast {
   display: inline-flex;

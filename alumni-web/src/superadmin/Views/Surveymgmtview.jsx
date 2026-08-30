@@ -279,6 +279,7 @@ export default function SurveyMgmtView({
                                         <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                         <select
                                           multiple
+                                          className="branch-goto-select"
                                           value={selectVal}
                                           onChange={e => {
                                             const vals = Array.from(e.target.selectedOptions, o => o.value);
@@ -287,7 +288,7 @@ export default function SurveyMgmtView({
                                           style={{
                                             padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
                                             border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                            width: "160px", maxWidth: "160px", height: "70px",
+                                            height: "70px",
                                           }}
                                         >
                                           <option value="next">Next question</option>
@@ -313,6 +314,7 @@ export default function SurveyMgmtView({
                                     <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                     <select
                                       multiple
+                                      className="branch-goto-select"
                                       value={(() => {
                                         const v = branches[key];
                                         return Array.isArray(v) ? v : v ? [v] : ["next"];
@@ -324,7 +326,7 @@ export default function SurveyMgmtView({
                                       style={{
                                         padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
                                         border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                        width: "160px", maxWidth: "160px", height: "70px",
+                                        height: "70px",
                                       }}
                                     >
                                       <option value="next">Next question</option>
