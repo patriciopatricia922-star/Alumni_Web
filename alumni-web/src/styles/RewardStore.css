@@ -65,26 +65,6 @@
   gap: 12px;
 }
 
-/* ── Header row: Back button + bell share one flex row, no fixed offsets ── */
-.rewards-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: clamp(8px, 1.5vw, 16px);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* ── Desktop-only: align Back button + bell like About's header, where each
-   sits independently in the layout rather than being vertically centered
-   against each other. Mobile keeps the existing centered row untouched. ── */
-@media (min-width: 768px) {
-  .rewards-header-row {
-    align-items: flex-start;
-  }
-}
-
 /* ============================================
    NOTIFICATION BELL OVERRIDE (REUSABLE COMPONENT)
    Scopes the shared NotificationBell component to the RewardStore page
@@ -116,7 +96,7 @@
 @media (min-width: 1025px) {
   .rewards-store-content .notification-bell-wrapper {
     top: 46px;
-    right: 94px;
+    right: 60px;
   }
 }
 
@@ -141,17 +121,20 @@
   transition: opacity 0.15s ease;
 }
 
-/* ── Desktop-only: reproduce About's .ab-back positioning values
-   (gap, margin-top, margin-left) on RewardStore's existing .back-button
-   class. About's back button sits in normal flow, pulled left via a
-   negative margin — no position/top offset needed. Mobile is untouched;
-   the button's inline style (isMobile branch) keeps the previous
-   position/top/marginLeft exactly as they were. ── */
+/* ── Desktop-only: reproduce Announcements' .ann-back positioning values
+   (gap, position, top offset, margin-left) on RewardStore's existing
+   .back-button class, now that it sits as an independent sibling rather
+   than inside a shared flex row — matching Announcements' structure where
+   the back button is in normal flow, pulled left via a negative margin
+   with a small top offset. Mobile is untouched; the button's inline style
+   (isMobile branch) keeps the previous position/top/marginLeft exactly as
+   they were. ── */
 @media (min-width: 768px) {
   .back-button {
     gap: 15px;
-    margin-top: calc(clamp(2px, 0.4vh, 6px) + 1px);
-    margin-left: -65px;
+    position: relative;
+    top: -0.5px;
+    margin-left: -19px;
   }
 }
 

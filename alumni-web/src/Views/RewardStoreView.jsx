@@ -302,16 +302,16 @@ const RewardStoreView = ({
         className="rewards-store-content"
         style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
       >
-        {/* ── Sticky header row (pattern: AlumniDashboardView's .dashboard-header) ──
-        backButton renders inside this same row, bell sits at the far right,
-        so both sit on one sticky line  like the reference screenshot. ── */}
-        <div className="rewards-header-row">
-          {backButton}
-          <NotificationBell
-            onSeeAll={() => navigate("/notifications")}
-            className={isMobile ? "mobile" : ""}
-          />
-        </div>
+        {/* ── Bell + Back button render as independent siblings (matching
+        Announcements' .announcements-main-content structure): the bell is
+        absolutely positioned via .notification-bell-wrapper and the back
+        button sits in normal document flow, rather than being paired in a
+        shared flex row. ── */}
+        <NotificationBell
+          onSeeAll={() => navigate("/notifications")}
+          className={isMobile ? "mobile" : ""}
+        />
+        {backButton}
         {header}
         {pointsBanner}
         {merchandiseSection}
