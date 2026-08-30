@@ -142,7 +142,7 @@ const SelectArrow = () => (
 // View
 // ═════════════════════════════════════════════════════════════════════════════
 const EducationalBackgroundView = ({
-  form, set, setLicensureReviewing, setLicensurePlans, setLicensureNoPlans,
+  form, set, setLicensureReviewing, setLicensurePlans,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
   degreeOptions, yearOptions, distinctionOptions,
@@ -160,8 +160,7 @@ const EducationalBackgroundView = ({
   const showPostGradCourse    = form.post_grad_plans === 'Yes';
   const showLicensureBranch   = form.licensure_reviewing === 'Yes';
   const showLicensureNoBranch = form.licensure_reviewing === 'No';
-  const showBoardExam         = showLicensureBranch &&
-    (form.licensure_plans === 'Yes' || form.licensure_plans === 'Already taken');
+  const showBoardExam         = showLicensureBranch;
 
   const isLocked = (field) => !!lockedFields[field];
 
@@ -493,54 +492,6 @@ const EducationalBackgroundView = ({
                   </div>
                 )}
 
-                {/* ── "Yes" branch — licensure plans ─────────────────────── */}
-                {showLicensureBranch && shouldShowField("licensure_plans") && (
-                  <div className="eb-field">
-                    <label className="eb-label-sub">
-                      {getLabel("licensure_plans")}{" "}
-                      <span className="eb-req">*</span>
-                      {errors.has("licensure_plans") && (
-                        <span className="eb-field-error">Required</span>
-                      )}
-                    </label>
-                    <div className="eb-radio-group">
-                      {licensurePlansOptions.map((opt) => (
-                        <label key={opt} className="eb-radio-label">
-                          <input
-                            type="radio"
-                            name="licensure_plans"
-                            value={opt}
-                            checked={form.licensure_plans === opt}
-                            onChange={() => setLicensurePlans(opt)}
-                          />
-                          {opt}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── "Yes" branch — licensure reason ────────────────────── */}
-                {showLicensureBranch && shouldShowField("licensure_reason") && (
-                  <div className="eb-field">
-                    <label className="eb-label-sub">
-                      {getLabel("licensure_reason")}{" "}
-                      <span className="eb-req">*</span>
-                      {errors.has("licensure_reason") && (
-                        <span className="eb-field-error">Required</span>
-                      )}
-                    </label>
-                    <textarea
-                      className="eb-textarea"
-                      placeholder={getPlaceholder("licensure_reason")}
-                      value={form.licensure_reason}
-                      onChange={(e) => set("licensure_reason", e.target.value)}
-                      onFocus={onFocus}
-                      onBlur={onBlur}
-                    />
-                  </div>
-                )}
-
                 {/* ── Board exam name ────────────────────────────────────── */}
                 {showBoardExam && shouldShowField("board_exam_name") && (
                   <div className="eb-field">
@@ -611,58 +562,53 @@ const EducationalBackgroundView = ({
                   </div>
                 )}
 
-                {/* ── "No" branch — future licensure plans ───────────────── */}
-                {showLicensureNoBranch &&
-                  shouldShowField("licensure_no_plans") && (
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        Do you have any plans on taking the Licensure
-                        Examination?
-                        <span className="eb-req">*</span>
-                        {errors.has("licensure_no_plans") && (
-                          <span className="eb-field-error">Required</span>
-                        )}
-                      </label>
-                      <div className="eb-radio-group">
-                        {["Yes", "No", "Maybe", "Not at all"].map((opt) => (
-                          <label key={opt} className="eb-radio-label">
-                            <input
-                              type="radio"
-                              name="licensure_no_plans"
-                              value={opt}
-                              checked={form.licensure_no_plans === opt}
-                              onChange={() => setLicensureNoPlans(opt)}
-                            />
-                            {opt}
-                          </label>
-                        ))}
-                      </div>
+                {/* ── "No" branch — licensure plans ──────────────────────── */}
+                {showLicensureNoBranch && shouldShowField("licensure_plans") && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel("licensure_plans")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("licensure_plans") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
+                    </label>
+                    <div className="eb-radio-group">
+                      {licensurePlansOptions.map((opt) => (
+                        <label key={opt} className="eb-radio-label">
+                          <input
+                            type="radio"
+                            name="licensure_plans"
+                            value={opt}
+                            checked={form.licensure_plans === opt}
+                            onChange={() => setLicensurePlans(opt)}
+                          />
+                          {opt}
+                        </label>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                {/* ── "No" branch — licensure no reason ─────────────────── */}
-                {showLicensureNoBranch &&
-                  shouldShowField("licensure_no_reason") && (
-                    <div className="eb-field">
-                      <label className="eb-label-sub">
-                        {getLabel("licensure_reason")}
-                        <span className="eb-req">*</span>
-                        {errors.has("licensure_no_reason") && (
-                          <span className="eb-field-error">Required</span>
-                        )}
-                      </label>
-                      <textarea
-                        className="eb-textarea"
-                        placeholder={getPlaceholder("licensure_reason")}
-                        value={form.licensure_no_reason}
-                        onChange={(e) =>
-                          set("licensure_no_reason", e.target.value)
-                        }
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                      />
-                    </div>
-                  )}
+                {/* ── "No" branch — licensure reason ─────────────────────── */}
+                {showLicensureNoBranch && shouldShowField("licensure_reason") && (
+                  <div className="eb-field">
+                    <label className="eb-label-sub">
+                      {getLabel("licensure_reason")}{" "}
+                      <span className="eb-req">*</span>
+                      {errors.has("licensure_reason") && (
+                        <span className="eb-field-error">Required</span>
+                      )}
+                    </label>
+                    <textarea
+                      className="eb-textarea"
+                      placeholder={getPlaceholder("licensure_reason")}
+                      value={form.licensure_reason}
+                      onChange={(e) => set("licensure_reason", e.target.value)}
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                  </div>
+                )}
               </div>
               {/* /eb-fields */}
 
