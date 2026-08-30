@@ -103,22 +103,34 @@ export function useSurveyBranching(
   // ── Build the set of question IDs that are currently SKIPPED ────────────
   //
   // Algorithm:
-  //   For every question in the section that has option-level branch rules:
-  //     1. Find which option the user has currently selected.
-  //     2. Look up that option's rule: triggeredDests = branches["q-<id>-opt<N>"]
-  //     3. Collect ALL destinations referenced by ANY option of this question.
-  //     4. Any destination that appears in other options' rules but NOT in the
-  //        triggered option's rule is considered skipped.
+  //   A destination question can be the branch target of more than one
+  //   parent question (e.g. both "licensure_reviewing" → Yes and
+  //   "licensure_plans" → Already taken point at the same three board-exam
+  //   questions). We therefore compute this in two passes across ALL
+  //   rule-bearing questions in the section:
+  //
+  //     1. possibleDests  — every destination ANY option-level rule ever
+  //        references, regardless of what's currently selected.
+  //     2. reachableDests — destinations referenced by the option that is
+  //        CURRENTLY selected, for each parent question.
+  //
+  //   A destination is skipped only if it's in possibleDests but NOT in
+  //   reachableDests — i.e. some rule could route to it, but nothing the
+  //   user currently has selected does. This means if ANY parent's current
+  //   answer reaches a shared destination, it stays visible, even if a
+  //   different parent (currently on a non-matching answer) also has a
+  //   rule pointing at the same destination.
   //
   //   Special sentinel values "next" and "end" are never skipped — they are
   //   control-flow signals, not question references.
   //
   const skippedQIds = useMemo(() => {
-    const skipped = new Set();
-
     if (!branchingReady || !sectionConfig || Object.keys(branches).length === 0) {
-      return skipped;
+      return new Set();
     }
+
+    const possibleDests  = new Set();
+    const reachableDests = new Set();
 
     sectionConfig.questions.forEach((q, qIdx) => {
       // Only multiple-choice questions can trigger branching
@@ -135,38 +147,30 @@ export function useSurveyBranching(
       );
       if (!hasRules) return;
 
-      const selectedValue   = form[fieldKey];
-      const selectedOptIdx  = selectedValue != null
+      const selectedValue  = form[fieldKey];
+      const selectedOptIdx = selectedValue != null
         ? q.options.indexOf(selectedValue)
         : -1;
 
-      // Collect destinations for the SELECTED option (or empty if nothing selected)
-      const triggeredDests = new Set(
-        selectedOptIdx !== -1
-          ? (branches[`q-${q.id}-opt${selectedOptIdx}`] ?? ['next'])
-          : ['next']
-      );
-
-      // Collect destinations for ALL OTHER options
       q.options.forEach((_, i) => {
-        if (i === selectedOptIdx) return;
-        const dests = branches[`q-${q.id}-opt${i}`] ?? ['next'];
+        const dests = branches[`q-${q.id}-opt${i}`];
+        if (!dests) return; // no rule on this option — doesn't constrain anything
+
         dests.forEach(dest => {
           if (dest === 'next' || dest === 'end') return;
-          // dest is "q-<uid>" — skip it if the current selection doesn't include it
-          if (!triggeredDests.has(dest)) {
-            const destId = dest.startsWith('q-') ? dest.slice(2) : dest;
-            skipped.add(destId);
+          const destId = dest.startsWith('q-') ? dest.slice(2) : dest;
+          possibleDests.add(destId);
+          if (i === selectedOptIdx) {
+            reachableDests.add(destId);
           }
         });
       });
-
-      // Also: if the triggered option explicitly lists specific destinations,
-      // any question that is ONLY reachable via other options (not "next" or
-      // the triggered option's dests) should also be skipped.
-      // The loop above handles this — we skip anything not in triggeredDests.
     });
 
+    const skipped = new Set();
+    possibleDests.forEach(destId => {
+      if (!reachableDests.has(destId)) skipped.add(destId);
+    });
     return skipped;
   }, [branches, sectionConfig, indexToField, form, branchingReady]);
 
