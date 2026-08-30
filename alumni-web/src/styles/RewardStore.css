@@ -30,6 +30,20 @@
     scrollbar-gutter: stable;
     overflow-x: clip;
   }
+
+  /* Fallback for browsers that don't support `scrollbar-gutter` (e.g. Safari
+     versions before 18.2 / macOS Sequoia 15.2, Dec 2024) — on those browsers
+     the rule above is silently ignored, so the scrollbar track isn't
+     reserved and content can still shift. Forcing `overflow-y: scroll`
+     keeps the track always present as an equivalent fallback, achieving the
+     same "never shift" goal without any manual offset. Browsers that DO
+     support scrollbar-gutter are excluded via @supports so they keep using
+     the primary rule above unchanged. */
+  @supports not (scrollbar-gutter: stable) {
+    .rewards-store-content {
+      overflow-y: scroll;
+    }
+  }
 }
 
 .rewards-header {
