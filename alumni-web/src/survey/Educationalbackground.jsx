@@ -46,8 +46,19 @@ const DEFAULT_LABELS = {
   board_exam_result:   'Results',
 };
 
+// Must match, position-for-position, the exact order of questions saved by
+// SuperAdmin for the "Educational Background" section (College). That saved
+// list has 12 questions and does NOT include a separate "other_degree"
+// question (it's a UI-only sub-field shown when degree_program === "Other"),
+// so it must not occupy a slot here either. Leaving it in shifts every
+// subsequent field mapping one position out of alignment with the real
+// config array, which both (a) breaks branching detection for
+// licensure_reviewing and (b) causes applyConfig() to apply the WRONG
+// admin question's label/options to distinction, post_grad_plans,
+// licensure_reviewing, licensure_plans, etc. — the exact "formatting
+// corruption from Distinction onward" symptom.
 const INDEX_TO_FIELD = [
-  'degree_program', 'other_degree', 'reason_for_course', 'year_graduated',
+  'degree_program', 'reason_for_course', 'year_graduated',
   'distinction', 'post_grad_plans', 'post_grad_course', 'licensure_reviewing',
   'licensure_plans', 'licensure_reason', 'board_exam_name', 'board_exam_date',
   'board_exam_result',
