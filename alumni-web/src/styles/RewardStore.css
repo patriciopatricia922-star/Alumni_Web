@@ -130,7 +130,7 @@
 @media (min-width: 768px) {
   .back-button {
     gap: 15px;
-    margin-top: calc(clamp(2px, 0.4vh, 6px) + 22px);
+    margin-top: calc(clamp(2px, 0.4vh, 6px) + 32px);
     margin-left: -65px;
   }
 }
