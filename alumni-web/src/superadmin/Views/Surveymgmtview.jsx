@@ -68,6 +68,16 @@ export default function SurveyMgmtView({
     }
   }, [status]);
 
+  // Resolves a branching "go to" value (e.g. "next", "end", or "q-<id>")
+  // into a short human-readable label, used to render an explicit
+  // "currently selected" readout next to each branching select.
+  const getBranchDestinationLabel = (val) => {
+    if (val === "next") return "Next question";
+    if (val === "end") return "End of form";
+    const dest = allQuestions.find(d => `q-${d.id}` === val);
+    return dest ? `${dest.sectionTitle} → ${dest.label}` : val;
+  };
+
   const formatSectionTitle = (title) => {
     if (title && title.length > 25) {
       const words = title.split(" ");
@@ -237,6 +247,10 @@ export default function SurveyMgmtView({
                           {section.questions.map((q, qIdx) => {
                             const key = `q-${q.id}`;
                             const domId = `q-${targetSectionIdx}-${qIdx}`;
+                            const defaultBranchVal = branches[key];
+                            const defaultSelectVal = Array.isArray(defaultBranchVal)
+                              ? defaultBranchVal
+                              : defaultBranchVal ? [defaultBranchVal] : ["next"];
                             return (
                               <div
                                 key={key}
@@ -279,6 +293,7 @@ export default function SurveyMgmtView({
                                         <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                         <select
                                           multiple
+                                          className={`branch-goto-select${selectVal.length === 1 && selectVal[0] === "next" ? "" : " branch-goto-custom"}`}
                                           value={selectVal}
                                           onChange={e => {
                                             const vals = Array.from(e.target.selectedOptions, o => o.value);
@@ -286,7 +301,7 @@ export default function SurveyMgmtView({
                                           }}
                                           style={{
                                             padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                            border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                            fontSize: "0.78rem",
                                             width: "160px", maxWidth: "160px", height: "70px",
                                           }}
                                         >
@@ -301,6 +316,13 @@ export default function SurveyMgmtView({
                                         <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
                                           Hold Ctrl / Cmd to select multiple
                                         </div>
+                                        <div className="branch-goto-summary" style={{ flexBasis: "100%" }}>
+                                          {selectVal.map(v => (
+                                            <span key={v} className="branch-goto-chip">
+                                              {getBranchDestinationLabel(v)}
+                                            </span>
+                                          ))}
+                                        </div>
                                       </div>
                                     );
                                   })
@@ -313,17 +335,15 @@ export default function SurveyMgmtView({
                                     <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
                                     <select
                                       multiple
-                                      value={(() => {
-                                        const v = branches[key];
-                                        return Array.isArray(v) ? v : v ? [v] : ["next"];
-                                      })()}
+                                      className={`branch-goto-select${defaultSelectVal.length === 1 && defaultSelectVal[0] === "next" ? "" : " branch-goto-custom"}`}
+                                      value={defaultSelectVal}
                                       onChange={e => {
                                         const vals = Array.from(e.target.selectedOptions, o => o.value);
                                         setBranches(prev => ({ ...prev, [key]: vals }));
                                       }}
                                       style={{
                                         padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                        border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                        fontSize: "0.78rem",
                                         width: "160px", maxWidth: "160px", height: "70px",
                                       }}
                                     >
@@ -337,6 +357,13 @@ export default function SurveyMgmtView({
                                     </select>
                                     <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
                                       Hold Ctrl / Cmd to select multiple
+                                    </div>
+                                    <div className="branch-goto-summary" style={{ flexBasis: "100%" }}>
+                                      {defaultSelectVal.map(v => (
+                                        <span key={v} className="branch-goto-chip">
+                                          {getBranchDestinationLabel(v)}
+                                        </span>
+                                      ))}
                                     </div>
                                   </div>
                                 )}
