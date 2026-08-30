@@ -121,20 +121,17 @@
   transition: opacity 0.15s ease;
 }
 
-/* ── Desktop-only: reproduce Announcements' .ann-back positioning values
-   (gap, position, top offset, margin-left) on RewardStore's existing
-   .back-button class, now that it sits as an independent sibling rather
-   than inside a shared flex row — matching Announcements' structure where
-   the back button is in normal flow, pulled left via a negative margin
-   with a small top offset. Mobile is untouched; the button's inline style
-   (isMobile branch) keeps the previous position/top/marginLeft exactly as
-   they were. ── */
+/* ── Desktop-only: reproduce Profile's .prof-back positioning values
+   (gap, margin-top, margin-left) on RewardStore's existing .back-button
+   class. Profile's back button sits in normal flow with no position/top
+   offset — pulled left via a negative margin only. Mobile is untouched;
+   the button's inline style (isMobile branch) keeps the previous
+   position/top/marginLeft exactly as they were. ── */
 @media (min-width: 768px) {
   .back-button {
     gap: 15px;
-    position: relative;
-    top: 9.5px;
-    margin-left: -29px;
+    margin-top: calc(clamp(2px, 0.4vh, 6px) + 1px);
+    margin-left: -65px;
   }
 }
 
