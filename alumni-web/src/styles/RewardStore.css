@@ -133,7 +133,7 @@
   .back-button {
     gap: 15px;
     position: relative;
-    top: -0.5px;
+    top: 9.5px;
     margin-left: -19px;
   }
 }
