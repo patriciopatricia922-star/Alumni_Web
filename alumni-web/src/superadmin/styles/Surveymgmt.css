@@ -503,61 +503,6 @@ body {
   font-family: "Lexend", sans-serif;
 }
 
-/* ── Branching "Go to" select — visibility improvement ──────────────────
-   Applies to the multi-select destination pickers inside the branching
-   panel (used identically for College and SHS surveys). The native
-   multi-select highlight is too faint to read at a glance, so we:
-   1) give the select itself a clear border that changes color once a
-      non-default destination is chosen, and
-   2) render an explicit chip readout of the current selection(s) below
-      the select, since relying on the native highlight alone is not
-      reliable across browsers.
-   No layout, sizing, or functional behavior is changed. */
-.branch-goto-select {
-  border: 1.5px solid #d1d5db;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.branch-goto-select:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-}
-
-/* Distinct border once the destination differs from the default
-   "Next question" flow, so a customized branch is noticeable at a glance. */
-.branch-goto-select.branch-goto-custom {
-  border-color: #4f46e5;
-}
-
-/* Strengthen the selected-option highlight itself where the browser
-   supports styling option:checked (Chrome/Edge/Firefox). Falls back
-   gracefully to the native highlight elsewhere. */
-.branch-goto-select option:checked {
-  background: linear-gradient(0deg, #4f46e5 0%, #4f46e5 100%);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* Chip readout showing the currently selected destination(s) in plain
-   text, so the selection is understandable without reading the select. */
-.branch-goto-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.branch-goto-chip {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: #4f46e5;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  border-radius: 999px;
-  padding: 0.15rem 0.55rem;
-  white-space: nowrap;
-}
-
 /* ============================ TOAST NOTIFICATION STYLES ============================ */
 .sm-toast {
   display: inline-flex;
