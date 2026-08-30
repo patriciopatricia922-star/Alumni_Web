@@ -78,6 +78,9 @@ const computeFormPct = (form) => {
   }
   if (form.licensure_reviewing === 'No') {
     required.push('licensure_plans', 'licensure_reason');
+    if (form.licensure_plans === 'Already taken') {
+      required.push('board_exam_name', 'board_exam_date', 'board_exam_result');
+    }
   }
   const SECTION_BASE = ((CURRENT_SECTION - 1) / TOTAL_SECTIONS) * 100;
   const SECTION_CAP  = (CURRENT_SECTION / TOTAL_SECTIONS) * 100;
@@ -320,6 +323,11 @@ const EducationalBackground = () => {
     } else if (form.licensure_reviewing === 'No') {
       if (shouldShowField('licensure_plans') && !form.licensure_plans)               e.add('licensure_plans');
       if (shouldShowField('licensure_reason') && !form.licensure_reason.trim())      e.add('licensure_reason');
+      if (form.licensure_plans === 'Already taken') {
+        if (shouldShowField('board_exam_name') && !form.board_exam_name.trim())      e.add('board_exam_name');
+        if (shouldShowField('board_exam_date') && !form.board_exam_date)             e.add('board_exam_date');
+        if (shouldShowField('board_exam_result') && !form.board_exam_result)         e.add('board_exam_result');
+      }
     }
     return e;
   };
