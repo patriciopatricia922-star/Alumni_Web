@@ -28,9 +28,9 @@ const supabase = createClient(
 // DEPARTMENT METADATA — maps department codes to display info
 // ============================================================================
 const DEPARTMENT_META = {
-  SECA: { key: 'seca', name: 'School of Engineering and Computer Studies',    color: 'blue'   },
-  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy', color: 'amber'  },
-  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',        color: 'violet' },
+  SECA: { key: 'seca', name: 'School of Engineering, Computer, and Architecture',    color: 'blue'   },
+  SBMA: { key: 'sbma', name: 'School of Business Management and Accountancy',        color: 'amber'  },
+  SASE: { key: 'sase', name: 'School of Arts, Sciences and Education',               color: 'violet' },
 };
 
 // ============================================================================
