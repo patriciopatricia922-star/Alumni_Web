@@ -36,8 +36,8 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
         // every image — gallery pick, native camera photo, or in-app
         // camera capture — before sending it for OCR. This does not change
         // OCR logic/thresholds/validation, only what bytes reach it.
-        const normalizedFile = await normalizeImageForOCR(imageFile);
-        const result = await verifyAlumniID(normalizedFile);
+        const { file: normalizedFile, meta: clientMeta } = await normalizeImageForOCR(imageFile);
+        const result = await verifyAlumniID(normalizedFile, clientMeta);
         if (result.verified) {
           setStatus("verified");
           setExtractedData(result.extracted);
