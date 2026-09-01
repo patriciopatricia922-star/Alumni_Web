@@ -234,6 +234,14 @@ body {
   width: 100%;
 }
 
+/* ---- Certification Status chart: prevent the last data point's dot ----
+   from being clipped by the SVG's default overflow:hidden when the point
+   sits at (or very near) the plot's right edge. Scoped to this one chart
+   only via .ra-cert-chart so no other analytics charts are affected. */
+.ra-cert-chart .recharts-surface {
+  overflow: visible;
+}
+
 @media (max-width: 900px) {
   .ra-content {
     padding: 24px 20px;

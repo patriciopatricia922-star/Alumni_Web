@@ -639,15 +639,26 @@ const ResponseAnalyticsView = ({
 
               {isSectionVisible("certification-achievements") && alumniType !== 'shs' && (
                 <div className="ra-chart-single">
-                  <div className="ra-chart-inner">
+                  <div className="ra-chart-inner ra-cert-chart">
                     <h3 className="ra-chart-title">Certification Status</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <LineChart data={hasCertData ? stats.certification : [{ status: 'No Data', count: 1 }]}>
+                      <LineChart
+                        data={hasCertData ? stats.certification : [{ status: 'No Data', count: 1 }]}
+                        margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="status" />
                         <YAxis />
                         <Tooltip />
-                        <Line type="monotone" dataKey="count" stroke="#F59E0B" strokeWidth={3} />
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="#F59E0B"
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: "#F59E0B", stroke: "#F59E0B", strokeWidth: 1 }}
+                          activeDot={{ r: 6 }}
+                          isAnimationActive={false}
+                        />
                       </LineChart>
                     </ChartWithResponsiveContainer>
                   </div>
