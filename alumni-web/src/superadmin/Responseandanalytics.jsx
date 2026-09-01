@@ -80,10 +80,9 @@ const getAgeBucket = (birthday) => {
     age -= 1;
   }
   if (age <= 24) return '18-24';
-  if (age <= 29) return '25-29';
-  if (age <= 34) return '30-34';
-  if (age <= 39) return '35-39';
-  return '40+';
+  if (age <= 34) return '25-34';
+  if (age <= 44) return '35-44';
+  return '45+';
 };
 
 const extractYear = (value) => {
