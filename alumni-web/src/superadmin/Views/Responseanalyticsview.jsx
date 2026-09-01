@@ -658,10 +658,10 @@ const ResponseAnalyticsView = ({
                         margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="status" />
+                        <XAxis dataKey="status" tick={false} />
                         <YAxis />
                         <Tooltip />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: 15 }} />
                         <Line
                           type="monotone"
                           dataKey="withCertification"
