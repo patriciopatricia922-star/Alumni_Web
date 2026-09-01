@@ -252,7 +252,7 @@ const AdminPredictiveAnalytics = () => {
             onClick={handleRefresh}
             disabled={refreshing}
           >
-            {refreshing ? 'Updating predictions…' : '↻ Refresh Predictions'}
+            {refreshing ? 'Updating Predictions…' : '↻ Refresh Predictions'}
           </button>
         </div>
       }
