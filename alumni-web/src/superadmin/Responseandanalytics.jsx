@@ -122,19 +122,29 @@ const resolveEmploymentStatus = (empData) => {
 
 // ============================ RESILIENT RATING KEY LOOKUP ============================
 // Root-cause fix for the "Work Ethics / Professionalism" 0/5 bug:
-// the stored JSONB key for this specific rating does not match any of the
-// snake_case/camelCase/Title-Case variants the other rating fields rely on.
-// Rather than guessing yet another literal key name, this normalizes every
-// key actually present on the ratings object (lowercased, punctuation and
-// whitespace stripped) and matches it against the same normalized target.
-// This reads whatever key the database actually uses — it does not rename,
-// move, or write anything back to the database.
+// The actual stored JSONB key for this rating is
+//   "Work Ethics/Professionalism Skills"
+// (no spaces around the slash, plus a trailing " Skills" — confirmed against
+// a real survey_progress.skills_competencies_data.skill_ratings row), which
+// does not match the UI label "Work Ethics / Professionalism" nor any of the
+// snake_case/camelCase guesses previously checked. The other four ratings
+// happened to work because their stored keys are an exact character match
+// for their UI label + " Skills" (e.g. "Leadership Skills").
+// This helper is a safety net for any further key drift: it tokenizes the
+// target label and matches it against a normalized (lowercased,
+// punctuation/whitespace-stripped) version of each key actually present on
+// the ratings object, so trailing words like "Skills" or missing/extra
+// spacing no longer break the lookup. It only reads the existing key — it
+// never renames or writes anything back to the database.
 const findRatingByNormalizedKey = (ratingsObj, targetLabel) => {
   if (!ratingsObj || typeof ratingsObj !== 'object') return undefined;
   const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
-  const target = normalize(targetLabel);
+  const targetTokens = targetLabel.toLowerCase().split(/\s+/).filter(Boolean);
   for (const key of Object.keys(ratingsObj)) {
-    if (normalize(key) === target) return ratingsObj[key];
+    const normalizedKey = normalize(key);
+    if (targetTokens.every((tok) => normalizedKey.includes(tok))) {
+      return ratingsObj[key];
+    }
   }
   return undefined;
 };
@@ -191,13 +201,16 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
   const workEthicsRating = isShs
     ? (skillRatings.work_ethics || 0)
     : (
+        // Confirmed actual stored key (no spaces around "/", trailing " Skills"),
+        // matching the same "<Label> Skills" pattern the other four ratings use.
+        skillRatings['Work Ethics/Professionalism Skills'] ||
         skillRatings.work_ethics_professionalism ||
         skillRatings.workEthicsProfessionalism ||
         skillRatings.work_ethics ||
         skillRatings.workEthics ||
         skillRatings['Work Ethics / Professionalism'] ||
         // Fallback: match whatever key the DB actually uses for this rating
-        // (handles capitalization/spacing/naming-convention mismatches)
+        // (handles capitalization/spacing/naming-convention/suffix mismatches)
         // without touching the DB or any other rating's value.
         findRatingByNormalizedKey(skillRatings, 'work ethics professionalism') ||
         findRatingByNormalizedKey(skillRatings, 'work ethics') ||
