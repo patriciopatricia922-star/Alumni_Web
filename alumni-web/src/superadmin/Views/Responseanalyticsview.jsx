@@ -523,6 +523,17 @@ const ResponseAnalyticsView = ({
   const hasAgeData          = stats.ageDistribution?.length     > 0;
   const hasBoardExamData    = stats.boardExam?.length           > 0;
   const hasCertData         = stats.certification?.length       > 0;
+  // Certification Status chart: pull the two category counts out of the
+  // existing `stats.certification` array (still used elsewhere/unchanged)
+  // and reshape them into two constant-value series so "With Certification"
+  // and "No Certification" render as two distinct, clearly colored lines
+  // instead of one line connecting two unrelated categories.
+  const certWithCount = stats.certification?.find(d => d.status === 'With Certification')?.count || 0;
+  const certNoCount   = stats.certification?.find(d => d.status === 'No Certification')?.count   || 0;
+  const certChartData = [
+    { status: 'With Certification', withCertification: certWithCount, noCertification: certNoCount },
+    { status: 'No Certification',   withCertification: certWithCount, noCertification: certNoCount },
+  ];
   const hasEmploymentData   = stats.employment?.length          > 0;
   const hasSalaryData       = stats.salary?.length              > 0;
   const hasTimeToJobData    = stats.timeToJob?.length           > 0;
@@ -643,19 +654,31 @@ const ResponseAnalyticsView = ({
                     <h3 className="ra-chart-title">Certification Status</h3>
                     <ChartWithResponsiveContainer height={250}>
                       <LineChart
-                        data={hasCertData ? stats.certification : [{ status: 'No Data', count: 1 }]}
+                        data={hasCertData ? certChartData : [{ status: 'No Data', withCertification: 1, noCertification: 1 }]}
                         margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="status" />
                         <YAxis />
                         <Tooltip />
+                        <Legend />
                         <Line
                           type="monotone"
-                          dataKey="count"
+                          dataKey="withCertification"
+                          name="With Certification"
                           stroke="#F59E0B"
                           strokeWidth={3}
                           dot={{ r: 4, fill: "#F59E0B", stroke: "#F59E0B", strokeWidth: 1 }}
+                          activeDot={{ r: 6 }}
+                          isAnimationActive={false}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="noCertification"
+                          name="No Certification"
+                          stroke="#2563EB"
+                          strokeWidth={3}
+                          dot={{ r: 4, fill: "#2563EB", stroke: "#2563EB", strokeWidth: 1 }}
                           activeDot={{ r: 6 }}
                           isAnimationActive={false}
                         />
