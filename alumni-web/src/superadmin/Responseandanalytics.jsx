@@ -66,6 +66,20 @@ const getRatingValue = (feedback) => {
   if (satisfactionMap[raw]) return satisfactionMap[raw];
   const numeric = Number(raw);
   if (!isNaN(numeric) && numeric >= 1 && numeric <= 5) return numeric;
+  // Resilient fallback (same normalized-key technique used above for
+  // Work Ethics/Professionalism): if the stored satisfaction text is a
+  // close variant of the labels above — extra punctuation/whitespace, a
+  // leading number like "1 - Very Dissatisfied", different casing — an
+  // exact-string match misses it and the response is silently dropped
+  // instead of counted. This only reads the existing value; it never
+  // invents or hard-codes a rating.
+  const normalized = raw.replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (satisfactionMap[normalized]) return satisfactionMap[normalized];
+  const leadingNum = raw.match(/^\s*(\d)\b/);
+  if (leadingNum) {
+    const n = Number(leadingNum[1]);
+    if (n >= 1 && n <= 5) return n;
+  }
   return null;
 };
 
