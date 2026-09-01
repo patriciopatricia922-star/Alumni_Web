@@ -60,7 +60,8 @@ const AdminPredictiveAnalytics = () => {
         const { data, error } = await supabase
           .from('predictions')
           .select('*')
-          .order('year', { ascending: true });
+          .order('year', { ascending: true })
+          .order('program', { ascending: true });
         if (error) throw error;
         setPredictions(data || []);
       } catch (err) {
@@ -98,11 +99,9 @@ const AdminPredictiveAnalytics = () => {
       byDept[row.department].push(row);
     });
     return Object.entries(byDept).map(([dept, rows]) => {
-      const sorted    = [...rows].sort((a, b) => a.year - b.year);
-      const current   = Math.round(sorted[0].current_rate ?? sorted[0].predicted_rate ?? 0);
-      const predicted = Math.round(sorted[sorted.length - 1].predicted_rate);
-      const meta      = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
+      const meta = DEPARTMENT_META[dept] || { key: dept.toLowerCase(), name: dept, color: 'blue' };
 
+      // Program-level cards.
       const programsList = [...new Set(rows.map((r) => r.program))];
       const programs = programsList.map((prog) => {
         const progRows      = rows.filter((r) => r.program === prog).sort((a, b) => a.year - b.year);
@@ -115,6 +114,22 @@ const AdminPredictiveAnalytics = () => {
           change:    progPredicted - progCurrent,
         };
       });
+
+      // Department/school card — aggregated across this department's programs.
+      //
+      // NOTE: a response-weighted aggregate (weighting each program by its
+      // alumni/cohort count) would be the more representative figure, but the
+      // `predictions` table does not currently store a cohort/respondent count
+      // per row (only program, department, year, predicted_rate, current_rate).
+      // Without that field, weighting by response count can't be done correctly
+      // here, so this uses an equal-weighted mean across the department's
+      // programs instead of inventing a proxy weight.
+      const current   = Math.round(
+        programs.reduce((sum, p) => sum + p.current, 0) / programs.length
+      );
+      const predicted = Math.round(
+        programs.reduce((sum, p) => sum + p.predicted, 0) / programs.length
+      );
 
       return {
         key:      meta.key,
@@ -185,7 +200,8 @@ const AdminPredictiveAnalytics = () => {
         const { data: newData } = await supabase
           .from('predictions')
           .select('*')
-          .order('year', { ascending: true });
+          .order('year', { ascending: true })
+          .order('program', { ascending: true });
         setPredictions(newData || []);
       } else {
         setRefreshMsg('Failed: ' + (data.message ?? 'Unknown error'));
