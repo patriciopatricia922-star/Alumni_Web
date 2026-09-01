@@ -140,7 +140,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   };
 
   const Field = ({ label, value }) => (
-    <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+    <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px", borderRadius: 8, fontSize: 13 }}>
       <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 3 }}>{label}</span>
       <strong style={{ color: "#111827" }}>{value || "N/A"}</strong>
     </div>
@@ -155,7 +155,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   );
 
   const FullBlock = ({ label, children }) => (
-    <div style={{ background: "#fff5e7", padding: "10px 12px", borderRadius: 8, fontSize: 13 }}>
+    <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px 12px", borderRadius: 8, fontSize: 13 }}>
       <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 6 }}>{label}</span>
       {children}
     </div>
@@ -319,7 +319,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 label={isShs ? "Is your current job related to your strand?" : "Job Related to Degree"} 
                 value={data.jobRelatedToDegree} 
               />
-              <div style={{ background: "#fff5e7", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px", borderRadius: 8, fontSize: 13 }}>
                 <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
                   {isShs ? "Current Employment Status" : "Employment Status"}
                 </span>
@@ -381,7 +381,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               </div>
             )}
             <div style={{ marginBottom: 10 }}>
-              <div style={{ background: "#fff5e7", borderRadius: 8, padding: "12px", fontSize: 13 }}>
+              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: 8, padding: "12px", fontSize: 13 }}>
                 <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
                   How well did NU Dasma prepare you? (1 = Lowest, 5 = Highest)
                 </span>

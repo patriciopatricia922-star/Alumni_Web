@@ -120,6 +120,25 @@ const resolveEmploymentStatus = (empData) => {
   return rawStatus || 'Not specified';
 };
 
+// ============================ RESILIENT RATING KEY LOOKUP ============================
+// Root-cause fix for the "Work Ethics / Professionalism" 0/5 bug:
+// the stored JSONB key for this specific rating does not match any of the
+// snake_case/camelCase/Title-Case variants the other rating fields rely on.
+// Rather than guessing yet another literal key name, this normalizes every
+// key actually present on the ratings object (lowercased, punctuation and
+// whitespace stripped) and matches it against the same normalized target.
+// This reads whatever key the database actually uses — it does not rename,
+// move, or write anything back to the database.
+const findRatingByNormalizedKey = (ratingsObj, targetLabel) => {
+  if (!ratingsObj || typeof ratingsObj !== 'object') return undefined;
+  const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const target = normalize(targetLabel);
+  for (const key of Object.keys(ratingsObj)) {
+    if (normalize(key) === target) return ratingsObj[key];
+  }
+  return undefined;
+};
+
 // ============================ SINGLE RESPONSE EXTRACTION ============================
 // ← SYNCED: now SHS-aware, mirroring Admin's extractRespondentData exactly.
 const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
@@ -171,7 +190,19 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
 
   const workEthicsRating = isShs
     ? (skillRatings.work_ethics || 0)
-    : (skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0);
+    : (
+        skillRatings.work_ethics_professionalism ||
+        skillRatings.workEthicsProfessionalism ||
+        skillRatings.work_ethics ||
+        skillRatings.workEthics ||
+        skillRatings['Work Ethics / Professionalism'] ||
+        // Fallback: match whatever key the DB actually uses for this rating
+        // (handles capitalization/spacing/naming-convention mismatches)
+        // without touching the DB or any other rating's value.
+        findRatingByNormalizedKey(skillRatings, 'work ethics professionalism') ||
+        findRatingByNormalizedKey(skillRatings, 'work ethics') ||
+        0
+      );
 
   return {
     id: row.id,
