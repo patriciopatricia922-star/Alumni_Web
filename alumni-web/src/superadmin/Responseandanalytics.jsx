@@ -358,10 +358,32 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     if (examResult.toLowerCase().includes('pass'))      boardExam.Passed++;
     else if (examResult.toLowerCase().includes('fail')) boardExam.Failed++;
 
-    const hasCertification = safeText(certificationData.certiport_passer) === 'Yes' ||
-                             (certificationData.certifications && certificationData.certifications.length > 0);
-    if (hasCertification)                                   certification['With Certification']++;
-    else if (certificationData.certiport_passer !== null)   certification['No Certification']++;
+    // ── Certification Status aggregation ──────────────────────────────────
+    // Root cause of the missing "No Certification" bucket: this used to gate
+    // the count behind `certificationData.certiport_passer !== null`, an
+    // unrelated field. Any real response where `certiport_passer` happened to
+    // be null (even though `certifications` was a valid, answered empty
+    // array `[]`) was silently skipped from BOTH buckets — it never reached
+    // "With Certification" (no certs) and never reached "No Certification"
+    // either (blocked by the null check). certiport_passer is a separate,
+    // Certiport-specific field and is intentionally left untouched/unused
+    // here; only `certifications` decides this chart's bucket.
+    //
+    // - `certifications` is a real array (answered) with 1+ non-blank entries
+    //     → "With Certification"
+    // - `certifications` is a real array (answered) but empty, or contains
+    //   only blank strings → "No Certification"
+    // - `certifications` is missing/null (section not answered) → not
+    //   counted in either bucket, consistent with how other charts in this
+    //   file (board exam, salary, time-to-job, etc.) skip genuinely blank
+    //   survey answers rather than assuming a value.
+    if (Array.isArray(certificationData.certifications)) {
+      const nonBlankCerts = certificationData.certifications.filter(
+        (c) => safeText(c) !== ''
+      );
+      if (nonBlankCerts.length > 0) certification['With Certification']++;
+      else                          certification['No Certification']++;
+    }
 
     const resolvedStatus = resolveEmploymentStatus(employmentData);
     if (employment.hasOwnProperty(resolvedStatus)) {
