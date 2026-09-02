@@ -611,6 +611,10 @@ const ResponseAnalyticsView = ({
         </div>
 
         <div className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}>
+          {stats.totalResponses === 0 ? (
+            <div className="ra-empty-state">No records found.</div>
+          ) : (
+            <>
           {activeTab === "overview" && (
             <div className="ra-charts-container">
               {isSectionVisible("personal-information") && (
@@ -912,6 +916,8 @@ const ResponseAnalyticsView = ({
                 <ResponseModal data={selectedResponse} onClose={() => setSelectedResponse(null)} alumniType={alumniType} />
               )}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>

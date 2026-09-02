@@ -505,6 +505,25 @@ const LoadingScreen = ({ message, isError = false }) => {
   );
 };
 
+// ============================ EMPTY STATS SHAPE ============================
+// Reused whenever there are no completed responses to process, so switching
+// alumniType (SHS ↔ College) from a department that has data to one that
+// doesn't correctly clears out the previous department's stats/respondents
+// instead of leaving stale charts/table data on screen.
+const EMPTY_STATS = {
+  totalResponses:    0,
+  avgSatisfaction:   0,
+  satisfactionScores: [],
+  genderDistribution: [],
+  ageDistribution:   [],
+  boardExam:         [],
+  certification:     [],
+  employment:        [],
+  salary:            [],
+  timeToJob:         [],
+  skills:            [],
+};
+
 // ============================ MAIN COMPONENT ============================
 // ← unchanged: component name ResponseandAnalytics preserved (Super Admin naming convention)
 const ResponseandAnalytics = () => {
@@ -518,20 +537,9 @@ const ResponseandAnalytics = () => {
   const [selectedResponse,  setSelectedResponse]  = useState(null);
   const [loading,           setLoading]            = useState(true);
   const [error,             setError]              = useState(null);
-  const [stats,             setStats]              = useState({
-    totalResponses:    0,
-    avgSatisfaction:   0,
-    satisfactionScores: [],
-    genderDistribution: [],
-    ageDistribution:   [],
-    boardExam:         [],
-    certification:     [],
-    employment:        [],
-    salary:            [],
-    timeToJob:         [],
-    skills:            [],
-  });
+  const [stats,             setStats]              = useState(EMPTY_STATS);
   const [respondents, setRespondents] = useState([]);
+
 
   useEffect(() => {
     if (focus === "employment_status") setActiveTab("overview");
@@ -582,7 +590,8 @@ const ResponseandAnalytics = () => {
         if (fetchError) throw fetchError;
 
         if (!data || data.length === 0) {
-          setError('No survey responses found.');
+          setStats(EMPTY_STATS);
+          setRespondents([]);
           setLoading(false);
           return;
         }
@@ -595,7 +604,8 @@ const ResponseandAnalytics = () => {
         });
 
         if (completedSurveys.length === 0) {
-          setError('No completed survey responses found.');
+          setStats(EMPTY_STATS);
+          setRespondents([]);
           setLoading(false);
           return;
         }

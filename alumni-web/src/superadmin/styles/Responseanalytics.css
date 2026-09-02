@@ -188,6 +188,18 @@ body {
   flex-direction: column;
 }
 
+/* ---- Empty state: no completed responses yet ---- */
+.ra-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px;
+  color: #6A7282;
+}
+
 /* ============================ CHARTS ============================ */
 .ra-charts-container {
   display: flex;
