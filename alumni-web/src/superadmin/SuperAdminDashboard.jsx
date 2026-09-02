@@ -90,6 +90,32 @@ const safeParse = (value) => {
   try { return JSON.parse(value); } catch { return null; }
 };
 
+// ============================ MOST IN-DEMAND SKILLS: CATEGORY NORMALIZATION ============================
+// Root-cause fix: "Most In-Demand Skills" must be derived from
+// survey_progress.skills_competencies_data.useful_competencies, which only
+// ever contains the five canonical competency categories below — but the
+// exact string stored per alumnus can drift (e.g. "Work Ethics/Professionalism
+// Skills" vs "Work Ethics/Professionalism", trailing "Skills" suffixes,
+// spacing/punctuation differences around "&"/"/"). This normalizer collapses
+// any such variant to one canonical label so the same competency is never
+// double-counted as two categories, and legitimate values are never dropped
+// just because the stored string doesn't match a label exactly. It only
+// reads/labels existing values — it never invents or discards a category.
+const SKILL_CATEGORY_MATCHERS = [
+  { label: 'Communication Skills',              test: (n) => n.includes('communication') },
+  { label: 'Information & Technology Skills',   test: (n) => n.includes('information') && n.includes('technology') },
+  { label: 'Leadership Skills',                 test: (n) => n.includes('leadership') },
+  { label: 'Critical & Problem-Solving Skills', test: (n) => n.includes('critical') && (n.includes('problem') || n.includes('solving')) },
+  { label: 'Work Ethics / Professionalism',     test: (n) => n.includes('work') && (n.includes('ethic') || n.includes('professionalism')) },
+];
+
+const normalizeSkillCategory = (rawLabel) => {
+  if (!rawLabel || typeof rawLabel !== 'string') return null;
+  const normalized = rawLabel.toLowerCase().replace(/[^a-z]/g, '');
+  const match = SKILL_CATEGORY_MATCHERS.find((c) => c.test(normalized));
+  return match ? match.label : null;
+};
+
 // Ported from Admin: generic satisfaction computation helper, used for both
 // College (feedback_university_data) and SHS (shs_feedback_and_engagement_data).
 const computeSatisfaction = (rows, dataField, innerField = "satisfaction") => {
@@ -732,7 +758,7 @@ const SuperAdminDashboard = () => {
 
         const { data: surveyData } = await supabase
           .from('survey_progress')
-          .select('user_id, employment_information_data');
+          .select('user_id, employment_information_data, skills_competencies_data');
 
         const { data: userPrograms } = await supabase
           .from('users')
@@ -779,69 +805,37 @@ const SuperAdminDashboard = () => {
             .map(([name, value]) => ({ name, value }))
         );
 
+        // ── Most In-Demand Skills ─────────────────────────────────────────
+        // Correct source: survey_progress.skills_competencies_data.useful_competencies
+        // for college alumni. Counts how frequently each of the five canonical
+        // competency categories is reported as a "useful competency" across
+        // college alumni survey responses. Naming variants for the same
+        // category (see normalizeSkillCategory) are collapsed into one
+        // category rather than creating duplicates or being dropped. If no
+        // alumnus has recorded useful_competencies yet, skillCount stays
+        // empty and the chart renders its existing empty state — no
+        // fabricated skills or counts are introduced.
         const skillCount = {};
 
-        const { data: jobsData } = await supabase
-          .from('jobs')
-          .select('tags')
-          .eq('is_active', true);
-
-        jobsData?.forEach(job => {
-          if (!job.tags) return;
-          let tagsArray = [];
-          if (Array.isArray(job.tags)) {
-            tagsArray = job.tags;
-          } else if (typeof job.tags === 'string') {
-            try {
-              const p = JSON.parse(job.tags);
-              tagsArray = Array.isArray(p) ? p : [p];
-            } catch {
-              tagsArray = job.tags.split(',').map(t => t.trim());
-            }
-          }
-          tagsArray.forEach(tag => {
-            if (tag?.length > 0) {
-              const skill = tag.toLowerCase().trim();
-              skillCount[skill] = (skillCount[skill] || 0) + 1;
-            }
+        surveyData?.forEach(row => {
+          if (!collegeUserIds.has(row.user_id)) return;
+          const skillsParsed = safeParse(row.skills_competencies_data);
+          if (!skillsParsed) return;
+          const usefulCompetencies = Array.isArray(skillsParsed.useful_competencies)
+            ? skillsParsed.useful_competencies
+            : [];
+          usefulCompetencies.forEach(rawCategory => {
+            const category = normalizeSkillCategory(rawCategory);
+            if (!category) return;
+            skillCount[category] = (skillCount[category] || 0) + 1;
           });
         });
-
-        if (Object.keys(skillCount).length === 0) {
-          const { data: surveyEmpData } = await supabase
-            .from('survey_progress')
-            .select('user_id, employment_information_data');
-
-          surveyEmpData?.forEach(row => {
-            if (!collegeUserIds.has(row.user_id)) return;
-            const parsed = safeParse(row.employment_information_data);
-            if (!parsed) return;
-            const factors = parsed.job_factors || parsed.first_job_factors;
-            if (Array.isArray(factors)) {
-              factors.forEach(factor => {
-                if (factor && factor !== 'Other') {
-                  const skill = factor.toLowerCase().trim();
-                  skillCount[skill] = (skillCount[skill] || 0) + 1;
-                }
-              });
-            }
-          });
-        }
-
-        if (Object.keys(skillCount).length === 0) {
-          ['Leadership', 'Communication', 'Problem Solving', 'Teamwork',
-           'Project Management', 'Critical Thinking', 'Adaptability', 'Digital Literacy']
-            .forEach((skill, i, arr) => { skillCount[skill.toLowerCase()] = arr.length - i; });
-        }
 
         setInDemandSkillsData(
           Object.entries(skillCount)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 8)
-            .map(([name, count]) => ({
-              name: name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-              count,
-            }))
+            .map(([name, count]) => ({ name, count }))
         );
 
       } catch (err) {
