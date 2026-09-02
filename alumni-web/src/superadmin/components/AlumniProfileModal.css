@@ -223,6 +223,9 @@
 .apm-badge--active {
   background: rgba(142, 201, 47, 0.28);
   color: #4C4C4C;
+  /* Narrower badge width per request: reduced horizontal padding only.
+     Vertical padding, font, radius, and color are unchanged. */
+  padding: 2px 6px;
 }
 
 .apm-badge--inactive,

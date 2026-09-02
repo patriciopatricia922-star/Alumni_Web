@@ -24,6 +24,13 @@ const AlumniProfileModal = ({ alumni, onClose }) => {
   const statusClass = (value) =>
     (value ?? "").toLowerCase().replace(/[\s-]+/g, "-");
 
+  // Display-only helper: capitalizes the first letter for rendering.
+  // Does NOT touch the underlying status value/data source.
+  const capitalizeDisplay = (value) =>
+    typeof value === "string" && value.length > 0
+      ? value.charAt(0).toUpperCase() + value.slice(1)
+      : value;
+
   const detailItems = [
     {
       icon: <MdEmail size={18} color="#155DFC" />,
@@ -94,7 +101,7 @@ const AlumniProfileModal = ({ alumni, onClose }) => {
                   <span className="apm-detail-label">{item.label}</span>
                   {item.isBadge ? (
                     <span className={`apm-badge apm-badge--${statusClass(item.value)}`}>
-                      {item.value === "completed" ? "Completed" : item.value === "pending" ? "Pending" : item.value}
+                      {item.value === "completed" ? "Completed" : item.value === "pending" ? "Pending" : capitalizeDisplay(item.value)}
                     </span>
                   ) : (
                     <span className="apm-detail-value">{item.value}</span>
