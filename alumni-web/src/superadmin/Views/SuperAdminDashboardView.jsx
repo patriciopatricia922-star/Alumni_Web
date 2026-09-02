@@ -395,8 +395,8 @@ function CareerAlignmentChart({ data, title, subtitle, height = 300, navigateTo 
             wrapperStyle={{ fontSize: '12px' }}
             formatter={(value) => value === 'predicted' ? 'Predicted Rate' : 'Actual Rate'}
           />
-          <Bar dataKey="predicted" name="predicted" fill="#324D87" radius={[6, 6, 0, 0]} />
           <Bar dataKey="actual"    name="actual"    fill="#00BC7D" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="predicted" name="predicted" fill="#324D87" radius={[6, 6, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
