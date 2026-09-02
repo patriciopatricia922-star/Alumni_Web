@@ -31,15 +31,31 @@ const exportToCSV = (data, filename = 'survey-responses') => {
       return set;
     }, new Set())
   );
-  const escapeCell = (value) => {
+  // ---- Root cause of birthday showing as "########" or blank in Excel ----
+  // Every cell here is already wrapped in double quotes below, but CSV
+  // quoting only escapes the delimiter — it does NOT stop Excel's own
+  // auto-detection of date-shaped text when the file is opened. Excel still
+  // reads a quoted value like "2001-05-10" and silently converts it to an
+  // internal date serial number. If the column is too narrow for the
+  // reformatted date, Excel displays "########"; depending on locale/date
+  // system, some values fail that re-parse entirely and render blank
+  // instead. Wrapping ONLY the birthday column in Excel's text-literal
+  // formula syntax (="...") makes Excel keep the exact original string as
+  // plain text instead of re-typing it — the stored value itself, and every
+  // other column, are completely unchanged.
+  const escapeCell = (value, header) => {
     if (value === null || value === undefined) return '""';
     const str = Array.isArray(value) ? value.join('; ') : String(value);
-    return `"${str.replace(/"/g, '""')}"`;
+    const escaped = str.replace(/"/g, '""');
+    if (header === 'birthday' && str !== '') {
+      return `"=""${escaped}"""`;
+    }
+    return `"${escaped}"`;
   };
   const csvRows = [
-    headers.map(escapeCell).join(','),
+    headers.map((h) => escapeCell(h)).join(','),
     ...data.map((row) =>
-      headers.map((h) => escapeCell(row[h])).join(',')
+      headers.map((h) => escapeCell(row[h], h)).join(',')
     ),
   ];
   const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });

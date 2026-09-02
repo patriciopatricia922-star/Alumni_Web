@@ -162,6 +162,27 @@ const findRatingByNormalizedKey = (ratingsObj, targetLabel) => {
   return undefined;
 };
 
+// ============================ RESILIENT BIRTHDAY LOOKUP ============================
+// Root-cause fix for birthdays exporting as blank in the CSV: every other
+// field on `personal` that has known key variants (student_number/student_id,
+// contact_number/phone, street_address/address, zip_code/postal_code) already
+// checks multiple possible keys. `birthday` was the one exception that only
+// ever checked a single key (`personal.birthday`), so any record where the
+// stored key drifted (e.g. birth_date, date_of_birth, dateOfBirth, dob) was
+// silently read as blank even though the alumnus had actually answered it.
+// This only reads whatever key actually holds the value — it never invents,
+// reformats, or writes back a birthday.
+const getBirthdayValue = (personal) => {
+  if (!personal || typeof personal !== 'object') return '';
+  const direct = safeText(personal.birthday);
+  if (direct) return direct;
+  const fallback =
+    findRatingByNormalizedKey(personal, 'birth date') ??
+    findRatingByNormalizedKey(personal, 'date of birth') ??
+    findRatingByNormalizedKey(personal, 'dob');
+  return fallback !== undefined ? safeText(fallback) : '';
+};
+
 // ============================ SINGLE RESPONSE EXTRACTION ============================
 // ← SYNCED: now SHS-aware, mirroring Admin's extractRespondentData exactly.
 const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
@@ -239,7 +260,7 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     status: employmentStatus,
     studentNumber:            safeText(personal.student_number)   || safeText(personal.student_id)  || '',
     gender:                   safeText(personal.gender)           || '',
-    birthday:                 safeText(personal.birthday)         || '',
+    birthday:                 getBirthdayValue(personal),
     civilStatus:              safeText(personal.civil_status)     || '',
     contact:                  safeText(personal.contact_number)   || safeText(personal.phone) || '',
     streetAddress:            safeText(personal.street_address)   || safeText(personal.address) || '',
