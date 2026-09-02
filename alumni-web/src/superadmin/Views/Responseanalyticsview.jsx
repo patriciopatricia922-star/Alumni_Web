@@ -744,10 +744,10 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Top Skills</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <BarChart data={hasSkillsData ? stats.skills : [{ skill: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 80, bottom: 10 }}>
+                      <BarChart data={hasSkillsData ? stats.skills : [{ skill: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 140, bottom: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="skill" type="category" width={80} />
+                        <YAxis dataKey="skill" type="category" width={140} interval={0} />
                         <Tooltip />
                         <Bar dataKey="count" fill="#8B5CF6" />
                       </BarChart>
