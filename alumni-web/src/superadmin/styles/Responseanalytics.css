@@ -339,7 +339,7 @@ body {
 
 .ra-name-cell {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   justify-content: flex-start;
 }
