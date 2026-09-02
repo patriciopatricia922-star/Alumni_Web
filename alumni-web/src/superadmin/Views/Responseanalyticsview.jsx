@@ -764,7 +764,7 @@ const ResponseAnalyticsView = ({
                       <BarChart data={hasSatisfactionData ? stats.satisfactionScores : [{ score: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 60, bottom: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="score" type="category" tickFormatter={(v) => renderStars(parseInt(v))} width={60} />
+                        <YAxis dataKey="score" type="category" interval={0} tickFormatter={(v) => renderStars(parseInt(v))} width={60} />
                         <Tooltip />
                         <Bar dataKey="count" fill="#F97316" />
                       </BarChart>
