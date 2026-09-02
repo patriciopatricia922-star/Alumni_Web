@@ -353,6 +353,9 @@ body {
 .ra-avatar {
   width: 26px;
   height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  flex-shrink: 0;
   font-size: 12px;
   background: #dbeafe;
   color: #1d4ed8;
