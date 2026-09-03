@@ -116,6 +116,48 @@ const isInternshipSource = (rawValue) => {
 };
 
 // ============================================================================
+// SKILL CATEGORY MATCHERS
+// "Most In-Demand Skills" is derived from survey_progress.skills_competencies_data
+// .useful_competencies, which only ever contains the five canonical competency
+// categories below — but the exact string stored per alumnus can drift (e.g.
+// "Work Ethics/Professionalism Skills" vs "Work Ethics/Professionalism",
+// trailing "Skills" suffixes, spacing/punctuation differences around "&"/"/").
+// normalizeSkillCategory collapses any such variant to one canonical label so
+// the same competency is never double-counted as two categories, and
+// legitimate values are never dropped just because the stored string doesn't
+// match a label exactly.
+// ============================================================================
+const SKILL_CATEGORY_MATCHERS = [
+  { label: "Communication Skills", test: (n) => n.includes("communication") },
+  {
+    label: "Information & Technology Skills",
+    test: (n) => n.includes("information") && n.includes("technology"),
+  },
+  { label: "Leadership Skills", test: (n) => n.includes("leadership") },
+  {
+    label: "Critical & Problem-Solving Skills",
+    test: (n) =>
+      n.includes("critical") && (n.includes("problem") || n.includes("solving")),
+  },
+  {
+    label: "Work Ethics / Professionalism",
+    test: (n) =>
+      n.includes("work") && (n.includes("ethic") || n.includes("professionalism")),
+  },
+];
+
+// ============================================================================
+// normalizeSkillCategory — maps a raw useful_competencies string to its
+// canonical category label, or null if it doesn't match any known category.
+// ============================================================================
+const normalizeSkillCategory = (rawLabel) => {
+  if (!rawLabel || typeof rawLabel !== "string") return null;
+  const normalized = rawLabel.toLowerCase().replace(/[^a-z]/g, "");
+  const match = SKILL_CATEGORY_MATCHERS.find((c) => c.test(normalized));
+  return match ? match.label : null;
+};
+
+// ============================================================================
 // isNuBranch — checks if a post-grad institution string matches any NU campus
 // ============================================================================
 const isNuBranch = (rawValue) => {
@@ -1000,7 +1042,9 @@ const AdminDashboard = () => {
         // ── 2. Employment Status distribution (College only) ──────────────
         const { data: surveyData } = await supabase
           .from("survey_progress")
-          .select("user_id, employment_information_data");
+          .select(
+            "user_id, employment_information_data, skills_competencies_data",
+          );
 
         // Fetch user programs once more to filter to College rows only.
         // (Avoids a join — the users query above is already out of scope here.)
@@ -1062,81 +1106,36 @@ const AdminDashboard = () => {
         );
 
         // ── 3. In-Demand Skills ────────────────────────────────────────────
+        // Source: survey_progress.skills_competencies_data.useful_competencies
+        // for College alumni. Counts how frequently each of the five canonical
+        // competency categories is reported as a "useful competency" across
+        // College alumni survey responses, collapsing naming variants of the
+        // same category via normalizeSkillCategory. If no alumnus has recorded
+        // useful_competencies yet, skillCount stays empty and the chart renders
+        // its existing empty state.
         const skillCount = {};
 
-        const { data: jobsData } = await supabase
-          .from("jobs")
-          .select("tags")
-          .eq("is_active", true);
-
-        jobsData?.forEach((job) => {
-          if (!job.tags) return;
-          let tagsArray = [];
-          if (Array.isArray(job.tags)) {
-            tagsArray = job.tags;
-          } else if (typeof job.tags === "string") {
-            try {
-              const p = JSON.parse(job.tags);
-              tagsArray = Array.isArray(p) ? p : [p];
-            } catch {
-              tagsArray = job.tags.split(",").map((t) => t.trim());
-            }
-          }
-          tagsArray.forEach((tag) => {
-            if (tag?.length > 0) {
-              const skill = tag.toLowerCase().trim();
-              skillCount[skill] = (skillCount[skill] || 0) + 1;
-            }
+        surveyData?.forEach((row) => {
+          if (!collegeUserIds.has(row.user_id)) return;
+          const skillsParsed = safeParse(row.skills_competencies_data);
+          if (!skillsParsed) return;
+          const usefulCompetencies = Array.isArray(
+            skillsParsed.useful_competencies,
+          )
+            ? skillsParsed.useful_competencies
+            : [];
+          usefulCompetencies.forEach((rawCategory) => {
+            const category = normalizeSkillCategory(rawCategory);
+            if (!category) return;
+            skillCount[category] = (skillCount[category] || 0) + 1;
           });
         });
-
-        if (Object.keys(skillCount).length === 0) {
-          const { data: surveyEmpData } = await supabase
-            .from("survey_progress")
-            .select("user_id, employment_information_data");
-
-          surveyEmpData?.forEach((row) => {
-            if (!collegeUserIds.has(row.user_id)) return;
-            const parsed = safeParse(row.employment_information_data);
-            if (!parsed) return;
-            const factors = parsed.job_factors || parsed.first_job_factors;
-            if (Array.isArray(factors)) {
-              factors.forEach((factor) => {
-                if (factor && factor !== "Other") {
-                  const skill = factor.toLowerCase().trim();
-                  skillCount[skill] = (skillCount[skill] || 0) + 1;
-                }
-              });
-            }
-          });
-        }
-
-        if (Object.keys(skillCount).length === 0) {
-          [
-            "Leadership",
-            "Communication",
-            "Problem Solving",
-            "Teamwork",
-            "Project Management",
-            "Critical Thinking",
-            "Adaptability",
-            "Digital Literacy",
-          ].forEach((skill, i, arr) => {
-            skillCount[skill.toLowerCase()] = arr.length - i;
-          });
-        }
 
         setInDemandSkillsData(
           Object.entries(skillCount)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 8)
-            .map(([name, count]) => ({
-              name: name
-                .split(" ")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" "),
-              count,
-            })),
+            .map(([name, count]) => ({ name, count })),
         );
       } catch (err) {
         console.error("Error fetching chart data:", err);
