@@ -115,6 +115,73 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
   );
 };
 
+// ============================ CONTACT NUMBER COUNTRY-CODE FORMATTING ============================
+// Pure display formatter for the Survey Response modal's "Contact Number"
+// field. It does NOT touch how the number/country are stored or fetched —
+// it only changes how the already-retrieved `data.contact` string is shown,
+// based on the already-retrieved `data.country` string (both come from
+// extractRespondentData, shared by SHS and College). The database value is
+// never modified, fabricated, or replaced — only re-prefixed for display.
+const COUNTRY_CALLING_CODES = {
+  'philippines': '63',
+  'united states': '1',
+  'united states of america': '1',
+  'usa': '1',
+  'us': '1',
+  'canada': '1',
+  'united kingdom': '44',
+  'uk': '44',
+  'great britain': '44',
+  'australia': '61',
+  'japan': '81',
+  'south korea': '82',
+  'korea': '82',
+  'china': '86',
+  'singapore': '65',
+  'malaysia': '60',
+  'hong kong': '852',
+  'united arab emirates': '971',
+  'uae': '971',
+  'saudi arabia': '966',
+  'qatar': '974',
+  'kuwait': '965',
+  'bahrain': '973',
+  'oman': '968',
+  'india': '91',
+  'germany': '49',
+  'italy': '39',
+  'spain': '34',
+  'france': '33',
+  'netherlands': '31',
+  'new zealand': '64',
+  'thailand': '66',
+  'vietnam': '84',
+  'indonesia': '62',
+  'taiwan': '886',
+  'brunei': '673',
+};
+
+const formatContactNumber = (rawContact, rawCountry) => {
+  const phone = (rawContact ?? '').toString().trim();
+  if (!phone) return ''; // preserve existing "missing" behavior (Field shows N/A)
+
+  // Already entered in international format — show exactly as stored.
+  if (phone.startsWith('+')) return phone;
+
+  const countryKey = (rawCountry ?? '').toString().trim().toLowerCase();
+  const callingCode = COUNTRY_CALLING_CODES[countryKey];
+
+  // Unknown/unsupported/missing country — preserve existing behavior by
+  // showing the number exactly as stored, without inventing a code.
+  if (!callingCode) return phone;
+
+  // Drop a single leading trunk "0" (e.g. PH "09xxxxxxxxx" -> "9xxxxxxxxx"),
+  // the standard convention for dialing internationally, then prefix the
+  // country's calling code. The remaining digits are left untouched.
+  const localNumber = phone.replace(/^0/, '');
+  return `+${callingCode} ${localNumber}`;
+};
+
 // ============================ RESPONSE MODAL ============================
 const ResponseModal = ({ data, onClose, alumniType }) => {
   useEffect(() => {
@@ -209,7 +276,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
               {!isShs && <Field label="Civil Status" value={data.civilStatus} />}
-              <Field label="Contact Number" value={data.contact} />
+              <Field label="Contact Number" value={formatContactNumber(data.contact, data.country)} />
               <Field label="Personal Email Address" value={data.email} />
             </div>
             <FullBlock label="Complete Address">
