@@ -52,10 +52,11 @@ const DEFAULT_CERTIFICATIONS = [
 ];
 
 const DEFAULT_LABELS = {
-  certiport_passer: 'Are you a certiport passer?',
-  certifications:   'Please specify any certiport certification earned',
-  helped_career:    'Have your certifications helped you in your career?',
-  how_helped:       'How have your certifications helped you?',
+  certiport_passer:     'Are you a certiport passer?',
+  certifications:       'Please specify any certiport certification earned',
+  certifications_other: 'Please specify your other certification/achievement',
+  helped_career:        'Have your certifications helped you in your career?',
+  how_helped:           'How have your certifications helped you?',
 };
 
 const INDEX_TO_FIELD = [
@@ -90,10 +91,11 @@ const CertificationAchievement = () => {
   const [configVersion,        setConfigVersion]        = useState(0);
 
   const [form, setForm] = useState({
-    certiport_passer: '',
-    certifications:   [],
-    helped_career:    '',
-    how_helped:       '',
+    certiport_passer:    '',
+    certifications:      [],
+    certifications_other: '',
+    helped_career:        '',
+    how_helped:           '',
   });
 
   const [errors,    setErrors]    = useState(new Set());
@@ -169,6 +171,14 @@ const CertificationAchievement = () => {
   }, []);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // If "Other" is deselected (directly, or via the certiport_passer reset below),
+  // clear the stale "Others" text so it doesn't linger in state/persistence.
+  useEffect(() => {
+    if (!form.certifications.includes('Other') && form.certifications_other) {
+      setForm(prev => ({ ...prev, certifications_other: '' }));
+    }
+  }, [form.certifications]);
 
   const setCertiportPasser = (val) =>
     setForm(prev => ({ ...prev, certiport_passer: val, certifications: [], helped_career: '', how_helped: '' }));

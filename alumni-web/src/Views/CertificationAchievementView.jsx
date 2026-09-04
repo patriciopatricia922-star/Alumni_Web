@@ -33,6 +33,9 @@ const STYLES = `
   .ca-textarea { width: 100%; height: 100px; background: #F9FAFB; border: 0.8px solid #D1D5DC; border-radius: 10px; padding: 12px 16px; font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-size: 14px; color: #0A0A0A; outline: none; resize: none; transition: border-color 0.15s; }
   .ca-textarea::placeholder { color: rgba(10,10,10,0.3); }
   .ca-textarea:focus { border-color: #003EA6; }
+  .ca-input { width: 100%; height: 47px; background: #F9FAFB; border: 0.8px solid #D1D5DC; border-radius: 10px; padding: 0 16px; font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-size: 14px; color: #0A0A0A; outline: none; transition: border-color 0.15s; }
+  .ca-input::placeholder { color: rgba(10,10,10,0.3); }
+  .ca-input:focus { border-color: #003EA6; }
   .ca-radio-group { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
   .ca-radio-label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-size: 14px; font-weight: 400; color: #4A5565; line-height: 1.4; padding: 2px 0; }
   .ca-radio-label input[type="radio"] { width: 18px; height: 18px; accent-color: #003EA6; cursor: pointer; flex-shrink: 0; }
@@ -236,6 +239,28 @@ const CertificationAchievementView = ({
                             </button>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {form.certifications.includes("Other") && (
+                      <div className="ca-field">
+                        <label className="ca-label">
+                          {getLabel("certifications_other")}
+                        </label>
+                        <input
+                          type="text"
+                          className="ca-input"
+                          placeholder={
+                            getPlaceholder("certifications_other") ||
+                            "Please specify your other certification/achievement"
+                          }
+                          value={form.certifications_other || ""}
+                          onChange={(e) =>
+                            set("certifications_other", e.target.value)
+                          }
+                          onFocus={onFocus}
+                          onBlur={onBlur}
+                        />
                       </div>
                     )}
 
