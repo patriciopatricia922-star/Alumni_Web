@@ -559,7 +559,7 @@ const handleAwardPoints = async (userIds, points) => {
       if (!formData.title?.trim())  { showToastMessage('Section title is required', 'error'); return; }
       if (!formData.section_type)   { showToastMessage('Section type is required', 'error'); return; }
 
-      const { image_urls, image_url } = resolveImages(formData);
+      const { image_url } = resolveImages(formData);
       
       const newSection = {
         title:        formData.title.trim(),
@@ -567,7 +567,6 @@ const handleAwardPoints = async (userIds, points) => {
         section_type: formData.section_type,
         content:      formData.content || '',
         image_url,
-        image_urls,
         order_index:  landingSections.length,
         created_at:   new Date().toISOString(),
         updated_at:   new Date().toISOString(),
@@ -768,7 +767,10 @@ const handleAwardPoints = async (userIds, points) => {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
-      const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
+      const { image_url } = resolveImages(
+        formData,
+        editingItem?.image_url ? [editingItem.image_url] : [],
+      );
 
       const updates = {
         title:        formData.title?.trim(),
@@ -776,7 +778,6 @@ const handleAwardPoints = async (userIds, points) => {
         section_type: formData.section_type,
         content:      formData.content || '',
         image_url,
-        image_urls,
         updated_at:   new Date().toISOString(),
       };
 
