@@ -1132,7 +1132,7 @@ const ResponseAnalyticsView = ({
               {isSectionVisible("certification-achievements") &&
                 alumniType !== "shs" && (
                   <div className="ra-chart-single">
-                    <div className="ra-chart-inner">
+                    <div className="ra-chart-inner ra-cert-chart">
                       <h3 className="ra-chart-title">Certification Status</h3>
                       <ChartWithResponsiveContainer height={250}>
                         <LineChart
