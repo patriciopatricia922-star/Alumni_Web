@@ -834,7 +834,7 @@ const AdminDashboardView = ({
                 dataKey="count"
                 nameKey="name"
                 title="Most In-Demand Skills"
-                subtitle="Top skills required by employers"
+                subtitle="Most useful skills reported by alumni"
                 height={300}
               />
             </div>

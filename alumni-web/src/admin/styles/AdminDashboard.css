@@ -61,6 +61,11 @@
   margin: 0;
 }
 
+/* ============================ SECTION ============================ */
+.dashboard-section {
+  margin-bottom: 8px;
+}
+
 /* ============================ SECTION HEADER ============================ */
 .section-header {
   display: flex;
@@ -298,6 +303,9 @@
   font-weight: 700;
   font-size: 18px;
   color: #101828;
+  display: flex;
+  align-items: center;
+  gap: 0;
 }
 
 .chart-card-subtitle {
@@ -312,6 +320,45 @@
   padding: 16px 20px 20px;
   height: auto;
   min-height: 320px;
+}
+
+/* ============================ NAVIGABLE CHART CARD ============================ */
+.chart-card--navigable {
+  cursor: pointer;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  pointer-events: auto;
+}
+
+.chart-card--navigable:hover {
+  box-shadow: 0 6px 24px 0 rgba(50, 77, 135, 0.13);
+  transform: translateY(-2px);
+}
+
+.chart-card--navigable:focus-visible {
+  outline: 2.5px solid #3B82F6;
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
+.chart-card--navigable:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px 0 rgba(50, 77, 135, 0.10);
+}
+
+.chart-card-nav-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  color: #94A3B8;
+  position: relative;
+  top: -1px;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.chart-card--navigable:hover .chart-card-nav-icon,
+.chart-card--navigable:focus-visible .chart-card-nav-icon {
+  color: #3B82F6;
 }
 
 /* ============================ CHART ROWS ============================ */

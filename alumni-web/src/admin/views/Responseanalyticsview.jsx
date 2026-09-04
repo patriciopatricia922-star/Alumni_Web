@@ -73,15 +73,33 @@ const exportToCSV = (data, filename = "survey-responses") => {
     }, new Set()),
   );
 
-  const escapeCell = (value) => {
+  // ---- Root cause of birthday showing as "########" or blank in Excel ----
+  // Every cell here is already wrapped in double quotes below, but CSV
+  // quoting only escapes the delimiter — it does NOT stop Excel's own
+  // auto-detection of date-shaped text when the file is opened. Excel still
+  // reads a quoted value like "2001-05-10" and silently converts it to an
+  // internal date serial number. If the column is too narrow for the
+  // reformatted date, Excel displays "########"; depending on locale/date
+  // system, some values fail that re-parse entirely and render blank
+  // instead. Wrapping ONLY the birthday column in Excel's text-literal
+  // formula syntax (="...") makes Excel keep the exact original string as
+  // plain text instead of re-typing it — the stored value itself, and every
+  // other column, are completely unchanged.
+  const escapeCell = (value, header) => {
     if (value === null || value === undefined) return '""';
     const str = Array.isArray(value) ? value.join("; ") : String(value);
-    return `"${str.replace(/"/g, '""')}"`;
+    const escaped = str.replace(/"/g, '""');
+    if (header === "birthday" && str !== "") {
+      return `"=""${escaped}"""`;
+    }
+    return `"${escaped}"`;
   };
 
   const csvRows = [
-    headers.map(escapeCell).join(","),
-    ...data.map((row) => headers.map((h) => escapeCell(row[h])).join(",")),
+    headers.map((h) => escapeCell(h)).join(","),
+    ...data.map((row) =>
+      headers.map((h) => escapeCell(row[h], h)).join(","),
+    ),
   ];
 
   const blob = new Blob([csvRows.join("\n")], {
@@ -166,6 +184,72 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
       </ResponsiveContainer>
     </div>
   );
+};
+
+// ============================ CONTACT NUMBER COUNTRY-CODE FORMATTING ============================
+// Pure display formatter for the Survey Response modal's "Contact Number"
+// field. It does NOT touch how the number/country are stored or fetched —
+// it only changes how the already-retrieved `data.contact` string is shown,
+// based on the already-retrieved `data.country` string. The database value
+// is never modified, fabricated, or replaced — only re-prefixed for display.
+const COUNTRY_CALLING_CODES = {
+  philippines: "63",
+  "united states": "1",
+  "united states of america": "1",
+  usa: "1",
+  us: "1",
+  canada: "1",
+  "united kingdom": "44",
+  uk: "44",
+  "great britain": "44",
+  australia: "61",
+  japan: "81",
+  "south korea": "82",
+  korea: "82",
+  china: "86",
+  singapore: "65",
+  malaysia: "60",
+  "hong kong": "852",
+  "united arab emirates": "971",
+  uae: "971",
+  "saudi arabia": "966",
+  qatar: "974",
+  kuwait: "965",
+  bahrain: "973",
+  oman: "968",
+  india: "91",
+  germany: "49",
+  italy: "39",
+  spain: "34",
+  france: "33",
+  netherlands: "31",
+  "new zealand": "64",
+  thailand: "66",
+  vietnam: "84",
+  indonesia: "62",
+  taiwan: "886",
+  brunei: "673",
+};
+
+const formatContactNumber = (rawContact, rawCountry) => {
+  const phone = (rawContact ?? "").toString().trim();
+  if (!phone) return ""; // preserve existing "missing" behavior (Field shows N/A)
+
+  // Already entered in international format — show exactly as stored.
+  if (phone.startsWith("+")) return phone;
+
+  const countryKey = (rawCountry ?? "").toString().trim().toLowerCase();
+  const callingCode = COUNTRY_CALLING_CODES[countryKey];
+
+  // Unknown/unsupported/missing country — preserve existing behavior by
+  // showing the number exactly as stored, without inventing a code.
+  if (!callingCode) return phone;
+
+  // Drop a single leading trunk "0" (e.g. PH "09xxxxxxxxx" -> "9xxxxxxxxx"),
+  // the standard convention for dialing internationally, then prefix the
+  // country's calling code. The remaining digits are left untouched.
+  const localNumber = phone.replace(/^0/, "");
+  return `+${callingCode} ${localNumber}`;
 };
 
 // ============================ RESPONSE MODAL ============================
@@ -294,7 +378,10 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               {!alumniType || alumniType !== "shs" ? (
                 <Field label="Civil Status" value={data.civilStatus} />
               ) : null}
-              <Field label="Contact Number" value={data.contact} />
+              <Field
+                label="Contact Number"
+                value={formatContactNumber(data.contact, data.country)}
+              />
               <Field label="Personal Email Address" value={data.email} />
             </div>
             <FullBlock label="Complete Address">
@@ -767,7 +854,7 @@ const ResponseAnalyticsView = ({
   isSectionVisible,
   renderStars,
   sidebar,
-  alumniType = { alumniType },
+  alumniType,
 }) => {
   const filterRef = useRef(null);
 
@@ -832,6 +919,29 @@ const ResponseAnalyticsView = ({
   const hasAgeData = stats.ageDistribution?.length > 0;
   const hasBoardExamData = stats.boardExam?.length > 0;
   const hasCertData = stats.certification?.length > 0;
+  // Certification Status chart: pull the two category counts out of the
+  // existing `stats.certification` array (still used elsewhere/unchanged)
+  // and reshape them into two constant-value series so "With Certification"
+  // and "No Certification" render as two distinct, clearly colored lines
+  // instead of one line connecting two unrelated categories.
+  const certWithCount =
+    stats.certification?.find((d) => d.status === "With Certification")
+      ?.count || 0;
+  const certNoCount =
+    stats.certification?.find((d) => d.status === "No Certification")
+      ?.count || 0;
+  const certChartData = [
+    {
+      status: "With Certification",
+      withCertification: certWithCount,
+      noCertification: certNoCount,
+    },
+    {
+      status: "No Certification",
+      withCertification: certWithCount,
+      noCertification: certNoCount,
+    },
+  ];
   const hasEmploymentData = stats.employment?.length > 0;
   const hasSalaryData = stats.salary?.length > 0;
   const hasTimeToJobData = stats.timeToJob?.length > 0;
@@ -904,14 +1014,16 @@ const ResponseAnalyticsView = ({
                       "All Sections",
                       "Personal Information",
                       "Educational Information",
-                      alumniType !== "shs"
+                      ...(alumniType !== "shs"
                         ? ["Certification Achievements"]
-                        : [],
+                        : []),
                       "Employment Information",
                       "Job Experience",
                       "Skills & Competencies",
                       "Feedback & Engagement",
-                    ].map((section) => (
+                    ]
+                      .flat()
+                      .map((section) => (
                       <div
                         key={section}
                         className="ra-filter-option"
@@ -934,6 +1046,10 @@ const ResponseAnalyticsView = ({
         <div
           className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}
         >
+          {stats.totalResponses === 0 ? (
+            <div className="ra-empty-state">No records found.</div>
+          ) : (
+            <>
           {activeTab === "overview" && (
             <div className="ra-charts-container">
               {isSectionVisible("personal-information") && (
@@ -1022,19 +1138,51 @@ const ResponseAnalyticsView = ({
                         <LineChart
                           data={
                             hasCertData
-                              ? stats.certification
-                              : [{ status: "No Data", count: 1 }]
+                              ? certChartData
+                              : [
+                                  {
+                                    status: "No Data",
+                                    withCertification: 1,
+                                    noCertification: 1,
+                                  },
+                                ]
                           }
+                          margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="status" />
+                          <XAxis dataKey="status" tick={false} />
                           <YAxis />
                           <Tooltip />
+                          <Legend wrapperStyle={{ fontSize: 15 }} />
                           <Line
                             type="monotone"
-                            dataKey="count"
+                            dataKey="withCertification"
+                            name="With Certification"
                             stroke="#F59E0B"
                             strokeWidth={3}
+                            dot={{
+                              r: 4,
+                              fill: "#F59E0B",
+                              stroke: "#F59E0B",
+                              strokeWidth: 1,
+                            }}
+                            activeDot={{ r: 6 }}
+                            isAnimationActive={false}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="noCertification"
+                            name="No Certification"
+                            stroke="#2563EB"
+                            strokeWidth={3}
+                            dot={{
+                              r: 4,
+                              fill: "#2563EB",
+                              stroke: "#2563EB",
+                              strokeWidth: 1,
+                            }}
+                            activeDot={{ r: 6 }}
+                            isAnimationActive={false}
                           />
                         </LineChart>
                       </ChartWithResponsiveContainer>
@@ -1130,11 +1278,16 @@ const ResponseAnalyticsView = ({
                             : [{ skill: "No Data", count: 1 }]
                         }
                         layout="vertical"
-                        margin={{ top: 10, right: 20, left: 80, bottom: 10 }}
+                        margin={{ top: 10, right: 20, left: 140, bottom: 10 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="skill" type="category" width={80} />
+                        <YAxis
+                          dataKey="skill"
+                          type="category"
+                          width={140}
+                          interval={0}
+                        />
                         <Tooltip />
                         <Bar dataKey="count" fill="#8B5CF6" />
                       </BarChart>
@@ -1162,6 +1315,7 @@ const ResponseAnalyticsView = ({
                         <YAxis
                           dataKey="score"
                           type="category"
+                          interval={0}
                           tickFormatter={(v) => renderStars(parseInt(v))}
                           width={60}
                         />
@@ -1392,6 +1546,8 @@ const ResponseAnalyticsView = ({
                 />
               )}
             </div>
+          )}
+            </>
           )}
         </div>
       </div>

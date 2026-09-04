@@ -66,6 +66,18 @@ const getRatingValue = (feedback) => {
   if (satisfactionMap[raw]) return satisfactionMap[raw];
   const numeric = Number(raw);
   if (!isNaN(numeric) && numeric >= 1 && numeric <= 5) return numeric;
+  // Resilient fallback: if the stored satisfaction text is a close variant
+  // of the labels above (extra punctuation/whitespace, a leading number like
+  // "1 - Very Dissatisfied", different casing), an exact-string match misses
+  // it and the response is silently dropped instead of counted. This only
+  // reads the existing value; it never invents or hard-codes a rating.
+  const normalized = raw.replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (satisfactionMap[normalized]) return satisfactionMap[normalized];
+  const leadingNum = raw.match(/^\s*(\d)\b/);
+  if (leadingNum) {
+    const n = Number(leadingNum[1]);
+    if (n >= 1 && n <= 5) return n;
+  }
   return null;
 };
 
@@ -80,10 +92,9 @@ const getAgeBucket = (birthday) => {
     age -= 1;
   }
   if (age <= 24) return '18-24';
-  if (age <= 29) return '25-29';
-  if (age <= 34) return '30-34';
-  if (age <= 39) return '35-39';
-  return '40+';
+  if (age <= 34) return '25-34';
+  if (age <= 44) return '35-44';
+  return '45+';
 };
 
 const extractYear = (value) => {
@@ -94,6 +105,44 @@ const extractYear = (value) => {
   }
   const date = new Date(value);
   return !isNaN(date.getTime()) ? String(date.getFullYear()) : null;
+};
+
+// ============================ RESILIENT RATING KEY LOOKUP ============================
+// Some rating keys stored in the DB drift from the guessed snake_case/camelCase
+// variants (e.g. a trailing " Skills" suffix, different spacing around "/").
+// This tokenizes the target label and matches it against a normalized
+// (lowercased, punctuation/whitespace-stripped) version of each key actually
+// present on the ratings object, so such drift no longer breaks the lookup.
+// It only reads the existing key — it never renames or writes anything back.
+const findRatingByNormalizedKey = (ratingsObj, targetLabel) => {
+  if (!ratingsObj || typeof ratingsObj !== 'object') return undefined;
+  const normalize = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targetTokens = targetLabel.toLowerCase().split(/\s+/).filter(Boolean);
+  for (const key of Object.keys(ratingsObj)) {
+    const normalizedKey = normalize(key);
+    if (targetTokens.every((tok) => normalizedKey.includes(tok))) {
+      return ratingsObj[key];
+    }
+  }
+  return undefined;
+};
+
+// ============================ RESILIENT BIRTHDAY LOOKUP ============================
+// birthday previously only ever checked personal.birthday directly, unlike
+// other fields on `personal` (student_number/student_id, contact_number/phone,
+// etc.) which already check multiple known key variants. This adds the same
+// fallback so records where the stored key drifted (birth_date, date_of_birth,
+// dob) aren't read as blank. It only reads whatever key actually holds the
+// value — it never invents, reformats, or writes back a birthday.
+const getBirthdayValue = (personal) => {
+  if (!personal || typeof personal !== 'object') return '';
+  const direct = safeText(personal.birthday);
+  if (direct) return direct;
+  const fallback =
+    findRatingByNormalizedKey(personal, 'birth date') ??
+    findRatingByNormalizedKey(personal, 'date of birth') ??
+    findRatingByNormalizedKey(personal, 'dob');
+  return fallback !== undefined ? safeText(fallback) : '';
 };
 
 // ============================ EMPLOYMENT STATUS NORMALIZATION ============================
@@ -180,7 +229,22 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     : (skillRatings.critical_problem_solving_skills || skillRatings.criticalProblemSolvingSkills || skillRatings.critical_thinking || skillRatings['Critical & Problem-Solving Skills'] || skillRatings.criticalThinking || 0);
   const workEthicsRating = isShs
     ? (skillRatings.work_ethics || 0)
-    : (skillRatings.work_ethics_professionalism || skillRatings.workEthicsProfessionalism || skillRatings.work_ethics || skillRatings.workEthics || skillRatings['Work Ethics / Professionalism'] || 0);
+    : (
+        // Confirmed actual stored key (no spaces around "/", trailing " Skills"),
+        // matching the same "<Label> Skills" pattern the other four ratings use.
+        skillRatings['Work Ethics/Professionalism Skills'] ||
+        skillRatings.work_ethics_professionalism ||
+        skillRatings.workEthicsProfessionalism ||
+        skillRatings.work_ethics ||
+        skillRatings.workEthics ||
+        skillRatings['Work Ethics / Professionalism'] ||
+        // Fallback: match whatever key the DB actually uses for this rating
+        // (handles capitalization/spacing/naming-convention/suffix mismatches)
+        // without touching the DB or any other rating's value.
+        findRatingByNormalizedKey(skillRatings, 'work ethics professionalism') ||
+        findRatingByNormalizedKey(skillRatings, 'work ethics') ||
+        0
+      );
 
   return {
     id: row.id,
@@ -191,7 +255,7 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     status: employmentStatus,
     studentNumber: safeText(personal.student_number) || safeText(personal.student_id) || '',
     gender: safeText(personal.gender) || '',
-    birthday: safeText(personal.birthday) || '',
+    birthday: getBirthdayValue(personal),
     civilStatus: safeText(personal.civil_status) || '',
     contact: safeText(personal.contact_number) || safeText(personal.phone) || '',
     streetAddress: safeText(personal.street_address) || safeText(personal.address) || '',
@@ -323,10 +387,24 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     if (examResult.toLowerCase().includes('pass')) boardExam.Passed++;
     else if (examResult.toLowerCase().includes('fail')) boardExam.Failed++;
 
-    const hasCertification = safeText(certificationData.certiport_passer) === 'Yes' ||
-                            (certificationData.certifications && certificationData.certifications.length > 0);
-    if (hasCertification) certification['With Certification']++;
-    else if (certificationData.certiport_passer !== null) certification['No Certification']++;
+    // ── Certification Status aggregation ──────────────────────────────────
+    // Buckets purely on `certifications`, not the unrelated certiport_passer
+    // field:
+    // - `certifications` is a real array (answered) with 1+ non-blank entries
+    //     → "With Certification"
+    // - `certifications` is a real array (answered) but empty, or contains
+    //   only blank strings → "No Certification"
+    // - `certifications` is missing/null (section not answered) → not
+    //   counted in either bucket, consistent with how other charts in this
+    //   file (board exam, salary, time-to-job, etc.) skip genuinely blank
+    //   survey answers rather than assuming a value.
+    if (Array.isArray(certificationData.certifications)) {
+      const nonBlankCerts = certificationData.certifications.filter(
+        (c) => safeText(c) !== ''
+      );
+      if (nonBlankCerts.length > 0) certification['With Certification']++;
+      else                          certification['No Certification']++;
+    }
 
     const resolvedStatus = resolveEmploymentStatus(employmentData);
     if (employment.hasOwnProperty(resolvedStatus)) {
@@ -415,6 +493,25 @@ const LoadingScreen = ({ message, isError = false }) => {
   );
 };
 
+// ============================ EMPTY STATS SHAPE ============================
+// Reused whenever there are no completed responses to process, so switching
+// alumniType (SHS ↔ College) from a department that has data to one that
+// doesn't correctly clears out the previous department's stats/respondents
+// instead of leaving stale charts/table data on screen.
+const EMPTY_STATS = {
+  totalResponses: 0,
+  avgSatisfaction: 0,
+  satisfactionScores: [],
+  genderDistribution: [],
+  ageDistribution: [],
+  boardExam: [],
+  certification: [],
+  employment: [],
+  salary: [],
+  timeToJob: [],
+  skills: [],
+};
+
 // ============================ MAIN COMPONENT ============================
 const ResponseAnalytics = () => {
   const { alumniType } = useAlumniType();
@@ -427,19 +524,7 @@ const ResponseAnalytics = () => {
   const [selectedResponse, setSelectedResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    totalResponses: 0,
-    avgSatisfaction: 0,
-    satisfactionScores: [],
-    genderDistribution: [],
-    ageDistribution: [],
-    boardExam: [],
-    certification: [],
-    employment: [],
-    salary: [],
-    timeToJob: [],
-    skills: [],
-  });
+  const [stats, setStats] = useState(EMPTY_STATS);
   const [respondents, setRespondents] = useState([]);
 
   useEffect(() => {
@@ -491,7 +576,8 @@ const ResponseAnalytics = () => {
         if (fetchError) throw fetchError;
 
         if (!data || data.length === 0) {
-          setError('No survey responses found.');
+          setStats(EMPTY_STATS);
+          setRespondents([]);
           setLoading(false);
           return;
         }
@@ -503,7 +589,8 @@ const ResponseAnalytics = () => {
         });
 
         if (completedSurveys.length === 0) {
-          setError('No completed survey responses found.');
+          setStats(EMPTY_STATS);
+          setRespondents([]);
           setLoading(false);
           return;
         }
