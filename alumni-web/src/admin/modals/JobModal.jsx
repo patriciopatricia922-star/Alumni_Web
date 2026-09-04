@@ -7,10 +7,22 @@ import {
   FaAlignCenter,
   FaAlignRight
 } from 'react-icons/fa';
-import { FiImage, FiTrash2, FiX } from 'react-icons/fi';
+import { FiImage, FiTrash2, FiX, FiChevronDown } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 import MultiImageUpload from '../modals/MultiImageUpload';
 import '../modals/Disc.css';
+
+// ── Date restriction helper ───────────────────────────────────────────────────
+// Returns today's date as 'YYYY-MM-DD' (local time), used as the `min` for
+// date inputs so past dates cannot be selected. Computed at render time so it
+// stays correct on any future day.
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
@@ -227,6 +239,15 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+    // Guards a date field against past dates regardless of entry method
+  // (calendar click, typed digits, or paste). `min` on the input restricts
+  // the calendar UI; this catches any value that still slips through.
+  const handleDateFieldChange = (k) => (e) => {
+    const val = e.target.value;
+    const today = getTodayDateString();
+    s(k, val && val < today ? today : val);
+  };
+
   const handleSubmit = async () => {
     console.log('[JobModal] Submitting form:', form);
     setLoading(true);
@@ -278,19 +299,22 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           />
         </Field>
 
-        <div className="cm-field-grid">
+                <div className="cm-field-grid">
           <Field label="Location" required>
             <input className="cm-input" placeholder="Enter job location" value={form.location} onChange={(e) => s('location', e.target.value)} />
           </Field>
 
           <Field label="Category" required>
-            <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
-              <option>Full-time</option>
-              <option>Part-time</option>
-              <option>Contract</option>
-              <option>Internship</option>
-              <option>Remote</option>
-            </select>
+            <div className="cm-select-wrap">
+              <select className="cm-select" value={form.category} onChange={(e) => s('category', e.target.value)}>
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+                <option>Internship</option>
+                <option>Remote</option>
+              </select>
+              <FiChevronDown size={14} className="cm-select-arrow" />
+            </div>
           </Field>
         </div>
 
@@ -305,7 +329,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
         </div>
 
         <Field label="Expiry Date">
-          <input className="cm-input" type="date" value={form.expiry} onChange={(e) => s('expiry', e.target.value)} />
+          <input className="cm-input" type="date" value={form.expiry} min={getTodayDateString()} onChange={handleDateFieldChange('expiry')} />
         </Field>
 
         <ModalFooter
