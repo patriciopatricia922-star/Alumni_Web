@@ -2,46 +2,63 @@
 // Predictiveanalyticsview — UI / Presentation Layer (Refactored)
 // ============================================================================
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   HiOutlineChartBar,
   HiOutlineBuildingOffice2,
   HiOutlineArrowTrendingUp,
   HiOutlineChevronRight,
-} from 'react-icons/hi2';
-import { LuArrowUpRight, LuArrowRight } from 'react-icons/lu';
-import { FiBarChart2, FiTrendingUp, FiAlertCircle, FiCpu } from 'react-icons/fi';
-import '../styles/Predictiveanalytics.css';
+} from "react-icons/hi2";
+import { LuArrowUpRight, LuArrowRight } from "react-icons/lu";
+import {
+  FiBarChart2,
+  FiTrendingUp,
+  FiAlertCircle,
+  FiCpu,
+} from "react-icons/fi";
+import "../styles/Predictiveanalytics.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 // ============================================================================
 // Skeleton Components
 // ============================================================================
-const SkeletonLine = ({ width = '100%', height = '13px', style = {} }) => (
-  <div className="pa-skeleton" style={{ width, height, borderRadius: '6px', ...style }} />
+const SkeletonLine = ({ width = "100%", height = "13px", style = {} }) => (
+  <div
+    className="pa-skeleton"
+    style={{ width, height, borderRadius: "6px", ...style }}
+  />
 );
 
-const SkeletonBlock = ({ height = '80px', style = {} }) => (
-  <div className="pa-skeleton" style={{ width: '100%', height, borderRadius: '12px', ...style }} />
+const SkeletonBlock = ({ height = "80px", style = {} }) => (
+  <div
+    className="pa-skeleton"
+    style={{ width: "100%", height, borderRadius: "12px", ...style }}
+  />
 );
 
 const AIInsightsSkeleton = () => (
   <div className="ai-insights-card ai-insights-skeleton">
     <div className="ai-insights-header">
-      <div className="pa-skeleton" style={{ width: 20, height: 20, borderRadius: '50%' }} />
+      <div
+        className="pa-skeleton"
+        style={{ width: 20, height: 20, borderRadius: "50%" }}
+      />
       <SkeletonLine width="100px" height="16px" />
-      <div className="pa-skeleton ai-badge-skeleton" style={{ width: 90, height: 20, borderRadius: 20, marginLeft: 'auto' }} />
+      <div
+        className="pa-skeleton ai-badge-skeleton"
+        style={{ width: 90, height: 20, borderRadius: 20, marginLeft: "auto" }}
+      />
     </div>
     <div className="ai-insights-content">
       <SkeletonBlock height="72px" />
       <SkeletonBlock height="72px" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <SkeletonLine width="60%" height="12px" />
         <SkeletonLine width="100%" height="40px" style={{ borderRadius: 10 }} />
         <SkeletonLine width="100%" height="40px" style={{ borderRadius: 10 }} />
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <SkeletonLine width="60%" height="12px" />
         <SkeletonLine width="100%" height="40px" style={{ borderRadius: 10 }} />
       </div>
@@ -52,23 +69,49 @@ const AIInsightsSkeleton = () => (
 const ChartSkeleton = () => (
   <div className="pa-chart-card">
     <div className="pa-chart-header" style={{ marginBottom: 24 }}>
-      <div className="pa-skeleton" style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0 }} />
-      <div className="pa-chart-header-text" style={{ marginLeft: 14, flex: 1, minWidth: 0 }}>
+      <div
+        className="pa-skeleton"
+        style={{ width: 44, height: 44, borderRadius: 12, flexShrink: 0 }}
+      />
+      <div
+        className="pa-chart-header-text"
+        style={{ marginLeft: 14, flex: 1, minWidth: 0 }}
+      >
         <SkeletonLine width="55%" height="20px" style={{ marginBottom: 8 }} />
         <SkeletonLine width="40%" height="13px" />
       </div>
     </div>
-    <div style={{ display: 'flex', justifyContent: 'center', gap: 40, marginBottom: 24, flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: 40,
+        marginBottom: 24,
+        flexWrap: "wrap",
+      }}
+    >
       <SkeletonLine width="90px" height="13px" />
       <SkeletonLine width="90px" height="13px" />
       <SkeletonLine width="90px" height="13px" />
     </div>
     <SkeletonBlock height="260px" style={{ borderRadius: 12 }} />
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        marginTop: 16,
+        flexWrap: "wrap",
+      }}
+    >
       <SkeletonLine width="120px" height="40px" style={{ borderRadius: 10 }} />
       <SkeletonLine width="24px" height="24px" />
       <SkeletonLine width="120px" height="40px" style={{ borderRadius: 10 }} />
-      <SkeletonLine width="60px" height="24px" style={{ marginLeft: 'auto', borderRadius: 20 }} />
+      <SkeletonLine
+        width="60px"
+        height="24px"
+        style={{ marginLeft: "auto", borderRadius: 20 }}
+      />
     </div>
   </div>
 );
@@ -76,12 +119,16 @@ const ChartSkeleton = () => (
 // ============================================================================
 // AIInsightsCard
 // ============================================================================
-const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData }) => {
+const AIInsightsCard = ({
+  overviewTrend,
+  departmentCards,
+  selectedDepartmentData,
+}) => {
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const currentView = selectedDepartmentData ? 'department' : 'overview';
+  const currentView = selectedDepartmentData ? "department" : "overview";
 
   const fetchAIInsights = async () => {
     setLoading(true);
@@ -98,25 +145,30 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
         })),
         current_view: currentView,
         selected_department: selectedDepartmentData
-          ? { name: selectedDepartmentData.title, programs: selectedDepartmentData.programs }
+          ? {
+              name: selectedDepartmentData.title,
+              programs: selectedDepartmentData.programs,
+            }
           : null,
       };
 
       const response = await fetch(`${API_BASE}/api/ai/predictive-insights`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const body = await response.text().catch(() => '');
-        throw new Error(`HTTP ${response.status}${body ? ': ' + body.slice(0, 120) : ''}`);
+        const body = await response.text().catch(() => "");
+        throw new Error(
+          `HTTP ${response.status}${body ? ": " + body.slice(0, 120) : ""}`,
+        );
       }
 
       setInsights(await response.json());
     } catch (err) {
-      console.error('AI Insights error:', err);
-      setError('AI insights unavailable — ' + err.message);
+      console.error("AI Insights error:", err);
+      setError("AI insights unavailable — " + err.message);
     } finally {
       setLoading(false);
     }
@@ -137,7 +189,9 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
           <span>AI Insights</span>
         </div>
         <p>{error}</p>
-        <button onClick={fetchAIInsights} className="ai-retry-btn">Retry</button>
+        <button onClick={fetchAIInsights} className="ai-retry-btn">
+          Retry
+        </button>
       </div>
     );
   }
@@ -193,7 +247,10 @@ const AIInsightsCard = ({ overviewTrend, departmentCards, selectedDepartmentData
             <div className="ai-insight-bullets">
               {insights.recommendations.map((item, i) => (
                 <div key={i} className="ai-bullet">
-                  <span className="ai-bullet-dot" style={{ background: '#3B82F6' }} />
+                  <span
+                    className="ai-bullet-dot"
+                    style={{ background: "#3B82F6" }}
+                  />
                   <span>{item}</span>
                 </div>
               ))}
@@ -227,13 +284,12 @@ const Predictiveanalyticsview = ({
   sidebar,
   refreshBar,
 }) => {
-
   const [animProgress, setAnimProgress] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const animRef = useRef(null);
 
   useEffect(() => {
-    if (activePage !== 'overview' || !overviewTrend?.length) return;
+    if (activePage !== "overview" || !overviewTrend?.length) return;
     setAnimProgress(0);
     let start = null;
     const duration = 1200;
@@ -281,11 +337,11 @@ const Predictiveanalyticsview = ({
               </div>
               <h2 className="pa-chart-title">Not enough data yet</h2>
               <p className="pa-chart-subtitle pa-empty-text">
-                No predictions have been generated yet. Predictive Analytics needs
-                at least one completed alumni survey (with degree program and
-                employment information) before it can produce a forecast. Once
-                alumni records are available, click <strong>Refresh Predictions</strong> above
-                to generate them.
+                No predictions have been generated yet. Predictive Analytics
+                needs at least one completed alumni survey (with degree program
+                and employment information) before it can produce a forecast.
+                Once alumni records are available, click{" "}
+                <strong>Refresh Predictions</strong> above to generate them.
               </p>
             </div>
           </div>
@@ -303,7 +359,8 @@ const Predictiveanalyticsview = ({
   const MAX = Math.min(100, Math.ceil(dataMax + padding));
   const RANGE = MAX - MIN || 1;
 
-  const toX = (i) => (overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50);
+  const toX = (i) =>
+    overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50;
   const toY = (v) => ((MAX - v) / RANGE) * 100;
 
   const animatedTrend = overviewTrend
@@ -314,39 +371,72 @@ const Predictiveanalyticsview = ({
       if (!prev) return null;
       const segLen = 1 / (overviewTrend.length - 1);
       const segT = (animProgress - (i - 1) * segLen) / segLen;
-      return { year: d.year, value: prev.value + (d.value - prev.value) * segT };
+      return {
+        year: d.year,
+        value: prev.value + (d.value - prev.value) * segT,
+      };
     })
     .filter(Boolean);
 
-  const linePoints = animatedTrend.map((d, i) => `${toX(i)},${toY(d.value)}`).join(' ');
+  const linePoints = animatedTrend
+    .map((d, i) => `${toX(i)},${toY(d.value)}`)
+    .join(" ");
   const upperPoints = [
     ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value + padding * 0.6)}`),
-    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value)}`),
-  ].join(' ');
+    ...overviewTrend
+      .slice()
+      .reverse()
+      .map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value)}`),
+  ].join(" ");
   const lowerPoints = [
     ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value)}`),
-    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value - padding * 0.6)}`),
-  ].join(' ');
+    ...overviewTrend
+      .slice()
+      .reverse()
+      .map(
+        (d, i) =>
+          `${toX(overviewTrend.length - 1 - i)},${toY(d.value - padding * 0.6)}`,
+      ),
+  ].join(" ");
 
-  const changeVal = overviewTrend.length > 1
-    ? overviewTrend[overviewTrend.length - 1].value - overviewTrend[0].value
-    : 0;
-  const yLabels = [MAX, Math.round(MIN + RANGE * 0.66), Math.round(MIN + RANGE * 0.33), MIN];
+  const changeVal =
+    overviewTrend.length > 1
+      ? overviewTrend[overviewTrend.length - 1].value - overviewTrend[0].value
+      : 0;
+  const yLabels = [
+    MAX,
+    Math.round(MIN + RANGE * 0.66),
+    Math.round(MIN + RANGE * 0.33),
+    MIN,
+  ];
 
-  const showOverview = activePage === 'overview';
-  const showDeptList = activePage === 'departments';
-  const showDeptDetail = activePage === 'department-detail' && !!selectedDepartment && !!selectedDepartmentData;
+  const showOverview = activePage === "overview";
+  const showDeptList = activePage === "departments";
+  const showDeptDetail =
+    activePage === "department-detail" &&
+    !!selectedDepartment &&
+    !!selectedDepartmentData;
 
   const breadcrumbItems = (() => {
     const items = [
-      { key: 'overview', label: 'Overview', icon: <HiOutlineChartBar size={15} />, active: showOverview },
-      { key: 'departments', label: 'Departments', icon: <HiOutlineBuildingOffice2 size={15} />, active: showDeptList },
+      {
+        key: "overview",
+        label: "Overview",
+        icon: <HiOutlineChartBar size={15} />,
+        active: showOverview,
+      },
+      {
+        key: "departments",
+        label: "Departments",
+        icon: <HiOutlineBuildingOffice2 size={15} />,
+        active: showDeptList,
+      },
     ];
     if (showDeptDetail) {
       const dept = departmentCards?.find((c) => c.key === selectedDepartment);
       items.push({
-        key: 'department-detail',
-        label: dept?.code || 'Detail',
+        key: "department-detail",
+        label: dept?.code || "Detail",
         icon: <HiOutlineBuildingOffice2 size={15} />,
         active: true,
       });
@@ -358,7 +448,6 @@ const Predictiveanalyticsview = ({
     <div className="pa-layout">
       {sidebar}
       <main className="pa-main">
-
         <div className="pa-page-header">
           <h1 className="pa-page-title">Predictive Analytics</h1>
           <p className="pa-page-subtitle">
@@ -371,10 +460,11 @@ const Predictiveanalyticsview = ({
             {breadcrumbItems.map((item, idx) => (
               <React.Fragment key={item.key}>
                 <button
-                  className={`pa-tab-btn ${item.active ? 'active' : ''}`}
+                  className={`pa-tab-btn ${item.active ? "active" : ""}`}
                   onClick={() => onBreadcrumbNav(item.key)}
                 >
-                  {item.icon}{item.label}
+                  {item.icon}
+                  {item.label}
                 </button>
                 {idx < breadcrumbItems.length - 1 && (
                   <HiOutlineChevronRight size={13} color="#C0CCDA" />
@@ -396,7 +486,9 @@ const Predictiveanalyticsview = ({
                 </div>
                 <div className="pa-chart-header-text">
                   <h2 className="pa-chart-title">Career to Degree Alignment</h2>
-                  <p className="pa-chart-subtitle">Predicted alignment rates for all departments</p>
+                  <p className="pa-chart-subtitle">
+                    Predicted alignment rates for all departments
+                  </p>
                 </div>
               </div>
 
@@ -417,11 +509,16 @@ const Predictiveanalyticsview = ({
 
               <div className="pa-chart-shell">
                 <div className="pa-chart-y-axis">
-                  {yLabels.map((v) => <span key={v}>{v}</span>)}
+                  {yLabels.map((v) => (
+                    <span key={v}>{v}</span>
+                  ))}
                 </div>
                 <div className="pa-chart-main">
                   <div className="pa-chart-grid">
-                    <span /><span /><span /><span />
+                    <span />
+                    <span />
+                    <span />
+                    <span />
                   </div>
 
                   {/* SVG layer: area fills + line only (safe to non-uniformly scale) */}
@@ -432,21 +529,59 @@ const Predictiveanalyticsview = ({
                     aria-hidden="true"
                   >
                     <defs>
-                      <linearGradient id="upperGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#93C5FD" stopOpacity="0.35" />
-                        <stop offset="100%" stopColor="#93C5FD" stopOpacity="0.02" />
+                      <linearGradient
+                        id="upperGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#93C5FD"
+                          stopOpacity="0.35"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#93C5FD"
+                          stopOpacity="0.02"
+                        />
                       </linearGradient>
-                      <linearGradient id="lowerGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BFDBFE" stopOpacity="0.22" />
-                        <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0.02" />
+                      <linearGradient
+                        id="lowerGrad"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#BFDBFE"
+                          stopOpacity="0.22"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#BFDBFE"
+                          stopOpacity="0.02"
+                        />
                       </linearGradient>
                       <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#60A5FA" />
                         <stop offset="100%" stopColor="#155DFC" />
                       </linearGradient>
                     </defs>
-                    <polygon points={upperPoints} fill="url(#upperGrad)" stroke="none" style={{ opacity: animProgress }} />
-                    <polygon points={lowerPoints} fill="url(#lowerGrad)" stroke="none" style={{ opacity: animProgress }} />
+                    <polygon
+                      points={upperPoints}
+                      fill="url(#upperGrad)"
+                      stroke="none"
+                      style={{ opacity: animProgress }}
+                    />
+                    <polygon
+                      points={lowerPoints}
+                      fill="url(#lowerGrad)"
+                      stroke="none"
+                      style={{ opacity: animProgress }}
+                    />
                     {animatedTrend.length > 1 && (
                       <polyline
                         className="pa-chart-line"
@@ -466,13 +601,16 @@ const Predictiveanalyticsview = ({
                   <div className="pa-chart-markers" aria-hidden="false">
                     {overviewTrend.map((d, i) => {
                       const t = i / Math.max(overviewTrend.length - 1, 1);
-                      const opacity = Math.max(0, Math.min(1, (animProgress - t) / 0.1));
+                      const opacity = Math.max(
+                        0,
+                        Math.min(1, (animProgress - t) / 0.1),
+                      );
                       const isHovered = hoveredPoint === i;
                       return (
                         <button
                           key={d.year}
                           type="button"
-                          className={`pa-chart-marker ${isHovered ? 'is-hovered' : ''}`}
+                          className={`pa-chart-marker ${isHovered ? "is-hovered" : ""}`}
                           style={{
                             left: `${toX(i)}%`,
                             top: `${toY(d.value)}%`,
@@ -497,32 +635,42 @@ const Predictiveanalyticsview = ({
                   </div>
 
                   <div className="pa-chart-x-axis">
-                    {overviewTrend.map((d) => <span key={d.year}>{d.year}</span>)}
+                    {overviewTrend.map((d) => (
+                      <span key={d.year}>{d.year}</span>
+                    ))}
                   </div>
                 </div>
               </div>
 
               <div className="pa-chart-summary">
                 <div className="pa-summary-block">
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                  <span className="pa-summary-label">
+                    Current ({overviewTrend[0]?.year})
+                  </span>
                   <strong>{overviewTrend[0]?.value}%</strong>
                 </div>
                 <div className="pa-summary-arrow">
                   <LuArrowRight size={20} color="#93C5FD" />
                 </div>
                 <div className="pa-summary-block">
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
-                  <strong>{overviewTrend[overviewTrend.length - 1]?.value}%</strong>
+                  <span className="pa-summary-label">
+                    Predicted ({overviewTrend[overviewTrend.length - 1]?.year})
+                  </span>
+                  <strong>
+                    {overviewTrend[overviewTrend.length - 1]?.value}%
+                  </strong>
                 </div>
                 <div className="pa-summary-change">
                   <span className="pa-trend-badge">
-                    <LuArrowUpRight size={11} color="#009966" />
-                    +{changeVal}%
+                    <LuArrowUpRight size={11} color="#009966" />+{changeVal}%
                   </span>
                 </div>
               </div>
 
-              <button className="pa-view-breakdown-btn" onClick={onViewBreakdown}>
+              <button
+                className="pa-view-breakdown-btn"
+                onClick={onViewBreakdown}
+              >
                 Click to view detailed breakdown by department →
               </button>
             </div>
@@ -541,7 +689,11 @@ const Predictiveanalyticsview = ({
         {showDeptList && (
           <div className="pa-department-grid">
             {departmentCards?.map((card) => (
-              <div key={card.key} className="pa-department-card" onClick={() => onDepartmentClick(card.key)}>
+              <div
+                key={card.key}
+                className="pa-department-card"
+                onClick={() => onDepartmentClick(card.key)}
+              >
                 <div className="pa-department-top">
                   <div className={`pa-dept-icon ${card.color}`}>
                     <HiOutlineBuildingOffice2 size={22} />
@@ -556,17 +708,23 @@ const Predictiveanalyticsview = ({
                     <span className="pa-metric-value">{card.current}%</span>
                   </div>
                   <div className="pa-metric-row">
-                    <span className="pa-metric-label">Predicted {overviewTrend[overviewTrend.length - 1]?.year}</span>
-                    <span className={`pa-metric-value accent ${card.color}`}>{card.predicted}%</span>
+                    <span className="pa-metric-label">
+                      Predicted {overviewTrend[overviewTrend.length - 1]?.year}
+                    </span>
+                    <span className={`pa-metric-value accent ${card.color}`}>
+                      {card.predicted}%
+                    </span>
                   </div>
                   <div className="pa-metric-change">
                     <span className="pa-trend-badge">
-                      <LuArrowUpRight size={11} color="#009966" />
-                      +{card.change}%
+                      <LuArrowUpRight size={11} color="#009966" />+{card.change}
+                      %
                     </span>
                   </div>
                 </div>
-                <div className="pa-department-footer">{card.programs?.length} Programs</div>
+                <div className="pa-department-footer">
+                  {card.programs?.length} Programs
+                </div>
               </div>
             ))}
           </div>
@@ -576,17 +734,25 @@ const Predictiveanalyticsview = ({
         {showDeptDetail && selectedDepartmentData && (
           <div className="pa-overview-container pa-detail-container">
             <div className="pa-panel">
-              <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
-              <p className="pa-section-subtitle">{selectedDepartmentData.subtitle}</p>
+              <h2 className="pa-section-title">
+                {selectedDepartmentData.title}
+              </h2>
+              <p className="pa-section-subtitle">
+                {selectedDepartmentData.subtitle}
+              </p>
 
               <div className="pa-bar-legend">
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch current" />
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                  <span className="pa-summary-label">
+                    Current ({overviewTrend[0]?.year})
+                  </span>
                 </div>
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch predicted" />
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
+                  <span className="pa-summary-label">
+                    Predicted ({overviewTrend[overviewTrend.length - 1]?.year})
+                  </span>
                 </div>
               </div>
 
@@ -597,21 +763,32 @@ const Predictiveanalyticsview = ({
                       <div className="pa-overview-card-title">
                         <span className="pa-program-code">{prog.code}</span>
                         <span className="pa-trend-badge">
-                          <LuArrowUpRight size={11} color="#009966" />
-                          +{prog.change}%
+                          <LuArrowUpRight size={11} color="#009966" />+
+                          {prog.change}%
                         </span>
                       </div>
                       <div className="pa-overview-stats">
-                        <span className="pa-overview-years">{overviewTrend[0]?.year} → {overviewTrend[overviewTrend.length - 1]?.year}</span>
-                        <span className="pa-overview-values">{prog.current}% → {prog.predicted}%</span>
+                        <span className="pa-overview-years">
+                          {overviewTrend[0]?.year} →{" "}
+                          {overviewTrend[overviewTrend.length - 1]?.year}
+                        </span>
+                        <span className="pa-overview-values">
+                          {prog.current}% → {prog.predicted}%
+                        </span>
                       </div>
                     </div>
                     <div className="pa-bar-pair">
                       <div className="pa-bar-track">
-                        <div className="pa-bar-fill current" style={{ width: `${prog.current}%` }} />
+                        <div
+                          className="pa-bar-fill current"
+                          style={{ width: `${prog.current}%` }}
+                        />
                       </div>
                       <div className="pa-bar-track">
-                        <div className="pa-bar-fill predicted" style={{ width: `${prog.predicted}%` }} />
+                        <div
+                          className="pa-bar-fill predicted"
+                          style={{ width: `${prog.predicted}%` }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -628,7 +805,6 @@ const Predictiveanalyticsview = ({
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
