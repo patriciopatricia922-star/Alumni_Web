@@ -315,6 +315,23 @@ const PersonalBackground = () => {
     }
   };
 
+  // Contact Number: numeric-only, capped at 14 digits (E.164 national-number
+  // ceiling — the leading country code is entered separately via phone_prefix).
+  // Mirrors the same digit-stripping pattern already used for contactNumber
+  // in ProfileView.jsx, so behavior is consistent across the app.
+  const setContactNumber = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 14) value = value.slice(0, 14);
+    setForm((f) => ({ ...f, contact_number: value }));
+    if (errors.has('contact_number')) {
+      setErrors((prev) => {
+        const next = new Set(prev);
+        next.delete('contact_number');
+        return next;
+      });
+    }
+  };
+
   const setCountry = (e) => {
     const c      = e.target.value;
     const prefix = c === 'Philippines' ? '+63' : c === 'United States' ? '+1' : '+';
@@ -341,6 +358,14 @@ const PersonalBackground = () => {
     REQUIRED_FIELDS.forEach((field) => {
       if (!form[field] || !String(form[field]).trim()) e.add(field);
     });
+    // Contact Number: letters are already stripped on input (setContactNumber),
+    // so this only needs to catch length. 7–14 digits covers any valid E.164
+    // national significant number (country code is entered separately),
+    // without forcing a Philippine-only 10-digit format.
+    if (form.contact_number) {
+      const digits = form.contact_number.replace(/\D/g, '');
+      if (digits.length < 7 || digits.length > 14) e.add('contact_number');
+    }
     return e;
   };
 
@@ -400,6 +425,7 @@ const PersonalBackground = () => {
         set={setField}
         setRadio={setRadio}
         setCountry={setCountry}
+        setContactNumber={setContactNumber}
         errors={errors}
         saveToast={saveToast}
         cardRef={cardRef}

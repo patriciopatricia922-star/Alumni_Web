@@ -498,7 +498,7 @@ onPISave, onClose, onSetToast,
 const row = isMobile ? 'prof-pi-row prof-pi-row--col' : 'prof-pi-row';
 const handleContactNumberChange = (e) => {
 let value = e.target.value.replace(/\D/g, '');
-if (value.length > 12) value = value.slice(0, 12);
+if (value.length > 14) value = value.slice(0, 14);
 setPiField('contactNumber')(value);
 };
 const handleStudentNumberChange = (e) => {
@@ -514,8 +514,8 @@ setPiField('country')(country);
 };
 const getContactNumberError = () => {
 const digits = piForm.contactNumber?.replace(/\D/g, '') || '';
-if (digits.length > 0 && (digits.length < 10 || digits.length > 12)) {
-return 'Contact number must be 10-12 digits';
+if (digits.length > 0 && (digits.length < 7 || digits.length > 14)) {
+return 'Contact number must be 7-14 digits';
 }
 return piFieldErrors.contactNumber;
 };
@@ -788,7 +788,7 @@ return (
                </div>
              </div>
              {contactNumberError && <span className="prof-pi-error-text">{contactNumberError}</span>}
-             <p className="prof-pi-hint">Enter a valid 10-12 digit mobile number without the country code.</p>
+             <p className="prof-pi-hint">Enter a valid 7-14 digit contact number without the country code.</p>
            </div>
            <h3 className="prof-pi-section-title">Academic Information</h3>
            <div className="prof-pi-field">

@@ -415,6 +415,7 @@ const PersonalBackgroundView = ({
   set,
   setRadio,
   setCountry,
+  setContactNumber,
   errors,
   saveToast,
   cardRef,
@@ -731,7 +732,9 @@ const PersonalBackgroundView = ({
                 <label className="pb-label">
                   {getLabel("contact_number")} <span className="pb-req">*</span>
                   {errors.has("contact_number") && (
-                    <span className="pb-field-error">Required</span>
+                    <span className="pb-field-error">
+                      {form.contact_number ? "Enter a valid contact number" : "Required"}
+                    </span>
                   )}
                 </label>
                 <div className="pb-phone-row">
@@ -756,10 +759,11 @@ const PersonalBackgroundView = ({
                   )}
                   <input
                     type="tel"
+                    inputMode="numeric"
                     className="pb-input pb-phone-input"
                     placeholder={getPlaceholder("contact_number")}
                     value={form.contact_number}
-                    onChange={set("contact_number")}
+                    onChange={setContactNumber}
                   />
                 </div>
               </div>

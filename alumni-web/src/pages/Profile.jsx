@@ -92,8 +92,8 @@ export const validatePI = (form) => {
     errors.zipCode = 'Zip code must be 4 digits.';
   if (form.contactNumber) {
     const digits = form.contactNumber.replace(/\D/g, '');
-    if (digits.length < 10 || digits.length > 11)
-      errors.contactNumber = 'Enter a valid 10\u201311 digit number.';
+    if (digits.length < 7 || digits.length > 14)
+      errors.contactNumber = 'Enter a valid contact number (7\u201314 digits).';
   }
   if (form.yearGraduated && !/^\d{4}$/.test(form.yearGraduated))
     errors.yearGraduated = 'Enter a valid 4-digit year.';
