@@ -123,6 +123,7 @@ html, body, #root {
 .notif-tabs {
   position: relative;
   display: flex;
+  width: clamp(240px, 28vw, 320px);
   background: #ffffff;
   border: 1px solid var(--notif-card-border);
   border-radius: 11px;
