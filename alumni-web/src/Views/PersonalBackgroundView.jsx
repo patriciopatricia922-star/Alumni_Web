@@ -63,6 +63,19 @@ const STYLES = `
     font-size: 14px;
     color: #002263;
     flex-shrink: 0;
+    /* [Agenda 5] Pulled toward the sidebar edge to mirror About's
+       flush-left back button, without shifting the title/subtitle
+       (which keep their own independent padding). */
+    margin-left: -34px;
+  }
+
+  /* [Agenda 5] Bell wrapper: pushed slightly further from the right
+     edge to mirror About's more generous right-inset for the bell.
+     Kept inside the existing topbar flex row (not absolutely
+     positioned) so it can never overlap the title/subtitle below it. */
+  .pb-bell-wrap {
+    flex-shrink: 0;
+    margin-right: 40px;
   }
 
   .pb-badge {
@@ -375,6 +388,8 @@ const STYLES = `
     .pb-title    { padding: 14px 32px 0; font-size: 26px; }
     .pb-progress { margin: 12px 32px 0; }
     .pb-body     { padding: 20px 32px 60px; }
+    .pb-back-btn { margin-left: -22px; }
+    .pb-bell-wrap { margin-right: 24px; }
   }
   @media (max-width: 900px) {
     .pb-topbar   { padding: 20px 24px 0; }
@@ -382,6 +397,8 @@ const STYLES = `
     .pb-progress { margin: 10px 24px 0; }
     .pb-body     { padding: 18px 24px 60px; }
     .pb-card     { padding: 28px 24px 28px; }
+    .pb-back-btn { margin-left: -16px; }
+    .pb-bell-wrap { margin-right: 16px; }
   }
   @media (max-width: 767px) {
     .pb-content  { margin-left: 0; }
@@ -396,6 +413,8 @@ const STYLES = `
     .pb-card     { padding: 20px 16px 20px; gap: 28px; }
     .pb-section-title  { font-size: 17px; }
     .pb-row      { flex-direction: column; gap: 28px; }
+    .pb-back-btn { margin-left: -10px; }
+    .pb-bell-wrap { margin-right: 8px; }
   }
   @media (max-width: 390px) {
     .pb-title    { font-size: 18px; }
@@ -453,7 +472,7 @@ const PersonalBackgroundView = ({
             </button>
 
             {/* ── Bell ──────────────────────────────────────────────────────── */}
-            <div style={{ position: "relative", flexShrink: 0 }}>
+            <div className="pb-bell-wrap" style={{ position: "relative" }}>
               <NotificationBell
                 onSeeAll={() => navigate("/notifications")}
               />
