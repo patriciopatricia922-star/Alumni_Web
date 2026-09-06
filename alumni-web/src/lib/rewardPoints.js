@@ -6,7 +6,6 @@ const resolveUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (user) return user;
 
-  console.warn('[rewardPoints] getUser() failed, falling back to getSession():', error);
   const { data: { session } } = await supabase.auth.getSession();
   return session?.user ?? null;
 };
@@ -15,7 +14,6 @@ const resolveUser = async () => {
 export const fetchRewardProfile = async () => {
   const user = await resolveUser();
   if (!user) {
-    console.error('[rewardPoints] fetchRewardProfile: no authenticated user');
     return null;
   }
 
@@ -26,15 +24,8 @@ export const fetchRewardProfile = async () => {
     .single();
 
   if (error) {
-    console.error('[rewardPoints] fetchRewardProfile query failed:', error);
     return null;
   }
-
-  console.log('[rewardPoints] fetched profile:', {
-    userId:          user.id,
-    rewardPoints:    data.reward_points,
-    surveyClaimedAt: data.survey_reward_claimed_at,
-  });
 
   return {
     rewardPoints:         data.reward_points          ?? 0,
@@ -46,12 +37,10 @@ export const fetchRewardProfile = async () => {
 export const deductPoints = async (currentPoints, cost) => {
   const user = await resolveUser();
   if (!user) {
-    console.error('[rewardPoints] deductPoints: no authenticated user');
     return null;
   }
 
   const newPoints = currentPoints - cost;
-  console.log('[rewardPoints] deductPoints:', { userId: user.id, currentPoints, cost, newPoints });
 
   const { data, error } = await supabase
     .from('users')
@@ -61,11 +50,9 @@ export const deductPoints = async (currentPoints, cost) => {
     .single();
 
   if (error) {
-    console.error('[rewardPoints] deductPoints failed:', error);
     return null;
   }
 
-  console.log('[rewardPoints] deductPoints confirmed:', data.reward_points);
   return data.reward_points;
 };
 
@@ -73,14 +60,8 @@ export const deductPoints = async (currentPoints, cost) => {
 export const claimSurveyReward = async (pointsToAward = 50) => {
   const user = await resolveUser();
   if (!user) {
-    console.error('[rewardPoints] claimSurveyReward: no authenticated user — cannot claim');
     return null;
   }
-
-  console.log('[rewardPoints] claimSurveyReward: invoking RPC', {
-    userId: user.id,
-    pointsToAward,
-  });
 
   const { data, error } = await supabase.rpc('claim_survey_reward', {
     p_user_id: user.id,
@@ -88,21 +69,8 @@ export const claimSurveyReward = async (pointsToAward = 50) => {
   });
 
   if (error) {
-    console.error('[rewardPoints] claimSurveyReward RPC error:', {
-      message: error.message,
-      code:    error.code,
-      details: error.details,
-      hint:    error.hint,
-    });
     return null;
   }
-
-  console.log('[rewardPoints] claimSurveyReward RPC response:', {
-    awarded: data.awarded,
-    points:  data.points,
-    reason:  data.reason,
-    userId:  user.id,
-  });
 
   return data;
 };
@@ -113,7 +81,6 @@ export const claimSurveyReward = async (pointsToAward = 50) => {
 export const subscribeToRewardPoints = async (onChange, onAwarded) => {
   const user = await resolveUser();
   if (!user) {
-    console.error('[rewardPoints] subscribeToRewardPoints: no authenticated user');
     return null;
   }
 
@@ -145,11 +112,6 @@ export const subscribeToRewardPoints = async (onChange, onAwarded) => {
       },
       (payload) => {
         const newPoints = payload.new?.reward_points;
-        console.log('[rewardPoints] realtime UPDATE received:', {
-          userId:      user.id,
-          newPoints,
-          fullPayload: payload.new,
-        });
         if (typeof newPoints === 'number') {
           onChange(newPoints);
 
@@ -162,11 +124,6 @@ export const subscribeToRewardPoints = async (onChange, onAwarded) => {
       }
     )
     .subscribe((status, err) => {
-      if (err) {
-        console.error('[rewardPoints] subscription error:', err);
-      } else {
-        console.log('[rewardPoints] subscription status:', status);
-      }
     });
 
   return channel;
