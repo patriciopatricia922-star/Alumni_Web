@@ -33,6 +33,7 @@ const STYLES = `
   .eb-field { display: flex; flex-direction: column; gap: 10px; width: 100%; }
   .eb-label { font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 21px; color: #003EA6; }
   .eb-label-sub { font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-weight: 400; font-size: 13px; line-height: 18px; letter-spacing: 0.3px; color: #003EA6; }
+  .eb-branch { display: flex; flex-direction: column; gap: 36px; padding-left: 20px; border-left: 2px solid rgba(0, 62, 166, 0.12); margin-left: 4px; }
   .eb-input { width: 100%; height: 47px; background: #F9FAFB; border: 0.8px solid #D1D5DC; border-radius: 10px; padding: 12px 16px; font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-size: 14px; color: #0A0A0A; outline: none; transition: border-color 0.15s; }
   .eb-input::placeholder { color: rgba(10,10,10,0.3); }
   .eb-input:focus { border-color: #003EA6; }
@@ -87,8 +88,8 @@ const STYLES = `
   }
 
   @media (max-width: 1100px) { .eb-topbar { padding: 24px 32px 0; } .eb-title { padding: 14px 32px 0; font-size: 26px; } .eb-subtitle { padding: 4px 32px 0; } .eb-progress { margin: 12px 32px 0; } .eb-body { padding: 20px 32px 60px; } .eb-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .eb-topbar { padding: 20px 24px 0; } .eb-title { padding: 12px 24px 0; font-size: 24px; } .eb-subtitle { padding: 4px 24px 0; } .eb-progress { margin: 10px 24px 0; } .eb-body { padding: 18px 24px 60px; } .eb-card { padding: 28px 24px 24px; gap: 28px; } .eb-fields { gap: 28px; } }
-  @media (max-width: 767px) { .eb-content { margin-left: 0; } .eb-topbar { padding: 20px 16px 0; } .eb-badge { padding: 6px 12px; font-size: 10px; } .eb-bell { display: none; } .eb-title { padding: 12px 16px 0; font-size: 20px; } .eb-subtitle { padding: 4px 16px 0; font-size: 14px; } .eb-progress { margin: 10px 16px 0; padding: 14px 16px; } .eb-progress-row { font-size: 13px; } .eb-progress-label { font-size: 13px; } .eb-body { padding: 16px 16px 80px; } .eb-card { padding: 20px 16px 20px; gap: 24px; } .eb-fields { gap: 24px; } .eb-section-title { font-size: 17px; } .eb-btn-prev { width: 100px; height: 44px; font-size: 14px; } .eb-btn-save { width: 80px; height: 44px; font-size: 14px; } .eb-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 900px) { .eb-topbar { padding: 20px 24px 0; } .eb-title { padding: 12px 24px 0; font-size: 24px; } .eb-subtitle { padding: 4px 24px 0; } .eb-progress { margin: 10px 24px 0; } .eb-body { padding: 18px 24px 60px; } .eb-card { padding: 28px 24px 24px; gap: 28px; } .eb-fields { gap: 28px; } .eb-branch { gap: 28px; } }
+  @media (max-width: 767px) { .eb-content { margin-left: 0; } .eb-topbar { padding: 20px 16px 0; } .eb-badge { padding: 6px 12px; font-size: 10px; } .eb-bell { display: none; } .eb-title { padding: 12px 16px 0; font-size: 20px; } .eb-subtitle { padding: 4px 16px 0; font-size: 14px; } .eb-progress { margin: 10px 16px 0; padding: 14px 16px; } .eb-progress-row { font-size: 13px; } .eb-progress-label { font-size: 13px; } .eb-body { padding: 16px 16px 80px; } .eb-card { padding: 20px 16px 20px; gap: 24px; } .eb-fields { gap: 24px; } .eb-branch { gap: 24px; padding-left: 12px; } .eb-section-title { font-size: 17px; } .eb-btn-prev { width: 100px; height: 44px; font-size: 14px; } .eb-btn-save { width: 80px; height: 44px; font-size: 14px; } .eb-btn-next { width: 100px; height: 44px; font-size: 14px; } }
   @media (max-width: 390px) { .eb-title { font-size: 17px; } .eb-input, .eb-textarea { font-size: 13px; } .eb-btn-prev, .eb-btn-next { width: 90px; font-size: 13px; } .eb-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .eb-header { padding-bottom: 10px; } .eb-progress { padding: 10px 20px; } .eb-body { padding-top: 14px; } }
 `;
@@ -284,6 +285,7 @@ const EducationalBackgroundView = ({
                 {/* ── Other Degree (conditional on local logic + branching) ─ */}
                 {form.degree_program === "Other" &&
                   shouldShowField("other_degree") && (
+                    <div className="eb-branch">
                     <div className="eb-field">
                       <label className="eb-label">
                         {getLabel("other_degree")}{" "}
@@ -300,6 +302,7 @@ const EducationalBackgroundView = ({
                         onFocus={onFocus}
                         onBlur={onBlur}
                       />
+                    </div>
                     </div>
                   )}
 
@@ -435,6 +438,7 @@ const EducationalBackgroundView = ({
 
                 {/* ── Post-grad course (local + branching gate) ──────────── */}
                 {showPostGradCourse && shouldShowField("post_grad_course") && (
+                  <div className="eb-branch">
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("post_grad_course")}{" "}
@@ -451,6 +455,7 @@ const EducationalBackgroundView = ({
                       onFocus={onFocus}
                       onBlur={onBlur}
                     />
+                  </div>
                   </div>
                 )}
 
@@ -481,8 +486,10 @@ const EducationalBackgroundView = ({
                   </div>
                 )}
 
-                {/* ── "No" branch — licensure plans ──────────────────────── */}
-                {showLicensureNoBranch && shouldShowField("licensure_plans") && (
+                {/* ── "No" branch — licensure plans + reason (shared connector) ── */}
+                {showLicensureNoBranch && (
+                  <div className="eb-branch">
+                  {shouldShowField("licensure_plans") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("licensure_plans")}{" "}
@@ -506,10 +513,9 @@ const EducationalBackgroundView = ({
                       ))}
                     </div>
                   </div>
-                )}
+                  )}
 
-                {/* ── "No" branch — licensure reason ─────────────────────── */}
-                {showLicensureNoBranch && shouldShowField("licensure_reason") && (
+                  {shouldShowField("licensure_reason") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("licensure_reason")}{" "}
@@ -527,10 +533,14 @@ const EducationalBackgroundView = ({
                       onBlur={onBlur}
                     />
                   </div>
+                  )}
+                  </div>
                 )}
 
-                {/* ── Board exam name ────────────────────────────────────── */}
-                {showBoardExam && shouldShowField("board_exam_name") && (
+                {/* ── Board exam name/date/result (shared connector) ──────── */}
+                {showBoardExam && (
+                  <div className="eb-branch">
+                  {shouldShowField("board_exam_name") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("board_exam_name")}{" "}
@@ -548,10 +558,9 @@ const EducationalBackgroundView = ({
                       onBlur={onBlur}
                     />
                   </div>
-                )}
+                  )}
 
-                {/* ── Board exam date ────────────────────────────────────── */}
-                {showBoardExam && shouldShowField("board_exam_date") && (
+                  {shouldShowField("board_exam_date") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("board_exam_date")}{" "}
@@ -570,10 +579,9 @@ const EducationalBackgroundView = ({
                       onBlur={onBlur}
                     />
                   </div>
-                )}
+                  )}
 
-                {/* ── Board exam result ──────────────────────────────────── */}
-                {showBoardExam && shouldShowField("board_exam_result") && (
+                  {shouldShowField("board_exam_result") && (
                   <div className="eb-field">
                     <label className="eb-label-sub">
                       {getLabel("board_exam_result")}{" "}
@@ -596,6 +604,8 @@ const EducationalBackgroundView = ({
                         </label>
                       ))}
                     </div>
+                  </div>
+                  )}
                   </div>
                 )}
               </div>
