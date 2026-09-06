@@ -12,7 +12,8 @@ const STYLES = `
   .eb-content { flex: 1; min-width: 0; margin-left: 229px; }
   .eb-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; }
   .eb-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
-  .eb-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
+  .eb-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; margin-left: -34px; }
+  .eb-bell-wrap { flex-shrink: 0; margin-right: 40px; }
   .eb-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
   .eb-bell { width: 48px; height: 48px; background: #003EA6; border: 1.24px solid rgba(255,255,255,0.2); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
   .eb-bell.active { background: #002263; border-color: rgba(0,34,99,0.5); }
@@ -87,9 +88,9 @@ const STYLES = `
     margin-top: -4px;
   }
 
-  @media (max-width: 1100px) { .eb-topbar { padding: 24px 32px 0; } .eb-title { padding: 14px 32px 0; font-size: 26px; } .eb-subtitle { padding: 4px 32px 0; } .eb-progress { margin: 12px 32px 0; } .eb-body { padding: 20px 32px 60px; } .eb-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .eb-topbar { padding: 20px 24px 0; } .eb-title { padding: 12px 24px 0; font-size: 24px; } .eb-subtitle { padding: 4px 24px 0; } .eb-progress { margin: 10px 24px 0; } .eb-body { padding: 18px 24px 60px; } .eb-card { padding: 28px 24px 24px; gap: 28px; } .eb-fields { gap: 28px; } .eb-branch { gap: 28px; } }
-  @media (max-width: 767px) { .eb-content { margin-left: 0; } .eb-topbar { padding: 20px 16px 0; } .eb-badge { padding: 6px 12px; font-size: 10px; } .eb-bell { display: none; } .eb-title { padding: 12px 16px 0; font-size: 20px; } .eb-subtitle { padding: 4px 16px 0; font-size: 14px; } .eb-progress { margin: 10px 16px 0; padding: 14px 16px; } .eb-progress-row { font-size: 13px; } .eb-progress-label { font-size: 13px; } .eb-body { padding: 16px 16px 80px; } .eb-card { padding: 20px 16px 20px; gap: 24px; } .eb-fields { gap: 24px; } .eb-branch { gap: 24px; padding-left: 12px; } .eb-section-title { font-size: 17px; } .eb-btn-prev { width: 100px; height: 44px; font-size: 14px; } .eb-btn-save { width: 80px; height: 44px; font-size: 14px; } .eb-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 1100px) { .eb-topbar { padding: 24px 32px 0; } .eb-title { padding: 14px 32px 0; font-size: 26px; } .eb-subtitle { padding: 4px 32px 0; } .eb-progress { margin: 12px 32px 0; } .eb-body { padding: 20px 32px 60px; } .eb-card { padding: 32px 32px 28px; } .eb-back-btn { margin-left: -22px; } .eb-bell-wrap { margin-right: 24px; } }
+  @media (max-width: 900px) { .eb-topbar { padding: 20px 24px 0; } .eb-title { padding: 12px 24px 0; font-size: 24px; } .eb-subtitle { padding: 4px 24px 0; } .eb-progress { margin: 10px 24px 0; } .eb-body { padding: 18px 24px 60px; } .eb-card { padding: 28px 24px 24px; gap: 28px; } .eb-fields { gap: 28px; } .eb-branch { gap: 28px; } .eb-back-btn { margin-left: -16px; } .eb-bell-wrap { margin-right: 16px; } }
+  @media (max-width: 767px) { .eb-content { margin-left: 0; } .eb-topbar { padding: 20px 16px 0; } .eb-badge { padding: 6px 12px; font-size: 10px; } .eb-bell { display: none; } .eb-title { padding: 12px 16px 0; font-size: 20px; } .eb-subtitle { padding: 4px 16px 0; font-size: 14px; } .eb-progress { margin: 10px 16px 0; padding: 14px 16px; } .eb-progress-row { font-size: 13px; } .eb-progress-label { font-size: 13px; } .eb-body { padding: 16px 16px 80px; } .eb-card { padding: 20px 16px 20px; gap: 24px; } .eb-fields { gap: 24px; } .eb-branch { gap: 24px; padding-left: 12px; } .eb-section-title { font-size: 17px; } .eb-btn-prev { width: 100px; height: 44px; font-size: 14px; } .eb-btn-save { width: 80px; height: 44px; font-size: 14px; } .eb-btn-next { width: 100px; height: 44px; font-size: 14px; } .eb-back-btn { margin-left: -10px; } .eb-bell-wrap { margin-right: 8px; } }
   @media (max-width: 390px) { .eb-title { font-size: 17px; } .eb-input, .eb-textarea { font-size: 13px; } .eb-btn-prev, .eb-btn-next { width: 90px; font-size: 13px; } .eb-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .eb-header { padding-bottom: 10px; } .eb-progress { padding: 10px 20px; } .eb-body { padding-top: 14px; } }
 `;
@@ -189,7 +190,7 @@ const EducationalBackgroundView = ({
                 Back
               </button>
 
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div className="eb-bell-wrap" style={{ position: "relative" }}>
                 <NotificationBell onSeeAll={() => navigate("/notifications")} />
               </div>
             </div>
