@@ -250,6 +250,7 @@ const CertificationAchievement = () => {
       getPlaceholder={getPlaceholder}
       handleSave={handleSave}
       handleNext={handleNext}
+      onBack={handleBack}
       navigate={navigate}
     />
     <BackGuardModal />
