@@ -62,7 +62,7 @@ const NotificationsPageView = ({
           <div className="notif-tabs">
             <div
               className="notif-tabs-indicator"
-              style={{ transform: tab === 'unread' ? 'translateX(100%)' : 'translateX(0%)' }}
+              style={{ transform: tab === 'unread' ? 'translateX(calc(100% + 2px))' : 'translateX(0%)' }}
             />
             {['all', 'unread'].map(t => (
               <button
