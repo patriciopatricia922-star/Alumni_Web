@@ -151,29 +151,6 @@ const JobCard = ({ job, isRecommended = false, isMobile, isTarget }) => {
       )}
 
       <div className={`job-card-body ${isMobile ? 'mobile' : ''}`}>
-        {/* Icon box / company image */}
-        {job.image ? (
-          <div className={`job-icon-box ${hovered ? 'hovered' : ''} job-icon-box--img`}>
-            <img
-              src={job.image}
-              alt={job.company || job.title}
-              className="job-card-img"
-              onError={e => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement.classList.add('job-icon-box--fallback');
-              }}
-            />
-          </div>
-        ) : (
-          <div className={`job-icon-box ${hovered ? 'hovered' : ''}`}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="7" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
-              <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round"/>
-              <path d="M2 12h20" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6"/>
-            </svg>
-          </div>
-        )}
-
         {/* Content */}
         <div className="job-content">
           {/* Top row: badge + timestamp */}
