@@ -10,7 +10,8 @@ const STYLES = `
   .sc-content { flex: 1; min-width: 0; margin-left: 229px; }
   .sc-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px;}
   .sc-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
-  .sc-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
+  .sc-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; margin-left: -34px; }
+  .sc-bell-wrap { flex-shrink: 0; margin-right: 40px; }
   .sc-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
   .sc-bell { width: 48px; height: 48px; background: #003EA6; border: 1.24px solid rgba(255,255,255,0.2); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
   .sc-bell.active { background: #002263; border-color: rgba(0,34,99,0.5); }
@@ -51,9 +52,9 @@ const STYLES = `
   .sc-error-banner { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.3); border-radius: 10px; padding: 12px 16px; font-family: 'Arimo', Arial, sans-serif; font-size: 13px; color: #DC2626; line-height: 1.5; }
   .sc-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .sc-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
-  @media (max-width: 1100px) { .sc-topbar { padding: 24px 32px 0; } .sc-title { padding: 14px 32px 0; font-size: 26px; } .sc-subtitle { padding: 4px 32px 0; } .sc-progress { margin: 12px 32px 0; } .sc-body { padding: 20px 32px 60px; } .sc-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .sc-topbar { padding: 20px 24px 0; } .sc-title { padding: 12px 24px 0; font-size: 24px; } .sc-subtitle { padding: 4px 24px 0; } .sc-progress { margin: 10px 24px 0; } .sc-body { padding: 18px 24px 60px; } .sc-card { padding: 28px 24px 24px; gap: 28px; } .sc-questions { gap: 28px; } }
-  @media (max-width: 767px) { .sc-content { margin-left: 0; } .sc-topbar { padding: 20px 16px 0; } .sc-badge { padding: 6px 12px; font-size: 10px; } .sc-bell { display: none; } .sc-title { padding: 12px 16px 0; font-size: 20px; } .sc-subtitle { padding: 4px 16px 0; font-size: 14px; } .sc-progress { margin: 10px 16px 0; padding: 14px 16px; } .sc-progress-row { font-size: 13px; } .sc-progress-label { font-size: 13px; } .sc-body { padding: 16px 16px 80px; } .sc-card { padding: 20px 16px 20px; gap: 24px; } .sc-questions { gap: 24px; } .sc-section-title { font-size: 17px; } .sc-stars { gap: 12px; } .sc-star { width: 28px; height: 28px; } .sc-btn-prev { width: 100px; height: 44px; font-size: 14px; } .sc-btn-save { width: 80px; height: 44px; font-size: 14px; } .sc-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 1100px) { .sc-topbar { padding: 24px 32px 0; } .sc-title { padding: 14px 32px 0; font-size: 26px; } .sc-subtitle { padding: 4px 32px 0; } .sc-progress { margin: 12px 32px 0; } .sc-body { padding: 20px 32px 60px; } .sc-card { padding: 32px 32px 28px; } .sc-back-btn { margin-left: -22px; } .sc-bell-wrap { margin-right: 24px; } }
+  @media (max-width: 900px) { .sc-topbar { padding: 20px 24px 0; } .sc-title { padding: 12px 24px 0; font-size: 24px; } .sc-subtitle { padding: 4px 24px 0; } .sc-progress { margin: 10px 24px 0; } .sc-body { padding: 18px 24px 60px; } .sc-card { padding: 28px 24px 24px; gap: 28px; } .sc-questions { gap: 28px; } .sc-back-btn { margin-left: -16px; } .sc-bell-wrap { margin-right: 16px; } }
+  @media (max-width: 767px) { .sc-content { margin-left: 0; } .sc-topbar { padding: 20px 16px 0; } .sc-badge { padding: 6px 12px; font-size: 10px; } .sc-bell { display: none; } .sc-title { padding: 12px 16px 0; font-size: 20px; } .sc-subtitle { padding: 4px 16px 0; font-size: 14px; } .sc-progress { margin: 10px 16px 0; padding: 14px 16px; } .sc-progress-row { font-size: 13px; } .sc-progress-label { font-size: 13px; } .sc-body { padding: 16px 16px 80px; } .sc-card { padding: 20px 16px 20px; gap: 24px; } .sc-questions { gap: 24px; } .sc-section-title { font-size: 17px; } .sc-stars { gap: 12px; } .sc-star { width: 28px; height: 28px; } .sc-btn-prev { width: 100px; height: 44px; font-size: 14px; } .sc-btn-save { width: 80px; height: 44px; font-size: 14px; } .sc-btn-next { width: 100px; height: 44px; font-size: 14px; } .sc-back-btn { margin-left: -10px; } .sc-bell-wrap { margin-right: 8px; } }
   @media (max-width: 390px) { .sc-title { font-size: 17px; } .sc-textarea { font-size: 13px; } .sc-btn-prev, .sc-btn-next { width: 90px; font-size: 13px; } .sc-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .sc-header { padding-bottom: 10px; } .sc-progress { padding: 10px 20px; } .sc-body { padding-top: 14px; } }
 `;
@@ -118,7 +119,7 @@ const SkillsAndCompetenciesView = ({
               Back
             </button>
 
-            <div style={{ position: "relative", flexShrink: 0 }}>
+            <div className="sc-bell-wrap" style={{ position: "relative" }}>
               <NotificationBell onSeeAll={() => navigate("/notifications")} />
             </div>
           </div>

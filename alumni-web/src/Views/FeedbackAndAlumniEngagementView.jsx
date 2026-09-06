@@ -10,7 +10,8 @@ const STYLES = `
   .fa-content { flex: 1; min-width: 0; margin-left: 229px; }
   .fa-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px;}
   .fa-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
-  .fa-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
+  .fa-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; margin-left: -34px; }
+  .fa-bell-wrap { flex-shrink: 0; margin-right: 40px; }
   .fa-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
   .fa-bell { width: 48px; height: 48px; background: #003EA6; border: 1.24px solid rgba(255,255,255,0.2); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
   .fa-bell.active { background: #002263; border-color: rgba(0,34,99,0.5); }
@@ -52,9 +53,9 @@ const STYLES = `
   .fa-other-input { width: 100%; height: 47px; background: #F9FAFB; border: 0.8px solid #D1D5DC; border-radius: 10px; padding: 12px 16px; font-family: 'Montserrat', 'Arimo', Arial, sans-serif; font-size: 14px; color: #0A0A0A; outline: none; margin-top: 8px; transition: border-color 0.15s; }
   .fa-other-input:focus { border-color: #003EA6; }
   .fa-other-input::placeholder { color: rgba(10,10,10,0.3); }
-  @media (max-width: 1100px) { .fa-topbar { padding: 24px 32px 0; } .fa-title { padding: 14px 32px 0; font-size: 26px; } .fa-subtitle { padding: 4px 32px 0; } .fa-progress { margin: 12px 32px 0; } .fa-body { padding: 20px 32px 60px; } .fa-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .fa-topbar { padding: 20px 24px 0; } .fa-title { padding: 12px 24px 0; font-size: 24px; } .fa-subtitle { padding: 4px 24px 0; } .fa-progress { margin: 10px 24px 0; } .fa-body { padding: 18px 24px 60px; } .fa-card { padding: 28px 24px 24px; gap: 28px; } .fa-questions { gap: 28px; } }
-  @media (max-width: 767px) { .fa-content { margin-left: 0; } .fa-topbar { padding: 20px 16px 0; } .fa-badge { padding: 6px 12px; font-size: 10px; } .fa-bell { display: none; } .fa-title { padding: 12px 16px 0; font-size: 20px; } .fa-subtitle { padding: 4px 16px 0; font-size: 14px; } .fa-progress { margin: 10px 16px 0; padding: 14px 16px; } .fa-progress-row { font-size: 13px; } .fa-progress-label { font-size: 13px; } .fa-body { padding: 16px 16px 80px; } .fa-card { padding: 20px 16px 20px; gap: 24px; } .fa-questions { gap: 24px; } .fa-section-title { font-size: 17px; } .fa-btn-prev { width: 100px; height: 44px; font-size: 14px; } .fa-btn-save { width: 80px; height: 44px; font-size: 14px; } .fa-btn-submit { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 1100px) { .fa-topbar { padding: 24px 32px 0; } .fa-title { padding: 14px 32px 0; font-size: 26px; } .fa-subtitle { padding: 4px 32px 0; } .fa-progress { margin: 12px 32px 0; } .fa-body { padding: 20px 32px 60px; } .fa-card { padding: 32px 32px 28px; } .fa-back-btn { margin-left: -22px; } .fa-bell-wrap { margin-right: 24px; } }
+  @media (max-width: 900px) { .fa-topbar { padding: 20px 24px 0; } .fa-title { padding: 12px 24px 0; font-size: 24px; } .fa-subtitle { padding: 4px 24px 0; } .fa-progress { margin: 10px 24px 0; } .fa-body { padding: 18px 24px 60px; } .fa-card { padding: 28px 24px 24px; gap: 28px; } .fa-questions { gap: 28px; } .fa-back-btn { margin-left: -16px; } .fa-bell-wrap { margin-right: 16px; } }
+  @media (max-width: 767px) { .fa-content { margin-left: 0; } .fa-topbar { padding: 20px 16px 0; } .fa-badge { padding: 6px 12px; font-size: 10px; } .fa-bell { display: none; } .fa-title { padding: 12px 16px 0; font-size: 20px; } .fa-subtitle { padding: 4px 16px 0; font-size: 14px; } .fa-progress { margin: 10px 16px 0; padding: 14px 16px; } .fa-progress-row { font-size: 13px; } .fa-progress-label { font-size: 13px; } .fa-body { padding: 16px 16px 80px; } .fa-card { padding: 20px 16px 20px; gap: 24px; } .fa-questions { gap: 24px; } .fa-section-title { font-size: 17px; } .fa-btn-prev { width: 100px; height: 44px; font-size: 14px; } .fa-btn-save { width: 80px; height: 44px; font-size: 14px; } .fa-btn-submit { width: 100px; height: 44px; font-size: 14px; } .fa-back-btn { margin-left: -10px; } .fa-bell-wrap { margin-right: 8px; } }
   @media (max-width: 390px) { .fa-title { font-size: 17px; } .fa-textarea, .fa-other-input { font-size: 13px; } .fa-btn-prev, .fa-btn-submit { width: 90px; font-size: 13px; } .fa-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .fa-header { padding-bottom: 10px; } .fa-progress { padding: 10px 20px; } .fa-body { padding-top: 14px; } }
 `;
@@ -113,7 +114,7 @@ const FeedbackAndAlumniEngagementView = ({
                 Back
               </button>
 
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div className="fa-bell-wrap" style={{ position: "relative" }}>
                 <NotificationBell onSeeAll={() => navigate("/notifications")} />
               </div>
             </div>

@@ -10,7 +10,8 @@ const STYLES = `
   .ei-content { flex: 1; min-width: 0; margin-left: 229px; }
   .ei-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; }
   .ei-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
-  .ei-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
+  .ei-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; margin-left: -34px; }
+  .ei-bell-wrap { flex-shrink: 0; margin-right: 40px; }
   .ei-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
   .ei-bell { width: 48px; height: 48px; background: #003EA6; border: 1.24px solid rgba(255,255,255,0.2); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
   .ei-bell.active { background: #002263; border-color: rgba(0,34,99,0.5); }
@@ -53,9 +54,9 @@ const STYLES = `
   .ei-btn-next:hover { background: #002a80; }
   .ei-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .ei-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
-  @media (max-width: 1100px) { .ei-topbar { padding: 24px 32px 0; } .ei-title { padding: 14px 32px 0; font-size: 26px; } .ei-subtitle { padding: 4px 32px 0; } .ei-progress { margin: 12px 32px 0; } .ei-body { padding: 20px 32px 60px; } .ei-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .ei-topbar { padding: 20px 24px 0; } .ei-title { padding: 12px 24px 0; font-size: 24px; } .ei-subtitle { padding: 4px 24px 0; } .ei-progress { margin: 10px 24px 0; } .ei-body { padding: 18px 24px 60px; } .ei-card { padding: 28px 24px 24px; gap: 28px; } .ei-fields { gap: 28px; } .ei-branch { gap: 28px; } }
-  @media (max-width: 767px) { .ei-content { margin-left: 0; } .ei-topbar { padding: 20px 16px 0; } .ei-badge { padding: 6px 12px; font-size: 10px; } .ei-bell { display: none; } .ei-title { padding: 12px 16px 0; font-size: 20px; } .ei-subtitle { padding: 4px 16px 0; font-size: 14px; } .ei-progress { margin: 10px 16px 0; padding: 14px 16px; } .ei-progress-row { font-size: 13px; } .ei-progress-label { font-size: 13px; } .ei-body { padding: 16px 16px 80px; } .ei-card { padding: 20px 16px 20px; gap: 24px; } .ei-fields { gap: 24px; } .ei-branch { gap: 24px; } .ei-section-title { font-size: 17px; } .ei-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ei-btn-save { width: 80px; height: 44px; font-size: 14px; } .ei-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 1100px) { .ei-topbar { padding: 24px 32px 0; } .ei-title { padding: 14px 32px 0; font-size: 26px; } .ei-subtitle { padding: 4px 32px 0; } .ei-progress { margin: 12px 32px 0; } .ei-body { padding: 20px 32px 60px; } .ei-card { padding: 32px 32px 28px; } .ei-back-btn { margin-left: -22px; } .ei-bell-wrap { margin-right: 24px; } }
+  @media (max-width: 900px) { .ei-topbar { padding: 20px 24px 0; } .ei-title { padding: 12px 24px 0; font-size: 24px; } .ei-subtitle { padding: 4px 24px 0; } .ei-progress { margin: 10px 24px 0; } .ei-body { padding: 18px 24px 60px; } .ei-card { padding: 28px 24px 24px; gap: 28px; } .ei-fields { gap: 28px; } .ei-branch { gap: 28px; } .ei-back-btn { margin-left: -16px; } .ei-bell-wrap { margin-right: 16px; } }
+  @media (max-width: 767px) { .ei-content { margin-left: 0; } .ei-topbar { padding: 20px 16px 0; } .ei-badge { padding: 6px 12px; font-size: 10px; } .ei-bell { display: none; } .ei-title { padding: 12px 16px 0; font-size: 20px; } .ei-subtitle { padding: 4px 16px 0; font-size: 14px; } .ei-progress { margin: 10px 16px 0; padding: 14px 16px; } .ei-progress-row { font-size: 13px; } .ei-progress-label { font-size: 13px; } .ei-body { padding: 16px 16px 80px; } .ei-card { padding: 20px 16px 20px; gap: 24px; } .ei-fields { gap: 24px; } .ei-branch { gap: 24px; } .ei-section-title { font-size: 17px; } .ei-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ei-btn-save { width: 80px; height: 44px; font-size: 14px; } .ei-btn-next { width: 100px; height: 44px; font-size: 14px; } .ei-back-btn { margin-left: -10px; } .ei-bell-wrap { margin-right: 8px; } }
   @media (max-width: 390px) { .ei-title { font-size: 17px; } .ei-input { font-size: 13px; } .ei-btn-prev, .ei-btn-next { width: 90px; font-size: 13px; } .ei-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .ei-header { padding-bottom: 10px; } .ei-progress { padding: 10px 20px; } .ei-body { padding-top: 14px; } }
 `;
@@ -131,7 +132,7 @@ const EmploymentInformationView = ({
               </button>
 
               {/* ── Bell ────────────────────────────────────────────────────── */}
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div className="ei-bell-wrap" style={{ position: "relative" }}>
                 <NotificationBell onSeeAll={() => navigate("/notifications")} />
               </div>
             </div>
