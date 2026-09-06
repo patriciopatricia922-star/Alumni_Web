@@ -290,7 +290,6 @@ const AlumniDashboard = () => {
       }
 
     } catch (error) {
-      console.error("[AlumniDashboard] Error fetching reward content:", error);
     } finally {
       setLoadingRewardContent(false);
     }
@@ -376,15 +375,7 @@ const AlumniDashboard = () => {
         .eq("id", authUser.id)
         .single();
       if (rewardError) {
-        console.error(
-          "[AlumniDashboard] reward_points fetch failed:",
-          rewardError,
-        );
       } else {
-        console.log(
-          "[AlumniDashboard] reward_points fetched:",
-          rewardData?.reward_points,
-        );
         setRewardPoints(rewardData?.reward_points ?? 0);
       }
 
@@ -416,7 +407,6 @@ const AlumniDashboard = () => {
           if (!cancelled) setSurveyRoute(route);
         }
       } catch (err) {
-        console.error("AlumniDashboard: error resolving survey route:", err);
         if (!cancelled) setSurveyRoute("/survey/personal-background");
       }
     };
@@ -495,7 +485,6 @@ const AlumniDashboard = () => {
     let mounted = true;
     subscribeToRewardPoints(
       (newPoints) => {
-        console.log("[AlumniDashboard] realtime reward update:", newPoints);
         if (mounted) setRewardPoints(newPoints);
       },
       ({ points, newBalance }) => {
@@ -533,10 +522,6 @@ const AlumniDashboard = () => {
         .eq("is_active", true);
       persistDismissed(category, count || 0);
     } catch (err) {
-      console.warn(
-        `AlumniDashboard: dismissBadge fetch failed for "${category}"`,
-        err,
-      );
       // Optimistic clear is already applied; use sentinel as fallback.
       persistDismissed(category, 999999);
     }
