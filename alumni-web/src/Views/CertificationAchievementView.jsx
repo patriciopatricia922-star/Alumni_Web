@@ -10,7 +10,8 @@ const STYLES = `
   .ca-content { flex: 1; min-width: 0; margin-left: 229px; }
   .ca-header { position: sticky; top: 0; z-index: 40; background: #DAE5F1; padding-bottom: 16px; }
   .ca-topbar { display: flex; align-items: center; justify-content: space-between; padding: 28px 51px 0; }
-  .ca-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; }
+  .ca-back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; padding: 0; font-family: 'Arimo', Arial, sans-serif; font-weight: 700; font-size: 14px; color: #002263; flex-shrink: 0; margin-left: -34px; }
+  .ca-bell-wrap { flex-shrink: 0; margin-right: 40px; }
   .ca-badge { background: #003EA6; border: 1.24px solid rgba(99,102,241,0.3); border-radius: 999px; padding: 7px 20px; font-family: 'Arimo', Arial, sans-serif; font-size: 12px; letter-spacing: 0.3px; color: rgba(255,255,255,0.8); white-space: nowrap; }
   .ca-bell { width: 48px; height: 48px; background: #003EA6; border: 1.24px solid rgba(255,255,255,0.2); box-shadow: 0 4px 4px rgba(0,0,0,0.25); border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; transition: all 0.15s; }
   .ca-bell.active { background: #002263; border-color: rgba(0,34,99,0.5); }
@@ -59,9 +60,9 @@ const STYLES = `
   .ca-btn-next:hover { background: #002a80; }
   .ca-req { color: #F87171; font-weight: 700; margin-left: 2px; }
   .ca-field-error { font-family: 'Arimo', Arial, sans-serif; font-size: 12px; color: #F87171; margin-left: 6px; font-weight: 400; }
-  @media (max-width: 1100px) { .ca-topbar { padding: 24px 32px 0; } .ca-title { padding: 14px 32px 0; font-size: 26px; } .ca-subtitle { padding: 4px 32px 0; } .ca-progress { margin: 12px 32px 0; } .ca-body { padding: 20px 32px 60px; } .ca-card { padding: 32px 32px 28px; } }
-  @media (max-width: 900px) { .ca-topbar { padding: 20px 24px 0; } .ca-title { padding: 12px 24px 0; font-size: 24px; } .ca-subtitle { padding: 4px 24px 0; } .ca-progress { margin: 10px 24px 0; } .ca-body { padding: 18px 24px 60px; } .ca-card { padding: 28px 24px 24px; gap: 28px; } .ca-fields { gap: 28px; } }
-  @media (max-width: 767px) { .ca-content { margin-left: 0; } .ca-topbar { padding: 20px 16px 0; } .ca-badge { padding: 6px 12px; font-size: 10px; } .ca-bell { display: none; } .ca-title { padding: 12px 16px 0; font-size: 20px; } .ca-subtitle { padding: 4px 16px 0; font-size: 14px; } .ca-progress { margin: 10px 16px 0; padding: 14px 16px; } .ca-progress-row { font-size: 13px; } .ca-progress-label { font-size: 13px; } .ca-body { padding: 16px 16px 80px; } .ca-card { padding: 20px 16px 20px; gap: 24px; } .ca-fields { gap: 24px; } .ca-section-title { font-size: 17px; } .ca-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ca-btn-save { width: 80px; height: 44px; font-size: 14px; } .ca-btn-next { width: 100px; height: 44px; font-size: 14px; } }
+  @media (max-width: 1100px) { .ca-topbar { padding: 24px 32px 0; } .ca-title { padding: 14px 32px 0; font-size: 26px; } .ca-subtitle { padding: 4px 32px 0; } .ca-progress { margin: 12px 32px 0; } .ca-body { padding: 20px 32px 60px; } .ca-card { padding: 32px 32px 28px; } .ca-back-btn { margin-left: -22px; } .ca-bell-wrap { margin-right: 24px; } }
+  @media (max-width: 900px) { .ca-topbar { padding: 20px 24px 0; } .ca-title { padding: 12px 24px 0; font-size: 24px; } .ca-subtitle { padding: 4px 24px 0; } .ca-progress { margin: 10px 24px 0; } .ca-body { padding: 18px 24px 60px; } .ca-card { padding: 28px 24px 24px; gap: 28px; } .ca-fields { gap: 28px; } .ca-back-btn { margin-left: -16px; } .ca-bell-wrap { margin-right: 16px; } }
+  @media (max-width: 767px) { .ca-content { margin-left: 0; } .ca-topbar { padding: 20px 16px 0; } .ca-badge { padding: 6px 12px; font-size: 10px; } .ca-bell { display: none; } .ca-title { padding: 12px 16px 0; font-size: 20px; } .ca-subtitle { padding: 4px 16px 0; font-size: 14px; } .ca-progress { margin: 10px 16px 0; padding: 14px 16px; } .ca-progress-row { font-size: 13px; } .ca-progress-label { font-size: 13px; } .ca-body { padding: 16px 16px 80px; } .ca-card { padding: 20px 16px 20px; gap: 24px; } .ca-fields { gap: 24px; } .ca-section-title { font-size: 17px; } .ca-btn-prev { width: 100px; height: 44px; font-size: 14px; } .ca-btn-save { width: 80px; height: 44px; font-size: 14px; } .ca-btn-next { width: 100px; height: 44px; font-size: 14px; } .ca-back-btn { margin-left: -10px; } .ca-bell-wrap { margin-right: 8px; } }
   @media (max-width: 390px) { .ca-title { font-size: 17px; } .ca-textarea { font-size: 13px; } .ca-btn-prev, .ca-btn-next { width: 90px; font-size: 13px; } .ca-btn-save { width: 70px; font-size: 13px; } }
   @media (max-height: 600px) { .ca-header { padding-bottom: 10px; } .ca-progress { padding: 10px 20px; } .ca-body { padding-top: 14px; } }
 `;
@@ -133,7 +134,7 @@ const CertificationAchievementView = ({
                 Back
               </button>
 
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div className="ca-bell-wrap" style={{ position: "relative" }}>
                 <NotificationBell onSeeAll={() => navigate("/notifications")} />
               </div>
             </div>
