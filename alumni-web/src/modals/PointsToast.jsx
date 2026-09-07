@@ -12,7 +12,7 @@ import rewardIcon from '../assets/reward_icn.svg';
  *   newBalance    {number}   — updated balance after award
  *   label         {string}   — supporting message shown under the headline
  *                              (default: Rewards Store redemption note)
- *   duration      {number}   — ms visible before auto-dismiss starts (default: 5000)
+ *   duration      {number}   — ms visible before auto-dismiss starts (default: 60000, ~1 min)
  *   onDismiss     {function} — called once the toast has fully dismissed
  */
 const EXIT_ANIMATION_MS = 220;
@@ -22,7 +22,7 @@ const PointsToast = ({
   points,
   newBalance,
   label    = 'These points can be redeemed for rewards in the Rewards Store.',
-  duration = 5000,
+  duration = 60000,
   onDismiss,
 }) => {
   const dismissTimerRef = useRef(null);
