@@ -1,47 +1,29 @@
 import React, { useState } from 'react';
 import { FiImage, FiTrash2 } from 'react-icons/fi';
+import { FaCrop } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
+import ImageCropModal from './ImageCropModal';
 
 const MAX_IMAGES = 4;
 
-// ── Image dimension requirement ────────────────────────────────────────────────
-const REQUIRED_WIDTH = 1080;
-const REQUIRED_HEIGHT = 1080;
-
-const getImageDimensions = (file) => {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Could not read image file.'));
-    };
-    img.src = url;
-  });
-};
-
 const MultiImageUpload = ({
-  images = [],          // array of URLs, current value
-  onChange,              // (newArray) => void
+  images = [],           // array of URLs, current value
+  onChange,               // (newArray) => void
   bucketName,
   folder,
   label = 'Upload Images',
+  classPrefix = '',
 }) => {
   const [uploading, setUploading] = useState(false);
-  const [dimError, setDimError] = useState('');
+  const [error, setError] = useState('');
+  const [cropTarget, setCropTarget] = useState(null); // { index, url } | null
 
-  const uploadOne = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const uploadOne = async (fileOrBlob, fileName) => {
     const filePath = `${folder}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucketName)
-      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      .upload(filePath, fileOrBlob, { cacheControl: '3600', upsert: false });
 
     if (uploadError) throw uploadError;
 
@@ -52,56 +34,32 @@ const MultiImageUpload = ({
     return publicUrl;
   };
 
+  // Any image size/format is accepted — no dimension check. Use the crop
+  // tool after upload to adjust sizing if needed.
   const handleFilesSelected = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    setDimError('');
+    setError('');
 
     const remainingSlots = MAX_IMAGES - images.length;
     if (remainingSlots <= 0) return;
 
-    const filesToConsider = files.slice(0, remainingSlots);
-
-    // ── Validate dimensions for every selected file BEFORE uploading any of them ──
-    const validFiles = [];
-    const rejectedNames = [];
-
-    for (const file of filesToConsider) {
-      try {
-        const dims = await getImageDimensions(file);
-        if (dims.width === REQUIRED_WIDTH && dims.height === REQUIRED_HEIGHT) {
-          validFiles.push(file);
-        } else {
-          rejectedNames.push(`${file.name} (${dims.width}x${dims.height}px)`);
-        }
-      } catch (err) {
-        rejectedNames.push(`${file.name} (unreadable)`);
-      }
-    }
-
-    if (rejectedNames.length > 0) {
-      setDimError(
-        `Rejected — images must be exactly ${REQUIRED_WIDTH}x${REQUIRED_HEIGHT}px: ${rejectedNames.join(', ')}`
-      );
-    }
-
-    if (validFiles.length === 0) {
-      e.target.value = '';
-      return;
-    }
+    const filesToUpload = files.slice(0, remainingSlots);
 
     setUploading(true);
     try {
       const uploaded = [];
-      for (const file of validFiles) {
-        const url = await uploadOne(file);
+      for (const file of filesToUpload) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const url = await uploadOne(file, fileName);
         if (url) uploaded.push(url);
       }
       onChange([...images, ...uploaded]);
     } catch (err) {
       console.error('Upload error:', err);
-      alert(`Upload failed: ${err.message}`);
+      setError(`Upload failed: ${err.message}`);
     } finally {
       setUploading(false);
       e.target.value = ''; // allow re-selecting the same file later
@@ -110,25 +68,58 @@ const MultiImageUpload = ({
 
   const handleRemove = (index) => {
     onChange(images.filter((_, i) => i !== index));
-    setDimError('');
+    setError('');
+  };
+
+  const handleCropClick = (index) => {
+    setCropTarget({ index, url: images[index] });
+  };
+
+  // Uploads the cropped result as a new file and swaps it into that slot.
+  const handleCropSave = async (croppedBlob) => {
+    if (!cropTarget) return;
+    setUploading(true);
+    setError('');
+    try {
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-cropped.jpg`;
+      const newUrl = await uploadOne(croppedBlob, fileName);
+      const updated = [...images];
+      updated[cropTarget.index] = newUrl;
+      onChange(updated);
+    } catch (err) {
+      console.error('Crop upload error:', err);
+      setError(`Failed to save cropped image: ${err.message}`);
+    } finally {
+      setUploading(false);
+      setCropTarget(null);
+    }
   };
 
   const inputId = `multi-image-input-${folder}`;
   const canAddMore = images.length < MAX_IMAGES;
 
   return (
-    <div className="image-upload-container">
+    <div className={`${classPrefix}image-upload-container`}>
       {images.length > 0 && (
-        <div className="multi-image-grid">
+        <div className={`${classPrefix}multi-image-grid`}>
           {images.map((url, i) => (
-            <div className="image-preview" key={url + i}>
+            <div className={`${classPrefix}image-preview`} key={url + i}>
               <img src={url} alt={`Upload ${i + 1}`} />
               <button
                 type="button"
-                className="remove-image-btn"
+                className={`${classPrefix}remove-image-btn`}
                 onClick={() => handleRemove(i)}
+                title="Remove image"
               >
                 <FiTrash2 size={12} />
+              </button>
+              <button
+                type="button"
+                className={`${classPrefix}crop-image-btn`}
+                onClick={() => handleCropClick(i)}
+                title="Edit / crop image"
+              >
+                <FaCrop size={12} />
               </button>
             </div>
           ))}
@@ -137,7 +128,7 @@ const MultiImageUpload = ({
 
       {canAddMore && (
         <div
-          className="image-upload-area"
+          className={`${classPrefix}image-upload-area`}
           onClick={() => document.getElementById(inputId).click()}
         >
           {uploading ? (
@@ -158,13 +149,20 @@ const MultiImageUpload = ({
         </div>
       )}
 
-      {dimError ? (
-        <p className="field-hint" style={{ color: '#EF4444' }}>{dimError}</p>
+      {error ? (
+        <p className="field-hint" style={{ color: '#EF4444' }}>{error}</p>
       ) : (
         <p className="field-hint">
-          {images.length}/{MAX_IMAGES} images added. Each must be exactly {REQUIRED_WIDTH}x{REQUIRED_HEIGHT}px. Formats: JPG, PNG, GIF.
+          {images.length}/{MAX_IMAGES} images added. Any size accepted — use the crop icon to adjust. Formats: JPG, PNG, GIF.
         </p>
       )}
+
+      <ImageCropModal
+        open={!!cropTarget}
+        imageUrl={cropTarget?.url}
+        onClose={() => setCropTarget(null)}
+        onSave={handleCropSave}
+      />
     </div>
   );
 };
