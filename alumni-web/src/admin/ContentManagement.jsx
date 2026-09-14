@@ -1,7 +1,7 @@
 // ============================================================================
 // Purpose: Handles all business logic, Supabase API calls, data processing,
 //          state management, and event handlers for Content Management.
-//
+//mine
 // INTEGRATION LOG 
 // ─────────────────────────────────────────────────────────────────────────────
 // [landing-cms]   updated_at stamped on every mutating Supabase call
@@ -421,6 +421,7 @@ const handleAwardPoints = async (userIds, points) => {
         image_urls,
         published_at: new Date().toISOString(),
         is_active:    true,
+        expires_at:   formData.expiry ? new Date(formData.expiry).toISOString() : null, // ADD THIS LINE
         target_user_ids: formData.audience === 'Specific User' && formData.target_user_id
         ? [formData.target_user_id]
         : null,
@@ -637,6 +638,7 @@ const handleAwardPoints = async (userIds, points) => {
         image_url,
         image_urls,
         updated_at: new Date().toISOString(),
+        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null, // ADD THIS LINE
         target_user_ids: formData.audience === 'Specific User' && formData.target_user_id
         ? [formData.target_user_id]
         : null,

@@ -189,7 +189,9 @@ const AnnouncementModal = ({
         content: announcement.content || "",
         priority: announcement.priority || "Medium",
         audience: announcement.audience || "All Alumni",
-        expiry: announcement.expiry || "",
+        expiry: announcement.expires_at
+          ? new Date(announcement.expires_at).toISOString().split("T")[0]
+          : "",
         image_urls: announcement.image_urls?.length
           ? announcement.image_urls
           : announcement.image_url
