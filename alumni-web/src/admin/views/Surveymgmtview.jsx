@@ -75,6 +75,15 @@ export default function SurveyMgmtView({
   const [dirtySection, setDirtySection] = useState(false);
   const sectionSnapshotRef = useRef(null);
 
+  // ── FIX 8: Survey-level header/description editing ──────────────────────
+  // Same open/close/save/dirty pattern as section editing above, applied to
+  // the top-level `survey.title` / `survey.description` fields instead of a
+  // section. Persists through the identical setSurvey → handlePublish →
+  // survey_config flow already used for question headers — no new storage.
+  const [editingSurveyMeta, setEditingSurveyMeta] = useState(false);
+  const [dirtySurveyMeta, setDirtySurveyMeta] = useState(false);
+  const surveyMetaSnapshotRef = useRef(null);
+
   useEffect(() => {
     if (status === "saved") {
       setShowSuccessModal(true);
@@ -90,6 +99,14 @@ export default function SurveyMgmtView({
     setDirtySection(false);
     sectionSnapshotRef.current = null;
   }, [activeSection]);
+
+  // Close any in-progress survey header edit when switching College/SHS so
+  // an edit for one survey type can never be accidentally saved onto another.
+  useEffect(() => {
+    setEditingSurveyMeta(false);
+    setDirtySurveyMeta(false);
+    surveyMetaSnapshotRef.current = null;
+  }, [alumniType]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const formatSectionTitle = (title) => {
@@ -151,6 +168,41 @@ export default function SurveyMgmtView({
     setDirtySection(false);
     sectionSnapshotRef.current = null;
     addToast("Section updated successfully", "edit");
+  };
+
+  // ── FIX 8 (cont.): survey-level header/description handlers ─────────────
+  const updateSurveyMeta = (patch) => {
+    setSurvey((prev) => ({ ...prev, ...patch }));
+    setDirtySurveyMeta(true);
+  };
+
+  const updateSurveyMetaRaw = (patch) => {
+    setSurvey((prev) => ({ ...prev, ...patch }));
+  };
+
+  const openSurveyMetaEdit = () => {
+    surveyMetaSnapshotRef.current = {
+      title: survey.title,
+      description: survey.description ?? "",
+    };
+    setDirtySurveyMeta(false);
+    setEditingSurveyMeta(true);
+  };
+
+  const closeSurveyMetaEdit = () => {
+    if (dirtySurveyMeta && surveyMetaSnapshotRef.current) {
+      updateSurveyMetaRaw(surveyMetaSnapshotRef.current);
+    }
+    setEditingSurveyMeta(false);
+    setDirtySurveyMeta(false);
+    surveyMetaSnapshotRef.current = null;
+  };
+
+  const saveSurveyMetaEdit = () => {
+    setEditingSurveyMeta(false);
+    setDirtySurveyMeta(false);
+    surveyMetaSnapshotRef.current = null;
+    addToast("Survey header updated successfully", "edit");
   };
 
   // ── Loading state ─────────────────────────────────────────────────────────
@@ -642,6 +694,90 @@ export default function SurveyMgmtView({
             ) : (
               /* ── Editor Mode ─────────────────────────────────────────── */
               <>
+                {/* Survey header/description card (FIX 8) — the overall
+                    survey title + description shown to alumni, editable the
+                    same way section titles/descriptions already are. Shown
+                    once above the sections, not tied to activeSection. */}
+                <div className="section-card">
+                  <div className="section-top">
+                    <span>Survey Header</span>
+                    <button
+                      onClick={() =>
+                        editingSurveyMeta
+                          ? closeSurveyMetaEdit()
+                          : openSurveyMetaEdit()
+                      }
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        padding: "0.2rem",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      title={editingSurveyMeta ? "Cancel editing" : "Edit survey header"}
+                    >
+                      <FiEdit2
+                        size={14}
+                        color={editingSurveyMeta ? "#3b82f6" : "#374151"}
+                      />
+                    </button>
+                  </div>
+
+                  {editingSurveyMeta ? (
+                    <>
+                      <input
+                        value={survey.title}
+                        onChange={(e) =>
+                          updateSurveyMeta({ title: e.target.value })
+                        }
+                        placeholder="Survey title"
+                        style={{
+                          width: "100%",
+                          border: "none",
+                          borderBottom: "2px solid #3b82f6",
+                          outline: "none",
+                          fontFamily: "Lexend",
+                          fontSize: "1.1rem",
+                          fontWeight: 600,
+                          background: "transparent",
+                          color: "#0f172a",
+                          padding: "0.2rem 0",
+                          margin: "0.2rem 0",
+                        }}
+                      />
+                      <textarea
+                        value={survey.description ?? ""}
+                        onChange={(e) =>
+                          updateSurveyMeta({ description: e.target.value })
+                        }
+                        placeholder="Survey description"
+                        rows={2}
+                        className="q-placeholder-input q-placeholder-textarea"
+                        style={{ marginTop: "0.4rem", maxWidth: "100%" }}
+                      />
+                      <div className="q-save-row">
+                        <button
+                          className="q-save-btn"
+                          disabled={!dirtySurveyMeta}
+                          onClick={saveSurveyMetaEdit}
+                        >
+                          <FiCheck size={13} /> Save changes
+                        </button>
+                        <button className="q-cancel-btn" onClick={closeSurveyMetaEdit}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>{survey.title}</h2>
+                      {survey.description && (
+                        <p className="section-sub">{survey.description}</p>
+                      )}
+                    </>
+                  )}
+                </div>
                 {/* Section header card */}
                 <div className="section-card">
                   <div className="section-top">
