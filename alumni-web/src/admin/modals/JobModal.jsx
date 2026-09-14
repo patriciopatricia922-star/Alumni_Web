@@ -239,7 +239,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
 
   const s = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-    // Guards a date field against past dates regardless of entry method
+  // Guards a date field against past dates regardless of entry method
   // (calendar click, typed digits, or paste). `min` on the input restricts
   // the calendar UI; this catches any value that still slips through.
   const handleDateFieldChange = (k) => (e) => {
@@ -299,7 +299,7 @@ const JobModal = ({ open, onClose, mode, job, onCreate, onUpdate }) => {
           />
         </Field>
 
-                <div className="cm-field-grid">
+        <div className="cm-field-grid">
           <Field label="Location" required>
             <input className="cm-input" placeholder="Enter job location" value={form.location} onChange={(e) => s('location', e.target.value)} />
           </Field>
