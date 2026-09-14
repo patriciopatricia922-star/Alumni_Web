@@ -613,6 +613,8 @@ const LandingModal = ({ open, onClose, mode, section, onCreate, onUpdate }) => {
     image_url: null,
   });
   const [loading, setLoading] = useState(false);
+  const currentSectionLabel =
+    SECTION_TYPES.find((o) => o.value === form.section_type)?.label || "Section";
 
   useEffect(() => {
     if (mode === "edit" && section) {
@@ -729,7 +731,9 @@ const LandingModal = ({ open, onClose, mode, section, onCreate, onUpdate }) => {
       open={open}
       onClose={onClose}
       title={
-        mode === "edit" ? "Edit Landing Section" : "Create Landing Section"
+        mode === "edit"
+          ? `${currentSectionLabel}`
+          : `Create ${currentSectionLabel}`
       }
       subtitle={
         mode === "edit"
