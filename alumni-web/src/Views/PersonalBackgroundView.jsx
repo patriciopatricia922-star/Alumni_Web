@@ -441,6 +441,8 @@ const PersonalBackgroundView = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Personal Background',
+  sectionDescription = 'Basic information about you',
   handleSave,
   handleNext,
   onBack,
@@ -499,7 +501,7 @@ const PersonalBackgroundView = ({
                 style={{ width: `${formPct}%` }}
               />
             </div>
-            <span className="pb-progress-label">Personal Background</span>
+            <span className="pb-progress-label">{sectionTitle}</span>
           </div>
         </div>
 
@@ -507,8 +509,8 @@ const PersonalBackgroundView = ({
         <div className="pb-body">
           <div className="pb-card" ref={cardRef}>
             <div>
-              <h2 className="pb-section-title">Personal Information</h2>
-              <p className="pb-section-sub">Basic information about you</p>
+              <h2 className="pb-section-title">{sectionTitle}</h2>
+              <p className="pb-section-sub">{sectionDescription}</p>
             </div>
 
             <div className="pb-fields">
