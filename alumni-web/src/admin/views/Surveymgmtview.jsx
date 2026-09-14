@@ -9,7 +9,7 @@ import {
   FiPlus,
 } from "react-icons/fi";
 import { BiGitBranch } from "react-icons/bi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function SurveyMgmtView({
   // ============================ CORE DATA ============================
@@ -66,11 +66,14 @@ export default function SurveyMgmtView({
   handlePublish,
   // ============================ DERIVED DATA ============================
   currentSection,
-  allQuestions, 
-  targetSectionIdx, 
-  alumniType, 
+  allQuestions,
+  targetSectionIdx,
+  alumniType,
 }) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [editingSection, setEditingSection] = useState(false);
+  const [dirtySection, setDirtySection] = useState(false);
+  const sectionSnapshotRef = useRef(null);
 
   useEffect(() => {
     if (status === "saved") {
@@ -81,6 +84,12 @@ export default function SurveyMgmtView({
       return () => clearTimeout(timer);
     }
   }, [status]);
+
+  useEffect(() => {
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+  }, [activeSection]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const formatSectionTitle = (title) => {
@@ -99,6 +108,51 @@ export default function SurveyMgmtView({
     }
     return title;
   };
+
+  const updateSectionMeta = (index, patch) => {
+    setSurvey((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec, i) =>
+        i === index ? { ...sec, ...patch } : sec,
+      ),
+    }));
+    setDirtySection(true);
+  };
+
+  const updateSectionMetaRaw = (index, patch) => {
+    setSurvey((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec, i) =>
+        i === index ? { ...sec, ...patch } : sec,
+      ),
+    }));
+  };
+
+  const openSectionEdit = () => {
+    sectionSnapshotRef.current = {
+      title: currentSection.title,
+      description: currentSection.description,
+    };
+    setDirtySection(false);
+    setEditingSection(true);
+  };
+
+  const closeSectionEdit = () => {
+    if (dirtySection && sectionSnapshotRef.current) {
+      updateSectionMetaRaw(activeSection, sectionSnapshotRef.current);
+    }
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+  };
+
+  const saveSectionEdit = () => {
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+    addToast("Section updated successfully", "edit");
+  };
+
   // ── Loading state ─────────────────────────────────────────────────────────
   if (!survey) {
     return (
@@ -198,7 +252,6 @@ export default function SurveyMgmtView({
         {/* ── Header ────────────────────────────────────────────────────── */}
         <div className="survey-header">
           <div className="survey-header-left">
-            {/* alumniType badge — adopted from friend's version */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <h1 style={{ fontWeight: 700, fontSize: 27 }}>
                 Survey Management
@@ -595,9 +648,82 @@ export default function SurveyMgmtView({
                     <span>
                       Section {activeSection + 1} of {survey.sections.length}
                     </span>
+                    <button
+                      onClick={() =>
+                        editingSection ? closeSectionEdit() : openSectionEdit()
+                      }
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        padding: "0.2rem",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                      title={editingSection ? "Cancel editing" : "Edit section"}
+                    >
+                      <FiEdit2
+                        size={14}
+                        color={editingSection ? "#3b82f6" : "#374151"}
+                      />
+                    </button>
                   </div>
-                  <h2>{currentSection.title}</h2>
-                  <p className="section-sub">{currentSection.description}</p>
+
+                  {editingSection ? (
+                    <>
+                      <input
+                        value={currentSection.title}
+                        onChange={(e) =>
+                          updateSectionMeta(activeSection, {
+                            title: e.target.value,
+                          })
+                        }
+                        placeholder="Section title"
+                        style={{
+                          width: "100%",
+                          border: "none",
+                          borderBottom: "2px solid #3b82f6",
+                          outline: "none",
+                          fontFamily: "Lexend",
+                          fontSize: "1.1rem",
+                          fontWeight: 600,
+                          background: "transparent",
+                          color: "#0f172a",
+                          padding: "0.2rem 0",
+                          margin: "0.2rem 0",
+                        }}
+                      />
+                      <textarea
+                        value={currentSection.description}
+                        onChange={(e) =>
+                          updateSectionMeta(activeSection, {
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Section description"
+                        rows={2}
+                        className="q-placeholder-input q-placeholder-textarea"
+                        style={{ marginTop: "0.4rem", maxWidth: "100%" }}
+                      />
+                      <div className="q-save-row">
+                        <button
+                          className="q-save-btn"
+                          disabled={!dirtySection}
+                          onClick={saveSectionEdit}
+                        >
+                          <FiCheck size={13} /> Save changes
+                        </button>
+                        <button className="q-cancel-btn" onClick={closeSectionEdit}>
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>{currentSection.title}</h2>
+                      <p className="section-sub">{currentSection.description}</p>
+                    </>
+                  )}
                 </div>
                 {/* Questions */}
                 {currentSection.questions.map((q, qIdx) => {
@@ -811,17 +937,7 @@ export default function SurveyMgmtView({
                       </div>
                       {/* Required toggle */}
                       {isEditing && (
-                        <label
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "0.4rem",
-                            fontSize: "0.75rem",
-                            marginTop: "0.5rem",
-                            marginBottom: "0.5rem",
-                            color: "#6b7280",
-                          }}
-                        >
+                        <label className="q-required-row">
                           <input
                             type="checkbox"
                             checked={!!q.required}
@@ -840,19 +956,7 @@ export default function SurveyMgmtView({
                         <>
                           {isEditing && (
                             <input
-                              style={{
-                                width: "100%",
-                                maxWidth: "22rem",
-                                marginLeft: "0.75rem",
-                                marginBottom: "0.5rem",
-                                border: "1px solid #d1d5db",
-                                borderRadius: "0.4rem",
-                                padding: "0.35rem",
-                                fontSize: "0.75rem",
-                                fontFamily: "Lexend",
-                                background: "#ffffff",
-                                color: "#111827",
-                              }}
+                              className="q-placeholder-input"
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
                               onChange={(e) =>
@@ -875,20 +979,10 @@ export default function SurveyMgmtView({
                       {q.type === "long" && (
                         <>
                           {isEditing && (
-                            <input
-                              style={{
-                                width: "100%",
-                                maxWidth: "22rem",
-                                marginBottom: "0.5rem",
-                                border: "1px solid #d1d5db",
-                                borderRadius: "0.4rem",
-                                padding: "0.35rem",
-                                fontSize: "0.75rem",
-                                fontFamily: "Lexend",
-                                background: "#ffffff",
-                                color: "#111827",
-                              }}
+                            <textarea
+                              className="q-placeholder-input q-placeholder-textarea"
                               placeholder="Placeholder text"
+                              rows="3"
                               value={q.placeholder || ""}
                               onChange={(e) =>
                                 updateQuestion(activeSection, qIdx, {
@@ -897,12 +991,14 @@ export default function SurveyMgmtView({
                               }
                             />
                           )}
-                          <textarea
-                            className="question-input"
-                            placeholder={q.placeholder || "Long answer"}
-                            rows="3"
-                            readOnly
-                          />
+                          {!isEditing && (
+                            <textarea
+                              className="question-input"
+                              placeholder={q.placeholder || "Long answer"}
+                              rows="3"
+                              readOnly
+                            />
+                          )}
                         </>
                       )}
                       {/* Date */}
