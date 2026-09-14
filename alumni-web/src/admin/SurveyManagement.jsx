@@ -1,7 +1,7 @@
 // ============================================================================
 // SurveyManagement.jsx — Logic Controller (SHS added as additional survey type)
 // ============================================================================
-// EXTENSION NOTES
+// EXTENSION NOTES (merged)
 // ───────────────
 // All original College Survey Management logic is preserved EXACTLY as-is:
 //   • DEFAULT_SURVEY, normalizeIds, migrateIntegerIds, sanitiseBranches,
@@ -28,6 +28,11 @@
 //     handlePublish via a type-aware branch (does not alter the College
 //     branch of that same function — the college `if (currentConfigId)`
 //     UPDATE/INSERT logic is untouched, byte-for-byte).
+//
+// MERGED FROM FRIEND:
+//   • closeEdit() now reverts a question to its pre-edit snapshot when there
+//     are unsaved changes (dirtyQ), instead of silently keeping live edits
+//     that were never explicitly saved.
 //
 // SCHEMA NOTE (per your supplied `survey_config` DDL):
 //   The table has no `survey_type` column. survey_type must live INSIDE the
@@ -932,7 +937,26 @@ export default function SurveyManagement() {
     setEditingQ({ sIdx, qIdx });
   };
 
+  // MERGED FROM FRIEND: if there are unsaved edits (dirtyQ), revert the
+  // question back to its pre-edit snapshot instead of leaving the live
+  // (unsaved) changes applied to `survey` when the editor is closed.
   const closeEdit = () => {
+    if (dirtyQ && editingQ && editSnapshotRef.current) {
+      const snapshot = JSON.parse(editSnapshotRef.current);
+      setSurvey((prev) => ({
+        ...prev,
+        sections: prev.sections.map((sec, si) =>
+          si !== editingQ.sIdx
+            ? sec
+            : {
+                ...sec,
+                questions: sec.questions.map((q, qi) =>
+                  qi !== editingQ.qIdx ? q : snapshot,
+                ),
+              },
+        ),
+      }));
+    }
     setEditingQ(null);
     setDirtyQ(false);
     editSnapshotRef.current = null;
