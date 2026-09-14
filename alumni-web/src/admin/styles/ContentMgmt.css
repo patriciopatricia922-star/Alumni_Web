@@ -48,6 +48,65 @@ body {
   margin: 0;
 }
 
+/* ============================ ARCHIVE SEARCH & FILTER ============================ */
+.cm-archive-filters {
+  padding: 18px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.cm-archive-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cm-archive-search-wrapper svg {
+  position: absolute;
+  left: 10px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.cm-archive-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Arimo', sans-serif;
+  color: #1E293B;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.cm-archive-search-input:focus {
+  border-color: #3B82F6;
+}
+
+.cm-archive-search-clear {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.cm-archive-search-clear:hover {
+  color: #475569;
+}
+
+.cm-archive-type-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 /* ============================ BUTTONS ============================ */
 .cm-archive-btn {
   display: inline-flex;
@@ -292,6 +351,53 @@ body {
 
 .cm-lp-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================ LANDING CARD HEADER FIX ============================ */
+.cm-lp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cm-lp-card-title {
+  font-family: 'Lexend', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: break-word;
+}
+
+.cm-lp-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cm-lp-edit-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.cm-lp-edit-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+  border-color: #1e293b;
 }
 
 .cm-lp-card-header {
@@ -804,24 +910,53 @@ body {
 
 /* Edit button on landing page section cards */
 .cm-lp-edit-btn {
-  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  justify-content: center;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
-  font-size: 11.5px;
-  font-weight: 500;
   color: #475569;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
-  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0;
 }
 .cm-lp-edit-btn:hover {
   background: #1e293b;
   color: #ffffff;
   border-color: #1e293b;
+}
+.cm-lp-edit-btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.cm-lp-archive-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fef2f2;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.cm-lp-archive-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+.cm-lp-archive-btn svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Add Section button (landing page tab header) */
