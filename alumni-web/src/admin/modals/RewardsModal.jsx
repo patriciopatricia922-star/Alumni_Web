@@ -3,7 +3,7 @@
 // ============================================================================
 import React, { useState, useEffect } from 'react';
 import { FaBold, FaItalic, FaUnderline, FaAlignLeft, FaAlignCenter, FaAlignRight } from 'react-icons/fa';
-import { FiImage, FiTrash2 } from 'react-icons/fi';
+import { FiImage, FiTrash2, FiChevronDown } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
 import '../modals/Disc.css';
 import MultiImageUpload from '../modals/MultiImageUpload';
@@ -224,13 +224,16 @@ const RewardModal = ({ open, onClose, mode, reward, onCreate, onUpdate }) => {
               </div>
               <div className="cm-field">
                 <label className="cm-label">Category <span className="cm-label-required">*</span></label>
-                <select
-                  className="cm-select"
-                  value={form.category}
-                  onChange={e => s('category', e.target.value)}
-                >
-                  {CATEGORY_OPTIONS.map(c => <option key={c}>{c}</option>)}
-                </select>
+                <div className="cm-select-wrap">
+                  <select
+                    className="cm-select"
+                    value={form.category}
+                    onChange={e => s('category', e.target.value)}
+                  >
+                    {CATEGORY_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                  <FiChevronDown size={14} className="cm-select-arrow" />
+                </div>
               </div>
             </div>
           </div>
