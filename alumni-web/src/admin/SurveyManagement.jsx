@@ -74,11 +74,6 @@ const dbgWarn = (...args) => {
 // ============================================================================
 const DEFAULT_SURVEY = {
   title: "Alumni Survey",
-  // Survey-level header/description shown on the alumni-facing side. Saved
-  // and loaded through the exact same survey_config JSON blob as `title`
-  // and every question label — no separate storage mechanism. See FIX 8
-  // in SurveyMgmtView for the admin-side editor that maintains this field.
-  description: "Help us stay connected by sharing your journey since graduation.",
   sections: [
     {
       id: 1,
@@ -199,10 +194,6 @@ const DEFAULT_SURVEY = {
 // ============================================================================
 const DEFAULT_SHS_SURVEY = {
   title: "SHS Alumni Survey",
-  // See matching comment on DEFAULT_SURVEY.description above — same pattern,
-  // same storage mechanism, kept independent per survey type like every
-  // other SHS field in this file.
-  description: "Help us stay connected by sharing your journey since graduation.",
   sections: [
     {
       id: 1,
