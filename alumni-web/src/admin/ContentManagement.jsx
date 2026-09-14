@@ -103,6 +103,16 @@ function ContentManagement() {
     return (tmp.textContent || tmp.innerText || '').trim();
   };
 
+  // ── Required-field validation helpers ───────────────────────────────────
+  // isBlank: true for null/undefined/empty-string/whitespace-only values —
+  // ensures a field isn't treated as "filled in" just because its state
+  // variable exists; it must actually hold meaningful input.
+  const isBlank = (val) => val === null || val === undefined || String(val).trim() === '';
+  // isRichTextBlank: same idea for RichTextEditor fields, whose contentEditable
+  // markup can look non-empty ("<p><br></p>") while holding no real text —
+  // reuses the same stripHtml logic already trusted for the disclosure form.
+  const isRichTextBlank = (html) => stripHtml(html) === '';
+
   const resolveImages = (formData, existingUrls = []) => {
   const urls = Array.isArray(formData.image_urls) ? formData.image_urls : null;
   const finalUrls = urls && urls.length > 0 ? urls : existingUrls;
@@ -361,8 +371,12 @@ const handleAwardPoints = async (userIds, points) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
 
-      if (!formData.title?.trim()) { showToastMessage('Event title is required', 'error'); return; }
-      if (!formData.date)          { showToastMessage('Event date is required', 'error'); return; }
+      if (isBlank(formData.title))          { showToastMessage('Please enter an event title.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.date))           { showToastMessage('Please select a date.', 'error'); return; }
+      if (isBlank(formData.category))       { showToastMessage('Please select a category.', 'error'); return; }
+      if (isBlank(formData.startTime))      { showToastMessage('Please enter a start time.', 'error'); return; }
+      if (isBlank(formData.location))       { showToastMessage('Please enter a location.', 'error'); return; }
 
       const eventDate = formData.startTime
         ? new Date(`${formData.date}T${formData.startTime}`)
@@ -404,7 +418,10 @@ const handleAwardPoints = async (userIds, points) => {
       if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
 
       const title = formData.title?.trim();
-      if (!title) { showToastMessage('Announcement title is required', 'error'); return; }
+      if (isBlank(title))                          { showToastMessage('Please enter an announcement title.', 'error'); return; }
+      if (isRichTextBlank(formData.content))       { showToastMessage('Please enter content for the announcement.', 'error'); return; }
+      if (isBlank(formData.priority))              { showToastMessage('Please select a priority.', 'error'); return; }
+      if (isBlank(formData.audience))              { showToastMessage('Please select a target audience.', 'error'); return; }
 
       let category = 'Activities';
       if (formData.priority === 'High')        category = 'News';
@@ -445,8 +462,11 @@ const handleAwardPoints = async (userIds, points) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
 
-      if (!formData.title?.trim())   { showToastMessage('Job title is required', 'error'); return; }
-      if (!formData.company?.trim()) { showToastMessage('Company name is required', 'error'); return; }
+      if (isBlank(formData.title))            { showToastMessage('Please enter a job title.', 'error'); return; }
+      if (isBlank(formData.company))          { showToastMessage('Please enter a company.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.location))         { showToastMessage('Please enter a location.', 'error'); return; }
+      if (isBlank(formData.category))         { showToastMessage('Please select a category.', 'error'); return; }
 
       let tags = [];
       if (Array.isArray(formData.tags)) tags = formData.tags;
@@ -485,8 +505,10 @@ const handleAwardPoints = async (userIds, points) => {
   const handleCreateDiscount = async (formData) => {
     console.log('[CREATE] Discount formData received:', formData);
     try {
-      if (!formData.title?.trim())   { showToastMessage('Discount title is required', 'error'); return; }
-      if (!formData.company?.trim()) { showToastMessage('Company name is required', 'error'); return; }
+      if (isBlank(formData.title))            { showToastMessage('Please enter a discount title.', 'error'); return; }
+      if (isBlank(formData.company))          { showToastMessage('Please enter a location.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.audience))         { showToastMessage('Please select a target audience.', 'error'); return; }
 
       const { image_urls, image_url } = resolveImages(formData);
 
@@ -521,8 +543,10 @@ const handleAwardPoints = async (userIds, points) => {
       if (userError) { showToastMessage('Authentication error. Please log in again.', 'error'); return; }
       if (!user?.id) { showToastMessage('Authentication error. Please log in again.', 'error'); return; } // ADDED
 
-      if (!formData.title?.trim())     { showToastMessage('Reward title is required', 'error'); return; }
-      if (!formData.points_required)   { showToastMessage('Points required is required', 'error'); return; }
+      if (isBlank(formData.title))                { showToastMessage('Please enter a reward title.', 'error'); return; }
+      if (isRichTextBlank(formData.description))  { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.points_required))      { showToastMessage('Please enter the points required.', 'error'); return; }
+      if (isBlank(formData.category))             { showToastMessage('Please select a category.', 'error'); return; }
 
       const { image_urls, image_url } = resolveImages(formData);
 
@@ -598,6 +622,13 @@ const handleAwardPoints = async (userIds, points) => {
       if (formData.startTime)  eventDate = new Date(`${formData.date}T${formData.startTime}`);
       else if (formData.date)  eventDate = new Date(formData.date);
 
+      if (isBlank(formData.title))          { showToastMessage('Please enter an event title.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.date))           { showToastMessage('Please select a date.', 'error'); return; }
+      if (isBlank(formData.category))       { showToastMessage('Please select a category.', 'error'); return; }
+      if (isBlank(formData.startTime))      { showToastMessage('Please enter a start time.', 'error'); return; }
+      if (isBlank(formData.location))       { showToastMessage('Please enter a location.', 'error'); return; }
+
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
       const updates = {
@@ -611,7 +642,6 @@ const handleAwardPoints = async (userIds, points) => {
       };
 
       if (eventDate && !isNaN(eventDate.getTime())) updates.event_date = eventDate.toISOString();
-      if (!updates.title) { showToastMessage('Event title is required', 'error'); return; }
 
       const { error } = await supabase.from('events').update(updates).eq('id', id);
       if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
@@ -630,6 +660,11 @@ const handleAwardPoints = async (userIds, points) => {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
+      if (isBlank(formData.title))            { showToastMessage('Please enter an announcement title.', 'error'); return; }
+      if (isRichTextBlank(formData.content))  { showToastMessage('Please enter content for the announcement.', 'error'); return; }
+      if (isBlank(formData.priority))         { showToastMessage('Please select a priority.', 'error'); return; }
+      if (isBlank(formData.audience))         { showToastMessage('Please select a target audience.', 'error'); return; }
+
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
       const updates = {
@@ -643,9 +678,6 @@ const handleAwardPoints = async (userIds, points) => {
         ? [formData.target_user_id]
         : null,
       };
-
-
-      if (!updates.title) { showToastMessage('Announcement title is required', 'error'); return; }
 
       const { error } = await supabase.from('announcements').update(updates).eq('id', id);
       if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
@@ -663,6 +695,12 @@ const handleAwardPoints = async (userIds, points) => {
     console.log('[UPDATE] Job - ID:', id, 'formData:', formData);
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
+
+      if (isBlank(formData.title))            { showToastMessage('Please enter a job title.', 'error'); return; }
+      if (isBlank(formData.company))          { showToastMessage('Please enter a company.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.location))         { showToastMessage('Please enter a location.', 'error'); return; }
+      if (isBlank(formData.category))         { showToastMessage('Please select a category.', 'error'); return; }
 
       let tags = [];
       if (Array.isArray(formData.tags)) tags = formData.tags;
@@ -683,9 +721,6 @@ const handleAwardPoints = async (userIds, points) => {
         updated_at:  new Date().toISOString(),
       };
 
-      if (!updates.title)   { showToastMessage('Job title is required', 'error'); return; }
-      if (!updates.company) { showToastMessage('Company name is required', 'error'); return; }
-
       const { error } = await supabase.from('jobs').update(updates).eq('id', id);
       if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
 
@@ -703,6 +738,11 @@ const handleAwardPoints = async (userIds, points) => {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
+      if (isBlank(formData.title))            { showToastMessage('Please enter a discount title.', 'error'); return; }
+      if (isBlank(formData.company))          { showToastMessage('Please enter a location.', 'error'); return; }
+      if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.audience))         { showToastMessage('Please select a target audience.', 'error'); return; }
+
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
       const updates = {
@@ -715,9 +755,6 @@ const handleAwardPoints = async (userIds, points) => {
         valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
         updated_at:    new Date().toISOString(),
       };
-
-      if (!updates.title)   { showToastMessage('Discount title is required', 'error'); return; }
-      if (!updates.company) { showToastMessage('Company name is required', 'error'); return; }
 
       const { error } = await supabase.from('discounts').update(updates).eq('id', id);
       if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
@@ -736,8 +773,10 @@ const handleAwardPoints = async (userIds, points) => {
     try {
       if (!id) { showToastMessage('Cannot update: Missing record ID', 'error'); return; }
 
-      if (!formData.title?.trim())   { showToastMessage('Reward title is required', 'error'); return; }
-      if (!formData.points_required) { showToastMessage('Points required is required', 'error'); return; }
+      if (isBlank(formData.title))                { showToastMessage('Please enter a reward title.', 'error'); return; }
+      if (isRichTextBlank(formData.description))  { showToastMessage('Please enter a description.', 'error'); return; }
+      if (isBlank(formData.points_required))      { showToastMessage('Please enter the points required.', 'error'); return; }
+      if (isBlank(formData.category))             { showToastMessage('Please select a category.', 'error'); return; }
 
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
