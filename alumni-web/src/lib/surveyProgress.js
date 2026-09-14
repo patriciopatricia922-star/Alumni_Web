@@ -12,6 +12,16 @@ supabase.auth.onAuthStateChange((event) => {
   }
 });
 
+const SECTION_SLUG_MAP = [
+  'personal-background',
+  'educational-background',
+  'certification-achievement',
+  'employment-information',
+  'job-experience',
+  'skills-and-competencies',
+  'feedback-and-engagement',
+];
+
 const DB_BOOLEAN_COL = {
   personal_background:        'personal_background',
   educational_background:     'educational_background',
