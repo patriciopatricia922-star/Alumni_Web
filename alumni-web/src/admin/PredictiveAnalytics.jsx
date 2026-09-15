@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import Predictiveanalyticsview from './views/Predictiveanalyticsview';
 import AdminSidebar from './components/AdminSidebar';
 
@@ -19,10 +19,25 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 // ============================================================================
 // SUPABASE CLIENT
 // ============================================================================
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+// FIX (Rewards Archive RLS bug): this component used to call its own
+// createClient(...) here with default options. Since it pointed at the same
+// Supabase project as lib/supabase.js and specified no custom storageKey,
+// it silently shared the same default localStorage auth-token key as the
+// canonical client — but as a *separate* GoTrueClient instance with its own
+// in-memory session and its own autoRefreshToken timer.
+//
+// When this instance's timer rotated the refresh token, it rewrote the
+// shared localStorage session, but the canonical client elsewhere in the
+// app (e.g. Content Management) never picked up that change and kept using
+// its now-invalidated access token — which Postgres/PostgREST then treated
+// as an unauthenticated request, causing RLS policies scoped `TO
+// authenticated` to reject with 42501 on unrelated pages.
+//
+// Fix: reuse the single shared client instead of creating a second
+// GoTrueClient instance. No query/behavior here changes — this component
+// only ever did supabase.from('predictions').select(...), which the shared
+// client supports identically.
+// ============================================================================
 
 // ============================================================================
 // DEPARTMENT METADATA — maps department codes to display info

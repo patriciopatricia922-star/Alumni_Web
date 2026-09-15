@@ -976,6 +976,20 @@ const handleAwardPoints = async (userIds, points) => {
       const { table, module: moduleName, data: list } = entry;
       const itemTitle = list.find(i => i.id === id)?.title || String(id);
 
+      // TEMP DIAGNOSTIC (safe to remove once root cause is confirmed):
+      // Confirms whether THIS client instance actually holds a live session,
+      // and what role its JWT actually carries, at the moment of the archive
+      // request. Does NOT log the raw access token.
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[ARCHIVE] Session user:', session?.user?.id);
+      console.log('[ARCHIVE] Has access token:', !!session?.access_token);
+      console.log(
+        '[ARCHIVE] Session role claim:',
+        session?.access_token
+          ? JSON.parse(atob(session.access_token.split('.')[1]))?.role
+          : null
+      );
+
       const {
         data: { user },
         error: userError,

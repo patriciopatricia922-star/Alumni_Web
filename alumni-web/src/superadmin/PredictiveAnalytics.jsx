@@ -7,7 +7,7 @@
 // ============================================================================
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
 import Predictiveanalyticsview from './Views/Predictiveanalyticsview';
 import AdminSidebar from './SuperAdSidebar';
 
@@ -19,10 +19,23 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 // ============================================================================
 // SUPABASE CLIENT
 // ============================================================================
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+// FIX (Rewards Archive RLS bug): this component used to call its own
+// createClient(...) here with default options — the same fix applied to the
+// Admin Predictive Analytics controller. See that file's comment for the
+// full explanation. In short: a second GoTrueClient instance pointed at the
+// same project with no custom storageKey silently collided with the shared
+// client's localStorage session, and its token refreshes could invalidate
+// the session the rest of the app (e.g. Content Management) relied on.
+//
+// Fix: reuse the single shared client. This component's only Supabase call
+// is supabase.from('predictions').select(...), unchanged below.
+//
+// NOTE: this import assumes '../lib/supabase' resolves to the same shared
+// module used elsewhere (e.g. src/lib/supabase.js from a sibling
+// src/superadmin/ directory). Please verify this path against your actual
+// folder structure — the SuperAdSidebar import path here differs from the
+// Admin controller's, so the directory depth may not be identical.
+// ============================================================================
 
 // ============================================================================
 // DEPARTMENT METADATA
