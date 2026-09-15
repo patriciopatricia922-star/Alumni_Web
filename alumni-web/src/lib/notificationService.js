@@ -15,7 +15,11 @@ export async function fetchNotifications(userId, limit = 20) {
   ] = await Promise.all([
     supabase
       .from('announcements')
-      .select('id, title, content, published_at, is_active')
+      // [policy-notif-click] `category` added so Policy Update rows (see
+      // ContentManagement.jsx handleDisclosureUpdate) can be distinguished
+      // from regular announcements once they reach the UI — used below by
+      // getPolicyModalType(). No other announcement behavior depends on it.
+      .select('id, title, content, published_at, is_active, category')
       .eq('is_active', true)
       .or(`target_user_ids.is.null,target_user_ids.cs.{${userId}}`)
       .order('published_at', { ascending: false }),
@@ -56,7 +60,11 @@ export async function fetchNotifications(userId, limit = 20) {
   // FIX: added an optional `fallbackBody` builder so a type can supply a
   // data-driven fallback (e.g. rewards, when `description` is empty) instead
   // of silently falling through to whatever field happened to be passed in.
-  const normalize = (data, type, idField, titleField, bodyField, dateField, fallbackBody) => {
+  // [policy-notif-click] added an optional `extraFields(item)` so a caller
+  // can merge a few extra passthrough fields (currently only `category`,
+  // for announcements) onto the normalized object without changing this
+  // helper's shape for the other four callers, which don't pass it.
+  const normalize = (data, type, idField, titleField, bodyField, dateField, fallbackBody, extraFields) => {
     if (!data) return [];
     return data.map(item => {
       const rawBody = item[bodyField];
@@ -71,12 +79,24 @@ export async function fetchNotifications(userId, limit = 20) {
         body: stripHtml(String(resolvedBody || '')),
         time: item[dateField],
         read: readIds.includes(`${type}-${item[idField]}`),
+        ...(extraFields ? extraFields(item) : {}),
       };
     });
   };
 
   if (!annError && annData) {
-    notifications.push(...normalize(annData, 'announcement', 'id', 'title', 'content', 'published_at'));
+    notifications.push(
+      ...normalize(
+        annData,
+        'announcement',
+        'id',
+        'title',
+        'content',
+        'published_at',
+        null,
+        (item) => ({ category: item.category || null })
+      )
+    );
   }
   if (!discError && discData) {
     notifications.push(...normalize(discData, 'discount', 'id', 'title', 'description', 'created_at'));
@@ -170,4 +190,30 @@ export function formatTime(iso) {
   if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
   if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
   return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
+
+// [policy-notif-click] Maps a notification to which UserPolicyModal `type`
+// it should open on click — 'tos', 'privacy', or null for anything that
+// isn't a Policy Update notification (i.e. everything falls through to the
+// normal announcement/discount/job/event/reward click handling untouched).
+//
+// Title text is matched rather than re-deriving from disclosure state
+// because the three possible titles are an exact, fixed contract written
+// by ContentManagement.jsx's handleDisclosureUpdate — this only routes an
+// already-created notification, it doesn't decide what changed.
+//
+// When both were updated in the same save (one combined notification),
+// this defaults to opening Terms first; Privacy Policy remains one tap
+// away via the same entry points (About / ID Registration) as always —
+// UserPolicyModal itself only ever shows one document at a time, and
+// giving it a two-document mode here would be a bigger change than this
+// task calls for.
+export function getPolicyModalType(n) {
+  if (!n || n.category !== 'Policy Update') return null;
+  const title = n.title || '';
+  const hasTos = title.includes('Terms of Service');
+  const hasPp = title.includes('Privacy Policy');
+  if (hasTos) return 'tos';
+  if (hasPp) return 'privacy';
+  return null;
 }
