@@ -881,11 +881,13 @@ export default function SurveyManagement() {
 
       dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
-      // NOTE: this is the same status-reset timer that already existed here;
-      // its duration was extended from 3s to ~30s so the consolidated
-      // save/publish modal's success state has time to display before
-      // auto-closing (see SurveyMgmtView.jsx). No duplicate timer added.
-      setTimeout(() => setStatus(""), 30000);
+      // Resets the shared "saved" status flag ~20s after a successful
+      // publish (aligned with the modal's own auto-close timer in
+      // SurveyMgmtView.jsx) so a later Publish attempt starts from a
+      // clean "" status instead of stale "saved". The modal's visibility
+      // itself is now closed directly by its own timer in the View, not
+      // by this flag flipping — this timer only resets the status flag.
+      setTimeout(() => setStatus(""), 20000);
     } catch (err) {
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);

@@ -74,22 +74,30 @@ export default function SurveyMgmtView({
   const [dirtySection, setDirtySection] = useState(false);
   const sectionSnapshotRef = useRef(null);
 
-  // ── Consolidated save/publish modal: close it once the parent's
-  // "saved" status window elapses (that ~30s timer lives in
-  // SurveyManagement.jsx's handlePublish and is the sole auto-close
-  // mechanism — this just reacts to it turning back to "" after a
-  // successful publish, rather than running a second, duplicate timer).
-  const prevStatusRef = useRef(status);
+  // ── Derived publish-modal state (shared by the auto-close effect below
+  // and the modal's JSX further down, so both agree on the same values).
+  const isPublishFlow = confirmState?.title === "Publish Survey";
+  const isLoading = isPublishFlow && saving;
+  const isSuccess = isPublishFlow && !saving && status === "saved";
+
+  // ── Auto-close the consolidated save/publish modal ~20s after the
+  // SUCCESS state appears. The timer starts directly off `isSuccess`
+  // turning true (i.e. right when the success message is shown), rather
+  // than reactively watching for a separate, remote timer elsewhere to
+  // flip `status` back to "" — that indirect approach was the root cause
+  // of the modal previously failing to auto-close: it had no timer of its
+  // own tied to entering the success state, only a reactive watcher for a
+  // signal from another component's unrelated timer.
   useEffect(() => {
-    if (
-      prevStatusRef.current === "saved" &&
-      status !== "saved" &&
-      confirmState?.title === "Publish Survey"
-    ) {
+    if (!isSuccess) return undefined;
+    const timer = setTimeout(() => {
       setConfirmState(null);
-    }
-    prevStatusRef.current = status;
-  }, [status, confirmState, setConfirmState]);
+    }, 20000);
+    // Cleanup: fires if the modal is closed manually (isSuccess flips to
+    // false) or if the component unmounts, preventing a stale timer from
+    // calling setConfirmState after the fact.
+    return () => clearTimeout(timer);
+  }, [isSuccess, setConfirmState]);
 
   useEffect(() => {
     setEditingSection(false);
@@ -216,10 +224,6 @@ export default function SurveyMgmtView({
       {/* are unaffected and render exactly as before. */}
       {(() => {
         if (!confirmState) return null;
-
-        const isPublishFlow = confirmState.title === "Publish Survey";
-        const isLoading = isPublishFlow && saving;
-        const isSuccess = isPublishFlow && !saving && status === "saved";
 
         return (
           <div
