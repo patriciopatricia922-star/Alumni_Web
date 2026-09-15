@@ -717,6 +717,43 @@
   font-family: "Montserrat", sans-serif;
 }
 
+/* ============================================
+   [policy-html] Additive-only rules for rendering the admin-authored
+   rich-text HTML (h3/p/strong/br) that UserPolicyModal injects into
+   .ab-modal-inner for Terms of Service / Privacy Policy. Mirrors the
+   font sizes, weights, and colors of .ab-modal-sec-title/.ab-modal-sec-body
+   above so real dynamic content looks the same as the previous hardcoded
+   section markup. Does not modify any existing selector.
+   ============================================ */
+.ab-modal-inner.ab-policy-html h3 {
+  font-weight: 700;
+  font-family: "Montserrat", sans-serif;
+  font-size: clamp(13px, 1.05vw, 15px);
+  color: #003ea6;
+  margin: 0 0 4px;
+}
+
+.ab-modal-inner.ab-policy-html h3:not(:first-child) {
+  margin-top: clamp(12px, 1.4vh, 18px);
+}
+
+.ab-modal-inner.ab-policy-html p {
+  font-weight: 400;
+  font-size: clamp(13px, 1.05vw, 15px);
+  line-height: 1.7;
+  color: #1a2a4a;
+  font-family: "Montserrat", sans-serif;
+  margin: 0 0 clamp(12px, 1.4vh, 18px);
+}
+
+.ab-modal-inner.ab-policy-html p:last-child {
+  margin-bottom: 0;
+}
+
+.ab-modal-inner.ab-policy-html strong {
+  font-weight: 700;
+}
+
 .ab-mission-body {
   font-weight: 400;
   font-size: clamp(12px, 0.98vw, 14px);

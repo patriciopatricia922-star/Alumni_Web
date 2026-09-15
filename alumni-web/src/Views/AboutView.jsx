@@ -11,6 +11,10 @@ import PaperIcon from "../assets/paper_icn.svg";
 import ProtectIcon from "../assets/protect_icn.svg";
 import Missionicon from "../assets/mission_icn.svg";
 import useDisclosure from "../hooks/Usedisclosure";
+// [policy-modal-extract] Shared Terms/Privacy modal — replaces the local
+// TosModal/PrivacyModal (and their hardcoded TOS_SECTIONS/PRIVACY_SECTIONS
+// arrays) that used to live in this file. See UserPolicyModal.jsx for why.
+import UserPolicyModal from "../modals/UserPolicyModal";
 
 /* ─────────────────────────────────────────────────────────────
    MISSION / VISION MODAL ICONS
@@ -78,95 +82,6 @@ COMMUNITY by contributing to the improvement of life's conditions`;
 
 const VISION_TEXT =
   "We are National University, a dynamic private institution committed to nation building, recognized internationally in teaching and research.";
-
-const TOS_SECTIONS = [
-  {
-    title: "1. Acceptance of Terms",
-    body: "By accessing or using AlumnAI, you agree to comply with these Terms of Service. If you do not agree, you may not use the platform.",
-  },
-  {
-    title: "2. Purpose of the Platform",
-    body: "AlumnAI is designed to support alumni engagement, data collection, and analytics for institutional use, including surveys, announcements, job opportunities, events, and alumni services.",
-  },
-  {
-    title: "3. User Responsibilities",
-    body: "• Provide accurate and truthful information.\n• Use the platform only for lawful and appropriate purposes.\n• Keep your login credentials secure and confidential.\n• Refrain from activities that may disrupt or harm the platform.",
-  },
-  {
-    title: "4. Data Use and Accuracy",
-    body: "The institution may use aggregated data for analytics, reporting, and institutional improvement. AlumnAI is not responsible for inaccuracies resulting from incorrect information provided by users.",
-  },
-  {
-    title: "5. Availability and Updates",
-    body: "The institution may modify, update, or discontinue platform features at any time without prior notice.",
-  },
-  {
-    title: "6. Limitation of Liability",
-    body: 'AlumnAI is provided "as is". The institution is not liable for any damages arising from the use or inability to use the platform, including data loss, unauthorized access, or technical issues.',
-  },
-  {
-    title: "7. Changes to the Terms",
-    body: "We reserve the right to modify these Terms of Service at any time. We will notify users of any material changes via platform notification. Continued use of the platform after changes constitutes acceptance of the new terms.",
-  },
-];
-
-const PRIVACY_SECTIONS = [
-  {
-    title: "1. Information We Collect",
-    body: "We may collect the following types of information:\n• Personal Information: Name, Contact Details, Demographic info.\n• Educational Data: Program, Year Graduated, Academic Records (when applicable).\n• Employment Information: Job Details, Career Progress, and Related Survey Responses.\n• Usage Data: Device Information, Logs, and Interactions with the platform.",
-  },
-  {
-    title: "2. How We Use Your Information",
-    body: "Information collected through AlumnAI may be used to:\n• Maintain and improve alumni records.\n• Analyze graduate outcomes and employment trends.\n• Provide personalized alumni services, opportunities, and notifications.\n• Enhance the overall alumni engagement experience.",
-  },
-  {
-    title: "3. Data Sharing",
-    body: "We do not sell personal data. Information may only be shared with:\n• Internal university offices for legitimate academic or administrative purposes.\n• Third-party service providers who help operate the platform (e.g., hosting, analytics) under strict confidentiality agreements.",
-  },
-  {
-    title: "4. Data Security",
-    body: "We implement administrative, technical, and physical measures to protect your information. While we strive to safeguard your data, no system can guarantee absolute security.",
-  },
-  {
-    title: "5. User Rights",
-    body: "You have the right to:\n• Access a copy of your personal data.\n• Update or correct inaccurate information.",
-  },
-  {
-    title: "6. Cookies and Tracking",
-    body: "The platform may use cookies or similar technologies to improve functionality and user experience.",
-  },
-  {
-    title: "7. Data Retention",
-    body: "Your information is retained only for as long as needed for institutional purposes, unless a longer retention period is required by law or policy.",
-  },
-  {
-    title: "8. Third-Party Links",
-    body: "AlumnAI may contain links to third-party sites. We are not responsible for the privacy practices of external platforms.",
-  },
-  {
-    title: "9. Updates to the Policy",
-    body: "We reserve the right to modify these Privacy Policy at any time. We will notify users of any material changes via platform notification. Continued use of the platform after changes constitutes acceptance of the new policy.",
-  },
-];
-
-/* ─────────────────────────────────────────────────────────────
-   HELPERS
-   [disclosure-sync] Shared date formatter used by TosModal and PrivacyModal.
-───────────────────────────────────────────────────────────── */
-const FALLBACK_DATE = "February 28, 2026";
-
-const formatUpdatedAt = (iso) => {
-  if (!iso) return FALLBACK_DATE;
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return FALLBACK_DATE;
-  }
-};
 
 /* ─────────────────────────────────────────────────────────────
    SHARED MODAL SHELL (Dashboard-aligned)
@@ -396,57 +311,10 @@ const ContactModal = ({ onClose }) => (
   </Modal>
 );
 
-/* ─────────────────────────────────────────────────────────────
-   TERMS OF SERVICE MODAL
-   [disclosure-sync] Accepts updatedAt prop; subtitle rendered dynamically.
-───────────────────────────────────────────────────────────── */
-const TosModal = ({ onClose, updatedAt }) => (
-  <Modal
-    onClose={onClose}
-    iconClass="yellow"
-    icon={PaperIcon}
-    iconAlt="Terms of Service"
-    title="Terms of Service"
-    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
-  >
-    <div className="ab-modal-inner">
-      {TOS_SECTIONS.map((sec, i) => (
-        <div key={i}>
-          <p className="ab-modal-sec-title">{sec.title}</p>
-          <p className="ab-modal-sec-body">{sec.body}</p>
-        </div>
-      ))}
-    </div>
-  </Modal>
-);
-
-/* ─────────────────────────────────────────────────────────────
-   PRIVACY POLICY MODAL
-   [disclosure-sync] Accepts updatedAt prop; subtitle rendered dynamically.
-───────────────────────────────────────────────────────────── */
-const PrivacyModal = ({ onClose, updatedAt }) => (
-  <Modal
-    onClose={onClose}
-    iconClass="red"
-    icon={ProtectIcon}
-    iconAlt="Privacy Policy"
-    title="Privacy Policy"
-    subtitle={`Last Updated: ${formatUpdatedAt(updatedAt)}`}
-  >
-    <div className="ab-modal-inner">
-      {PRIVACY_SECTIONS.map((sec, i) => (
-        <div key={i}>
-          <p className="ab-modal-sec-title">{sec.title}</p>
-          <p className="ab-modal-sec-body">{sec.body}</p>
-        </div>
-      ))}
-    </div>
-  </Modal>
-);
-
 /* ═══════════════════════════════════════════════════════════
 MAIN VIEW (Dashboard-aligned layout)
-[disclosure-sync] useDisclosure() fetched here; updatedAt flows to both TosModal and PrivacyModal via prop.
+[disclosure-sync] useDisclosure() fetched here; disclosure flows into
+UserPolicyModal (content + Last Updated) via the `disclosure` prop.
 ════════════════════════════════════════════════════════════ */
 const AboutView = ({ isMobile, isTablet, links, navigate }) => {
   const [activeModal, setActiveModal] = useState(null);
@@ -581,10 +449,30 @@ const AboutView = ({ isMobile, isTablet, links, navigate }) => {
       {activeModal === "vision" && <VisionModal onClose={closeModal} />}
       {activeModal === "contact" && <ContactModal onClose={closeModal} />}
       {activeModal === "tos" && (
-        <TosModal onClose={closeModal} updatedAt={disclosure?.updated_at} />
+        <UserPolicyModal
+          type="tos"
+          disclosure={disclosure}
+          onClose={closeModal}
+          headerIcon={<img src={PaperIcon} alt="Terms of Service" />}
+          closeIcon={
+            <svg width="25" height="25" viewBox="0 0 18 18" fill="none">
+              <path d="M14 4L4 14M4 4L14 14" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          }
+        />
       )}
       {activeModal === "privacy" && (
-        <PrivacyModal onClose={closeModal} updatedAt={disclosure?.updated_at} />
+        <UserPolicyModal
+          type="privacy"
+          disclosure={disclosure}
+          onClose={closeModal}
+          headerIcon={<img src={ProtectIcon} alt="Privacy Policy" />}
+          closeIcon={
+            <svg width="25" height="25" viewBox="0 0 18 18" fill="none">
+              <path d="M14 4L4 14M4 4L14 14" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          }
+        />
       )}
     </>
   );

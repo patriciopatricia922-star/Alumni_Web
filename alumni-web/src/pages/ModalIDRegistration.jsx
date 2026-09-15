@@ -1,6 +1,12 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { verifyAlumniID, normalizeImageForOCR } from "../utils/ocrUtils";
 import IDRegistrationView from "../Views/IDRegistrationview";
+// [policy-modal-extract] This container never fetched the disclosure row,
+// so IDRegistrationView's `disclosure` prop was always undefined here —
+// meaning both the Last Updated date AND the policy content silently fell
+// back to static values in this (the actually-used) registration flow.
+// Wiring the same shared hook every other consumer already uses.
+import useDisclosure from "../hooks/Usedisclosure";
 
 const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
   const fileInputRef = useRef(null);
@@ -9,6 +15,10 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
   const streamRef = useRef(null);
   const detectionRef = useRef(null);
   const capturedRef = useRef(false);
+
+  // [policy-modal-extract] Live source for Terms/Privacy content + Last
+  // Updated date, passed straight through to IDRegistrationView below.
+  const { disclosure } = useDisclosure();
 
   const [agreed, setAgreed] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -354,6 +364,7 @@ const ModalIDRegistration = ({ onVerified, onSwitchToLogin, onClose }) => {
       isModal
       onClose={onClose}
       onSwitchToLogin={onSwitchToLogin}
+      disclosure={disclosure}
     />
   );
 };

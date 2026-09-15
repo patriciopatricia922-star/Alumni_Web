@@ -18,6 +18,15 @@
 //                    The prop is optional — when absent both modals fall back
 //                    to their built-in static date, so nothing breaks during
 //                    the transition.
+// [policy-modal-extract] Swapped the separate modals/Termsmodal.jsx +
+//                    modals/Privacypolicymodal.jsx (each with their own
+//                    hardcoded content, only the date was dynamic) for the
+//                    shared UserPolicyModal, which reads
+//                    disclosure.tos_content/pp_content directly so the
+//                    actual policy text is finally live here too. Header
+//                    icons below are the exact inline SVGs the two old
+//                    modal files used, passed in as-is so nothing visually
+//                    changes.
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -25,8 +34,7 @@ import { Link } from 'react-router-dom';
 import CameraIcon from '../assets/camera_icn.svg';
 import CameraIconBlue from '../assets/camerablue_icn.svg';
 import '../styles/IDregistration.css';
-import TermsModal         from '../modals/Termsmodal';
-import PrivacyPolicyModal from '../modals/Privacypolicymodal';
+import UserPolicyModal from '../modals/UserPolicyModal';
 
 const IDRegistrationView = ({
   fileInputRef, videoRef, canvasRef,
@@ -393,20 +401,43 @@ const IDRegistrationView = ({
 
       {/*
         ── Legal modals — above everything ───────────────────────────────────
-        [disclosure-sync] updatedAt is sourced from disclosure?.updated_at.
-        When disclosure is null (first run) both modals fall back to their
-        built-in static date — no visible breakage.
+        [disclosure-sync / policy-modal-extract] disclosure (content +
+        updated_at) is sourced from the disclosure prop, straight through to
+        UserPolicyModal. When disclosure is null (first run) it falls back to
+        its own built-in static content/date — no visible breakage.
       */}
-      {legalModal === 'terms'   && (
-        <TermsModal
+      {legalModal === 'terms' && (
+        <UserPolicyModal
+          type="tos"
+          disclosure={disclosure}
           onClose={() => setLegalModal(null)}
-          updatedAt={disclosure?.updated_at}
+          headerIcon={
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              />
+              <path
+                d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+                stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              />
+            </svg>
+          }
         />
       )}
       {legalModal === 'privacy' && (
-        <PrivacyPolicyModal
+        <UserPolicyModal
+          type="privacy"
+          disclosure={disclosure}
           onClose={() => setLegalModal(null)}
-          updatedAt={disclosure?.updated_at}
+          headerIcon={
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              />
+            </svg>
+          }
         />
       )}
     </>
