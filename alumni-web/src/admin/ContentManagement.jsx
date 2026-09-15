@@ -1017,7 +1017,18 @@ const handleAwardPoints = async (userIds, points) => {
         })
         .eq('id', id);
 
-      if (error) { showToastMessage(`Failed to archive: ${error.message}`, 'error'); return; }
+      if (error) {
+        // TEMP DIAGNOSTIC: the console only ever showed the HTTP status (403).
+        // Postgres/PostgREST reuse SQLSTATE 42501 for both "RLS WITH CHECK
+        // failed" and "missing table/column grant" — the message/code/details
+        // are the only way to tell which one this actually is.
+        console.log('[ARCHIVE] Update error code:', error.code);
+        console.log('[ARCHIVE] Update error message:', error.message);
+        console.log('[ARCHIVE] Update error details:', error.details);
+        console.log('[ARCHIVE] Update error hint:', error.hint);
+        showToastMessage(`Failed to archive: ${error.message}`, 'error');
+        return;
+      }
 
       await logAction({ action: 'Archive', module: moduleName, description: `Archived ${type.slice(0, -1)}: ${itemTitle}`, recordId: id, status: 'Success' });
       await fetchAllContent();
