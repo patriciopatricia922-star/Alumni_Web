@@ -31,6 +31,11 @@ import ContentManagementView from './views/Contentmgmtview';
 import { supabase } from '../lib/supabase';
 import { logAction } from '../lib/auditLogger';
 import { useAlumniType } from "./contexts/AlumniTypeContext";
+// [policy-notif] DEFAULT_TOS/DEFAULT_PP reused as the "previous content"
+// baseline when no disclosure row exists yet (first-run state) — same
+// fallback DisclosureModal itself uses to seed the editor, so the diff
+// below compares against exactly what the admin saw on screen.
+import { DEFAULT_TOS, DEFAULT_PP } from './modals/DisclosureModal';
 
 
 // ============================ CONSTANTS ============================
@@ -860,6 +865,20 @@ const handleAwardPoints = async (userIds, points) => {
       return;
     }
 
+    // [policy-notif] Detect what actually changed BEFORE writing, by diffing
+    // against the content the admin was actually looking at (the loaded
+    // `disclosure` row, or the same defaults the modal falls back to on
+    // first run). DisclosureModal always submits both fields regardless of
+    // which document was being edited, so this diff — not the modal's
+    // `initialEditing` prop — is the only reliable way to know whether
+    // Terms, Privacy, or both were genuinely modified. Comparing stripped
+    // plain text (not raw HTML) avoids false positives from formatting-only
+    // noise, and ensures a "Save" with no real change produces no notification.
+    const prevTos = disclosure?.tos_content || DEFAULT_TOS;
+    const prevPp  = disclosure?.pp_content  || DEFAULT_PP;
+    const tosChanged = stripHtml(prevTos) !== stripHtml(tos_content);
+    const ppChanged  = stripHtml(prevPp)  !== stripHtml(pp_content);
+
     try {
       const now = new Date().toISOString();
 
@@ -885,6 +904,61 @@ const handleAwardPoints = async (userIds, points) => {
         recordId:    1,
         status:      'Success',
       });
+
+      // [policy-notif] Only fire once, only when content genuinely changed.
+      // Reuses the exact same notification path as Announcements: a row in
+      // `announcements` is all `notificationService.js` needs to pick this
+      // up for every user, through the existing bell/dropdown/page UI with
+      // no changes to any of that code. `target_user_ids: null` mirrors the
+      // "everyone" audience already supported by announcements.
+      if (tosChanged || ppChanged) {
+        let title;
+        if (tosChanged && ppChanged) {
+          title = 'Terms of Service and Privacy Policy have been updated.';
+        } else if (tosChanged) {
+          title = 'Terms of Service have been updated.';
+        } else {
+          title = 'Privacy Policy have been updated.';
+        }
+
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+
+          const { data: notifData, error: notifError } = await supabase
+            .from('announcements')
+            .insert([{
+              title,
+              content:         title,
+              author_id:       user?.id,
+              category:        'Policy Update',
+              image_url:       null,
+              image_urls:      null,
+              published_at:    now,
+              is_active:       true,
+              expires_at:      null,
+              target_user_ids: null,
+            }])
+            .select();
+
+          if (notifError) {
+            // Non-fatal: the disclosure save itself already succeeded above.
+            console.error('[DISCLOSURE] Policy notification insert failed:', notifError);
+          } else {
+            await logAction({
+              action:      'Create',
+              module:      'Announcements',
+              description: `System notification: ${title}`,
+              recordId:    notifData?.[0]?.id,
+              status:      'Success',
+            });
+            // Keeps the admin's own Announcements tab in sync, same as every
+            // other create handler (handleCreateAnnouncement, etc.) already does.
+            await fetchAnnouncements();
+          }
+        } catch (notifErr) {
+          console.error('[DISCLOSURE] Unexpected policy notification error:', notifErr);
+        }
+      }
 
       await fetchDisclosure();
       closeDisclosureModal();
