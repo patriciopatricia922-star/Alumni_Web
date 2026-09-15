@@ -52,12 +52,28 @@ const AIInsightsCard = () => {
     );
   }
 
-  if (!insights || insights.total === 0) {
+  // These are two different states and must not be conflated: `!insights`
+  // means the fetch never returned a usable result, while `insights.total
+  // === 0` is a legitimate result — zero feedback entries exist. Both are
+  // rendered here, but the total===0 case says so explicitly ("0 feedback
+  // entries") rather than reusing the same "no data yet" wording that a
+  // missing/failed fetch would show, so a real 0 is never hidden.
+  if (!insights) {
     return (
       <div className="ai-insights-card">
         <div className="ai-icon">🤖</div>
         <h3>AI Insights</h3>
         <p>No feedback data to analyze yet. Once alumni submit feedback, insights will appear here.</p>
+      </div>
+    );
+  }
+
+  if (insights.total === 0) {
+    return (
+      <div className="ai-insights-card">
+        <div className="ai-icon">🤖</div>
+        <h3>AI Insights</h3>
+        <p>0 feedback entries have been analyzed so far. Once alumni submit feedback, insights will appear here.</p>
       </div>
     );
   }
