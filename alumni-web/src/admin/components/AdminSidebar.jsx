@@ -6,7 +6,11 @@ import AdminSidebarView from './AdminSidebarview';
 import { MODULES, canAccessModule } from '../../utils/Modulepermissions';
 
 // ─── Module-level user cache ──────────────────────────────────────────────────
+// _cachedUserId pins the cache to a specific auth user — without this, a
+// stale profile from a previously-authenticated account can be shown for
+// whoever is currently logged in (root cause of the wrong sidebar name bug).
 let _cachedUser = null;
+let _cachedUserId = null;
 
 // ─── Responsive width hook ────────────────────────────────────────────────────
 const useWindowWidth = () => {
@@ -85,8 +89,8 @@ function filterMenuByPermissions(items, user) {
 const AdminSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser]               = useState(_cachedUser);
-  const [isLoadingUser, setIsLoading] = useState(_cachedUser === null);
+  const [user, setUser]               = useState(null);
+  const [isLoadingUser, setIsLoading] = useState(true);
 
   const width    = useWindowWidth();
   const isMobile = width < 768;
@@ -106,17 +110,22 @@ const AdminSidebar = () => {
 
   // ── User fetch with cache short-circuit ────────────────────────────────────
   useEffect(() => {
-    if (_cachedUser !== null) {
-      setIsLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
     const fetchUser = async () => {
       try {
+        // Always resolve the current auth identity first. The cache is only
+        // safe to use if it belongs to *this* authenticated user.
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser || cancelled) return;
+
+        if (_cachedUser !== null && _cachedUserId === authUser.id) {
+          if (mountedRef.current) {
+            setUser(_cachedUser);
+            setIsLoading(false);
+          }
+          return;
+        }
 
         const { data, error } = await supabase
           .from('users')
@@ -127,6 +136,7 @@ const AdminSidebar = () => {
         if (error || !data || cancelled) return;
 
         _cachedUser = data;
+        _cachedUserId = authUser.id;
 
         if (mountedRef.current) {
           setUser(data);
@@ -139,11 +149,12 @@ const AdminSidebar = () => {
 
     fetchUser();
     return () => { cancelled = true; };
-  }, []); 
+  }, []); // intentionally empty — fetch once per mount; cache is validated by id inside
 
   // ── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = async () => {
     _cachedUser = null;
+    _cachedUserId = null;
     await supabase.auth.signOut();
     navigate('/');
   };

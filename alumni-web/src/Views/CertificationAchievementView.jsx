@@ -104,6 +104,8 @@ const CertificationAchievementView = ({
   form, set, setCertiportPasser, setHelpedCareer,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
+  sectionTitle = 'Certification Achievement',
+  sectionDescription = 'Certifications you have',
   certifications, yesNoOptions,
   getLabel, getPlaceholder,
   handleSave, handleNext,
@@ -160,7 +162,7 @@ const CertificationAchievementView = ({
                 />
               </div>
               <span className="ca-progress-label">
-                Certification Achievement
+                {sectionTitle}
               </span>
             </div>
           </div>
@@ -168,8 +170,8 @@ const CertificationAchievementView = ({
           <div className="ca-body">
             <div className="ca-card" ref={cardRef}>
               <div>
-                <h2 className="ca-section-title">Certification Achievement</h2>
-                <p className="ca-section-sub">Certifications you have</p>
+                <h2 className="ca-section-title">{sectionTitle}</h2>
+                <p className="ca-section-sub">{sectionDescription}</p>
               </div>
 
               <div className="ca-fields">

@@ -66,6 +66,8 @@ const JobExperienceView = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Job Experience',
+  sectionDescription = 'Your work search experience',
   timeToFindJobOptions,
   employmentDurationOptions,
   firstJobOptions,
@@ -123,15 +125,15 @@ const JobExperienceView = ({
                 style={{ width: `${formPct}%` }}
               />
             </div>
-            <span className="je-progress-label">Work Experience</span>
+            <span className="je-progress-label">{sectionTitle}</span>
           </div>
         </div>
 
         <div className="je-body">
           <div className="je-card" ref={cardRef}>
             <div>
-              <h2 className="je-section-title">Work Search Experience</h2>
-              <p className="je-section-sub">Your work search experience</p>
+              <h2 className="je-section-title">{sectionTitle}</h2>
+              <p className="je-section-sub">{sectionDescription}</p>
             </div>
 
             <div className="je-questions">

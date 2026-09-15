@@ -11,6 +11,19 @@ import { useNotifications } from '../hooks/useNotifications';
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 4;
 
+// This section's known position in the default College section order
+// (matches COLLEGE_SLUG_MAP[3] = 'employment-information' in
+// surveyRegistry.js). Used only to look up this section's live
+// title/description/count for the header display — TOTAL_SECTIONS/
+// CURRENT_SECTION above are untouched and still drive computeFormPct
+// exactly as before.
+const SECTION_INDEX = 3;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Employment Information';
+const DEFAULT_SECTION_DESCRIPTION = 'Information related to your job';
+
 const DEFAULT_INDUSTRY_OPTIONS = [
   'Agriculture, Forestry and Fishing', 'Mining and Quarrying', 'Manufacturing',
   'Electricity, Gas, Steam and Air Conditioning Supply', 'Water Supply, Sewerage and Waste Management',
@@ -100,6 +113,15 @@ const EmploymentInformation = () => {
   const [loadingLabels,        setLoadingLabels]        = useState(true);
   const [configVersion,        setConfigVersion]        = useState(0);
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
   const [form, setForm] = useState({
     job_related_to_degree: '',
     employment_status: '',
@@ -123,8 +145,28 @@ const EmploymentInformation = () => {
   
   const applyConfig = (config) => {
     if (!config?.sections) return;
-    const empSection = config.sections.find(s => s.title === 'Employment Information');
-    if (!empSection?.questions) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // section order) so renaming the section title in Admin doesn't break
+    // this lookup — the previous title-only match would silently fail to
+    // find the section once its title no longer equals the literal string
+    // 'Employment Information'. Position match keeps working through
+    // renames; the title match is kept as a fallback only.
+    const empSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(s => s.title === 'Employment Information');
+    if (!empSection) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (empSection.title)       setSectionTitle(empSection.title);
+    if (empSection.description) setSectionDescription(empSection.description);
+    if (config.sections.length) setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(empSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!empSection.questions) return;
 
     const labels       = {};
     const placeholders = {};
@@ -294,8 +336,10 @@ const EmploymentInformation = () => {
       saveToast={saveToast}
       cardRef={cardRef}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       industryOptions={industryOptions}
       employmentStatusesAll={employmentStatuses}
       reasonsForJob={reasonsForJob}

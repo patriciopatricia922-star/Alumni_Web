@@ -12,6 +12,19 @@ import { useNotifications } from '../hooks/useNotifications';
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 3;
 
+// This section's known position in the default College section order
+// (matches COLLEGE_SLUG_MAP[2] = 'certification-achievement' in
+// surveyRegistry.js). Used only to look up this section's live
+// title/description/count for the header display — TOTAL_SECTIONS/
+// CURRENT_SECTION above are untouched and still drive computeFormPct
+// exactly as before.
+const SECTION_INDEX = 2;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Certification Achievement';
+const DEFAULT_SECTION_DESCRIPTION = 'Certifications you have';
+
 const DEFAULT_CERTIFICATIONS = [
   'Microsoft Office Specialist (MOS) - Word', 'Microsoft Office Specialist (MOS) - Excel',
   'Microsoft Office Specialist (MOS) - PowerPoint', 'Microsoft Office Specialist (MOS) - Outlook',
@@ -90,6 +103,15 @@ const CertificationAchievement = () => {
   const [loadingLabels,        setLoadingLabels]        = useState(true);
   const [configVersion,        setConfigVersion]        = useState(0);
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
   const [form, setForm] = useState({
     certiport_passer:    '',
     certifications:      [],
@@ -107,8 +129,28 @@ const CertificationAchievement = () => {
   // FIXED: Logic now maps config to specific state keys for checkboxes/radio options
   const applyConfig = (config) => {
     if (!config?.sections) return;
-    const certSection = config.sections.find(s => s.title === 'Certification Achievement');
-    if (!certSection?.questions) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // section order) so renaming the section title in Admin doesn't break
+    // this lookup — the previous title-only match would silently fail to
+    // find the section once its title no longer equals the literal string
+    // 'Certification Achievement'. Position match keeps working through
+    // renames; the title match is kept as a fallback only.
+    const certSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(s => s.title === 'Certification Achievement');
+    if (!certSection) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (certSection.title)       setSectionTitle(certSection.title);
+    if (certSection.description) setSectionDescription(certSection.description);
+    if (config.sections.length)  setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(certSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!certSection.questions) return;
 
     const labels       = {};
     const placeholders = {};
@@ -242,8 +284,10 @@ const CertificationAchievement = () => {
       saveToast={saveToast}
       cardRef={cardRef}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       certifications={certifications}
       yesNoOptions={yesNoOptions}
       getLabel={getLabel}

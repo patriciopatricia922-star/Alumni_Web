@@ -97,6 +97,8 @@ const EmploymentInformationView = ({
   form, set, resetEmploymentBranch,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
+  sectionTitle = 'Employment Information',
+  sectionDescription = 'Information related to your job',
   industryOptions, employmentStatusesAll, reasonsForJob,
   unemployedReasons, monthlyIncome, locationOptions,
   employedStatuses, unemployedStatuses,
@@ -157,16 +159,16 @@ const EmploymentInformationView = ({
                   style={{ width: `${formPct}%` }}
                 />
               </div>
-              <span className="ei-progress-label">Employment Information</span>
+              <span className="ei-progress-label">{sectionTitle}</span>
             </div>
           </div>
 
           <div className="ei-body">
             <div className="ei-card" ref={cardRef}>
               <div>
-                <h2 className="ei-section-title">Employment Information</h2>
+                <h2 className="ei-section-title">{sectionTitle}</h2>
                 <p className="ei-section-sub">
-                  Information related to your job
+                  {sectionDescription}
                 </p>
               </div>
 
