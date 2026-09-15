@@ -79,6 +79,10 @@ const Jobs = () => {
           category: job.category || 'Full-time',
           description: job.description,
           tags: [],
+          // NEW: pass through the row's actual posting timestamp so each
+          // card computes its own "posted X ago" instead of falling back
+          // to a shared/hardcoded value in JobsView.
+          posted_at: job.posted_at,
           keywords: getProgramKeywords(alumniProgram),
           // Use the admin-uploaded image; fall back to null so the card shows the SVG icon instead
           image: job.image_url || job.image || null,

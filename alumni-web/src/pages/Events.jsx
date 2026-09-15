@@ -57,6 +57,10 @@ const Events = () => {
             description: event.description,
             category: category,
             location: event.location,
+            // NEW: pass through the row's actual creation timestamp so each
+            // card computes its own "posted X ago" instead of falling back
+            // to a shared/hardcoded value in EventsView.
+            created_at: event.created_at,
             image: event.image_url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80',
             images: event.image_urls?.length
               ? event.image_urls

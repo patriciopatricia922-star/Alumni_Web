@@ -30,10 +30,19 @@ const EventCard = ({ event, isMobile, isTarget }) => {
   const formatEventTime = (dateStr) =>
     new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   const relativeTime = (dateStr) => {
-    if (!dateStr) return '2 hours ago';
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const hrs = Math.floor(diff / 3600000);
-    if (hrs < 1) return 'just now';
+    // No timestamp for this specific item — don't guess with a shared/static value.
+    if (!dateStr) return '';
+    const parsed = new Date(dateStr).getTime();
+    if (Number.isNaN(parsed)) return '';
+    // Date.now() / new Date(dateStr) both resolve to UTC epoch ms under the
+    // hood, so this diff is already correct local-vs-UTC regardless of the
+    // viewer's timezone — no separate conversion needed.
+    const diff = Date.now() - parsed;
+    if (diff < 0) return 'Just now';
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} minute${mins > 1 ? 's' : ''} ago`;
+    const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs} hour${hrs > 1 ? 's' : ''} ago`;
     const days = Math.floor(hrs / 24);
     return `${days} day${days > 1 ? 's' : ''} ago`;
@@ -139,7 +148,7 @@ const EventCard = ({ event, isMobile, isTarget }) => {
           <div className="events-timestamp-overlay">
             <ClockSVG />
             <span className="events-timestamp-text">
-              {relativeTime(event.created_at || event.event_date)}
+              {relativeTime(event.created_at)}
             </span>
           </div>
         </div>
