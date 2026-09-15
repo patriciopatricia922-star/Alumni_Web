@@ -70,20 +70,26 @@ export default function SurveyMgmtView({
   targetSectionIdx,
   alumniType,
 }) {
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [editingSection, setEditingSection] = useState(false);
   const [dirtySection, setDirtySection] = useState(false);
   const sectionSnapshotRef = useRef(null);
 
+  // ── Consolidated save/publish modal: close it once the parent's
+  // "saved" status window elapses (that ~30s timer lives in
+  // SurveyManagement.jsx's handlePublish and is the sole auto-close
+  // mechanism — this just reacts to it turning back to "" after a
+  // successful publish, rather than running a second, duplicate timer).
+  const prevStatusRef = useRef(status);
   useEffect(() => {
-    if (status === "saved") {
-      setShowSuccessModal(true);
-      const timer = setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 2500);
-      return () => clearTimeout(timer);
+    if (
+      prevStatusRef.current === "saved" &&
+      status !== "saved" &&
+      confirmState?.title === "Publish Survey"
+    ) {
+      setConfirmState(null);
     }
-  }, [status]);
+    prevStatusRef.current = status;
+  }, [status, confirmState, setConfirmState]);
 
   useEffect(() => {
     setEditingSection(false);
@@ -203,50 +209,76 @@ export default function SurveyMgmtView({
         ))}
       </div>
       {/* ── Confirm / Publish Modal ─────────────────────────────────────── */}
-      {confirmState && (
-        <div
-          className="sm-confirm-overlay"
-          onClick={() => setConfirmState(null)}
-        >
-          <div className="sm-confirm-card" onClick={(e) => e.stopPropagation()}>
-            <h3 className="sm-confirm-title">
-              {confirmState.title || "Delete?"}
-            </h3>
-            <p className="sm-confirm-message">{confirmState.message}</p>
-            <div className="sm-confirm-actions">
-              <button
-                className="sm-confirm-cancel"
-                onClick={() => setConfirmState(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className={
-                  confirmState.title === "Publish Survey"
-                    ? "sm-confirm-confirm"
-                    : "sm-confirm-delete"
-                }
-                onClick={confirmState.onConfirm}
-              >
-                {confirmState.title === "Publish Survey" ? "Confirm" : "Delete"}
-              </button>
+      {/* Consolidated into one modal: the same sm-confirm-overlay / */}
+      {/* sm-confirm-card now cycles through confirm → loading → success */}
+      {/* states for the Publish Survey flow, instead of handing off to a */}
+      {/* separate success popup. Non-publish confirmations (e.g. delete) */}
+      {/* are unaffected and render exactly as before. */}
+      {(() => {
+        if (!confirmState) return null;
+
+        const isPublishFlow = confirmState.title === "Publish Survey";
+        const isLoading = isPublishFlow && saving;
+        const isSuccess = isPublishFlow && !saving && status === "saved";
+
+        return (
+          <div
+            className="sm-confirm-overlay"
+            onClick={() => {
+              // Don't let the operation be interrupted mid-flight by an
+              // accidental backdrop click while it's saving.
+              if (isLoading) return;
+              setConfirmState(null);
+            }}
+          >
+            <div className="sm-confirm-card" onClick={(e) => e.stopPropagation()}>
+              {isLoading ? (
+                <>
+                  <div className="sm-confirm-spinner" aria-hidden="true" />
+                  <h3 className="sm-confirm-title">Saving…</h3>
+                  <p className="sm-confirm-message">
+                    Please wait while your survey changes are being published.
+                  </p>
+                </>
+              ) : isSuccess ? (
+                <>
+                  <h3 className="sm-confirm-title">
+                    Changes published successfully!
+                  </h3>
+                  <p className="sm-confirm-message">
+                    The survey changes have been published successfully.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="sm-confirm-title">
+                    {confirmState.title || "Delete?"}
+                  </h3>
+                  <p className="sm-confirm-message">{confirmState.message}</p>
+                  <div className="sm-confirm-actions">
+                    <button
+                      className="sm-confirm-cancel"
+                      onClick={() => setConfirmState(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={
+                        confirmState.title === "Publish Survey"
+                          ? "sm-confirm-confirm"
+                          : "sm-confirm-delete"
+                      }
+                      onClick={confirmState.onConfirm}
+                    >
+                      {confirmState.title === "Publish Survey" ? "Confirm" : "Delete"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      )}
-      {/* ── Success Modal ───────────────────────────────────────────────── */}
-      {showSuccessModal && (
-        <div className="sm-confirm-overlay" style={{ pointerEvents: "none" }}>
-          <div className="sm-confirm-card">
-            <h3 className="sm-confirm-title">
-              Changes published successfully!
-            </h3>
-            <p className="sm-confirm-message">
-              The survey changes have been published successfully.
-            </p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
       {/* ── Main Page ───────────────────────────────────────────────────── */}
       <div className="survey-page">
         {/* ── Header ────────────────────────────────────────────────────── */}
@@ -277,11 +309,6 @@ export default function SurveyMgmtView({
             {status === "error" && (
               <span style={{ color: "#BF0000", fontSize: "0.75rem" }}>
                 Failed to save
-              </span>
-            )}
-            {status === "saving" && (
-              <span style={{ color: "#6A7282", fontSize: "0.75rem" }}>
-                Saving…
               </span>
             )}
             <button

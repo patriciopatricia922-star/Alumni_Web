@@ -691,6 +691,21 @@ body {
 .sm-confirm-confirm:hover {
   background: #3d8fd6;
 }
+
+/* ── Publish/Save loading spinner (used inside the consolidated
+   save/publish confirm modal while the operation is in progress) ── */
+.sm-confirm-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4FA3F7;
+  border-radius: 50%;
+  animation: smConfirmSpin 0.7s linear infinite;
+}
+
+@keyframes smConfirmSpin {
+  to { transform: rotate(360deg); }
+}
 /* ============================ BUILDER CONTAINER ============================ */
 .survey-builder { 
   margin-bottom: 3rem; 
