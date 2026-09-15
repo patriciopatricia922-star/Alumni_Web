@@ -23,6 +23,19 @@ import { useNotifications } from '../hooks/useNotifications';
 const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 2;
 
+// This section's known position in the default College section order
+// (matches COLLEGE_SLUG_MAP[1] = 'educational-background' in
+// surveyRegistry.js). Used only to look up this section's live
+// title/description/count for the header display — TOTAL_SECTIONS/
+// CURRENT_SECTION above are untouched and still drive computeFormPct
+// exactly as before.
+const SECTION_INDEX = 1;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Educational Background';
+const DEFAULT_SECTION_DESCRIPTION = 'Your academic background';
+
 const DEFAULT_DEGREE_OPTIONS          = ['BA COMM', 'BS PSYCH', 'BS PE', 'BSA', 'BSMA', 'BSBA-MM', 'BSBA-FM', 'BSBA-HRM', 'BSTM', 'BSHM', 'BS ARCH', 'BSCE', 'BSCS-ML', 'BSCpE', 'BSIT-MWA', 'Other'];
 const DEFAULT_YEAR_OPTIONS            = Array.from({ length: 10 }, (_, i) => String(2025 + i));
 const DEFAULT_DISTINCTION_OPTIONS     = ['Summa Cum Laude', 'Magna Cum Laude', 'Cum Laude', 'None'];
@@ -117,6 +130,15 @@ const EducationalBackground = () => {
   const [boardResultOptions,    setBoardResultOptions]    = useState(DEFAULT_BOARD_RESULT_OPTIONS);
   const [loadingLabels,         setLoadingLabels]         = useState(true);
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
   const [lockedFields, setLockedFields] = useState({
     degree_program: false,
     year_graduated: false,
@@ -166,8 +188,29 @@ const EducationalBackground = () => {
 
   const applyConfig = useCallback((config) => {
     if (!config?.sections) return;
-    const eduSection = config.sections.find(s => s.title === 'Educational Background');
-    if (!eduSection?.questions) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // section order) so renaming the section title in Admin doesn't break
+    // this lookup — the previous title-only match would silently fail to
+    // find the section once its title no longer equals the literal string
+    // 'Educational Background'. Position match keeps working through
+    // renames; the title match is kept as a fallback only. (This does not
+    // touch useSurveyBranching's own separate title-based lookup above.)
+    const eduSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(s => s.title === 'Educational Background');
+    if (!eduSection) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (eduSection.title)       setSectionTitle(eduSection.title);
+    if (eduSection.description) setSectionDescription(eduSection.description);
+    if (config.sections.length) setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(eduSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!eduSection.questions) return;
 
     const labels       = {};
     const placeholders = {};
@@ -383,8 +426,10 @@ const EducationalBackground = () => {
       saveToast={saveToast}
       cardRef={cardRef}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       degreeOptions={degreeOptions}
       yearOptions={yearOptions}
       distinctionOptions={distinctionOptions}

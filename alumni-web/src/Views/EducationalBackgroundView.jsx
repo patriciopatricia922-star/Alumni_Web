@@ -147,6 +147,8 @@ const EducationalBackgroundView = ({
   form, set, setLicensureReviewing, setLicensurePlans,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
+  sectionTitle = 'Educational Background',
+  sectionDescription = 'Your academic background',
   degreeOptions, yearOptions, distinctionOptions,
   licensureOptions, licensurePlansOptions, boardResultOptions,
   getLabel, getPlaceholder,
@@ -215,7 +217,7 @@ const EducationalBackgroundView = ({
                   style={{ width: `${formPct}%` }}
                 />
               </div>
-              <span className="eb-progress-label">Educational Background</span>
+              <span className="eb-progress-label">{sectionTitle}</span>
             </div>
           </div>
 
@@ -223,8 +225,8 @@ const EducationalBackgroundView = ({
           <div className="eb-body">
             <div className="eb-card" ref={cardRef}>
               <div>
-                <h2 className="eb-section-title">Educational Background</h2>
-                <p className="eb-section-sub">Your academic background</p>
+                <h2 className="eb-section-title">{sectionTitle}</h2>
+                <p className="eb-section-sub">{sectionDescription}</p>
               </div>
 
               <div className="eb-fields">
