@@ -44,6 +44,8 @@ const EmploymentInformationViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Employment Information',
+  sectionDescription = 'Information related to your current work',
   handleSave,
   handleNext,
   navigate,
@@ -107,7 +109,7 @@ const EmploymentInformationViewSHS = ({
               />
             </div>
             <span className="ei-shs-progress-label">
-              Employment Information
+              {sectionTitle}
             </span>
           </div>
         </div>
@@ -117,9 +119,9 @@ const EmploymentInformationViewSHS = ({
           <div className="ei-shs-card" ref={cardRef}>
             {/* Card heading */}
             <div>
-              <h2 className="ei-shs-section-title">Employment Information</h2>
+              <h2 className="ei-shs-section-title">{sectionTitle}</h2>
               <p className="ei-shs-section-sub">
-                Information related to your current work
+                {sectionDescription}
               </p>
             </div>
 

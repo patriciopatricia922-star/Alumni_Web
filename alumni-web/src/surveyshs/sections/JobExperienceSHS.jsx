@@ -42,6 +42,18 @@ const PREV_ROUTE      = '/surveyshs/shs-employment-information';
 const NEXT_ROUTE      = '/surveyshs/shs-skills-and-competencies';
 
 const DEPARTMENT_TYPE = 'shs';  // used for surveyConfig filtering
+
+// This section's known position in the default SHS section order (matches
+// SHS_SLUG_MAP[3] = 'shs-job-experience' in surveyRegistry.js). Used only
+// to look up this section's live title/description/count for the header
+// display — TOTAL_SECTIONS/CURRENT_SECTION above are untouched and still
+// drive computeFormPct exactly as before.
+const SECTION_INDEX = 3;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Job Experience';
+const DEFAULT_SECTION_DESCRIPTION = 'Information related to your first job after graduation';
 // ─────────────────────────────────────────────────────────────────────────────
 // Static option lists
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,12 +150,44 @@ const JobExperienceSHS = () => {
 
   const { unreadCount, setNotifs, setUnreadCount } = useNotifications();
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // This file doesn't wire dynamic question labels (a separate, pre-existing
+  // gap outside this task's scope) — this adds only the section
+  // title/description/count extraction, reusing the same loadSurveyConfig
+  // call already made below, whose return value was previously discarded.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
+  const applyConfig = useCallback((configData) => {
+    const config = configData?.config ?? configData;
+    if (!config?.sections) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // SHS section order) so renaming the section title in Admin doesn't
+    // break this lookup; an id/title match is kept as a fallback only.
+    const jobSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(
+        (s) => s.id === SECTION_KEY || s.title === 'Job Experience'
+      );
+    if (!jobSection) return;
+
+    if (jobSection.title)       setSectionTitle(jobSection.title);
+    if (jobSection.description) setSectionDescription(jobSection.description);
+    if (config.sections.length) setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(jobSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
       setLoadingConfig(true);
       try {
-        await loadSurveyConfig(true, DEPARTMENT_TYPE);
+        const config = await loadSurveyConfig(true, DEPARTMENT_TYPE);
+        if (!cancelled && config) applyConfig(config);
       } finally {
         if (!cancelled) setLoadingConfig(false);
       }
@@ -151,10 +195,11 @@ const JobExperienceSHS = () => {
     init();
 
     const channel = subscribeToSurveyConfigChanges(async () => {
-      await loadSurveyConfig(true, DEPARTMENT_TYPE);
+      const fresh = await loadSurveyConfig(true, DEPARTMENT_TYPE);
+      if (!cancelled && fresh) applyConfig(fresh);
     });
     return () => { cancelled = true; channel?.unsubscribe(); };
-  }, []);
+  }, [applyConfig]);
 
   useEffect(() => {
     const load = async () => {
@@ -311,8 +356,10 @@ const JobExperienceSHS = () => {
       howFoundJobOptions={HOW_FOUND_JOB_OPTIONS}
       factorsFirstJobOptions={FACTORS_FIRST_JOB_OPTIONS}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       handleSave={handleSave}
       handleNext={handleNext}
       navigate={navigate}

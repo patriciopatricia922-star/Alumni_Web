@@ -101,6 +101,8 @@ const SkillsAndCompetenciesViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Skills and Competencies',
+  sectionDescription = 'Rate how well the university prepared you in the following areas',
   handleSave,
   handleNext,
   navigate,
@@ -156,7 +158,7 @@ const SkillsAndCompetenciesViewSHS = ({
               style={{ width: `${formPct}%` }}
             />
           </div>
-          <span className="sc-shs-progress-label">Skills and Competencies</span>
+          <span className="sc-shs-progress-label">{sectionTitle}</span>
         </div>
       </div>
 
@@ -165,9 +167,9 @@ const SkillsAndCompetenciesViewSHS = ({
         <div className="sc-shs-card" ref={cardRef}>
           {/* Card heading */}
           <div>
-            <h2 className="sc-shs-section-title">Skills and Competencies</h2>
+            <h2 className="sc-shs-section-title">{sectionTitle}</h2>
             <p className="sc-shs-section-sub">
-              Rate how well the university prepared you in the following areas
+              {sectionDescription}
             </p>
           </div>
 

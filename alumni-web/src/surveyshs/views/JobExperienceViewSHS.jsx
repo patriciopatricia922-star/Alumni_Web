@@ -37,6 +37,8 @@ const JobExperienceViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Job Experience',
+  sectionDescription = 'Information related to your first job after graduation',
   handleSave,
   handleNext,
   navigate,
@@ -92,7 +94,7 @@ const JobExperienceViewSHS = ({
               style={{ width: `${formPct}%` }}
             />
           </div>
-          <span className="je-shs-progress-label">Job Experience</span>
+          <span className="je-shs-progress-label">{sectionTitle}</span>
         </div>
       </div>
 
@@ -101,9 +103,9 @@ const JobExperienceViewSHS = ({
         <div className="je-shs-card" ref={cardRef}>
           {/* Card heading */}
           <div>
-            <h2 className="je-shs-section-title">Job Experience</h2>
+            <h2 className="je-shs-section-title">{sectionTitle}</h2>
             <p className="je-shs-section-sub">
-              Information related to your first job after graduation
+              {sectionDescription}
             </p>
           </div>
 
