@@ -12,6 +12,16 @@ import AwardPointsModal  from '../modals/AwardPointsModal';
 
 const HIDDEN_SECTION_TYPES = ['hero'];
 
+const ARCHIVE_TYPE_FILTERS = [
+  { label: 'All',           value: 'All' },
+  { label: 'Announcements', value: 'Announcement' },
+  { label: 'Discounts',     value: 'Discount' },
+  { label: 'Events',        value: 'Event' },
+  { label: 'Jobs',          value: 'Job' },
+  { label: 'Rewards',       value: 'Reward' },
+  { label: 'Landing',       value: 'Landing Section' },
+];
+
 const TabIcon = ({ type, active }) => {
   const c = active ? '#FFFFFF' : '#475569';
   if (type === 'events') return (
@@ -62,7 +72,7 @@ const TabIcon = ({ type, active }) => {
   return null;
 };
 
-const LandingSectionCard = ({ section, onEdit }) => {
+const LandingSectionCard = ({ section, onEdit, onArchive }) => {
   const strip = (html) => {
     if (!html) return '';
     const d = document.createElement('div');
@@ -80,11 +90,18 @@ const LandingSectionCard = ({ section, onEdit }) => {
         <h3 className="cm-lp-card-title">{section.title}</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className="landing-type-badge">{section.section_type?.replace('_', ' ') || 'Section'}</span>
-          <button className="cm-lp-edit-btn" onClick={() => onEdit(section)}>
+          <button className="cm-lp-edit-btn" onClick={() => onEdit(section)} title="Edit section" aria-label="Edit section">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/>
             </svg>
             Edit
+          </button>
+          <button className="cm-lp-archive-btn" onClick={() => onArchive(section)} title="Archive section" aria-label="Archive section">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="21 8 21 21 3 21 3 8"/>
+              <rect x="1" y="3" width="22" height="5"/>
+              <line x1="10" y1="12" x2="14" y2="12"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -282,6 +299,11 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
             <span>Valid until {new Date(item.valid_until).toLocaleDateString()}</span>
           </div>
         )}
+        {type === 'announcements' && item.expires_at && (
+          <div className="content-item-meta">
+            <span>Valid until {new Date(item.expires_at).toLocaleDateString()}</span>
+          </div>
+        )}
         {type === 'rewards' && (
           <div className="content-item-meta">
             <span>
@@ -315,43 +337,90 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
   );
 };
 
-const ArchivePanel = ({ archivedItems, onClose, onRestore }) => (
-  <>
-    <div className="cm-overlay" onClick={onClose} />
-    <div className="cm-archive-panel">
-      <div className="cm-archive-header">
-        <h2>Archived ({archivedItems.length})</h2>
-        <button className="cm-archive-close" onClick={onClose}>✕</button>
-      </div>
-      <div className="cm-archive-body">
-        {archivedItems.length === 0 ? (
-          <div className="empty-archive-state">No archived items</div>
-        ) : (
-          archivedItems.map((item, i) => (
-            <div key={i} className="cm-archive-item">
-              <div className="cm-archive-item-header">
-                <div className="cm-archive-item-title">
-                  <span className="archive-type-pill">{item.type}</span>
-                  {item.title}
-                </div>
-                <button className="cm-restore-btn" onClick={() => onRestore(item.type, item.id)}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="1 4 1 10 7 10"/>
-                    <path d="M3.51 15a9 9 0 1 0 .49-3.99"/>
-                  </svg>
-                  Restore
-                </button>
-              </div>
-              <div className="cm-archive-item-sub">{item.dateLabel}</div>
-              <div className="cm-archive-item-desc">{item.description}</div>
-              <div className="cm-archive-item-creator">Created by {item.createdBy}</div>
+const ArchivePanel = ({ archivedItems, onClose, onRestore }) => {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('All');
+
+  const filteredItems = archivedItems.filter((item) => {
+    const matchesType = typeFilter === 'All' || item.type === typeFilter;
+    const matchesSearch = (item.title || '')
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
+  });
+
+  return (
+    <>
+      <div className="cm-overlay" onClick={onClose} />
+      <div className="cm-archive-panel">
+        <div className="cm-archive-header">
+          <h2>Archived ({archivedItems.length})</h2>
+          <button className="cm-archive-close" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="cm-archive-filters">
+          <div className="cm-archive-search-wrapper">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              className="cm-archive-search-input"
+              placeholder="Search archived title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="cm-archive-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
+
+          <div className="cm-archive-type-filters">
+            {ARCHIVE_TYPE_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                className={`cm-filter-btn ${typeFilter === f.value ? 'active' : ''}`}
+                onClick={() => setTypeFilter(f.value)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="cm-archive-body">
+          {filteredItems.length === 0 ? (
+            <div className="empty-archive-state">
+              {archivedItems.length === 0 ? 'No archived items' : 'No matching archived items'}
             </div>
-          ))
-        )}
+          ) : (
+            filteredItems.map((item, i) => (
+              <div key={i} className="cm-archive-item">
+                <div className="cm-archive-item-header">
+                  <div className="cm-archive-item-title">
+                    <span className="archive-type-pill">{item.type}</span>
+                    {item.title}
+                  </div>
+                  <button className="cm-restore-btn" onClick={() => onRestore(item.type, item.id)}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="1 4 1 10 7 10"/>
+                      <path d="M3.51 15a9 9 0 1 0 .49-3.99"/>
+                    </svg>
+                    Restore
+                  </button>
+                </div>
+                <div className="cm-archive-item-sub">{item.dateLabel}</div>
+                <div className="cm-archive-item-desc">{item.description}</div>
+                <div className="cm-archive-item-creator">Created by {item.createdBy}</div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 const ConfirmDialog = ({ action, onClose }) => {
   if (!action) return null;
@@ -514,7 +583,18 @@ const ContentManagementView = ({
             </div>
           ) : (
             editableLandingSections.map((s) => (
-              <LandingSectionCard key={s.id} section={s} onEdit={onOpenEditSection} />
+              <LandingSectionCard
+                key={s.id}
+                section={s}
+                onEdit={onOpenEditSection}
+                onArchive={(section) => onShowConfirm(
+                  'Archive this section?',
+                  `"${section.title}" will be hidden from the landing page.`,
+                  'Archive',
+                  '#EF4444',
+                  () => onArchive('landingpage', section.id)
+                )}
+              />
             ))
           )}
         </div>

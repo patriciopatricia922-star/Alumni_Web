@@ -400,6 +400,31 @@ body {
   border-color: #1e293b;
 }
 
+/* Archive button on landing page section cards — mirrors .cm-lp-edit-btn's
+   pill shape, using the same danger palette as .content-archive-btn so the
+   two archive affordances in this file read as one visual language. */
+.cm-lp-archive-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid #FEE2E2;
+  background: #FEF2F2;
+  color: #EF4444;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.cm-lp-archive-btn:hover {
+  background: #EF4444;
+  color: #ffffff;
+  border-color: #EF4444;
+}
+
 /* Add Section button (landing page tab header) */
 .cm-add-section-btn {
   display: inline-flex;
@@ -1032,6 +1057,62 @@ MODAL — Complete modal styling
 }
 
 .cm-archive-close:hover { background: #E2E8F0; }
+
+/* Search + type-filter row above the archive list. Sits between the panel
+   header and body, so it gets its own bottom border like the header does. */
+.cm-archive-filters {
+  padding: 18px 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.cm-archive-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cm-archive-search-wrapper svg {
+  position: absolute;
+  left: 10px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.cm-archive-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Arimo', sans-serif;
+  color: #1E293B;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.cm-archive-search-input:focus { border-color: #155DFC; }
+
+.cm-archive-search-clear {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.cm-archive-search-clear:hover { color: #475569; }
+
+.cm-archive-type-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
 .cm-archive-body {
   overflow-y: auto;

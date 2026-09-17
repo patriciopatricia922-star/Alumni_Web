@@ -4,6 +4,10 @@ import ContentManagementView from "./Views/Contentmgmtview";
 import { supabase } from "../lib/supabase";
 import { logAction } from "../lib/auditLogger";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
+// [policy-notif] DEFAULT_TOS/DEFAULT_PP reused as the "previous content"
+// baseline when no disclosure row exists yet — same fallback DisclosureModal
+// itself uses, so the diff below compares against exactly what the admin saw.
+import { DEFAULT_TOS, DEFAULT_PP } from "./modals/DisclosureModal";
 
 const TABS = [
   { id: "announcements",  label: "Announcements" },
@@ -68,6 +72,17 @@ function useContentManagement() {
     tmp.innerHTML = html;
     return (tmp.textContent || tmp.innerText || "").trim();
   };
+
+  // ── Required-field validation helpers ───────────────────────────────────
+  // isBlank: true for null/undefined/empty-string/whitespace-only values —
+  // ensures a field isn't treated as "filled in" just because its state
+  // variable exists; it must actually hold meaningful input.
+  const isBlank = (val) =>
+    val === null || val === undefined || String(val).trim() === "";
+  // isRichTextBlank: same idea for RichTextEditor fields, whose contentEditable
+  // markup can look non-empty ("<p><br></p>") while holding no real text —
+  // reuses the same stripHtml logic already trusted for the disclosure form.
+  const isRichTextBlank = (html) => stripHtml(html) === "";
 
   // Fix resolveImages itself
 const resolveImages = (formData, existingUrls = []) => {
@@ -329,6 +344,20 @@ const resolveImages = (formData, existingUrls = []) => {
       return;
     }
 
+    // [policy-notif] Detect what actually changed BEFORE writing, by diffing
+    // against the content the admin was actually looking at (the loaded
+    // `disclosure` row, or the same defaults the modal falls back to on
+    // first run). DisclosureModal always submits both fields regardless of
+    // which document was being edited, so this diff — not the modal's
+    // `initialEditing` prop — is the only reliable way to know whether
+    // Terms, Privacy, or both were genuinely modified. Comparing stripped
+    // plain text (not raw HTML) avoids false positives from formatting-only
+    // noise, and ensures a "Save" with no real change produces no notification.
+    const prevTos = disclosure?.tos_content || DEFAULT_TOS;
+    const prevPp  = disclosure?.pp_content  || DEFAULT_PP;
+    const tosChanged = stripHtml(prevTos) !== stripHtml(tos_content);
+    const ppChanged  = stripHtml(prevPp)  !== stripHtml(pp_content);
+
     try {
       const now = new Date().toISOString();
       const { error } = await supabase
@@ -351,6 +380,61 @@ const resolveImages = (formData, existingUrls = []) => {
         status: "Success",
       });
 
+      // [policy-notif] Only fire once, only when content genuinely changed.
+      // Reuses the exact same notification path as Announcements: a row in
+      // `announcements` is all `notificationService.js` needs to pick this
+      // up for every user, through the existing bell/dropdown/page UI with
+      // no changes to any of that code. `target_user_ids: null` mirrors the
+      // "everyone" audience already supported by announcements.
+      if (tosChanged || ppChanged) {
+        let title;
+        if (tosChanged && ppChanged) {
+          title = "Terms of Service and Privacy Policy have been updated.";
+        } else if (tosChanged) {
+          title = "Terms of Service have been updated.";
+        } else {
+          title = "Privacy Policy have been updated.";
+        }
+
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+
+          const { data: notifData, error: notifError } = await supabase
+            .from("announcements")
+            .insert([{
+              title,
+              content:         title,
+              author_id:       user?.id,
+              category:        "Policy Update",
+              image_url:       null,
+              image_urls:      null,
+              published_at:    now,
+              is_active:       true,
+              expires_at:      null,
+              target_user_ids: null,
+            }])
+            .select();
+
+          if (notifError) {
+            // Non-fatal: the disclosure save itself already succeeded above.
+            console.error("[DISCLOSURE] Policy notification insert failed:", notifError);
+          } else {
+            await logAction({
+              action:      "Create",
+              module:      "Announcements",
+              description: `System notification: ${title}`,
+              recordId:    notifData?.[0]?.id,
+              status:      "Success",
+            });
+            // Keeps the SuperAdmin's own Announcements tab in sync, same as
+            // every other create handler (handleCreateAnnouncement, etc.).
+            await fetchAnnouncements();
+          }
+        } catch (notifErr) {
+          console.error("[DISCLOSURE] Unexpected policy notification error:", notifErr);
+        }
+      }
+
       await fetchDisclosure();
       closeDisclosureModal();
       showToastMessage("Disclosure content saved successfully!", "success");
@@ -371,12 +455,28 @@ const resolveImages = (formData, existingUrls = []) => {
         return;
       }
 
-      if (!formData.title?.trim()) {
+      if (isBlank(formData.title)) {
         showToastMessage("Event title is required", "error");
         return;
       }
-      if (!formData.date) {
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Event description is required", "error");
+        return;
+      }
+      if (isBlank(formData.date)) {
         showToastMessage("Event date is required", "error");
+        return;
+      }
+      if (isBlank(formData.category)) {
+        showToastMessage("Event category is required", "error");
+        return;
+      }
+      if (isBlank(formData.startTime)) {
+        showToastMessage("Event start time is required", "error");
+        return;
+      }
+      if (isBlank(formData.location)) {
+        showToastMessage("Event location is required", "error");
         return;
       }
 
@@ -439,6 +539,23 @@ const resolveImages = (formData, existingUrls = []) => {
         return;
       }
 
+      if (isBlank(formData.title)) {
+        showToastMessage("Announcement title is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.content)) {
+        showToastMessage("Announcement content is required", "error");
+        return;
+      }
+      if (isBlank(formData.priority)) {
+        showToastMessage("Announcement priority is required", "error");
+        return;
+      }
+      if (isBlank(formData.audience)) {
+        showToastMessage("Announcement audience is required", "error");
+        return;
+      }
+
       const category =
         formData.priority === "High"
           ? "News"
@@ -457,15 +574,11 @@ const resolveImages = (formData, existingUrls = []) => {
         image_urls,
         published_at: new Date().toISOString(),
         is_active: true,
+        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
         target_user_ids: formData.audience === "Specific User" && formData.target_user_id
           ? [formData.target_user_id]
           : null,
       };
-
-      if (!newAnnouncement.title) {
-        showToastMessage("Announcement title is required", "error");
-        return;
-      }
 
       const { data, error } = await supabase
         .from("announcements")
@@ -506,12 +619,24 @@ const resolveImages = (formData, existingUrls = []) => {
         return;
       }
 
-      if (!formData.title?.trim()) {
+      if (isBlank(formData.title)) {
         showToastMessage("Job title is required", "error");
         return;
       }
-      if (!formData.company?.trim()) {
+      if (isBlank(formData.company)) {
         showToastMessage("Company name is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Job description is required", "error");
+        return;
+      }
+      if (isBlank(formData.location)) {
+        showToastMessage("Job location is required", "error");
+        return;
+      }
+      if (isBlank(formData.category)) {
+        showToastMessage("Job category is required", "error");
         return;
       }
 
@@ -568,12 +693,20 @@ const resolveImages = (formData, existingUrls = []) => {
   const handleCreateDiscount = async (formData) => {
     console.log("[CREATE] Discount formData received:", formData);
     try {
-      if (!formData.title?.trim()) {
+      if (isBlank(formData.title)) {
         showToastMessage("Discount title is required", "error");
         return;
       }
-      if (!formData.company?.trim()) {
+      if (isBlank(formData.company)) {
         showToastMessage("Company name is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Discount description is required", "error");
+        return;
+      }
+      if (isBlank(formData.audience)) {
+        showToastMessage("Target audience is required", "error");
         return;
       }
 
@@ -633,12 +766,20 @@ const resolveImages = (formData, existingUrls = []) => {
         return;
       }
 
-      if (!formData.title?.trim()) {
+      if (isBlank(formData.title)) {
         showToastMessage("Reward title is required", "error");
         return;
       }
-      if (!formData.points_required) {
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Reward description is required", "error");
+        return;
+      }
+      if (isBlank(formData.points_required)) {
         showToastMessage("Points required is required", "error");
+        return;
+      }
+      if (isBlank(formData.category)) {
+        showToastMessage("Reward category is required", "error");
         return;
       }
 
@@ -756,6 +897,13 @@ const handleUpdateEvent = async (id, formData) => {
     if (formData.startTime) eventDate = new Date(`${formData.date}T${formData.startTime}`);
     else if (formData.date)  eventDate = new Date(formData.date);
 
+    if (isBlank(formData.title))          { showToastMessage('Event title is required', 'error'); return; }
+    if (isRichTextBlank(formData.description)) { showToastMessage('Event description is required', 'error'); return; }
+    if (isBlank(formData.date))           { showToastMessage('Event date is required', 'error'); return; }
+    if (isBlank(formData.category))       { showToastMessage('Event category is required', 'error'); return; }
+    if (isBlank(formData.startTime))      { showToastMessage('Event start time is required', 'error'); return; }
+    if (isBlank(formData.location))       { showToastMessage('Event location is required', 'error'); return; }
+
     const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
     const updates = {
@@ -768,8 +916,6 @@ const handleUpdateEvent = async (id, formData) => {
       updated_at:  new Date().toISOString(),
       ...(eventDate && !isNaN(eventDate.getTime()) && { event_date: eventDate.toISOString() }),
     };
-
-    if (!updates.title) { showToastMessage('Event title is required', 'error'); return; }
 
     const { error } = await supabase.from('events').update(updates).eq('id', id);
     if (error) { showToastMessage(`Failed to update: ${error.message}`, 'error'); return; }
@@ -791,6 +937,23 @@ const handleUpdateEvent = async (id, formData) => {
         return;
       }
 
+      if (isBlank(formData.title)) {
+        showToastMessage("Announcement title is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.content)) {
+        showToastMessage("Announcement content is required", "error");
+        return;
+      }
+      if (isBlank(formData.priority)) {
+        showToastMessage("Announcement priority is required", "error");
+        return;
+      }
+      if (isBlank(formData.audience)) {
+        showToastMessage("Announcement audience is required", "error");
+        return;
+      }
+
       // handleUpdateAnnouncement
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
       const updates = {
@@ -799,14 +962,11 @@ const handleUpdateEvent = async (id, formData) => {
         image_url,
         image_urls,
         updated_at: new Date().toISOString(),
+        expires_at: formData.expiry ? new Date(formData.expiry).toISOString() : null,
         target_user_ids: formData.audience === "Specific User" && formData.target_user_id
           ? [formData.target_user_id]
           : null,
       };
-      if (!updates.title) {
-        showToastMessage("Announcement title is required", "error");
-        return;
-      }
 
       const { error } = await supabase
         .from("announcements")
@@ -843,6 +1003,27 @@ const handleUpdateEvent = async (id, formData) => {
         return;
       }
 
+      if (isBlank(formData.title)) {
+        showToastMessage("Job title is required", "error");
+        return;
+      }
+      if (isBlank(formData.company)) {
+        showToastMessage("Company name is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Job description is required", "error");
+        return;
+      }
+      if (isBlank(formData.location)) {
+        showToastMessage("Job location is required", "error");
+        return;
+      }
+      if (isBlank(formData.category)) {
+        showToastMessage("Job category is required", "error");
+        return;
+      }
+
       const tags = Array.isArray(formData.tags)
         ? formData.tags
         : (formData.tags || "")
@@ -864,14 +1045,6 @@ const handleUpdateEvent = async (id, formData) => {
         expires_at:  formData.expiry ? new Date(formData.expiry).toISOString() : null,
         updated_at:  new Date().toISOString(),
       };
-      if (!updates.title) {
-        showToastMessage("Job title is required", "error");
-        return;
-      }
-      if (!updates.company) {
-        showToastMessage("Company name is required", "error");
-        return;
-      }
 
       const { error } = await supabase
         .from("jobs")
@@ -905,6 +1078,23 @@ const handleUpdateEvent = async (id, formData) => {
         return;
       }
 
+      if (isBlank(formData.title)) {
+        showToastMessage("Discount title is required", "error");
+        return;
+      }
+      if (isBlank(formData.company)) {
+        showToastMessage("Company name is required", "error");
+        return;
+      }
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Discount description is required", "error");
+        return;
+      }
+      if (isBlank(formData.audience)) {
+        showToastMessage("Target audience is required", "error");
+        return;
+      }
+
       // handleUpdateDiscount
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
       const updates = {
@@ -917,15 +1107,6 @@ const handleUpdateEvent = async (id, formData) => {
         valid_until:   formData.expiry ? new Date(formData.expiry).toISOString() : null,
         updated_at:    new Date().toISOString(),
       };
-
-      if (!updates.title) {
-        showToastMessage("Discount title is required", "error");
-        return;
-      }
-      if (!updates.company) {
-        showToastMessage("Company name is required", "error");
-        return;
-      }
 
       const { error } = await supabase
         .from("discounts")
@@ -1021,12 +1202,20 @@ const handleUpdateEvent = async (id, formData) => {
         return;
       }
 
-      if (!formData.title?.trim()) {
+      if (isBlank(formData.title)) {
         showToastMessage("Reward title is required", "error");
         return;
       }
-      if (!formData.points_required) {
+      if (isRichTextBlank(formData.description)) {
+        showToastMessage("Reward description is required", "error");
+        return;
+      }
+      if (isBlank(formData.points_required)) {
         showToastMessage("Points required is required", "error");
+        return;
+      }
+      if (isBlank(formData.category)) {
+        showToastMessage("Reward category is required", "error");
         return;
       }
 
@@ -1138,6 +1327,14 @@ const handleUpdateEvent = async (id, formData) => {
         .eq("id", id);
 
       if (error) {
+        // TEMP DIAGNOSTIC: the console only ever showed the HTTP status (403).
+        // Postgres/PostgREST reuse SQLSTATE 42501 for both "RLS WITH CHECK
+        // failed" and "missing table/column grant" — the message/code/details
+        // are the only way to tell which one this actually is.
+        console.log("[ARCHIVE] Update error code:", error.code);
+        console.log("[ARCHIVE] Update error message:", error.message);
+        console.log("[ARCHIVE] Update error details:", error.details);
+        console.log("[ARCHIVE] Update error hint:", error.hint);
         showToastMessage(`Failed to archive: ${error.message}`, "error");
         return;
       }

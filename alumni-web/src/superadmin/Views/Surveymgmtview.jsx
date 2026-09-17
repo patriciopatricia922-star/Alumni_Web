@@ -9,8 +9,8 @@ import {
   FiPlus
 } from "react-icons/fi";
 import { BiGitBranch } from "react-icons/bi";
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useRef } from "react";
+//SUPERADMIN
 export default function SurveyMgmtView({
   survey,
   setSurvey,
@@ -58,15 +58,75 @@ export default function SurveyMgmtView({
 }) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Aligned to 20s so this popup's lifetime matches handlePublish's own
+  // status-reset timer in SurveyManagement.jsx, instead of closing early
+  // while the controller still thinks a "saved" publish is in progress.
   useEffect(() => {
     if (status === "saved") {
       setShowSuccessModal(true);
       const timer = setTimeout(() => {
         setShowSuccessModal(false);
-      }, 2500);
+      }, 20000);
       return () => clearTimeout(timer);
     }
   }, [status]);
+
+  // ── Section title/description editing (mirrors the question-level
+  // edit/dirty/snapshot pattern already used for questions via
+  // openEdit/closeEdit/saveEdit + dirtyQ + editSnapshotRef) ──────────────
+  const [editingSection, setEditingSection] = useState(false);
+  const [dirtySection, setDirtySection] = useState(false);
+  const sectionSnapshotRef = useRef(null);
+
+  useEffect(() => {
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+  }, [activeSection]);
+
+  const updateSectionMeta = (index, patch) => {
+    setSurvey((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec, i) =>
+        i === index ? { ...sec, ...patch } : sec,
+      ),
+    }));
+    setDirtySection(true);
+  };
+
+  const updateSectionMetaRaw = (index, patch) => {
+    setSurvey((prev) => ({
+      ...prev,
+      sections: prev.sections.map((sec, i) =>
+        i === index ? { ...sec, ...patch } : sec,
+      ),
+    }));
+  };
+
+  const openSectionEdit = () => {
+    sectionSnapshotRef.current = {
+      title: currentSection.title,
+      description: currentSection.description,
+    };
+    setDirtySection(false);
+    setEditingSection(true);
+  };
+
+  const closeSectionEdit = () => {
+    if (dirtySection && sectionSnapshotRef.current) {
+      updateSectionMetaRaw(activeSection, sectionSnapshotRef.current);
+    }
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+  };
+
+  const saveSectionEdit = () => {
+    setEditingSection(false);
+    setDirtySection(false);
+    sectionSnapshotRef.current = null;
+    addToast("Section updated successfully", "edit");
+  };
 
   const formatSectionTitle = (title) => {
     if (title && title.length > 25) {
@@ -112,25 +172,52 @@ export default function SurveyMgmtView({
         ))}
       </div>
 
-      {confirmState && (
-        <div className="sm-confirm-overlay" onClick={() => setConfirmState(null)}>
-          <div className="sm-confirm-card" onClick={e => e.stopPropagation()}>
-            <h3 className="sm-confirm-title">{confirmState.title || "Delete?"}</h3>
-            <p className="sm-confirm-message">{confirmState.message}</p>
-            <div className="sm-confirm-actions">
-              <button className="sm-confirm-cancel" onClick={() => setConfirmState(null)}>
-                Cancel
-              </button>
-              <button
-                className={confirmState.title === "Publish Survey" ? "sm-confirm-confirm" : "sm-confirm-delete"}
-                onClick={confirmState.onConfirm}
-              >
-                {confirmState.title === "Publish Survey" ? "Confirm" : "Delete"}
-              </button>
+      {confirmState && (() => {
+        // Blocks re-firing handlePublish while a publish is already in
+        // flight: disables Confirm and ignores backdrop-dismiss whenever
+        // this is the publish flow and saving is true.
+        const isPublishFlow = confirmState.title === "Publish Survey";
+        const isConfirmLoading = isPublishFlow && saving;
+
+        return (
+          <div
+            className="sm-confirm-overlay"
+            onClick={() => {
+              if (isConfirmLoading) return;
+              setConfirmState(null);
+            }}
+          >
+            <div className="sm-confirm-card" onClick={e => e.stopPropagation()}>
+              <h3 className="sm-confirm-title">{confirmState.title || "Delete?"}</h3>
+              <p className="sm-confirm-message">
+                {isConfirmLoading
+                  ? "Please wait while your survey changes are being published."
+                  : confirmState.message}
+              </p>
+              <div className="sm-confirm-actions">
+                <button
+                  className="sm-confirm-cancel"
+                  disabled={isConfirmLoading}
+                  onClick={() => setConfirmState(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className={isPublishFlow ? "sm-confirm-confirm" : "sm-confirm-delete"}
+                  disabled={isConfirmLoading}
+                  onClick={confirmState.onConfirm}
+                >
+                  {isConfirmLoading
+                    ? "Publishing…"
+                    : isPublishFlow
+                      ? "Confirm"
+                      : "Delete"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {showSuccessModal && (
         <div className="sm-confirm-overlay" style={{ pointerEvents: "none" }}>
@@ -363,9 +450,55 @@ export default function SurveyMgmtView({
                 <div className="section-card">
                   <div className="section-top">
                     <span>Section {activeSection + 1} of {survey.sections.length}</span>
+                    <button
+                      onClick={() => editingSection ? closeSectionEdit() : openSectionEdit()}
+                      style={{
+                        border: "none", background: "transparent", cursor: "pointer",
+                        padding: "0.2rem", display: "flex", alignItems: "center",
+                      }}
+                      title={editingSection ? "Cancel editing" : "Edit section"}
+                    >
+                      <FiEdit2 size={14} color={editingSection ? "#3b82f6" : "#374151"} />
+                    </button>
                   </div>
-                  <h2>{currentSection.title}</h2>
-                  <p className="section-sub">{currentSection.description}</p>
+
+                  {editingSection ? (
+                    <>
+                      <input
+                        value={currentSection.title}
+                        onChange={e => updateSectionMeta(activeSection, { title: e.target.value })}
+                        placeholder="Section title"
+                        style={{
+                          width: "100%", border: "none", borderBottom: "2px solid #3b82f6",
+                          outline: "none", fontFamily: "Lexend", fontSize: "1.1rem",
+                          fontWeight: 600, background: "transparent", color: "#0f172a",
+                          padding: "0.2rem 0", margin: "0.2rem 0",
+                        }}
+                      />
+                      <textarea
+                        value={currentSection.description}
+                        onChange={e => updateSectionMeta(activeSection, { description: e.target.value })}
+                        placeholder="Section description"
+                        rows={2}
+                        style={{
+                          width: "100%", marginTop: "0.4rem", border: "1px solid #d1d5db",
+                          borderRadius: "0.4rem", padding: "0.4rem", fontSize: "0.8rem",
+                          fontFamily: "Lexend", background: "#ffffff", color: "#111827",
+                        }}
+                      />
+                      <div className="q-save-row">
+                        <button className="q-save-btn" disabled={!dirtySection} onClick={saveSectionEdit}>
+                          <FiCheck size={13} /> Save changes
+                        </button>
+                        <button className="q-cancel-btn" onClick={closeSectionEdit}>Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>{currentSection.title}</h2>
+                      <p className="section-sub">{currentSection.description}</p>
+                    </>
+                  )}
                 </div>
                 {currentSection.questions.map((q, qIdx) => {
                   const isEditing = editingQ?.sIdx === activeSection && editingQ?.qIdx === qIdx;

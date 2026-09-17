@@ -207,6 +207,7 @@ body {
 .section-top { 
   display: flex; 
   justify-content: space-between; 
+  align-items: center;
   font-size: 0.75rem; 
   color: #6b7280; 
   margin-bottom: 0.5rem; 
@@ -283,6 +284,17 @@ body {
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
   font-family: "Lexend", sans-serif;
+  /* PARITY FIX (from Admin): no text color was ever declared on this
+     badge, so the <select> variant (shown while editing a question's
+     type) picked up an inherited color instead of a readable one,
+     making the selected type unreadable against the light gray pill. */
+  color: #374151;
+}
+
+.question-type:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 /* Input field styling for preview mode */
@@ -638,6 +650,7 @@ body {
 }
 
 .sm-confirm-cancel:hover { background: #f9fafb; }
+.sm-confirm-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Delete confirmation button */
 .sm-confirm-delete {
@@ -654,6 +667,7 @@ body {
 }
 
 .sm-confirm-delete:hover { background: #dc2626; }
+.sm-confirm-delete:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sm-confirm-confirm {
   padding: 0.45rem 1.1rem;
@@ -671,11 +685,88 @@ body {
 .sm-confirm-confirm:hover {
   background: #3d8fd6;
 }
+.sm-confirm-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Publish/Save loading spinner (ported from Admin — used inside the
+   confirm modal's Confirm button state while a publish is in progress) ── */
+.sm-confirm-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #4FA3F7;
+  border-radius: 50%;
+  animation: smConfirmSpin 0.7s linear infinite;
+}
+
+@keyframes smConfirmSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* ============================ BUILDER CONTAINER ============================ */
 .survey-builder { 
   margin-bottom: 3rem; 
   min-width: 0; 
 }
+
+/* ============================================================================
+   FORM FIELD READABILITY FIX (parity with Admin Survey Management)
+   ============================================================================
+   Root cause: several inputs/selects/textareas in the survey editor (label
+   fields, placeholder fields, option fields, and especially the branch
+   destination "Go to" selects, which only set padding/border/font-size
+   inline) never declared their own background/color. Without that, the
+   browser falls back to whatever color/background the app's outer theme
+   sets on plain <input>/<select>/<textarea> elements, which can resolve to
+   a dark, low-contrast field instead of this page's light-card look.
+
+   These rules are scoped to .survey-page only (no layout/sizing changes)
+   and act as a safety net alongside any explicit inline background/color
+   already set on specific fields, so every field stays readable even if
+   new inputs are added later without their own explicit colors.
+   ============================================================================ */
+.survey-page input:not([type="checkbox"]):not([type="radio"]),
+.survey-page select,
+.survey-page textarea {
+  background-color: #ffffff;
+  color: #111827;
+  caret-color: #111827;
+  font-family: "Lexend", sans-serif;
+}
+
+.survey-page input::placeholder,
+.survey-page textarea::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.survey-page input:focus,
+.survey-page select:focus,
+.survey-page textarea:focus {
+  outline: none;
+}
+
+.survey-page input:disabled,
+.survey-page input[readonly],
+.survey-page textarea[readonly] {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: default;
+}
+
+/* Edit / Copy / Delete / Branch action icon buttons — force a visible
+   neutral color so they never rely on an inherited currentColor that
+   could resolve to something invisible against the white card. */
+.survey-page .question-actions button,
+.survey-page .branch-btn,
+.survey-page .inner-section-card > div button {
+  color: #374151;
+}
+
+.survey-page .question-actions button:hover,
+.survey-page .inner-section-card > div button:hover {
+  color: #1f2937;
+}
+
 /* ============================================================================
    SURVEY SKELETON LOADER — sm-skel-* namespace
    Append these rules to the bottom of Surveymgmt.css.
