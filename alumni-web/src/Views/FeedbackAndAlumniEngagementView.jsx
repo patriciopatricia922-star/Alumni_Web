@@ -79,6 +79,8 @@ const FeedbackAndAlumniEngagementView = ({
   form, set, toggleParticipate,
   errors, saveToast, cardRef,
   formPct, currentSection, totalSections,
+  sectionTitle = 'Feedback and Alumni Engagement',
+  sectionDescription = 'Share your thoughts and stay connected with us',
   satisfactionOptions, participateOptions, yesNoOptions,
   getLabel, getPlaceholder,
   handleSave, handleSubmit,
@@ -140,7 +142,7 @@ const FeedbackAndAlumniEngagementView = ({
                 />
               </div>
               <span className="fa-progress-label">
-                Feedback and Alumni Engagement
+                {sectionTitle}
               </span>
             </div>
           </div>
@@ -156,10 +158,10 @@ const FeedbackAndAlumniEngagementView = ({
               )}
               <div>
                 <h2 className="fa-section-title">
-                  Feedback and Alumni Engagement
+                  {sectionTitle}
                 </h2>
                 <p className="fa-section-sub">
-                  Share your thoughts and stay connected with us
+                  {sectionDescription}
                 </p>
               </div>
 
