@@ -34,6 +34,18 @@ const SECTION_KEY     = 'shs_personal_background';
 const NEXT_ROUTE      = '/surveyshs/shs-educational-background';
 const DEPARTMENT_TYPE = 'shs';
 
+// This section's known position in the default SHS section order (matches
+// SHS_SLUG_MAP[0] = 'shs-personal-background' in surveyRegistry.js). Used
+// only to look up this section's live title/description/count for the
+// header display — TOTAL_SECTIONS/CURRENT_SECTION above are untouched and
+// still drive computeFormPct exactly as before.
+const SECTION_INDEX = 0;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Personal Background';
+const DEFAULT_SECTION_DESCRIPTION = 'Basic information about you';
+
 const REQUIRED_FIELDS = [
   'last_name',
   'first_name',
@@ -219,6 +231,15 @@ const PersonalBackgroundSHS = () => {
   const [questionOptions,      setQuestionOptions]      = useState({});
   const [loadingConfig,        setLoadingConfig]        = useState(true);
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,       setSectionTitle]       = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription, setSectionDescription] = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,   setDisplayTotalSections]   = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection,  setDisplayCurrentSection]  = useState(CURRENT_SECTION);
+
   const [form, setForm] = useState({
     last_name:        '',
     first_name:       '',
@@ -256,15 +277,34 @@ const PersonalBackgroundSHS = () => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
 
-    const section = config.sections.find(
-      (s) =>
-        s.id === SECTION_KEY ||
-        s.id === 'shs_personal_background' ||
-        s.title === 'Personal Background' ||
-        s.title === 'SHS Personal Background'
-    );
+    // Prefer a positional match (this section's known index in the default
+    // SHS section order) so renaming the section title in Admin doesn't
+    // break this lookup — the id/title candidates below would silently
+    // fail to find the section once its title no longer equals one of the
+    // hardcoded literal strings. Position match keeps working through
+    // renames; the id/title candidates are kept as a fallback only.
+    const section =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(
+        (s) =>
+          s.id === SECTION_KEY ||
+          s.id === 'shs_personal_background' ||
+          s.title === 'Personal Background' ||
+          s.title === 'SHS Personal Background'
+      );
 
-    if (!section?.questions) return;
+    if (!section) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (section.title)       setSectionTitle(section.title);
+    if (section.description) setSectionDescription(section.description);
+    if (config.sections.length) setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(section);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!section.questions) return;
 
     const labels = {}, placeholders = {}, options = {};
     section.questions.forEach((q, idx) => {
@@ -550,8 +590,10 @@ const PersonalBackgroundSHS = () => {
         saveToast={saveToast}
         cardRef={cardRef}
         formPct={formPct}
-        currentSection={CURRENT_SECTION}
-        totalSections={TOTAL_SECTIONS}
+        currentSection={displayCurrentSection}
+        totalSections={displayTotalSections}
+        sectionTitle={sectionTitle}
+        sectionDescription={sectionDescription}
         handleSave={handleSave}
         handleNext={handleNext}
         onBack={handleBack}

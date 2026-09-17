@@ -32,6 +32,8 @@ const PersonalBackgroundViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Personal Background',
+  sectionDescription = 'Basic information about you',
   handleSave,
   handleNext,
   onBack,
@@ -86,7 +88,7 @@ const PersonalBackgroundViewSHS = ({
               style={{ width: `${formPct}%` }}
             />
           </div>
-          <span className="shs-pb-progress-label">Personal Background</span>
+          <span className="shs-pb-progress-label">{sectionTitle}</span>
         </div>
       </div>
 
@@ -94,8 +96,8 @@ const PersonalBackgroundViewSHS = ({
         <div className="shs-pb-card" ref={cardRef}>
 
           <div>
-            <h2 className="shs-pb-section-title">Personal Information</h2>
-            <p className="shs-pb-section-sub">Basic information about you</p>
+            <h2 className="shs-pb-section-title">{sectionTitle}</h2>
+            <p className="shs-pb-section-sub">{sectionDescription}</p>
           </div>
 
           <div className="shs-pb-fields">
