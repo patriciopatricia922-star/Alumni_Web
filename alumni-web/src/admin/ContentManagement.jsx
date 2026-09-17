@@ -1082,14 +1082,22 @@ const handleAwardPoints = async (userIds, points) => {
       console.log("[ARCHIVE] Profile:", profile);
       console.log("[ARCHIVE] Profile Error:", profileError);
       
-      const { error } = await supabase
-        .from(table)
-        .update({
-          is_active:   false,
-          archived_at: new Date().toISOString(),
-          updated_at:  new Date().toISOString(),
-        })
-        .eq('id', id);
+      // Rewards-only: direct UPDATE on this table has been intermittently
+      // rejected by RLS (42501) even with a verified-correct authenticated
+      // session and a permissive policy — root cause still under
+      // investigation with Supabase support. Routing archiving through this
+      // RPC as a stable workaround; it enforces the same admin/superadmin
+      // check explicitly. Every other content type is untouched.
+      const { error } = type === 'rewards'
+        ? await supabase.rpc('archive_reward', { p_reward_id: id })
+        : await supabase
+            .from(table)
+            .update({
+              is_active:   false,
+              archived_at: new Date().toISOString(),
+              updated_at:  new Date().toISOString(),
+            })
+            .eq('id', id);
 
       if (error) {
         // TEMP DIAGNOSTIC: the console only ever showed the HTTP status (403).
