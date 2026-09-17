@@ -12,6 +12,22 @@ const TOTAL_SECTIONS  = 7;
 const CURRENT_SECTION = 6;
 const SECTION_KEY     = 'skills_and_competencies';
 
+// This section's known position in the default College section order
+// (matches COLLEGE_SLUG_MAP[5] = 'skills-and-competencies' in
+// surveyRegistry.js). Used only to look up this section's live
+// title/description/count for the header display — TOTAL_SECTIONS/
+// CURRENT_SECTION above are untouched and still drive computeFormPct
+// exactly as before.
+const SECTION_INDEX = 5;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section. Matches 'Skills & Competencies'
+// (the title applyConfig already matches against and Admin's default),
+// unifying the View's two previously-duplicated "Skills and competencies"
+// literals under one dynamic value.
+const DEFAULT_SECTION_TITLE       = 'Skills & Competencies';
+const DEFAULT_SECTION_DESCRIPTION = 'Your workplace skills';
+
 const DEFAULT_COMPETENCIES_OPTIONS = [
   'Communication Skills',
   'Information & Technology Skills',
@@ -71,6 +87,15 @@ const SkillsAndCompetencies = () => {
   const [loadingLabels,        setLoadingLabels]        = useState(true);
   const [configVersion,        setConfigVersion]        = useState(0);
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
   // Used to prevent realtime updates from clobbering restored ratings
   const savedProgressRef = useRef(null);
 
@@ -88,8 +113,28 @@ const SkillsAndCompetencies = () => {
 
   const applyConfig = (config) => {
     if (!config?.sections) return;
-    const skillsSection = config.sections.find(s => s.title === 'Skills & Competencies');
-    if (!skillsSection?.questions) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // section order) so renaming the section title in Admin doesn't break
+    // this lookup — the previous title-only match would silently fail to
+    // find the section once its title no longer equals the literal string
+    // 'Skills & Competencies'. Position match keeps working through
+    // renames; the title match is kept as a fallback only.
+    const skillsSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(s => s.title === 'Skills & Competencies');
+    if (!skillsSection) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (skillsSection.title)       setSectionTitle(skillsSection.title);
+    if (skillsSection.description) setSectionDescription(skillsSection.description);
+    if (config.sections.length)    setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(skillsSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!skillsSection.questions) return;
 
     const labels        = {};
     const placeholders  = {};
@@ -237,8 +282,10 @@ const SkillsAndCompetencies = () => {
       saveToast={saveToast}
       cardRef={cardRef}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       competenciesOptions={competenciesOptions}
       skillRatingsKeys={skillRatingsKeys}
       getLabel={getLabel}

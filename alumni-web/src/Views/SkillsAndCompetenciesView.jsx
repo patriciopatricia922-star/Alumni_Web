@@ -90,6 +90,8 @@ const SkillsAndCompetenciesView = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Skills & Competencies',
+  sectionDescription = 'Your workplace skills',
   competenciesOptions,
   skillRatingsKeys,
   getLabel,
@@ -144,7 +146,7 @@ const SkillsAndCompetenciesView = ({
                 style={{ width: `${formPct}%` }}
               />
             </div>
-            <span className="sc-progress-label">Skills and competencies</span>
+            <span className="sc-progress-label">{sectionTitle}</span>
           </div>
         </div>
 
@@ -158,8 +160,8 @@ const SkillsAndCompetenciesView = ({
               </div>
             )}
             <div>
-              <h2 className="sc-section-title">Skills and competencies</h2>
-              <p className="sc-section-sub">Your workplace skills</p>
+              <h2 className="sc-section-title">{sectionTitle}</h2>
+              <p className="sc-section-sub">{sectionDescription}</p>
             </div>
 
             <div className="sc-questions">
