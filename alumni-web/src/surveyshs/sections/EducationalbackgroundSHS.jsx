@@ -57,6 +57,18 @@ const NEXT_ROUTE_STOPPED        = '/surveyshs/shs-feedback-and-engagement';
 // Matches the convention used in PersonalBackgroundSHS.jsx
 const DEPARTMENT_TYPE = 'shs';
 
+// This section's known position in the default SHS section order (matches
+// SHS_SLUG_MAP[1] = 'shs-educational-background' in surveyRegistry.js).
+// Used only to look up this section's live title/description/count for the
+// header display — TOTAL_SECTIONS/CURRENT_SECTION above are untouched and
+// still drive computeFormPct exactly as before.
+const SECTION_INDEX = 1;
+
+// Fallbacks shown until config has loaded, and used if the config lookup
+// below ever fails to find this section.
+const DEFAULT_SECTION_TITLE       = 'Educational Background';
+const DEFAULT_SECTION_DESCRIPTION = 'Your academic background after SHS';
+
 // The route this section is mounted at — stored as prevRoute for Feedback
 // when the skip path is taken.
 const THIS_ROUTE = '/surveyshs/shs-educational-background';
@@ -200,14 +212,43 @@ const EducationalBackgroundSHS = () => {
   const [questionPlaceholders, setQuestionPlaceholders] = useState({});
   const [questionOptions,      setQuestionOptions]      = useState({});
 
+  // ── Section header display state (FIX: was hardcoded in the View) ────────
+  // Sourced from the exact same survey_config fetch/realtime-subscription
+  // below that already drives questionLabels — same applyConfig call, no
+  // separate storage or fetch, matching the existing dynamic-config pattern.
+  const [sectionTitle,          setSectionTitle]          = useState(DEFAULT_SECTION_TITLE);
+  const [sectionDescription,    setSectionDescription]    = useState(DEFAULT_SECTION_DESCRIPTION);
+  const [displayTotalSections,  setDisplayTotalSections]  = useState(TOTAL_SECTIONS);
+  const [displayCurrentSection, setDisplayCurrentSection] = useState(CURRENT_SECTION);
+
   // ── applyConfig — MUST be declared before any useEffect references it ──
   const applyConfig = useCallback((configData) => {
     const config = configData?.config ?? configData;
     if (!config?.sections) return;
-    const eduSection = config.sections.find(
-      (s) => s.id === SECTION_KEY || s.title === 'Educational Background'
-    );
-    if (!eduSection?.questions) return;
+
+    // Prefer a positional match (this section's known index in the default
+    // SHS section order) so renaming the section title in Admin doesn't
+    // break this lookup — the previous id/title match would silently fail
+    // to find the section once its title no longer equals the literal
+    // string 'Educational Background'. Position match keeps working
+    // through renames; the id/title match is kept as a fallback only.
+    const eduSection =
+      config.sections[SECTION_INDEX] ??
+      config.sections.find(
+        (s) => s.id === SECTION_KEY || s.title === 'Educational Background'
+      );
+    if (!eduSection) return;
+
+    // ── Section header (title/description) + dynamic section count ───────
+    // Same config object the question labels below already read from —
+    // reuses the existing dynamic-config pattern, no new storage or fetch.
+    if (eduSection.title)       setSectionTitle(eduSection.title);
+    if (eduSection.description) setSectionDescription(eduSection.description);
+    if (config.sections.length) setDisplayTotalSections(config.sections.length);
+    const foundIndex = config.sections.indexOf(eduSection);
+    if (foundIndex !== -1) setDisplayCurrentSection(foundIndex + 1);
+
+    if (!eduSection.questions) return;
 
     const labels = {};
     const placeholders = {};
@@ -418,8 +459,10 @@ const EducationalBackgroundSHS = () => {
       saveToast={saveToast}
       cardRef={cardRef}
       formPct={formPct}
-      currentSection={CURRENT_SECTION}
-      totalSections={TOTAL_SECTIONS}
+      currentSection={displayCurrentSection}
+      totalSections={displayTotalSections}
+      sectionTitle={sectionTitle}
+      sectionDescription={sectionDescription}
       handleSave={handleSave}
       handleNext={handleNext}
       getLabel={getLabel}

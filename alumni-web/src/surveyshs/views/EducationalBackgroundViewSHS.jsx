@@ -234,6 +234,8 @@ const EducationalBackgroundViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Educational Background',
+  sectionDescription = 'Your academic background after SHS',
   /* actions */
   handleSave,
   handleNext,
@@ -293,7 +295,7 @@ const EducationalBackgroundViewSHS = ({
               />
             </div>
             <span className="shs-eb-progress-label">
-              Educational Background
+              {sectionTitle}
             </span>
           </div>
         </div>
@@ -302,9 +304,9 @@ const EducationalBackgroundViewSHS = ({
         <div className="shs-eb-body">
           <div className="shs-eb-card" ref={cardRef}>
             <div>
-              <h2 className="shs-eb-section-title">Educational Background</h2>
+              <h2 className="shs-eb-section-title">{sectionTitle}</h2>
               <p className="shs-eb-section-sub">
-                Your academic background after SHS
+                {sectionDescription}
               </p>
             </div>
 
