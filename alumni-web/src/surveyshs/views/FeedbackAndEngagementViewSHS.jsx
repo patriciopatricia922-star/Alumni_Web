@@ -43,6 +43,8 @@ const FeedbackAndEngagementViewSHS = ({
   formPct,
   currentSection,
   totalSections,
+  sectionTitle = 'Feedback and Alumni Engagement',
+  sectionDescription = 'Share your thoughts and stay connected with us',
   handleSave,
   handleSubmit,
   navigate,
@@ -98,7 +100,7 @@ const FeedbackAndEngagementViewSHS = ({
             />
           </div>
           <span className="fa-shs-progress-label">
-            Feedback and Alumni Engagement
+            {sectionTitle}
           </span>
         </div>
       </div>
@@ -118,10 +120,10 @@ const FeedbackAndEngagementViewSHS = ({
           {/* Card heading */}
           <div>
             <h2 className="fa-shs-section-title">
-              Feedback and Alumni Engagement
+              {sectionTitle}
             </h2>
             <p className="fa-shs-section-sub">
-              Share your thoughts and stay connected with us
+              {sectionDescription}
             </p>
           </div>
 
