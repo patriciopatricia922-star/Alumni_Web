@@ -66,7 +66,7 @@ export default function SurveyMgmtView({
       setShowSuccessModal(true);
       const timer = setTimeout(() => {
         setShowSuccessModal(false);
-      }, 20000);
+      }, 10000);
       return () => clearTimeout(timer);
     }
   }, [status]);
