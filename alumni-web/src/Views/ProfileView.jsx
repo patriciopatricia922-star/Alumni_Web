@@ -61,7 +61,7 @@ const PasswordInput = memo(({ label, value, onChange, placeholder }) => {
 const [show, setShow] = useState(false);
 return (
  <div className="prof-cp-field">
-{label && <label className="prof-cp-label">{label.replace('  ', '')} <span className="eb-req">*</span></label>}
+{label && <label className="prof-cp-label">{label}</label>}
  <div className="prof-cp-input-wrap">
  <input
 type={show ? 'text' : 'password'}
@@ -932,7 +932,7 @@ return (
      <div className="prof-cp-modal-body">
        <div className="prof-cp-form">
          <PasswordInput
-           label="Current password *"
+           label={<>Current password <span className="eb-req">*</span></>}
            value={cpCurrent}
            onChange={e => setCpCurrent(e.target.value)}
            placeholder="···········"
@@ -944,7 +944,7 @@ return (
            <p className="prof-cp-hint">The password must be at least 8 characters long and include at least one uppercase letter, one number, and one special character (e.g., !@#$%^&*).</p>
          </div>
          <PasswordInput
-           label="Confirm new password *"
+           label={<>Confirm new password <span className="eb-req">*</span></>}
            value={cpConfirm}
            onChange={e => setCpConfirm(e.target.value)}
            placeholder="···········"

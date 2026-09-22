@@ -433,10 +433,22 @@ const Profile = () => {
   const handleCPSave = useCallback(async () => {
     setCpError('');
     setCpSuccess(false);
-    if (!cpCurrent || !cpNew || !cpConfirm) return setCpError('Please fill in all fields.');
+
+    // 1. Required fields — check all three, surface the first missing one.
+    if (!cpCurrent) return setCpError('Current password • required');
+    if (!cpNew) return setCpError('New Password • required');
+    if (!cpConfirm) return setCpError('Confirm new password • required');
+
     if (!PASSWORD_RULES.every((r) => r.test(cpNew)))
       return setCpError('New password does not meet all requirements.');
-    if (cpNew !== cpConfirm) return setCpError('New passwords do not match.');
+
+    // 2. New password and confirmation must match.
+    if (cpNew !== cpConfirm)
+      return setCpError('New password and confirmation password do not match.');
+
+    // 3. New password must differ from the current password.
+    if (cpNew === cpCurrent)
+      return setCpError('New password cannot be the same as your current password.');
 
     setCpLoading(true);
     try {
