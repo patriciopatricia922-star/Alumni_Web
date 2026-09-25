@@ -767,6 +767,68 @@ body {
   color: #1f2937;
 }
 
+/* ── Publish success — banner-style treatment (ported from Admin) ────────
+   Applies only to the success step of the consolidated confirm modal.
+   The confirm/delete step and the loading/spinner step above are
+   untouched — this only styles the `isSuccess` branch in
+   Surveymgmtview.jsx and the extra `sm-confirm-card-success` class that
+   gets added to the card only while isSuccess is true. ── */
+.sm-confirm-card-success {
+  border-left: 4px solid #22c55e;
+  position: relative;
+  overflow: hidden;
+}
+
+.sm-confirm-success-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #EAF8F0;
+  color: #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.sm-confirm-success-title {
+  margin: 0;
+  font-family: "Lexend", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #111827;
+  text-align: center;
+}
+
+.sm-confirm-success-desc {
+  margin: 0;
+  font-family: "Lexend", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.6;
+  max-width: 220px;
+}
+
+/* Drains left-to-right over the same 2.7s window as the JS auto-close
+   timer in Surveymgmtview.jsx, so the countdown is visible as well as
+   felt. Purely decorative — stops automatically when the card unmounts. */
+.sm-confirm-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #22c55e;
+  animation: smConfirmProgressDrain 2.7s linear forwards;
+}
+
+@keyframes smConfirmProgressDrain {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
 /* ============================================================================
    SURVEY SKELETON LOADER — sm-skel-* namespace
    Append these rules to the bottom of Surveymgmt.css.

@@ -56,20 +56,32 @@ export default function SurveyMgmtView({
   targetSectionIdx,
   alumniType,
 }) {
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // ── Derived publish-modal state (ported from Admin — replaces the old
+  // separate `showSuccessModal` state/effect below). Confirm, saving, and
+  // success are now three renders of the SAME `confirmState`-driven modal
+  // instead of two independently-mounted overlays, so there's no longer a
+  // second "Changes published successfully!" card that can be left showing
+  // on top of/behind the original confirm dialog after a publish.
+  const isPublishFlow = confirmState?.title === "Publish Survey";
+  const isLoading = isPublishFlow && saving;
+  const isSuccess = isPublishFlow && !saving && status === "saved";
 
-  // Aligned to 20s so this popup's lifetime matches handlePublish's own
-  // status-reset timer in SurveyManagement.jsx, instead of closing early
-  // while the controller still thinks a "saved" publish is in progress.
+  // ── Auto-close the consolidated save/publish modal ~2.7s after the
+  // SUCCESS state appears. The timer starts directly off `isSuccess`
+  // turning true, and is the ONLY thing that closes the modal on success —
+  // handlePublish in SurveyManagement.jsx no longer runs its own
+  // independent status-reset timer, so there's nothing left to race with
+  // this one and strand the modal on its default confirm-dialog content.
   useEffect(() => {
-    if (status === "saved") {
-      setShowSuccessModal(true);
-      const timer = setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [status]);
+    if (!isSuccess) return undefined;
+    const timer = setTimeout(() => {
+      setConfirmState(null);
+    }, 2700);
+    // Cleanup: fires if the modal is closed manually (isSuccess flips to
+    // false) or if the component unmounts, preventing a stale timer from
+    // calling setConfirmState after the fact.
+    return () => clearTimeout(timer);
+  }, [isSuccess, setConfirmState]);
 
   // ── Section title/description editing (mirrors the question-level
   // edit/dirty/snapshot pattern already used for questions via
@@ -172,61 +184,80 @@ export default function SurveyMgmtView({
         ))}
       </div>
 
-      {confirmState && (() => {
-        // Blocks re-firing handlePublish while a publish is already in
-        // flight: disables Confirm and ignores backdrop-dismiss whenever
-        // this is the publish flow and saving is true.
-        const isPublishFlow = confirmState.title === "Publish Survey";
-        const isConfirmLoading = isPublishFlow && saving;
+      {/* ── Confirm / Publish Modal (ported from Admin) ───────────────────── */}
+      {/* Consolidated into one modal: the same sm-confirm-overlay /        */}
+      {/* sm-confirm-card now cycles through confirm → loading → success    */}
+      {/* states for the Publish Survey flow, instead of handing off to a   */}
+      {/* separate success popup. Non-publish confirmations (e.g. delete)   */}
+      {/* are unaffected and render exactly as before.                      */}
+      {(() => {
+        if (!confirmState) return null;
 
         return (
           <div
             className="sm-confirm-overlay"
             onClick={() => {
-              if (isConfirmLoading) return;
+              // Don't let the operation be interrupted mid-flight by an
+              // accidental backdrop click while it's saving.
+              if (isLoading) return;
               setConfirmState(null);
             }}
           >
-            <div className="sm-confirm-card" onClick={e => e.stopPropagation()}>
-              <h3 className="sm-confirm-title">{confirmState.title || "Delete?"}</h3>
-              <p className="sm-confirm-message">
-                {isConfirmLoading
-                  ? "Please wait while your survey changes are being published."
-                  : confirmState.message}
-              </p>
-              <div className="sm-confirm-actions">
-                <button
-                  className="sm-confirm-cancel"
-                  disabled={isConfirmLoading}
-                  onClick={() => setConfirmState(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className={isPublishFlow ? "sm-confirm-confirm" : "sm-confirm-delete"}
-                  disabled={isConfirmLoading}
-                  onClick={confirmState.onConfirm}
-                >
-                  {isConfirmLoading
-                    ? "Publishing…"
-                    : isPublishFlow
-                      ? "Confirm"
-                      : "Delete"}
-                </button>
-              </div>
+            <div
+              className={`sm-confirm-card${isSuccess ? " sm-confirm-card-success" : ""}`}
+              onClick={e => e.stopPropagation()}
+            >
+              {isLoading ? (
+                <>
+                  <div className="sm-confirm-spinner" aria-hidden="true" />
+                  <h3 className="sm-confirm-title">Saving…</h3>
+                  <p className="sm-confirm-message">
+                    Please wait while your survey changes are being published.
+                  </p>
+                </>
+              ) : isSuccess ? (
+                <>
+                  <div className="sm-confirm-success-icon" aria-hidden="true">
+                    <FiCheck size={18} />
+                  </div>
+                  <h3 className="sm-confirm-success-title">
+                    Changes published
+                  </h3>
+                  <p className="sm-confirm-success-desc">
+                    Your survey is now live and visible to alumni.
+                  </p>
+                  {/* Drains left→right over the same 2.7s window as the
+                      auto-close timer above, so the countdown is visible
+                      as well as felt. Purely decorative — clearing the
+                      real setTimeout on close/unmount is what actually
+                      cancels this early; the CSS animation is just along
+                      for the ride and stops when the element unmounts. */}
+                  <div className="sm-confirm-progress" aria-hidden="true" />
+                </>
+              ) : (
+                <>
+                  <h3 className="sm-confirm-title">{confirmState.title || "Delete?"}</h3>
+                  <p className="sm-confirm-message">{confirmState.message}</p>
+                  <div className="sm-confirm-actions">
+                    <button
+                      className="sm-confirm-cancel"
+                      onClick={() => setConfirmState(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={isPublishFlow ? "sm-confirm-confirm" : "sm-confirm-delete"}
+                      onClick={confirmState.onConfirm}
+                    >
+                      {isPublishFlow ? "Confirm" : "Delete"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
       })()}
-
-      {showSuccessModal && (
-        <div className="sm-confirm-overlay" style={{ pointerEvents: "none" }}>
-          <div className="sm-confirm-card">
-            <h3 className="sm-confirm-title">Changes published successfully!</h3>
-            <p className="sm-confirm-message">The survey changes have been published successfully.</p>
-          </div>
-        </div>
-      )}
 
       <div className="survey-page">
         <div className="survey-header">

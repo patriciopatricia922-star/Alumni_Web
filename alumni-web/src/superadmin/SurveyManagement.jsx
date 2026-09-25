@@ -567,8 +567,16 @@ export default function SurveyManagement() {
   // ==========================================================================
   // CONFIRMATION MODAL
   // ==========================================================================
-  const askConfirm = (message, onConfirm, title = "Delete?") =>
+  const askConfirm = (message, onConfirm, title = "Delete?") => {
+    // PFIX-E (ported from Admin): reset the shared "status" flag every time
+    // a confirmation dialog is opened. Without this, re-opening the Publish
+    // modal shortly after a prior publish could find `status` still equal
+    // to "saved" (or "error") from that earlier attempt, making the new
+    // confirm dialog briefly evaluate as already-successful/failed instead
+    // of showing the normal confirm step.
+    setStatus("");
     setConfirmState({ message, onConfirm, title });
+  };
 
   // ==========================================================================
   // DATA LOADING — COLLEGE (ported query pattern from Admin, with the
@@ -835,12 +843,26 @@ export default function SurveyManagement() {
 
       dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
-      setTimeout(() => setStatus(""), 3000);
+      // PFIX-G (ported from Admin): no independent setTimeout(() =>
+      // setStatus(""), ...) here anymore. That timer used to race with the
+      // View's own auto-close timer (both ~3s, but this one starts a beat
+      // earlier since it's scheduled synchronously instead of inside a
+      // useEffect) — whichever fired first flipped `status` before the
+      // View could close the modal off of it, stranding the modal on its
+      // default confirm-dialog content. askConfirm (PFIX-E, above) already
+      // resets `status` to "" the moment the *next* confirm dialog opens,
+      // so nothing here needs to reset it early.
     } catch (err) {
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);
       setStatus("error");
       addToast("Failed to publish. Please try again.", "delete");
+      // Close the publish modal on failure instead of leaving `confirmState`
+      // set — otherwise, once `saving` flips back to false, the modal falls
+      // back to its default "Do you want to publish this survey?" content
+      // instead of closing. The failure is already surfaced via the toast
+      // and the header's "Failed to save" text.
+      setConfirmState(null);
     } finally {
       setSaving(false);
     }
