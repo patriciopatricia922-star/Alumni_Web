@@ -222,11 +222,23 @@ const CertificationAchievement = () => {
     }
   }, [form.certifications]);
 
+  // NOTE: These intentionally only update the field that changed. Branch
+  // visibility (showCertFields / showHowHelped in the View) is driven purely
+  // by these values, so hiding a branch is already just a render-time
+  // conditional — it must not also delete the branch's own answers here.
+  // Previously this reset certifications/helped_career/how_helped back to
+  // empty on every change (including No → Yes), which silently discarded
+  // anything the alumni had already entered when they toggled the parent
+  // answer back and forth. Validation (validate()) and the progress
+  // percentage (computeFormPct) already only require/count these fields
+  // while their branch is visible, so leaving stale values in state while
+  // hidden is safe — they simply aren't checked or shown until the branch
+  // reopens, at which point the alumni's previous input reappears as-is.
   const setCertiportPasser = (val) =>
-    setForm(prev => ({ ...prev, certiport_passer: val, certifications: [], helped_career: '', how_helped: '' }));
+    setForm(prev => ({ ...prev, certiport_passer: val }));
 
   const setHelpedCareer = (val) =>
-    setForm(prev => ({ ...prev, helped_career: val, how_helped: '' }));
+    setForm(prev => ({ ...prev, helped_career: val }));
 
   const validate = () => {
     const e = new Set();
