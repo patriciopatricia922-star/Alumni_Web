@@ -92,13 +92,14 @@ export default function SurveyMgmtView({
   // PFIX-F: was previously 20000ms. Mechanically the timer fired fine at
   // 20s, but 20 real seconds reads as "broken" next to this app's other
   // notifications (the toast system dismisses in ~2.75s), so nobody
-  // waited long enough to see it close on its own. Shortened to line up
-  // with that existing cadence.
+  // waited long enough to see it close on its own. Shortened to 2.7s to
+  // line up with that existing cadence (per user request, down from an
+  // initial 3.5s pass).
   useEffect(() => {
     if (!isSuccess) return undefined;
     const timer = setTimeout(() => {
       setConfirmState(null);
-    }, 3500);
+    }, 2700);
     // Cleanup: fires if the modal is closed manually (isSuccess flips to
     // false) or if the component unmounts, preventing a stale timer from
     // calling setConfirmState after the fact.
@@ -241,7 +242,10 @@ export default function SurveyMgmtView({
               setConfirmState(null);
             }}
           >
-            <div className="sm-confirm-card" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`sm-confirm-card${isSuccess ? " sm-confirm-card-success" : ""}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               {isLoading ? (
                 <>
                   <div className="sm-confirm-spinner" aria-hidden="true" />
@@ -252,12 +256,22 @@ export default function SurveyMgmtView({
                 </>
               ) : isSuccess ? (
                 <>
-                  <h3 className="sm-confirm-title">
-                    Changes published successfully!
+                  <div className="sm-confirm-success-icon" aria-hidden="true">
+                    <FiCheck size={18} />
+                  </div>
+                  <h3 className="sm-confirm-success-title">
+                    Changes published
                   </h3>
-                  <p className="sm-confirm-message">
-                    The survey changes have been published successfully.
+                  <p className="sm-confirm-success-desc">
+                    Your survey is now live and visible to alumni.
                   </p>
+                  {/* Drains left→right over the same 2.7s window as the
+                      auto-close timer above, so the countdown is visible
+                      as well as felt. Purely decorative — clearing the
+                      real setTimeout on close/unmount is what actually
+                      cancels this early; the CSS animation is just along
+                      for the ride and stops when the element unmounts. */}
+                  <div className="sm-confirm-progress" aria-hidden="true" />
                 </>
               ) : (
                 <>
