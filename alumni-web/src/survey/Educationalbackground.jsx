@@ -326,25 +326,23 @@ const EducationalBackground = () => {
     });
   }, [lockedFields]);
 
+  // NOTE: These intentionally only update the field that changed. Branch
+  // visibility (showLicensureBranch / showLicensureNoBranch / showBoardExam
+  // in the View, plus the admin-configurable shouldShowField checks) is
+  // already computed purely from current form values, so hiding a branch
+  // is just a render-time conditional — it must not also delete the
+  // branch's own answers here. Previously this reset licensure_plans /
+  // licensure_reason / board_exam_name / board_exam_date / board_exam_result
+  // back to empty on every change (including toggling back to a value that
+  // re-reveals the branch), which silently discarded anything the alumni
+  // had already entered. validate() and computeFormPct already only
+  // require/count these fields while their branch is visible, so leaving
+  // stale values in state while hidden is safe.
   const setLicensureReviewing = useCallback((val) =>
-    setForm(prev => ({
-      ...prev,
-      licensure_reviewing:  val,
-      licensure_plans:      '',
-      licensure_reason:     '',
-      board_exam_name:      '',
-      board_exam_date:      '',
-      board_exam_result:    '',
-    })), []);
+    setForm(prev => ({ ...prev, licensure_reviewing: val })), []);
 
   const setLicensurePlans = useCallback((val) =>
-    setForm(prev => ({
-      ...prev,
-      licensure_plans:   val,
-      board_exam_name:   '',
-      board_exam_date:   '',
-      board_exam_result: '',
-    })), []);
+    setForm(prev => ({ ...prev, licensure_plans: val })), []);
 
   const validate = () => {
     const e = new Set();
