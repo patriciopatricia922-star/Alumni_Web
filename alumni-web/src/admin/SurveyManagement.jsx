@@ -893,16 +893,19 @@ export default function SurveyManagement() {
 
       dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
-      // Resets the shared "saved" status flag ~2.7s after a successful
-      // publish (aligned with the modal's own auto-close timer in
-      // SurveyMgmtView.jsx, PFIX-F) so a later Publish attempt starts from
-      // a clean "" status instead of stale "saved". The modal's visibility
-      // itself is now closed directly by its own timer in the View, not
-      // by this flag flipping — this timer only resets the status flag.
-      // (askConfirm — PFIX-E — also resets status the moment any new
-      // confirm dialog opens, so this timeout is now a secondary/backup
-      // reset rather than the only thing standing between publishes.)
-      setTimeout(() => setStatus(""), 2700);
+      // PFIX-G: previously there was a `setTimeout(() => setStatus(""), 2700)`
+      // here as a "backup" reset. It raced with the modal's own auto-close
+      // timer in SurveyMgmtView.jsx (which also fires ~2700ms after success,
+      // but starts a beat later since it's scheduled from inside a useEffect
+      // that only runs after this setStatus("saved") commits). Because this
+      // timer fired first, it flipped `status` back to "" and made
+      // `isSuccess` false *before* the View's timer could call
+      // setConfirmState(null) — which cleared the View's pending timer via
+      // its effect cleanup without ever closing the modal, stranding it on
+      // the default "Do you want to publish this survey?" card until a
+      // manual backdrop click. Removed: askConfirm (PFIX-E) already resets
+      // `status` to "" the moment the *next* confirm dialog opens, so
+      // nothing here needs to reset it early.
     } catch (err) {
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);
