@@ -340,15 +340,12 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
     </div>
   );
 
-  const completeAddress = [
-    data.streetAddress,
-    data.city,
-    data.province,
-    data.zipCode,
-    data.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  const completeAddress =
+    alumniType === "shs"
+      ? data.completeAddress || ""
+      : [data.streetAddress, data.city, data.province, data.zipCode, data.country]
+          .filter(Boolean)
+          .join(", ");
 
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
@@ -372,7 +369,9 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               color="#3B82F6"
             />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              <Field label="Student Number" value={data.studentNumber} />
+              {data.studentNumber && (
+                <Field label="Student Number" value={data.studentNumber} />
+              )}
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
               {!alumniType || alumniType !== "shs" ? (
