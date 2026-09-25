@@ -55,17 +55,13 @@ const toArray = (value) => {
 };
 
 // ============================ COLLEGE / SHS CLASSIFICATION ============================
-// The College vs SHS category for a survey_progress row is determined by
-// which of personal_background_data / shs_personal_background_data actually
-// has content — there is no separate category column. A bare `!!value`
-// check is unsafe here: JSONB columns can come back as a non-null empty
-// object ({}) for the section a respondent never filled out, and `{}` is
-// truthy in JS, so that respondent's row would incorrectly satisfy the
-// *other* category's check and leak into both views/counts. This only
-// reads the object's own keys — it never infers category from program
-// name/strand, and never writes anything back.
-const hasSurveyData = (value) =>
-  !!value && typeof value === 'object' && Object.keys(value).length > 0;
+// College vs SHS is decided using the schema's own per-track completion
+// flags — personal_background / shs_personal_background — NOT by checking
+// whether personal_background_data / shs_personal_background_data has
+// content. The data blob can be populated (e.g. with basic profile fields)
+// even when that track's section was never actually completed, so presence
+// of data is not a reliable classification signal; the boolean flag is.
+// See the completedSurveys filter below for where this is applied.
 
 const getRatingValue = (feedback) => {
   const satisfactionMap = {
@@ -570,6 +566,8 @@ const ResponseAnalytics = () => {
             completed,
             percentage,
             last_updated,
+            personal_background,
+            shs_personal_background,
             personal_background_data,
             educational_background_data,
             certification_achievement_data,
@@ -597,8 +595,8 @@ const ResponseAnalytics = () => {
 
         const completedSurveys = data.filter(row => {
           if (row.completed !== true) return false;
-          if (alumniType === 'shs') return hasSurveyData(row.shs_personal_background_data);
-          return hasSurveyData(row.personal_background_data);
+          if (alumniType === 'shs') return row.shs_personal_background === true;
+          return row.personal_background === true;
         });
 
         if (completedSurveys.length === 0) {
