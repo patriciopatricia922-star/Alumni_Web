@@ -599,8 +599,20 @@ export default function SurveyManagement() {
   // ==========================================================================
   // CONFIRMATION MODAL (UNCHANGED)
   // ==========================================================================
-  const askConfirm = (message, onConfirm, title = "Delete?") =>
+  const askConfirm = (message, onConfirm, title = "Delete?") => {
+    // PFIX-E: reset the shared "status" flag every time a confirmation
+    // dialog is opened. Without this, re-opening the Publish modal within
+    // the 20s window after a prior successful publish would find `status`
+    // still equal to "saved" from that earlier publish, so `isSuccess` in
+    // SurveyMgmtView.jsx would evaluate true immediately — the modal would
+    // skip straight to "Changes published successfully!" instead of
+    // showing the confirm step, and its own auto-close timer would start
+    // ticking down for a publish that never actually happened. Clearing
+    // status here guarantees every new confirmation (publish or delete)
+    // starts from a clean "" state.
+    setStatus("");
     setConfirmState({ message, onConfirm, title });
+  };
 
   // ==========================================================================
   // DATA LOADING — COLLEGE (UNCHANGED — identical to the original load())
