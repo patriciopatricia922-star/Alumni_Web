@@ -54,6 +54,19 @@ const toArray = (value) => {
   return [];
 };
 
+// ============================ COLLEGE / SHS CLASSIFICATION ============================
+// The College vs SHS category for a survey_progress row is determined by
+// which of personal_background_data / shs_personal_background_data actually
+// has content — there is no separate category column. A bare `!!value`
+// check is unsafe here: JSONB columns can come back as a non-null empty
+// object ({}) for the section a respondent never filled out, and `{}` is
+// truthy in JS, so that respondent's row would incorrectly satisfy the
+// *other* category's check and leak into both views/counts. This only
+// reads the object's own keys — it never infers category from program
+// name/strand, and never writes anything back.
+const hasSurveyData = (value) =>
+  !!value && typeof value === 'object' && Object.keys(value).length > 0;
+
 const getRatingValue = (feedback) => {
   const satisfactionMap = {
     'very satisfied': 5,
@@ -584,8 +597,8 @@ const ResponseAnalytics = () => {
 
         const completedSurveys = data.filter(row => {
           if (row.completed !== true) return false;
-          if (alumniType === 'shs') return !!row.shs_personal_background_data;
-          return !!row.personal_background_data;
+          if (alumniType === 'shs') return hasSurveyData(row.shs_personal_background_data);
+          return hasSurveyData(row.personal_background_data);
         });
 
         if (completedSurveys.length === 0) {
