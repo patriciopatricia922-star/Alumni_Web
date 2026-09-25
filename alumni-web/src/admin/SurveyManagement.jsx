@@ -893,13 +893,16 @@ export default function SurveyManagement() {
 
       dbg("=== PUBLISH SUCCESS ===", currentType);
       setStatus("saved");
-      // Resets the shared "saved" status flag ~20s after a successful
+      // Resets the shared "saved" status flag ~3.5s after a successful
       // publish (aligned with the modal's own auto-close timer in
-      // SurveyMgmtView.jsx) so a later Publish attempt starts from a
-      // clean "" status instead of stale "saved". The modal's visibility
+      // SurveyMgmtView.jsx, PFIX-F) so a later Publish attempt starts from
+      // a clean "" status instead of stale "saved". The modal's visibility
       // itself is now closed directly by its own timer in the View, not
       // by this flag flipping — this timer only resets the status flag.
-      setTimeout(() => setStatus(""), 20000);
+      // (askConfirm — PFIX-E — also resets status the moment any new
+      // confirm dialog opens, so this timeout is now a secondary/backup
+      // reset rather than the only thing standing between publishes.)
+      setTimeout(() => setStatus(""), 3500);
     } catch (err) {
       console.error("[SurveyManagement] Publish failed:", err);
       dbg("=== PUBLISH FAILED ===", err);

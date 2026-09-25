@@ -80,7 +80,7 @@ export default function SurveyMgmtView({
   const isLoading = isPublishFlow && saving;
   const isSuccess = isPublishFlow && !saving && status === "saved";
 
-  // ── Auto-close the consolidated save/publish modal ~20s after the
+  // ── Auto-close the consolidated save/publish modal ~3.5s after the
   // SUCCESS state appears. The timer starts directly off `isSuccess`
   // turning true (i.e. right when the success message is shown), rather
   // than reactively watching for a separate, remote timer elsewhere to
@@ -88,11 +88,17 @@ export default function SurveyMgmtView({
   // of the modal previously failing to auto-close: it had no timer of its
   // own tied to entering the success state, only a reactive watcher for a
   // signal from another component's unrelated timer.
+  //
+  // PFIX-F: was previously 20000ms. Mechanically the timer fired fine at
+  // 20s, but 20 real seconds reads as "broken" next to this app's other
+  // notifications (the toast system dismisses in ~2.75s), so nobody
+  // waited long enough to see it close on its own. Shortened to line up
+  // with that existing cadence.
   useEffect(() => {
     if (!isSuccess) return undefined;
     const timer = setTimeout(() => {
       setConfirmState(null);
-    }, 20000);
+    }, 3500);
     // Cleanup: fires if the modal is closed manually (isSuccess flips to
     // false) or if the component unmounts, preventing a stale timer from
     // calling setConfirmState after the fact.
