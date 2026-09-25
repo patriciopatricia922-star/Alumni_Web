@@ -908,6 +908,15 @@ export default function SurveyManagement() {
       dbg("=== PUBLISH FAILED ===", err);
       setStatus("error");
       addToast("Failed to publish. Please try again.", "delete");
+      // Close the publish modal on failure instead of leaving `confirmState`
+      // set. Without this, the modal's isLoading/isSuccess checks both
+      // evaluate false once `saving` flips back to false (status is
+      // "error", not "saved"), so the ternary in SurveyMgmtView.jsx falls
+      // through to its default branch and silently re-renders the original
+      // "Do you want to publish this survey?" Cancel/Confirm dialog. The
+      // failure is already surfaced via the toast and the header's
+      // "Failed to save" text, so the modal should just close.
+      setConfirmState(null);
     } finally {
       setSaving(false);
     }
