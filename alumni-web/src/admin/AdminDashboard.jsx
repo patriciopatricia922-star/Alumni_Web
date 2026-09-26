@@ -628,11 +628,22 @@ const AdminDashboard = () => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return;
 
+        // shs_educational_background_data has two schema versions in
+        // production:
+        //  - older submissions: pursued_nu_branch / nu_branch / school_name
+        //  - newer submissions: pursued_further_studies_nu / other_school_name
+        // pursued_other_school ("Yes"/"No") is present in both versions, so
+        // it's used as the gate for the "Other School" bucket instead of
+        // relying on a single NU-branch key name that isn't present in
+        // every submission.
+        const pursuedNu =
+          edu.pursued_nu_branch ?? edu.pursued_further_studies_nu;
+
         let bucket = "";
-        if (edu.pursued_nu_branch === "Yes") {
-          bucket = (edu.nu_branch || "").trim();
-        } else if (edu.pursued_nu_branch === "No") {
-          bucket = (edu.school_name || "").trim();
+        if (pursuedNu === "Yes") {
+          bucket = (edu.nu_branch || edu.nuBranch || "").trim();
+        } else if (edu.pursued_other_school === "Yes") {
+          bucket = (edu.school_name || edu.other_school_name || "").trim();
         }
 
         if (!bucket) return;
