@@ -257,10 +257,10 @@ export default function SurveyMgmtView({
               ) : isSuccess ? (
                 <>
                   <div className="sm-confirm-success-icon" aria-hidden="true">
-                    <FiCheck size={18} />
+                    <FiCheck size={20} />
                   </div>
                   <h3 className="sm-confirm-success-title">
-                    Changes published
+                    Changes Published!
                   </h3>
                   <p className="sm-confirm-success-desc">
                     Your survey is now live and visible to alumni.
