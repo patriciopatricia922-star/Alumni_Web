@@ -87,13 +87,6 @@ const ALL_SUPERADMIN_MENU_ITEMS = [
     module: MODULES.ALUMNI,         // annotation only
   },
   {
-    path:   '/superadmin/super-alumni-engagement',
-    icon:   'content_icn',
-    label:  'Content Management',
-    split:  true,
-    module: MODULES.ENGAGEMENT,     // annotation only
-  },
-  {
     path:   '/superadmin/survey-management',
     icon:   'survey_icn',
     label:  'Survey Management',
@@ -112,6 +105,14 @@ const ALL_SUPERADMIN_MENU_ITEMS = [
     marginTop: '16px',
     module:    MODULES.REPORTS,     // annotation only
     collegeOnly: true,               // ← ported from Admin: hidden for SHS
+  },
+
+  {
+    path:   '/superadmin/super-alumni-engagement',
+    icon:   'content_icn',
+    label:  'Content Management',
+    split:  true,
+    module: MODULES.ENGAGEMENT,     // annotation only
   },
 ];
 
