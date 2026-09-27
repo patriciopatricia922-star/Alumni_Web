@@ -257,7 +257,7 @@ export default function SurveyMgmtView({
               ) : isSuccess ? (
                 <>
                   <div className="sm-confirm-success-icon" aria-hidden="true">
-                    <FiCheck size={26} />
+                    <FiCheck size={30} />
                   </div>
                   <h3 className="sm-confirm-success-title">
                     Changes Published!
