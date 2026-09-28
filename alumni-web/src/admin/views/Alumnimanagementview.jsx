@@ -804,7 +804,7 @@ function AlumniProfileModal({ alumni, onClose, alumniType }) {
       value: alumni.email || "—",
       isText: true,
     },
-    // SHS only: Educational Status (shs_educational_background.status) sits
+    // SHS only: Educational Status (shs_educational_background_data.status) sits
     // directly above Employment Status.
     ...(alumniType === "shs"
       ? [

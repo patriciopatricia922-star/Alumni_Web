@@ -113,8 +113,8 @@ function AlumniManagement() {
           else if (lower.includes("self")) employmentStatus = "Self-Employed";
         }
 
-        // SHS only: educational status lives in shs_educational_background.status
-        let shsEdu = s.shs_educational_background;
+        // SHS only: educational status lives in shs_educational_background_data.status
+        let shsEdu = s.shs_educational_background_data;
         if (typeof shsEdu === "string") {
           try {
             shsEdu = JSON.parse(shsEdu);
