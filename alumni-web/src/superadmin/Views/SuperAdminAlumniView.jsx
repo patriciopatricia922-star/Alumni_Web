@@ -854,12 +854,18 @@ function AlumniProfileModal({ alumni, onClose, alumniType  }) {
       value: alumni.account_status || "—",
       isBadge: true,
     },
-    {
-    icon: <MdWork size={18} color="#155DFC" />,
-    label: alumniType === "shs" ? "dqpaalam" : "Employment Status",
-    value: alumni.employment_status || "—",
-    isText: true,
-  },
+    // Second Employment Status row: rendered for SHS only. For College it
+    // duplicated the "Employment Status" row above (same employment_status value).
+    ...(alumniType === "shs"
+      ? [
+          {
+            icon: <MdWork size={18} color="#155DFC" />,
+            label: "dqpaalam",
+            value: alumni.employment_status || "—",
+            isText: true,
+          },
+        ]
+      : []),
   ];
 
   return (
