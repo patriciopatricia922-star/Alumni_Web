@@ -804,11 +804,28 @@ function AlumniProfileModal({ alumni, onClose, alumniType }) {
       value: alumni.email || "—",
       isText: true,
     },
+    // SHS only: Educational Status (shs_educational_background.status) sits
+    // directly above Employment Status.
+    ...(alumniType === "shs"
+      ? [
+          {
+            icon: <MdWork size={18} color="#155DFC" />,
+            label: "Educational Status",
+            value: alumni.shs_educational_status || "—",
+            isText: true,
+          },
+        ]
+      : []),
     {
       icon: <MdWork size={18} color="#155DFC" />,
-      // SHS alumni use a different label — replace placeholder when finalised
-      label: alumniType === "shs" ? "dqpaalam" : "Employment Status",
-      value: alumni.employment_status || "—",
+      label: "Employment Status",
+      // SHS shows "N/A" when there is no employment status; College unchanged.
+      value:
+        alumniType === "shs"
+          ? alumni.employment_status && alumni.employment_status !== "—"
+            ? alumni.employment_status
+            : "N/A"
+          : alumni.employment_status || "—",
       isText: true,
     },
     {

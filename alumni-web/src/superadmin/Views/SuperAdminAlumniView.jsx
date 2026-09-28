@@ -836,10 +836,28 @@ function AlumniProfileModal({ alumni, onClose, alumniType  }) {
       value: alumni.email || "—",
       isText: true,
     },
+    // SHS only: Educational Status (shs_educational_background.status) sits
+    // directly above Employment Status.
+    ...(alumniType === "shs"
+      ? [
+          {
+            icon: <MdWork size={18} color="#155DFC" />,
+            label: "Educational Status",
+            value: alumni.shs_educational_status || "—",
+            isText: true,
+          },
+        ]
+      : []),
     {
       icon: <MdWork size={18} color="#155DFC" />,
       label: "Employment Status",
-      value: alumni.employment_status || "—",
+      // SHS shows "N/A" when there is no employment status; College unchanged.
+      value:
+        alumniType === "shs"
+          ? alumni.employment_status && alumni.employment_status !== "—"
+            ? alumni.employment_status
+            : "N/A"
+          : alumni.employment_status || "—",
       isText: true,
     },
     {
@@ -854,18 +872,6 @@ function AlumniProfileModal({ alumni, onClose, alumniType  }) {
       value: alumni.account_status || "—",
       isBadge: true,
     },
-    // Second Employment Status row: rendered for SHS only. For College it
-    // duplicated the "Employment Status" row above (same employment_status value).
-    ...(alumniType === "shs"
-      ? [
-          {
-            icon: <MdWork size={18} color="#155DFC" />,
-            label: "dqpaalam",
-            value: alumni.employment_status || "—",
-            isText: true,
-          },
-        ]
-      : []),
   ];
 
   return (

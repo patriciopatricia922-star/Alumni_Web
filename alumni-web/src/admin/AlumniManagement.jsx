@@ -113,7 +113,19 @@ function AlumniManagement() {
           else if (lower.includes("self")) employmentStatus = "Self-Employed";
         }
 
+        // SHS only: educational status lives in shs_educational_background.status
+        let shsEdu = s.shs_educational_background;
+        if (typeof shsEdu === "string") {
+          try {
+            shsEdu = JSON.parse(shsEdu);
+          } catch (_) {
+            shsEdu = {};
+          }
+        }
+        shsEdu = shsEdu || {};
+
         surveyMap[s.user_id] = {
+          shs_educational_status: shsEdu.status ?? null,
           survey_status: s.completed ? "completed" : "pending",
           percentage: s.percentage ?? 0,
           employment_status: employmentStatus || null,
@@ -145,6 +157,7 @@ function AlumniManagement() {
           employment_status: survey.employment_status ?? null,
           job_position: survey.job_position ?? null,
           job_company: survey.job_company ?? null,
+          shs_educational_status: survey.shs_educational_status ?? null,
         };
       });
 
