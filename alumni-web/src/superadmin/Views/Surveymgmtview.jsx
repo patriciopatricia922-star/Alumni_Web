@@ -218,10 +218,10 @@ export default function SurveyMgmtView({
               ) : isSuccess ? (
                 <>
                   <div className="sm-confirm-success-icon" aria-hidden="true">
-                    <FiCheck size={18} />
+                    <FiCheck size={30} />
                   </div>
                   <h3 className="sm-confirm-success-title">
-                    Changes published
+                    Changes Published!
                   </h3>
                   <p className="sm-confirm-success-desc">
                     Your survey is now live and visible to alumni.
@@ -279,7 +279,6 @@ export default function SurveyMgmtView({
           </div>
           <div className="survey-header-actions">
             {status === "error" && <span style={{ color: "#BF0000", fontSize: "0.75rem" }}>Failed to save</span>}
-            {status === "saving" && <span style={{ color: "#6A7282", fontSize: "0.75rem" }}>Saving…</span>}
             <button
               className="publish-btn"
               disabled={saving}
@@ -348,7 +347,7 @@ export default function SurveyMgmtView({
                         <div key={targetSectionIdx} style={{ marginBottom: "1.5rem" }}>
                           <div style={{
                             fontSize: "0.9rem", fontWeight: 600,
-                            color: "#4f46e5", marginBottom: "0.5rem",
+                            color: "#4f46e5", marginBottom: "0.75rem",
                           }}>
                             {section.title}
                           </div>
@@ -370,7 +369,7 @@ export default function SurveyMgmtView({
                                   fontSize: "0.82rem", fontWeight: 600,
                                   color: "#111827", marginBottom: "0.75rem",
                                 }}>
-                                  {q.label}
+                                  Q{qIdx + 1}. {q.label}
                                 </div>
                                 {q.type === "multiple" ? (
                                   (q.options || []).map((opt, oIdx) => {
@@ -381,82 +380,98 @@ export default function SurveyMgmtView({
                                       : currentVal ? [currentVal] : ["next"];
                                     return (
                                       <div key={oIdx} style={{
-                                        display: "flex", alignItems: "center", gap: "0.75rem",
-                                        padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
+                                        display: "grid", gridTemplateColumns: "1fr auto auto",
+                                        alignItems: "center", gap: "0.75rem",
+                                        padding: "0.4rem 0.6rem", borderRadius: "0.4rem",
                                         marginBottom: "0.3rem", background: "#f9fafb",
-                                        flexWrap: "wrap",
+                                        border: "1px solid #e5e7eb", flexWrap: "nowrap",
                                       }}>
-                                        <input type="radio" disabled />
                                         <span style={{
-                                          flex: 1, fontSize: "0.75rem",
+                                          fontSize: "0.75rem", flexShrink: 0,
                                           overflow: "hidden", textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap", maxWidth: "180px",
+                                          whiteSpace: "nowrap", color: "#374151",
                                         }}>
+                                          <span style={{ color: "#9ca3af", marginRight: "0.4rem" }}>↳</span>
                                           {opt}
                                         </span>
-                                        <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
-                                        <select
-                                          multiple
-                                          className="branch-goto-select"
-                                          value={selectVal}
-                                          onChange={e => {
-                                            const vals = Array.from(e.target.selectedOptions, o => o.value);
-                                            setBranches(prev => ({ ...prev, [optKey]: vals }));
-                                          }}
-                                          style={{
-                                            padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                            border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                            height: "70px",
-                                          }}
-                                        >
-                                          <option value="next">Next question</option>
-                                          {allQuestions.map((dest, j) => (
-                                            <option key={j} value={`q-${dest.id}`}>
-                                              {dest.sectionTitle} → {dest.label}
-                                            </option>
-                                          ))}
-                                          <option value="end">End of form</option>
-                                        </select>
-                                        <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
-                                          Hold Ctrl / Cmd to select multiple
+                                        <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>Go to</span>
+                                        <div style={{
+                                          display: "flex", flexDirection: "column",
+                                          gap: "0.2rem", alignItems: "flex-end",
+                                        }}>
+                                          <select
+                                            multiple
+                                            className="branch-goto-select"
+                                            value={selectVal}
+                                            onChange={e => {
+                                              const vals = Array.from(e.target.selectedOptions, o => o.value);
+                                              setBranches(prev => ({ ...prev, [optKey]: vals }));
+                                            }}
+                                            style={{
+                                              padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                              border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                              minWidth: "200px", maxWidth: "420px", height: "70px",
+                                              background: "#ffffff", color: "#111827",
+                                            }}
+                                          >
+                                            <option value="next">Next question</option>
+                                            {allQuestions.map((dest, j) => (
+                                              <option key={j} value={`q-${dest.id}`}>
+                                                {dest.sectionTitle} → {dest.label}
+                                              </option>
+                                            ))}
+                                            <option value="end">End of form</option>
+                                          </select>
+                                          <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
+                                            Hold Ctrl / Cmd to select multiple
+                                          </div>
                                         </div>
                                       </div>
                                     );
                                   })
                                 ) : (
                                   <div style={{
-                                    display: "flex", alignItems: "center", gap: "0.75rem",
-                                    padding: "0.45rem 0.6rem", borderRadius: "0.4rem",
-                                    background: "#f9fafb", flexWrap: "wrap",
+                                    display: "grid", gridTemplateColumns: "1fr auto",
+                                    alignItems: "center", gap: "0.75rem",
+                                    padding: "0.4rem 0.6rem", borderRadius: "0.4rem",
+                                    background: "#f9fafb", border: "1px solid #e5e7eb",
                                   }}>
-                                    <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>Go to</span>
-                                    <select
-                                      multiple
-                                      className="branch-goto-select"
-                                      value={(() => {
-                                        const v = branches[key];
-                                        return Array.isArray(v) ? v : v ? [v] : ["next"];
-                                      })()}
-                                      onChange={e => {
-                                        const vals = Array.from(e.target.selectedOptions, o => o.value);
-                                        setBranches(prev => ({ ...prev, [key]: vals }));
-                                      }}
-                                      style={{
-                                        padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
-                                        border: "1px solid #d1d5db", fontSize: "0.78rem",
-                                        height: "70px",
-                                      }}
-                                    >
-                                      <option value="next">Next question</option>
-                                      {allQuestions.map((dest, j) => (
-                                        <option key={j} value={`q-${dest.id}`}>
-                                          {dest.sectionTitle} → {dest.label}
-                                        </option>
-                                      ))}
-                                      <option value="end">End of form</option>
-                                    </select>
-                                    <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
-                                      Hold Ctrl / Cmd to select multiple
+                                    <span style={{ fontSize: "0.78rem", color: "#6b7280", flexShrink: 0 }}>
+                                      This question goes to:
+                                    </span>
+                                    <div style={{
+                                      display: "flex", flexDirection: "column",
+                                      gap: "0.2rem", alignItems: "flex-end",
+                                    }}>
+                                      <select
+                                        multiple
+                                        className="branch-goto-select"
+                                        value={(() => {
+                                          const v = branches[key];
+                                          return Array.isArray(v) ? v : v ? [v] : ["next"];
+                                        })()}
+                                        onChange={e => {
+                                          const vals = Array.from(e.target.selectedOptions, o => o.value);
+                                          setBranches(prev => ({ ...prev, [key]: vals }));
+                                        }}
+                                        style={{
+                                          padding: "0.3rem 0.5rem", borderRadius: "0.4rem",
+                                          border: "1px solid #d1d5db", fontSize: "0.78rem",
+                                          minWidth: "200px", maxWidth: "520px", height: "70px",
+                                          background: "#ffffff", color: "#111827",
+                                        }}
+                                      >
+                                        <option value="next">Next question</option>
+                                        {allQuestions.map((dest, j) => (
+                                          <option key={j} value={`q-${dest.id}`}>
+                                            {dest.sectionTitle} → {dest.label}
+                                          </option>
+                                        ))}
+                                        <option value="end">End of form</option>
+                                      </select>
+                                      <div style={{ fontSize: "0.65rem", color: "#9ca3af" }}>
+                                        Hold Ctrl / Cmd to select multiple
+                                      </div>
                                     </div>
                                   </div>
                                 )}
@@ -511,11 +526,8 @@ export default function SurveyMgmtView({
                         onChange={e => updateSectionMeta(activeSection, { description: e.target.value })}
                         placeholder="Section description"
                         rows={2}
-                        style={{
-                          width: "100%", marginTop: "0.4rem", border: "1px solid #d1d5db",
-                          borderRadius: "0.4rem", padding: "0.4rem", fontSize: "0.8rem",
-                          fontFamily: "Lexend", background: "#ffffff", color: "#111827",
-                        }}
+                        className="q-placeholder-input q-placeholder-textarea"
+                        style={{ marginTop: "0.4rem", maxWidth: "100%" }}
                       />
                       <div className="q-save-row">
                         <button className="q-save-btn" disabled={!dirtySection} onClick={saveSectionEdit}>
@@ -637,10 +649,7 @@ export default function SurveyMgmtView({
                         </div>
                       </div>
                       {isEditing && (
-                        <label style={{
-                          display: "inline-flex", alignItems: "center", gap: "0.4rem",
-                          fontSize: "0.75rem", marginTop: "0.5rem", marginBottom: "0.5rem", color: "#6b7280",
-                        }}>
+                        <label className="q-required-row">
                           <input
                             type="checkbox"
                             checked={!!q.required}
@@ -654,7 +663,7 @@ export default function SurveyMgmtView({
                         <>
                           {isEditing && (
                             <input
-                              style={{ width: "100%", maxWidth: "22rem", marginLeft: "0.75rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend", backgroundColor: "#ffffff", color: "#111827" }}
+                              className="q-placeholder-input"
                               placeholder="Placeholder text"
                               value={q.placeholder || ""}
                               onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
@@ -668,14 +677,17 @@ export default function SurveyMgmtView({
                       {q.type === "long" && (
                         <>
                           {isEditing && (
-                            <input
-                              style={{ width: "100%", maxWidth: "22rem", marginBottom: "0.5rem", border: "1px solid #d1d5db", borderRadius: "0.4rem", padding: "0.35rem", fontSize: "0.75rem", fontFamily: "Lexend", backgroundColor: "#ffffff", color: "#111827" }}
+                            <textarea
+                              className="q-placeholder-input q-placeholder-textarea"
                               placeholder="Placeholder text"
+                              rows="3"
                               value={q.placeholder || ""}
                               onChange={e => updateQuestion(activeSection, qIdx, { placeholder: e.target.value })}
                             />
                           )}
-                          <textarea className="question-input" placeholder={q.placeholder || "Long answer"} rows="3" readOnly />
+                          {!isEditing && (
+                            <textarea className="question-input" placeholder={q.placeholder || "Long answer"} rows="3" readOnly />
+                          )}
                         </>
                       )}
                       {q.type === "date" && (
@@ -696,7 +708,7 @@ export default function SurveyMgmtView({
                                   <input
                                     value={opt}
                                     onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
-                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "transparent", color: "#111827" }}
+                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "#ffffff", color: "#111827" }}
                                   />
                                   <button
                                     onClick={() => deleteOption(activeSection, qIdx, oIdx)}
@@ -730,7 +742,7 @@ export default function SurveyMgmtView({
                                   <input
                                     value={opt}
                                     onChange={e => updateOption(activeSection, qIdx, oIdx, e.target.value)}
-                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "transparent", color: "#111827" }}
+                                    style={{ flex: 1, border: "none", borderBottom: "1px solid #d1d5db", outline: "none", fontSize: "0.8rem", fontFamily: "Lexend", padding: "0.2rem 0", background: "#ffffff", color: "#111827" }}
                                   />
                                   <button
                                     onClick={() => deleteOption(activeSection, qIdx, oIdx)}

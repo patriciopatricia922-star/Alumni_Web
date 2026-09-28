@@ -1,7 +1,7 @@
 // ============================================================================
 // SurveyManagement.jsx — Logic Controller (SHS added as additional survey type) SUPER ADMIN
 // ============================================================================
-// PARITY FIX NOTE (this pass)
+// PARITY FIX NOTE (this pass) superadmin
 // ───────────────
 // Feature-parity check against Admin's SurveyManagement.jsx found exactly
 // ONE gap: SuperAdmin's DEFAULT_SHS_SURVEY was a short, non-branching
@@ -912,7 +912,26 @@ export default function SurveyManagement() {
     setEditingQ({ sIdx, qIdx });
   };
 
+  // Ported from Admin: if there are unsaved edits (dirtyQ), revert the
+  // question back to its pre-edit snapshot instead of leaving the live
+  // (unsaved) changes applied to `survey` when the editor is closed.
   const closeEdit = () => {
+    if (dirtyQ && editingQ && editSnapshotRef.current) {
+      const snapshot = JSON.parse(editSnapshotRef.current);
+      setSurvey((prev) => ({
+        ...prev,
+        sections: prev.sections.map((sec, si) =>
+          si !== editingQ.sIdx
+            ? sec
+            : {
+                ...sec,
+                questions: sec.questions.map((q, qi) =>
+                  qi !== editingQ.qIdx ? q : snapshot,
+                ),
+              },
+        ),
+      }));
+    }
     setEditingQ(null);
     setDirtyQ(false);
     editSnapshotRef.current = null;

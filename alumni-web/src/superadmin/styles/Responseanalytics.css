@@ -1,8 +1,10 @@
 /* ============================================================================
-THIS IS FOR INLINE STYLES.
-Purpose: Contains all CSS styles for the Response & Analytics component.
-Uses friend's exact design with proper responsive breakpoints.
-============================================================================ */
+   THIS IS FOR INLINE STYLES.
+   ============================================================================
+   Purpose: Contains all CSS styles for the Response & Analytics component.
+            Uses friend's exact design with proper responsive breakpoints.
+   ============================================================================ */
+
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&family=Arimo:wght@400;600;700&display=swap');
 
 * {
@@ -14,7 +16,6 @@ body {
   background: #E5ECF7F2;
 }
 
-/* ============================ PAGE LAYOUT ============================ */
 .ra-page {
   height: 100vh;
   overflow: hidden;
@@ -35,7 +36,6 @@ body {
   }
 }
 
-/* ============================ HEADER ============================ */
 .ra-header {
   display: flex;
   flex-direction: column;
@@ -58,7 +58,6 @@ body {
   margin: 0;
 }
 
-/* ============================ TABS ============================ */
 .ra-tabs-container {
   display: flex;
   justify-content: center;
@@ -89,7 +88,6 @@ body {
   color: #ffffff;
 }
 
-/* ============================ CONTROLS BAR ============================ */
 .ra-controls {
   display: flex;
   justify-content: space-between;
@@ -168,7 +166,6 @@ body {
   background: #F1F5F9;
 }
 
-/* ============================ CONTENT CARDS ============================ */
 .ra-content {
   background: #ffffff;
   box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.171);
@@ -200,7 +197,6 @@ body {
   color: #6A7282;
 }
 
-/* ============================ CHARTS ============================ */
 .ra-charts-container {
   display: flex;
   flex-direction: column;
@@ -258,23 +254,18 @@ body {
   .ra-content {
     padding: 24px 20px;
   }
-
   .ra-chart-row {
     grid-template-columns: 1fr;
     gap: 24px;
   }
-
-  .chart-container,
-  .chart-container-big {
+  .chart-container, .chart-container-big {
     height: 260px;
   }
-
   .ra-charts-container {
     gap: 24px;
   }
 }
 
-/* ============================ RESPONSES TABLE ============================ */
 .ra-table-container {
   width: 100%;
 }
@@ -428,7 +419,6 @@ body {
   color: white;
 }
 
-/* ============================ MODAL ============================ */
 .ra-modal-overlay {
   position: fixed;
   inset: 0;
@@ -450,7 +440,6 @@ body {
   animation: raFade 0.2s ease;
 }
 
-/* Alumni response modal: light-blue Response Analytics theme */
 .ra-modal-card.wide {
   width: 700px;
   max-width: 100%;
@@ -465,10 +454,9 @@ body {
 
 @keyframes raFade {
   from { opacity: 0; transform: translateY(15px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- Header: name / email / batch ---- */
 .ra-modal-header {
   position: sticky;
   top: 0;
@@ -496,7 +484,6 @@ body {
   color: #6A7282;
 }
 
-/* ---- Close button: clearly visible against white header ---- */
 .ra-modal-close {
   position: absolute;
   top: 14px;
@@ -527,7 +514,6 @@ body {
   outline-offset: 2px;
 }
 
-/* ---- Body / scroll area ---- */
 .ra-modal-body {
   padding: 20px 24px 24px;
   display: flex;
@@ -537,7 +523,6 @@ body {
   flex: 1;
 }
 
-/* ---- Response fields (reused across Field / FullBlock / status / ratings) ---- */
 .ra-modal-field {
   background: #F5F9FD;
   border: 1px solid #DCE7F3;
@@ -568,7 +553,6 @@ body {
   gap: 12px;
 }
 
-/* ============================ RESPONSIVE ============================ */
 @media (max-width: 768px) {
   .ra-grid {
     grid-template-columns: 1fr;

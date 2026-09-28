@@ -10,6 +10,17 @@
 //   Changes from the previous version are marked ← SYNCED.
 //   Super Admin-specific structure preserved: sidebar import (SuperAdsidebar), component
 //   name (ResponseandAnalytics), file/folder location, and export are UNCHANGED.
+//
+// SYNCED FROM ADMIN (latest pass):
+//   - College vs SHS classification now uses the completion flags
+//     (personal_background / shs_personal_background) instead of checking
+//     whether the *_data blobs are non-empty; both flags added to the select.
+//   - SHS educational fields (pursuedNuBranch, reasonNotNu, schoolName,
+//     educationLevel, courseProgram, yearLevel) now read the real SHS keys.
+//   - Added completeAddress (SHS free-text mailing address).
+//   - SHS feedback/engagement fields (satisfaction, wouldRecommend,
+//     informedAboutEvents, willingToParticipate, willingToParticipateOther)
+//     now read the real SHS keys.
 // ============================================================================
 import React, { useState, useEffect } from 'react';
 import SuperAdSidebar from "./SuperAdSidebar";
@@ -53,6 +64,15 @@ const toArray = (value) => {
   if (typeof value === 'string') return value.split(',').map((item) => item.trim()).filter(Boolean);
   return [];
 };
+
+// ============================ COLLEGE / SHS CLASSIFICATION ============================
+// College vs SHS is decided using the schema's own per-track completion
+// flags — personal_background / shs_personal_background — NOT by checking
+// whether personal_background_data / shs_personal_background_data has
+// content. The data blob can be populated (e.g. with basic profile fields)
+// even when that track's section was never actually completed, so presence
+// of data is not a reliable classification signal; the boolean flag is.
+// See the completedSurveys filter below for where this is applied.
 
 const getRatingValue = (feedback) => {
   const satisfactionMap = {
@@ -268,6 +288,11 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     province:                 safeText(personal.province)          || '',
     zipCode:                  safeText(personal.zip_code)         || safeText(personal.postal_code) || '',
     country:                  safeText(personal.country)          || 'Philippines',
+    // ← SYNCED: SHS stores the whole mailing address as one free-text field
+    // rather than College's separate street/city/province/zip columns. Kept
+    // as its own key (not merged into streetAddress) so the College join
+    // logic is never touched by SHS data shape.
+    completeAddress:          isShs ? safeText(personal.complete_address) : '',
     // ← SYNCED: SHS uses reason_nu instead of reason_for_course
     reasonTakingCourse:       isShs
       ? safeText(educational.reason_nu)
@@ -275,18 +300,37 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     distinction:              safeText(educational.distinction)          || '',
     postGradPlans:             safeText(educational.post_grad_plans)      || '',
     postGradCourse:           safeText(educational.post_grad_course)     || '',
-    // ← SYNCED: SHS Educational Background branching fields
+    // ← SYNCED: SHS Educational Background branching fields (source: shs_educational_background_data)
     eduStatus:                safeText(educational.status)               || '',
-    pursuedNuBranch:          safeText(educational.pursued_nu_branch)    || '',
+    // NOTE: the six fields below are only ever rendered inside the modal's
+    // alumniType === "shs" branch, so remapping them to SHS's actual stored
+    // keys is safe and has no effect on College. Previously these read
+    // College-shaped key names that don't exist in shs_educational_background_data
+    // (e.g. pursued_nu_branch vs. the real pursued_further_studies_nu), so
+    // the value was always '' — which matched neither "Yes" nor "No" and
+    // silently hid this entire sub-section for every SHS respondent.
+    pursuedNuBranch:          isShs
+      ? safeText(educational.pursued_further_studies_nu)
+      : safeText(educational.pursued_nu_branch) || '',
     pursuedOtherSchool:       safeText(educational.pursued_other_school) || '',
     nuBranch:                 safeText(educational.nu_branch)            || '',
     reasonNu:                 safeText(educational.reason_nu)            || '',
-    reasonNotNu:              safeText(educational.reason_not_nu)        || '',
-    schoolName:               safeText(educational.school_name)          || '',
-    educationLevel:           safeText(educational.education_level)      || '',
+    reasonNotNu:              isShs
+      ? safeText(educational.not_choose_nu_reason)
+      : safeText(educational.reason_not_nu) || '',
+    schoolName:               isShs
+      ? safeText(educational.other_school_name)
+      : safeText(educational.school_name) || '',
+    educationLevel:           isShs
+      ? safeText(educational.other_school_education_level)
+      : safeText(educational.education_level) || '',
     educationLevelOther:      safeText(educational.education_level_other)|| '',
-    courseProgram:            safeText(educational.course_program)       || '',
-    yearLevel:                safeText(educational.year_level)           || '',
+    courseProgram:            isShs
+      ? safeText(educational.other_school_course_program)
+      : safeText(educational.course_program) || '',
+    yearLevel:                isShs
+      ? safeText(educational.other_school_year_level)
+      : safeText(educational.year_level) || '',
     stoppedReason:            safeText(educational.stopped_reason)       || '',
     stoppedReasonOther:       safeText(educational.stopped_reason_other) || '',
     programOther:             safeText(educational.degree_program_other) || '',
@@ -331,13 +375,31 @@ const extractRespondentData = (row, userEmail = '', alumniType = 'college') => {
     leadershipRating:         Number(leadershipRating)    || 0,
     criticalRating:           Number(criticalRating)      || 0,
     workEthicsRating:         Number(workEthicsRating)    || 0,
-    satisfaction:             safeText(feedback.satisfaction)          || '',
-    wouldRecommend:           safeText(feedback.recommend)             || '',
+    // ← SYNCED: SHS's shs_feedback_and_engagement_data uses different key
+    // names than College's feedback_university_data / alumni_engagement_data
+    // for the same on-screen questions. These previously read the College
+    // key names, which don't exist in the SHS JSONB, so every SHS response
+    // showed blank here regardless of what the alumnus actually answered.
+    satisfaction: isShs
+      ? safeText(feedback.satisfaction_level)
+      : safeText(feedback.satisfaction) || '',
+    wouldRecommend: isShs
+      ? safeText(feedback.recommend_nu)
+      : safeText(feedback.recommend) || '',
     suggestions:               safeText(feedback.suggestions)           || '',
-    informedAboutEvents:      safeText(engagement.informed_about_events)        || '',
-    willingToParticipate:     toArray(engagement.participate_in),
+    // SHS's "stay_connected" answers the same on-screen question ("Would you
+    // like to be informed about upcoming alumni events and activities?") —
+    // reusing this existing field keeps the current layout unchanged while
+    // surfacing the real stored answer instead of a College-only key that
+    // doesn't exist in the SHS data.
+    informedAboutEvents: isShs
+      ? safeText(feedback.stay_connected)
+      : safeText(engagement.informed_about_events) || '',
+    willingToParticipate: isShs
+      ? toArray(feedback.engagement_activities)
+      : toArray(engagement.participate_in),
     willingToParticipateOther: isShs
-      ? safeText(engagement.other_participate)
+      ? safeText(feedback.engagement_activities_other)
       : safeText(engagement.participate_in_other) || '',
   };
 };
@@ -570,6 +632,8 @@ const ResponseandAnalytics = () => {
             completed,
             percentage,
             last_updated,
+            personal_background,
+            shs_personal_background,
             personal_background_data,
             educational_background_data,
             certification_achievement_data,
@@ -585,7 +649,7 @@ const ResponseandAnalytics = () => {
             shs_skills_and_competencies_data,
             shs_feedback_and_engagement_data
           `);
-        // ← SYNCED: added shs_* columns to select
+        // ← SYNCED: added personal_background / shs_personal_background flags and shs_* columns to select
 
         if (fetchError) throw fetchError;
 
@@ -596,11 +660,13 @@ const ResponseandAnalytics = () => {
           return;
         }
 
-        // ← SYNCED: filter now branches on alumniType, matching Admin
+        // ← SYNCED: filter branches on alumniType using the per-track
+        // completion flags (see COLLEGE / SHS CLASSIFICATION note above),
+        // matching Admin.
         const completedSurveys = data.filter(row => {
           if (row.completed !== true) return false;
-          if (alumniType === 'shs') return !!row.shs_personal_background_data;
-          return !!row.personal_background_data;
+          if (alumniType === 'shs') return row.shs_personal_background === true;
+          return row.personal_background === true;
         });
 
         if (completedSurveys.length === 0) {
