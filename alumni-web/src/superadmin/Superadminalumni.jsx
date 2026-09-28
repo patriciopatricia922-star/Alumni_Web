@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 // import { supabaseAdmin } from "../../backend/supabaseAdmin";
 import SuperAdminAlumniView from "./Views/SuperAdminAlumniView";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
+import { exportAlumniToExcel } from "../utils/alumniExport";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
@@ -306,37 +307,13 @@ function SuperAdminAlumni() {
     loadAlumni();
   };
 
-  // ── Export to CSV ────────────────────────────────────────────────────────
-  const handleExport = () => {
-    const headers = [
-      "Name",
-      "Email",
-      "Program",
-      "Batch",
-      "Employment Status",
-      "Survey Status",
-      "Account Status",
-    ];
-    const csvData = filtered.map((a) => [
-      a.name,
-      a.email,
-      a.program,
-      a.batch,
-      a.employment_status || "—",
-      a.survey_status === "completed" ? "Completed" : "Pending",
-      a.account_status === "active" ? "Active" : "Inactive",
-    ]);
-
-    const csvContent = [headers, ...csvData].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `alumni_export_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // ── Export to Excel ───────────────────────────────────────────────────────
+  const handleExport = async () => {
+    try {
+      await exportAlumniToExcel(filtered, alumniType);
+    } catch (e) {
+      console.error("handleExport error:", e);
+    }
   };
 
   const hasActiveFilters =
