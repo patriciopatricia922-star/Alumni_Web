@@ -8,6 +8,7 @@ import {
   HiOutlineBuildingOffice2,
   HiOutlineArrowTrendingUp,
   HiOutlineChevronRight,
+  HiOutlineChevronDown,
 } from "react-icons/hi2";
 import { LuArrowUpRight, LuArrowRight } from "react-icons/lu";
 import {
@@ -114,6 +115,33 @@ const ChartSkeleton = () => (
       />
     </div>
   </div>
+);
+
+// ============================================================================
+// GraduationBatchFilter — UI shell only (Phase 1)
+// ----------------------------------------------------------------------------
+// Static demo options; NOT wired to the backend, predictions, or AI insights.
+// ============================================================================
+const GRADUATION_BATCH_OPTIONS = ["All", "2025", "2026"];
+
+const GraduationBatchFilter = ({ value, onChange }) => (
+  <label className="pa-batch-filter">
+    <span className="pa-batch-filter-label">Graduation Batch</span>
+    <span className="pa-batch-filter-select-wrap">
+      <select
+        className="pa-batch-filter-select"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {GRADUATION_BATCH_OPTIONS.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      <HiOutlineChevronDown size={13} className="pa-batch-filter-chevron" />
+    </span>
+  </label>
 );
 
 // ============================================================================
@@ -286,6 +314,7 @@ const Predictiveanalyticsview = ({
 }) => {
   const [animProgress, setAnimProgress] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [graduationBatch, setGraduationBatch] = useState("All"); // UI only
   const animRef = useRef(null);
 
   useEffect(() => {
@@ -490,6 +519,10 @@ const Predictiveanalyticsview = ({
                     Predicted alignment rates for all departments
                   </p>
                 </div>
+                <GraduationBatchFilter
+                  value={graduationBatch}
+                  onChange={setGraduationBatch}
+                />
               </div>
 
               <div className="pa-chart-legend">
@@ -687,6 +720,14 @@ const Predictiveanalyticsview = ({
 
         {/* ── DEPARTMENTS LIST PAGE ── */}
         {showDeptList && (
+          <div className="pa-batch-filter-row">
+            <GraduationBatchFilter
+              value={graduationBatch}
+              onChange={setGraduationBatch}
+            />
+          </div>
+        )}
+        {showDeptList && (
           <div className="pa-department-grid">
             {departmentCards?.map((card) => (
               <div
@@ -734,12 +775,20 @@ const Predictiveanalyticsview = ({
         {showDeptDetail && selectedDepartmentData && (
           <div className="pa-overview-container pa-detail-container">
             <div className="pa-panel">
-              <h2 className="pa-section-title">
-                {selectedDepartmentData.title}
-              </h2>
-              <p className="pa-section-subtitle">
-                {selectedDepartmentData.subtitle}
-              </p>
+              <div className="pa-panel-header">
+                <div className="pa-panel-header-text">
+                  <h2 className="pa-section-title">
+                    {selectedDepartmentData.title}
+                  </h2>
+                  <p className="pa-section-subtitle">
+                    {selectedDepartmentData.subtitle}
+                  </p>
+                </div>
+                <GraduationBatchFilter
+                  value={graduationBatch}
+                  onChange={setGraduationBatch}
+                />
+              </div>
 
               <div className="pa-bar-legend">
                 <div className="pa-bar-legend-item">

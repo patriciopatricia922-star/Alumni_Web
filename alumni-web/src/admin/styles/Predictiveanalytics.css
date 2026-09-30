@@ -202,6 +202,88 @@ body {
 }
 
 /* ============================================
+   GRADUATION BATCH FILTER (UI shell — Phase 1)
+   ============================================ */
+.pa-batch-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: 'Lexend', sans-serif;
+}
+
+.pa-batch-filter-label {
+  font-size: clamp(10px, 0.9vw, 12px);
+  font-weight: 500;
+  color: #6B7280;
+  white-space: nowrap;
+}
+
+.pa-batch-filter-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pa-batch-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 6px 28px 6px 12px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-family: 'Lexend', sans-serif;
+  font-size: clamp(11px, 0.9vw, 12px);
+  font-weight: 600;
+  color: #1E293B;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.pa-batch-filter-select:hover { border-color: #93C5FD; }
+
+.pa-batch-filter-select:focus-visible {
+  outline: none;
+  border-color: #155DFC;
+  box-shadow: 0 0 0 3px rgba(21, 93, 252, 0.15);
+}
+
+.pa-batch-filter-chevron {
+  position: absolute;
+  right: 10px;
+  color: #90A1B9;
+  pointer-events: none;
+}
+
+/* Departments list page: small right-aligned row above the cards */
+.pa-batch-filter-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+/* Department detail panel: title/subtitle left, filter right */
+.pa-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.pa-panel-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .pa-batch-filter-label { display: none; }
+}
+
+/* ============================================
    OVERVIEW CONTAINER (Chart + AI sidebar)
    ============================================ */
 .pa-overview-container {
