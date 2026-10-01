@@ -49,6 +49,70 @@ const DEPARTMENT_META = {
 };
 
 // ============================================================================
+// GRADUATION-BATCH (COHORT) HELPERS
+// ============================================================================
+// Each prediction row written by train_model.py carries the graduation_year of
+// the batch it belongs to (batch 2025 -> 2025..2030, batch 2026 -> 2026..2031).
+// Rows from before that migration have no graduation_year and are grouped as
+// 'legacy' so the page keeps working until predictions are refreshed.
+// ============================================================================
+const ALL_BATCHES = 'All';
+
+const batchKeyOf = (row) =>
+  row.graduation_year != null ? String(row.graduation_year) : 'legacy';
+
+const batchLabelOf = (key) => (key === 'legacy' ? 'Unassigned' : `Batch ${key}`);
+
+// Label for a "years since graduation" position (used when batches are pooled).
+const horizonLabel = (offset) => `Year ${offset}`;
+
+// Average predicted_rate per year across the given rows -> [{ year, value }].
+// (Same calculation the page always used for its overview trend.)
+const averageByYear = (rows) => {
+  const byYear = {};
+  rows.forEach(({ year, predicted_rate }) => {
+    if (!byYear[year]) byYear[year] = [];
+    byYear[year].push(predicted_rate);
+  });
+  return Object.entries(byYear)
+    .sort(([a], [b]) => Number(a) - Number(b))
+    .map(([year, rates]) => ({
+      year:  String(year),
+      value: Math.round(rates.reduce((s, r) => s + r, 0) / rates.length),
+    }));
+};
+
+// Pool several batches onto one "years since graduation" timeline. Each
+// (program, offset) becomes one row, weighted by respondent_count (1 when the
+// count is missing). Because every batch is aligned by its own graduation year,
+// a 2026 graduate's first prediction year is compared with a 2025 graduate's
+// first prediction year -- never with their 2026 value.
+const mergeByHorizon = (rows) => {
+  const legacyYears = rows.filter((r) => r.graduation_year == null).map((r) => r.year);
+  const legacyBase  = legacyYears.length ? Math.min(...legacyYears) : null;
+  const merged = {};
+  rows.forEach((r) => {
+    const base   = r.graduation_year != null ? r.graduation_year : legacyBase;
+    const offset = r.year - base;
+    const k      = `${r.program}|${offset}`;
+    const w      = r.respondent_count > 0 ? r.respondent_count : 1;
+    if (!merged[k]) {
+      merged[k] = { program: r.program, department: r.department, year: offset, w: 0, pred: 0, cur: 0 };
+    }
+    merged[k].w    += w;
+    merged[k].pred += r.predicted_rate * w;
+    merged[k].cur  += (r.current_rate ?? r.predicted_rate ?? 0) * w;
+  });
+  return Object.values(merged).map((m) => ({
+    program:        m.program,
+    department:     m.department,
+    year:           m.year,
+    predicted_rate: m.pred / m.w,
+    current_rate:   m.cur / m.w,
+  }));
+};
+
+// ============================================================================
 // AdminPredictiveAnalytics — main logic controller
 // ============================================================================
 const AdminPredictiveAnalytics = () => {
@@ -56,6 +120,7 @@ const AdminPredictiveAnalytics = () => {
   // ── UI state ───────────────────────────────────────────────────────────────
   const [activePage,         setActivePage]         = useState('overview');
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [selectedBatch,      setSelectedBatch]      = useState(ALL_BATCHES);
 
   // ── Refresh state ──────────────────────────────────────────────────────────
   const [refreshing, setRefreshing] = useState(false);
@@ -89,27 +154,81 @@ const AdminPredictiveAnalytics = () => {
     fetchPredictions();
   }, []);
 
-  // ── Overview trend — { year, value } pairs averaged across all departments ─
-  const overviewTrend = useMemo(() => {
-    if (!predictions.length) return [];
-    const byYear = {};
-    predictions.forEach(({ year, predicted_rate }) => {
-      if (!byYear[year]) byYear[year] = [];
-      byYear[year].push(predicted_rate);
-    });
-    return Object.entries(byYear)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([year, rates]) => ({
-        year:  String(year),
-        value: Math.round(rates.reduce((s, r) => s + r, 0) / rates.length),
-      }));
+  // ── Graduation batches available in the data (options for the filter) ─────
+  const batchOptions = useMemo(() => {
+    const years = [
+      ...new Set(
+        predictions.map((r) => r.graduation_year).filter((y) => y != null)
+      ),
+    ]
+      .sort((a, b) => a - b)
+      .map(String);
+    return [ALL_BATCHES, ...years];
   }, [predictions]);
+
+  // If the chosen batch disappears (e.g. after a refresh), fall back to All.
+  const activeBatch = batchOptions.includes(selectedBatch) ? selectedBatch : ALL_BATCHES;
+
+  // ── Rows in scope for the selected batch ───────────────────────────────────
+  const seriesRows = useMemo(
+    () =>
+      activeBatch === ALL_BATCHES
+        ? predictions
+        : predictions.filter((r) => batchKeyOf(r) === activeBatch),
+    [predictions, activeBatch]
+  );
+
+  // ── One trend line per batch: [{ key, label, points: [{ year, value }] }] ──
+  // A single batch selected -> one series. "All" -> one series per batch, each
+  // on its own real calendar years (2025..2030 and 2026..2031).
+  const trendSeries = useMemo(() => {
+    const groups = {};
+    seriesRows.forEach((r) => {
+      const k = batchKeyOf(r);
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(r);
+    });
+    return Object.keys(groups)
+      .sort((a, b) => (a === 'legacy') - (b === 'legacy') || Number(a) - Number(b))
+      .map((key) => ({
+        key,
+        label:  batchLabelOf(key),
+        points: averageByYear(groups[key]),
+      }));
+  }, [seriesRows]);
+
+  // Shared x-axis: every calendar year that any visible series has a point for.
+  const trendYears = useMemo(
+    () =>
+      [...new Set(trendSeries.flatMap((s) => s.points.map((p) => p.year)))].sort(
+        (a, b) => Number(a) - Number(b)
+      ),
+    [trendSeries]
+  );
+
+  // Rows feeding the department/program figures and the AI summary. With one
+  // series these are simply the rows in scope; with several, the batches are
+  // pooled by years-since-graduation (respondent-weighted per program).
+  const summaryRows = useMemo(
+    () => (trendSeries.length > 1 ? mergeByHorizon(seriesRows) : seriesRows),
+    [trendSeries, seriesRows]
+  );
+
+  // ── Overview trend — { year, value } pairs averaged across all departments ─
+  // Single batch: real calendar years. Pooled "All": Year 0 .. Year N.
+  const overviewTrend = useMemo(() => {
+    if (!summaryRows.length) return [];
+    const points = averageByYear(summaryRows);
+    return trendSeries.length > 1
+      ? points.map((p) => ({ ...p, year: horizonLabel(p.year) }))
+      : points;
+  }, [summaryRows, trendSeries]);
 
   // ── Department cards ───────────────────────────────────────────────────────
   const departmentCards = useMemo(() => {
-    if (!predictions.length) return [];
+    if (!summaryRows.length) return [];
     const byDept = {};
-    predictions.forEach((row) => {
+    summaryRows.forEach((row) => {
       if (!byDept[row.department]) byDept[row.department] = [];
       byDept[row.department].push(row);
     });
@@ -157,7 +276,7 @@ const AdminPredictiveAnalytics = () => {
         programs,
       };
     });
-  }, [predictions]);
+  }, [summaryRows]);
 
   // ── Selected department detail ─────────────────────────────────────────────
   const selectedDepartmentData = useMemo(() => {
@@ -170,6 +289,18 @@ const AdminPredictiveAnalytics = () => {
       programs: dept.programs,
     };
   }, [selectedDepartment, departmentCards, overviewTrend]);
+
+  // ── If the selected department has no data for the chosen batch, go back ──
+  useEffect(() => {
+    if (
+      selectedDepartment &&
+      departmentCards.length &&
+      !departmentCards.some((d) => d.key === selectedDepartment)
+    ) {
+      setSelectedDepartment(null);
+      setActivePage('departments');
+    }
+  }, [departmentCards, selectedDepartment]);
 
   // ── Navigation handlers ────────────────────────────────────────────────────
   const handleBreadcrumbNav = (targetPage) => {
@@ -268,6 +399,11 @@ const AdminPredictiveAnalytics = () => {
       selectedDepartment={selectedDepartment}
       selectedDepartmentData={selectedDepartmentData}
       overviewTrend={overviewTrend}
+      trendSeries={trendSeries}
+      trendYears={trendYears}
+      batchOptions={batchOptions}
+      selectedBatch={activeBatch}
+      onBatchChange={setSelectedBatch}
       departmentCards={departmentCards}
       onDepartmentClick={handleDepartmentClick}
       onBreadcrumbNav={handleBreadcrumbNav}

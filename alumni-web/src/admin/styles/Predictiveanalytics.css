@@ -499,7 +499,8 @@ body {
   left: 0; right: 0; bottom: 0;
   height: 1.75rem;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* column count follows the number of years shown (set inline by the view) */
+  grid-template-columns: repeat(var(--pa-x-cols, 6), 1fr);
   font-family: 'Arimo', Arial;
   font-size: clamp(9.5px, 0.8vw, 11px);
   font-weight: 500;
