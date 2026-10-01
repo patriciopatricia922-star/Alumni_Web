@@ -6,7 +6,7 @@
 // predictive analytics.
 // ============================================================================
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import Predictiveanalyticsview from './views/Predictiveanalyticsview';
 import AdminSidebar from './components/AdminSidebar';
@@ -185,6 +185,82 @@ const AdminPredictiveAnalytics = () => {
       }
     };
     fetchPredictions();
+  }, []);
+
+  // ── Live sync: keep displayed predictions current (display only) ───────────
+  // Subscribes to Supabase Realtime changes on the `predictions` table and
+  // silently re-reads it with the exact same query as the mount fetch above.
+  // It NEVER calls /api/refresh-predictions, so it cannot trigger retraining —
+  // it only re-reads rows that train_model.py (or anything else) has already
+  // written. The Refresh Predictions button is unchanged and remains the manual
+  // fallback.
+  //   * Debounced: train_model.py deletes every row and re-inserts them one by
+  //     one, which emits one event per row; they collapse into a single refetch.
+  //   * Skipped while a manual refresh is running (handleRefresh refetches itself).
+  //   * setPredictions is only called when the rows actually changed (order
+  //     ignored), so an identical re-read does not re-trigger the AI insights.
+  //   * Never touches `loading`, so the page does not flash a loading state and
+  //     the selected batch / department are preserved.
+  // Requires `predictions` to be in the supabase_realtime publication.
+  const refreshingRef = useRef(false);
+  useEffect(() => {
+    refreshingRef.current = refreshing;
+  }, [refreshing]);
+
+  useEffect(() => {
+    const LIVE_SYNC_DEBOUNCE_MS = 2000;
+    let cancelled = false;
+    let debounceTimer = null;
+
+    const signature = (rows) =>
+      rows.map((r) => JSON.stringify(r)).sort().join('|');
+
+    const syncPredictions = async () => {
+      if (cancelled || refreshingRef.current) return;
+      try {
+        const { data, error } = await supabase
+          .from('predictions')
+          .select('*')
+          .order('year', { ascending: true })
+          .order('program', { ascending: true });
+        if (error) throw error;
+        if (cancelled || refreshingRef.current) return;
+        const next = data || [];
+        setPredictions((prev) => {
+          if (signature(prev) === signature(next)) return prev;
+          console.debug('[predictions-live] predictions changed — view updated');
+          return next;
+        });
+      } catch (err) {
+        console.warn('[predictions-live] silent refetch failed:', err);
+      }
+    };
+
+    const scheduleSync = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(syncPredictions, LIVE_SYNC_DEBOUNCE_MS);
+    };
+
+    const channel = supabase
+      .channel('predictions-live-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'predictions' },
+        scheduleSync
+      )
+      .subscribe((status) => {
+        // Also fires after a reconnect, catching anything missed while offline.
+        if (status === 'SUBSCRIBED') scheduleSync();
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[predictions-live] realtime unavailable:', status);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // ── Graduation batches available in the data (options for the filter) ─────
