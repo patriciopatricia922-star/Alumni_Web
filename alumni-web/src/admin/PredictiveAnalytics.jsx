@@ -82,6 +82,39 @@ const averageByYear = (rows) => {
     }));
 };
 
+// Headline figures for one scope (one batch, or all batches together):
+//   current   = observed current_rate, alumni-weighted by respondent_count
+//   predicted = model prediction at the END of each batch's horizon, weighted
+//               the same way
+// Each (program, batch) pair counts once, however many forecast years it has.
+// Rows without respondent_count (written before the migration) weigh 1.
+const summarizeScope = (rows) => {
+  const groups = {};
+  rows.forEach((r) => {
+    const k = `${r.program}|${batchKeyOf(r)}`;
+    if (!groups[k]) {
+      groups[k] = { w: r.respondent_count > 0 ? r.respondent_count : 1, first: r, last: r };
+    }
+    if (r.year < groups[k].first.year) groups[k].first = r;
+    if (r.year > groups[k].last.year)  groups[k].last  = r;
+  });
+  const list = Object.values(groups);
+  const totalW = list.reduce((s, g) => s + g.w, 0);
+  const current = list.reduce(
+    (s, g) => s + (g.first.current_rate ?? g.first.predicted_rate ?? 0) * g.w, 0
+  ) / totalW;
+  const predicted = list.reduce((s, g) => s + g.last.predicted_rate * g.w, 0) / totalW;
+  const hasCounts = rows.some((r) => r.respondent_count > 0);
+  return {
+    current:     Math.round(current),
+    predicted:   Math.round(predicted),
+    firstYear:   Math.min(...list.map((g) => g.first.year)),
+    lastYear:    Math.max(...list.map((g) => g.last.year)),
+    horizon:     Math.max(...list.map((g) => g.last.year - g.first.year)),
+    respondents: hasCounts ? list.reduce((s, g) => s + g.w, 0) : null,
+  };
+};
+
 // Pool several batches onto one "years since graduation" timeline. Each
 // (program, offset) becomes one row, weighted by respondent_count (1 when the
 // count is missing). Because every batch is aligned by its own graduation year,
@@ -214,15 +247,51 @@ const AdminPredictiveAnalytics = () => {
     [trendSeries, seriesRows]
   );
 
+  // ── Headline figures shown in the summary strip(s) ─────────────────────────
+  // One entry per batch in scope. When several batches are shown ("All"), a
+  // first "All batches" entry gives the overall figure across every alumnus.
+  const trendSummaries = useMemo(() => {
+    if (!seriesRows.length) return [];
+    const groups = {};
+    seriesRows.forEach((r) => {
+      const k = batchKeyOf(r);
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(r);
+    });
+    const keys = Object.keys(groups).sort(
+      (a, b) => (a === 'legacy') - (b === 'legacy') || Number(a) - Number(b)
+    );
+    const perBatch = keys.map((key) => ({
+      key,
+      label: keys.length === 1 && key === 'legacy' ? 'All batches' : batchLabelOf(key),
+      pooled: false,
+      ...summarizeScope(groups[key]),
+    }));
+    if (perBatch.length <= 1) return perBatch;
+    return [
+      { key: 'overall', label: 'All batches', pooled: true, ...summarizeScope(seriesRows) },
+      ...perBatch,
+    ];
+  }, [seriesRows]);
+
   // ── Overview trend — { year, value } pairs averaged across all departments ─
   // Single batch: real calendar years. Pooled "All": Year 0 .. Year N.
   const overviewTrend = useMemo(() => {
     if (!summaryRows.length) return [];
     const points = averageByYear(summaryRows);
-    return trendSeries.length > 1
+    const labelled = trendSeries.length > 1
       ? points.map((p) => ({ ...p, year: horizonLabel(p.year) }))
       : points;
-  }, [summaryRows, trendSeries]);
+    // Make the end points match the summary strip (observed current rate ->
+    // predicted rate at the end of the horizon) so the AI insights quote the
+    // same numbers the admin sees.
+    const head = trendSummaries[0];
+    if (head && labelled.length > 1) {
+      labelled[0] = { ...labelled[0], value: head.current };
+      labelled[labelled.length - 1] = { ...labelled[labelled.length - 1], value: head.predicted };
+    }
+    return labelled;
+  }, [summaryRows, trendSeries, trendSummaries]);
 
   // ── Department cards ───────────────────────────────────────────────────────
   const departmentCards = useMemo(() => {
@@ -401,6 +470,7 @@ const AdminPredictiveAnalytics = () => {
       overviewTrend={overviewTrend}
       trendSeries={trendSeries}
       trendYears={trendYears}
+      trendSummaries={trendSummaries}
       batchOptions={batchOptions}
       selectedBatch={activeBatch}
       onBatchChange={setSelectedBatch}

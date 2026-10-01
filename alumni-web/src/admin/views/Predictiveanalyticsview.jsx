@@ -309,6 +309,7 @@ const Predictiveanalyticsview = ({
   overviewTrend,
   trendSeries,
   trendYears,
+  trendSummaries,
   batchOptions,
   selectedBatch,
   onBatchChange,
@@ -748,33 +749,34 @@ const Predictiveanalyticsview = ({
                 </div>
               </div>
 
-              {isMultiSeries ? (
-                chartSeries.map((sr) => {
-                  const first = sr.points[0];
-                  const last = sr.points[sr.points.length - 1];
-                  const ch = changeOf(sr.points);
+              {trendSummaries && trendSummaries.length > 0 ? (
+                trendSummaries.map((sm) => {
+                  const diff = sm.predicted - sm.current;
+                  const scope = sm.respondents != null ? `${sm.label} (n=${sm.respondents})` : sm.label;
                   return (
-                    <div className="pa-chart-summary" key={sr.key}>
+                    <div className="pa-chart-summary" key={sm.key}>
                       <div className="pa-summary-block">
                         <span className="pa-summary-label">
-                          {sr.label} · Current ({first?.year})
+                          {scope} · Current{sm.pooled ? "" : ` (${sm.firstYear})`}
                         </span>
-                        <strong>{first?.value}%</strong>
+                        <strong>{sm.current}%</strong>
                       </div>
                       <div className="pa-summary-arrow">
                         <LuArrowRight size={20} color="#93C5FD" />
                       </div>
                       <div className="pa-summary-block">
                         <span className="pa-summary-label">
-                          Predicted ({last?.year})
+                          {sm.pooled
+                            ? `Predicted (+${sm.horizon} yrs)`
+                            : `Predicted (${sm.lastYear})`}
                         </span>
-                        <strong>{last?.value}%</strong>
+                        <strong>{sm.predicted}%</strong>
                       </div>
                       <div className="pa-summary-change">
                         <span className="pa-trend-badge">
                           <LuArrowUpRight size={11} color="#009966" />
-                          {ch > 0 ? "+" : ""}
-                          {ch}%
+                          {diff > 0 ? "+" : ""}
+                          {diff}%
                         </span>
                       </div>
                     </div>
