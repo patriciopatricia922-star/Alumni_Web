@@ -591,7 +591,11 @@ const Predictiveanalyticsview = ({
                     <span key={v}>{v}</span>
                   ))}
                 </div>
-                <div className="pa-chart-main">
+                <div className="pa-chart-scroll">
+                <div
+                  className="pa-chart-main"
+                  style={{ minWidth: `${axisYears.length * 56}px` }}
+                >
                   <div className="pa-chart-grid">
                     <span />
                     <span />
@@ -747,17 +751,23 @@ const Predictiveanalyticsview = ({
                     ))}
                   </div>
                 </div>
+                </div>
               </div>
 
               {trendSummaries && trendSummaries.length > 0 ? (
                 trendSummaries.map((sm) => {
                   const diff = sm.predicted - sm.current;
-                  const scope = sm.respondents != null ? `${sm.label} (n=${sm.respondents})` : sm.label;
+                  // College-only alumni count (SHS rows are never predicted, so
+                  // respondent_count already excludes them).
+                  const scope = sm.respondents != null
+                    ? `${sm.label} = ${sm.respondents} alumni`
+                    : sm.label;
                   return (
                     <div className="pa-chart-summary" key={sm.key}>
+                      <span className="pa-summary-scope">{scope}</span>
                       <div className="pa-summary-block">
                         <span className="pa-summary-label">
-                          {scope} · Current{sm.pooled ? "" : ` (${sm.firstYear})`}
+                          Current{sm.pooled ? "" : ` (${sm.firstYear})`}
                         </span>
                         <strong>{sm.current}%</strong>
                       </div>

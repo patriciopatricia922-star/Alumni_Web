@@ -458,6 +458,16 @@ body {
   flex-shrink: 0;
 }
 
+/* Contained horizontal scroll: the plot keeps a minimum width per year so
+   2025 -> 2031 always stay in one row; if the card is too narrow the chart
+   scrolls inside itself instead of wrapping or widening the page. */
+.pa-chart-scroll {
+  min-width: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 .pa-chart-main {
   position: relative;
   height: 100%;
@@ -500,7 +510,8 @@ body {
   height: 1.75rem;
   display: grid;
   /* column count follows the number of years shown (set inline by the view) */
-  grid-template-columns: repeat(var(--pa-x-cols, 6), 1fr);
+  grid-template-columns: repeat(var(--pa-x-cols, 6), minmax(0, 1fr));
+  white-space: nowrap;
   font-family: 'Arimo', Arial;
   font-size: clamp(9.5px, 0.8vw, 11px);
   font-weight: 500;
@@ -621,9 +632,16 @@ body {
 }
 
 .pa-chart-summary {
-  display: flex;
+  /* Fixed column template -> values, arrow and badge sit at identical x/y
+     positions in every row (All / 2025 / 2026). */
+  display: grid;
+  grid-template-columns: 10.5rem 1.5rem 10.5rem 1fr;
+  grid-template-areas:
+    "scope scope scope scope"
+    "cur   arrow pred  change";
   align-items: center;
-  gap: 0.75rem;
+  column-gap: 0.75rem;
+  row-gap: 6px;
   padding: 12px 16px;
   background: #F8FAFD;
   border: 1px solid #EEF2F7;
@@ -635,12 +653,24 @@ body {
   overflow: hidden;
 }
 
+.pa-summary-scope {
+  grid-area: scope;
+  font-family: 'Arimo', Arial;
+  font-size: clamp(10px, 0.9vw, 11px);
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.2;
+}
+
 .pa-summary-block {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 3px;
   min-width: 0;
 }
+.pa-chart-summary > .pa-summary-block:nth-of-type(1) { grid-area: cur; }
+.pa-chart-summary > .pa-summary-block:nth-of-type(3) { grid-area: pred; }
 
 .pa-summary-label {
   font-family: 'Arimo', Arial;
@@ -658,15 +688,21 @@ body {
   color: #0F172B;
   line-height: 1.2;
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
 }
 
 .pa-summary-arrow {
+  grid-area: arrow;
   display: flex;
   align-items: center;
+  justify-content: center;
+  align-self: end;           /* sits on the value line, not the label line */
+  height: 1.5rem;
   flex-shrink: 0;
 }
 
-.pa-summary-change { margin-left: auto; }
+.pa-summary-change { grid-area: change; justify-self: end; margin-left: 0; }
 
 .pa-trend-badge {
   display: inline-flex;
@@ -1392,8 +1428,7 @@ body {
   .pa-chart-card { padding: 18px 16px 14px; }
   .pa-panel      { padding: 18px 16px; }
 
-  .pa-chart-summary  { flex-direction: row; flex-wrap: wrap; gap: 8px; }
-  .pa-summary-change { margin-left: auto; }
+  .pa-chart-summary  { grid-template-columns: minmax(0,1fr) 1.5rem minmax(0,1fr) auto; column-gap: 8px; }
 
   .pa-chart-shell { height: clamp(180px, 55vw, 260px); }
 
@@ -1454,8 +1489,8 @@ body {
 
   .pa-chart-legend { flex-direction: column; align-items: flex-start; gap: 6px; }
 
-  .pa-chart-summary { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .pa-summary-change { margin-left: 0; }
+  .pa-chart-summary { grid-template-columns: minmax(0,1fr) 1.25rem minmax(0,1fr); grid-template-areas: "scope scope scope" "cur arrow pred" "change change change"; }
+  .pa-summary-change { justify-self: start; }
 
   .pa-overview-stats { display: none; }
 
