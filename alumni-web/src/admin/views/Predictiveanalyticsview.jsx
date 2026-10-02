@@ -494,6 +494,15 @@ const Predictiveanalyticsview = ({
     MIN,
   ];
 
+  // Summary strips: under "All" the controller supplies the pooled "All batches"
+  // strip plus one per batch. Show only the pooled one; the per-batch strips are
+  // still computed (the chart anchors use them) and appear when that batch is
+  // selected. Display-only: no data or calculations change.
+  const visibleSummaries =
+    batchValue === "All" && trendSummaries?.some((sm) => sm.pooled)
+      ? trendSummaries.filter((sm) => sm.pooled)
+      : trendSummaries;
+
   const showOverview = activePage === "overview";
   const showDeptList = activePage === "departments";
   const showDeptDetail =
@@ -795,8 +804,8 @@ const Predictiveanalyticsview = ({
                 </div>
               </div>
 
-              {trendSummaries && trendSummaries.length > 0 ? (
-                trendSummaries.map((sm) => {
+              {visibleSummaries && visibleSummaries.length > 0 ? (
+                visibleSummaries.map((sm) => {
                   const diff = sm.predicted - sm.current;
                   // College-only alumni count (SHS rows are never predicted, so
                   // respondent_count already excludes them).
