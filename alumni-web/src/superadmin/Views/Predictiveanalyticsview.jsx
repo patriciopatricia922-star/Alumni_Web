@@ -1,5 +1,5 @@
 // ============================================================================
-// Predictiveanalyticsview — UI / Presentation Layer (Refactored)
+// SuperAdminPredictiveanalyticsview — UI / Presentation Layer (Refactored)
 // ============================================================================
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -7,6 +7,7 @@ import {
   HiOutlineBuildingOffice2,
   HiOutlineArrowTrendingUp,
   HiOutlineChevronRight,
+  HiOutlineChevronDown,
 } from 'react-icons/hi2';
 import { LuArrowUpRight, LuArrowRight } from 'react-icons/lu';
 import { FiBarChart2, FiTrendingUp, FiAlertCircle, FiCpu } from 'react-icons/fi';
@@ -71,6 +72,33 @@ const ChartSkeleton = () => (
     </div>
   </div>
 );
+
+// ============================================================================
+// GraduationBatchFilter
+// ----------------------------------------------------------------------------
+// Options are supplied by the controller (derived from the graduation_year of
+// the prediction rows), so new batches (2027, 2028, ...) appear automatically.
+// ============================================================================
+const GraduationBatchFilter = ({ value, options = ['All'], onChange }) => (
+  <label className="pa-batch-filter">
+    <span className="pa-batch-filter-label">Graduation Batch</span>
+    <span className="pa-batch-filter-select-wrap">
+      <select
+        className="pa-batch-filter-select"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+      <HiOutlineChevronDown size={13} className="pa-batch-filter-chevron" />
+    </span>
+  </label>
+);
+
+// One colour per batch line when several batches are shown together.
+const SERIES_COLORS = ['#155DFC', '#8B5CF6', '#F59E0B', '#10B981', '#EC4899', '#06B6D4'];
 
 // ============================================================================
 // AIInsightsCard
@@ -219,6 +247,12 @@ const Predictiveanalyticsview = ({
   selectedDepartment,
   selectedDepartmentData,
   overviewTrend,
+  trendSeries,
+  trendYears,
+  trendSummaries,
+  batchOptions,
+  selectedBatch,
+  onBatchChange,
   departmentCards,
   onDepartmentClick,
   onBreadcrumbNav,
@@ -228,6 +262,11 @@ const Predictiveanalyticsview = ({
 }) => {
   const [animProgress, setAnimProgress] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  // Batch selection lives in the controller; local state is only a fallback
+  // for when the view is rendered without those props.
+  const [localBatch, setLocalBatch] = useState('All');
+  const batchValue = selectedBatch ?? localBatch;
+  const setBatchValue = onBatchChange ?? setLocalBatch;
   const animRef = useRef(null);
 
   useEffect(() => {
@@ -292,8 +331,35 @@ const Predictiveanalyticsview = ({
     );
   }
 
-  // Chart math (unchanged)
-  const values = overviewTrend.map((d) => d.value);
+  // Chart math. With one batch selected this draws the same single line as
+  // before; with "All" each batch is its own line, placed at its real calendar
+  // years on a shared x-axis (so 2031 gets its own column instead of wrapping).
+  const baseSeries = trendSeries && trendSeries.length > 0
+    ? trendSeries
+    : [{ key: 'all', label: '', points: overviewTrend }];
+  // The plotted points are the model's predicted_rate per year, so the first
+  // point is the year-0 *prediction* and the observed Current rate never
+  // appears on the line. Anchor each batch's first and last points to the very
+  // same Current / Predicted figures shown in its summary strip, so the line
+  // visibly runs from "Current" to "Predicted". Display-only: no values are
+  // recalculated, the strip's existing numbers are just reused.
+  const chartSeries = baseSeries.map((sr) => {
+    const sm = (trendSummaries || []).find((t) => !t.pooled && t.key === sr.key);
+    if (!sm || sr.points.length < 2) return sr;
+    const last = sr.points.length - 1;
+    return {
+      ...sr,
+      points: sr.points.map((p, i) =>
+        i === 0 ? { ...p, value: sm.current } : i === last ? { ...p, value: sm.predicted } : p
+      ),
+    };
+  });
+  const axisYears = trendYears && trendYears.length > 0
+    ? trendYears
+    : overviewTrend.map((d) => d.year);
+  const isMultiSeries = chartSeries.length > 1;
+
+  const values = chartSeries.flatMap((sr) => sr.points.map((d) => d.value));
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
   const padding = Math.max((dataMax - dataMin) * 0.5, 5);
@@ -301,31 +367,47 @@ const Predictiveanalyticsview = ({
   const MAX = Math.min(100, Math.ceil(dataMax + padding));
   const RANGE = MAX - MIN || 1;
 
-  const toX = (i) => (overviewTrend.length > 1 ? (i / (overviewTrend.length - 1)) * 100 : 50);
+  // Years are spread edge to edge: the first year sits on the left edge of the
+  // plot and the last on the right edge. X-axis labels use this same function,
+  // so each dot stays directly above its label.
+  const toX = (year) =>
+    axisYears.length > 1 ? (axisYears.indexOf(year) / (axisYears.length - 1)) * 100 : 50;
   const toY = (v) => ((MAX - v) / RANGE) * 100;
 
-  const animatedTrend = overviewTrend
-    .map((d, i) => {
-      const t = i / Math.max(overviewTrend.length - 1, 1);
-      if (t <= animProgress) return d;
-      const prev = overviewTrend[i - 1];
-      if (!prev) return null;
-      const segLen = 1 / (overviewTrend.length - 1);
-      const segT = (animProgress - (i - 1) * segLen) / segLen;
-      return { year: d.year, value: prev.value + (d.value - prev.value) * segT };
-    })
-    .filter(Boolean);
+  // Reveal each line left-to-right during the intro animation.
+  const animatePoints = (pts) => {
+    const out = [];
+    pts.forEach((d, i) => {
+      const x = toX(d.year) / 100;
+      if (x <= animProgress) {
+        out.push(d);
+        return;
+      }
+      const prev = pts[i - 1];
+      if (!prev) return;
+      const px = toX(prev.year) / 100;
+      if (animProgress <= px) return;
+      const segT = (animProgress - px) / (x - px);
+      out.push({
+        year: d.year,
+        value: prev.value + (d.value - prev.value) * segT,
+        x: animProgress * 100,
+      });
+    });
+    return out;
+  };
+  const toLine = (pts) => pts.map((d) => `${d.x ?? toX(d.year)},${toY(d.value)}`).join(' ');
 
-  const linePoints = animatedTrend.map((d, i) => `${toX(i)},${toY(d.value)}`).join(' ');
-
+  // Upper/lower confidence bands are only drawn for a single line.
+  const bandPts = chartSeries[0].points;
   const upperPoints = [
-    ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value + padding * 0.6)}`),
-    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value)}`),
+    ...bandPts.map((d) => `${toX(d.year)},${toY(d.value + padding * 0.6)}`),
+    ...bandPts.slice().reverse().map((d) => `${toX(d.year)},${toY(d.value)}`),
   ].join(' ');
 
   const lowerPoints = [
-    ...overviewTrend.map((d, i) => `${toX(i)},${toY(d.value)}`),
-    ...overviewTrend.slice().reverse().map((d, i) => `${toX(overviewTrend.length - 1 - i)},${toY(d.value - padding * 0.6)}`),
+    ...bandPts.map((d) => `${toX(d.year)},${toY(d.value)}`),
+    ...bandPts.slice().reverse().map((d) => `${toX(d.year)},${toY(d.value - padding * 0.6)}`),
   ].join(' ');
 
   const changeVal = overviewTrend.length > 1
@@ -398,129 +480,214 @@ const Predictiveanalyticsview = ({
                   <h2 className="pa-chart-title">Career to Degree Alignment</h2>
                   <p className="pa-chart-subtitle">Predicted alignment rates for all departments</p>
                 </div>
+                <GraduationBatchFilter
+                  value={batchValue}
+                  options={batchOptions}
+                  onChange={setBatchValue}
+                />
               </div>
 
               <div className="pa-chart-legend">
-                <div className="pa-legend-item">
-                  <span className="pa-legend-swatch upper" />
-                  <span className="pa-legend-label">Upper Bound</span>
-                </div>
-                <div className="pa-legend-item">
-                  <span className="pa-legend-swatch lower" />
-                  <span className="pa-legend-label">Lower Bound</span>
-                </div>
-                <div className="pa-legend-item">
-                  <span className="pa-legend-swatch predicted" />
-                  <span className="pa-legend-label">Predicted Rate</span>
-                </div>
+                {isMultiSeries ? (
+                  chartSeries.map((sr, i) => (
+                    <div className="pa-legend-item" key={sr.key}>
+                      <span
+                        className="pa-legend-swatch"
+                        style={{ background: SERIES_COLORS[i % SERIES_COLORS.length] }}
+                      />
+                      <span className="pa-legend-label">{sr.label}</span>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="pa-legend-item">
+                      <span className="pa-legend-swatch upper" />
+                      <span className="pa-legend-label">Upper Bound</span>
+                    </div>
+                    <div className="pa-legend-item">
+                      <span className="pa-legend-swatch lower" />
+                      <span className="pa-legend-label">Lower Bound</span>
+                    </div>
+                    <div className="pa-legend-item">
+                      <span className="pa-legend-swatch predicted" />
+                      <span className="pa-legend-label">Predicted Rate</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="pa-chart-shell">
                 <div className="pa-chart-y-axis">
                   {yLabels.map((v) => <span key={v}>{v}</span>)}
                 </div>
-                <div className="pa-chart-main">
-                  <div className="pa-chart-grid">
-                    <span /><span /><span /><span />
-                  </div>
-
-                  {/* SVG layer: area fills + line only (safe to non-uniformly scale) */}
-                  <svg
-                    className="pa-chart-svg"
-                    viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
+                <div className="pa-chart-scroll">
+                  <div
+                    className="pa-chart-main"
+                    style={{ minWidth: `${axisYears.length * 56}px` }}
                   >
-                    <defs>
-                      <linearGradient id="upperGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#93C5FD" stopOpacity="0.35" />
-                        <stop offset="100%" stopColor="#93C5FD" stopOpacity="0.02" />
-                      </linearGradient>
-                      <linearGradient id="lowerGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BFDBFE" stopOpacity="0.22" />
-                        <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0.02" />
-                      </linearGradient>
-                      <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#60A5FA" />
-                        <stop offset="100%" stopColor="#155DFC" />
-                      </linearGradient>
-                    </defs>
-                    <polygon points={upperPoints} fill="url(#upperGrad)" stroke="none" style={{ opacity: animProgress }} />
-                    <polygon points={lowerPoints} fill="url(#lowerGrad)" stroke="none" style={{ opacity: animProgress }} />
-                    {animatedTrend.length > 1 && (
-                      <polyline
-                        className="pa-chart-line"
-                        fill="none"
-                        stroke="url(#lineGrad)"
-                        strokeWidth="2.5"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={linePoints}
-                        vectorEffect="non-scaling-stroke"
-                      />
-                    )}
-                  </svg>
+                    <div className="pa-chart-grid">
+                      <span /><span /><span /><span />
+                    </div>
 
-                  {/* HTML marker layer: percentage-positioned so every dot stays a perfect circle
-                      regardless of the chart's aspect ratio or screen size. */}
-                  <div className="pa-chart-markers" aria-hidden="false">
-                    {overviewTrend.map((d, i) => {
-                      const t = i / Math.max(overviewTrend.length - 1, 1);
-                      const opacity = Math.max(0, Math.min(1, (animProgress - t) / 0.1));
-                      const isHovered = hoveredPoint === i;
-                      return (
-                        <button
-                          key={d.year}
-                          type="button"
-                          className={`pa-chart-marker ${isHovered ? 'is-hovered' : ''}`}
-                          style={{
-                            left: `${toX(i)}%`,
-                            top: `${toY(d.value)}%`,
-                            opacity,
-                          }}
-                          onMouseEnter={() => setHoveredPoint(i)}
-                          onMouseLeave={() => setHoveredPoint(null)}
-                          onFocus={() => setHoveredPoint(i)}
-                          onBlur={() => setHoveredPoint(null)}
-                          aria-label={`${d.year}: ${d.value}%`}
-                        >
-                          <span className="pa-chart-marker-dot" />
-                          {isHovered && (
-                            <span className="pa-chart-marker-tooltip">
-                              <strong>{d.value}%</strong>
-                              <span>{d.year}</span>
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                    {/* SVG layer: area fills + line only (safe to non-uniformly scale) */}
+                    <svg
+                      className="pa-chart-svg"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <defs>
+                        <linearGradient id="upperGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#93C5FD" stopOpacity="0.35" />
+                          <stop offset="100%" stopColor="#93C5FD" stopOpacity="0.02" />
+                        </linearGradient>
+                        <linearGradient id="lowerGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#BFDBFE" stopOpacity="0.22" />
+                          <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0.02" />
+                        </linearGradient>
+                        <linearGradient id="lineGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="0">
+                          <stop offset="0%" stopColor="#60A5FA" />
+                          <stop offset="100%" stopColor="#155DFC" />
+                        </linearGradient>
+                      </defs>
+                      {!isMultiSeries && (
+                        <>
+                          <polygon points={upperPoints} fill="url(#upperGrad)" stroke="none" style={{ opacity: animProgress }} />
+                          <polygon points={lowerPoints} fill="url(#lowerGrad)" stroke="none" style={{ opacity: animProgress }} />
+                        </>
+                      )}
+                      {chartSeries.map((sr, si) => {
+                        const pts = animatePoints(sr.points);
+                        return (
+                          pts.length > 1 && (
+                            <polyline
+                              key={sr.key}
+                              className="pa-chart-line"
+                              fill="none"
+                              stroke={isMultiSeries ? SERIES_COLORS[si % SERIES_COLORS.length] : 'url(#lineGrad)'}
+                              strokeWidth="2.5"
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
+                              points={toLine(pts)}
+                              vectorEffect="non-scaling-stroke"
+                            />
+                          )
+                        );
+                      })}
+                    </svg>
 
-                  <div className="pa-chart-x-axis">
-                    {overviewTrend.map((d) => <span key={d.year}>{d.year}</span>)}
+                    {/* HTML marker layer: percentage-positioned so every dot stays a perfect circle
+                        regardless of the chart's aspect ratio or screen size. */}
+                    <div className="pa-chart-markers" aria-hidden="false">
+                      {chartSeries.map((sr, si) =>
+                        sr.points.map((d) => {
+                          const x = toX(d.year) / 100;
+                          const opacity = Math.max(0, Math.min(1, (animProgress - x) / 0.1));
+                          const pointId = `${sr.key}:${d.year}`;
+                          const isHovered = hoveredPoint === pointId;
+                          const edgeClass =
+                            axisYears.length > 1 && d.year === axisYears[0]
+                              ? 'is-edge-first'
+                              : axisYears.length > 1 && d.year === axisYears[axisYears.length - 1]
+                                ? 'is-edge-last'
+                                : '';
+                          return (
+                            <button
+                              key={pointId}
+                              type="button"
+                              className={`pa-chart-marker ${isHovered ? 'is-hovered' : ''} ${edgeClass}`}
+                              style={{
+                                left: `${toX(d.year)}%`,
+                                top: `${toY(d.value)}%`,
+                                opacity,
+                              }}
+                              onMouseEnter={() => setHoveredPoint(pointId)}
+                              onMouseLeave={() => setHoveredPoint(null)}
+                              onFocus={() => setHoveredPoint(pointId)}
+                              onBlur={() => setHoveredPoint(null)}
+                              aria-label={`${isMultiSeries ? sr.label + ' ' : ''}${d.year}: ${d.value}%`}
+                            >
+                              <span
+                                className="pa-chart-marker-dot"
+                                style={isMultiSeries ? { borderColor: SERIES_COLORS[si % SERIES_COLORS.length] } : undefined}
+                              />
+                              {isHovered && (
+                                <span className="pa-chart-marker-tooltip">
+                                  <strong>{d.value}%</strong>
+                                  <span>{isMultiSeries ? `${sr.label} · ${d.year}` : d.year}</span>
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <div className="pa-chart-x-axis" style={{ '--pa-x-cols': axisYears.length }}>
+                      {axisYears.map((y) => (
+                        <span key={y} style={{ left: `${toX(y)}%` }}>{y}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pa-chart-summary">
-                <div className="pa-summary-block">
-                  <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
-                  <strong>{overviewTrend[0]?.value}%</strong>
+              {trendSummaries && trendSummaries.length > 0 ? (
+                trendSummaries.map((sm) => {
+                  const diff = sm.predicted - sm.current;
+                  // College-only alumni count (SHS rows are never predicted, so
+                  // respondent_count already excludes them).
+                  const scope = sm.respondents != null
+                    ? `${sm.label} = ${sm.respondents} alumni`
+                    : sm.label;
+                  return (
+                    <div className="pa-chart-summary" key={sm.key}>
+                      <span className="pa-summary-scope">{scope}</span>
+                      <div className="pa-summary-block">
+                        <span className="pa-summary-label">
+                          Current{sm.pooled ? '' : ` (${sm.firstYear})`}
+                        </span>
+                        <strong>{sm.current}%</strong>
+                      </div>
+                      <div className="pa-summary-arrow">
+                        <LuArrowRight size={20} color="#93C5FD" />
+                      </div>
+                      <div className="pa-summary-block">
+                        <span className="pa-summary-label">
+                          {sm.pooled ? `Predicted (+${sm.horizon} yrs)` : `Predicted (${sm.lastYear})`}
+                        </span>
+                        <strong>{sm.predicted}%</strong>
+                      </div>
+                      <div className="pa-summary-change">
+                        <span className="pa-trend-badge">
+                          <LuArrowUpRight size={11} color="#009966" />
+                          {diff > 0 ? '+' : ''}{diff}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="pa-chart-summary">
+                  <div className="pa-summary-block">
+                    <span className="pa-summary-label">Current ({overviewTrend[0]?.year})</span>
+                    <strong>{overviewTrend[0]?.value}%</strong>
+                  </div>
+                  <div className="pa-summary-arrow">
+                    <LuArrowRight size={20} color="#93C5FD" />
+                  </div>
+                  <div className="pa-summary-block">
+                    <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
+                    <strong>{overviewTrend[overviewTrend.length - 1]?.value}%</strong>
+                  </div>
+                  <div className="pa-summary-change">
+                    <span className="pa-trend-badge">
+                      <LuArrowUpRight size={11} color="#009966" />
+                      +{changeVal}%
+                    </span>
+                  </div>
                 </div>
-                <div className="pa-summary-arrow">
-                  <LuArrowRight size={20} color="#93C5FD" />
-                </div>
-                <div className="pa-summary-block">
-                  <span className="pa-summary-label">Predicted ({overviewTrend[overviewTrend.length - 1]?.year})</span>
-                  <strong>{overviewTrend[overviewTrend.length - 1]?.value}%</strong>
-                </div>
-                <div className="pa-summary-change">
-                  <span className="pa-trend-badge">
-                    <LuArrowUpRight size={11} color="#009966" />
-                    +{changeVal}%
-                  </span>
-                </div>
-              </div>
+              )}
 
               <button className="pa-view-breakdown-btn" onClick={onViewBreakdown}>
                 Click to view detailed breakdown by department →
@@ -538,6 +705,15 @@ const Predictiveanalyticsview = ({
         )}
 
         {/* ── DEPARTMENTS LIST PAGE ── */}
+        {showDeptList && (
+          <div className="pa-batch-filter-row">
+            <GraduationBatchFilter
+              value={batchValue}
+              options={batchOptions}
+              onChange={setBatchValue}
+            />
+          </div>
+        )}
         {showDeptList && (
           <div className="pa-department-grid">
             {departmentCards?.map((card) => (
@@ -576,8 +752,17 @@ const Predictiveanalyticsview = ({
         {showDeptDetail && selectedDepartmentData && (
           <div className="pa-overview-container pa-detail-container">
             <div className="pa-panel">
-              <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
-              <p className="pa-section-subtitle">{selectedDepartmentData.subtitle}</p>
+              <div className="pa-panel-header">
+                <div className="pa-panel-header-text">
+                  <h2 className="pa-section-title">{selectedDepartmentData.title}</h2>
+                  <p className="pa-section-subtitle">{selectedDepartmentData.subtitle}</p>
+                </div>
+                <GraduationBatchFilter
+                  value={batchValue}
+                  options={batchOptions}
+                  onChange={setBatchValue}
+                />
+              </div>
               <div className="pa-bar-legend">
                 <div className="pa-bar-legend-item">
                   <span className="pa-bar-legend-swatch current" />

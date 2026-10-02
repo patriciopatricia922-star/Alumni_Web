@@ -1,5 +1,5 @@
 // ============================================================================
-// Predictiveanalyticsview — UI / Presentation Layer (Refactored)
+// AdminPredictiveanalyticsview — UI / Presentation Layer (Refactored) 
 // ============================================================================
 
 import React, { useState, useRef, useEffect } from "react";
