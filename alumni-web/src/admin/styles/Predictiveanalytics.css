@@ -466,6 +466,10 @@ body {
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
+  /* Inset so the dots/labels on the first and last year (which now sit exactly
+     on the plot's left/right edges) are not clipped by the scroll container. */
+  padding: 0 24px;
+  box-sizing: border-box;
 }
 
 .pa-chart-main {
@@ -508,18 +512,20 @@ body {
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 1.75rem;
-  display: grid;
-  /* column count follows the number of years shown (set inline by the view) */
-  grid-template-columns: repeat(var(--pa-x-cols, 6), minmax(0, 1fr));
+  /* labels are absolutely positioned at the same x as their dots (set inline) */
   white-space: nowrap;
   font-family: 'Arimo', Arial;
   font-size: clamp(9.5px, 0.8vw, 11px);
   font-weight: 500;
   color: #94A3B8;
   text-align: center;
-  align-items: flex-end;
-  padding-bottom: 0.25rem;
   pointer-events: none;
+}
+
+.pa-chart-x-axis span {
+  position: absolute;
+  bottom: 0.25rem;
+  transform: translateX(-50%);
 }
 
 /* ============================================
@@ -602,6 +608,13 @@ body {
   z-index: 3;
   animation: pa-tooltip-in 0.12s ease-out;
 }
+
+/* Tooltips on the first/last dot anchor to the dot instead of centring, so
+   they stay inside the card. */
+.pa-chart-marker.is-edge-first .pa-chart-marker-tooltip { left: 0; transform: none; animation: none; }
+.pa-chart-marker.is-edge-last  .pa-chart-marker-tooltip { left: auto; right: 0; transform: none; animation: none; }
+.pa-chart-marker.is-edge-first .pa-chart-marker-tooltip::after { left: 11px; }
+.pa-chart-marker.is-edge-last  .pa-chart-marker-tooltip::after { left: auto; right: 6px; transform: none; }
 
 .pa-chart-marker-tooltip::after {
   content: '';

@@ -412,9 +412,13 @@ const Predictiveanalyticsview = ({
   const MAX = Math.min(100, Math.ceil(dataMax + padding));
   const RANGE = MAX - MIN || 1;
 
-  // One equal-width column per year; points sit at the column centre so each
-  // dot lines up exactly with its x-axis label.
-  const toX = (year) => ((axisYears.indexOf(year) + 0.5) / axisYears.length) * 100;
+  // Years are spread edge to edge: the first year sits on the left edge of the
+  // plot and the last on the right edge (like a standard line chart). X-axis
+  // labels use this same function, so each dot stays directly above its label.
+  const toX = (year) =>
+    axisYears.length > 1
+      ? (axisYears.indexOf(year) / (axisYears.length - 1)) * 100
+      : 50;
   const toY = (v) => ((MAX - v) / RANGE) * 100;
 
   // Reveal each line left-to-right during the intro animation.
@@ -591,7 +595,11 @@ const Predictiveanalyticsview = ({
                     <span key={v}>{v}</span>
                   ))}
                 </div>
-                <div className="pa-chart-main">
+                <div className="pa-chart-scroll">
+                <div
+                  className="pa-chart-main"
+                  style={{ minWidth: `${axisYears.length * 56}px` }}
+                >
                   <div className="pa-chart-grid">
                     <span />
                     <span />
@@ -704,7 +712,14 @@ const Predictiveanalyticsview = ({
                           <button
                             key={pointId}
                             type="button"
-                            className={`pa-chart-marker ${isHovered ? "is-hovered" : ""}`}
+                            className={`pa-chart-marker ${isHovered ? "is-hovered" : ""} ${
+                              axisYears.length > 1 && d.year === axisYears[0]
+                                ? "is-edge-first"
+                                : axisYears.length > 1 &&
+                                    d.year === axisYears[axisYears.length - 1]
+                                  ? "is-edge-last"
+                                  : ""
+                            }`}
                             style={{
                               left: `${toX(d.year)}%`,
                               top: `${toY(d.value)}%`,
@@ -743,21 +758,29 @@ const Predictiveanalyticsview = ({
                     style={{ "--pa-x-cols": axisYears.length }}
                   >
                     {axisYears.map((y) => (
-                      <span key={y}>{y}</span>
+                      <span key={y} style={{ left: `${toX(y)}%` }}>
+                        {y}
+                      </span>
                     ))}
                   </div>
+                </div>
                 </div>
               </div>
 
               {trendSummaries && trendSummaries.length > 0 ? (
                 trendSummaries.map((sm) => {
                   const diff = sm.predicted - sm.current;
-                  const scope = sm.respondents != null ? `${sm.label} (n=${sm.respondents})` : sm.label;
+                  // College-only alumni count (SHS rows are never predicted, so
+                  // respondent_count already excludes them).
+                  const scope = sm.respondents != null
+                    ? `${sm.label} = ${sm.respondents} alumni`
+                    : sm.label;
                   return (
                     <div className="pa-chart-summary" key={sm.key}>
+                      <span className="pa-summary-scope">{scope}</span>
                       <div className="pa-summary-block">
                         <span className="pa-summary-label">
-                          {scope} · Current{sm.pooled ? "" : ` (${sm.firstYear})`}
+                          Current{sm.pooled ? "" : ` (${sm.firstYear})`}
                         </span>
                         <strong>{sm.current}%</strong>
                       </div>
