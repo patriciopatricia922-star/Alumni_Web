@@ -49,6 +49,24 @@ const DEPARTMENT_META = {
 };
 
 // ============================================================================
+// LIVE SYNC SETTINGS
+// ----------------------------------------------------------------------------
+// The page listens for changes to the `predictions` table (Supabase Realtime)
+// and quietly re-reads it. This only refreshes what is DISPLAYED; it never
+// starts model training -- that still happens only via "Refresh Predictions".
+// ============================================================================
+const SYNC_DEBOUNCE_MS    = 1500;     // wait for a burst of row events to finish
+const SYNC_EMPTY_RETRY_MS = 3000;     // an empty table usually means a rewrite is mid-way
+const POLL_TICK_MS        = 30000;    // how often the fallback timer wakes up
+const POLL_FAST_MS        = 30000;    // re-read this often while realtime is NOT connected
+const POLL_SLOW_MS        = 300000;   // safety-net re-read while realtime IS connected
+
+// Cheap identity of a set of prediction rows. Includes ids, so a full rewrite
+// by train_model.py counts as a change even when the numbers are identical.
+const predictionsFingerprint = (rows) =>
+  rows.map((r) => `${r.id}:${r.year}:${r.predicted_rate}:${r.current_rate}`).join('|');
+
+// ============================================================================
 // GRADUATION-BATCH (COHORT) HELPERS
 // ============================================================================
 // Each prediction row written by train_model.py carries the graduation_year of
@@ -187,81 +205,99 @@ const AdminPredictiveAnalytics = () => {
     fetchPredictions();
   }, []);
 
-  // ── Live sync: keep displayed predictions current (display only) ───────────
-  // Subscribes to Supabase Realtime changes on the `predictions` table and
-  // silently re-reads it with the exact same query as the mount fetch above.
-  // It NEVER calls /api/refresh-predictions, so it cannot trigger retraining —
-  // it only re-reads rows that train_model.py (or anything else) has already
-  // written. The Refresh Predictions button is unchanged and remains the manual
-  // fallback.
-  //   * Debounced: train_model.py deletes every row and re-inserts them one by
-  //     one, which emits one event per row; they collapse into a single refetch.
-  //   * Skipped while a manual refresh is running (handleRefresh refetches itself).
-  //   * setPredictions is only called when the rows actually changed (order
-  //     ignored), so an identical re-read does not re-trigger the AI insights.
-  //   * Never touches `loading`, so the page does not flash a loading state and
-  //     the selected batch / department are preserved.
-  // Requires `predictions` to be in the supabase_realtime publication.
-  const refreshingRef = useRef(false);
-  useEffect(() => {
-    refreshingRef.current = refreshing;
-  }, [refreshing]);
+  // ── Live sync: keep the displayed predictions in step with the table ───────
+  // Realtime is the primary signal. A slow poll is a safety net (e.g. Realtime
+  // not enabled for the table, or the connection dropped), and the page also
+  // re-checks when the browser tab becomes visible again.
+  // Nothing here shows a spinner or changes the UI: if the rows are unchanged
+  // the state is left alone, so nothing re-renders or re-animates.
+  const predictionsRef = useRef(predictions);
+  predictionsRef.current = predictions;
+  const refreshingRef = useRef(refreshing);
+  refreshingRef.current = refreshing;
 
   useEffect(() => {
-    const LIVE_SYNC_DEBOUNCE_MS = 2000;
+    if (loading) return undefined;           // wait for the initial load
+
     let cancelled = false;
+    let realtimeOk = false;
+    let lastSyncAt = Date.now();
     let debounceTimer = null;
+    let retryTimer = null;
+    let channel = null;
 
-    const signature = (rows) =>
-      rows.map((r) => JSON.stringify(r)).sort().join('|');
-
-    const syncPredictions = async () => {
+    const sync = async (acceptEmpty = false) => {
+      // The manual Refresh in this tab re-reads the table itself when it ends.
       if (cancelled || refreshingRef.current) return;
+      lastSyncAt = Date.now();
       try {
-        const { data, error } = await supabase
+        const { data, error: syncError } = await supabase
           .from('predictions')
           .select('*')
           .order('year', { ascending: true })
           .order('program', { ascending: true });
-        if (error) throw error;
-        if (cancelled || refreshingRef.current) return;
-        const next = data || [];
-        setPredictions((prev) => {
-          if (signature(prev) === signature(next)) return prev;
-          console.debug('[predictions-live] predictions changed — view updated');
-          return next;
-        });
+        if (syncError) throw syncError;
+        if (cancelled) return;
+        const rows  = data || [];
+        const shown = predictionsRef.current;
+
+        // Refresh wipes the table before re-inserting. Don't blank the page for
+        // that moment -- look again shortly before accepting an empty table.
+        if (rows.length === 0 && shown.length > 0 && !acceptEmpty) {
+          clearTimeout(retryTimer);
+          retryTimer = setTimeout(() => sync(true), SYNC_EMPTY_RETRY_MS);
+          return;
+        }
+        if (predictionsFingerprint(rows) !== predictionsFingerprint(shown)) {
+          console.debug('[predictions] new data detected - updating view');
+          setPredictions(rows);
+        }
       } catch (err) {
-        console.warn('[predictions-live] silent refetch failed:', err);
+        console.warn('[predictions] background sync failed (keeping current data):', err?.message ?? err);
       }
     };
 
     const scheduleSync = () => {
+      console.debug('[predictions] change detected - re-syncing shortly');
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(syncPredictions, LIVE_SYNC_DEBOUNCE_MS);
+      debounceTimer = setTimeout(() => sync(), SYNC_DEBOUNCE_MS);
     };
 
-    const channel = supabase
-      .channel('predictions-live-sync')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'predictions' },
-        scheduleSync
-      )
-      .subscribe((status) => {
-        // Also fires after a reconnect, catching anything missed while offline.
-        if (status === 'SUBSCRIBED') scheduleSync();
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          console.warn('[predictions-live] realtime unavailable:', status);
-        }
-      });
+    if (typeof supabase.channel === 'function') {
+      channel = supabase
+        .channel('predictions-live')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'predictions' }, scheduleSync)
+        .subscribe((status) => {
+          if (cancelled) return;
+          if (status === 'SUBSCRIBED') {
+            realtimeOk = true;
+            sync();                           // catch anything missed while (re)connecting
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            realtimeOk = false;
+          }
+        });
+    }
+
+    const pollTimer = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      const every = realtimeOk ? POLL_SLOW_MS : POLL_FAST_MS;
+      if (Date.now() - lastSyncAt >= every) sync();
+    }, POLL_TICK_MS);
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') sync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       cancelled = true;
       clearTimeout(debounceTimer);
-      supabase.removeChannel(channel);
+      clearTimeout(retryTimer);
+      clearInterval(pollTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, []);
+  }, [loading]);
 
   // ── Graduation batches available in the data (options for the filter) ─────
   const batchOptions = useMemo(() => {
