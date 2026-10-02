@@ -639,6 +639,11 @@ body {
   grid-template-areas:
     "scope scope scope scope"
     "cur   arrow pred  change";
+  /* Single source of truth for the value line: the number and the arrow both
+     derive their height from these, so the arrow stays centred on the number
+     at every viewport width. */
+  --pa-sum-value-size: clamp(0.95rem, 1.5vw, 1.25rem);
+  --pa-sum-value-lh: 1.2;
   align-items: center;
   column-gap: 0.75rem;
   row-gap: 6px;
@@ -683,10 +688,10 @@ body {
 
 .pa-summary-block strong {
   font-family: 'Lexend', 'Arimo', Arial;
-  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+  font-size: var(--pa-sum-value-size);
   font-weight: 700;
   color: #0F172B;
-  line-height: 1.2;
+  line-height: var(--pa-sum-value-lh);
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   text-align: left;
@@ -698,7 +703,7 @@ body {
   align-items: center;
   justify-content: center;
   align-self: end;           /* sits on the value line, not the label line */
-  height: 1.5rem;
+  height: calc(var(--pa-sum-value-size) * var(--pa-sum-value-lh));
   flex-shrink: 0;
 }
 
@@ -1428,7 +1433,7 @@ body {
   .pa-chart-card { padding: 18px 16px 14px; }
   .pa-panel      { padding: 18px 16px; }
 
-  .pa-chart-summary  { grid-template-columns: minmax(0,1fr) 1.5rem minmax(0,1fr) auto; column-gap: 8px; }
+  .pa-chart-summary  { grid-template-columns: minmax(0,1fr) 1.5rem minmax(0,1fr) 4.5rem; column-gap: 8px; }
 
   .pa-chart-shell { height: clamp(180px, 55vw, 260px); }
 
