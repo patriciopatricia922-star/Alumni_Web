@@ -394,10 +394,31 @@ const Predictiveanalyticsview = ({
   // Chart math. With one batch selected this draws the same single line as
   // before; with "All" each batch is its own line, placed at its real calendar
   // years on a shared x-axis (so 2031 gets its own column instead of wrapping).
-  const chartSeries =
+  const baseSeries =
     trendSeries && trendSeries.length > 0
       ? trendSeries
       : [{ key: "all", label: "", points: overviewTrend }];
+  // The plotted points are the model's predicted_rate per year, so the first
+  // point is the year-0 *prediction* and the observed Current rate (e.g. 67%)
+  // never appears on the line. Anchor each batch's first and last points to the
+  // very same Current / Predicted figures shown in its summary strip, so the
+  // line visibly runs from "Current" to "Predicted". Display-only: no values
+  // are recalculated, the strip's existing numbers are just reused.
+  const chartSeries = baseSeries.map((sr) => {
+    const sm = (trendSummaries || []).find((t) => !t.pooled && t.key === sr.key);
+    if (!sm || sr.points.length < 2) return sr;
+    const last = sr.points.length - 1;
+    return {
+      ...sr,
+      points: sr.points.map((p, i) =>
+        i === 0
+          ? { ...p, value: sm.current }
+          : i === last
+            ? { ...p, value: sm.predicted }
+            : p,
+      ),
+    };
+  });
   const axisYears =
     trendYears && trendYears.length > 0
       ? trendYears
@@ -651,7 +672,14 @@ const Predictiveanalyticsview = ({
                           stopOpacity="0.02"
                         />
                       </linearGradient>
-                      <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                      <linearGradient
+                        id="lineGrad"
+                        gradientUnits="userSpaceOnUse"
+                        x1="0"
+                        y1="0"
+                        x2="100"
+                        y2="0"
+                      >
                         <stop offset="0%" stopColor="#60A5FA" />
                         <stop offset="100%" stopColor="#155DFC" />
                       </linearGradient>
