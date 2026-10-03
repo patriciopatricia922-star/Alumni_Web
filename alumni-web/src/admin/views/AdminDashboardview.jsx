@@ -21,6 +21,7 @@ import {
 } from "react-icons/md";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AdminDashboard.css";
+import { describeKpiResult } from "../../utils/kpiEngine";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -116,7 +117,7 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
 // ============================================================================
 // KPI PROGRESS CARD
 // ============================================================================
-function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount }) {
+function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount, status }) {
   const trendColor = trend.dir === "up"
     ? (targetDir === "below" ? "#F59E0B" : "#00A63E")
     : trend.dir === "down"
@@ -131,11 +132,16 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
 
   // Mirrors the isGood logic in RadialGauge exactly so the warning fires
   // whenever the gauge would show amber — including the target===100 sentinel.
-  const isNotMet = target > 0 && (
-    targetDir === "below"
-      ? (target < 100 ? progress > target : progress > 0)
-      : progress < target
-  );
+  // College KPIs carry a `status` from the shared KPI result (raw percentage vs
+  // target), so the card never re-derives it from the rounded value. SHS cards
+  // have no status and keep the original rule.
+  const isNotMet = status !== undefined
+    ? status === "not_met"
+    : target > 0 && (
+        targetDir === "below"
+          ? (target < 100 ? progress > target : progress > 0)
+          : progress < target
+      );
 
   return (
     <div className="kpi-progress-card">
@@ -478,32 +484,6 @@ function ShsContinuedStudiesChart({ data, title, subtitle, height = 300 }) {
 }
 
 // ============================================================================
-// KPI INSIGHTS RESOLVER
-// Maps a KPI label to the correct key in the kpiInsights object.
-// Keys must match those returned by buildAllKpiInsights:
-//   employment | feedback | engagement | education
-// ============================================================================
-const resolveInsightsCategory = (label) => {
-  const employmentLabels = [
-    "Absorption from Internship",
-    "Employed Within 2 Yrs of Graduation",
-    "Employed in Field / Related Field",
-    "Employed Outside Field of Specialization",
-    "Engaged in Entrepreneurship",
-    "Occupying Supervisory Positions",
-  ];
-  const educationLabels = [
-    "Pursued Graduate Studies (within 1 yr)",
-    "Pursued Graduate Studies at NU",
-    "In Positions in Professional Organizations",
-  ];
-
-  if (employmentLabels.includes(label)) return 'employment';
-  if (educationLabels.includes(label))  return 'education';
-  return 'feedback';
-};
-
-// ============================================================================
 // STATIC FALLBACK SUGGESTIONS
 // Includes your original college KPI suggestions plus SHS entries from friend.
 // ============================================================================
@@ -561,12 +541,11 @@ const staticFallbackSuggestions = (label) => {
 // ============================================================================
 // KPI ALERT MODAL
 // ============================================================================
-function KpiAlertModal({ label, onClose, kpiInsights }) {
-  const category     = resolveInsightsCategory(label);
-  const data         = kpiInsights?.[category];
-  const suggestions  = data ? data.recommendations : staticFallbackSuggestions(label);
-  const insightLines = data?.insights || [];
-  const summary      = data?.summary  || null;
+function KpiAlertModal({ label, onClose, kpiResult }) {
+  // Numbers come from the same result object the card uses; recommendations
+  // stay as the existing static text until the recommendation step.
+  const suggestions  = staticFallbackSuggestions(label);
+  const { summary, lines: insightLines } = describeKpiResult(kpiResult);
 
   // Close on Escape
   useEffect(() => {
@@ -671,7 +650,6 @@ const AdminDashboardView = ({
   inDemandSkillsData,
   careerAlignmentData,
   loadingCharts,
-  kpiInsights,
   alumniType,
   shsPostGradPathData,
   shsContinuedStudiesData,
@@ -847,7 +825,9 @@ const AdminDashboardView = ({
           <KpiAlertModal
             label={activeKpiModal}
             onClose={() => setActiveKpiModal(null)}
-            kpiInsights={kpiInsights}
+            kpiResult={Object.values(kpiData || {})
+              .flat()
+              .find((k) => k.label === activeKpiModal)?.result}
           />
         )}
 

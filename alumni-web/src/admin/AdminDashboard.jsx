@@ -5,7 +5,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import AdminDashboardView from "./views/AdminDashboardview";
-import { buildAllKpiInsights } from "../services/KpiInsightsService";
+import {
+  computeCollegeKpiResults,
+  toCardProps,
+} from "../utils/kpiEngine";
+import { formatValidationReport } from "../utils/kpiValidation";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
@@ -51,27 +55,6 @@ const STATUS_MAPPING = {
 };
 
 // ============================================================================
-// SUPERVISORY KEYWORDS
-// ============================================================================
-const SUPERVISORY_KEYWORDS = [
-  "manager",
-  "supervisor",
-  "lead",
-  "leader",
-  "head",
-  "director",
-  "chief",
-  "officer",
-  "coordinator",
-  "superintendent",
-  "foreman",
-  "overseer",
-  "team lead",
-  "senior",
-  "principal",
-];
-
-// ============================================================================
 // UNEMPLOYED STATUSES
 // ============================================================================
 const UNEMPLOYED_STATUSES = new Set([
@@ -81,39 +64,6 @@ const UNEMPLOYED_STATUSES = new Set([
   "Not employed",
   "Looking for work",
 ]);
-
-// ============================================================================
-// NU BRANCH KEYWORDS
-// ============================================================================
-const NU_BRANCH_KEYWORDS = [
-  "nu manila",
-  "nu nazareth",
-  "nu fairview",
-  "nu laguna",
-  "nu baliwag",
-  "nu dasmarinas",
-  "nu dasmariñas",
-  "nu lipa",
-  "nu east ortigas",
-  "nu bacolod",
-  "nu cebu",
-  "nu moa",
-  "nu clark",
-  "nu las piñas",
-  "nu las pinas",
-  "national university",
-];
-
-// ============================================================================
-// isInternshipSource — normalised substring check
-// ============================================================================
-const isInternshipSource = (rawValue) => {
-  const src = (rawValue || "").toLowerCase().trim();
-  if (!src) return false;
-  return ["internship", "ojt", "on-the-job", "practicum"].some((kw) =>
-    src.includes(kw),
-  );
-};
 
 // ============================================================================
 // SKILL CATEGORY MATCHERS
@@ -155,15 +105,6 @@ const normalizeSkillCategory = (rawLabel) => {
   const normalized = rawLabel.toLowerCase().replace(/[^a-z]/g, "");
   const match = SKILL_CATEGORY_MATCHERS.find((c) => c.test(normalized));
   return match ? match.label : null;
-};
-
-// ============================================================================
-// isNuBranch — checks if a post-grad institution string matches any NU campus
-// ============================================================================
-const isNuBranch = (rawValue) => {
-  const val = (rawValue || "").toLowerCase().trim();
-  if (!val) return false;
-  return NU_BRANCH_KEYWORDS.some((kw) => val.includes(kw));
 };
 
 // ============================================================================
@@ -223,8 +164,8 @@ const institutionalKpis = {
       label: "Absorption from Internship",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -233,8 +174,8 @@ const institutionalKpis = {
       label: "Employed Within 2 Yrs of Graduation",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -243,8 +184,8 @@ const institutionalKpis = {
       label: "Employed in Field / Related Field",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
   ],
@@ -255,8 +196,8 @@ const institutionalKpis = {
       label: "Employed Outside Field of Specialization",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       targetDir: "below",
       trend: { dir: "none", delta: "" },
     },
@@ -266,8 +207,8 @@ const institutionalKpis = {
       label: "Engaged in Entrepreneurship",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -276,8 +217,8 @@ const institutionalKpis = {
       label: "Occupying Supervisory Positions",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
   ],
@@ -288,8 +229,8 @@ const institutionalKpis = {
       label: "Pursued Graduate Studies (within 1 yr)",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -298,8 +239,8 @@ const institutionalKpis = {
       label: "Pursued Graduate Studies at NU",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -309,7 +250,7 @@ const institutionalKpis = {
       value: "0",
       progress: 0,
       target: 0,
-      targetLabel: "Goal: —",
+      targetLabel: "No target set",
       isCount: true,
       trend: { dir: "none", delta: "" },
     },
@@ -419,7 +360,6 @@ const AdminDashboard = () => {
   const [shsContinuedStudiesData, setShsContinuedStudiesData] = useState([]);
 
   // ── Dynamic KPI insights ──────────────────────────────────────────────────
-  const [kpiInsights, setKpiInsights] = useState(null);
 
   // ==========================================================================
   // KPI DATA FETCHING
@@ -686,17 +626,23 @@ const AdminDashboard = () => {
 
       setShsContinuedStudiesData(continuedStudiesChartData);
 
-      // ── 10. All 9 College Institutional KPIs + dynamic insights ──────────
-      // Build dynamic insights from College survey rows only.
-      const insights = buildAllKpiInsights(collegeSurveyRows);
-      setKpiInsights(insights);
+      // ── 10. All 9 College Institutional KPIs ─────────────────────────────
+      // One calculation (utils/kpiEngine.js) feeds both the KPI cards and the
+      // KPI modal. Eligibility, n, d, raw % and display % are all decided
+      // there; nothing below recalculates a KPI.
+      const { dataset: kpiDataset, results: kpiResults } =
+        computeCollegeKpiResults(collegeAlumni, collegeSurveyRows);
 
+      if (import.meta.env.DEV) {
+        // Development-only validation log (anonymised row refs, no PII).
+        console.log(
+          "[KPI validation]\n" + formatValidationReport(kpiDataset, kpiResults),
+        );
+      }
+
+      // Employment Rate stat card (not one of the 9 KPIs) keeps its own logic.
       const parsedCollege = collegeSurveyRows.map((row) => ({
         emp: safeParse(row.employment_information_data),
-        edu: safeParse(row.educational_background_data),
-        eng: safeParse(row.alumni_engagement_data),
-        job: safeParse(row.job_experience_data),
-        skills: safeParse(row.skills_competencies_data),
       }));
 
       const isEmployedHelper = (emp) => {
@@ -711,150 +657,6 @@ const AdminDashboard = () => {
       };
 
       const withEmpData = parsedCollege.filter((r) => r.emp !== null);
-      const withEduData = parsedCollege.filter((r) => r.edu !== null);
-      const employedRows = withEmpData.filter((r) => isEmployedHelper(r.emp));
-      const withJobData = parsedCollege.filter((r) => r.job !== null);
-
-      if (import.meta.env.DEV) {
-        console.log(
-          "[internship KPI] all first_job_source values:",
-          withJobData.map((r) => r.job.first_job_source ?? "(missing)"),
-        );
-        console.log("[internship KPI] withJobData count:", withJobData.length);
-      }
-
-      // ── Employment tab KPIs ───────────────────────────────────────────────
-
-      const internshipCount = withJobData.filter((r) => {
-        const rawSrc =
-          r.job.first_job_source ||
-          r.job.how_found_first_job ||
-          r.job.source_of_first_job ||
-          r.job.job_source ||
-          "";
-        return isInternshipSource(rawSrc);
-      }).length;
-      const internshipPct =
-        withJobData.length > 0
-          ? Math.round((internshipCount / withJobData.length) * 100)
-          : 0;
-
-      const empWithinTwoYears = withEmpData.filter((r) =>
-        isEmployedHelper(r.emp),
-      ).length;
-      const empTwoYearsPct =
-        withEmpData.length > 0
-          ? Math.round((empWithinTwoYears / withEmpData.length) * 100)
-          : 0;
-
-      const fieldRelatedCount = employedRows.filter((r) => {
-        const val =
-          r.emp.job_related_to_degree ||
-          r.emp.is_job_related_to_degree ||
-          r.emp.jobRelatedToDegree ||
-          "";
-        return val === "Yes" || val === true;
-      }).length;
-      const fieldRelatedPct =
-        employedRows.length > 0
-          ? Math.round((fieldRelatedCount / employedRows.length) * 100)
-          : 0;
-
-      // ── Career tab KPIs ───────────────────────────────────────────────────
-
-      const outsideFieldCount = employedRows.filter((r) => {
-        const val =
-          r.emp.job_related_to_degree ||
-          r.emp.is_job_related_to_degree ||
-          r.emp.jobRelatedToDegree ||
-          "";
-        return val === "No" || val === false;
-      }).length;
-      const outsideFieldPct =
-        employedRows.length > 0
-          ? Math.round((outsideFieldCount / employedRows.length) * 100)
-          : 0;
-
-      const entrepreneurCount = withEmpData.filter((r) => {
-        const status =
-          r.emp.employment_status ||
-          r.emp.current_employment_status ||
-          r.emp.employmentStatus ||
-          "";
-        return status === "Self-Employed" || status === "Self-employed";
-      }).length;
-      const entrepreneurPct =
-        withEmpData.length > 0
-          ? Math.round((entrepreneurCount / withEmpData.length) * 100)
-          : 0;
-
-      const supervisoryCount = employedRows.filter((r) => {
-        const pos = (
-          r.emp.job_position ||
-          r.emp.jobPosition ||
-          r.emp.position ||
-          ""
-        ).toLowerCase();
-        return SUPERVISORY_KEYWORDS.some((kw) => pos.includes(kw));
-      }).length;
-      const supervisoryPct =
-        employedRows.length > 0
-          ? Math.round((supervisoryCount / employedRows.length) * 100)
-          : 0;
-
-      // ── Education tab KPIs ────────────────────────────────────────────────
-
-      const gradStudiesCount = withEduData.filter((r) => {
-        const plans =
-          r.edu.post_grad_plans ||
-          r.edu.postGradPlans ||
-          r.edu.plans_postgraduate ||
-          r.edu.do_you_have_plans_postgrad ||
-          r.edu.plansPostgraduate ||
-          r.edu.post_graduate_plans ||
-          "";
-        return plans === "Yes" || plans === true;
-      }).length;
-      const gradStudiesPct =
-        withEduData.length > 0
-          ? Math.round((gradStudiesCount / withEduData.length) * 100)
-          : 0;
-
-      const nuGradStudiesCount = withEduData.filter((r) => {
-        const plans =
-          r.edu.post_grad_plans ||
-          r.edu.postGradPlans ||
-          r.edu.plans_postgraduate ||
-          r.edu.do_you_have_plans_postgrad ||
-          r.edu.plansPostgraduate ||
-          r.edu.post_graduate_plans ||
-          "";
-        if (plans !== "Yes" && plans !== true) return false;
-        const institution =
-          r.edu.post_grad_course ||
-          r.edu.postGradCourse ||
-          r.edu.post_grad_school ||
-          r.edu.postGradSchool ||
-          r.edu.graduate_school ||
-          r.edu.school ||
-          "";
-        return isNuBranch(institution);
-      }).length;
-      const nuGradStudiesPct =
-        withEduData.length > 0
-          ? Math.round((nuGradStudiesCount / withEduData.length) * 100)
-          : 0;
-
-      const withSkillsData = parsedCollege.filter((r) => r.skills !== null);
-      const leadershipCount = withSkillsData.filter((r) => {
-        const ratings = r.skills.skill_ratings || r.skills.skillRatings || {};
-        const leadershipRating =
-          ratings["Leadership Skills"] ??
-          ratings["leadership_skills"] ??
-          ratings["Leadership"] ??
-          null;
-        return leadershipRating !== null && Number(leadershipRating) >= 4;
-      }).length;
 
       // ── College Employment Rate stat card ─────────────────────────────────
       const employedStatCount = withEmpData.filter((r) =>
@@ -899,89 +701,13 @@ const AdminDashboard = () => {
           ? Math.round((shsPursuedUndergradNu / shsWithEduRows.length) * 100)
           : 0;
       // ── Apply computed KPIs to state ──────────────────────────────────────
+      const fromResults = (kpi) =>
+        kpiResults[kpi.id] ? { ...kpi, ...toCardProps(kpiResults[kpi.id]) } : kpi;
+
       setKpiData({
-        employment: institutionalKpis.employment.map((kpi) => {
-          switch (kpi.id) {
-            case "internship_absorption":
-              return {
-                ...kpi,
-                value: `${internshipPct}%`,
-                progress: internshipPct,
-              };
-            case "employment_two_years":
-              return {
-                ...kpi,
-                value: `${empTwoYearsPct}%`,
-                progress: empTwoYearsPct,
-              };
-            case "field_related":
-              return {
-                ...kpi,
-                value: `${fieldRelatedPct}%`,
-                progress: fieldRelatedPct,
-              };
-            default:
-              return kpi;
-          }
-        }),
-
-        career: institutionalKpis.career.map((kpi) => {
-          switch (kpi.id) {
-            case "outside_field":
-              return {
-                ...kpi,
-                value: `${outsideFieldPct}%`,
-                progress: outsideFieldPct,
-              };
-            case "entrepreneurship":
-              return {
-                ...kpi,
-                value: `${entrepreneurPct}%`,
-                progress: entrepreneurPct,
-              };
-            case "supervisory":
-              return {
-                ...kpi,
-                value: `${supervisoryPct}%`,
-                progress: supervisoryPct,
-              };
-            default:
-              return kpi;
-          }
-        }),
-
-        education: institutionalKpis.education.map((kpi) => {
-          switch (kpi.id) {
-            case "grad_studies":
-              return {
-                ...kpi,
-                value: `${gradStudiesPct}%`,
-                progress: gradStudiesPct,
-                targetLabel: `Goal: 100% (${gradStudiesCount} of ${withEduData.length})`,
-              };
-            case "nu_grad_studies":
-              return {
-                ...kpi,
-                value: `${nuGradStudiesPct}%`,
-                progress: nuGradStudiesPct,
-                targetLabel: `Goal: 100% (${nuGradStudiesCount} of ${withEduData.length})`,
-              };
-            case "prof_org":
-              return {
-                ...kpi,
-                value: String(leadershipCount),
-                progress:
-                  withSkillsData.length > 0
-                    ? Math.round(
-                        (leadershipCount / withSkillsData.length) * 100,
-                      )
-                    : 0,
-                targetLabel: `${leadershipCount} alumni`,
-              };
-            default:
-              return kpi;
-          }
-        }),
+        employment: institutionalKpis.employment.map(fromResults),
+        career: institutionalKpis.career.map(fromResults),
+        education: institutionalKpis.education.map(fromResults),
 
         seniorrhigh: institutionalKpis.seniorrhigh.map((kpi) => {
           switch (kpi.id) {
@@ -1214,7 +940,6 @@ const AdminDashboard = () => {
       inDemandSkillsData={inDemandSkillsData}
       careerAlignmentData={careerAlignmentData}
       loadingCharts={loadingCharts}
-      kpiInsights={kpiInsights}
       alumniType={alumniType}
       shsPostGradPathData={shsPostGradPathData}
       shsContinuedStudiesData={shsContinuedStudiesData}
