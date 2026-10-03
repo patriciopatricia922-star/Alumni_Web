@@ -21,7 +21,7 @@ import {
 } from "react-icons/md";
 import AdminSidebar from "../components/AdminSidebar";
 import "../styles/AdminDashboard.css";
-import { describeKpiResult } from "../../utils/kpiEngine";
+import { buildKpiRecommendations } from "../../utils/kpiRecommendations";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -165,6 +165,16 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
             >
               <MdWarningAmber size={13} />
               Goal not met — click for suggestions
+            </div>
+          )}
+          {!isNotMet && status !== undefined && (
+            <div
+              className="kpi-alert-text"
+              style={{ color: "#45556C" }}
+              onClick={() => window.dispatchEvent(new CustomEvent('openKpiModal', { detail: { label } }))}
+            >
+              <MdBarChart size={13} />
+              View insights
             </div>
           )}
         </div>
@@ -542,10 +552,14 @@ const staticFallbackSuggestions = (label) => {
 // KPI ALERT MODAL
 // ============================================================================
 function KpiAlertModal({ label, onClose, kpiResult }) {
-  // Numbers come from the same result object the card uses; recommendations
-  // stay as the existing static text until the recommendation step.
-  const suggestions  = staticFallbackSuggestions(label);
-  const { summary, lines: insightLines } = describeKpiResult(kpiResult);
+  // Everything shown here is built from the same result object the card uses.
+  // SHS cards have no result, so they keep the original static text.
+  const rec          = buildKpiRecommendations(kpiResult);
+  const suggestions  = rec ? rec.recommendations : staticFallbackSuggestions(label);
+  const insightLines = rec ? rec.observations : [];
+  const summary      = rec ? rec.summary : null;
+  const badgeText    = rec ? rec.badge : "Below Target Performance";
+  const isShortfall  = !rec || rec.badge === "Below Target Performance";
 
   // Close on Escape
   useEffect(() => {
@@ -579,9 +593,12 @@ function KpiAlertModal({ label, onClose, kpiResult }) {
         </div>
 
         {/* ── STATUS BADGE ── */}
-        <div className="kpi-modal-status">
-          <MdWarningAmber size={14} />
-          Below Target Performance
+        <div
+          className="kpi-modal-status"
+          style={isShortfall ? undefined : { background: "#F1F5F9", color: "#45556C" }}
+        >
+          {isShortfall ? <MdWarningAmber size={14} /> : <MdBarChart size={14} />}
+          {badgeText}
         </div>
 
         {/* ── DESCRIPTION ── */}
