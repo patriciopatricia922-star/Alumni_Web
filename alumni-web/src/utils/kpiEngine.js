@@ -346,64 +346,18 @@ const buildResult = (id, spec, rowsOutcome, extra = {}) => {
       qualifying: n,
       nonQualifying: d - n,
       notEvaluable: rowsOutcome.filter((r) => r.outcome === "not_evaluable").length,
-      ...withFacts(rowsOutcome),
       ...extra,
     },
-    rows: rowsOutcome.map(({ ref, program, outcome, reason, detail }) => ({
+    rows: rowsOutcome.map(({ ref, program, outcome, reason }) => ({
       ref,
       program,
       outcome,
       reason,
-      detail,
     })),
   };
 };
 
-const tally = (items) => {
-  const m = new Map();
-  items.forEach((x) => m.set(x, (m.get(x) || 0) + 1));
-  return [...m.entries()]
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
-};
-
-/**
- * Adds the facts the modal is allowed to cite. Everything here is counted
- * from the same rows as n and d, so it can never disagree with the card:
- *  - categories: how the evaluable alumni answered (only answers that exist)
- *  - byProgram: n and d per program
- *  - notEvaluableReasons: why alumni were left out of d
- */
-const withFacts = (rowsOutcome) => {
-  const evaluable = rowsOutcome.filter(
-    (r) => r.outcome === "qualifying" || r.outcome === "non_qualifying",
-  );
-  const programs = tally(evaluable.map((r) => r.program)).map(({ label }) => label);
-  return {
-    categories: tally(evaluable.map((r) => r.detail).filter(Boolean)),
-    byProgram: programs
-      .map((program) => {
-        const inProg = evaluable.filter((r) => r.program === program);
-        return {
-          program,
-          n: inProg.filter((r) => r.outcome === "qualifying").length,
-          d: inProg.length,
-        };
-      })
-      .sort((a, b) => a.program.localeCompare(b.program)),
-    notEvaluableReasons: tally(
-      rowsOutcome.filter((r) => r.outcome === "not_evaluable").map((r) => r.reason),
-    ),
-  };
-};
-
-const row = (r, outcome, reason, detail) => ({
-  ref: r.ref,
-  program: r.program,
-  outcome,
-  reason,
-  detail,
-});
+const row = (r, outcome, reason) => ({ ref: r.ref, program: r.program, outcome, reason });
 
 const notMeasurable = (id, eligibleCount, reason) =>
   buildResult(
@@ -437,13 +391,13 @@ export const computeCollegeKpis = (dataset) => {
       if (src === null) return row(r, "not_evaluable", "no_first_job_source");
       if (isNotApplicable(src)) return row(r, "not_evaluable", "not_applicable");
       return lc(src) === INTERNSHIP_SOURCE_VALUE.toLowerCase()
-        ? row(r, "qualifying", "internship_absorption", src)
-        : row(r, "non_qualifying", "other_source", src);
+        ? row(r, "qualifying", "internship_absorption")
+        : row(r, "non_qualifying", "other_source");
     }),
   );
 
   // 2. Employed within 2 years ("to date") ----------------------------------
-  // The 2-year window is not complete for the most recent batches, so this is
+  // The 2-year window is not complete for the 2025/2026 batches, so this is
   // reported "to date": currently employed OR reported a real
   // time_to_find_job bucket (i.e. a job was found after graduation).
   out.employment_two_years = buildResult(
@@ -452,21 +406,19 @@ export const computeCollegeKpis = (dataset) => {
       basis: "to_date",
       eligibleCount: E,
       note:
-        "Reported to date: currently employed, or reported finding a job after graduation. The 2-year window is not yet complete for the most recent graduating batches, so this is not a strict 2-year outcome.",
+        "Reported to date: currently employed, or reported finding a job after graduation. The 2-year window is not yet complete for the 2025-2026 batches, so this is not a strict 2-year outcome.",
     },
     eligible.map((r) => {
       const cls = classifyEmployment(r.emp);
       if (cls === null || cls === "unclassified") {
         return row(r, "not_evaluable", cls === null ? "no_employment_status" : "unclassified_status");
       }
-      if (cls === "employed") {
-        return row(r, "qualifying", "currently_employed", "Currently employed");
-      }
+      if (cls === "employed") return row(r, "qualifying", "currently_employed");
       const ttf = clean(r.job?.time_to_find_job);
       if (ttf !== null && !isNotApplicable(ttf)) {
-        return row(r, "qualifying", "found_job_after_graduation", "Found a job after graduation, not employed now");
+        return row(r, "qualifying", "found_job_after_graduation");
       }
-      return row(r, "non_qualifying", "no_job_reported", "No job reported");
+      return row(r, "non_qualifying", "no_job_reported");
     }),
   );
 
@@ -481,10 +433,9 @@ export const computeCollegeKpis = (dataset) => {
       if (v !== "yes" && v !== "no") {
         return row(r, "not_evaluable", "no_job_related_answer");
       }
-      const answer = v === "yes" ? "Job related to degree" : "Job not related to degree";
       return v === match
-        ? row(r, "qualifying", `job_related_${match}`, answer)
-        : row(r, "non_qualifying", `job_related_${match === "yes" ? "no" : "yes"}`, answer);
+        ? row(r, "qualifying", `job_related_${match}`)
+        : row(r, "non_qualifying", `job_related_${match === "yes" ? "no" : "yes"}`);
     });
   out.field_related = buildResult("field_related", { basis: "direct", eligibleCount: E }, fieldRows("yes"));
   out.outside_field = buildResult("outside_field", { basis: "direct", eligibleCount: E }, fieldRows("no"));
@@ -504,10 +455,9 @@ export const computeCollegeKpis = (dataset) => {
       if (classifyEmployment(r.emp) !== "employed") {
         return row(r, "not_evaluable", "not_employed");
       }
-      const st = clean(r.emp.employment_status);
-      return lc(st) === SELF_EMPLOYED_STATUS.toLowerCase()
-        ? row(r, "qualifying", "self_employed", st)
-        : row(r, "non_qualifying", "employed_by_others", st);
+      return lc(r.emp.employment_status) === SELF_EMPLOYED_STATUS.toLowerCase()
+        ? row(r, "qualifying", "self_employed")
+        : row(r, "non_qualifying", "employed_by_others");
     }),
   );
 
@@ -547,8 +497,8 @@ export const computeCollegeKpis = (dataset) => {
       const v = lc(r.edu?.post_grad_plans);
       if (v !== "yes" && v !== "no") return row(r, "not_evaluable", "no_post_grad_plans_answer");
       return v === "yes"
-        ? row(r, "qualifying", "plans_postgraduate", "Plans postgraduate study")
-        : row(r, "non_qualifying", "no_plans", "No postgraduate plans");
+        ? row(r, "qualifying", "plans_postgraduate")
+        : row(r, "non_qualifying", "no_plans");
     }),
   );
 
@@ -576,3 +526,65 @@ export const computeCollegeKpiResults = (users, surveyRows, opts) => {
 // ----------------------------------------------------------------------------
 // PRESENTATION HELPERS (shared by the card wiring and the modal)
 // ----------------------------------------------------------------------------
+
+/** Card props derived from a result. No arithmetic beyond formatting. */
+export const toCardProps = (result) => {
+  const measurable = result.status !== "not_measurable";
+  const hasPct = measurable && result.displayPct !== null;
+  const hasTarget = result.target !== null && measurable && result.d > 0;
+  let targetLabel;
+  if (!measurable) targetLabel = "Not measurable";
+  else if (hasTarget) targetLabel = `Goal: ${result.target}% (${result.n} of ${result.d})`;
+  else targetLabel = `No target set (${result.n} of ${result.d})`;
+
+  return {
+    value: hasPct ? `${result.displayPct}%` : "N/A",
+    progress: hasPct ? result.displayPct : 0,
+    target: hasTarget ? result.target : 0, // 0 = "No Goal" gauge, never "Goal not met"
+    targetDir: result.targetDir,
+    targetLabel,
+    status: result.status,
+    result,
+  };
+};
+
+const fmt = (x) => (Math.round(x * 100) / 100).toString();
+
+/**
+ * Modal text built from the SAME result object the card uses.
+ * Returns { summary, lines }.
+ */
+export const describeKpiResult = (result) => {
+  if (!result) return { summary: null, lines: [] };
+  if (result.status === "not_measurable") {
+    return {
+      summary: NOT_MEASURABLE_MESSAGE + ".",
+      lines: [result.breakdown.reason].filter(Boolean),
+    };
+  }
+  const lines = [];
+  if (result.d === 0) {
+    return { summary: "No evaluable responses yet.", lines };
+  }
+  lines.push(
+    `${result.n} of ${result.d} evaluable alumni qualify = ${fmt(result.rawPct)}% (shown as ${result.displayPct}%).`,
+  );
+  lines.push(
+    `Eligible College alumni: ${result.breakdown.eligiblePopulation}; not evaluable for this KPI: ${result.breakdown.notEvaluable}.`,
+  );
+  if (result.target !== null) {
+    lines.push(
+      result.targetDir === "below"
+        ? `Target: at most ${result.target}%. Current value is ${fmt(Math.abs(result.gap))} points ${result.gap > 0 ? "above" : "within"} the ceiling.`
+        : `Target: ${result.target}%. Current value is ${fmt(Math.abs(result.gap))} points ${result.gap > 0 ? "below" : "above"} the target.`,
+    );
+  } else {
+    lines.push("No institutional target has been set for this KPI.");
+  }
+  if (result.note) lines.push(result.note);
+  lines.push(`Based on ${result.d} response${result.d === 1 ? "" : "s"}; one alumnus moves this value by ${fmt(100 / result.d)} points.`);
+  return {
+    summary: `${result.label}: ${result.n} of ${result.d} = ${fmt(result.rawPct)}%.`,
+    lines,
+  };
+};
