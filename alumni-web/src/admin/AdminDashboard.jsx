@@ -8,8 +8,8 @@ import AdminDashboardView from "./views/AdminDashboardview";
 import {
   computeCollegeKpiResults,
   toCardProps,
-} from "../utils/kpiEngine";
-import { formatValidationReport } from "../utils/kpiValidation";
+} from "../../utils/kpiEngine";
+import { formatValidationReport } from "../../utils/kpiValidation";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
