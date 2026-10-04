@@ -436,7 +436,7 @@
 
 /* ============================ KPI MODAL ============================ */
 
-/* Overlay — fixed to viewport, always fully visible */
+/* Overlay: fixed to the viewport, always fully visible */
 .kpi-modal-overlay {
   position: fixed;
   inset: 0;
@@ -445,25 +445,25 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 16px;                  /* keeps modal away from screen edges */
+  padding: 16px;
   box-sizing: border-box;
-  overflow-y: auto;               /* allows scrolling on very small screens */
+  overflow-y: auto;
 }
 
-/* Modal container — max-height + overflow-y prevent clipping */
+/* Modal: header and footer stay in view, only the body scrolls */
 .kpi-modal {
+  --kpi-pad: 24px;
   width: 100%;
   max-width: 480px;
-  max-height: calc(100vh - 32px); /* never taller than the viewport */
+  max-height: calc(100vh - 32px);
   background: #ffffff;
   border-radius: 18px;
-  padding: 24px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
   font-family: 'Lexend', sans-serif;
   animation: kpiModalFadeIn 0.2s ease;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;               /* scroll internally when content is tall */
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -474,10 +474,7 @@
 
 /* ── HEADER ── */
 .kpi-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
+  padding: var(--kpi-pad) var(--kpi-pad) 0;
   flex-shrink: 0;
 }
 
@@ -487,134 +484,326 @@
   color: #1E293B;
   line-height: 1.35;
   margin: 0;
-  word-break: break-word;       /* prevents long KPI names from overflowing */
+  word-break: break-word;
 }
 
-.kpi-modal-close-icon {
-  background: #F1F5F9;
-  border: none;
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  border-radius: 50%;
-  font-size: 14px;
-  cursor: pointer;
-  color: #64748B;
+/* ── BODY (scrolls) ── */
+.kpi-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--kpi-pad) 8px;
+}
+
+/* ── RESULT ── */
+.kpi-hero {
+  margin-top: 16px;
+}
+
+.kpi-hero-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 16px;
 }
 
-.kpi-modal-close-icon:hover {
+.kpi-hero-value {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-hero-value small {
+  font-size: 20px;
+  font-weight: 500;
+  color: #94A3B8;
+}
+
+.kpi-hero-frac {
+  font-size: 13px;
+  color: #475569;
+  padding-bottom: 5px;
+}
+
+.kpi-hero-frac b {
+  color: #1E293B;
+  font-weight: 600;
+}
+
+.kpi-hero-bar {
+  height: 6px;
+  border-radius: 999px;
   background: #E2E8F0;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.kpi-hero-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #324D87;
+}
+
+/* ── STATUS CHIPS ── */
+.kpi-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.kpi-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.kpi-chip--warn    { background: #FEF3C7; color: #92400E; }
+.kpi-chip--ok      { background: #ECFDF5; color: #047857; }
+.kpi-chip--neutral { background: #F1F5F9; color: #45556C; }
+.kpi-chip--plain   { background: #F8FAFC; color: #475569; border: 1px solid #E8EFF7; font-weight: 500; }
+
+/* ── MESSAGE (not measurable / no data) ── */
+.kpi-message {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #F8FAFC;
+  border: 1px solid #E8EFF7;
+  border-radius: 10px;
+}
+
+.kpi-message-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
   color: #1E293B;
 }
 
-/* ── STATUS BADGE ── */
-.kpi-modal-status {
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #FEF3C7;
-  color: #92400E;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 999px;
-  letter-spacing: 0.2px;
-  flex-shrink: 0;
+.kpi-message-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #475569;
 }
 
-/* ── DESCRIPTION ── */
+/* ── SECTIONS ── */
+.kpi-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #E8EFF7;
+}
+
+.kpi-section-title {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #94A3B8;
+}
+
+.kpi-section-hint {
+  margin: -4px 0 12px;
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+/* label and value rows */
+.kpi-kv {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.kpi-kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.kpi-kv-row dt { margin: 0; min-width: 0; word-break: break-word; }
+
+.kpi-kv-row dd {
+  margin: 0;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* survey answers */
+.kpi-answer + .kpi-answer {
+  margin-top: 18px;
+}
+
+.kpi-answer-q {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.5;
+}
+
+.kpi-answer-stat {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-answer-meta {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #94A3B8;
+}
+
+.kpi-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kpi-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: baseline;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.kpi-bar-label { word-break: break-word; }
+
+.kpi-bar-count {
+  font-weight: 600;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.kpi-bar-track {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: #E2E8F0;
+  overflow: hidden;
+}
+
+.kpi-bar-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #324D87;
+  opacity: 0.75;
+}
+
+/* small-group caution */
+.kpi-caution {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  background: #F8FAFC;
+  border: 1px solid #E8EFF7;
+  border-radius: 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #475569;
+}
+
+/* suggested actions */
+.kpi-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.kpi-action {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 0;
+  border-top: 1px solid #E8EFF7;
+}
+
+.kpi-action:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.kpi-action-no {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #EFF6FF;
+  color: #324D87;
+  font-size: 11.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-action-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1E293B;
+  word-break: break-word;
+}
+
+.kpi-action-basis {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #94A3B8;
+  word-break: break-word;
+}
+
+.kpi-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.kpi-tag--evidence { background: #ECFDF5; color: #047857; }
+.kpi-tag--general  { background: #F8FAFC; color: #475569; border: 1px solid #E8EFF7; }
+
+/* fallback description (SHS cards) */
 .kpi-modal-desc {
-  margin-top: 14px;
+  margin: 14px 0 0;
   font-size: 13px;
   color: #475569;
   line-height: 1.65;
   word-break: break-word;
-  flex-shrink: 0;
-}
-
-/* ── SECTION LABEL (Insights / Recommendations) ── */
-.kpi-modal-section-label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 18px;
-  margin-bottom: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  color: #94A3B8;
-  flex-shrink: 0;
-}
-
-/* ── SUGGESTIONS LIST ── */
-.kpi-modal-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* Individual card */
-.kpi-suggestion-item {
-  display: flex;
-  gap: 10px;
-  background: #F8FAFC;
-  border: 1px solid #E8EFF7;
-  padding: 11px 13px;
-  border-radius: 10px;
-  align-items: flex-start;
-  transition: background 0.12s;
-}
-
-.kpi-suggestion-item:hover {
-  background: #EFF6FF;
-}
-
-/* Icon column — fixed width so text always aligns */
-.suggestion-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.suggestion-icon--insight {
-  background: #EFF6FF;
-  color: #3B82F6;
-}
-
-.suggestion-icon--rec {
-  background: #ECFDF5;
-  color: #059669;
-}
-
-/* Text */
-.suggestion-text {
-  font-size: 13px;
-  color: #334155;
-  line-height: 1.6;
-  word-break: break-word;
-  flex: 1;
 }
 
 /* ── FOOTER ── */
 .kpi-modal-footer {
-  margin-top: 20px;
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  flex-shrink: 0;
+  padding: 14px var(--kpi-pad) var(--kpi-pad);
+  border-top: 1px solid #E8EFF7;
 }
 
 .kpi-modal-close {
@@ -634,7 +823,12 @@
   background: #253a6a;
 }
 
-/* ── RESPONSIVE — TABLET (≤ 768px) ── */
+.kpi-modal-close:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* ── RESPONSIVE: TABLET (<= 768px) ── */
 @media (max-width: 768px) {
   .kpi-modal-overlay {
     padding: 12px;
@@ -642,26 +836,18 @@
   }
 
   .kpi-modal {
+    --kpi-pad: 18px;
     max-width: 100%;
     max-height: 88vh;
     border-radius: 18px 18px 12px 12px;
-    padding: 20px 18px;
   }
 
   .kpi-modal-header h2 {
     font-size: 15px;
   }
-
-  .kpi-modal-desc {
-    font-size: 12.5px;
-  }
-
-  .suggestion-text {
-    font-size: 12.5px;
-  }
 }
 
-/* ── RESPONSIVE — MOBILE (≤ 480px) ── */
+/* ── RESPONSIVE: MOBILE (<= 480px) ── */
 @media (max-width: 480px) {
   .kpi-modal-overlay {
     padding: 0;
@@ -669,30 +855,17 @@
   }
 
   .kpi-modal {
+    --kpi-pad: 16px;
     max-height: 92vh;
     border-radius: 16px 16px 0 0;
-    padding: 18px 16px 24px;
   }
 
   .kpi-modal-header h2 {
     font-size: 14px;
   }
 
-  .kpi-modal-status {
-    font-size: 11px;
-  }
-
-  .kpi-modal-desc {
-    font-size: 12px;
-    margin-top: 10px;
-  }
-
-  .kpi-suggestion-item {
-    padding: 10px 11px;
-  }
-
-  .suggestion-text {
-    font-size: 12px;
+  .kpi-hero-value {
+    font-size: 38px;
   }
 
   .kpi-modal-close {

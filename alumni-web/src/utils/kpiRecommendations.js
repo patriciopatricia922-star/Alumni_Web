@@ -420,6 +420,32 @@ const chooseActions = (id, findings, count, rng) => {
 };
 
 // ----------------------------------------------------------------------------
+// Small-group caution (plain language, no statistics terms)
+// ----------------------------------------------------------------------------
+
+/** Below this many alumni who can be judged, one alumnus visibly moves the result. */
+export const SMALL_SAMPLE_LIMIT = 30;
+
+/**
+ * "Only 5 alumni can be judged, so one alumnus changes the result a lot. If one
+ * answered differently, it would be 40% or 0% instead of 20%."
+ * Null when the group is large enough or there is nothing to judge.
+ */
+export const smallSampleNote = (result) => {
+  const { n, d } = result;
+  if (!d || d >= SMALL_SAMPLE_LIMIT) return null;
+  const share = (k) => `${Math.round((k / d) * 100)}%`;
+  const options = [];
+  if (n < d) options.push(share(n + 1));
+  if (n > 0) options.push(share(n - 1));
+  const head =
+    d === 1
+      ? "Only 1 alumnus can be judged, so this one answer decides the whole result."
+      : `Only ${d} alumni can be judged, so one alumnus changes the result ${d <= 5 ? "a lot" : "noticeably"}.`;
+  return `${head} If ${d === 1 ? "that alumnus" : "one"} answered differently, it would be ${options.join(" or ")} instead of ${share(n)}.`;
+};
+
+// ----------------------------------------------------------------------------
 // Observations: facts only, all read from the result object.
 // ----------------------------------------------------------------------------
 
@@ -481,11 +507,8 @@ const buildObservations = (result) => {
 
   if (result.note) out.push(result.note);
 
-  if (result.d < 10) {
-    out.push(
-      `With only ${result.d} evaluable response${result.d === 1 ? "" : "s"}, one alumnus changes this value by ${pts(100 / result.d)}.`,
-    );
-  }
+  const caution = smallSampleNote(result);
+  if (caution) out.push(caution);
   return out;
 };
 
@@ -570,4 +593,147 @@ export const buildKpiRecommendations = (result, opts = {}) => {
       ...chooseActions(result.id, result.findings, ACTIONS_WHEN_NO_TARGET, rng),
     ],
   };
+};
+
+// ----------------------------------------------------------------------------
+// Insight view: the same facts as `observations`, grouped for the modal layout.
+// Pure data. The modal only draws it; no number is computed in the component.
+// ----------------------------------------------------------------------------
+
+const MAX_ANSWER_ROWS = 6;
+const MAX_PROGRAM_ROWS = 6;
+
+const GAP_HINT = {
+  small: "The gap is small.",
+  moderate: "The gap is moderate.",
+  severe: "The gap is large.",
+};
+
+const rankedBlock = (question, items, meta) => {
+  const shown = items.slice(0, MAX_ANSWER_ROWS);
+  const hidden = items.slice(MAX_ANSWER_ROWS);
+  return {
+    type: "ranked",
+    question,
+    items: shown,
+    max: Math.max(...shown.map((i) => i.count)),
+    more: hidden.length,
+    meta,
+  };
+};
+
+/**
+ * @param {object} result  KPI result from kpiEngine.js
+ * @param {object} rec     output of buildKpiRecommendations(result, { seed })
+ * @returns {object|null}  null when there is no result (SHS cards)
+ */
+export const buildInsightView = (result, rec) => {
+  if (!result || !rec) return null;
+  const b = result.breakdown;
+  const status = result.status;
+  const measurable = status !== "not_measurable" && status !== "no_data";
+
+  const view = {
+    badge: rec.badge,
+    tone: status === "not_met" ? "warn" : status === "met" ? "ok" : "neutral",
+    hero: null,
+    chips: [],
+    message: null,
+    included: null,
+    answers: [],
+    byProgram: null,
+    caution: null,
+    actionsHint: null,
+    actions: rec.recommendations,
+  };
+
+  if (status === "not_measurable") {
+    view.message = { title: NOT_MEASURABLE_MESSAGE, text: b.reason };
+  } else if (status === "no_data") {
+    view.message = {
+      title: "No data yet",
+      text: `${b.eligiblePopulation} eligible College alumni, but none could be evaluated for this KPI.`,
+    };
+  }
+
+  if (measurable) {
+    view.hero = { value: result.displayPct, n: result.n, d: result.d };
+    if (result.target !== null) {
+      view.chips.push({
+        text: `Target: ${result.targetDir === "below" ? "no more than " : ""}${result.target}%`,
+        tone: "neutral",
+      });
+      if (status === "not_met") {
+        view.chips.push({
+          text: result.targetDir === "below" ? `Above the ceiling by ${r1(result.gap)}%` : `Gap to target: ${r1(result.gap)}%`,
+          tone: "warn",
+        });
+      }
+    } else {
+      view.chips.push({ text: "Set a target to measure the gap", tone: "neutral" });
+    }
+
+    view.included = {
+      rows: [
+        ["Eligible College alumni", b.eligiblePopulation],
+        ["Can be judged for this KPI", result.d],
+        ["Qualifying", result.n],
+        ["Not qualifying", result.d - result.n],
+        ["Left out (cannot be judged)", b.notEvaluable],
+      ],
+      leftOut:
+        b.notEvaluableReasons.length > 0
+          ? "Left out because: " +
+            b.notEvaluableReasons.map((x) => `${REASON_TEXT[x.label] || x.label} (${x.count})`).join("; ") + "."
+          : null,
+      note: result.note || null,
+    };
+
+    if (b.categories.length > 0 && CATEGORY_INTRO[result.id]) {
+      const total = b.categories.reduce((s, c) => s + c.count, 0);
+      view.answers.push(rankedBlock(CATEGORY_INTRO[result.id], b.categories, `${total} of ${result.d} alumni answered`));
+    }
+
+    (result.findings || []).forEach((f) => {
+      const source = friendlySource(f.source);
+      if (f.countOnly) {
+        view.answers.push({
+          type: "stat",
+          question: f.title,
+          value: `${f.base} of ${f.of}`,
+          meta: source,
+          note: "The comments are free text and are not shown or interpreted here.",
+        });
+      } else if (f.avg !== undefined) {
+        view.answers.push({
+          type: "stat",
+          question: f.title,
+          value: `${r1(f.avg)} on average`,
+          meta: `${f.base} of ${f.of} rated · ${source}`,
+          note: null,
+        });
+      } else if (f.items.length > 0) {
+        view.answers.push(rankedBlock(f.title, f.items, `${f.base} of ${f.of} answered · ${source}`));
+      }
+    });
+
+    if (b.byProgram.length >= 2) {
+      const ranked = [...b.byProgram].sort((x, y) => x.n / x.d - y.n / y.d || x.program.localeCompare(y.program));
+      const many = b.byProgram.length > MAX_PROGRAM_ROWS;
+      const shown = many ? ranked.slice(0, 3) : b.byProgram;
+      const largest = Math.max(...b.byProgram.map((p) => p.d));
+      view.byProgram = {
+        title: many ? "By program (three lowest shown)" : "By program",
+        rows: shown.map((p) => [p.program, `${p.n} of ${p.d}`]),
+        note: largest < 10 ? "Each program group is small, so read these as descriptions, not rankings." : null,
+      };
+    }
+
+    view.caution = smallSampleNote(result);
+  }
+
+  if (status === "no_target") view.actionsHint = "Areas to consider. No target is set, so this is not a shortfall.";
+  else if (status === "not_met") view.actionsHint = GAP_HINT[rec.severity] || null;
+
+  return view;
 };
