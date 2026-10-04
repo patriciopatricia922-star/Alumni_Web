@@ -15,6 +15,8 @@
 // displayPct is the only rounded value and is for presentation only.
 // ============================================================================
 
+import { buildFindings } from "./kpiFindings.js";
+
 // ----------------------------------------------------------------------------
 // CONFIGURATION — everything an administrator may need to review lives here.
 // ----------------------------------------------------------------------------
@@ -300,6 +302,7 @@ export const buildCollegeDataset = (users, surveyRows, opts = {}) => {
       edu,
       job: section(survey.job_experience_data),
       skills: section(survey.skills_competencies_data),
+      feedback: section(survey.feedback_university_data),
     });
   });
 
@@ -563,6 +566,16 @@ export const computeCollegeKpis = (dataset) => {
     E,
     "The survey has no question on positions held in professional organizations. The previous value counted Leadership Skills self-ratings of 4 or 5, which is a different thing.",
   );
+
+  // Attach the alumni answers behind each KPI (counted from the same rows as n and d).
+  const byRef = new Map(eligible.map((r) => [r.ref, r]));
+  Object.values(out).forEach((result) => {
+    result.findings = buildFindings(result.id, {
+      rows: result.rows,
+      byRef,
+      employment: (emp) => classifyEmployment(emp),
+    });
+  });
 
   return out;
 };

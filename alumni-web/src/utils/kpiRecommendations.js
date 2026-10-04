@@ -1,39 +1,69 @@
 // ============================================================================
-// kpiRecommendations.js — Deterministic facts + seeded wording for the KPI modal
+// kpiRecommendations.js — Facts, findings and suggested actions for the KPI modal
 // ============================================================================
-// Input : ONE KPI result object from kpiEngine.js (the same object the card uses).
+// Input : ONE KPI result object from kpiEngine.js (the same object the card
+//         uses), plus an optional seed that only affects WHICH wording and
+//         WHICH eligible suggestions are shown.
 // Output: { badge, summary, observations[], recommendations[], severity }
+//         recommendations[i] = { text, basis, general }
 //
-// Rules this file follows:
-//  - Every number and category in the text is read from the result object.
-//    Nothing is invented, estimated or taken from the prediction model.
-//  - Only the WORDING varies. Which variant is used is chosen by a hash of
-//    (kpi id, n, d, target), so the same data always gives the same text and a
-//    changed result can give different text. No random number generator is used.
+// Where each part comes from:
+//  - Numbers, categories and findings: counted from alumni survey answers in
+//    the result object. Nothing is invented, estimated, or taken from the
+//    prediction model.
+//  - A suggestion with a `basis` is shown ONLY because the survey answers
+//    contain that evidence (the basis line quotes the count and the field).
+//  - A suggestion with general: true is a standard practice. It is not derived
+//    from the survey and is labelled that way.
+//  - The seed never changes a number. This file uses no random number generator;
+//    the caller supplies the seed (default: a hash of the result, so the same
+//    data gives the same text).
 //  - A shortfall is only claimed when the result's status is "not_met".
-//    With no target set, the text says so and offers areas to consider.
 // ============================================================================
 
 import { NOT_MEASURABLE_MESSAGE } from "./kpiEngine.js";
+import { describeFinding } from "./kpiFindings.js";
 
 /**
  * Severity bands, in percentage points of gap to the target.
  * These are configurable institutional thresholds, NOT facts about the data.
- * gap <= small -> "small"; gap <= moderate -> "moderate"; otherwise "severe".
  */
 export const SEVERITY_BANDS = { small: 10, moderate: 25 };
 
-/** Number of suggested actions shown per severity (the pool has three per KPI). */
+/** Number of suggested actions shown per severity. */
 const ACTIONS_BY_SEVERITY = { small: 1, moderate: 2, severe: 3 };
+const ACTIONS_WHEN_NO_TARGET = 2;
 
-/** Stable string hash (djb2). Same input -> same number, every time. */
+// ----------------------------------------------------------------------------
+// Seeded helpers (deterministic for a given seed)
+// ----------------------------------------------------------------------------
+
 const hash = (str) => {
   let h = 5381;
   for (let i = 0; i < str.length; i += 1) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
   return h;
 };
-const pick = (variants, seed, salt) =>
-  variants[hash(`${seed}|${salt}`) % variants.length];
+
+/** mulberry32: small seeded generator. Same seed -> same sequence. */
+const makeRng = (seed) => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+const shuffled = (arr, rng) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const oneOf = (arr, rng) => arr[Math.floor(rng() * arr.length)];
 
 const r1 = (x) => Math.round(x * 10) / 10;
 const pct = (x) => `${r1(x)}%`;
@@ -79,108 +109,275 @@ const SEVERITY_PHRASE = {
 };
 
 // ----------------------------------------------------------------------------
-// Suggested actions: three per KPI, each with two interchangeable wordings.
-// These are general institutional suggestions, not claims about the data.
+// Suggested actions
 // ----------------------------------------------------------------------------
+// Each action: { v: [wordings...], when?: (findings) => basisString | null }
+//  - no `when`: a general practice (shown labelled "general practice").
+//  - with `when`: eligible ONLY if the survey answers contain the evidence;
+//    the returned string is the basis shown under the action.
+// Add or edit actions here; nothing else needs to change.
+
+const findingById = (findings, id) => (findings || []).find((f) => f.id === id) || null;
+
+/** Basis string if any item of the finding matches `rx`, else null. */
+const evidence = (findings, id, rx) => {
+  const f = findingById(findings, id);
+  if (!f) return null;
+  const hits = f.items.filter((i) => rx.test(i.label));
+  if (hits.length === 0) return null;
+  return (
+    hits.map((h) => `"${h.label}" (${h.count})`).join(", ") +
+    ` among ${f.base} ${f.base === 1 ? "alumnus" : "alumni"} who answered (${f.source}).`
+  );
+};
 
 const ACTIONS = {
   internship_absorption: [
-    [
-      "Strengthen partnerships with internship host companies and agree on clear paths from internship to hiring.",
-      "Work with host companies to set internship-to-hire pathways, and follow up on how many interns are offered jobs.",
-    ],
-    [
-      "Record which host companies later hire interns and prioritise them in future placements.",
-      "Keep a list of host companies that have absorbed interns and give them priority when assigning students.",
-    ],
-    [
-      "Prepare students before the internship ends on how hiring decisions are made and how to express interest in staying.",
-      "Brief interns near the end of their placement on how to ask about, and apply for, a permanent role.",
-    ],
+    {
+      v: [
+        "Strengthen partnerships with internship host companies and agree on clear paths from internship to hiring.",
+        "Work with host companies to set internship-to-hire pathways, and follow up on how many interns are offered jobs.",
+        "Formalise agreements with host companies so that good interns can be considered for permanent roles.",
+      ],
+      when: (f) => evidence(f, "first_job_factors", /internship|on-the-job/i),
+    },
+    {
+      v: [
+        "Record which host companies later hire interns and prioritise them in future placements.",
+        "Keep a list of host companies that have absorbed interns and give them priority when assigning students.",
+      ],
+    },
+    {
+      v: [
+        "Prepare students before the internship ends on how hiring decisions are made and how to express interest in staying.",
+        "Brief interns near the end of their placement on how to ask about, and apply for, a permanent role.",
+      ],
+    },
+    {
+      v: [
+        "Ask host companies why interns were or were not kept on, and use the answers to improve preparation.",
+        "Collect short feedback from host supervisors at the end of each internship about retention decisions.",
+      ],
+    },
+    {
+      v: [
+        "Time internship placements so that the end of the placement lines up with hiring periods.",
+        "Schedule internships to finish close to host companies' hiring cycles where possible.",
+      ],
+    },
   ],
+
   employment_two_years: [
-    [
-      "Increase career services support in the final year, such as job fairs and employer visits.",
-      "Expand final-year career services, including job fairs and employer talks, to move graduates into work sooner.",
-    ],
-    [
-      "Run job-readiness workshops (résumé, interview, application practice) before graduation.",
-      "Offer pre-graduation workshops on résumés, interviews and job applications.",
-    ],
-    [
-      "Keep in touch with graduates who are still looking for work and connect them with open positions.",
-      "Follow up with job-seeking graduates and match them with employer openings from the alumni network.",
-    ],
+    {
+      v: [
+        "Strengthen links with employers in fields related to the programs, for example through targeted job fairs.",
+        "Invite employers from each program's field to recruit on campus, since alumni report a lack of field-related openings.",
+      ],
+      when: (f) => evidence(f, "reasons_unemployed", /lack of job opportunities related/i),
+    },
+    {
+      v: [
+        "Run workshops and short projects that build work experience and the qualifications employers ask for.",
+        "Offer skills-building sessions and portfolio projects before graduation to close the experience gap alumni describe.",
+      ],
+      when: (f) => evidence(f, "reasons_unemployed", /lack of work experience|qualifications required/i),
+    },
+    {
+      v: [
+        "Follow up with alumni who are waiting on hiring results and help them with next steps.",
+        "Check in with alumni whose applications are still pending and connect them with other openings.",
+      ],
+      when: (f) => evidence(f, "reasons_unemployed", /waiting for job placement|hiring process/i),
+    },
+    {
+      v: [
+        "Offer job-matching and career-progression advice to alumni who are already working but looking for better opportunities.",
+        "Share openings with alumni who are seeking better employment and offer career coaching.",
+      ],
+      when: (f) => evidence(f, "reasons_unemployed", /seeking better employment/i),
+    },
+    {
+      v: [
+        "Increase career services support in the final year, such as job fairs and employer visits.",
+        "Run job-readiness workshops (résumé, interview, application practice) before graduation.",
+      ],
+    },
   ],
+
   field_related: [
-    [
-      "Review how closely the curriculum matches current industry requirements in the programs with lower results.",
-      "Check the curriculum against current industry needs, starting with the programs that score lowest.",
-    ],
-    [
-      "Make internships more relevant to each degree program so first jobs are more likely to be in the field.",
-      "Align internship placements with each program's field to improve degree-related first jobs.",
-    ],
-    [
-      "Give career advising on degree-related roles earlier, before the final year.",
-      "Start career advising on roles related to the degree before the final year.",
-    ],
+    {
+      v: [
+        "Include information on pay and prospects for degree-related roles in career advising, since pay is a reason some alumni give for taking jobs outside their field.",
+        "Show students typical pay and growth for degree-related roles, because some alumni outside the field cited salary and benefits.",
+      ],
+      when: (f) => evidence(f, "reason_for_job_outside", /salar|benefit/i),
+    },
+    {
+      v: [
+        "Build employer partnerships near where alumni live, since proximity of residence is a reason some give for taking jobs outside their field.",
+        "Look for degree-related employers in the areas where alumni live, as some chose their job for proximity.",
+      ],
+      when: (f) => evidence(f, "reason_for_job_outside", /proximity/i),
+    },
+    {
+      v: [
+        "Check that the skills alumni rate most useful are well covered in coursework in the programs with lower results.",
+        "Compare the skills alumni found most useful with what each program teaches.",
+      ],
+      when: (f) => evidence(f, "useful_competencies", /./),
+    },
+    {
+      v: [
+        "Review how closely the curriculum matches current industry requirements, starting with the programs that score lowest.",
+        "Check the curriculum against current industry needs, starting with the programs that score lowest.",
+      ],
+    },
+    {
+      v: [
+        "Make internships more relevant to each degree program so first jobs are more likely to be in the field.",
+        "Align internship placements with each program's field.",
+      ],
+    },
+    {
+      v: [
+        "Give career advising on degree-related roles earlier, before the final year.",
+        "Start career advising on roles related to the degree before the final year.",
+      ],
+    },
   ],
+
   outside_field: [
-    [
-      "Review program-to-industry alignment each academic year, starting with the programs where alumni work outside their field.",
-      "Check each year how well programs match the industries that hire their graduates.",
-    ],
-    [
-      "Provide career guidance and mentoring from the first year so students know the roles their degree leads to.",
-      "Introduce mentoring and career guidance early so students understand degree-related career paths.",
-    ],
-    [
-      "Ask alumni who work outside their field why they chose their job (for example through the existing reason-for-job question) before changing programs.",
-      "Look at the reasons outside-field alumni gave for accepting their job before deciding on curriculum changes.",
-    ],
+    {
+      v: [
+        "Include information on pay and prospects for degree-related roles in career advising, since pay is a reason some alumni give for taking jobs outside their field.",
+        "Show students typical pay and growth for degree-related roles, because some alumni outside the field cited salary and benefits.",
+      ],
+      when: (f) => evidence(f, "reason_for_job_outside", /salar|benefit/i),
+    },
+    {
+      v: [
+        "Build employer partnerships near where alumni live, since proximity of residence is a reason some give for taking jobs outside their field.",
+        "Look for degree-related employers in the areas where alumni live, as some chose their job for proximity.",
+      ],
+      when: (f) => evidence(f, "reason_for_job_outside", /proximity/i),
+    },
+    {
+      v: [
+        "Review program-to-industry alignment each academic year, starting with the programs where alumni work outside their field.",
+        "Check each year how well programs match the industries that hire their graduates.",
+      ],
+    },
+    {
+      v: [
+        "Provide career guidance and mentoring from the first year so students know the roles their degree leads to.",
+        "Introduce mentoring and career guidance early so students understand degree-related career paths.",
+      ],
+    },
+    {
+      v: [
+        "Look at the reasons outside-field alumni gave for accepting their job before deciding on curriculum changes.",
+        "Review the reason-for-job answers of outside-field alumni before changing programs.",
+      ],
+    },
   ],
+
   entrepreneurship: [
-    [
-      "Offer entrepreneurship training and startup incubation to students in business programs.",
-      "Provide startup incubation and entrepreneurship training for business-program students.",
-    ],
-    [
-      "Connect students and alumni with mentors and seed-funding networks.",
-      "Link student and alumni founders to mentors and funding sources.",
-    ],
-    [
-      "Invite alumni who run businesses to share their experience in classes and events.",
-      "Bring alumni entrepreneurs in as guest speakers and mentors.",
-    ],
+    {
+      v: [
+        "Offer entrepreneurship training and startup incubation to students in business programs.",
+        "Provide startup incubation and entrepreneurship training for business-program students.",
+      ],
+    },
+    {
+      v: [
+        "Connect students and alumni with mentors and seed-funding networks.",
+        "Link student and alumni founders to mentors and funding sources.",
+      ],
+    },
+    {
+      v: [
+        "Invite alumni who run businesses to share their experience in classes and events.",
+        "Bring alumni entrepreneurs in as guest speakers and mentors.",
+      ],
+    },
+    {
+      v: [
+        "Add a business-plan or venture project to the senior year of business programs.",
+        "Include a capstone venture or business-plan requirement in business programs.",
+      ],
+    },
+    {
+      v: [
+        "Confirm which programs should count toward this KPI, since only the configured business programs are included.",
+        "Review the list of programs counted for entrepreneurship so the KPI reflects the intended population.",
+      ],
+    },
   ],
+
   supervisory: [
-    [
-      "Provide leadership development for early-career alumni, such as short courses through the alumni office.",
-      "Offer leadership and management training for alumni who are early in their careers.",
-    ],
-    [
-      "Pair alumni with senior mentors who can advise on career progression.",
-      "Set up alumni mentoring with senior professionals to support career progression.",
-    ],
-    [
-      "Track job positions over several survey cycles so progression into supervisory roles can be seen over time.",
-      "Compare job positions across survey cycles to see how alumni move into supervisory roles.",
-    ],
+    {
+      v: [
+        "Provide leadership development for early-career alumni, such as short courses through the alumni office.",
+        "Offer leadership and management training for alumni who are early in their careers.",
+      ],
+    },
+    {
+      v: [
+        "Pair alumni with senior mentors who can advise on career progression.",
+        "Set up alumni mentoring with senior professionals to support career progression.",
+      ],
+    },
+    {
+      v: [
+        "Track job positions over several survey cycles so progression into supervisory roles can be seen over time.",
+        "Compare job positions across survey cycles to see how alumni move into supervisory roles.",
+      ],
+    },
+    {
+      v: [
+        "Review the supervisory title list in the KPI settings with the career office, since the KPI counts only titles on that list.",
+        "Check the supervisory title list with the career office so the KPI reflects real supervisory roles.",
+      ],
+    },
+    {
+      v: [
+        "Create leadership roles for students in organizations and projects so alumni have leadership experience early.",
+        "Give students more chances to lead projects and organizations before graduation.",
+      ],
+    },
   ],
+
   grad_studies: [
-    [
-      "Promote postgraduate opportunities and advising to students in their final year.",
-      "Advise final-year students on postgraduate options and entry requirements.",
-    ],
-    [
-      "Offer information on scholarships and research assistantships for graduate study.",
-      "Share scholarship and research-assistantship options with students considering graduate study.",
-    ],
-    [
-      "Ask alumni who plan graduate study what support they need, and use the answers to plan programs.",
-      "Find out what support alumni with postgraduate plans want and plan around it.",
-    ],
+    {
+      v: [
+        "Promote postgraduate opportunities and advising to students in their final year.",
+        "Advise final-year students on postgraduate options and entry requirements.",
+      ],
+    },
+    {
+      v: [
+        "Offer information on scholarships and research assistantships for graduate study.",
+        "Share scholarship and research-assistantship options with students considering graduate study.",
+      ],
+    },
+    {
+      v: [
+        "Ask alumni who plan graduate study what support they need, and use the answers to plan programs.",
+        "Find out what support alumni with postgraduate plans want and plan around it.",
+      ],
+    },
+    {
+      v: [
+        "Hold a graduate-school information session with alumni who are already studying.",
+        "Invite alumni who are in graduate programs to speak with final-year students.",
+      ],
+    },
+    {
+      v: [
+        "Add a survey question on enrolment so that plans can later be compared with actual enrolment. This needs a change to the survey configuration, which has not been made.",
+        "Record enrolment in a later survey cycle, not only plans. This needs a change to the survey configuration, which has not been made.",
+      ],
+    },
   ],
 };
 
@@ -203,6 +400,23 @@ const NOT_MEASURABLE_ACTIONS = {
     "Add a survey question asking whether the alumnus holds a position in a professional organization, and which one. This needs a change to the survey configuration, which has not been made.",
     "Do not use Leadership Skills self-ratings as a substitute. They measure something different from organization positions.",
   ],
+};
+
+/** Choose `count` actions: evidence-backed ones first, then general practices. */
+const chooseActions = (id, findings, count, rng) => {
+  const pool = ACTIONS[id] || [];
+  const withBasis = pool
+    .filter((a) => a.when)
+    .map((a) => ({ a, basis: a.when(findings) }))
+    .filter((x) => x.basis);
+  const general = pool.filter((a) => !a.when).map((a) => ({ a, basis: null }));
+  return [...shuffled(withBasis, rng), ...shuffled(general, rng)]
+    .slice(0, count)
+    .map(({ a, basis }) => ({
+      text: oneOf(a.v, rng),
+      basis,
+      general: !basis,
+    }));
 };
 
 // ----------------------------------------------------------------------------
@@ -240,6 +454,8 @@ const buildObservations = (result) => {
       `${result.n} of ${result.d} employed alumni hold a job title that matches the documented supervisory rule.`,
     );
   }
+
+  (result.findings || []).forEach((f) => out.push(describeFinding(f)));
 
   if (b.byProgram.length >= 2) {
     const ranked = [...b.byProgram].sort((x, y) => x.n / x.d - y.n / y.d || x.program.localeCompare(y.program));
@@ -280,9 +496,17 @@ const buildObservations = (result) => {
 export const severityFor = (gap) =>
   gap <= SEVERITY_BANDS.small ? "small" : gap <= SEVERITY_BANDS.moderate ? "moderate" : "severe";
 
-export const buildKpiRecommendations = (result) => {
+const plain = (texts) => texts.map((text) => ({ text, basis: null, general: false }));
+
+/**
+ * @param {object} result  one KPI result from kpiEngine.js
+ * @param {{ seed?: number }} [opts]  seed only changes which eligible wording /
+ *   suggestions are shown. Default: a hash of the result (same data, same text).
+ */
+export const buildKpiRecommendations = (result, opts = {}) => {
   if (!result) return null;
-  const seed = `${result.id}|${result.n}|${result.d}|${result.target}`;
+  const defaultSeed = hash(`${result.id}|${result.n}|${result.d}|${result.target}`);
+  const rng = makeRng(opts.seed ?? defaultSeed);
   const badge = BADGE[result.status] || BADGE.no_data;
 
   if (result.status === "not_measurable") {
@@ -291,7 +515,7 @@ export const buildKpiRecommendations = (result) => {
       severity: null,
       summary: `${result.label}: ${NOT_MEASURABLE_MESSAGE}. ${result.breakdown.reason}`,
       observations: [],
-      recommendations: NOT_MEASURABLE_ACTIONS[result.id] || [],
+      recommendations: plain(NOT_MEASURABLE_ACTIONS[result.id] || []),
     };
   }
 
@@ -303,13 +527,11 @@ export const buildKpiRecommendations = (result) => {
       observations: [
         `${result.breakdown.eligiblePopulation} eligible College alumni; none could be evaluated for this KPI.`,
       ],
-      recommendations: ["Encourage alumni to complete the survey so this KPI can be calculated."],
+      recommendations: plain(["Encourage alumni to complete the survey so this KPI can be calculated."]),
     };
   }
 
   const observations = buildObservations(result);
-  const pool = ACTIONS[result.id] || [];
-  const actionText = (i) => pick(pool[i], seed, `action${i}`);
 
   if (result.status === "not_met") {
     const severity = severityFor(result.gap);
@@ -319,11 +541,9 @@ export const buildKpiRecommendations = (result) => {
       severity,
       summary:
         `${result.label}: ${result.n} of ${result.d} = ${pct(result.rawPct)} against a ${dirText} of ${result.target}%. ` +
-        pick(SEVERITY_PHRASE[severity], seed, "severity"),
+        oneOf(SEVERITY_PHRASE[severity], rng),
       observations,
-      recommendations: pool
-        .slice(0, ACTIONS_BY_SEVERITY[severity])
-        .map((_, i) => actionText(i)),
+      recommendations: chooseActions(result.id, result.findings, ACTIONS_BY_SEVERITY[severity], rng),
     };
   }
 
@@ -333,7 +553,7 @@ export const buildKpiRecommendations = (result) => {
       severity: null,
       summary: `${result.label}: ${result.n} of ${result.d} = ${pct(result.rawPct)}, which meets the ${result.targetDir === "below" ? "ceiling" : "target"} of ${result.target}%.`,
       observations,
-      recommendations: [pick(MET_ACTIONS, seed, "met")],
+      recommendations: plain([oneOf(MET_ACTIONS, rng)]),
     };
   }
 
@@ -345,6 +565,9 @@ export const buildKpiRecommendations = (result) => {
       `${result.label}: ${result.n} of ${result.d} = ${pct(result.rawPct)}. No target is set, so this is a result, not a shortfall. ` +
       "The points below are areas to consider.",
     observations,
-    recommendations: [pick(SET_TARGET, seed, "settarget"), actionText(0), actionText(1)],
+    recommendations: [
+      ...plain([oneOf(SET_TARGET, rng)]),
+      ...chooseActions(result.id, result.findings, ACTIONS_WHEN_NO_TARGET, rng),
+    ],
   };
 };

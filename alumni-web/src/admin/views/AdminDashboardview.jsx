@@ -554,7 +554,10 @@ const staticFallbackSuggestions = (label) => {
 function KpiAlertModal({ label, onClose, kpiResult }) {
   // Everything shown here is built from the same result object the card uses.
   // SHS cards have no result, so they keep the original static text.
-  const rec          = buildKpiRecommendations(kpiResult);
+  // The modal is mounted fresh each time it opens, so this seed gives a new draw of
+  // wording and eligible suggestions per opening. It never changes a number or finding.
+  const [seed]       = useState(() => Math.floor(Math.random() * 2147483647));
+  const rec          = buildKpiRecommendations(kpiResult, { seed });
   const suggestions  = rec ? rec.recommendations : staticFallbackSuggestions(label);
   const insightLines = rec ? rec.observations : [];
   const summary      = rec ? rec.summary : null;
@@ -634,14 +637,26 @@ function KpiAlertModal({ label, onClose, kpiResult }) {
           Recommendations
         </div>
         <div className="kpi-modal-suggestions">
-          {suggestions.map((s, i) => (
-            <div key={`rec-${i}`} className="kpi-suggestion-item">
-              <div className="suggestion-icon suggestion-icon--rec">
-                <MdLightbulb size={14} />
+          {suggestions.map((s, i) => {
+            const text  = typeof s === "string" ? s : s.text;
+            const basis = typeof s === "string" ? null
+              : s.basis ? `Basis: ${s.basis}`
+              : s.general ? "General practice, not derived from the survey."
+              : null;
+            return (
+              <div key={`rec-${i}`} className="kpi-suggestion-item">
+                <div className="suggestion-icon suggestion-icon--rec">
+                  <MdLightbulb size={14} />
+                </div>
+                <div className="suggestion-text">
+                  {text}
+                  {basis && (
+                    <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{basis}</div>
+                  )}
+                </div>
               </div>
-              <div className="suggestion-text">{s}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* ── FOOTER ── */}
