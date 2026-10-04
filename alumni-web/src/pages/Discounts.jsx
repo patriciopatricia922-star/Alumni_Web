@@ -20,10 +20,11 @@ const CATEGORIES = ['All', 'Accommodations', 'Food & Dining', 'Health, Wellness 
 const mapCategory = (discount) => {
   const title = discount.title?.toLowerCase() || '';
   const description = discount.description?.toLowerCase() || '';
-  if (title.includes('hotel') || title.includes('resort') || description.includes('accommodation')) {
+  if (title.includes('hotel') || title.includes('resort') || description.includes('accommodation') || description.includes('room rate')) {
     return 'Accommodations';
   }
-  if (title.includes('wingfinity') || description.includes('meal') || description.includes('restaurant')) {
+  if (title.includes('wingfinity') || description.includes('meal') || description.includes('restaurant') ||
+      /cafe|café|coffee|beverage|bistro|bakery|eatery/.test(`${title} ${description}`)) {
     return 'Food & Dining';
   }
   if (title.includes('taekwondo') || title.includes('dental') || title.includes('pretty you')) {
