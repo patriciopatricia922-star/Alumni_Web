@@ -522,7 +522,7 @@ export const computeCollegeKpis = (dataset) => {
       basis: "direct",
       eligibleCount: E,
       note:
-        "Classified from job_position by a documented whole-word rule (see SUPERVISORY_TERMS in kpiEngine.js). Titles that do not match are counted as non-supervisory.",
+        "Classified from the job position each alumnus reported, using a documented whole-word rule kept in the KPI settings. Titles that do not match are counted as non-supervisory.",
     },
     eligible.map((r) => {
       if (classifyEmployment(r.emp) !== "employed") {
@@ -544,7 +544,7 @@ export const computeCollegeKpis = (dataset) => {
       basis: "intent",
       eligibleCount: E,
       note:
-        "Based on reported postgraduate plans (post_grad_plans). This is intent, not proof of enrolment, and the survey has no enrolment date.",
+        "Based on reported postgraduate plans. This is intent, not proof of enrolment, and the survey has no enrolment date.",
     },
     eligible.map((r) => {
       const v = lc(r.edu?.post_grad_plans);
@@ -559,7 +559,7 @@ export const computeCollegeKpis = (dataset) => {
   out.nu_grad_studies = notMeasurable(
     "nu_grad_studies",
     E,
-    "The survey stores a postgraduate course name (post_grad_course), not the institution, so study at NU cannot be established.",
+    "The survey records the postgraduate course name, not the institution, so study at NU cannot be established.",
   );
   out.prof_org = notMeasurable(
     "prof_org",

@@ -22,7 +22,7 @@
 // ============================================================================
 
 import { NOT_MEASURABLE_MESSAGE } from "./kpiEngine.js";
-import { describeFinding } from "./kpiFindings.js";
+import { describeFinding, friendlySource } from "./kpiFindings.js";
 
 /**
  * Severity bands, in percentage points of gap to the target.
@@ -127,7 +127,7 @@ const evidence = (findings, id, rx) => {
   if (hits.length === 0) return null;
   return (
     hits.map((h) => `"${h.label}" (${h.count})`).join(", ") +
-    ` among ${f.base} ${f.base === 1 ? "alumnus" : "alumni"} who answered (${f.source}).`
+    ` among ${f.base} ${f.base === 1 ? "alumnus" : "alumni"} who answered (${friendlySource(f.source)}).`
   );
 };
 

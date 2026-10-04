@@ -205,17 +205,37 @@ export const buildFindings = (id, ctx) => {
   return out;
 };
 
-/** One readable line for a finding, with its source field. */
+/**
+ * Admin-facing names for the survey sections. The technical field path stays on
+ * the finding (finding.source) for traceability, but is never shown to admins.
+ * Edit these to match the section titles used in your survey.
+ */
+export const SOURCE_SECTION_LABELS = {
+  employment_information_data: "Employment Information",
+  job_experience_data: "Job Experience",
+  skills_competencies_data: "Skills and Competencies",
+  feedback_university_data: "University Feedback",
+  educational_background_data: "Educational Background",
+};
+
+/** "job_experience_data.time_to_find_job" -> "Job Experience section of the survey". */
+export const friendlySource = (source) => {
+  const section = String(source || "").split(".")[0];
+  const name = SOURCE_SECTION_LABELS[section];
+  return name ? `${name} section of the survey` : "the survey";
+};
+
+/** One readable line for a finding, with its source (survey section). */
 export const describeFinding = (f) => {
   if (f.countOnly) {
-    return `${f.title}: ${f.base} of ${f.of}. The comments are free text and are not shown or interpreted here. Source: ${f.source}.`;
+    return `${f.title}: ${f.base} of ${f.of}. The comments are free text and are not shown or interpreted here. Source: ${friendlySource(f.source)}.`;
   }
   if (f.avg !== undefined) {
-    return `${f.title}: ${Math.round(f.avg * 10) / 10} on average (${f.base} of ${f.of} rated). Source: ${f.source}.`;
+    return `${f.title}: ${Math.round(f.avg * 10) / 10} on average (${f.base} of ${f.of} rated). Source: ${friendlySource(f.source)}.`;
   }
   return (
     `${f.title} (${f.base} of ${f.of} answered): ` +
     f.items.map((i) => `${i.label} (${i.count})`).join(", ") +
-    `. Source: ${f.source}.`
+    `. Source: ${friendlySource(f.source)}.`
   );
 };
