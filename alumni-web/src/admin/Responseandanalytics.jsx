@@ -281,8 +281,14 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
       ? safeText(educational.reason_nu)
       : safeText(educational.reason_for_course) || '',
     distinction: safeText(educational.distinction) || '',
-    postGradPlans: safeText(educational.post_grad_plans) || '',
-    postGradCourse: safeText(educational.post_grad_course) || '',
+    // SHS: the "further studies to any NU Branch" field and its Course/Program
+    // read the SHS keys (post_grad_* are College-only and never exist in SHS data).
+    postGradPlans: isShs
+      ? (safeText(educational.pursued_nu_branch) || safeText(educational.pursued_further_studies_nu))
+      : safeText(educational.post_grad_plans) || '',
+    postGradCourse: isShs
+      ? (safeText(educational.course_program) || safeText(educational.other_school_course_program))
+      : safeText(educational.post_grad_course) || '',
     // SHS Educational Background branching fields (source: shs_educational_background_data)
     eduStatus: safeText(educational.status) || '',
     // NOTE: these six fields are only ever rendered inside the modal's
@@ -292,27 +298,31 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
     // (e.g. pursued_nu_branch vs. the real pursued_further_studies_nu), so
     // the value was always '' — which matched neither "Yes" nor "No" and
     // silently hid this entire sub-section for every SHS respondent.
+    // The SHS form (EducationalBackgroundSHS.jsx) saves pursued_nu_branch,
+    // reason_not_nu, school_name, education_level, course_program and
+    // year_level, so those are read first; the older key names are kept as a
+    // fallback so records stored under them still display.
     pursuedNuBranch: isShs
-      ? safeText(educational.pursued_further_studies_nu)
+      ? (safeText(educational.pursued_nu_branch) || safeText(educational.pursued_further_studies_nu))
       : safeText(educational.pursued_nu_branch) || '',
     pursuedOtherSchool: safeText(educational.pursued_other_school) || '',
     nuBranch: safeText(educational.nu_branch) || '',
     reasonNu: safeText(educational.reason_nu) || '',
     reasonNotNu: isShs
-      ? safeText(educational.not_choose_nu_reason)
+      ? (safeText(educational.reason_not_nu) || safeText(educational.not_choose_nu_reason))
       : safeText(educational.reason_not_nu) || '',
     schoolName: isShs
-      ? safeText(educational.other_school_name)
+      ? (safeText(educational.school_name) || safeText(educational.other_school_name))
       : safeText(educational.school_name) || '',
     educationLevel: isShs
-      ? safeText(educational.other_school_education_level)
+      ? (safeText(educational.education_level) || safeText(educational.other_school_education_level))
       : safeText(educational.education_level) || '',
     educationLevelOther: safeText(educational.education_level_other) || '',
     courseProgram: isShs
-      ? safeText(educational.other_school_course_program)
+      ? (safeText(educational.course_program) || safeText(educational.other_school_course_program))
       : safeText(educational.course_program) || '',
     yearLevel: isShs
-      ? safeText(educational.other_school_year_level)
+      ? (safeText(educational.year_level) || safeText(educational.other_school_year_level))
       : safeText(educational.year_level) || '',
     stoppedReason: safeText(educational.stopped_reason) || '',
     stoppedReasonOther: safeText(educational.stopped_reason_other) || '',
