@@ -65,6 +65,9 @@ const shuffled = (arr, rng) => {
 };
 const oneOf = (arr, rng) => arr[Math.floor(rng() * arr.length)];
 
+/** Which alumni group a result is about. College results carry no cohort field. */
+const cohortOf = (result) => result.cohort || "College";
+
 const r1 = (x) => Math.round(x * 10) / 10;
 const pct = (x) => `${r1(x)}%`;
 const pts = (x) => `${r1(Math.abs(x))} percentage point${r1(Math.abs(x)) === 1 ? "" : "s"}`;
@@ -83,6 +86,9 @@ const REASON_TEXT = {
   no_employment_status: "no employment status given",
   unclassified_status: 'employment status not classified (for example "Other")',
   no_post_grad_plans_answer: "no postgraduate-plans answer",
+  no_education_answer: "no answer in the education section",
+  incomplete_education_answer: "education answers incomplete (the NU or other-school question is missing)",
+  nu_question_not_answered: "did not answer whether they continued at NU",
 };
 
 const CATEGORY_INTRO = {
@@ -132,6 +138,63 @@ const evidence = (findings, id, rx) => {
 };
 
 const ACTIONS = {
+  // ---- Senior High -------------------------------------------------------------
+  shs_pursued_undergrad: [
+    {
+      v: [
+        "Follow up with alumni who did not continue to college and share enrolment, scholarship and bridging options with them.",
+        "Reach out to alumni who did not continue their studies and connect them with scholarship and enrolment support.",
+      ],
+      when: (f) => evidence(f, "destination", /did not continue/i),
+    },
+    {
+      v: [
+        "Strengthen the SHS-to-college transition program, including help with applications and enrolment steps.",
+        "Run a transition program in Grade 12 that walks students through college applications and enrolment.",
+      ],
+    },
+    {
+      v: [
+        "Provide early college counseling for Grade 12 students, starting with each student's chosen strand.",
+        "Start college counseling in the first term of Grade 12 so students have time to plan.",
+      ],
+    },
+    {
+      v: [
+        "Invite graduates who are now in college to speak with current Grade 12 students about the move.",
+        "Hold a yearly alumni talk where college students share what the transition was like.",
+      ],
+    },
+  ],
+
+  shs_pursued_undergrad_nu: [
+    {
+      v: [
+        "Ask a sample of alumni who chose another school what led them there, and use the answers to improve what NU offers.",
+        "Find out why some alumni continued at other schools, for example through a short follow-up survey, and share the results with admissions.",
+      ],
+      when: (f) => evidence(f, "destination", /another school/i),
+    },
+    {
+      v: [
+        "Offer an SHS-to-NU enrolment pathway, such as priority processing or early admission for NU Senior High graduates.",
+        "Create enrolment incentives for NU Senior High graduates who apply to NU undergraduate programs.",
+      ],
+    },
+    {
+      v: [
+        "Show current SHS students the NU undergraduate programs that match their strand.",
+        "Hold program briefings for Grade 12 students on the NU undergraduate courses open to their strand.",
+      ],
+    },
+    {
+      v: [
+        "Follow up with SHS alumni during the application period and help with the NU application steps.",
+        "Send reminders and application help to graduating SHS students who are considering NU.",
+      ],
+    },
+  ],
+
   internship_absorption: [
     {
       v: [
@@ -455,7 +518,7 @@ const buildObservations = (result) => {
 
   out.push(
     `${result.n} of ${result.d} evaluable alumni qualify = ${pct(result.rawPct)} ` +
-      `(${b.eligiblePopulation} eligible College alumni; ${b.notEvaluable} not evaluable for this KPI).`,
+      `(${b.eligiblePopulation} eligible ${cohortOf(result)} alumni; ${b.notEvaluable} not evaluable for this KPI).`,
   );
 
   if (result.target !== null) {
@@ -548,7 +611,7 @@ export const buildKpiRecommendations = (result, opts = {}) => {
       severity: null,
       summary: `${result.label}: no evaluable responses yet, so no value can be calculated.`,
       observations: [
-        `${result.breakdown.eligiblePopulation} eligible College alumni; none could be evaluated for this KPI.`,
+        `${result.breakdown.eligiblePopulation} eligible ${cohortOf(result)} alumni; none could be evaluated for this KPI.`,
       ],
       recommendations: plain(["Encourage alumni to complete the survey so this KPI can be calculated."]),
     };
@@ -652,7 +715,7 @@ export const buildInsightView = (result, rec) => {
   } else if (status === "no_data") {
     view.message = {
       title: "No data yet",
-      text: `${b.eligiblePopulation} eligible College alumni, but none could be evaluated for this KPI.`,
+      text: `${b.eligiblePopulation} eligible ${cohortOf(result)} alumni, but none could be evaluated for this KPI.`,
     };
   }
 
@@ -675,7 +738,7 @@ export const buildInsightView = (result, rec) => {
 
     view.included = {
       rows: [
-        ["Eligible College alumni", b.eligiblePopulation],
+        [`Eligible ${cohortOf(result)} alumni`, b.eligiblePopulation],
         ["Can be judged for this KPI", result.d],
         ["Qualifying", result.n],
         ["Not qualifying", result.d - result.n],

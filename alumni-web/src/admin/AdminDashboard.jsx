@@ -10,6 +10,7 @@ import {
   toCardProps,
 } from "../utils/kpiEngine";
 import { formatValidationReport } from "../utils/kpiValidation";
+import { computeShsKpiResults } from "../utils/shsKpiEngine";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
 
@@ -262,8 +263,8 @@ const institutionalKpis = {
       label: "SHS Alumni Who Pursued Undergraduate Degree",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
     {
@@ -272,8 +273,8 @@ const institutionalKpis = {
       label: "SHS Alumni Who Pursued Undergraduate at NU",
       value: "0%",
       progress: 0,
-      target: 100,
-      targetLabel: "Goal: 100%",
+      target: 0,
+      targetLabel: "No target set",
       trend: { dir: "none", delta: "" },
     },
   ],
@@ -675,60 +676,27 @@ const AdminDashboard = () => {
         setEmploymentRateSub("No employment data yet");
       }
 
-      // ── SHS Institutional KPI tab values ──────────────────────────────────
-      // Reads from shs_educational_background_data, reusing the same helpers.
-      const shsWithEduRows = shsSurveyRows.filter(
-        (r) => r.shs_educational_background_data !== null,
+      // ── SHS Institutional KPIs ────────────────────────────────────────────
+      // Same approach as College: one calculation (utils/shsKpiEngine.js) feeds
+      // both the two SHS cards and their insights popup.
+      const { results: shsKpiResults } = computeShsKpiResults(
+        shsAlumni,
+        shsSurveyRows,
       );
 
-      const shsPursuedUndergrad = shsWithEduRows.filter((r) => {
-        const edu = safeParse(r.shs_educational_background_data);
-        if (!edu) return false;
-        return edu.pursued_other_school === "Yes";
-      }).length;
-      const shsPursuedUndergradPct =
-        shsWithEduRows.length > 0
-          ? Math.round((shsPursuedUndergrad / shsWithEduRows.length) * 100)
-          : 0;
-
-      const shsPursuedUndergradNu = shsWithEduRows.filter((r) => {
-        const edu = safeParse(r.shs_educational_background_data);
-        if (!edu) return false;
-        return edu.pursued_nu_branch === "Yes";
-      }).length;
-      const shsPursuedUndergradNuPct =
-        shsWithEduRows.length > 0
-          ? Math.round((shsPursuedUndergradNu / shsWithEduRows.length) * 100)
-          : 0;
       // ── Apply computed KPIs to state ──────────────────────────────────────
+      const allKpiResults = { ...kpiResults, ...shsKpiResults };
       const fromResults = (kpi) =>
-        kpiResults[kpi.id] ? { ...kpi, ...toCardProps(kpiResults[kpi.id]) } : kpi;
+        allKpiResults[kpi.id]
+          ? { ...kpi, ...toCardProps(allKpiResults[kpi.id]) }
+          : kpi;
 
       setKpiData({
         employment: institutionalKpis.employment.map(fromResults),
         career: institutionalKpis.career.map(fromResults),
         education: institutionalKpis.education.map(fromResults),
 
-        seniorrhigh: institutionalKpis.seniorrhigh.map((kpi) => {
-          switch (kpi.id) {
-            case "shs_pursued_undergrad":
-              return {
-                ...kpi,
-                value: `${shsPursuedUndergradPct}%`,
-                progress: shsPursuedUndergradPct,
-                targetLabel: `Goal: 100% (${shsPursuedUndergrad} of ${shsWithEduRows.length})`,
-              };
-            case "shs_pursued_undergrad_nu":
-              return {
-                ...kpi,
-                value: `${shsPursuedUndergradNuPct}%`,
-                progress: shsPursuedUndergradNuPct,
-                targetLabel: `Goal: 100% (${shsPursuedUndergradNu} of ${shsWithEduRows.length})`,
-              };
-            default:
-              return kpi;
-          }
-        }),
+        seniorrhigh: institutionalKpis.seniorrhigh.map(fromResults),
       });
     };
 

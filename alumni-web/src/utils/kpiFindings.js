@@ -216,6 +216,11 @@ export const SOURCE_SECTION_LABELS = {
   skills_competencies_data: "Skills and Competencies",
   feedback_university_data: "University Feedback",
   educational_background_data: "Educational Background",
+  shs_educational_background_data: "Educational Background",
+  shs_feedback_and_engagement_data: "Feedback and Engagement",
+  shs_employment_information_data: "Employment Information",
+  shs_job_experience_data: "Job Experience",
+  shs_skills_and_competencies_data: "Skills and Competencies",
 };
 
 /** "job_experience_data.time_to_find_job" -> "Job Experience section of the survey". */

@@ -127,6 +127,9 @@ export const KPI_TARGET_CONFIG = {
   grad_studies: { target: null, dir: "above" },
   nu_grad_studies: { target: null, dir: "above" },
   prof_org: { target: null, dir: "above" },
+  // Senior High (computed in shsKpiEngine.js)
+  shs_pursued_undergrad: { target: null, dir: "above" },
+  shs_pursued_undergrad_nu: { target: null, dir: "above" },
 };
 
 export const NOT_MEASURABLE_MESSAGE = "Not measurable with current survey data";
@@ -141,6 +144,8 @@ export const KPI_LABELS = {
   grad_studies: "Pursued Graduate Studies (within 1 yr)",
   nu_grad_studies: "Pursued Graduate Studies at NU",
   prof_org: "In Positions in Professional Organizations",
+  shs_pursued_undergrad: "SHS Alumni Who Pursued Undergraduate Degree",
+  shs_pursued_undergrad_nu: "SHS Alumni Who Pursued Undergraduate at NU",
 };
 
 // ----------------------------------------------------------------------------
@@ -313,7 +318,7 @@ export const buildCollegeDataset = (users, surveyRows, opts = {}) => {
 // RESULT OBJECT
 // ----------------------------------------------------------------------------
 
-const buildResult = (id, spec, rowsOutcome, extra = {}) => {
+export const buildResult = (id, spec, rowsOutcome, extra = {}) => {
   const { target = null, dir = "above" } = KPI_TARGET_CONFIG[id] || {};
   const n = rowsOutcome.filter((r) => r.outcome === "qualifying").length;
   const d = n + rowsOutcome.filter((r) => r.outcome === "non_qualifying").length;
@@ -362,7 +367,7 @@ const buildResult = (id, spec, rowsOutcome, extra = {}) => {
   };
 };
 
-const tally = (items) => {
+export const tally = (items) => {
   const m = new Map();
   items.forEach((x) => m.set(x, (m.get(x) || 0) + 1));
   return [...m.entries()]
