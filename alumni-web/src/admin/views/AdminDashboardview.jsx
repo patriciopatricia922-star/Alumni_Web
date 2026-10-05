@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LineChart, Line,
-  BarChart, Bar,
+  BarChart, Bar, LabelList,
   PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
@@ -22,6 +22,28 @@ import "../styles/AdminDashboard.css";
 import { buildKpiRecommendations, buildInsightView } from "../../utils/kpiRecommendations";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+const FALLBACK_COLOR = "#94A3B8";
+
+const EMPLOYMENT_COLORS = {
+  Employed: "#10B981",
+  Unemployed: "#EF4444",
+  "Self-Employed": "#F59E0B",
+  Student: "#3B82F6",
+  Contractual: "#8B5CF6",
+  Freelance: "#06B6D4",
+};
+
+const SKILL_FALLBACK_PALETTE = ["#EC4899", "#F97316", "#6366F1", "#84CC16", "#E11D48", "#0EA5E9"];
+
+const getSkillColor = (name, i) => {
+  const n = String(name).toLowerCase();
+  if (n.includes("communication")) return "#3B82F6";
+  if (n.includes("critical")) return "#8B5CF6";
+  if (n.includes("work ethic")) return "#10B981";
+  if (n.includes("leadership")) return "#F59E0B";
+  if (n.includes("information") || n.includes("technolog") || n.includes("technical")) return "#06B6D4";
+  return SKILL_FALLBACK_PALETTE[i % SKILL_FALLBACK_PALETTE.length];
+};
 
 // ============================================================================
 // RADIAL GAUGE
@@ -376,21 +398,76 @@ function CustomBarChart({ data, dataKey, nameKey, title, subtitle, height = 280,
 // ============================================================================
 // CUSTOM PIE CHART
 // ============================================================================
-function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
-  const filteredData = data?.filter(d => d.value > 0) || [];
-
-  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent, name }) => {
-    const RADIAN = Math.PI / 180;
-    const radius = outerRadius * 1.15;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    return (
-      <text x={x} y={y} fill="#475569" textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central" fontSize={11} fontFamily="Arimo, sans-serif">
-        {`${name}: ${(percent * 100).toFixed(0)}%`}
-      </text>
+function CustomHorizontalBarChart({
+  data, dataKey, nameKey, title, subtitle, height = 280, navigateTo,
+  getColor, suffix = "", domain, yAxisWidth = 120, tooltipName = "Alumni",
+}) {
+  const fmt = (v) => `${Math.round(Number(v))}${suffix}`;
+  const content = (!data || data.length === 0)
+    ? <EmptyChart height={height} />
+    : (
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 10, right: 45, left: 10, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+          <XAxis
+            type="number"
+            domain={domain}
+            allowDecimals={false}
+            tick={{ fontSize: 11 }}
+            tickFormatter={fmt}
+          />
+          <YAxis
+            dataKey={nameKey}
+            type="category"
+            width={yAxisWidth}
+            interval={0}
+            tick={{ fontSize: 12 }}
+          />
+          <Tooltip formatter={(value) => [fmt(value), tooltipName]} />
+          <Bar dataKey={dataKey} radius={[0, 6, 6, 0]}>
+            {data.map((d, i) => (
+              <Cell key={i} fill={getColor ? getColor(d, i) : "#3B82F6"} />
+            ))}
+            <LabelList
+              dataKey={dataKey}
+              position="right"
+              formatter={fmt}
+              style={{ fontSize: 12, fill: "#475569" }}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     );
-  };
+
+  return navigateTo
+    ? <NavigableChartCard title={title} subtitle={subtitle} to={navigateTo}>{content}</NavigableChartCard>
+    : <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
+}
+// ── Vertical legend with wrapping names + counts ──
+function PieLegendList({ payload }) {
+  return (
+    <ul className="pie-legend-list">
+      {payload.map((e, i) => (
+        <li key={i} className="pie-legend-item">
+          <span className="pie-legend-swatch" style={{ background: e.color }} />
+          <span className="pie-legend-name">{e.value}</span>
+          <span className="pie-legend-count">{e.payload?.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CustomPieChart({
+  data, title, subtitle, height = 280, navigateTo, colorMap,
+  legendPosition = "bottom", // "bottom" | "right"
+}) {
+  const filteredData = data?.filter(d => d.value > 0) || [];
+  const legendRight = legendPosition === "right";
 
   const content = filteredData.length === 0
     ? <EmptyChart height={height} />
@@ -399,18 +476,37 @@ function CustomPieChart({ data, title, subtitle, height = 280, navigateTo }) {
         <PieChart>
           <Pie
             data={filteredData}
-            cx="50%" cy="50%"
-            labelLine={true}
-            label={renderCustomizedLabel}
-            outerRadius={80}
+            cx={legendRight ? "30%" : "50%"}
+            cy="50%"
+            outerRadius={legendRight ? 95 : 75}
             dataKey="value"
+            nameKey="name"
+            label={({ percent }) => percent >= 0.03 ? `${Math.round(percent * 100)}%` : ""}
           >
             {filteredData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={colorMap ? (colorMap[entry.name] || FALLBACK_COLOR) : COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip formatter={(value) => `${value} alumni`} />
-          <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+          {legendRight ? (
+            <Legend
+              layout="vertical"
+              align="right"
+              verticalAlign="middle"
+              wrapperStyle={{ width: "42%", maxHeight: "100%", overflowY: "auto" }}
+              content={<PieLegendList />}
+            />
+          ) : (
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }}
+              formatter={(value, entry) => `${value} (${entry.payload.value})`}
+            />
+          )}
         </PieChart>
       </ResponsiveContainer>
     );
@@ -875,7 +971,8 @@ const AdminDashboardView = ({
                 data={shsPostGradPathData}
                 title="Post-Graduation Path"
                 subtitle="Where SHS alumni went after graduation"
-                height={280}
+                height={320}
+                legendPosition="right"
               />
             </div>
 
@@ -911,7 +1008,7 @@ const AdminDashboardView = ({
                 your mouse-down timer, keyboard nav, and aria attributes instead
                 of the raw onClick wrapper divs in friend's version */}
             <div className="charts-row">
-              <CustomBarChart
+              <CustomHorizontalBarChart
                 data={employmentAlignmentData}
                 dataKey="alignment"
                 nameKey="name"
@@ -919,9 +1016,15 @@ const AdminDashboardView = ({
                 subtitle="Percentage of alumni employed in their degree field per program"
                 height={280}
                 navigateTo="/admin/response-and-analytics"
+                suffix="%"
+                domain={[0, 100]}
+                yAxisWidth={90}
+                tooltipName="Alignment"
+                getColor={() => "#3B82F6"}
               />
               <CustomPieChart
                 data={employmentStatusData}
+                colorMap={EMPLOYMENT_COLORS}
                 title="Employment Status Distribution"
                 subtitle="Breakdown of alumni by employment type"
                 height={280}
@@ -941,13 +1044,16 @@ const AdminDashboardView = ({
 
             {/* In-Demand Skills — present in your version, dropped by friend */}
             <div className="full-width-chart">
-              <CustomBarChart
+              <CustomHorizontalBarChart
                 data={inDemandSkillsData}
                 dataKey="count"
                 nameKey="name"
                 title="Most In-Demand Skills"
                 subtitle="Most useful skills reported by alumni"
                 height={300}
+                yAxisWidth={230}
+                tooltipName="Alumni"
+                getColor={(d, i) => getSkillColor(d.name, i)}
               />
             </div>
           </>
