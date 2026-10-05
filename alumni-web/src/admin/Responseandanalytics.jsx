@@ -388,6 +388,90 @@ const extractRespondentData = (row,userEmail = '',alumniType = 'college') => {
   };
 };
 
+// ============================ SHS EDUCATIONAL BACKGROUND TALLIES ============================
+// SHS counterpart of the College "Educational Information" chart. College's
+// chart reads educational_background_data.board_exam_result, a question the
+// SHS survey never asks, so SHS gets its own tallies built from the keys the
+// SHS Educational Background form (EducationalBackgroundSHS.jsx) really saves
+// into shs_educational_background_data: status, pursued_nu_branch,
+// pursued_other_school, nu_branch, education_level, year_level and
+// stopped_reason.
+//   - Option labels come from survey_config and can be edited by the admin,
+//     so categories are tallied from the stored text, not a fixed list.
+//   - Free-text answers (reason_nu, reason_not_nu, school_name,
+//     course_program and every *_other field) are not charted. An "Other" /
+//     "Others" choice is counted as one "Other" bar; what the alumnus typed
+//     is never shown.
+//   - The NU answer reads pursued_nu_branch first and falls back to the older
+//     pursued_further_studies_nu key (same precedence as shsKpiEngine), so
+//     this summary and the dashboard KPI cards classify alumni the same way.
+const choiceKey = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const yesNoAnswer = (value) => {
+  if (typeof value !== 'string') return null;
+  const s = value.trim().toLowerCase();
+  return s === 'yes' ? true : s === 'no' ? false : null;
+};
+
+const addChoice = (map, raw) => {
+  if (typeof raw !== 'string') return;
+  const text = raw.trim();
+  const key = choiceKey(text);
+  if (!key) return;
+  const label = key === 'other' || key === 'others' ? 'Other' : text;
+  const mapKey = choiceKey(label);
+  const hit = map.get(mapKey);
+  if (hit) hit.count++;
+  else map.set(mapKey, { label, count: 1 });
+};
+
+const createShsEducationTallies = () => ({
+  status: new Map(),
+  destination: new Map(),
+  nuBranch: new Map(),
+  educationLevel: new Map(),
+  yearLevel: new Map(),
+  stoppedReason: new Map(),
+});
+
+const tallyShsEducation = (educational, tallies) => {
+  addChoice(tallies.status, educational.status);
+
+  const nu = yesNoAnswer(educational.pursued_nu_branch || educational.pursued_further_studies_nu);
+  const other = yesNoAnswer(educational.pursued_other_school);
+
+  // Only alumni who actually answered the further-studies questions count
+  // here. "Working" and "Stopped" alumni are never asked them.
+  if (nu === true) addChoice(tallies.destination, 'Continued at NU');
+  else if (other === true) addChoice(tallies.destination, 'Continued at Another School');
+  else if (nu === false && other === false) addChoice(tallies.destination, 'Did Not Continue');
+
+  // "What branch of NU?" is only asked when the NU answer is Yes.
+  if (nu === true) addChoice(tallies.nuBranch, educational.nu_branch);
+
+  // Education level / year level are asked for NU and other-school continuers.
+  if (nu === true || other === true) {
+    addChoice(tallies.educationLevel, educational.education_level || educational.other_school_education_level);
+    addChoice(tallies.yearLevel, educational.year_level || educational.other_school_year_level);
+  }
+
+  // Asked only when status is Stopped (the form clears it otherwise).
+  addChoice(tallies.stoppedReason, educational.stopped_reason);
+};
+
+const byCountThenLabel = (a, b) => b.count - a.count || a.label.localeCompare(b.label);
+const byLabelNatural = (a, b) => a.label.localeCompare(b.label, undefined, { numeric: true });
+const tallyToArray = (map, sorter = byCountThenLabel) => [...map.values()].sort(sorter);
+
+const summarizeShsEducation = (tallies) => ({
+  status: tallyToArray(tallies.status),
+  destination: tallyToArray(tallies.destination),
+  nuBranch: tallyToArray(tallies.nuBranch),
+  educationLevel: tallyToArray(tallies.educationLevel),
+  yearLevel: tallyToArray(tallies.yearLevel, byLabelNatural),
+  stoppedReason: tallyToArray(tallies.stoppedReason),
+});
+
 // ============================ PROCESS ALL SURVEY DATA ============================
 const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
   let totalResponses = 0;
@@ -405,6 +489,7 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
   const skills = new Map();
   const respondents = [];
   const isShs = alumniType === 'shs';
+  const shsEducationTallies = createShsEducationTallies();
 
   rows.forEach(row => {
     totalResponses++;
@@ -437,6 +522,8 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     const examResult = safeText(educational.board_exam_result);
     if (examResult.toLowerCase().includes('pass')) boardExam.Passed++;
     else if (examResult.toLowerCase().includes('fail')) boardExam.Failed++;
+
+    if (isShs) tallyShsEducation(educational, shsEducationTallies);
 
     // ── Certification Status aggregation ──────────────────────────────────
     // Buckets purely on `certifications`, not the unrelated certiport_passer
@@ -507,6 +594,7 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     salary: Object.entries(salary).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
     timeToJob: Object.entries(timeToJob).filter(([_, v]) => v > 0).map(([label, count]) => ({ label, count })),
     skills: [...skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([skill, count]) => ({ skill, count })),
+    shsEducation: summarizeShsEducation(shsEducationTallies),
     respondents,
   };
 };
@@ -661,6 +749,7 @@ const ResponseAnalytics = () => {
           salary: processed.salary,
           timeToJob: processed.timeToJob,
           skills: processed.skills,
+          shsEducation: processed.shsEducation,
         });
         setRespondents(processed.respondents);
 

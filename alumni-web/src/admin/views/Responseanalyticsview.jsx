@@ -186,6 +186,44 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
   );
 };
 
+// ============================ SHS EDUCATIONAL BACKGROUND CARD ============================
+// One horizontal-bar card for the SHS "Educational Information" section.
+// Follows the same card / title / "No Data" placeholder pattern as the other
+// charts on this page. Category labels are admin-editable survey options, so
+// long ones are shortened on the axis only (the tooltip shows the full text).
+const SHS_EDU_AXIS_MAX_CHARS = 32;
+const ShsEducationBarCard = ({ title, data, color }) => {
+  const hasData = data?.length > 0;
+  return (
+    <div className="ra-chart-inner">
+      <h3 className="ra-chart-title">{title}</h3>
+      <ChartWithResponsiveContainer height={190}>
+        <BarChart
+          data={hasData ? data : [{ label: "No Data", count: 1 }]}
+          layout="vertical"
+          margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis type="number" allowDecimals={false} />
+          <YAxis
+            dataKey="label"
+            type="category"
+            width={165}
+            interval={0}
+            tickFormatter={(v) =>
+              String(v).length > SHS_EDU_AXIS_MAX_CHARS
+                ? `${String(v).slice(0, SHS_EDU_AXIS_MAX_CHARS - 1)}…`
+                : v
+            }
+          />
+          <Tooltip />
+          <Bar dataKey="count" name="Alumni" fill={color} />
+        </BarChart>
+      </ChartWithResponsiveContainer>
+    </div>
+  );
+};
+
 // ============================ CONTACT NUMBER COUNTRY-CODE FORMATTING ============================
 // Pure display formatter for the Survey Response modal's "Contact Number"
 // field. It does NOT touch how the number/country are stored or fetched —
@@ -1126,6 +1164,48 @@ const ResponseAnalyticsView = ({
                       </ChartWithResponsiveContainer>
                     </div>
                   </div>
+                )}
+
+              {isSectionVisible("educational-information") &&
+                alumniType === "shs" && (
+                  <>
+                    <div className="ra-chart-row">
+                      <ShsEducationBarCard
+                        title="Status After Senior High"
+                        data={stats.shsEducation?.status}
+                        color="#3B82F6"
+                      />
+                      <ShsEducationBarCard
+                        title="Further Studies After SHS"
+                        data={stats.shsEducation?.destination}
+                        color="#10B981"
+                      />
+                    </div>
+                    <div className="ra-chart-row">
+                      <ShsEducationBarCard
+                        title="Level of Education"
+                        data={stats.shsEducation?.educationLevel}
+                        color="#3B82F6"
+                      />
+                      <ShsEducationBarCard
+                        title="Year Level"
+                        data={stats.shsEducation?.yearLevel}
+                        color="#10B981"
+                      />
+                    </div>
+                    <div className="ra-chart-row">
+                      <ShsEducationBarCard
+                        title="NU Branch Attended"
+                        data={stats.shsEducation?.nuBranch}
+                        color="#3B82F6"
+                      />
+                      <ShsEducationBarCard
+                        title="Reason for Not Pursuing Further Studies"
+                        data={stats.shsEducation?.stoppedReason}
+                        color="#10B981"
+                      />
+                    </div>
+                  </>
                 )}
 
               {isSectionVisible("certification-achievements") &&
