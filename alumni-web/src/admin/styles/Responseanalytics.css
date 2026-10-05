@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.
+   THIS IS FOR INLINE STYLES.Also mine too
    ============================================================================
    Purpose: Contains all CSS styles for the Response & Analytics component.
             Uses friend's exact design with proper responsive breakpoints.
@@ -176,13 +176,13 @@ body {
 }
 
 .ra-content.responses {
-  padding: 18px 20px;
-  max-width: 900px;
+  padding: 18px 24px;     
   margin: 0 auto;
   height: calc(100vh - 280px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  max-width: none !important;
 }
 
 /* ---- Empty state: no completed responses yet ---- */
@@ -398,6 +398,11 @@ body {
   color: #92400e;
 }
 
+.ra-status.student       { background: #DBEAFE; color: #1D4ED8; }
+.ra-status.contractual   { background: #EDE9FE; color: #6D28D9; }
+.ra-status.freelance     { background: #CFFAFE; color: #0E7490; }
+.ra-status.not-specified { background: #F1F5F9; color: #64748B; }
+
 .ra-pagination {
   display: flex;
   justify-content: space-between;
@@ -551,6 +556,36 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.ra-modal-field {
+  padding: 9px 10px;
+}
+
+.ra-table-scroll {
+  scrollbar-gutter: stable;
+}
+
+/* Header table matches the body's width (12px = scrollbar width) */
+.ra-table-container > .ra-table {
+  width: calc(100% - 12px);
+}
+
+/* Horizontal lines like Alumni Management */
+.ra-table thead tr {
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.ra-table tbody tr {
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.ra-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ra-table tbody tr:hover {
+  background: #F8FAFC;
 }
 
 @media (max-width: 768px) {

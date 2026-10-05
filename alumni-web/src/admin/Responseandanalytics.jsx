@@ -9,6 +9,7 @@
 //
 //   Changes from the previous version are marked ← SKELETON.
 //   ALL other code is character-for-character identical.
+// This is mine
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -585,9 +586,19 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
           }[key]))
       : toArray(skillsData.useful_competencies);
     competencies.forEach(skill => {
-      const normalized = skill.trim();
-      if (normalized) skills.set(normalized, (skills.get(normalized) || 0) + 1);
+      let normalized = skill.trim();
+      if (!normalized) return;
+      // If the checklist's own "Other" option is stored (e.g. "Other: xyz"), group it
+      if (normalized.toLowerCase().startsWith('other')) normalized = 'Others';
+      skills.set(normalized, (skills.get(normalized) || 0) + 1);
     });
+
+    // Free-text answer: "What other skills should NU Dasma develop...?"
+    const typedSkills = safeText(isShs ? skillsData.other_skills_suggestion : skillsData.skills_to_develop);
+    const isBlankAnswer = /^(n\/?a|none|no|-+|\.+)$/i.test(typedSkills);
+    if (typedSkills && !isBlankAnswer) {
+      skills.set('Others', (skills.get('Others') || 0) + 1);
+    }
   });
 
   const avgSatisfaction = satisfactionCount > 0 ? (satisfactionSum / satisfactionCount).toFixed(1) : 0;
@@ -597,13 +608,13 @@ const processSurveyData = (rows, userEmails = {}, alumniType = 'college') => {
     avgSatisfaction: parseFloat(avgSatisfaction),
     satisfactionScores: Object.entries(satisfactionScores).map(([score, count]) => ({ score, count })),
     genderDistribution: Object.entries(genderDistribution).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
-    ageDistribution: Object.entries(ageDistribution).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
+    ageDistribution: Object.entries(ageDistribution).map(([range, count]) => ({ range, count })),
     boardExam: Object.entries(boardExam).filter(([_, v]) => v > 0).map(([category, count]) => ({ category, count })),
     certification: Object.entries(certification).filter(([_, v]) => v > 0).map(([status, count]) => ({ status, count })),
     employment: Object.entries(employment).filter(([_, v]) => v > 0).map(([name, value]) => ({ name, value })),
-    salary: Object.entries(salary).filter(([_, v]) => v > 0).map(([range, count]) => ({ range, count })),
-    timeToJob: Object.entries(timeToJob).filter(([_, v]) => v > 0).map(([label, count]) => ({ label, count })),
-    skills: [...skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([skill, count]) => ({ skill, count })),
+    salary: Object.entries(salary).map(([range, count]) => ({ range, count })),
+    timeToJob: Object.entries(timeToJob).map(([label, count]) => ({ label, count })),
+    skills: [...skills.entries()].sort((a, b) => (a[0] === 'Others') - (b[0] === 'Others') || b[1] - a[1]).slice(0, 8).map(([skill, count]) => ({ skill, count })),
     shsEducation: summarizeShsEducation(shsEducationTallies),
     respondents,
   };

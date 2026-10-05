@@ -1,5 +1,5 @@
 // ============================================================================
-// Purpose: admin
+// Purpose: admin, Also Mine
 // Renders all visual components with combined enhancements:
 //          - PDF export with batch/program filtering (friend)
 //          - Scrollable table body (friend)
@@ -16,6 +16,7 @@ import React, { useRef, useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
+  LabelList,
   LineChart,
   Line,
   PieChart,
@@ -55,8 +56,93 @@ const IconExport = ({ color = "#314158" }) => (
 );
 
 // ============================ COLORS ============================
-const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#10B981"];
+    const FALLBACK_COLOR = "#94A3B8";
 
+    const GENDER_COLORS = {
+      Male: "#3B82F6",
+      Female: "#EC4899",
+      Other: "#8B5CF6",
+    };
+
+    const EMPLOYMENT_COLORS = {
+      Employed: "#10B981",
+      Unemployed: "#EF4444",
+      "Self-Employed": "#F59E0B",
+      Student: "#3B82F6",
+      Contractual: "#8B5CF6",
+      Freelance: "#06B6D4",
+    };
+
+    const BOARD_COLORS = { Passed: "#10B981", Failed: "#EF4444" };
+
+    const AGE_COLORS = {
+      "18-24": "#14B8A6",
+      "25-34": "#3B82F6",
+      "35-44": "#8B5CF6",
+      "45+": "#F59E0B",
+    };
+
+    const SALARY_COLORS = {
+      "Below ₱15k": "#F87171",
+      "₱15k–30k": "#FBBF24",
+      "₱30k–50k": "#34D399",
+      "> ₱50k": "#16A34A",
+    };
+
+    const TIME_TO_JOB_COLORS = {
+      "< 1 month": "#16A34A",
+      "1–3 months": "#84CC16",
+      "4–6 months": "#F59E0B",
+      "7–12 months": "#F97316",
+      "> 1 year": "#EF4444",
+    };
+
+    const CERT_COLORS = {
+      "With Certification": "#2563EB",
+      "No Certification": "#94A3B8",
+    };
+    const SKILL_FALLBACK_PALETTE = [
+      "#EC4899", "#F97316", "#6366F1", "#84CC16", "#E11D48", "#0EA5E9",
+    ];
+
+    const getSkillColor = (name, i) => {
+      const n = String(name).toLowerCase();
+      if (n.includes("communication")) return "#3B82F6"; // blue
+      if (n.includes("critical")) return "#8B5CF6";      // purple
+      if (n.includes("work ethic")) return "#10B981";    // green
+      if (n.includes("leadership")) return "#F59E0B";    // amber
+      if (n.includes("information") || n.includes("technolog") || n.includes("technical"))
+        return "#06B6D4";
+      if (n === "others") return "#64748B"; // slate gray
+      return SKILL_FALLBACK_PALETTE[i % SKILL_FALLBACK_PALETTE.length];
+    };
+
+    const renderPieLabel = ({ name, value, percent }) =>
+  `${name}: ${value} (${Math.round(percent * 100)}%)`;
+
+    const ColoredBarTooltip = ({ active, payload, labelKey, getColor, formatLabel }) => {
+  if (!active || !payload || !payload.length) return null;
+  const d = payload[0].payload;
+  const color = getColor(d) || FALLBACK_COLOR;
+  const label = formatLabel ? formatLabel(d[labelKey]) : d[labelKey];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #E2E8F0",
+        borderRadius: 6,
+        padding: "6px 10px",
+        fontSize: 13,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      }}
+    >
+      <span style={{ color, fontWeight: 600 }}>
+        {label} : {d.count}
+      </span>
+    </div>
+  );
+};
 // ============================ EXPORT UTILITIES ============================
 
 /**
@@ -327,6 +413,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
       cyan: { bg: "#cffafe", text: "#0e7490" },
       orange: { bg: "#ffedd5", text: "#9a3412" },
     };
+
     const c = colors[color] || colors.blue;
     return (
       <span
@@ -407,9 +494,7 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               color="#3B82F6"
             />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              {data.studentNumber && (
-                <Field label="Student Number" value={data.studentNumber} />
-              )}
+              <Field label="Student Number" value={data.studentNumber} />
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
               {!alumniType || alumniType !== "shs" ? (
@@ -953,7 +1038,7 @@ const ResponseAnalyticsView = ({
 
   // ── Chart data guards ──
   const hasGenderData = stats.genderDistribution?.length > 0;
-  const hasAgeData = stats.ageDistribution?.length > 0;
+  const hasAgeData = stats.ageDistribution?.some((d) => d.count > 0);
   const hasBoardExamData = stats.boardExam?.length > 0;
   const hasCertData = stats.certification?.length > 0;
   // Certification Status chart: pull the two category counts out of the
@@ -980,8 +1065,8 @@ const ResponseAnalyticsView = ({
     },
   ];
   const hasEmploymentData = stats.employment?.length > 0;
-  const hasSalaryData = stats.salary?.length > 0;
-  const hasTimeToJobData = stats.timeToJob?.length > 0;
+  const hasSalaryData = stats.salary?.some((d) => d.count > 0);
+  const hasTimeToJobData = stats.timeToJob?.some((d) => d.count > 0);
   const hasSkillsData = stats.skills?.length > 0;
   const hasSatisfactionData = stats.satisfactionScores?.length > 0;
 
@@ -1103,13 +1188,12 @@ const ResponseAnalyticsView = ({
                           }
                           dataKey="value"
                           nameKey="name"
+                          outerRadius={60}
+                          label={hasGenderData ? renderPieLabel : false}
                         >
                           {hasGenderData ? (
-                            stats.genderDistribution.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
+                            stats.genderDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={GENDER_COLORS[entry.name] || FALLBACK_COLOR} />
                             ))
                           ) : (
                             <Cell fill="#CBD5E1" />
@@ -1134,8 +1218,12 @@ const ResponseAnalyticsView = ({
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
                         <YAxis dataKey="range" type="category" width={50} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#10B981" />
+                        <Tooltip content={<ColoredBarTooltip labelKey="range" getColor={(d) => AGE_COLORS[d.range]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasAgeData ? stats.ageDistribution : []).map((d, i) => (
+                            <Cell key={i} fill={AGE_COLORS[d.range] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -1148,19 +1236,24 @@ const ResponseAnalyticsView = ({
                     <div className="ra-chart-inner">
                       <h3 className="ra-chart-title">Board Exam Pass Rate</h3>
                       <ChartWithResponsiveContainer height={250}>
-                        <BarChart
-                          data={
-                            hasBoardExamData
-                              ? stats.boardExam
-                              : [{ category: "No Data", count: 1 }]
-                          }
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="category" />
-                          <YAxis />
+                        <PieChart>
+                          <Pie
+                            data={hasBoardExamData ? stats.boardExam : [{ category: "No Data", count: 1 }]}
+                            dataKey="count"
+                            nameKey="category"
+                            outerRadius={80}
+                            label={hasBoardExamData ? renderPieLabel : false}
+                          >
+                            {hasBoardExamData ? (
+                              stats.boardExam.map((d, i) => (
+                                <Cell key={i} fill={BOARD_COLORS[d.category] || FALLBACK_COLOR} />
+                              ))
+                            ) : (
+                              <Cell fill="#CBD5E1" />
+                            )}
+                          </Pie>
                           <Tooltip />
-                          <Bar dataKey="count" fill="#3B82F6" />
-                        </BarChart>
+                        </PieChart>
                       </ChartWithResponsiveContainer>
                     </div>
                   </div>
@@ -1214,56 +1307,24 @@ const ResponseAnalyticsView = ({
                     <div className="ra-chart-inner ra-cert-chart">
                       <h3 className="ra-chart-title">Certification Status</h3>
                       <ChartWithResponsiveContainer height={250}>
-                        <LineChart
-                          data={
-                            hasCertData
-                              ? certChartData
-                              : [
-                                  {
-                                    status: "No Data",
-                                    withCertification: 1,
-                                    noCertification: 1,
-                                  },
-                                ]
-                          }
-                          margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="status" tick={false} />
-                          <YAxis />
+                        <PieChart>
+                          <Pie
+                            data={hasCertData ? stats.certification : [{ status: "No Data", count: 1 }]}
+                            dataKey="count"
+                            nameKey="status"
+                            outerRadius={80}
+                            label={hasCertData ? renderPieLabel : false}
+                          >
+                            {hasCertData ? (
+                              stats.certification.map((d, i) => (
+                                <Cell key={i} fill={CERT_COLORS[d.status] || FALLBACK_COLOR} />
+                              ))
+                            ) : (
+                              <Cell fill="#CBD5E1" />
+                            )}
+                          </Pie>
                           <Tooltip />
-                          <Legend wrapperStyle={{ fontSize: 15 }} />
-                          <Line
-                            type="monotone"
-                            dataKey="withCertification"
-                            name="With Certification"
-                            stroke="#F59E0B"
-                            strokeWidth={3}
-                            dot={{
-                              r: 4,
-                              fill: "#F59E0B",
-                              stroke: "#F59E0B",
-                              strokeWidth: 1,
-                            }}
-                            activeDot={{ r: 6 }}
-                            isAnimationActive={false}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="noCertification"
-                            name="No Certification"
-                            stroke="#2563EB"
-                            strokeWidth={3}
-                            dot={{
-                              r: 4,
-                              fill: "#2563EB",
-                              stroke: "#2563EB",
-                              strokeWidth: 1,
-                            }}
-                            activeDot={{ r: 6 }}
-                            isAnimationActive={false}
-                          />
-                        </LineChart>
+                        </PieChart>
                       </ChartWithResponsiveContainer>
                     </div>
                   </div>
@@ -1283,13 +1344,12 @@ const ResponseAnalyticsView = ({
                           }
                           dataKey="value"
                           nameKey="name"
+                          outerRadius={60}
+                          label={hasEmploymentData ? renderPieLabel : false}
                         >
                           {hasEmploymentData ? (
-                            stats.employment.map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
+                            stats.employment.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={EMPLOYMENT_COLORS[entry.name] || FALLBACK_COLOR} />
                             ))
                           ) : (
                             <Cell fill="#CBD5E1" />
@@ -1312,9 +1372,13 @@ const ResponseAnalyticsView = ({
                       >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="range" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#EF4444" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ColoredBarTooltip labelKey="range" getColor={(d) => SALARY_COLORS[d.range]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasSalaryData ? stats.salary : []).map((d, i) => (
+                            <Cell key={i} fill={SALARY_COLORS[d.range] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -1327,18 +1391,18 @@ const ResponseAnalyticsView = ({
                     <h3 className="ra-chart-title">Time to First Job</h3>
                     <ChartWithResponsiveContainer height={250}>
                       <BarChart
-                        data={
-                          hasTimeToJobData
-                            ? stats.timeToJob
-                            : [{ label: "No Data", count: 1 }]
-                        }
-                        layout="vertical"
+                        data={hasTimeToJobData ? stats.timeToJob : [{ label: "No Data", count: 1 }]}
+                        margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="label" type="category" width={80} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#06B6D4" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="label" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ColoredBarTooltip labelKey="label" getColor={(d) => TIME_TO_JOB_COLORS[d.label]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasTimeToJobData ? stats.timeToJob : []).map((d, i) => (
+                            <Cell key={i} fill={TIME_TO_JOB_COLORS[d.label] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -1357,18 +1421,32 @@ const ResponseAnalyticsView = ({
                             : [{ skill: "No Data", count: 1 }]
                         }
                         layout="vertical"
-                        margin={{ top: 10, right: 20, left: 140, bottom: 10 }}
-                      >
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                        >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
                         <YAxis
                           dataKey="skill"
                           type="category"
-                          width={140}
+                          width={230}
                           interval={0}
+                          tick={{ fontSize: 13 }}
                         />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#8B5CF6" />
+                        <Tooltip
+                          content={
+                            <ColoredBarTooltip
+                              labelKey="skill"
+                              getColor={(d) =>
+                                getSkillColor(d.skill, stats.skills.findIndex((s) => s.skill === d.skill))
+                              }
+                            />
+                          }
+                        />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasSkillsData ? stats.skills : []).map((d, i) => (
+                            <Cell key={i} fill={getSkillColor(d.skill, i)} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -1398,8 +1476,16 @@ const ResponseAnalyticsView = ({
                           tickFormatter={(v) => renderStars(parseInt(v))}
                           width={60}
                         />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#F97316" />
+                        <Tooltip
+                          content={
+                            <ColoredBarTooltip
+                              labelKey="score"
+                              getColor={() => "#F59E0B"}
+                              formatLabel={(v) => renderStars(parseInt(v))}
+                            />
+                          }
+                        />
+                        <Bar dataKey="count" fill="#F59E0B" />
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -1485,7 +1571,7 @@ const ResponseAnalyticsView = ({
               </table>
 
               {/* Scrollable tbody (INTEGRATION: from friend's implementation) */}
-              <div style={{ overflowY: "auto", flex: 1 }}>
+              <div className="ra-table-scroll" style={{ overflowY: "auto", flex: 1 }}>
                 <table className="ra-table" style={{ tableLayout: "fixed" }}>
                   <colgroup>
                     <col />
