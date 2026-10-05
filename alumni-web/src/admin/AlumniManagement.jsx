@@ -16,7 +16,7 @@ import { exportAlumniToExcel } from "../utils/alumniExport";
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}/api`;
 
 // Preserved from your version
-const PER_PAGE = 12;
+const PER_PAGE = 50;
 
 function AlumniManagement() {
   const { alumniType } = useAlumniType();
