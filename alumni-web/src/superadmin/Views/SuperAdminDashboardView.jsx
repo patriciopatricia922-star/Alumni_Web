@@ -10,13 +10,12 @@ import {
 import { IoMdSchool }    from "react-icons/io";
 import { BiSolidSchool } from "react-icons/bi";
 import {
-  MdLightbulb,
   MdBarChart,
   MdWarningAmber,
-  MdClose,
 } from "react-icons/md";
 import SuperAdminSidebar from "../SuperAdSidebar";
 import "../styles/SuperAdminDashboard.css";
+import { buildKpiRecommendations, buildInsightView } from "../../utils/kpiRecommendations";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -100,7 +99,7 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
   );
 }
 
-function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount }) {
+function KpiProgressCard({ category, label, value, progress, target, targetLabel, targetDir = "above", trend, isCount, status }) {
   const trendColor = trend.dir === "up"
     ? (targetDir === "below" ? "#F59E0B" : "#00A63E")
     : trend.dir === "down"
@@ -113,15 +112,23 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
       ? 'Not Provided'
       : targetLabel;
 
-  const isNotMet = target > 0 && (
-    targetDir === "below"
-      ? (target < 100 ? progress > target : progress > 0)
-      : progress < target
-  );
+  // Mirrors the isGood logic in RadialGauge exactly so the warning fires
+  // whenever the gauge would show amber — including the target===100 sentinel.
+  // College KPIs carry a `status` from the shared KPI result (raw percentage vs
+  // target), so the card never re-derives it from the rounded value. SHS cards
+  // have no status and keep the original rule.
+  const isNotMet = status !== undefined
+    ? status === "not_met"
+    : target > 0 && (
+        targetDir === "below"
+          ? (target < 100 ? progress > target : progress > 0)
+          : progress < target
+      );
 
   return (
     <div className="kpi-progress-card">
       <div className="kpi-progress-category">{category}</div>
+
       <div className="kpi-progress-content">
         <div className="kpi-progress-info">
           <div className="kpi-progress-label">{label}</div>
@@ -142,7 +149,18 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
               Goal not met — click for suggestions
             </div>
           )}
+          {!isNotMet && status !== undefined && (
+            <div
+              className="kpi-alert-text"
+              style={{ color: "#45556C" }}
+              onClick={() => window.dispatchEvent(new CustomEvent('openKpiModal', { detail: { label } }))}
+            >
+              <MdBarChart size={13} />
+              View insights
+            </div>
+          )}
         </div>
+
         <div className="kpi-progress-gauge">
           <RadialGauge
             progress={progress}
@@ -428,27 +446,6 @@ function ShsContinuedStudiesChart({ data, title, subtitle, height = 300 }) {
   return <ChartCard title={title} subtitle={subtitle}>{content}</ChartCard>;
 }
 
-const resolveInsightsCategory = (label) => {
-  const employmentLabels = [
-    "Absorption from Internship",
-    "Employed Within 2 Yrs of Graduation",
-    "Employed in Field / Related Field",
-    "Employed Outside Field of Specialization",
-    "Engaged in Entrepreneurship",
-    "Occupying Supervisory Positions",
-  ];
-
-  const educationLabels = [
-    "Pursued Graduate Studies (within 1 yr)",
-    "Pursued Graduate Studies at NU",
-    "In Positions in Professional Organizations",
-  ];
-
-  if (employmentLabels.includes(label)) return 'employment';
-  if (educationLabels.includes(label))  return 'education';
-  return 'feedback';
-};
-
 const staticFallbackSuggestions = (label) => {
   const map = {
     "Absorption from Internship": [
@@ -498,19 +495,99 @@ const staticFallbackSuggestions = (label) => {
   };
   return map[label] || ["Review current data to generate recommendations."];
 };
-function KpiAlertModal({ label, onClose, kpiInsights }) {
-  const category     = resolveInsightsCategory(label);
-  const data         = kpiInsights?.[category];
-  const suggestions  = data ? data.recommendations : staticFallbackSuggestions(label);
-  const insightLines = data?.insights || [];
-  const summary      = data?.summary  || null;
+// KPI insights modal: everything shown is read from the same result object the card uses
+// (grouped by buildInsightView in utils/kpiRecommendations.js). Nothing is calculated here.
+function InsightSection({ title, hint, children }) {
+  return (
+    <section className="kpi-section">
+      <h3 className="kpi-section-title">{title}</h3>
+      {hint && <p className="kpi-section-hint">{hint}</p>}
+      {children}
+    </section>
+  );
+}
 
+function ActionList({ actions }) {
+  return (
+    <ol className="kpi-actions">
+      {actions.map((a, i) => {
+        const text  = typeof a === "string" ? a : a.text;
+        const basis = typeof a === "string" ? null : a.basis;
+        const general = typeof a === "string" ? false : a.general;
+        return (
+          <li key={`act-${i}`} className="kpi-action">
+            <span className="kpi-action-no" aria-hidden="true">{i + 1}</span>
+            <div className="kpi-action-body">
+              <p className="kpi-action-text">{text}</p>
+              {basis && (
+                <p className="kpi-action-basis">
+                  <span className="kpi-tag kpi-tag--evidence">Survey evidence</span>
+                  {basis}
+                </p>
+              )}
+              {!basis && general && (
+                <p className="kpi-action-basis">
+                  <span className="kpi-tag kpi-tag--general">General practice</span>
+                  Not derived from the survey.
+                </p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function AnswerBlock({ block }) {
+  if (block.type === "stat") {
+    return (
+      <div className="kpi-answer">
+        <p className="kpi-answer-q">{block.question}</p>
+        <p className="kpi-answer-stat">{block.value}</p>
+        <p className="kpi-answer-meta">{block.meta}</p>
+        {block.note && <p className="kpi-answer-meta">{block.note}</p>}
+      </div>
+    );
+  }
+  return (
+    <div className="kpi-answer">
+      <p className="kpi-answer-q">{block.question}</p>
+      <ul className="kpi-bars">
+        {block.items.map((item) => (
+          <li key={item.label} className="kpi-bar-row">
+            <span className="kpi-bar-label">{item.label}</span>
+            <span className="kpi-bar-count">{item.count}</span>
+            <span className="kpi-bar-track" aria-hidden="true">
+              <i style={{ width: `${(item.count / block.max) * 100}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="kpi-answer-meta">
+        {block.meta}
+        {block.more > 0 ? ` · ${block.more} more answer${block.more === 1 ? "" : "s"} not shown` : ""}
+      </p>
+    </div>
+  );
+}
+
+function KpiAlertModal({ label, onClose, kpiResult }) {
+  // The modal is mounted fresh each time it opens, so this seed gives a new draw of
+  // wording and eligible suggestions per opening. It never changes a number or finding.
+  const [seed] = useState(() => Math.floor(Math.random() * 2147483647));
+  const rec      = buildKpiRecommendations(kpiResult, { seed });
+  const view     = buildInsightView(kpiResult, rec);
+  const fallback = rec ? null : staticFallbackSuggestions(label);
+
+  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  // Prevent background scroll while open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -526,68 +603,112 @@ function KpiAlertModal({ label, onClose, kpiInsights }) {
     >
       <div className="kpi-modal">
 
+        {/* ── HEADER ── */}
         <div className="kpi-modal-header">
           <h2 id="kpi-modal-title">{label}</h2>
-          <button
-            className="kpi-modal-close-icon"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            <MdClose size={16} />
-          </button>
         </div>
 
-        <div className="kpi-modal-status">
-          <MdWarningAmber size={14} />
-          Below Target Performance
-        </div>
-
-        <p className="kpi-modal-desc">
-          {summary
-            ? summary
-            : "This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:"}
-        </p>
-
-        {insightLines.length > 0 && (
-          <>
-            <div className="kpi-modal-section-label">
-              <MdBarChart size={14} />
-              Data Insights
-            </div>
-            <div className="kpi-modal-suggestions">
-              {insightLines.map((line, i) => (
-                <div key={`insight-${i}`} className="kpi-suggestion-item">
-                  <div className="suggestion-icon suggestion-icon--insight">
-                    <MdBarChart size={14} />
+        <div className="kpi-modal-body">
+          {view ? (
+            <>
+              {/* ── RESULT ── */}
+              {view.hero && (
+                <div className="kpi-hero">
+                  <div className="kpi-hero-row">
+                    <span className="kpi-hero-value">{view.hero.value}<small>%</small></span>
+                    <span className="kpi-hero-frac"><b>{view.hero.n} of {view.hero.d}</b> alumni qualify</span>
                   </div>
-                  <div className="suggestion-text">{line}</div>
+                  <div
+                    className="kpi-hero-bar"
+                    role="img"
+                    aria-label={`${view.hero.value} percent`}
+                  >
+                    <i style={{ width: `${Math.min(Math.max(view.hero.value, 0), 100)}%` }} />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+              )}
 
-        <div className="kpi-modal-section-label">
-          <MdLightbulb size={14} />
-          Recommendations
-        </div>
-        <div className="kpi-modal-suggestions">
-          {suggestions.map((s, i) => (
-            <div key={`rec-${i}`} className="kpi-suggestion-item">
-              <div className="suggestion-icon suggestion-icon--rec">
-                <MdLightbulb size={14} />
+              <div className="kpi-chips">
+                <span className={`kpi-chip kpi-chip--${view.tone}`}>{view.badge}</span>
+                {view.chips.map((c) => (
+                  <span key={c.text} className={`kpi-chip kpi-chip--${c.tone === "warn" ? "warn" : "plain"}`}>{c.text}</span>
+                ))}
               </div>
-              <div className="suggestion-text">{s}</div>
-            </div>
-          ))}
+
+              {view.message && (
+                <div className="kpi-message">
+                  <p className="kpi-message-title">{view.message.title}</p>
+                  <p className="kpi-message-text">{view.message.text}</p>
+                </div>
+              )}
+
+              {/* ── WHO IS INCLUDED ── */}
+              {view.included && (
+                <InsightSection title="Who is included">
+                  <dl className="kpi-kv">
+                    {view.included.rows.map(([k, v]) => (
+                      <div key={k} className="kpi-kv-row">
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {view.included.leftOut && <p className="kpi-answer-meta">{view.included.leftOut}</p>}
+                  {view.included.note && <p className="kpi-answer-meta">{view.included.note}</p>}
+                </InsightSection>
+              )}
+
+              {/* ── WHAT ALUMNI ANSWERED ── */}
+              {view.answers.length > 0 && (
+                <InsightSection title="What alumni answered">
+                  {view.answers.map((block) => (
+                    <AnswerBlock key={block.question} block={block} />
+                  ))}
+                </InsightSection>
+              )}
+
+              {/* ── BY PROGRAM ── */}
+              {view.byProgram && (
+                <InsightSection title={view.byProgram.title}>
+                  <dl className="kpi-kv">
+                    {view.byProgram.rows.map(([k, v]) => (
+                      <div key={k} className="kpi-kv-row">
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {view.byProgram.note && <p className="kpi-answer-meta">{view.byProgram.note}</p>}
+                </InsightSection>
+              )}
+
+              {/* ── CAUTION ── */}
+              {view.caution && <p className="kpi-caution">{view.caution}</p>}
+
+              {/* ── SUGGESTED ACTIONS ── */}
+              <InsightSection title="Suggested actions" hint={view.actionsHint}>
+                <ActionList actions={view.actions} />
+              </InsightSection>
+            </>
+          ) : (
+            <>
+              <div className="kpi-chips">
+                <span className="kpi-chip kpi-chip--warn">Below Target Performance</span>
+              </div>
+              <p className="kpi-modal-desc">
+                This KPI is currently not meeting its expected goal. Here are some recommended actions to improve performance:
+              </p>
+              <InsightSection title="Suggested actions">
+                <ActionList actions={fallback} />
+              </InsightSection>
+            </>
+          )}
         </div>
 
+        {/* ── FOOTER ── */}
         <div className="kpi-modal-footer">
-          <button className="kpi-modal-close" onClick={onClose}>
-            Close
-          </button>
+          <button className="kpi-modal-close" onClick={onClose}>Close</button>
         </div>
-
       </div>
     </div>
   );
@@ -604,7 +725,6 @@ const SuperAdminDashboardView = ({
   inDemandSkillsData,
   careerAlignmentData,
   loadingCharts,
-  kpiInsights,
   alumniType,
   shsPostGradPathData,
   shsContinuedStudiesData,
@@ -774,7 +894,9 @@ const SuperAdminDashboardView = ({
           <KpiAlertModal
             label={activeKpiModal}
             onClose={() => setActiveKpiModal(null)}
-            kpiInsights={kpiInsights}
+            kpiResult={Object.values(kpiData || {})
+              .flat()
+              .find((k) => k.label === activeKpiModal)?.result}
           />
         )}
 
