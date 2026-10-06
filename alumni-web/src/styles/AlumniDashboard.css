@@ -1061,3 +1061,83 @@
     min-height: 0;
   }
 }
+
+/* ============================ SURVEY PROGRESS CARD - MOBILE RESPONSIVE ============================
+   Mobile-only (<= 767px); base/desktop .survey-* rules above are untouched.
+   Kept at the END of the file so it wins the cascade over the earlier 767/479/landscape blocks.
+   The font-size declarations need !important only because the base .survey-label and
+   .survey-message rules declare !important. Everything scales with viewport WIDTH between a
+   floor and a cap, so there is no per-device breakpoint. */
+@media (max-width: 767px) {
+  .survey-card {
+    height: auto;
+    padding: clamp(12px, 3.4vw, 18px) clamp(14px, 4.2vw, 22px);
+    gap: clamp(8px, 2.6vw, 14px);
+  }
+
+  .survey-card-content {
+    gap: clamp(6px, 1.8vw, 10px);
+  }
+
+  .survey-label {
+    font-size: clamp(10px, 2.8vw, 12.5px) !important;
+  }
+
+  .survey-message {
+    font-size: clamp(15px, 4.6vw, 21px) !important;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+
+  .continue-button {
+    padding: clamp(6px, 1.7vw, 8px) clamp(14px, 4vw, 20px);
+    font-size: clamp(11px, 3vw, 13px);
+  }
+
+  .progress-circle {
+    width: clamp(60px, 21vw, 104px);
+    height: clamp(60px, 21vw, 104px);
+  }
+
+  .progress-percentage {
+    font-size: clamp(13px, 3.9vw, 20px);
+  }
+}
+
+/* Side-by-side phone range (480-767px): the card only gets ~45% of the width, so scale its
+   contents against that narrower column. The banner row had a fixed height that clipped the
+   card; keep the original height as a minimum but let it grow with content. */
+@media (min-width: 480px) and (max-width: 767px) {
+  .top-banner-row {
+    height: auto;
+    min-height: clamp(120px, 20vh, 180px);
+  }
+
+  .survey-card {
+    padding: clamp(12px, 2.4vw, 18px) clamp(12px, 2.6vw, 18px);
+    gap: clamp(6px, 1.4vw, 10px);
+  }
+
+  .survey-message {
+    font-size: clamp(14px, 2.7vw, 19px) !important;
+  }
+
+  .progress-circle {
+    width: clamp(54px, 10vw, 84px);
+    height: clamp(54px, 10vw, 84px);
+  }
+
+  .progress-percentage {
+    font-size: clamp(12px, 2.1vw, 16px);
+  }
+}
+
+/* Landscape phones: the earlier landscape rule fixes the banner row height; let it grow instead
+   of clipping the card. */
+@media (max-width: 767px) and (max-height: 600px) and (orientation: landscape) {
+  .top-banner-row {
+    height: auto;
+    min-height: clamp(100px, 18vh, 160px);
+  }
+}
