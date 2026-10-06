@@ -155,6 +155,33 @@
     margin: 0 !important;
     padding: 0 !important;
   }
+
+  /* Notification dropdown — mobile viewport anchoring.
+     NotificationBell.css targets `.notification-dropdown.mobile`, but the
+     dashboard never passes a `mobile` class to the dropdown, so those rules
+     never applied and the dropdown kept its fixed 380px desktop width.
+     Scoped to `.notification-bell.mobile` (only rendered when isMobile) so
+     desktop and other pages are untouched.
+     The dropdown's containing block is `.notification-bell.mobile`, whose
+     right edge sits `clamp(12px, 4vw, 18px)` from the viewport edge; the
+     negative offset below cancels that so the panel's right edge lands on
+     the safe-area-aware gutter, and the width is derived from the viewport
+     minus the same gutters, giving equal left/right margins on any screen. */
+  .notification-bell.mobile .notification-dropdown {
+    --nb-gutter-l: max(12px, env(safe-area-inset-left, 0px));
+    --nb-gutter-r: max(12px, env(safe-area-inset-right, 0px));
+    position: absolute;
+    left: auto;
+    right: calc(var(--nb-gutter-r) - clamp(12px, 4vw, 18px));
+    width: calc(100vw - 24px); /* fallback for browsers without min()/max() */
+    width: min(380px, calc(100vw - var(--nb-gutter-l) - var(--nb-gutter-r)));
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    max-height: 70vh; /* fallback */
+    max-height: min(70vh, 520px);
+    max-height: min(70dvh, 520px);
+  }
 }
 
 @media (max-width: 1100px) {
