@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const LogoutIcon = ({ size = 16 }) => (
@@ -24,6 +24,16 @@ const SidebarView = ({
   onNavClick,   // ← required: called for every menu item click (includes DPA gate)
 }) => {
 
+  // Mobile logout confirmation: the Logout button only opens this; the existing
+  // handleLogout (passed in from Sidebar.jsx) runs only after the user confirms.
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
+  useEffect(() => {
+    if (!confirmLogoutOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setConfirmLogoutOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [confirmLogoutOpen]);
+
   // ── Mobile bottom nav ──────────────────────────────────────────────────────
   if (isMobile) {
     // Combine menu items with help items (e.g. About) for the mobile bottom nav,
@@ -34,6 +44,7 @@ const SidebarView = ({
     ];
 
     return (
+      <>
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         height: '68px',
@@ -110,7 +121,7 @@ const SidebarView = ({
         })}
 
         {/* Logout */}
-        <button onClick={handleLogout} style={{
+        <button onClick={() => setConfirmLogoutOpen(true)} style={{
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
           gap: '6px', flex: 1, height: '100%',
@@ -120,6 +131,64 @@ const SidebarView = ({
           <span style={{ fontFamily: 'Montserrat', fontSize: 'clamp(7.5px, 2.6vw, 10px)', color: 'rgba(255,255,255,0.45)' }}>Logout</span>
         </button>
       </nav>
+
+      {confirmLogoutOpen && (
+        <div
+          onClick={() => setConfirmLogoutOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 300,
+            background: 'rgba(0,15,50,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxSizing: 'border-box',
+            padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))',
+          }}
+        >
+          <div
+            role="dialog" aria-modal="true"
+            aria-labelledby="logout-confirm-title" aria-describedby="logout-confirm-desc"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              boxSizing: 'border-box',
+              width: '100%', maxWidth: '320px', maxHeight: '100%', overflowY: 'auto',
+              background: '#FFFFFF', borderRadius: '20px',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.35)',
+              padding: 'clamp(18px, 5vw, 24px)',
+              textAlign: 'center', fontFamily: 'Montserrat, Arial, sans-serif',
+            }}
+          >
+            <h2 id="logout-confirm-title" style={{
+              margin: '0 0 8px', fontSize: 'clamp(16px, 4.6vw, 19px)', fontWeight: 700,
+              lineHeight: 1.3, color: '#00226D',
+            }}>Log out?</h2>
+            <p id="logout-confirm-desc" style={{
+              margin: '0 0 20px', fontSize: 'clamp(13px, 3.6vw, 14.5px)',
+              lineHeight: 1.45, color: '#324D87',
+            }}>Are you sure you want to log out?</p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                autoFocus
+                onClick={() => setConfirmLogoutOpen(false)}
+                style={{
+                  flex: 1, minHeight: '46px', borderRadius: '25px', cursor: 'pointer',
+                  border: '1px solid #C9D6F2', background: '#EEF3FF', color: '#324D87',
+                  fontFamily: 'inherit', fontSize: '14px', fontWeight: 700,
+                  touchAction: 'manipulation',
+                }}
+              >Cancel</button>
+              <button
+                onClick={() => { setConfirmLogoutOpen(false); handleLogout(); }}
+                style={{
+                  flex: 1, minHeight: '46px', borderRadius: '25px', cursor: 'pointer',
+                  border: 'none', background: '#00226D', color: '#FFFFFF',
+                  fontFamily: 'inherit', fontSize: '14px', fontWeight: 700,
+                  touchAction: 'manipulation',
+                }}
+              >Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     );
   }
 
