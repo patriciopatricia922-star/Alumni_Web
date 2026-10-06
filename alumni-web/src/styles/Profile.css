@@ -189,8 +189,35 @@ to ensure consistent page-level alignment across all views. */
 
 @media (max-width: 767px) {
   .prof-content-wrapper .notification-bell-wrapper {
+    /* Single source of truth for the bell's distance from the right edge;
+       the dropdown rule below reads it to cancel this offset. */
+    --prof-bell-right: 40px;
     top: 24px;
-    right: 40px;
+    right: var(--prof-bell-right);
+  }
+
+  /* Notification dropdown — mobile viewport anchoring.
+     The dropdown never receives the `.mobile` class that the mobile rules in
+     NotificationBell.css expect (Profile only passes `mobile` to the wrapper),
+     so it kept its fixed 380px desktop width and, anchored to a bell sitting
+     40px from the edge, spilled off the left side on screens < ~420px.
+     Here the panel's right edge is moved to a safe-area-aware gutter by
+     cancelling the bell's offset, and its width is derived from the viewport
+     minus the same gutters, so margins stay equal on any screen width. */
+  .prof-content-wrapper .notification-bell-wrapper .notification-dropdown {
+    --nb-gutter-l: max(12px, env(safe-area-inset-left, 0px));
+    --nb-gutter-r: max(12px, env(safe-area-inset-right, 0px));
+    position: absolute;
+    left: auto;
+    right: calc(var(--nb-gutter-r) - var(--prof-bell-right));
+    width: calc(100vw - 24px); /* fallback for browsers without min()/max() */
+    width: min(380px, calc(100vw - var(--nb-gutter-l) - var(--nb-gutter-r)));
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    max-height: 70vh; /* fallback */
+    max-height: min(70vh, 520px);
+    max-height: min(70dvh, 520px);
   }
 }
 
