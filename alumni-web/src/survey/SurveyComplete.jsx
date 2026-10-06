@@ -188,14 +188,27 @@ const SurveyComplete = () => {
         .sc-btn:focus-visible { outline: 2px solid #6ea8ff; outline-offset: 2px; }
         .sc-arrow { transition: transform 0.15s ease; display: flex; }
 
-        @media (max-width: 768px) {
-          .sc-main { margin-left: 0; padding: 24px 16px; }
+        /* Mobile (<= 767px, matching Sidebar's isMobile = width < 768).
+           The page is bounded to the visible viewport and .sc-main becomes the scroller, so
+           scrolling works even though this page sets overflow:hidden on #root. Bottom padding
+           clears the fixed 68px bottom nav + safe area so the button is never hidden behind it. */
+        @media (max-width: 767px) {
+          .sc-wrap { height: 100vh; height: 100dvh; min-height: 0; }
+          .sc-main {
+            margin-left: 0;
+            min-height: 0;
+            align-items: flex-start;
+            padding: 24px 16px calc(70px + env(safe-area-inset-bottom, 0px) + 20px);
+          }
+          .sc-card { margin: auto; }
         }
         @media (max-width: 640px) {
           .sc-card { flex-direction: column; max-width: 440px; }
-          .sc-left { flex: none; padding: 32px 28px 28px; }
+          .sc-left { flex: none; padding: clamp(24px, 6.5vw, 32px) 28px clamp(22px, 5.5vw, 28px); }
+          .sc-badge-glow { width: clamp(84px, 24vw, 104px); height: clamp(84px, 24vw, 104px); margin-bottom: clamp(14px, 4vw, 22px); }
+          .sc-check-badge { width: clamp(54px, 16vw, 64px); height: clamp(54px, 16vw, 64px); }
           .sc-right { padding: 28px 24px 26px; }
-          .sc-rate { margin-top: 20px; padding-top: 18px; }
+          .sc-rate { margin-top: clamp(14px, 4.5vw, 20px); padding-top: clamp(14px, 4vw, 18px); }
         }
 
         @media (prefers-reduced-motion: reduce) {
