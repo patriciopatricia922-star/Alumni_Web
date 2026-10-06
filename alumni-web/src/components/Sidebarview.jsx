@@ -54,16 +54,29 @@ const SidebarView = ({
             <button
               key={item.path}
               onClick={() => onNavClick(item)}
-              disabled={item.loading}
+              // Not `disabled`: a disabled button swallows taps silently. While the survey
+              // route resolves, Sidebar.jsx queues the tap and navigates once it is ready.
+              aria-busy={item.loading || undefined}
               style={{
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
                 gap: '6px', flex: 1, height: '100%',
-                background: 'none', border: 'none', cursor: item.loading ? 'not-allowed' : 'pointer',
+                background: 'none', border: 'none', cursor: 'pointer',
                 padding: '0 2px', position: 'relative',
                 minWidth: 0,
+                // Tracer only: no double-tap-zoom delay/gesture ambiguity on touch.
+                ...(item.path === '/survey' ? { touchAction: 'manipulation' } : null),
               }}
             >
+              {/* Tracer only: invisible hit area, at least 44px tall and centred on the item,
+                  so the tap target never depends on box-sizing / safe-area inset. No visual
+                  or layout effect; taps bubble to the button. */}
+              {item.path === '/survey' && (
+                <span aria-hidden="true" style={{
+                  position: 'absolute', left: 0, right: 0, top: '50%',
+                  height: 'max(100%, 44px)', transform: 'translateY(-50%)',
+                }} />
+              )}
               {isActive && (
                 <div style={{
                   position: 'absolute', top: 0, left: '50%',

@@ -43,6 +43,9 @@ const Sidebar = () => {
     label: "",
   });
   const [surveyRoute, setSurveyRoute] = useState(null); // null = still resolving
+  // A Tracer tap that arrives while surveyRoute is still resolving is remembered here
+  // and replayed once the route is known, instead of being dropped.
+  const pendingSurveyTapRef = useRef(false);
   const width = useWindowWidth();
   const isMobile = width < 768;
   const isTablet = width >= 768 && width < 1024;
@@ -113,7 +116,7 @@ const Sidebar = () => {
           setSurveyRoute("/update-tracer");
         } else {
           const route = await getResumeRoute();
-          if (!cancelled) setSurveyRoute(route);
+          if (!cancelled) setSurveyRoute(route || "/survey/personal-background");
         }
       } catch (err) {
         console.error("Sidebar: error resolving survey route:", err);
@@ -142,9 +145,15 @@ const Sidebar = () => {
 
   // ── Nav click handler — gate the survey item through DPA ─────────────────
   const handleNavClick = (item) => {
-  if (!item.navPath) return;
-
   const isSurveyItem = item.path === "/survey";
+
+  if (!item.navPath) {
+    // Route still resolving: remember the Tracer tap so it isn't lost.
+    if (isSurveyItem) pendingSurveyTapRef.current = true;
+    return;
+  }
+  // Any other navigation supersedes a queued Tracer tap.
+  if (!isSurveyItem) pendingSurveyTapRef.current = false;
   if (isSurveyItem) {
     if (item.navPath === "/update-tracer") {
       sessionStorage.setItem("survey_origin_route", location.pathname);
@@ -181,6 +190,15 @@ const Sidebar = () => {
       loading: false,
     },
   ];
+
+  // Replay a Tracer tap that was made before the survey route finished resolving.
+  useEffect(() => {
+    if (surveyRoute && pendingSurveyTapRef.current) {
+      pendingSurveyTapRef.current = false;
+      handleNavClick({ path: "/survey", navPath: surveyRoute });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surveyRoute]);
 
   const helpItems = [{ path: "/about", label: "About", icon: aboutIcon }];
 
