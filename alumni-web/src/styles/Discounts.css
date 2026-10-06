@@ -73,8 +73,36 @@ right: 28px;
 }
 @media (max-width: 767px) {
 .discounts-main-content .notification-bell-wrapper {
+/* Single source of truth for the bell's distance from the right edge;
+the dropdown rule below reads it to cancel this offset. */
+--disc-bell-right: 16px;
 top: 24px;
-right: 16px;
+right: var(--disc-bell-right);
+}
+/* Notification dropdown — mobile viewport anchoring.
+This page only passes `mobile` to the bell wrapper, never to the
+dropdown, so the `.notification-dropdown.mobile` rules in
+NotificationBell.css never match (the `.discounts-notif-dropdown.mobile`
+rules further down target a class that is not rendered either). The
+dropdown kept its fixed 380px desktop width — wider than the screen on
+small phones, and clipped by `overflow-x: hidden` on this container.
+The panel's right edge is moved to a safe-area-aware gutter by cancelling
+the bell's offset, and its width is derived from the viewport minus the
+same gutters, so margins stay equal on any screen width. */
+.discounts-main-content .notification-bell-wrapper .notification-dropdown {
+--nb-gutter-l: max(12px, env(safe-area-inset-left, 0px));
+--nb-gutter-r: max(12px, env(safe-area-inset-right, 0px));
+position: absolute;
+left: auto;
+right: calc(var(--nb-gutter-r) - var(--disc-bell-right));
+width: calc(100vw - 24px); /* fallback for browsers without min()/max() */
+width: min(380px, calc(100vw - var(--nb-gutter-l) - var(--nb-gutter-r)));
+min-width: 0;
+max-width: none;
+box-sizing: border-box;
+max-height: 70vh; /* fallback */
+max-height: min(70vh, 520px);
+max-height: min(70dvh, 520px);
 }
 }
 /* Desktop only: fixes an unintended overflow/scrollbar issue and aligns the
