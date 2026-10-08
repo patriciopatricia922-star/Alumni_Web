@@ -297,7 +297,7 @@ const IDRegistrationView = ({
                         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M3 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    Retake Image
+                    Change Photo
                   </button>
                 </div>
               )}
@@ -341,7 +341,7 @@ const IDRegistrationView = ({
                       <path d="M5 13l4 4L19 7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <p style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '12px', color: '#86EFAC', margin: 0 }}>Alumni ID Verified!</p>
+                  <p style={{ fontFamily: 'Montserrat', fontWeight: 700, fontSize: '12px', color: '#407a55', margin: 0 }}>Alumni ID Verified!</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingLeft: '26px' }}>
                   {extractedData.firstName  && <p className="aid-extracted-row"><span className="aid-extracted-label">First Name: </span>{extractedData.firstName}</p>}
