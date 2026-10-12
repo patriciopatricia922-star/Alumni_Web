@@ -1,5 +1,5 @@
 // ============================================================================
-// Purpose: admin, Also Mine
+// Purpose: admin
 // Renders all visual components with combined enhancements:
 //          - PDF export with batch/program filtering (friend)
 //          - Scrollable table body (friend)

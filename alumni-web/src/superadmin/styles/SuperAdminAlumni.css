@@ -698,6 +698,15 @@ body { margin: 0; background: #E5ECF7F2; }
   justify-content: center;
 }
 
+.am-avatar-img,
+.apm-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 .apm-hero-info {
   text-align: center;
   position: relative;

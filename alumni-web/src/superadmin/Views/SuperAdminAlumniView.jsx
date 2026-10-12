@@ -99,6 +99,31 @@ function AccountBadge({ status }) {
 }
 
 // ============================================================================
+// ALUMNI AVATAR - shows the alumnus's picture, falls back to the initials
+// ============================================================================
+function AlumniAvatar({ src, fallback, imgClassName }) {
+  const [failed, setFailed] = useState(false);
+  const url = typeof src === "string" ? src.trim() : "";
+
+  // A different image URL (another alumnus, or a refreshed record) gets a fresh attempt
+  useEffect(() => {
+    setFailed(false);
+  }, [url]);
+
+  if (!url || failed) return fallback;
+
+  return (
+    <img
+      className={imgClassName}
+      src={url}
+      alt=""
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+// ============================================================================
 // FILTER MODAL
 // ============================================================================
 const FilterModal = ({
@@ -884,7 +909,14 @@ function AlumniProfileModal({ alumni, onClose, alumniType  }) {
         <div className="apm-hero">
           <div className="apm-hero-bg" aria-hidden="true" />
           <div className="apm-avatar-ring">
-            <div className="apm-avatar">{getInitials(alumni.name)}</div>
+            <div className="apm-avatar">
+              <AlumniAvatar
+                key={alumni.id}
+                src={alumni.profile_picture_url}
+                fallback={getInitials(alumni.name)}
+                imgClassName="apm-avatar-img"
+              />
+            </div>
           </div>
           <div className="apm-hero-info">
             <h2 className="apm-name">{alumni.name}</h2>
@@ -1044,7 +1076,11 @@ function SuperAdminAlumniView({
                     <td>
                       <div className="am-name-cell">
                         <div className="am-avatar">
-                          {(a.name ?? "?").charAt(0).toUpperCase()}
+                          <AlumniAvatar
+                            src={a.profile_picture_url}
+                            fallback={(a.name ?? "?").charAt(0).toUpperCase()}
+                            imgClassName="am-avatar-img"
+                          />
                         </div>
                         <div className="am-name-stack">
                           <span className="am-name">{a.name}</span>
