@@ -3,7 +3,7 @@
 .admin-management-layout {
   display: flex;
   min-height: 100vh;
-  background: #F8FAFC;
+  background: rgba(225,236,247,0.95);
   font-family: 'Lexend', 'Arimo', Arial, sans-serif;
 }
 
@@ -45,7 +45,7 @@
   font-family: 'Lexend', Arial, sans-serif;
   font-weight: 700;
   font-size: 30px;
-  color: #101828;
+  color: #324D87;
   margin: 0 0 4px;
   line-height: 36px;
 }
