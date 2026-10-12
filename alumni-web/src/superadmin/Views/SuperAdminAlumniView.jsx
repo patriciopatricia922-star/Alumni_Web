@@ -912,7 +912,7 @@ function AlumniProfileModal({ alumni, onClose, alumniType  }) {
             <div className="apm-avatar">
               <AlumniAvatar
                 key={alumni.id}
-                src={alumni.profile_picture_url}
+                src={alumni.avatar_url}
                 fallback={getInitials(alumni.name)}
                 imgClassName="apm-avatar-img"
               />
@@ -1077,7 +1077,7 @@ function SuperAdminAlumniView({
                       <div className="am-name-cell">
                         <div className="am-avatar">
                           <AlumniAvatar
-                            src={a.profile_picture_url}
+                            src={a.avatar_url}
                             fallback={(a.name ?? "?").charAt(0).toUpperCase()}
                             imgClassName="am-avatar-img"
                           />

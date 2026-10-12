@@ -158,8 +158,8 @@ function SuperAdminAlumni() {
           job_position: survey.job_position ?? null,
           job_company: survey.job_company ?? null,
           shs_educational_status: survey.shs_educational_status ?? null,
-          // Existing users-table columns; profile_picture_url is preferred.
-          profile_picture_url: u.profile_picture_url || u.avatar_url || null,
+          // Same field the Profile page writes (users.avatar_url, "avatars" bucket).
+          avatar_url: u.avatar_url || null,
         };
       });
 
