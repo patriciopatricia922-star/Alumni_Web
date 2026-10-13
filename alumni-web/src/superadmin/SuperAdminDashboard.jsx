@@ -6,6 +6,7 @@ import { computeShsKpiResults } from "../utils/shsKpiEngine";
 import { formatValidationReport } from "../utils/kpiValidation";
 import { useAlumniType } from "./contexts/AlumniTypeContext";
 import { isSHSProgram, isCollegeProgram } from "../utils/alumniUtils";
+import { groupSchools } from "../utils/schoolNames";
 
 const SATISFACTION_SCORE = {
   'Very Satisfied':    5,
@@ -442,17 +443,18 @@ const SuperAdminDashboard = () => {
         setShsRetentionSub('No education data yet');
       }
 
-      // ── SHS Post-Graduation Path chart — ported from Admin's exact
-      // bucketing logic (pursued_nu_branch / nu_branch / school_name) ───────
-      // shs_educational_background_data has two schema versions in
-      // production:
-      //  - older submissions: pursued_nu_branch / nu_branch / school_name
-      //  - newer submissions: pursued_further_studies_nu / other_school_name
+      // ── SHS Post-Graduation Path chart — synced with Admin's logic, which
+      // supports both schema versions of shs_educational_background_data:
+      //  - older: pursued_nu_branch / nu_branch / school_name
+      //  - newer: pursued_further_studies_nu / other_school_name
       // pursued_other_school ("Yes"/"No") is present in both versions, so
       // it's used as the gate for the "Other School" bucket instead of
       // relying on a single NU-branch key name that isn't present in every
       // submission.
-      const postGradCounts = {};
+      // School names are collected and then merged into one entry per school
+      // by groupSchools (utils/schoolNames.js), so spelling/format variants of
+      // the same school no longer appear as separate slices.
+      const postGradNames = [];
       shsSurveyRows.forEach(r => {
         const edu = safeParse(r.shs_educational_background_data);
         if (!edu) return;
@@ -466,12 +468,9 @@ const SuperAdminDashboard = () => {
           bucket = (edu.school_name || edu.other_school_name || '').trim();
         }
 
-        if (!bucket) return;
-        postGradCounts[bucket] = (postGradCounts[bucket] || 0) + 1;
+        if (bucket) postGradNames.push(bucket);
       });
-      setShsPostGradPathData(
-        Object.entries(postGradCounts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
-      );
+      setShsPostGradPathData(groupSchools(postGradNames));
 
       // ── SHS Continued Studies chart — ported from Admin's exact
       // bucketing logic (pursued_nu_branch / pursued_other_school) ─────────
