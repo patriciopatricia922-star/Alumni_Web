@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.Also mine too
+   THIS IS FOR INLINE STYLES. admin
    ============================================================================
    Purpose: Contains all CSS styles for the Response & Analytics component.
             Uses friend's exact design with proper responsive breakpoints.
@@ -179,6 +179,7 @@ body {
   padding: 18px 24px;     
   margin: 0 auto;
   height: calc(100vh - 280px);
+  max-height: calc(100vh - 249px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -248,6 +249,113 @@ body {
    only via .ra-cert-chart so no other analytics charts are affected. */
 .ra-cert-chart .recharts-surface {
   overflow: visible;
+}
+
+/* Respondents header: text on top, search + export on one row below */
+.ra-table-header {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.ra-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ra-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ra-search svg {
+  position: absolute;
+  left: 12px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.ra-search-input {
+  width: 260px;
+  height: 38px;
+  padding: 0 32px 0 34px;
+  border: 1px solid #CAD5E2;
+  border-radius: 10px;
+  background: #fff;
+  font-family: 'Arimo', sans-serif;
+  font-size: 14px;
+  color: #314158;
+  outline: none;
+  transition: border-color .12s;
+}
+
+.ra-search-input::placeholder { color: #94A3B8; }
+.ra-search-input:focus { border-color: #4FA3F7; }
+
+.ra-search-clear {
+  position: absolute;
+  right: 8px;
+  border: none;
+  background: none;
+  color: #94A3B8;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.ra-search-clear:hover { color: #475569; }
+
+.ra-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ra-select {
+  height: 38px;
+  padding: 0 30px 0 12px;
+  border: 1px solid #CAD5E2;
+  border-radius: 10px;
+  background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2364748B' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 12px center;
+  font-family: 'Arimo', sans-serif;
+  font-size: 14px;
+  color: #314158;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color .12s;
+}
+
+.ra-select:focus { border-color: #4FA3F7; }
+.ra-select-program { max-width: 220px; text-overflow: ellipsis; }
+
+.ra-clear-filters {
+  height: 38px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: #4FA3F7;
+  font-family: 'Arimo', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ra-clear-filters:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .ra-toolbar { flex-wrap: wrap; }
+  .ra-toolbar-left { width: 100%; }
+  .ra-select, .ra-select-program { flex: 1; max-width: none; }
+}
+
+@media (max-width: 640px) {
+  .ra-search { flex: 1; }
+  .ra-search-input { width: 100%; }
 }
 
 @media (max-width: 900px) {
@@ -396,12 +504,11 @@ body {
 .ra-status.self-employed {
   background: #fef3c7;
   color: #92400e;
+  .ra-status.student       { background: #DBEAFE; color: #1D4ED8; }
+  .ra-status.contractual   { background: #EDE9FE; color: #6D28D9; }
+  .ra-status.freelance     { background: #CFFAFE; color: #0E7490; }
+  .ra-status.not-specified { background: #F1F5F9; color: #64748B; }
 }
-
-.ra-status.student       { background: #DBEAFE; color: #1D4ED8; }
-.ra-status.contractual   { background: #EDE9FE; color: #6D28D9; }
-.ra-status.freelance     { background: #CFFAFE; color: #0E7490; }
-.ra-status.not-specified { background: #F1F5F9; color: #64748B; }
 
 .ra-pagination {
   display: flex;

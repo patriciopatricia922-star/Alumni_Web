@@ -34,7 +34,7 @@ import { exportSurveyPDF } from "../../utils/exportPDF";
 import { exportSHSSurveyPDF } from "../../utils/exportSHSPDF";
 
 // ============================ CONSTANTS ============================
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 
 // ============================ ICONS ============================
 const IconExport = ({ color = "#314158" }) => (
@@ -84,7 +84,7 @@ const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#10B981"];
     };
 
     const SALARY_COLORS = {
-      "Below ₱15k": "#F87171",
+      "< ₱15k": "#F87171",
       "₱15k–30k": "#FBBF24",
       "₱30k–50k": "#34D399",
       "> ₱50k": "#16A34A",
@@ -272,44 +272,6 @@ const ChartWithResponsiveContainer = ({ children, height = 190 }) => {
   );
 };
 
-// ============================ SHS EDUCATIONAL BACKGROUND CARD ============================
-// One horizontal-bar card for the SHS "Educational Information" section.
-// Follows the same card / title / "No Data" placeholder pattern as the other
-// charts on this page. Category labels are admin-editable survey options, so
-// long ones are shortened on the axis only (the tooltip shows the full text).
-const SHS_EDU_AXIS_MAX_CHARS = 32;
-const ShsEducationBarCard = ({ title, data, color }) => {
-  const hasData = data?.length > 0;
-  return (
-    <div className="ra-chart-inner">
-      <h3 className="ra-chart-title">{title}</h3>
-      <ChartWithResponsiveContainer height={190}>
-        <BarChart
-          data={hasData ? data : [{ label: "No Data", count: 1 }]}
-          layout="vertical"
-          margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" allowDecimals={false} />
-          <YAxis
-            dataKey="label"
-            type="category"
-            width={165}
-            interval={0}
-            tickFormatter={(v) =>
-              String(v).length > SHS_EDU_AXIS_MAX_CHARS
-                ? `${String(v).slice(0, SHS_EDU_AXIS_MAX_CHARS - 1)}…`
-                : v
-            }
-          />
-          <Tooltip />
-          <Bar dataKey="count" name="Alumni" fill={color} />
-        </BarChart>
-      </ChartWithResponsiveContainer>
-    </div>
-  );
-};
-
 // ============================ CONTACT NUMBER COUNTRY-CODE FORMATTING ============================
 // Pure display formatter for the Survey Response modal's "Contact Number"
 // field. It does NOT touch how the number/country are stored or fetched —
@@ -465,12 +427,15 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
     </div>
   );
 
-  const completeAddress =
-    alumniType === "shs"
-      ? data.completeAddress || ""
-      : [data.streetAddress, data.city, data.province, data.zipCode, data.country]
-          .filter(Boolean)
-          .join(", ");
+  const completeAddress = [
+    data.streetAddress,
+    data.city,
+    data.province,
+    data.zipCode,
+    data.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
@@ -984,19 +949,49 @@ const ResponseAnalyticsView = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   // Reset to page 1 on tab switch
+      const [searchQuery, setSearchQuery] = useState("");
+  const [batchFilter, setBatchFilter] = useState("All");
+  const [programFilter, setProgramFilter] = useState("All");
+
+  // Options come from the loaded respondents, so they always match real data
+  const batchOptions = [
+    ...new Set((respondents ?? []).map((r) => r.batch).filter((b) => b && b !== "N/A")),
+  ].sort((a, b) => b - a);
+  const programOptions = [
+    ...new Set((respondents ?? []).map((r) => r.program).filter((p) => p && p !== "Not specified")),
+  ].sort();
+
+  // Clear filters when the data set changes (e.g. College <-> SHS switch)
+  useEffect(() => {
+    setBatchFilter("All");
+    setProgramFilter("All");
+    setSearchQuery("");
+  }, [respondents]);
+
+  // Reset to page 1 on tab switch or any search/filter change
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab]);
+  }, [activeTab, searchQuery, batchFilter, programFilter]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil((respondents?.length ?? 0) / PAGE_SIZE),
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredRespondents = (respondents ?? []).filter((r) => {
+    if (batchFilter !== "All" && String(r.batch) !== batchFilter) return false;
+    if (programFilter !== "All" && r.program !== programFilter) return false;
+    if (!normalizedQuery) return true;
+    return [r.name, r.email, r.program, r.batch, r.status]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(normalizedQuery));
+  });
+
+  const hasActiveFilters =
+    batchFilter !== "All" || programFilter !== "All" || normalizedQuery !== "";
+
+  const totalPages = Math.max(1, Math.ceil(filteredRespondents.length / PAGE_SIZE));
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const pageEnd = pageStart + PAGE_SIZE;
-  const visibleRows = (respondents ?? []).slice(pageStart, pageEnd);
-  const firstEntry = respondents?.length ? pageStart + 1 : 0;
-  const lastEntry = Math.min(pageEnd, respondents?.length ?? 0);
+  const visibleRows = filteredRespondents.slice(pageStart, pageEnd);
+  const firstEntry = filteredRespondents.length ? pageStart + 1 : 0;
+  const lastEntry = Math.min(pageEnd, filteredRespondents.length);
 
   // ── Export modal state (INTEGRATION: from friend's implementation) ──
   const [exportOpen, setExportOpen] = useState(false);
@@ -1166,8 +1161,9 @@ const ResponseAnalyticsView = ({
 
         {/* CHARTS / RESPONSES */}
         <div
-          className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}
-        >
+  className={`ra-content ${activeTab === "responses" ? "responses" : ""}`}
+  style={activeTab === "responses" ? { height: "calc(100vh - 249px)" } : undefined}
+>
           {stats.totalResponses === 0 ? (
             <div className="ra-empty-state">No records found.</div>
           ) : (
@@ -1257,48 +1253,6 @@ const ResponseAnalyticsView = ({
                       </ChartWithResponsiveContainer>
                     </div>
                   </div>
-                )}
-
-              {isSectionVisible("educational-information") &&
-                alumniType === "shs" && (
-                  <>
-                    <div className="ra-chart-row">
-                      <ShsEducationBarCard
-                        title="Status After Senior High"
-                        data={stats.shsEducation?.status}
-                        color="#3B82F6"
-                      />
-                      <ShsEducationBarCard
-                        title="Further Studies After SHS"
-                        data={stats.shsEducation?.destination}
-                        color="#10B981"
-                      />
-                    </div>
-                    <div className="ra-chart-row">
-                      <ShsEducationBarCard
-                        title="Level of Education"
-                        data={stats.shsEducation?.educationLevel}
-                        color="#3B82F6"
-                      />
-                      <ShsEducationBarCard
-                        title="Year Level"
-                        data={stats.shsEducation?.yearLevel}
-                        color="#10B981"
-                      />
-                    </div>
-                    <div className="ra-chart-row">
-                      <ShsEducationBarCard
-                        title="NU Branch Attended"
-                        data={stats.shsEducation?.nuBranch}
-                        color="#3B82F6"
-                      />
-                      <ShsEducationBarCard
-                        title="Reason for Not Pursuing Further Studies"
-                        data={stats.shsEducation?.stoppedReason}
-                        color="#10B981"
-                      />
-                    </div>
-                  </>
                 )}
 
               {isSectionVisible("certification-achievements") &&
@@ -1531,28 +1485,77 @@ const ResponseAnalyticsView = ({
               }}
             >
               {/* Fixed header — never scrolls (INTEGRATION: improved layout from friend) */}
-              <div
-                className="ra-table-header"
-                style={{ flexShrink: 0, paddingBottom: "12px" }}
-              >
+              <div className="ra-table-header" style={{ flexShrink: 0, paddingBottom: "12px" }}>
                 <span>
-                  <strong>No of Respondents:</strong> {respondents.length}{" "}
-                  people
+                  <strong>No of Respondents:</strong> {respondents.length} people
                 </span>
-                <button
-                  className="am-tb-btn"
-                  style={{
-                    background: "#4FA3F7",
-                    color: "#fff",
-                    borderColor: "#4FA3F7",
-                  }}
-                  onClick={() => {
-                    resetExport();
-                    setExportOpen(true);
-                  }}
-                >
-                  <IconExport color="#fff" /> Export
-                </button>
+                <div className="ra-toolbar">
+  <div className="ra-toolbar-left">
+    <div className="ra-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        type="text"
+        className="ra-search-input"
+        placeholder="Search name, email, program…"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+      {searchQuery && (
+        <button className="ra-search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
+          ✕
+        </button>
+      )}
+    </div>
+
+    <select
+      className="ra-select"
+      value={batchFilter}
+      onChange={(e) => setBatchFilter(e.target.value)}
+      aria-label="Filter by batch"
+    >
+      <option value="All">All Batches</option>
+      {batchOptions.map((b) => (
+        <option key={b} value={String(b)}>Batch {b}</option>
+      ))}
+    </select>
+
+    <select
+      className="ra-select ra-select-program"
+      value={programFilter}
+      onChange={(e) => setProgramFilter(e.target.value)}
+      aria-label="Filter by program"
+    >
+      <option value="All">All Programs</option>
+      {programOptions.map((p) => (
+        <option key={p} value={p}>{p}</option>
+      ))}
+    </select>
+
+    {hasActiveFilters && (
+      <button
+        className="ra-clear-filters"
+        onClick={() => {
+          setSearchQuery("");
+          setBatchFilter("All");
+          setProgramFilter("All");
+        }}
+      >
+        Clear
+      </button>
+    )}
+  </div>
+
+  <button
+    className="am-tb-btn"
+    style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
+    onClick={() => { resetExport(); setExportOpen(true); }}
+  >
+    <IconExport color="#fff" /> Export
+  </button>
+</div>
               </div>
 
               {/* Fixed column headers — never scrolls */}
@@ -1590,7 +1593,7 @@ const ResponseAnalyticsView = ({
                             color: "#94A3B8",
                           }}
                         >
-                          No alumni records here
+                          {searchQuery ? "No respondents match your search" : "No alumni records here"}
                         </td>
                       </tr>
                     ) : (
@@ -1639,8 +1642,7 @@ const ResponseAnalyticsView = ({
                 style={{ flexShrink: 0, marginTop: "12px" }}
               >
                 <span>
-                  Showing {firstEntry} to {lastEntry} of {respondents.length}{" "}
-                  entries
+                 Showing {firstEntry} to {lastEntry} of {filteredRespondents.length} entries
                 </span>
                 <div>
                   <button
