@@ -34,13 +34,7 @@ import { MODULES } from '../utils/Modulepermissions'; // ← imported for annota
 // ─── Module-level user cache ──────────────────────────────────────────────────
 // Survives component remounts within the same JS session (i.e. same tab).
 // Reset to null on logout (see handleLogout).
-// _cachedUserId pins the cache to a specific auth user — without this, a
-// stale profile from a previously-authenticated account (e.g. during
-// testing, or a role change on the same account) can be shown for whoever
-// is *currently* logged in. This was the root cause of the wrong name
-// appearing in the sidebar pill.
 let _cachedUser = null;
-let _cachedUserId = null;
 
 // ─── Responsive width hook (unchanged) ───────────────────────────────────────
 const useWindowWidth = () => {
@@ -87,6 +81,13 @@ const ALL_SUPERADMIN_MENU_ITEMS = [
     module: MODULES.ALUMNI,         // annotation only
   },
   {
+    path:   '/superadmin/super-alumni-engagement',
+    icon:   'content_icn',
+    label:  'Content Management',
+    split:  true,
+    module: MODULES.ENGAGEMENT,     // annotation only
+  },
+  {
     path:   '/superadmin/survey-management',
     icon:   'survey_icn',
     label:  'Survey Management',
@@ -102,17 +103,8 @@ const ALL_SUPERADMIN_MENU_ITEMS = [
     path:      '/superadmin/predictive-analytics',
     icon:      'predict_icn',
     label:     'Predictive Analytics',
-    marginTop: '16px',
     module:    MODULES.REPORTS,     // annotation only
     collegeOnly: true,               // ← ported from Admin: hidden for SHS
-  },
-
-  {
-    path:   '/superadmin/super-alumni-engagement',
-    icon:   'content_icn',
-    label:  'Content Management',
-    split:  true,
-    module: MODULES.ENGAGEMENT,     // annotation only
   },
 ];
 
@@ -141,8 +133,8 @@ const SuperAdminSidebar = () => {
 
   // Pre-seed from cache so the very first render already has the right
   // display info if this component remounts after the initial fetch.
-  const [user, setUser]               = useState(null);
-  const [isLoadingUser, setIsLoading] = useState(true);
+  const [user, setUser]               = useState(_cachedUser);
+  const [isLoadingUser, setIsLoading] = useState(_cachedUser === null);
 
   const width                         = useWindowWidth();
   const isMobile                      = width < 768;
@@ -164,24 +156,18 @@ const SuperAdminSidebar = () => {
 
   // ── User fetch with cache short-circuit (ported from Admin) ──────────────
   useEffect(() => {
+    if (_cachedUser !== null) {
+      // State already seeded in useState initialiser; just clear loading.
+      setIsLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     const fetchUser = async () => {
       try {
-        // Always resolve the current auth identity first. The cache is only
-        // safe to use if it belongs to *this* authenticated user — this is
-        // the check that was previously missing, and is the fix for the
-        // wrong-name-in-pill bug.
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser || cancelled) return;
-
-        if (_cachedUser !== null && _cachedUserId === authUser.id) {
-          if (mountedRef.current) {
-            setUser(_cachedUser);
-            setIsLoading(false);
-          }
-          return;
-        }
 
         const { data, error } = await supabase
           .from('users')
@@ -191,11 +177,10 @@ const SuperAdminSidebar = () => {
 
         if (error || !data || cancelled) return;
 
-        // Populate the module-level cache (keyed to this user's id) before
-        // setting state so that any sibling remount that fires between now
-        // and the next tick also gets the correct cached value immediately.
+        // Populate the module-level cache before setting state so that any
+        // sibling remount that fires between now and the next tick also gets
+        // the cached value immediately.
         _cachedUser = data;
-        _cachedUserId = authUser.id;
 
         if (mountedRef.current) {
           setUser(data);
@@ -210,13 +195,12 @@ const SuperAdminSidebar = () => {
     fetchUser();
 
     return () => { cancelled = true; };
-  }, []); // intentionally empty — fetch once per mount; cache is validated by id inside
+  }, []); // intentionally empty — fetch once per mount, cache handles the rest
 
   // ── Logout (cache clear ported from Admin) ────────────────────────────────
   const handleLogout = async () => {
     try {
       _cachedUser = null;
-      _cachedUserId = null;
       await supabase.auth.signOut();
       navigate('/');
     } catch (error) {

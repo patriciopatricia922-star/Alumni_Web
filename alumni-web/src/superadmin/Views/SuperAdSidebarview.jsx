@@ -186,7 +186,7 @@ const SuperAdminSidebarView = ({
   }
 
   // ── Desktop / Tablet sidebar ───────────────────────────────────────────────
-  const sidebarW = isTablet ? '190px' : '218px';
+  const sidebarW = isTablet ? '200px' : '229px';
 
   return (
     <>
@@ -207,7 +207,7 @@ const SuperAdminSidebarView = ({
         <div className="superadmin-sidebar-divider" />
 
         {/* Alumni type switcher */}
-        <div style={{ padding: '26px 12px 0px' }}>
+        <div style={{ padding: '24px 12px 0px' }}>
           <AlumniTypeSwitcher alumniType={alumniType} setAlumniType={setAlumniType} />
         </div>
 
