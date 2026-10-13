@@ -41,7 +41,10 @@ body {
 .survey-header {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  /* Must stay BELOW the sidebar's z-index (100). At 1000 this opaque header
+     painted over the sidebar's drop shadow, cutting it off in the header
+     band and leaving a visible seam where the shadow resumed below it. */
+  z-index: 10;
   background: #E1ECF7;
   display: flex;
   justify-content: space-between;
@@ -58,13 +61,6 @@ body {
   top: -50px;
   height: 37px;
   background: #E1ECF7;
-}
-
-/* Remove any inherited/global shadow on the sticky header and its cap.
-   Scoped to the header only: cards, toasts, and modals keep their shadows. */
-.survey-header,
-.survey-header::before {
-  box-shadow: none;
 }
 
 /* Header left side - title and description container */
