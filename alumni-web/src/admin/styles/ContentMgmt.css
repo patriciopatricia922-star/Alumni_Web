@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.ADMIN
+   THIS IS FOR INLINE STYLES.ADMIN mine
    ============================================================================
    Purpose: Contains all CSS styles for the Content Management component.
             Includes layout, responsive breakpoints, animations, and all
@@ -137,23 +137,25 @@ body {
 }
 
 /* ============================ TABS ============================ */
+/* AGENDA 6: gap 4px -> 8px so tabs (and wrapped tab rows) are evenly spaced.
+   The group divider is placed by the `rightGroup` flag in the JSX, not by
+   nth-child rules, so no per-tab margin hacks are needed here. */
 .cm-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   margin-bottom: 28px;
   flex-wrap: wrap;
 }
 
-/* INTEGRATION: Visual grouping — adds a gap before the 3rd and 6th tabs */
-
-
+/* Divider margin reduced 8px -> 4px: combined with the 8px flex gap on each
+   side, the divider keeps ~12px of breathing room on both sides. */
 .cm-tab-divider {
   width: 1.5px;
   height: 24px;
   background: #94A3B8;
   align-self: center;
   flex-shrink: 0;
-  margin: 0 8px;
+  margin: 0 4px;
 }
 
 .cm-tab {
@@ -485,21 +487,6 @@ body {
   transform: scale(1.05);
 }
 
-/* Small colored type icon, top-right over the image — replaces the old
-   header-row icon so the body can stay compact. */
-.content-item-type-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
 /* Bottom-left overlay pill — category/company, mirrors the public card's tag */
 .content-item-tag {
   position: absolute;
@@ -516,16 +503,6 @@ body {
   font-size: 10px;
   color: #1E293B;
   line-height: 1;
-}
-
-/* Fallback header when there's no image (e.g. rewards/discounts without a photo) */
-.content-item-icon-only {
-  width: 100%;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  flex-shrink: 0;
 }
 
 .content-item-body {
@@ -1063,10 +1040,6 @@ body {
   
   .cm-archive-btn {
     align-self: flex-start;
-  }
-  
-  .cm-tabs {
-    gap: 8px;
   }
   
   .cm-tab {

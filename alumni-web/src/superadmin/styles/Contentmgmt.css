@@ -80,9 +80,14 @@ body {
 }
 
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
+/* AGENDA 6: gap 4px -> 8px so tabs (and wrapped tab rows) are evenly spaced.
+   The old position-based nth-child(3)/nth-child(6) margin + pseudo-divider
+   rules were removed: the group divider is placed by the `rightGroup` flag
+   in the JSX (.cm-tab-divider), so they only added an uneven extra gap
+   before the 3rd tab. */
 .cm-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   margin-bottom: 28px;
   flex-wrap: wrap;
   border-bottom: none;
@@ -90,34 +95,16 @@ body {
   overflow-x: visible;
 }
 
-/* Tab divider — separates logical tab groups (from Admin reference) */
+/* Tab divider — separates logical tab groups (from Admin reference).
+   Margin reduced 8px -> 4px: combined with the 8px flex gap on each side,
+   the divider keeps ~12px of breathing room on both sides. */
 .cm-tab-divider {
   width: 1.5px;
   height: 24px;
   background: #94A3B8;
   align-self: center;
   flex-shrink: 0;
-  margin: 0 8px;
-}
-
-.cm-tab:nth-child(3),
-.cm-tab:nth-child(6) {
-  margin-left: 16px;
-}
-
-.cm-tab:nth-child(6) {
-  position: relative;
-}
-
-.cm-tab:nth-child(6)::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 20px;
-  background: #E2E8F0;
+  margin: 0 4px;
 }
 
 .cm-tab {
@@ -503,9 +490,10 @@ body {
 
 /* ============================================================================
 CONTENT ITEM CARDS — SYNCED FROM ADMIN
-Redesigned card with image wrapper, overlay badges, hover state,
-body wrapper, divider, and full-width action buttons.
-Replaces the old flat header-row structure.
+Card with image wrapper, category overlay pill, hover state, body wrapper,
+divider, and full-width action buttons.
+AGENDA 6: the colored type-icon badge (.content-item-type-badge) and the
+no-image colored header strip (.content-item-icon-only) were removed.
 ============================================================================ */
 .content-item-card {
   background: #FFFFFF;
@@ -547,20 +535,6 @@ Replaces the old flat header-row structure.
   transform: scale(1.05);
 }
 
-/* Small colored type icon, top-right over the image */
-.content-item-type-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
 /* Bottom-left overlay pill — category/company tag */
 .content-item-tag {
   position: absolute;
@@ -577,16 +551,6 @@ Replaces the old flat header-row structure.
   font-size: 10px;
   color: #1E293B;
   line-height: 1;
-}
-
-/* Fallback header when there's no image */
-.content-item-icon-only {
-  width: 100%;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-  flex-shrink: 0;
 }
 
 .content-item-body {
@@ -1346,10 +1310,6 @@ MODAL — Complete modal styling
 
   .cm-archive-btn {
     align-self: flex-start;
-  }
-
-  .cm-tabs {
-    gap: 8px;
   }
 
   .cm-tab {

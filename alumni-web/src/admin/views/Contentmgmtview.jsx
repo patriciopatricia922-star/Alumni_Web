@@ -1,6 +1,6 @@
 // ============================================================================
 // Purpose: Content Management View — renders all visual components.admin and mine
-//ADMIN 
+//ADMIN mine
 // INTEGRATION: Added Disclosure tab content, DisclosureModal, hidden section
 //              type filtering, inline Edit button on landing cards, archive
 //              confirmation flow, and events image support from friend. NEW
@@ -12,6 +12,10 @@
 //                 cm-confirm-content wrapper in ConfirmDialog.
 // [FRIEND] landing section archive button, announcements expiry meta,
 //                 archive panel search + type filter.
+// [AGENDA 6] Removed the colored type icon badge (over the image) and the
+//                 colored icon-only header strip (no-image posts) from
+//                 ContentItemCard for ALL post types. typeColor / typeIcon()
+//                 were only used by those two elements and are removed.
 // ============================================================================
 
 import React, { useEffect, useCallback } from 'react';
@@ -203,45 +207,6 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
     return d.textContent || d.innerText || '';
   };
 
-  const typeColor = {
-    events: '#155DFC', announcements: '#F59E0B', jobs: '#10B981', discounts: '#8B5CF6',
-    rewards: '#F97316',
-  }[type] || '#6A7282';
-
-  const typeIcon = () => {
-    if (type === 'events') return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <rect x="3" y="4" width="18" height="18" rx="2"/>
-        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-        <line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
-    );
-    if (type === 'announcements') return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-    );
-    if (type === 'jobs') return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <rect x="2" y="7" width="20" height="14" rx="2"/>
-        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-      </svg>
-    );
-    if (type === 'discounts') return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-        <line x1="7" y1="7" x2="7.01" y2="7"/>
-      </svg>
-    );
-    if (type === 'rewards') return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-      </svg>
-    );
-    return null;
-  };
-
   const showImage = ['events', 'jobs', 'discounts', 'rewards', 'announcements'].includes(type) && item.image_url;
 
   const tagText =
@@ -258,7 +223,7 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {showImage ? (
+      {showImage && (
         <div className="content-item-image-wrapper">
           <img
             src={item.image_url}
@@ -266,18 +231,11 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
             className={`content-item-image ${hovered ? 'hovered' : ''}`}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <div className="content-item-type-badge" style={{ background: typeColor }}>
-            {typeIcon()}
-          </div>
           {tagText && (
             <div className="content-item-tag">
               <span>{tagText}</span>
             </div>
           )}
-        </div>
-      ) : (
-        <div className="content-item-icon-only" style={{ background: typeColor }}>
-          {typeIcon()}
         </div>
       )}
 
