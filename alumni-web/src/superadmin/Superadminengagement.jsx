@@ -709,6 +709,10 @@ const resolveImages = (formData, existingUrls = []) => {
         showToastMessage("Target audience is required", "error");
         return;
       }
+      if (isBlank(formData.category)) {
+        showToastMessage("Discount category is required", "error");
+        return;
+      }
 
       // handleCreateDiscount
       const { image_urls, image_url } = resolveImages(formData);
@@ -716,6 +720,7 @@ const resolveImages = (formData, existingUrls = []) => {
         title: formData.title.trim(),
         description: formData.description || "",
         company: formData.company.trim(),
+        category: formData.category,
         discount_code: formData.discountCode?.trim() || null,
         image_url,
         image_urls,
@@ -1094,6 +1099,10 @@ const handleUpdateEvent = async (id, formData) => {
         showToastMessage("Target audience is required", "error");
         return;
       }
+      if (isBlank(formData.category)) {
+        showToastMessage("Discount category is required", "error");
+        return;
+      }
 
       // handleUpdateDiscount
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
@@ -1101,6 +1110,7 @@ const handleUpdateEvent = async (id, formData) => {
         title:         formData.title?.trim(),
         description:   formData.description || '',
         company:       formData.company?.trim(),
+        category:      formData.category,
         discount_code: formData.discountCode?.trim() || null,
         image_url,
         image_urls,
