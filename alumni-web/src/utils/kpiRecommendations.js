@@ -733,7 +733,7 @@ export const buildInsightView = (result, rec) => {
         });
       }
     } else {
-      view.chips.push({ text: "Set a target to measure the gap", tone: "neutral" });
+      // view.chips.push({ text: "Set a target to measure the gap", tone: "neutral" });
     }
 
     view.included = {

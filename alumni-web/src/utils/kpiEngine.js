@@ -603,7 +603,7 @@ export const toCardProps = (result) => {
   let targetLabel;
   if (!measurable) targetLabel = "Not measurable";
   else if (hasTarget) targetLabel = `Goal: ${result.target}% (${result.n} of ${result.d})`;
-  else targetLabel = `No target set (${result.n} of ${result.d})`;
+  // else targetLabel = `No target set (${result.n} of ${result.d})`;
 
   return {
     value: hasPct ? `${result.displayPct}%` : "N/A",
