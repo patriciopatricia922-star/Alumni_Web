@@ -1,3 +1,4 @@
+//friend
 import React, { useRef, useEffect, useState } from 'react';
 import {
   BarChart, Bar, LineChart, Line,
@@ -8,8 +9,8 @@ import '../styles/Responseanalytics.css';
 import { exportSurveyPDF } from '../../utils/exportPDF';
 import { exportSHSSurveyPDF } from '../../utils/exportSHSPDF';
 
-// ============================ CONSTANTS superadmin ============================
-const PAGE_SIZE = 10;
+// ============================ CONSTANTS ============================
+const PAGE_SIZE = 50;
 
 // ============================ ICONS ============================
 const IconExport = ({ color = "#314158" }) => (
@@ -21,6 +22,88 @@ const IconExport = ({ color = "#314158" }) => (
 
 // ============================ COLORS ============================
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+const FALLBACK_COLOR = "#94A3B8";
+
+const GENDER_COLORS = { Male: "#3B82F6", Female: "#EC4899", Other: "#8B5CF6" };
+
+const EMPLOYMENT_COLORS = {
+  Employed: "#10B981",
+  Unemployed: "#EF4444",
+  "Self-Employed": "#F59E0B",
+  Student: "#3B82F6",
+  Contractual: "#8B5CF6",
+  Freelance: "#06B6D4",
+};
+
+const BOARD_COLORS = { Passed: "#10B981", Failed: "#EF4444" };
+
+const AGE_COLORS = {
+  "18-24": "#14B8A6",
+  "25-34": "#3B82F6",
+  "35-44": "#8B5CF6",
+  "45+": "#F59E0B",
+};
+
+const SALARY_COLORS = {
+  "< ₱15k": "#F87171",
+  "₱15k–30k": "#FBBF24",
+  "₱30k–50k": "#34D399",
+  "> ₱50k": "#16A34A",
+};
+
+const TIME_TO_JOB_COLORS = {
+  "< 1 month": "#16A34A",
+  "1–3 months": "#84CC16",
+  "4–6 months": "#F59E0B",
+  "7–12 months": "#F97316",
+  "> 1 year": "#EF4444",
+};
+
+const CERT_COLORS = {
+  "With Certification": "#2563EB",
+  "No Certification": "#94A3B8",
+};
+
+const SKILL_FALLBACK_PALETTE = ["#EC4899", "#F97316", "#6366F1", "#84CC16", "#E11D48", "#0EA5E9"];
+
+const getSkillColor = (name, i) => {
+  const n = String(name).toLowerCase();
+  if (n.includes("communication")) return "#3B82F6";
+  if (n.includes("critical")) return "#8B5CF6";
+  if (n.includes("work ethic")) return "#10B981";
+  if (n.includes("leadership")) return "#F59E0B";
+  if (n.includes("information") || n.includes("technolog") || n.includes("technical"))
+    return "#06B6D4";
+  if (n === "others") return "#64748B";
+  return SKILL_FALLBACK_PALETTE[i % SKILL_FALLBACK_PALETTE.length];
+};
+
+const renderPieLabel = ({ name, value, percent }) =>
+  `${name}: ${value} (${Math.round(percent * 100)}%)`;
+
+const ColoredBarTooltip = ({ active, payload, labelKey, getColor, formatLabel }) => {
+  if (!active || !payload || !payload.length) return null;
+  const d = payload[0].payload;
+  const color = getColor(d) || FALLBACK_COLOR;
+  const label = formatLabel ? formatLabel(d[labelKey]) : d[labelKey];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #E2E8F0",
+        borderRadius: 6,
+        padding: "6px 10px",
+        fontSize: 13,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+      }}
+    >
+      <span style={{ color, fontWeight: 600 }}>
+        {label} : {d.count}
+      </span>
+    </div>
+  );
+};
 
 // ============================ EXPORT UTILITIES ============================
 const exportToCSV = (data, filename = 'survey-responses') => {
@@ -223,9 +306,9 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   };
 
   const Field = ({ label, value }) => (
-    <div className="ra-modal-field">
-      <span className="ra-modal-field-label">{label}</span>
-      <strong className="ra-modal-field-value">{value || "N/A"}</strong>
+    <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 3 }}>{label}</span>
+      <strong style={{ color: "#111827" }}>{value || "N/A"}</strong>
     </div>
   );
 
@@ -238,39 +321,41 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
   );
 
   const FullBlock = ({ label, children }) => (
-    <div className="ra-modal-field">
-      <span className="ra-modal-field-label" style={{ marginBottom: 6 }}>{label}</span>
+    <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px 12px", borderRadius: 8, fontSize: 13 }}>
+      <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 6 }}>{label}</span>
       {children}
     </div>
   );
 
-  const isShs = alumniType === 'shs';
+  const completeAddress = [data.streetAddress, data.city, data.province, data.zipCode, data.country]
+    .filter(Boolean)
+    .join(", ");
 
-  const completeAddress = isShs
-    ? data.completeAddress || ""
-    : [data.streetAddress, data.city, data.province, data.zipCode, data.country]
-        .filter(Boolean)
-        .join(", ");
+  const isShs = alumniType === 'shs';
 
   return (
     <div className="ra-modal-overlay" onClick={onClose}>
       <div className="ra-modal-card wide" onClick={(e) => e.stopPropagation()}>
-        <div className="ra-modal-header">
-          <button className="ra-modal-close" onClick={onClose} aria-label="Close">✕</button>
-          <h2 className="ra-modal-name">{data.name}</h2>
-          <p className="ra-modal-meta">
+        <div style={{
+          position: "sticky", top: 0, zIndex: 10,
+          background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "16px 24px", borderRadius: "14px 14px 0 0"
+        }}>
+          <button className="ra-modal-close" onClick={onClose}>✕</button>
+          <h2 style={{ margin: 0, fontSize: 17, color: "#1f2937" }}>{data.name}</h2>
+          <p style={{ margin: "3px 0 0", fontSize: 12, color: "#6b7280" }}>
             {data.email && <span>{data.email} • </span>}
             Batch {data.batch}
           </p>
         </div>
 
-        <div className="ra-modal-body">
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 24, overflowY: "auto", flex: 1 }}>
           
           {/* Section 1: Personal Information */}
           <div>
             <SectionHeader title="Section 1 — Personal Information" color="#3B82F6" />
             <div className="ra-grid" style={{ marginBottom: 10 }}>
-              {data.studentNumber && <Field label="Student Number" value={data.studentNumber} />}
+              <Field label="Student Number" value={data.studentNumber} />
               <Field label="Gender" value={data.gender} />
               <Field label="Birthday" value={data.birthday} />
               {!isShs && <Field label="Civil Status" value={data.civilStatus} />}
@@ -400,8 +485,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 label={isShs ? "Is your current job related to your strand?" : "Job Related to Degree"} 
                 value={data.jobRelatedToDegree} 
               />
-              <div className="ra-modal-field">
-                <span className="ra-modal-field-label">
+              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", padding: "10px", borderRadius: 8, fontSize: 13 }}>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 4 }}>
                   {isShs ? "Current Employment Status" : "Employment Status"}
                 </span>
                 <span className={`ra-status ${data.status?.toLowerCase().replace(/ /g, '-') || ''}`}>{data.status}</span>
@@ -462,8 +547,8 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
               </div>
             )}
             <div style={{ marginBottom: 10 }}>
-              <div className="ra-modal-field" style={{ padding: "12px" }}>
-                <span className="ra-modal-field-label" style={{ marginBottom: 10 }}>
+              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: 8, padding: "12px", fontSize: 13 }}>
+                <span style={{ display: "block", fontSize: 11, color: "#6b7280", marginBottom: 10 }}>
                   How well did NU Dasma prepare you? (1 = Lowest, 5 = Highest)
                 </span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -505,13 +590,15 @@ const ResponseModal = ({ data, onClose, alumniType }) => {
                 value={data.wouldRecommend} 
               />
             </div>
-            <FullBlock label={isShs ? "Suggestions for improving academic programs/strands?" : "Suggestions for Improving Academic Programs & Alumni Services"}>
-              <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
-            </FullBlock>
+            <div style={{ marginBottom: 10 }}>
+              <FullBlock label={isShs ? "Suggestions for improving academic programs/strands?" : "Suggestions for Improving Academic Programs & Alumni Services"}>
+                <p style={{ margin: "4px 0 0", lineHeight: 1.6, color: "#374151" }}>{data.suggestions || "N/A"}</p>
+              </FullBlock>
+            </div>
 
-            {/* Alumni engagement questions — shown for all alumni types */}
-            <div className="ra-grid" style={{ marginTop: 10, alignItems: "start" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Alumni engagement questions — shown for all alumni types (preserved from original Superadmin) */}
+            <div className="ra-grid" style={{ marginBottom: 10, alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0, borderRadius: 0 }}>
                 <Field label="Would you like to be informed about upcoming alumni events and activities?" value={data.informedAboutEvents} />
                 {data.willingToParticipateOther && (
                   <FullBlock label="Please Specify Other Participation">
@@ -556,16 +643,28 @@ const ResponseAnalyticsView = ({
   const filterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [activeTab]);
+    const [searchQuery, setSearchQuery] = useState("");
 
-  const totalPages   = Math.max(1, Math.ceil((respondents?.length ?? 0) / PAGE_SIZE));
-  const pageStart    = (currentPage - 1) * PAGE_SIZE;
-  const pageEnd      = pageStart + PAGE_SIZE;
-  const visibleRows  = (respondents ?? []).slice(pageStart, pageEnd);
-  const firstEntry   = respondents?.length ? pageStart + 1 : 0;
-  const lastEntry    = Math.min(pageEnd, respondents?.length ?? 0);
+    // Reset to page 1 on tab switch or new search
+    useEffect(() => {
+      setCurrentPage(1);
+    }, [activeTab, searchQuery]);
+
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const filteredRespondents = normalizedQuery
+      ? (respondents ?? []).filter((r) =>
+          [r.name, r.email, r.program, r.batch, r.status]
+            .filter(Boolean)
+            .some((v) => String(v).toLowerCase().includes(normalizedQuery)),
+        )
+      : (respondents ?? []);
+
+    const totalPages = Math.max(1, Math.ceil(filteredRespondents.length / PAGE_SIZE));
+    const pageStart = (currentPage - 1) * PAGE_SIZE;
+    const pageEnd = pageStart + PAGE_SIZE;
+    const visibleRows = filteredRespondents.slice(pageStart, pageEnd);
+    const firstEntry = filteredRespondents.length ? pageStart + 1 : 0;
+    const lastEntry = Math.min(pageEnd, filteredRespondents.length);
 
   const [exportOpen, setExportOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState(null);
@@ -599,7 +698,7 @@ const ResponseAnalyticsView = ({
   }, [setShowFilter]);
 
   const hasGenderData       = stats.genderDistribution?.length  > 0;
-  const hasAgeData          = stats.ageDistribution?.length     > 0;
+  const hasAgeData          = stats.ageDistribution?.some((d) => d.count > 0);
   const hasBoardExamData    = stats.boardExam?.length           > 0;
   const hasCertData         = stats.certification?.length       > 0;
   // Certification Status chart: pull the two category counts out of the
@@ -614,8 +713,8 @@ const ResponseAnalyticsView = ({
     { status: 'No Certification',   withCertification: certWithCount, noCertification: certNoCount },
   ];
   const hasEmploymentData   = stats.employment?.length          > 0;
-  const hasSalaryData       = stats.salary?.length              > 0;
-  const hasTimeToJobData    = stats.timeToJob?.length           > 0;
+  const hasSalaryData       = stats.salary?.some((d) => d.count > 0);
+  const hasTimeToJobData    = stats.timeToJob?.some((d) => d.count > 0);
   const hasSkillsData       = stats.skills?.length              > 0;
   const hasSatisfactionData = stats.satisfactionScores?.length  > 0;
 
@@ -686,10 +785,16 @@ const ResponseAnalyticsView = ({
                     <h3 className="ra-chart-title">Gender Distribution</h3>
                     <ChartWithResponsiveContainer height={190}>
                       <PieChart>
-                        <Pie data={hasGenderData ? stats.genderDistribution : [{ name: 'No Data', value: 1 }]} dataKey="value" nameKey="name">
+                        <Pie
+                          data={hasGenderData ? stats.genderDistribution : [{ name: "No Data", value: 1 }]}
+                          dataKey="value"
+                          nameKey="name"
+                          outerRadius={60}
+                          label={hasGenderData ? renderPieLabel : false}
+                        >
                           {hasGenderData ? (
-                            stats.genderDistribution.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            stats.genderDistribution.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={GENDER_COLORS[entry.name] || FALLBACK_COLOR} />
                             ))
                           ) : (
                             <Cell fill="#CBD5E1" />
@@ -702,12 +807,19 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Age Distribution</h3>
                     <ChartWithResponsiveContainer height={190}>
-                      <BarChart data={hasAgeData ? stats.ageDistribution : [{ range: 'No Data', count: 1 }]} layout="vertical">
+                      <BarChart
+                        data={hasAgeData ? stats.ageDistribution : [{ range: "No Data", count: 1 }]}
+                        layout="vertical"
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
+                        <XAxis type="number" allowDecimals={false} />
                         <YAxis dataKey="range" type="category" width={50} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#10B981" />
+                        <Tooltip content={<ColoredBarTooltip labelKey="range" getColor={(d) => AGE_COLORS[d.range]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasAgeData ? stats.ageDistribution : []).map((d, i) => (
+                            <Cell key={i} fill={AGE_COLORS[d.range] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -719,13 +831,24 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Board Exam Pass Rate</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <BarChart data={hasBoardExamData ? stats.boardExam : [{ category: 'No Data', count: 1 }]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="category" />
-                        <YAxis />
+                      <PieChart>
+                        <Pie
+                          data={hasBoardExamData ? stats.boardExam : [{ category: "No Data", count: 1 }]}
+                          dataKey="count"
+                          nameKey="category"
+                          outerRadius={80}
+                          label={hasBoardExamData ? renderPieLabel : false}
+                        >
+                          {hasBoardExamData ? (
+                            stats.boardExam.map((d, i) => (
+                              <Cell key={i} fill={BOARD_COLORS[d.category] || FALLBACK_COLOR} />
+                            ))
+                          ) : (
+                            <Cell fill="#CBD5E1" />
+                          )}
+                        </Pie>
                         <Tooltip />
-                        <Bar dataKey="count" fill="#3B82F6" />
-                      </BarChart>
+                      </PieChart>
                     </ChartWithResponsiveContainer>
                   </div>
                 </div>
@@ -736,36 +859,24 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner ra-cert-chart">
                     <h3 className="ra-chart-title">Certification Status</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <LineChart
-                        data={hasCertData ? certChartData : [{ status: 'No Data', withCertification: 1, noCertification: 1 }]}
-                        margin={{ top: 8, right: 16, left: 4, bottom: 8 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="status" tick={false} />
-                        <YAxis />
+                      <PieChart>
+                        <Pie
+                          data={hasCertData ? stats.certification : [{ status: "No Data", count: 1 }]}
+                          dataKey="count"
+                          nameKey="status"
+                          outerRadius={80}
+                          label={hasCertData ? renderPieLabel : false}
+                        >
+                          {hasCertData ? (
+                            stats.certification.map((d, i) => (
+                              <Cell key={i} fill={CERT_COLORS[d.status] || FALLBACK_COLOR} />
+                            ))
+                          ) : (
+                            <Cell fill="#CBD5E1" />
+                          )}
+                        </Pie>
                         <Tooltip />
-                        <Legend wrapperStyle={{ fontSize: 15 }} />
-                        <Line
-                          type="monotone"
-                          dataKey="withCertification"
-                          name="With Certification"
-                          stroke="#F59E0B"
-                          strokeWidth={3}
-                          dot={{ r: 4, fill: "#F59E0B", stroke: "#F59E0B", strokeWidth: 1 }}
-                          activeDot={{ r: 6 }}
-                          isAnimationActive={false}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="noCertification"
-                          name="No Certification"
-                          stroke="#2563EB"
-                          strokeWidth={3}
-                          dot={{ r: 4, fill: "#2563EB", stroke: "#2563EB", strokeWidth: 1 }}
-                          activeDot={{ r: 6 }}
-                          isAnimationActive={false}
-                        />
-                      </LineChart>
+                      </PieChart>
                     </ChartWithResponsiveContainer>
                   </div>
                 </div>
@@ -777,10 +888,16 @@ const ResponseAnalyticsView = ({
                     <h3 className="ra-chart-title">Employment Status</h3>
                     <ChartWithResponsiveContainer height={190}>
                       <PieChart>
-                        <Pie data={hasEmploymentData ? stats.employment : [{ name: 'No Data', value: 1 }]} dataKey="value" nameKey="name">
+                        <Pie
+                          data={hasEmploymentData ? stats.employment : [{ name: "No Data", value: 1 }]}
+                          dataKey="value"
+                          nameKey="name"
+                          outerRadius={60}
+                          label={hasEmploymentData ? renderPieLabel : false}
+                        >
                           {hasEmploymentData ? (
-                            stats.employment.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            stats.employment.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={EMPLOYMENT_COLORS[entry.name] || FALLBACK_COLOR} />
                             ))
                           ) : (
                             <Cell fill="#CBD5E1" />
@@ -793,12 +910,16 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Salary Range</h3>
                     <ChartWithResponsiveContainer height={190}>
-                      <BarChart data={hasSalaryData ? stats.salary : [{ range: 'No Data', count: 1 }]}>
+                      <BarChart data={hasSalaryData ? stats.salary : [{ range: "No Data", count: 1 }]}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="range" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#EF4444" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ColoredBarTooltip labelKey="range" getColor={(d) => SALARY_COLORS[d.range]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasSalaryData ? stats.salary : []).map((d, i) => (
+                            <Cell key={i} fill={SALARY_COLORS[d.range] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -810,12 +931,19 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Time to First Job</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <BarChart data={hasTimeToJobData ? stats.timeToJob : [{ label: 'No Data', count: 1 }]} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="label" type="category" width={80} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#06B6D4" />
+                      <BarChart
+                        data={hasTimeToJobData ? stats.timeToJob : [{ label: "No Data", count: 1 }]}
+                        margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="label" />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip content={<ColoredBarTooltip labelKey="label" getColor={(d) => TIME_TO_JOB_COLORS[d.label]} />} />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasTimeToJobData ? stats.timeToJob : []).map((d, i) => (
+                            <Cell key={i} fill={TIME_TO_JOB_COLORS[d.label] || FALLBACK_COLOR} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -827,12 +955,29 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Top Skills</h3>
                     <ChartWithResponsiveContainer height={250}>
-                      <BarChart data={hasSkillsData ? stats.skills : [{ skill: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 140, bottom: 10 }}>
+                      <BarChart
+                        data={hasSkillsData ? stats.skills : [{ skill: "No Data", count: 1 }]}
+                        layout="vertical"
+                        margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="skill" type="category" width={140} interval={0} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#8B5CF6" />
+                        <XAxis type="number" allowDecimals={false} />
+                        <YAxis dataKey="skill" type="category" width={230} interval={0} tick={{ fontSize: 13 }} />
+                        <Tooltip
+                          content={
+                            <ColoredBarTooltip
+                              labelKey="skill"
+                              getColor={(d) =>
+                                getSkillColor(d.skill, stats.skills.findIndex((s) => s.skill === d.skill))
+                              }
+                            />
+                          }
+                        />
+                        <Bar dataKey="count" fill="#CBD5E1">
+                          {(hasSkillsData ? stats.skills : []).map((d, i) => (
+                            <Cell key={i} fill={getSkillColor(d.skill, i)} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -844,12 +989,30 @@ const ResponseAnalyticsView = ({
                   <div className="ra-chart-inner">
                     <h3 className="ra-chart-title">Rating Breakdown</h3>
                     <ChartWithResponsiveContainer height={190}>
-                      <BarChart data={hasSatisfactionData ? stats.satisfactionScores : [{ score: 'No Data', count: 1 }]} layout="vertical" margin={{ top: 10, right: 20, left: 60, bottom: 10 }}>
+                      <BarChart
+                        data={hasSatisfactionData ? stats.satisfactionScores : [{ score: "No Data", count: 1 }]}
+                        layout="vertical"
+                        margin={{ top: 10, right: 20, left: 60, bottom: 10 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" />
-                        <YAxis dataKey="score" type="category" interval={0} tickFormatter={(v) => renderStars(parseInt(v))} width={60} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#F97316" />
+                        <XAxis type="number" allowDecimals={false} />
+                        <YAxis
+                          dataKey="score"
+                          type="category"
+                          interval={0}
+                          tickFormatter={(v) => renderStars(parseInt(v))}
+                          width={60}
+                        />
+                        <Tooltip
+                          content={
+                            <ColoredBarTooltip
+                              labelKey="score"
+                              getColor={() => "#F59E0B"}
+                              formatLabel={(v) => renderStars(parseInt(v))}
+                            />
+                          }
+                        />
+                        <Bar dataKey="count" fill="#F59E0B" />
                       </BarChart>
                     </ChartWithResponsiveContainer>
                   </div>
@@ -873,16 +1036,38 @@ const ResponseAnalyticsView = ({
 
           {activeTab === "responses" && (
             <div className="ra-table-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <div className="ra-table-header" style={{ flexShrink: 0, paddingBottom: '12px' }}>
-                <span><strong>No of Respondents:</strong> {respondents.length} people</span>
+              <div className="ra-table-header" style={{ flexShrink: 0, paddingBottom: "12px" }}>
+              <span>
+                <strong>No of Respondents:</strong> {respondents.length} people
+              </span>
+              <div className="ra-toolbar">
+                <div className="ra-search">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    className="ra-search-input"
+                    placeholder="Search name, email, program…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button className="ra-search-clear" onClick={() => setSearchQuery("")} aria-label="Clear search">
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <button
                   className="am-tb-btn"
-                  style={{ background: '#4FA3F7', color: '#fff', borderColor: '#4FA3F7' }}
+                  style={{ background: "#4FA3F7", color: "#fff", borderColor: "#4FA3F7" }}
                   onClick={() => { resetExport(); setExportOpen(true); }}
                 >
                   <IconExport color="#fff" /> Export
                 </button>
               </div>
+            </div>
 
               <table className="ra-table" style={{ flexShrink: 0, tableLayout: 'fixed' }}>
                 <thead>
@@ -904,7 +1089,7 @@ const ResponseAnalyticsView = ({
                     {visibleRows.length === 0 ? (
                       <tr>
                         <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: '#94A3B8' }}>
-                          No alumni records here
+                          {searchQuery ? "No respondents match your search" : "No alumni records here"}
                         </td>
                       </tr>
                     ) : (
@@ -935,7 +1120,7 @@ const ResponseAnalyticsView = ({
 
               <div className="ra-pagination" style={{ flexShrink: 0, marginTop: '12px' }}>
                 <span>
-                  Showing {firstEntry} to {lastEntry} of {respondents.length} entries
+                  Showing {firstEntry} to {lastEntry} of {filteredRespondents.length} entries
                 </span>
                 <div>
                   <button
