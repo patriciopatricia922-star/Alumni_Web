@@ -333,7 +333,7 @@ const FilterSelect = ({ value, onChange, children, minWidth = '110px' }) => (
     onChange={onChange}
     style={{
       flex: 1, minWidth, padding: '7px 10px',
-      border: '1px solid #CAD5E2', borderRadius: '8px',
+      border: '1px solid #E5E7EB', borderRadius: '8px',
       fontSize: '13px', fontFamily: 'Arimo, Arial', background: 'white', cursor: 'pointer',
       color: '#374151', outline: 'none',
     }}
@@ -612,23 +612,22 @@ const AuditLogs = () => {
   return (
     <>
       <style>{FONT_STYLE}</style>
-      <div style={{ display: 'flex', minHeight: '100vh', background: 'rgba(225,236,247,0.95)', fontFamily: 'Arimo, Arial, sans-serif' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', background: 'rgba(225, 236, 247, 0.95)', fontFamily: 'Lexend, Arimo, Arial' }}>
         <SuperAdsidebar activePage="audit-logs" />
 
-        <main style={{ marginLeft: '229px', flex: 1, padding: '36px 36px 60px', overflowX: 'hidden' }}>
+        <main style={{ marginLeft: '229px', flex: 1, padding: '36px 32px 60px', overflowX: 'hidden' }}>
 
           {/* ══ PAGE HEADER ══════════════════════════════════════════════ */}
-          <div style={{ marginBottom: '28px' }}>
-            <h1 style={{ fontFamily: 'Lexend, Arial', fontWeight: 700, fontSize: '28px', color: '#324D87', margin: '0 0 6px' }}>
+          <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <h1 style={{ fontFamily: 'Lexend, sans-serif', fontWeight: 700, fontSize: '27px', color: '#324D87', margin: '0 0 4px' }}>
               Audit Logs
             </h1>
-            <p style={{ fontFamily: 'Lexend, Arial', fontSize: '15px', color: '#6A7282', margin: 0 }}>
+            <p style={{ fontFamily: 'Lexend, sans-serif', fontSize: '14px', color: '#6A7282', margin: 0 }}>
               System-wide audit trail — overview, analytics, and detailed log records.
             </p>
           </div>
 
           {/* ══ SECTION A: OVERVIEW ══════════════════════════════════════ */}
-          <SectionDivider label="Audit Overview" />
 
           {/* Stat Cards */}
           <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
@@ -699,16 +698,16 @@ const AuditLogs = () => {
           </div>
 
           {/* ══ SECTION B: DETAILED LOGS TABLE ═══════════════════════════ */}
-          <SectionDivider label="Detailed Log Records" />
+          <div style={{ height: '32px' }} />
 
           {/* Table header bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <h2 style={{ fontFamily: 'Lexend, Arial', fontWeight: 600, fontSize: '17px', color: '#324D87', margin: '0 0 2px' }}>Detailed Audit Logs</h2>
-              <p style={{ fontFamily: 'Lexend, Arial', fontSize: '13px', color: '#6A7282', margin: 0 }}>Complete audit trail of all system activities and operations</p>
+              <h2 style={{ fontFamily: 'Lexend, Arial', fontWeight: 600, fontSize: '17px', color: '#1A1F36', margin: '0 0 2px' }}>Detailed Audit Logs</h2>
+              <p style={{ fontFamily: 'Arimo, Arial', fontSize: '13px', color: '#6B7280', margin: 0 }}>Complete audit trail of all system activities and operations</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#F8FAFC', borderRadius: '8px', fontSize: '11px', color: '#62748E' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#F9FAFB', borderRadius: '8px', fontSize: '11px', color: '#6B7280' }}>
                 <FiDatabase size={12} />{total.toLocaleString()} records
                 <span style={{ opacity: 0.4 }}>|</span>
                 <FiClock size={12} />Showing {startEntry}–{endEntry}
@@ -717,7 +716,7 @@ const AuditLogs = () => {
               </div>
               <button
                 onClick={handleExport}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'white', border: '1px solid #CAD5E2', borderRadius: '8px', fontSize: '13px', fontWeight: 500, color: '#314158', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', fontWeight: 500, color: '#374151', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}
               >
                 <FiDownload size={14} /> Export CSV
               </button>
@@ -725,15 +724,15 @@ const AuditLogs = () => {
           </div>
 
           {/* Filters */}
-          <div style={{ background: '#F8F9FB', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '1px solid #E2E8F0' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '14px', marginBottom: '14px', border: '1px solid #E5E7EB' }}>
             <div style={{ position: 'relative', marginBottom: '10px' }}>
-              <FiSearch size={15} style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#90A1B9' }} />
+              <FiSearch size={15} style={{ position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
               <input
                 type="text"
                 placeholder="Search by user, description, or record ID..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '9px 12px 9px 32px', border: '1px solid #CAD5E2', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', outline: 'none', boxSizing: 'border-box', color: '#0F172B' }}
+                style={{ width: '100%', padding: '9px 12px 9px 32px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', fontFamily: 'Arimo, Arial', outline: 'none', boxSizing: 'border-box' }}
               />
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
@@ -757,16 +756,16 @@ const AuditLogs = () => {
               </FilterSelect>
               <button
                 onClick={handleReset}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: '#F1F5F9', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, color: '#314158', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 12px', background: '#F3F4F6', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 500, color: '#374151', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}
               >
                 <FiRotateCcw size={13} /> Reset
               </button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                <span style={{ fontSize: '12px', color: '#62748E', fontFamily: 'Arimo, Arial' }}>Show:</span>
+                <span style={{ fontSize: '12px', color: '#6B7280', fontFamily: 'Arimo, Arial' }}>Show:</span>
                 <select
                   value={itemsPerPage}
                   onChange={e => { if (tableWrapperRef.current) scrollPositionRef.current = tableWrapperRef.current.scrollTop; setItemsPerPage(parseInt(e.target.value)); }}
-                  style={{ padding: '5px 8px', border: '1px solid #CAD5E2', borderRadius: '6px', fontSize: '12px', fontFamily: 'Arimo, Arial', background: 'white', cursor: 'pointer' }}
+                  style={{ padding: '5px 8px', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '12px', background: 'white', cursor: 'pointer' }}
                 >
                   {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>
@@ -775,17 +774,17 @@ const AuditLogs = () => {
           </div>
 
           {/* Table */}
-          <div style={{ background: '#F8F9FB', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {logsLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '10px', color: '#90A1B9' }}>
-                <div style={{ width: '24px', height: '24px', border: '2px solid #E2E8F0', borderTopColor: '#155DFC', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '10px', color: '#9CA3AF' }}>
+                <div style={{ width: '24px', height: '24px', border: '2px solid #E5E7EB', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                 <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px' }}>Loading audit logs…</span>
               </div>
             ) : logs.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '8px', color: '#90A1B9' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px', gap: '8px', color: '#9CA3AF' }}>
                 <FiDatabase size={40} />
-                <span style={{ fontFamily: 'Lexend, Arial', fontSize: '14px', fontWeight: 600, color: '#62748E' }}>No logs found</span>
+                <span style={{ fontFamily: 'Lexend, Arial', fontSize: '14px', fontWeight: 600, color: '#6B7280' }}>No logs found</span>
                 <span style={{ fontFamily: 'Arimo, Arial', fontSize: '13px' }}>Try adjusting your filters or search query</span>
               </div>
             ) : (
@@ -805,7 +804,7 @@ const AuditLogs = () => {
                     <thead>
                       <tr>
                         {['Timestamp','User','Role','Action','Module','Description','Record ID','Status'].map(h => (
-                          <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#62748E', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 10, fontFamily: 'Arimo, Arial' }}>
+                          <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#6B7280', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap', position: 'sticky', top: 0, zIndex: 10, fontFamily: 'Arimo, Arial' }}>
                             {h}
                           </th>
                         ))}
@@ -813,32 +812,32 @@ const AuditLogs = () => {
                     </thead>
                     <tbody>
                       {logs.map(log => (
-                        <tr key={log.id} style={{ borderBottom: '1px solid #E2E8F0' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
+                        <tr key={log.id} style={{ borderBottom: '1px solid #F3F4F6' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <td style={{ padding: '10px 14px', fontSize: '11px', color: '#62748E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
+                          <td style={{ padding: '10px 14px', fontSize: '11px', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
                             <FiCalendar size={11} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                             {formatDate(log.created_at)}
                           </td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 500, color: '#45556C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
-                            <FiUser size={11} style={{ marginRight: '4px', verticalAlign: 'middle', color: '#90A1B9' }} />
+                          <td style={{ padding: '10px 14px', fontSize: '13px', fontWeight: 500, color: '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
+                            <FiUser size={11} style={{ marginRight: '4px', verticalAlign: 'middle', color: '#9CA3AF' }} />
                             {log.user_email || '—'}
                           </td>
                           <td style={{ padding: '10px 14px', overflow: 'hidden' }}>
                             {log.user_role ? <Tag label={log.user_role} /> : '—'}
                           </td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#45556C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
+                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
                             {log.action || '—'}
                           </td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#45556C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
-                            <FiFolder size={11} style={{ marginRight: '4px', verticalAlign: 'middle', color: '#90A1B9' }} />
+                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#1F2937', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
+                            <FiFolder size={11} style={{ marginRight: '4px', verticalAlign: 'middle', color: '#9CA3AF' }} />
                             {log.module || '—'}
                           </td>
-                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#62748E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
+                          <td style={{ padding: '10px 14px', fontSize: '13px', color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Arimo, Arial' }}>
                             {log.description || '—'}
                           </td>
-                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '10px', color: '#90A1B9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontSize: '10px', color: '#9CA3AF', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {log.record_id || '—'}
                           </td>
                           <td style={{ padding: '10px 14px', overflow: 'hidden' }}>
@@ -851,15 +850,15 @@ const AuditLogs = () => {
                 </div>
 
                 {/* Pagination */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #E2E8F0', background: '#F8F9FB', flexWrap: 'wrap', gap: '8px' }}>
-                  <span style={{ fontSize: '12px', color: '#62748E', fontFamily: 'Arimo, Arial' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid #E5E7EB', background: 'white', flexWrap: 'wrap', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#6B7280', fontFamily: 'Arimo, Arial' }}>
                     Showing <strong>{startEntry}</strong> to <strong>{endEntry}</strong> of <strong>{total.toLocaleString()}</strong> entries
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     <button
                       onClick={() => handlePageChange(Math.max(1, page - 1))}
                       disabled={page === 1}
-                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'white', border: '1px solid #CAD5E2', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: '#0F172B', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1, fontFamily: 'Arimo, Arial' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: '#374151', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1, fontFamily: 'Arimo, Arial' }}
                     >
                       <FiChevronLeft size={13} /> Prev
                     </button>
@@ -872,7 +871,7 @@ const AuditLogs = () => {
                         for (let i = sp; i <= ep; i++) {
                           pages.push(
                             <button key={i} onClick={() => handlePageChange(i)}
-                              style={{ minWidth: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: i === page ? '#155DFC' : 'white', border: '1px solid', borderColor: i === page ? '#155DFC' : '#CAD5E2', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: i === page ? 'white' : '#0F172B', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}>
+                              style={{ minWidth: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: i === page ? '#3B82F6' : 'white', border: '1px solid', borderColor: i === page ? '#3B82F6' : '#E5E7EB', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: i === page ? 'white' : '#374151', cursor: 'pointer', fontFamily: 'Arimo, Arial' }}>
                               {i}
                             </button>
                           );
@@ -883,7 +882,7 @@ const AuditLogs = () => {
                     <button
                       onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                       disabled={page === totalPages}
-                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'white', border: '1px solid #CAD5E2', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: '#0F172B', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1, fontFamily: 'Arimo, Arial' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: '#374151', cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1, fontFamily: 'Arimo, Arial' }}
                     >
                       Next <FiChevronRight size={13} />
                     </button>
