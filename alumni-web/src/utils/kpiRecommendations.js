@@ -105,7 +105,7 @@ const BADGE = {
   met: "Target Met",
   // no_target: "No Target Set",
   not_measurable: "Not Measurable",
-  no_data: "No Data Yet",
+  // no_data: "No Data Yet",
 };
 
 const SEVERITY_PHRASE = {
