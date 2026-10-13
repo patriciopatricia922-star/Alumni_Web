@@ -1,3 +1,4 @@
+// admin mine
 import React, { useState, useEffect } from "react";
 import {
   FaBold,
@@ -25,6 +26,13 @@ const getTodayDateString = () => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
+
+const DISCOUNT_CATEGORIES = [
+  "Accommodations",
+  "Food & Dining",
+  "Health, Wellness & Leisure",
+  "Shopping",
+];
 
 const Modal = ({ open, onClose, title, subtitle, children }) => {
   if (!open) return null;
@@ -274,6 +282,7 @@ const DiscountModal = ({
     title: "",
     description: "",
     company: "",
+    category: "",
     discountCode: "",
     audience: "All Alumni",
     expiry: "",
@@ -291,6 +300,7 @@ const DiscountModal = ({
         title: discount.title || "",
         description: discount.description || "",
         company: discount.company || "",
+        category: discount.category || "",
         discountCode: discount.discount_code || "",
         audience: discount.audience || "All Alumni",
         expiry: discount.valid_until
@@ -308,6 +318,7 @@ const DiscountModal = ({
         title: "",
         description: "",
         company: "",
+        category: "",
         discountCode: "",
         audience: "All Alumni",
         expiry: "",
@@ -352,6 +363,10 @@ const DiscountModal = ({
   };
 
   const handleSubmit = async () => {
+    if (!form.category) {
+      setFormError("Please select a category.");
+      return;
+    }
     if (
       (form.audience === "By Program" || form.audience === "By Batch") &&
       !form.target_filter_value
@@ -407,6 +422,30 @@ const DiscountModal = ({
             label="Upload Photos"
             classPrefix="cm-"
           />
+        </Field>
+
+        <Field label="Category" required>
+          <div className="cm-select-wrap">
+            <select
+              className="cm-select"
+              value={form.category}
+              onChange={(e) => {
+                s("category", e.target.value);
+                setFormError("");
+              }}
+            >
+              <option value="">Select a category</option>
+              {DISCOUNT_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <FiChevronDown size={14} className="cm-select-arrow" />
+          </div>
+          {formError && !form.category && (
+            <p className="cm-field-hint cm-field-error">{formError}</p>
+          )}
         </Field>
 
         <Field label="Location" required>

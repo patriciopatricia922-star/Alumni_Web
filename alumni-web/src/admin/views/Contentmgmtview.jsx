@@ -1,5 +1,5 @@
 // ============================================================================
-// Purpose: Content Management View — renders all visual components.
+// Purpose: Content Management View — renders all visual components.admin and mine
 //ADMIN 
 // INTEGRATION: Added Disclosure tab content, DisclosureModal, hidden section
 //              type filtering, inline Edit button on landing cards, archive
@@ -244,7 +244,10 @@ const ContentItemCard = ({ item, type, onEdit, onArchive }) => {
 
   const showImage = ['events', 'jobs', 'discounts', 'rewards', 'announcements'].includes(type) && item.image_url;
 
-  const tagText = item.category || item.company || null;
+  const tagText =
+    type === 'discounts'
+      ? (item.category || null)
+      : (item.category || item.company || null);
 
   const description = strip(item.description);
   const truncatedDesc = description?.length > 85 ? description.slice(0, 85) + '…' : description;

@@ -514,6 +514,7 @@ const handleAwardPoints = async (userIds, points) => {
       if (isBlank(formData.company))          { showToastMessage('Please enter a location.', 'error'); return; }
       if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
       if (isBlank(formData.audience))         { showToastMessage('Please select a target audience.', 'error'); return; }
+      if (isBlank(formData.category))         { showToastMessage('Please select a category.', 'error'); return; }
 
       const { image_urls, image_url } = resolveImages(formData);
 
@@ -521,6 +522,7 @@ const handleAwardPoints = async (userIds, points) => {
         title:         formData.title.trim(),
         description:   formData.description || '',
         company:       formData.company.trim(),
+        category:      formData.category,
         discount_code: formData.discountCode?.trim() || null,
         image_url,
         image_urls,
@@ -747,6 +749,7 @@ const handleAwardPoints = async (userIds, points) => {
       if (isBlank(formData.company))          { showToastMessage('Please enter a location.', 'error'); return; }
       if (isRichTextBlank(formData.description)) { showToastMessage('Please enter a description.', 'error'); return; }
       if (isBlank(formData.audience))         { showToastMessage('Please select a target audience.', 'error'); return; }
+      if (isBlank(formData.category))         { showToastMessage('Please select a category.', 'error'); return; }
 
       const { image_urls, image_url } = resolveImages(formData, editingItem?.image_urls ?? []);
 
@@ -754,6 +757,7 @@ const handleAwardPoints = async (userIds, points) => {
         title:         formData.title?.trim(),
         description:   formData.description || '',
         company:       formData.company?.trim(),
+        category:      formData.category,
         discount_code: formData.discountCode?.trim() || null,
         image_url,
         image_urls,
