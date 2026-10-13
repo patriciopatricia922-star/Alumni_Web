@@ -64,16 +64,11 @@ function RadialGauge({ progress = 0, target = 0, targetDir = "above", isCount = 
         <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E2E8F0" strokeWidth={7} />
         <circle cx={cx} cy={cy} r={r} fill="none" stroke={progressColor} strokeWidth={7}
           strokeDasharray={circumference} strokeDashoffset={progressOffset} strokeLinecap="round" />
-        <text x={cx} y={cy - 4} textAnchor="middle" dominantBaseline="middle"
+        <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle"
           fontSize={clampedProgress >= 100 ? 10 : 12}
           fontFamily="Lexend, Arimo, Arial" fontWeight={700} fill={progressColor}
           style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
           {valueLabel || `${clampedProgress}%`}
-        </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" dominantBaseline="middle"
-          fontSize={8} fontFamily="Lexend, Arimo, Arial" fontWeight={600} fill="#94A3B8"
-          style={{ transform: `rotate(90deg)`, transformOrigin: `${cx}px ${cy}px` }}>
-          No Goal
         </text>
       </svg>
     );
@@ -145,11 +140,6 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
     : "#90A1B9";
   const trendArrow = trend.dir === "up" ? "▲" : trend.dir === "down" ? "▼" : "";
 
-  const resolvedTargetLabel =
-    !targetLabel || targetLabel === 'N/A' || /^Goal:\s*[—-]/.test(targetLabel)
-      ? 'Not Provided'
-      : targetLabel;
-
   // Mirrors the isGood logic in RadialGauge exactly so the warning fires
   // whenever the gauge would show amber — including the target===100 sentinel.
   // College KPIs carry a `status` from the shared KPI result (raw percentage vs
@@ -171,7 +161,6 @@ function KpiProgressCard({ category, label, value, progress, target, targetLabel
         <div className="kpi-progress-info">
           <div className="kpi-progress-label">{label}</div>
           <div className="kpi-progress-value-row">
-            <div className="kpi-progress-target">{resolvedTargetLabel}</div>
             {trend.delta && (
               <div className="kpi-progress-trend" style={{ color: trendColor }}>
                 {trendArrow} {trend.delta}
