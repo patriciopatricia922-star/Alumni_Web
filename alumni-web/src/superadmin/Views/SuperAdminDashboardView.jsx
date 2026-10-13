@@ -724,12 +724,12 @@ function KpiAlertModal({ label, onClose, kpiResult }) {
                 </div>
               )}
 
-              <div className="kpi-chips">
+              {/* <div className="kpi-chips">
                 <span className={`kpi-chip kpi-chip--${view.tone}`}>{view.badge}</span>
                 {view.chips.map((c) => (
                   <span key={c.text} className={`kpi-chip kpi-chip--${c.tone === "warn" ? "warn" : "plain"}`}>{c.text}</span>
                 ))}
-              </div>
+              </div> */}
 
               {view.message && (
                 <div className="kpi-message">
