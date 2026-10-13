@@ -3,7 +3,7 @@
 .admin-management-layout {
   display: flex;
   min-height: 100vh;
-  background: rgba(225,236,247,0.95);
+  background: rgba(225, 236, 247, 0.95);
   font-family: 'Lexend', 'Arimo', Arial, sans-serif;
 }
 
@@ -12,7 +12,7 @@
   flex: 1;
   min-width: 0;
   overflow-x: hidden;
-  padding: 40px 40px 60px;
+  padding: 36px 32px 60px;
 }
 
 /* Responsive: Tablet */
@@ -36,24 +36,23 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
 }
 
 .admin-page-header h1 {
-  font-family: 'Lexend', Arial, sans-serif;
+  font-family: 'Lexend', sans-serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 27px;
   color: #324D87;
   margin: 0 0 4px;
-  line-height: 36px;
 }
 
 .admin-page-header p {
-  font-family: 'Arimo', Arial, sans-serif;
-  font-size: 16px;
-  color: #717182;
+  font-family: 'Lexend', sans-serif;
+  font-size: 14px;
+  color: #6A7282;
   margin: 0;
 }
 
