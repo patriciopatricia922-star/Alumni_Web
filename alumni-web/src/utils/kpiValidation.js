@@ -32,7 +32,7 @@ export const formatValidationReport = (dataset, results) => {
     lines.push(`  Qualifying (n): ${r.n}`);
     lines.push(`  Raw percentage: ${r.rawPct === null ? "n/a" : r.rawPct}`);
     lines.push(`  Display percentage: ${r.displayPct === null ? "n/a" : r.displayPct}`);
-    lines.push(`  Target: ${r.target === null ? "No target set" : r.target + "% (" + r.targetDir + ")"}  Status: ${r.status}`);
+    // lines.push(`  Target: ${r.target === null ? "No target set" : r.target + "% (" + r.targetDir + ")"}  Status: ${r.status}`);
     const by = (o) => r.rows.filter((x) => x.outcome === o).map((x) => `${x.ref}(${x.reason})`).join(" ") || "-";
     lines.push(`  Qualifying:     ${by("qualifying")}`);
     lines.push(`  Non-qualifying: ${by("non_qualifying")}`);
