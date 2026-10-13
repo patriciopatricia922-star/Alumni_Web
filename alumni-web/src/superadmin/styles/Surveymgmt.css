@@ -1,5 +1,5 @@
 /* ============================================================================
-   THIS IS FOR INLINE STYLES.SUPERADMIN
+   THIS IS FOR INLINE STYLES.SUPERADMIN mine
    ============================================================================
    Purpose: Contains all CSS styles for the Survey Management component.
             Includes layout, animations, component styling, and responsive
@@ -58,6 +58,13 @@ body {
   top: -50px;
   height: 37px;
   background: #E1ECF7;
+}
+
+/* Remove any inherited/global shadow on the sticky header and its cap.
+   Scoped to the header only: cards, toasts, and modals keep their shadows. */
+.survey-header,
+.survey-header::before {
+  box-shadow: none;
 }
 
 /* Header left side - title and description container */
