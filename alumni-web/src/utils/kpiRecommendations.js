@@ -103,7 +103,7 @@ const CATEGORY_INTRO = {
 const BADGE = {
   not_met: "Below Target Performance",
   met: "Target Met",
-  no_target: "No Target Set",
+  // no_target: "No Target Set",
   not_measurable: "Not Measurable",
   no_data: "No Data Yet",
 };
