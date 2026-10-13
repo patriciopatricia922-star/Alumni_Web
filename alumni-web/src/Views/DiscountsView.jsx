@@ -142,12 +142,6 @@ const DiscountCard = ({ item, isTarget }) => {
             <span className="discount-badge-text">{item.discountPercent}</span>
           </div>
         )}
-        {/* Category tag — bottom-left, white pill */}
-        {item.category && (
-          <div className="discount-category-tag">
-            <span className="discount-category-text">{item.category}</span>
-          </div>
-        )}
       </div>
 
       {/* ── Body ── */}
